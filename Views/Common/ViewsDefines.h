@@ -1,0 +1,37 @@
+
+#ifndef VIEWSDEFINES_H
+#define VIEWSDEFINES_H
+
+#define ROOT                                	""
+#define SCR_ADD_HARDWARE_SIGNER             	"qrc:/Qml/Screens/LocalMode/SCR_ADD_HARDWARE_SIGNER.qml"
+#define SCR_ADD_HARDWARE_SIGNER_TO_WALLET   	"qrc:/Qml/Screens/LocalMode/SCR_ADD_HARDWARE_SIGNER_TO_WALLET.qml"
+#define SCR_ADD_MASTER_SIGNER_RESULT        	"qrc:/Qml/Screens/LocalMode/SCR_ADD_MASTER_SIGNER_RESULT.qml"
+#define SCR_ADD_NEW_SIGNER                  	"qrc:/Qml/Screens/LocalMode/SCR_ADD_NEW_SIGNER.qml"
+#define SCR_ADD_NEW_SIGNER_TO_WALLET        	"qrc:/Qml/Screens/LocalMode/SCR_ADD_NEW_SIGNER_TO_WALLET.qml"
+#define SCR_ADD_NEW_SOFTWARE_SIGNER         	"qrc:/Qml/Screens/LocalMode/SCR_ADD_NEW_SOFTWARE_SIGNER.qml"
+#define SCR_ADD_REMOTE_SIGNER_RESULT        	"qrc:/Qml/Screens/LocalMode/SCR_ADD_REMOTE_SIGNER_RESULT.qml"
+#define SCR_ADD_WALLET                      	"qrc:/Qml/Screens/LocalMode/SCR_ADD_WALLET.qml"
+#define SCR_ADD_WALLET_CONFIRMATION         	"qrc:/Qml/Screens/LocalMode/SCR_ADD_WALLET_CONFIRMATION.qml"
+#define SCR_ADD_WALLET_SIGNER_CONFIGURATION 	"qrc:/Qml/Screens/LocalMode/SCR_ADD_WALLET_SIGNER_CONFIGURATION.qml"
+#define SCR_APP_SETTINGS                    	"qrc:/Qml/Screens/LocalMode/SCR_APP_SETTINGS.qml"
+#define SCR_CONSOLIDATE_OUTPUT              	"qrc:/Qml/Screens/LocalMode/SCR_UTXO_CONSOLIDATE.qml"
+#define SCR_CREATE_NEW_SEED                 	"qrc:/Qml/Screens/LocalMode/SCR_CREATE_NEW_SEED.qml"
+#define SCR_CREATE_TRANSACTION              	"qrc:/Qml/Screens/LocalMode/SCR_CREATE_TRANSACTION.qml"
+#define SCR_HOME                            	"qrc:/Qml/Screens/LocalMode/SCR_HOME.qml"
+#define SCR_INPUT_PASSPHRASE                	"qrc:/Qml/Screens/LocalMode/SCR_INPUT_PASSPHRASE.qml"
+#define SCR_INPUT_PIN                       	"qrc:/Qml/Screens/LocalMode/SCR_INPUT_PIN.qml"
+#define SCR_LOGIN                           	"qrc:/Qml/Screens/LocalMode/SCR_LOGIN.qml"
+#define SCR_MASTER_SIGNER_INFO              	"qrc:/Qml/Screens/LocalMode/SCR_MASTER_SIGNER_INFO.qml"
+#define SCR_RECEIVE                         	"qrc:/Qml/Screens/LocalMode/SCR_RECEIVE.qml"
+#define SCR_RECOVER_SOFTWARE_SIGNER         	"qrc:/Qml/Screens/LocalMode/SCR_RECOVER_SOFTWARE_SIGNER.qml"
+#define SCR_REMOTE_SIGNER_INFO              	"qrc:/Qml/Screens/LocalMode/SCR_REMOTE_SIGNER_INFO.qml"
+#define SCR_SEND                            	"qrc:/Qml/Screens/LocalMode/SCR_SEND_ADD_DESTINATION.qml"
+#define SCR_SOFTWARE_SIGNER_CONFIGURATION   	"qrc:/Qml/Screens/LocalMode/SCR_SOFTWARE_SIGNER_CONFIGURATION.qml"
+#define SCR_TRANSACTION_HISTORY             	"qrc:/Qml/Screens/LocalMode/SCR_TRANSACTION_HISTORY.qml"
+#define SCR_TRANSACTION_INFO                	"qrc:/Qml/Screens/LocalMode/SCR_TRANSACTION_INFO.qml"
+#define SCR_UTXOS                           	"qrc:/Qml/Screens/LocalMode/SCR_UTXOS.qml"
+#define SCR_UTXO_OUTPUT                     	"qrc:/Qml/Screens/LocalMode/SCR_UTXO_INFO.qml"
+#define SCR_WALLET_CHANGE_ADDRESSES         	"qrc:/Qml/Screens/LocalMode/SCR_CHANGE_ADDRESS.qml"
+#define SCR_WALLET_INFO                     	"qrc:/Qml/Screens/LocalMode/SCR_WALLET_INFO.qml"
+
+#endif // VIEWSDEFINES_H

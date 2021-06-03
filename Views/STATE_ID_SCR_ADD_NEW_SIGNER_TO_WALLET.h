@@ -1,0 +1,17 @@
+
+#ifndef STATE_ID_SCR_ADD_NEW_SIGNER_TO_WALLET_H
+#define STATE_ID_SCR_ADD_NEW_SIGNER_TO_WALLET_H
+
+#include <QObject>
+#include <QVariant>
+#include "ViewsDefines.h"
+#include "ViewsEnums.h"
+
+void SCR_ADD_NEW_SIGNER_TO_WALLET_Entry(QVariant msg);
+void SCR_ADD_NEW_SIGNER_TO_WALLET_Exit(QVariant msg);
+void EVT_ADD_SIGNER_TO_WALLET_BACK_REQUEST_HANDLER(QVariant msg);
+void EVT_ADD_HARDWARE_SIGNER_TO_WALLET_HANDLER(QVariant msg);
+void EVT_ADD_NEW_SOFTWARE_SIGNER_TO_WALLET_HANDLER(QVariant msg);
+void EVT_RECOVER_SOFTWARE_SIGNER_TO_WALLET_HANDLER(QVariant msg);
+
+#endif // STATE_ID_SCR_ADD_NEW_SIGNER_TO_WALLET_H

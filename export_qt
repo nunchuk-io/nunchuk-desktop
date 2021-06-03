@@ -1,0 +1,1 @@
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/songoku/Qt5.12.8/Tools/QtCreator/lib:/home/songoku/Qt5.12.8/Tools/QtCreator/lib/qtcreator:/home/songoku/Qt5.12.8/Tools/QtCreator/lib/Qt/lib

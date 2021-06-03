@@ -1,0 +1,16 @@
+
+#ifndef STATE_ID_SCR_TRANSACTION_HISTORY_H
+#define STATE_ID_SCR_TRANSACTION_HISTORY_H
+
+#include <QObject>
+#include <QVariant>
+#include "ViewsDefines.h"
+#include "ViewsEnums.h"
+
+void SCR_TRANSACTION_HISTORY_Entry(QVariant msg);
+void SCR_TRANSACTION_HISTORY_Exit(QVariant msg);
+void EVT_TRANSACTION_HISTORY_SORT_REQUEST_HANDLER(QVariant msg);
+void EVT_TRANSACTION_HISTORY_BACK_REQUEST_HANDLER(QVariant msg);
+void EVT_TRANSACTION_INFO_ITEM_SELECTED_HANDLER(QVariant msg);
+
+#endif // STATE_ID_SCR_TRANSACTION_HISTORY_H

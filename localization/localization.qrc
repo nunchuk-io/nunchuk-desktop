@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/localization">
+        <file>nunchuk_en.ts</file>
+        <file>nunchuk_en.qm</file>
+    </qresource>
+    <qresource prefix="/definations">
+        <file>localization.js</file>
+    </qresource>
+</RCC>

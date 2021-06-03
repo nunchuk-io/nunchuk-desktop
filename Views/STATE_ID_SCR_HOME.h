@@ -1,0 +1,27 @@
+
+#ifndef STATE_ID_SCR_HOME_H
+#define STATE_ID_SCR_HOME_H
+
+#include <QObject>
+#include <QVariant>
+#include "ViewsDefines.h"
+#include "ViewsEnums.h"
+
+void SCR_HOME_Entry(QVariant msg);
+void SCR_HOME_Exit(QVariant msg);
+void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg);
+void EVT_HOME_WALLET_COPY_ADDRESS_HANDLER(QVariant msg);
+void EVT_HOME_SETTING_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_DISPLAY_ADDRESS_HANDLER(QVariant msg);
+void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_SEND_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_RECEIVE_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_TRANSACTION_HISTORY_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_WALLET_INFO_REQUEST_HANDLER(QVariant msg);
+void EVT_APP_SETTING_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg);
+void EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER(QVariant msg);
+
+#endif // STATE_ID_SCR_HOME_H

@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/QAppFramework">
+        <file>QQml/Common/QRootScreen.qml</file>
+        <file>QQml/QMainViewPort.qml</file>
+        <file>QQml/QMainViewPortAnimation1.qml</file>
+        <file>QQml/QMainViewPortAnimation2.qml</file>
+    </qresource>
+</RCC>

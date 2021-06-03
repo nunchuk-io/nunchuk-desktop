@@ -1,0 +1,27 @@
+
+#include "STATE_ID_SCR_ADD_NEW_SIGNER_TO_WALLET.h"
+
+void SCR_ADD_NEW_SIGNER_TO_WALLET_Entry(QVariant msg) {
+
+}
+
+void SCR_ADD_NEW_SIGNER_TO_WALLET_Exit(QVariant msg) {
+
+}
+
+void EVT_ADD_SIGNER_TO_WALLET_BACK_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_ADD_HARDWARE_SIGNER_TO_WALLET_HANDLER(QVariant msg) {
+
+}
+
+void EVT_ADD_NEW_SOFTWARE_SIGNER_TO_WALLET_HANDLER(QVariant msg) {
+
+}
+
+void EVT_RECOVER_SOFTWARE_SIGNER_TO_WALLET_HANDLER(QVariant msg) {
+
+}
+
