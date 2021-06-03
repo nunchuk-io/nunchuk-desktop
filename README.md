@@ -1,6 +1,6 @@
 # Build guideline
 
-Follow this document to build the application for your platform.
+Follow this document to build the Nunchuk desktop application for your platform.
 
 # Tools
 **Qt libraries and Qt Creator**
