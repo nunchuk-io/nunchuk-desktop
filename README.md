@@ -5,8 +5,8 @@ Follow these steps to build the Nunchuk desktop application for your platform.
 # Tools
 **Qt libraries and Qt Creator**
 
- Download Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers) and install it.
- Visual studio 2017 or 2019 (for Windows)
+ Download Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers).
+ You will also need Visual studio 2017 or 2019 (for Windows).
 ```
  Notes: 
         Qt version 5.12 or higher is recommended
