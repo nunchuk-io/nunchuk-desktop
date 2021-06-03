@@ -1,10 +1,11 @@
 # Build guideline
 
-Follow this document to build the application on your platform
+Follow this document to build the application for your platform.
 
 # Tools
 **Qt libraries and Qt Creator**
- Download the Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers) and install it.
+
+ Download Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers) and install it.
  Visual studio 2017 or 2019 (for Windows)
 ```
  Notes: 
