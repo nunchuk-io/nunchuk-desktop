@@ -1,10 +1,13 @@
-This repo contains the source code for the Nunchuk desktop GUI.
+[![Nunchuk  Logo](https://nunchuk.io/images/logo.png)](https://nunchuk.io)
+
+## About
+This repo contains the source code for the [Nunchuk](https://nunchuk.io) desktop GUI.
 
 Source code for the underlying Bitcoin library can be found at [libnunchuk](https://github.com/nunchuk-io/libnunchuk).
 
 # Build instructions 
 
-Follow these steps to build the Nunchuk desktop application for your platform.
+Follow these steps to build the application for your platform.
 
 # Tools
 **Qt libraries and Qt Creator**
