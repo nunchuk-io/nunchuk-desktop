@@ -5,11 +5,11 @@ This repo contains the source code for the [Nunchuk](https://nunchuk.io) desktop
 
 Source code for the underlying Bitcoin library can be found at [libnunchuk](https://github.com/nunchuk-io/libnunchuk).
 
-# Build instructions 
+## Build instructions 
 
 Follow these steps to build the application for your platform.
 
-# Tools
+## Tools
 **Qt libraries and Qt Creator**
 
  Download Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers).
