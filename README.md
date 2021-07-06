@@ -50,11 +50,11 @@ Follow these steps to build the application for your platform.
 	cd ..
 ```
 
->**Build nunchuck-client-qt**
+>**Build nunchuck-desktop**
 >
 ```
 	Open Qt Creator
-        Open nunchuck-client-qt project via CMakeLists.txt
+        Open nunchuck-desktop project via CMakeLists.txt
 	Select your Kit (include compiler) : Desktop Qt %{Qt:Version} GCC 64bit,  (such as Desktop Qt 5.12.8 GCC 64bit)
 	Run qmake
 	Build
