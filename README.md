@@ -25,8 +25,8 @@ Follow these steps to build the application for your platform.
 >**Clone project and fetch submodules**
 >
 ``` 
-	git clone https://gitlab.com/nunchuck/nunchuck-qt
-	cd nunchuck-qt
+	git clone https://github.com/nunchuk-io/nunchuk-desktop
+	cd nunchuk-desktop
 	git submodule update --init --recursive
 ```
 **Build [contrib/libnunchuk](https://github.com/nunchuk-io/libnunchuk)**
@@ -50,11 +50,11 @@ Follow these steps to build the application for your platform.
 	cd ..
 ```
 
->**Build nunchuck-client-qt**
+>**Build nunchuk-desktop**
 >
 ```
 	Open Qt Creator
-        Open nunchuck-client-qt project via CMakeLists.txt
+        Open nunchuk-desktop project via CMakeLists.txt
 	Select your Kit (include compiler) : Desktop Qt %{Qt:Version} GCC 64bit,  (such as Desktop Qt 5.12.8 GCC 64bit)
 	Run qmake
 	Build
