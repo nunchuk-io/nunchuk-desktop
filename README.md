@@ -1,4 +1,4 @@
-[![Nunchuk  Logo](https://nunchuk.io/images/logo.png)](https://nunchuk.io)
+[![Nunchuk  Logo](https://nunchuk.io/wp-content/uploads/2021/03/Horizontal-Logo-2.png)](https://nunchuk.io)
 
 ## About
 This repo contains the source code for the [Nunchuk](https://nunchuk.io) desktop GUI.
