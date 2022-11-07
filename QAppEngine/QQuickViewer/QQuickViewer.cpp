@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "QQuickViewer.h"
 #include "QOutlog.h"
 #include <QFontDatabase>
@@ -36,20 +55,7 @@ void QQuickViewer::initialized()
     QObject::connect(m_viewer, SIGNAL(widthChanged(int)), this, SLOT(onWidthChanged(int)));
     m_ctxProperties.clear();
     m_qmlObj.clear();
-
-    int screenHeight = qApp->primaryScreen()->geometry().height();
-    m_currentScale = 1;
-    if(screenHeight >= QAPP_HEIGHT_EXPECTED){
-        QQuickViewer::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
-    }
-    else{
-        int targetHeight = screenHeight - QAPP_HEIGHT_HEADER;
-        int targetWidth = (double)((QAPP_WIDTH_EXPECTED*targetHeight)/QAPP_HEIGHT_EXPECTED);
-        m_currentScale = (double)targetHeight/QAPP_HEIGHT_EXPECTED;
-        QQuickViewer::instance()->setViewerSize(targetWidth, targetHeight);
-    }
-    m_viewer->setResizeMode(QQuickView::SizeViewToRootObject );
-    this->registerContextProperty("SCREEN_SCALE", m_currentScale);
+    QQuickViewer::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
     this->registerContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
     this->registerContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
     this->registerContextProperty("QMLHandle", QVariant::fromValue(this));
@@ -68,7 +74,7 @@ void QQuickViewer::initFonts(QStringList &fonts)
 
 void QQuickViewer::completed()
 {
-    loadQml(m_viewer, QUrl(QStringLiteral(MAIN_VIEWPORT_ANIMATION3_QML)), m_viewer->rootContext());
+    loadQml(m_viewer, QUrl(QStringLiteral(MAIN_VIEWPORT_QML)), m_viewer->rootContext());
     m_scrMng = new QScreenManager(m_viewer->rootObject(), m_viewer->rootContext());
     m_popMng = new QPopupManager(m_viewer->rootObject(), m_viewer->rootContext());
 
@@ -76,7 +82,6 @@ void QQuickViewer::completed()
         if(LAYER::LAYER_BASE == m_stateRegisted[m_stateRegisted.keys().at(i)]->layerbase){
             m_RootState = m_stateRegisted[m_stateRegisted.keys().at(i)]->id;
             m_stateRegisted[m_stateRegisted.keys().at(i)]->funcEntry(QVariant("START APPLICATION"));
-            DBG_INFO << m_RootState;
             break;
         }
     }
@@ -115,7 +120,6 @@ bool QQuickViewer::updateContextProperty(const QString &str, const QVariant &var
 
 void QQuickViewer::sendEvent(uint eventID, QVariant msg)
 {
-    DBG_INFO << eventID;
     // CHECK IN CURRENT POPUP
     if(NULL != m_popMng){
         QList<uint> pops = m_popMng->getCurrentPopups();
@@ -178,6 +182,11 @@ void QQuickViewer::onWidthChanged(int w)
         this->updateContextProperty("QAPP_DEVICE_WIDTH", m_currentSize.width());
         this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
     }
+}
+
+void QQuickViewer::aboutToQuit(QQuickViewer::QPrivateSignal signal)
+{
+    DBG_INFO;
 }
 
 void QQuickViewer::doRegisterQML(QObject *objPropose)
@@ -296,6 +305,7 @@ int QQuickViewer::currentFlow() const
 void QQuickViewer::setCurrentFlow(int currentFlow)
 {
     if(m_currentFlow != currentFlow){
+        DBG_INFO << currentFlow;
         m_currentFlow = currentFlow;
         emit currentFlowChanged();
     }
@@ -309,6 +319,18 @@ int QQuickViewer::popupTrigger(int popupId) const
 void QQuickViewer::setPopupTrigger(int popupId, int trigger)
 {
     m_PopupTriger[popupId] = trigger;
+}
+
+void QQuickViewer::addImageProvider(const QString &id, QQmlImageProviderBase *provider)
+{
+    if(m_viewer && m_viewer->engine()){
+        m_viewer->engine()->addImageProvider(id, provider);
+    }
+}
+
+QList<QObject *> QQuickViewer::getQmlObj() const
+{
+    return m_qmlObj;
 }
 
 uint QQuickViewer::onsRequester() const

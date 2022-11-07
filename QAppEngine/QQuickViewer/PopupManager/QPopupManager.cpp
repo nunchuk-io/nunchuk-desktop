@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "QPopupManager.h"
 
 QPopupManager::QPopupManager(QQuickItem *rootObject, QQmlContext *context): m_rootObject(rootObject), m_context(context)
@@ -101,6 +120,7 @@ void QPopupManager::qmlSyncup()
     if(m_QmlOder != m_PopupQmlData){
         m_QmlOder.clear();
         m_QmlOder = m_PopupQmlData;
+        DBG_INFO << m_QmlOder;
         QMetaObject::invokeMethod(m_rootObject, JS_POPUPS_TRANSITION_FUNCTION, Q_ARG(QVariant, QVariant::fromValue(m_QmlOder)), Q_ARG(QVariant,QVariant::fromValue( m_QmlOder.count())));
     }
     m_PopupQmlData.clear();
@@ -130,6 +150,7 @@ PopupObject::~PopupObject()
     if(NULL != m_popInfo.funcEntry){
         m_popInfo.funcExit(m_popInfo.msg);
     }
+    stop();
 }
 
 POPUP_DATA PopupObject::popupInfo() const

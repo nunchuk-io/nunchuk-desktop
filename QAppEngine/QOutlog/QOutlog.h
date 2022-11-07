@@ -16,7 +16,8 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QThread>
-#include <QDebug>
+#include <QJsonObject>
+#include <QDateTime>
 
 enum class LOG_LEVEL : int
 {
@@ -26,11 +27,15 @@ enum class LOG_LEVEL : int
     LOG_INFO,
 };
 
-#define DBG_FATAL    QOutlog().begin(LOG_LEVEL::LOG_FATAL) << '[' << QDateTime::currentDateTime() << ']' << '[' << __FUNCTION__ << "][" << __LINE__ << ']'
-#define DBG_ERROR    QOutlog().begin(LOG_LEVEL::LOG_ERROR) << '[' << QDateTime::currentDateTime() << ']' << '[' << __FUNCTION__ << "][" << __LINE__ << ']'
-#define DBG_WARN     QOutlog().begin(LOG_LEVEL::LOG_WARN)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __FUNCTION__ << "][" << __LINE__ << ']'
-#define DBG_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __FUNCTION__ << "][" << __LINE__ << ']'
-#define DBG_QT_MSG   QOutlog().begin(LOG_LEVEL::LOG_ERROR) << '[' << QDateTime::currentDateTime() << ']' << "[QtMsg]"
+#if !defined(__PRETTY_FUNCTION__) && !defined(__GNUC__)
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
+#define DBG_FATAL    QOutlog().begin(LOG_LEVEL::LOG_FATAL) << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
+#define DBG_ERROR    QOutlog().begin(LOG_LEVEL::LOG_ERROR) << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
+#define DBG_WARN     QOutlog().begin(LOG_LEVEL::LOG_WARN)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
+#define DBG_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
+#define DBG_QT_MSG   QOutlog().begin(LOG_LEVEL::LOG_ERROR)
 
 static const QString logfilePath = "logfile_nunchuck-client-qt.log";
 
@@ -102,6 +107,17 @@ public:
         return *this;
     }
 
+    template <class aKey>
+    inline QOutlog &operator<<(const QMap<aKey, QVariant> &map)
+    {
+        mStream << "QMap(";
+        for (typename QMap<aKey, QVariant>::const_iterator it = map.constBegin(); it != map.constEnd(); ++it) {
+            mStream << '(' << it.key() << "," << it.value().toString() << ')';
+        }
+        mStream << ')' << ' ';
+        return *this;
+    }
+
     template <class aKey, class aT>
     inline QOutlog &operator<<(const QHash<aKey, aT> &hash)
     {
@@ -116,7 +132,7 @@ public:
     template <class T1, class T2>
     inline QOutlog &operator<<(const QPair<T1, T2> &pair)
     {
-        mStream << "QPair(" << pair.first << ',' << pair.second << ')';
+        mStream << "QPair(" << pair.first << ',' << pair.second << ')' << ' ';
         return *this;
     }
 
@@ -156,8 +172,20 @@ public:
         return *this;
     }
 
-    inline QOutlog &operator<<(std::nullptr_t) { mStream << "(nullptr)"; return *this; }
-    inline QOutlog &operator<<(const void * t) { mStream << t; return *this; }
+    inline QOutlog &operator<<(std::nullptr_t) { mStream << "(nullptr)" << ' ';; return *this; }
+    inline QOutlog &operator<<(const void * t) { mStream << t << ' '; return *this; }
+    inline QOutlog &operator<<(const QJsonObject & t) { return operator<<(t.toVariantMap()); }
+    inline QOutlog &operator<<(QUrl t) { mStream << t.toString() << ' '; return *this; }
+
+    template <class T>
+    inline QOutlog &operator<<(const std::vector<T> &t)
+    {
+        for(int i = 0; i < t.size(); i++) {
+            mStream << QString("0x%1 ").arg((uchar)t.at(i), 2, 16, QChar('0'));
+        }
+        mStream  << ' ';
+        return *this;
+    }
 private:
     QTextStream mStream;
     QString     mLogString;
@@ -179,6 +207,7 @@ public:
     LogWriteToFile(const QString &file);
     ~LogWriteToFile();
 private:
+    QMutex mutex;
     QSharedPointer<QFile> logfile;
 };
 

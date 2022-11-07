@@ -1,100 +1,42 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import HMIEVENTS 1.0
 import "../origins"
+import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: homestep1
     width: 976
     height: 910
     color: "#F1FAFE"
-
-    QImage {
-        width: 640
-        height: 640
-        anchors.centerIn: parent
-        source: "qrc:/Images/Images/Logo_bgr.png"
-    }
-
-    QImage {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.topMargin: 335
-        source: "qrc:/Images/Images/Step1.png"
-    }
-
-    QText {
-        width: 255
-        height: 36
-        text: "Welcome to Nunchuk"
-        color: "#000000"
-        font.weight: Font.DemiBold
-        font.family: "Montserrat"
-        font.pixelSize: 24
-        horizontalAlignment: Text.AlignHCenter
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            top: parent.top
-            topMargin: 143
-        }
-    }
-
-    Column {
-        spacing: 24
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            top: parent.top
-            topMargin: 190
-        }
-
-        QText {
-            width: 530
-            text: "Start managing your Bitcoin wallets all in one place by adding a new signer."
-            color: "#000000"
-            font.family: "Lato"
-            font.pixelSize: 16
-            wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignHCenter
-        }
-
-//        QText {
-//            width: 530
-//            text: "NOTE: Air-gapped signers are not managed by Signer Manager. If you use air-gapped signers, please start by adding a new wallet. You can add air-gapped signers as \"remote signers\" as you create a wallet."
-//            color: "#000000"
-//            font.family: "Lato"
-//            font.pixelSize: 16
-//            wrapMode: Text.WordWrap
-//            horizontalAlignment: Text.AlignHCenter
-//        }
-    }
-
-    Row {
-        width: 336
-        height: 32
-        spacing: 16
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            top: parent.top
-            topMargin: 300
-        }
-
-        QButtonMedium {
-            width: 160
-            height: 32
-            label: "Add New Signer"
-            type: eOUTLINE_NORMAL
-            onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
-            }
-        }
-
-        QButtonMedium {
-            width: 160
-            height: 32
-            label: "Add New Wallet"
-            type: eOUTLINE_NORMAL
-            onButtonClicked : {
-                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_WALLET_REQUEST)
-            }
+    QAddWelcome{
+        anchors.fill: parent
+        btnTextLink: STR.STR_QML_083
+        titleSuggest: STR.STR_QML_614
+        titleWelcome: STR.STR_QML_463
+        content: STR.STR_QML_615
+        contentHeight: 152
+        icon:"qrc:/Images/Images/OnlineMode/keys.png"
+        onAddButtonClicked: {
+            QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
         }
     }
 }

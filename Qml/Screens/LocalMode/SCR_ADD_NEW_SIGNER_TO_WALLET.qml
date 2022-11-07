@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 1.4
 import QtQuick.Controls 2.3
@@ -6,53 +25,36 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
     id: rootAddsignerToWallet
-    Rectangle {
-        id: mask
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
+        enableHeader: false
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        id: contentMasked
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
         Loader {
             id: loadercontent
             anchors.fill: parent
             sourceComponent: maincontent
         }
-
         Component {
             id: maincontent
             Item {
                 QText {
+                    id: screenname
                     width: 163
                     height: 27
                     anchors {
                         left: parent.left
-                        leftMargin: 40
+                        leftMargin: 36
                         top: parent.top
-                        topMargin: 24
+                        topMargin: 36
                     }
-                    text: "Add New Signer"
+                    text: STR.STR_QML_083
                     color: "#031F2B"
                     font.family: "Montserrat"
                     font.weight: Font.ExtraBold
@@ -60,10 +62,9 @@ QScreen {
                 }
                 QCloseButton {
                     anchors {
+                        verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 16
-                        top: parent.top
-                        topMargin: 16
+                        rightMargin: 36
                     }
                     onClicked: {
                         QMLHandle.sendEvent(EVT.EVT_ADD_SIGNER_TO_WALLET_BACK_REQUEST)
@@ -95,7 +96,7 @@ QScreen {
                             QText {
                                 width: 210
                                 height: 56
-                                text: "Add hardware signer"
+                                text: STR.STR_QML_084
                                 horizontalAlignment: Text.AlignHCenter
                                 font.family: "Lato"
                                 font.pixelSize: 20
@@ -106,7 +107,7 @@ QScreen {
                             QText {
                                 width: 210
                                 height: 112
-                                text: "Add your existing hardware signers to Nunchuk. Wired and air-gapped signers supported."
+                                text: STR.STR_QML_085
                                 font.family: "Lato"
                                 font.pixelSize: 16
                                 font.weight: Font.Light
@@ -117,7 +118,7 @@ QScreen {
                             QTextButton {
                                 width: 180
                                 height: 48
-                                label.text: "Add Hardware Signer"
+                                label.text: STR.STR_QML_086
                                 label.font.pixelSize: 16
                                 label.font.family: "Lato"
                                 type: eTypeB
@@ -143,13 +144,13 @@ QScreen {
                                     width: 60
                                     height: 60
                                     anchors.centerIn: parent
-                                    source: "qrc:/Images/Images/software_add-60px.png"
+                                    source: "qrc:/Images/Images/software_add-60px.svg"
                                 }
                             }
                             QText {
                                 width: 210
                                 height: 56
-                                text: "Add Nunchuk software signer"
+                                text: STR.STR_QML_087
                                 horizontalAlignment: Text.AlignHCenter
                                 font.family: "Lato"
                                 font.pixelSize: 20
@@ -160,7 +161,7 @@ QScreen {
                             QText {
                                 width: 210
                                 height: 112
-                                text: "Nunchuk software signer is a companion signer that is managed by the app itself."
+                                text: STR.STR_QML_088
                                 font.family: "Lato"
                                 font.pixelSize: 16
                                 font.weight: Font.Light
@@ -168,11 +169,10 @@ QScreen {
                                 horizontalAlignment: Text.AlignHCenter
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
-
                             QTextButton {
                                 width: 180
                                 height: 48
-                                label.text: enabled ? "Add Software Signer" : "Already Added"
+                                label.text: enabled ? STR.STR_QML_089 : STR.STR_QML_090
                                 label.font.pixelSize: 16
                                 label.font.family: "Lato"
                                 type: eTypeB
@@ -187,20 +187,20 @@ QScreen {
                 }
             }
         }
-
         Component {
             id: beforeStartHardware
             Item {
                 QText {
+                    id: screenname
                     width: 163
                     height: 27
                     anchors {
                         left: parent.left
-                        leftMargin: 40
+                        leftMargin: 36
                         top: parent.top
-                        topMargin: 24
+                        topMargin: 36
                     }
-                    text: "Before you start"
+                    text: STR.STR_QML_091
                     color: "#031F2B"
                     font.family: "Montserrat"
                     font.weight: Font.ExtraBold
@@ -208,16 +208,14 @@ QScreen {
                 }
                 QCloseButton {
                     anchors {
+                        verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 16
-                        top: parent.top
-                        topMargin: 16
+                        rightMargin: 36
                     }
                     onClicked: {
                         loadercontent.sourceComponent = maincontent
                     }
                 }
-
                 Column {
                     spacing: 24
                     width: 536
@@ -241,7 +239,7 @@ QScreen {
                     QText {
                         width: 500
                         height: 28
-                        text: "Please ensure to do the following things"
+                        text: STR.STR_QML_092
                         anchors.horizontalCenter: parent.horizontalCenter
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -249,7 +247,6 @@ QScreen {
                         font.pixelSize: 16
                         color: "#031F2B"
                     }
-
                     Column {
                         id: guide
                         spacing: 16
@@ -273,7 +270,6 @@ QScreen {
                                     text: "1"
                                 }
                             }
-
                             Column {
                                 width: parent.width - 28
                                 anchors.left: guidenum1.right
@@ -287,7 +283,7 @@ QScreen {
                                     font.family: "Montserrat"
                                     lineHeightMode: Text.FixedHeight
                                     lineHeight: 28
-                                    text: "Initialize the brand new device"
+                                    text: STR.STR_QML_093
                                 }
                                 QText {
                                     width: parent.width
@@ -297,11 +293,10 @@ QScreen {
                                     wrapMode: Text.WordWrap
                                     lineHeightMode: Text.FixedHeight
                                     lineHeight: 28
-                                    text: "Follow your vendor's instruction on how to set up a device with a seed."
+                                    text: STR.STR_QML_094
                                 }
                             }
                         }
-
                         Item {
                             width: 536
                             height: 84
@@ -321,13 +316,11 @@ QScreen {
                                     text: "2"
                                 }
                             }
-
                             Column {
                                 width: parent.width - 28
                                 anchors.left: guidenum2.right
                                 anchors.leftMargin: 8
                                 spacing: 8
-
                                 QText {
                                     width: parent.width
                                     color: "#031F2B"
@@ -336,9 +329,8 @@ QScreen {
                                     font.family: "Montserrat"
                                     lineHeightMode: Text.FixedHeight
                                     lineHeight: 28
-                                    text: "Ensure your device is unlocked and plugged in"
+                                    text: STR.STR_QML_095
                                 }
-
                                 QText {
                                     width: parent.width
                                     color: "#323E4A"
@@ -347,18 +339,15 @@ QScreen {
                                     wrapMode: Text.WordWrap
                                     lineHeightMode: Text.FixedHeight
                                     lineHeight: 28
-                                    text: "Please enter the <b>PIN</b> to unlock the device.You might also need to enter a <b>PASSPHRASE</b> on-device, if <b>PASSPHRASE</b> is enabled."
+                                    text: STR.STR_QML_096
                                 }
                             }
                         }
                     }
-
                 }
-
                 QButtonTextLink {
-                    width: 203
                     height: 24
-                    label: "BACK TO PREVIOUS"
+                    label: STR.STR_QML_059
                     anchors {
                         left: parent.left
                         leftMargin: 40
@@ -369,13 +358,12 @@ QScreen {
                         loadercontent.sourceComponent = maincontent
                     }
                 }
-
                 QTextButton {
                     width: 200
                     height: 48
-                    label.text: "Continue"
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     anchors {
                         right: parent.right
                         rightMargin: 40
@@ -388,20 +376,20 @@ QScreen {
                 }
             }
         }
-
         Component {
             id: beforeStartSoftware
             Item {
                 QText {
+                    id: screenname
                     width: 163
                     height: 27
                     anchors {
                         left: parent.left
-                        leftMargin: 40
+                        leftMargin: 36
                         top: parent.top
-                        topMargin: 24
+                        topMargin: 36
                     }
-                    text: "Before you start"
+                    text: STR.STR_QML_091
                     color: "#031F2B"
                     font.family: "Montserrat"
                     font.weight: Font.ExtraBold
@@ -409,16 +397,14 @@ QScreen {
                 }
                 QCloseButton {
                     anchors {
+                        verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 16
-                        top: parent.top
-                        topMargin: 16
+                        rightMargin: 36
                     }
                     onClicked: {
                         loadercontent.sourceComponent = maincontent
                     }
                 }
-
                 Column {
                     spacing: 24
                     width: 536
@@ -442,7 +428,7 @@ QScreen {
                     QText {
                         width: 500
                         height: 28
-                        text: "Warning: This is a companion software signer that we provide for your convenience. Please use with caution. Generally speaking, software signers offer weaker security guarantees than hardware signers, and should be used in conjunction with hardware signers."
+                        text: STR.STR_QML_098
                         anchors.horizontalCenter: parent.horizontalCenter
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -452,11 +438,9 @@ QScreen {
                         wrapMode: Text.WordWrap
                     }
                 }
-
                 QButtonTextLink {
-                    width: 203
                     height: 24
-                    label: "BACK TO PREVIOUS"
+                    label: STR.STR_QML_059
                     anchors {
                         left: parent.left
                         leftMargin: 40
@@ -467,7 +451,6 @@ QScreen {
                         loadercontent.sourceComponent = maincontent
                     }
                 }
-
                 Row {
                     height: 48
                     spacing: 16
@@ -480,20 +463,19 @@ QScreen {
                     QTextButton {
                         width: 280
                         height: 48
-                        label.text: "Recover Signer With Mnemonic"
+                        label.text: STR.STR_QML_099
                         label.font.pixelSize: 16
                         type: eTypeB
                         onButtonClicked: {
                             QMLHandle.sendEvent(EVT.EVT_RECOVER_SOFTWARE_SIGNER_TO_WALLET)
                         }
                     }
-
                     QTextButton {
                         width: 200
                         height: 48
-                        label.text: "Create New Signer"
+                        label.text: STR.STR_QML_100
                         label.font.pixelSize: 16
-                        type: eTypeA
+                        type: eTypeE
                         onButtonClicked: {
                             QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SOFTWARE_SIGNER_TO_WALLET)
                         }

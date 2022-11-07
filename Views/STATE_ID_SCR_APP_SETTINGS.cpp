@@ -1,13 +1,40 @@
-
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "STATE_ID_SCR_APP_SETTINGS.h"
 #include "Models/AppModel.h"
 #include "QQuickViewer.h"
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
+#include "localization/STR_CPP.h"
 #include <QProcess>
+#include "Draco.h"
 
 void SCR_APP_SETTING_Entry(QVariant msg) {
-
+    QTimer::singleShot(200,[msg](){
+        if(msg.toInt() == 2){
+            QQuickViewer::instance()->sendEvent(E::EVT_SHOW_CREATE_ACCOUNT_REQUEST);
+        }
+        else if(msg.toInt() == 1){
+            QQuickViewer::instance()->sendEvent(E::EVT_SIGN_IN_REQUEST);
+        }
+    });
 }
 
 void SCR_APP_SETTING_Exit(QVariant msg) {
@@ -18,37 +45,43 @@ void EVT_APP_SETTING_BACK_REQUEST_HANDLER(QVariant msg) {
 
 }
 
-void EVT_APP_SETTING_UPDATE_SETTING_HANDLER(QVariant msg) {
-    QWarningMessage warningmsg;
-    bridge::nunchukUpdateAppSettings(warningmsg);
-    if((int)EWARNING::WarningType::EXCEPTION_MSG != warningmsg.type()){
-        QQuickViewer::instance()->sendEvent(E::EVT_APP_SETTING_BACK_REQUEST);
+void EVT_APP_SETTING_DELETE_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
+    if(msg.toBool() == false){
+            Draco::instance()->deleteCurrentUser();//account normal
     }
-    else {
-        if(nunchuk::NunchukException::APP_RESTART_REQUIRED == warningmsg.code()){
-            emit AppModel::instance()->requireRestartApp();
+    else{
+        QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+        if(pKey->needPassphraseSent()){
+            QMap<QString, QVariant> passPhraseData;
+            passPhraseData["state_id"] = E::STATE_ID_SCR_APP_SETTINGS;
+            passPhraseData["master_signer_id"] = pKey->id();
+            QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+        }else{
+            QQuickViewer::instance()->sendEvent(E::EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST);
+        }
+    }
+}
+
+void EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
+    QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+    if(pKey){
+        QString address = QString::fromStdString(pKey->primaryKey().get_address());
+        QString username = QString::fromStdString(pKey->primaryKey().get_account());
+        QString nonce = Draco::instance()->get_pkey_nonce(address,username);
+        QString message = QString("%1%2").arg(username).arg(nonce);
+        QString signature = bridge::SignLoginMessage(pKey->id(),message);
+        if(Draco::instance()->pkey_delete_confirmation(signature)){
+            bridge::nunchukDeletePrimaryKey();
+            AppModel::instance()->showToast(0,
+                                            STR_CPP_109,
+                                            EWARNING::WarningType::SUCCESS_MSG,
+                                            STR_CPP_109);
         }
     }
 }
 
 void EVT_APP_SETTING_CHANGE_PASSPHRASE_HANDLER(QVariant msg) {
-    QWarningMessage warningmsg;
-    bool ret = bridge::nunchukSetPassphrase(msg.toString(), warningmsg);
-    if(!ret || (int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type()){
-        if((int)nunchuk::NunchukException::PASSPHRASE_ALREADY_USED == warningmsg.code()){
-            AppSetting::instance()->setChangePassphraseResult((int)AppSetting::ChangePassphraseResult::PASSPHRASE_ALREADY_USED);
-        }
-        else if((int)nunchuk::NunchukException::INVALID_PASSPHRASE == warningmsg.code()){
-            AppSetting::instance()->setChangePassphraseResult((int)AppSetting::ChangePassphraseResult::INVALID_PASSPHRASE);
-        }
-        else{
-            AppSetting::instance()->setChangePassphraseResult((int)AppSetting::ChangePassphraseResult::CHANGE_ERROR);
-        }
-    }
-    else{
-        AppSetting::instance()->setChangePassphraseResult((int)AppSetting::ChangePassphraseResult::CHANGE_SUCCEED);
-    }
-    DBG_INFO << "Set passphrase:" << ret;
+
 }
 
 void EVT_APP_SETTING_REQUEST_RESTART_HANDLER(QVariant msg) {
@@ -60,3 +93,19 @@ void EVT_APP_SETTING_REQUEST_RESTART_HANDLER(QVariant msg) {
 void EVT_APP_SETTING_REQUEST_RESCAN_HANDLER(QVariant msg) {
     AppModel::instance()->startRescanBlockchain(max(msg.toInt(), 0), -1);
 }
+
+void EVT_APP_SETTING_BACK_TO_ONLINE_MODE_HANDLER(QVariant msg) {
+
+}
+
+void EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
+{
+    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY);
+}
+
+
+void EVT_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+

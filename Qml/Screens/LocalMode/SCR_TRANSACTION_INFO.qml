@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
@@ -6,41 +25,65 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../Components/customizes/Chats"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
-    property int confirmations: Math.max(0, (AppModel.chainTip - AppModel.transactionInfo.height)+1)
-    Rectangle {
-        id: mask
-        width: popupWidth
-        height: popupHeight
-        radius: 8
-        visible: false
+    readonly property int confirmations: Math.max(0, (AppModel.chainTip - AppModel.transactionInfo.height)+1)
+    readonly property bool needShowCancel: {
+        if((AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES) || (AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST)){
+            return (AppModel.transactionInfo.roomId !== "")
+        } else{ return false }
     }
+    readonly property bool needShowRBF: !AppModel.walletInfo.isSharedWallet
 
-    Rectangle {
-        id: content
+    QOnScreenContent {
+        id: contenCenter
         width: popupWidth
         height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
+        label.text: STR.STR_QML_282
+        label.font.pixelSize: 32
+        label.font.weight: Font.Medium
+        extraHeader: Rectangle {
+            width: indicatorStatusTop.width + 20
+            height: indicatorStatusTop.height + 10
+            radius: 20
+            color: {
+                if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#FFD7D9" }
+                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FDEBD2" }
+                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "#E8DAFF" }
+                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return "#D0E2FF" }
+                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED){ return "#CF4018" }
+                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED){ return "#EAEAEA" }
+                else{ return "#FFD7D9" }
             }
-            onClicked: {
+            QText {
+                id: indicatorStatusTop
+                anchors.centerIn: parent
+                font.pixelSize: 16
+                font.weight: Font.Medium
+                font.family: "Lato"
+                color: "#031F2B"
+                text:  {
+                    if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return STR.STR_QML_283 }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return STR.STR_QML_284 }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED){ return STR.STR_QML_285 }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return STR.STR_QML_286 }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return qsTr("%1 %2").arg(confirmations).arg(STR.STR_QML_287) }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED){ return STR.STR_QML_288 }
+                    else{ return STR.STR_QML_082 }
+                }
+            }
+        }
+        onCloseClicked: {
+            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_TRANSACTION_INFO)
+            }
+            else{
                 if(QMLHandle.onsRequester() === EVT.STATE_ID_SCR_TRANSACTION_HISTORY){
                     QMLHandle.sendEvent(EVT.EVT_TRANSACTION_INFO_BACK_REQUEST)
                 }
@@ -52,2141 +95,1117 @@ QScreen {
                 }
             }
         }
-
         Loader {
             anchors.fill: parent
             sourceComponent: AppModel.transactionInfo.isReceiveTx ? txReceived : txSend
         }
-
-        Component {
-            id: txSend
-            Item {
-                QText {
-                    id: sendfund
-                    anchors {
-                        left: parent.left
-                        leftMargin: 40
-                        top: parent.top
-                        topMargin: 24
-                    }
-                    text: "Transaction Info"
-                    color: "#031F2B"
-                    font.weight: Font.ExtraBold
-                    font.pixelSize: 24
-                }
-
-                Row {
-                    id: status
-                    height: 24
-                    spacing: 8
-                    anchors {
-                        left: sendfund.right
-                        leftMargin: 8
-                        verticalCenter: sendfund.verticalCenter
-                    }
-
-                    Rectangle {
-                        width: 4
-                        height: 24
-                        radius: 1
-                        color: indicatorStatusTop.color
-                    }
-
-                    QText {
-                        id: indicatorStatusTop
-                        anchors.verticalCenter: parent.verticalCenter
-                        text:  {
-                            if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "Pending Signatures" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "Ready to Broadcast" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED){ return "Network Rejected" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "Pending Confirmations" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return confirmations + " Confirmations" }
-                            else{ return "Replaced by Fee" }
-                        }
-                        color:  {
-                            if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#E02247" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FF7A00" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "#FF7A00" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return "#35ABEE" }
-                            else{ return "#031F2B" }
-                        }
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 14
-                    }
-                }
-
-                QNotification {
-                    id: notification
-                    anchors {
-                        horizontalCenter: parent.horizontalCenter
-                        top: parent.top
-                        topMargin: 60
-                    }
-                    visible: {
-                        if(AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED || AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED
-                                || AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED || AppModel.transactionInfo.isReceiveTx) { return false }
-                        else{ return ((AppModel.transactionInfo.warningMessage.type !== EWARNING.NONE_MSG) || (AppModel.deviceList.warningMessage.type === EWARNING.EXCEPTION_MSG))}
-                    }
-
-                    label:  (AppModel.deviceList.warningMessage.type === EWARNING.EXCEPTION_MSG) ? AppModel.deviceList.warningMessage.contentDisplay :
-                            (AppModel.transactionInfo.warningMessage.type !== EWARNING.NONE_MSG) ? AppModel.transactionInfo.warningMessage.contentDisplay : ""
-                    currentStatus:  (AppModel.deviceList.warningMessage.type === EWARNING.EXCEPTION_MSG) ? AppModel.deviceList.warningMessage.type :
-                                    (AppModel.transactionInfo.warningMessage.type !== EWARNING.NONE_MSG) ? AppModel.transactionInfo.warningMessage.type : 0
-                    onCloseRequest: {
-                        AppModel.transactionInfo.warningMessage.type = EWARNING.NONE_MSG
-                        AppModel.deviceList.warningMessage.type = EWARNING.NONE_MSG
-                    }
-                }
-
+    }
+    Component {
+        id: txSend
+        Item {
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 100
+                spacing: 30
                 Rectangle {
-                    width: 379
+                    width: 350
                     height: 480
-                    anchors {
-                        left: parent.left
-                        leftMargin: 40
-                        top: parent.top
-                        topMargin: notification.visible ? 120 : 84
+                    radius: 12
+                    border.color: "#EAEAEA"
+                    color: "#FFFFFF"
+                    layer.enabled: true
+                    layer.effect: OpacityMask {
+                        maskSource: Rectangle {
+                            width: 350
+                            height: 480
+                            radius: 12
+                        }
                     }
-                    color: Qt.rgba(255, 255, 255, 0.5)
-                    border.color: "#9CAEB8"
-                    border.width: 1
-                    radius: 8
-                    Column {
-                        width: parent.width
-                        Item {
+                    Flickable {
+                        anchors.fill: parent
+                        flickableDirection: Flickable.VerticalFlick
+                        clip: true
+                        interactive: contentHeight > height
+                        contentHeight: contentDisp.height
+                        ScrollBar.vertical: ScrollBar { active: true }
+                        Column {
+                            id: contentDisp
                             width: parent.width
-                            height: 47
-                            QText {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 24
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "Transaction Overview"
-                                color: "#031F2B"
-                                font.weight: Font.Bold
-                                font.pixelSize: 14
-
-                                QTooltip {
-                                    anchors.left: parent.right
-                                    anchors.leftMargin: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    toolTip: "Click the address to verify on device"
-                                    rightOfParent: true
+                            spacing: 12
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Rectangle {
+                                width: parent.width
+                                height: 32
+                                color: "#F5F5F5"
+                                QText {
+                                    text: STR.STR_QML_213
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 12
+                                    color: "#323E4A"
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                                QText {
+                                    text: STR.STR_QML_214
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 12
+                                    color: "#323E4A"
+                                    anchors {
+                                        right: parent.right
+                                        rightMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
                                 }
                             }
-                        }
-
-                        Flickable {
-                            id: flickcontent
-                            width: parent.width
-                            height: 465 - 47
-                            flickableDirection: Flickable.VerticalFlick
-                            clip: true
-                            interactive: contentHeight > flickcontent.height
-                            contentHeight: contentDisp.height
-                            ScrollBar.vertical: ScrollBar { active: true }
-                            Column {
-                                id: contentDisp
-                                width: 377
-                                spacing: 5
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                Rectangle {
-                                    width: parent.width
-                                    height: 32
-                                    color: "#C9DEF1"
+                            // Destination infomation
+                            Repeater {
+                                model: AppModel.transactionInfo.destinationList
+                                width: parent.width
+                                Row {
+                                    width: parent.width - 24
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    spacing: 12
                                     QText {
-                                        text: "SEND TO ADDRESS"
-                                        font.family: "Lato"
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 10
-                                        color: "#323E4A"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QText {
-                                        text: "AMOUNT"
-                                        font.family: "Lato"
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 10
-                                        color: "#323E4A"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                }
-
-                                // Destination infomation
-                                Repeater {
-                                    model: AppModel.transactionInfo.destinationList
-                                    width: parent.width
-                                    Item {
-                                        width: parent.width
-                                        height: 32
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            color: btnMouseVerify.containsMouse ?"#C9DEF1" : "transparent"
-                                        }
-                                        QText {
-                                            width: 220
-                                            text: destination_address
-                                            font.pixelSize: 12
-                                            wrapMode: Text.WrapAnywhere
-                                            color: "#031F2B"
-                                            font.family: "Lato"
-                                            anchors {
-                                                left: parent.left
-                                                leftMargin: 20
-                                                verticalCenter: parent.verticalCenter
-                                            }
-                                            MouseArea {
-                                                id: btnMouseVerify
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                anchors.fill: parent
-                                                onClicked: {
-                                                    displayAddressBusybox.addrToVerify = destination_address
-                                                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_VERIFY_ADDRESS, displayAddressBusybox.addrToVerify)
-                                                }
-                                            }
-                                        }
-                                        QText {
-                                            width: 140
-                                            height: 16
-                                            text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
-                                            horizontalAlignment: Text.AlignRight
-                                            font.pixelSize: 12
-                                            color: "#031F2B"
-                                            font.family: "Lato"
-                                            anchors {
-                                                right: parent.right
-                                                rightMargin: 20
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    color: "#9CAEB8"
-                                }
-
-                                // Destination total
-                                Item {
-                                    width: parent.width
-                                    height: 20
-                                    QText {
-                                        width: 93
-                                        height: 16
-                                        text: "Subtotal"
-                                        horizontalAlignment: Text.AlignRight
-                                        font.pixelSize: 12
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 150
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QText {
-                                        width: 93
-                                        height: 16
-                                        text: AppModel.transactionInfo.subtotal + ((AppSetting.unit === 1) ? " sat" : " BTC")
-                                        horizontalAlignment: Text.AlignRight
-                                        font.pixelSize: 12
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                }
-
-                                Item {
-                                    width: parent.width
-                                    height: 20
-                                    QText {
-                                        width: 93
-                                        height: 16
-                                        text: "Total Fee"
-                                        horizontalAlignment: Text.AlignRight
-                                        font.pixelSize: 12
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 150
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QText {
-                                        width: 93
-                                        height: 16
-                                        text: AppModel.transactionInfo.fee + ((AppSetting.unit === 1) ? " sat" : " BTC")
-                                        horizontalAlignment: Text.AlignRight
-                                        font.pixelSize: 12
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: 162
-                                    height: 1
-                                    anchors.right: parent.right
-                                    color: "#C9DEF1"
-                                }
-
-                                Item {
-                                    width: parent.width
-                                    height: 30
-                                    QText {
-                                        width: 93
-                                        height: 16
-                                        text: "Total"
-                                        horizontalAlignment: Text.AlignRight
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 16
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 120
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QText {
-                                        width: 93
-                                        height: 16
-                                        text: AppModel.transactionInfo.total + ((AppSetting.unit === 1) ? " sat" : " BTC")
-                                        horizontalAlignment: Text.AlignRight
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 16
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    id: changeinfo
-                                    width: parent.width
-                                    visible: AppModel.transactionInfo.hasChange
-                                    height: changeinfo.visible ? 32 : 0
-                                    color: "#C9DEF1"
-                                    QText {
-                                        text: "CHANGE ADDRESS"
-                                        font.family: "Lato"
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 10
-                                        color: "#323E4A"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QText {
-                                        text: "AMOUNT"
-                                        font.family: "Lato"
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 10
-                                        color: "#323E4A"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                }
-
-                                Item {
-                                    visible: changeinfo.visible
-                                    width: parent.width
-                                    height: changeinfo.visible ? 32 : 0
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        color: btnMouseVerifyChangeAddr.containsMouse ?"#C9DEF1" : "transparent"
-                                    }
-                                    QText {
-                                        width: 220
-                                        text: AppModel.transactionInfo.change.address
+                                        width: 192
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 20
                                         wrapMode: Text.WrapAnywhere
-                                        font.pixelSize: 12
+                                        font.pixelSize: 16
+                                        font.weight: Font.Bold
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-
+                                        text: destination_address
                                         MouseArea {
-                                            id: btnMouseVerifyChangeAddr
+                                            id: btnMouseVerify
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
                                             anchors.fill: parent
                                             onClicked: {
-                                                displayAddressBusybox.addrToVerify = AppModel.transactionInfo.change.address
+                                                displayAddressBusybox.addrToVerify = destination_address
                                                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_VERIFY_ADDRESS, displayAddressBusybox.addrToVerify)
                                             }
                                         }
                                     }
-                                    QText {
-                                        width: 140
-                                        height: 16
-                                        text: AppModel.transactionInfo.change.amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
-                                        horizontalAlignment: Text.AlignRight
-                                        font.pixelSize: 12
-                                        elide: Text.ElideRight
-                                        color: "#031F2B"
-                                        font.family: "Lato"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    anchors.right: parent.right
-                                    color: "#C9DEF1"
-                                }
-
-                                Item {
-                                    width: parent.width
-                                    height: memodisplay.height
-                                    clip: true
-                                    QTextInputBox {
-                                        id: memodisplay
-                                        textOutput: AppModel.transactionInfo.memo
-                                        placeholder.text: "MEMO"
-                                        color: "transparent"
-                                        width: parent.width
-                                        heightMin: 64
-                                        botomLineVisible: false
-                                        mode: ePREVIEW_MODE
-                                        onTypingFinished: {
-                                            if(currentText !== AppModel.transactionInfo.memo && currentText !== ""){
-                                                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, currentText)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    anchors.right: parent.right
-                                    color: "#C9DEF1"
-                                }
-
-                                Item {
-                                    width: parent.width
-                                    height: 64
-                                    QText {
-                                        text: "SIGNATURES"
-                                        font.pixelSize: 10
-                                        font.weight: Font.DemiBold
-                                        color: "#323E4A"
-                                        font.family: "Lato"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 20
-                                            top: parent.top
-                                            topMargin: 16
-                                        }
-                                    }
-                                    QText {
-                                        id: numbersignaturepending
-                                        text: AppModel.transactionInfo.numberSigned + " / " + AppModel.transactionInfo.m
-                                        font.pixelSize: 16
-                                        font.weight: Font.Bold
-                                        color: "#323E4A"
-                                        font.family: "Lato"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 20
-                                            top: parent.top
-                                            topMargin: 36
-                                        }
-                                        width: 346
-                                        height: 32
-                                        wrapMode: Text.WordWrap
-                                    }
-
-                                    Row {
-                                        visible: statusTransOverview.text !== ""
-                                        spacing: 8
-                                        height: 32
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 70
-                                            verticalCenter: numbersignaturepending.verticalCenter
-                                        }
-                                        Rectangle {
-                                            id: indicatorStatus
-                                            width: 4
-                                            height: 24
-                                            radius: 1
-                                            color: statusTransOverview.color
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-
+                                    Column {
+                                        width: 122
+                                        spacing: 4
                                         QText {
-                                            id: statusTransOverview
-                                            text:  {
-                                                if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){
-                                                    return "Pending " + Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)) + " Signatures"
-                                                }
-                                                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "Ready to Broadcast" }
-                                                else { return "" }
-                                            }
-                                            font.pixelSize: 12
-                                            font.family: "Lato"
-                                            color: {
-                                                if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#E02247" }
-                                                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FF7A00"}
-                                                else { return "transparent" }
-                                            }
+                                            width: parent.width
+                                            lineHeightMode: Text.FixedHeight
+                                            lineHeight: 20
+                                            wrapMode: Text.WrapAnywhere
+                                            font.pixelSize: 16
                                             font.weight: Font.Bold
-                                            width: 346
-                                            height: 32
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            color: "#031F2B"
+                                            font.family: "Lato"
+                                            text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                            horizontalAlignment: Text.AlignRight
                                         }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Row {
-                    id: signerheader
-                    width: 101
-                    height: 22
-                    spacing: 8
-                    anchors {
-                        left: parent.left
-                        leftMargin: 462
-                        top: parent.top
-                        topMargin: notification.visible ? 120 : 84
-                    }
-                    QText {
-                        width: 56
-                        height: 21
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.weight: Font.Bold
-                        font.pixelSize: 14
-                        color: "#031F2B"
-                        text: "Signers:"
-                    }
-                    QText {
-                        width: 10
-                        height: 21
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 16
-                        color: "#031F2B"
-                        text: AppModel.walletInfo.walletM       // number signatures required
-                    }
-                    Rectangle {
-                        width: 1
-                        height: 16
-                        color: "#839096"
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    QText {
-                        width: 10
-                        height: 21
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 16
-                        color: "#839096"
-                        text: AppModel.walletInfo.walletN       // number signers
-                    }
-                }
-
-                QListView {
-                    id: signedList
-                    width: 301
-                    height: visible ? Math.min(188, ((signedList.count*60)+(4*(signedList.count-1)))) : 0
-                    model: AppModel.transactionInfo.singleSignersAssigned
-                    spacing: 4
-                    clip: true
-                    anchors {
-                        right: parent.right
-                        rightMargin: 40
-                        top: signerheader.bottom
-                        topMargin: 6
-                    }
-                    ScrollBar.vertical: ScrollBar { active: true }
-
-                    delegate: Item {
-                        width: 301
-                        height: 60
-
-                        Rectangle {
-                            id: rect
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: 298
-                            height: 57
-                            color: Qt.rgba(255, 255, 255)
-                        }
-
-                        DropShadow {
-                            anchors.fill: rect
-                            verticalOffset: 2
-                            cached: true
-                            radius: 8
-                            samples: 16
-                            color: Qt.rgba(0, 0, 0, 0.15)
-                            source: rect
-                        }
-
-                        Image {
-                            id: checked
-                            anchors.top: parent.top
-                            anchors.topMargin: 8
-                            anchors.left: parent.left
-                            anchors.leftMargin: 8
-                            source: single_signer_signed_status ? "qrc:/Images/Images/check_circle_outline_24px_checked.png" :
-                                                                  "qrc:/Images/Images/check_circle_outline_24px_uncheck.png"
-                        }
-                        Column {
-                            width: 235
-                            height: 53
-                            anchors {
-                                left: parent.left
-                                leftMargin: 40
-                                verticalCenter: rect.verticalCenter
-                            }
-                            QText {
-                                width: 235
-                                height: 21
-                                id: signername
-                                text: singleSigner_name
-                                font.pixelSize: 14
-                                font.weight: Font.DemiBold
-                                font.family: "Montserrat"
-                                color: "#031F2B"
-                            }
-
-                            QText {
-                                id: xfp
-                                width: 235
-                                height: 16
-                                text: "XFP: " + singleSigner_masterFingerPrint
-                                font.capitalization: Font.AllUppercase
-                                font.pixelSize: 12
-                                color: "#031F2B"
-                            }
-
-                            QText {
-                                id: derivation
-                                width: 235
-                                height: 16
-                                text: "BIP32 Path: " + singleSigner_derivationPath
-                                font.pixelSize: 10
-                                color: "#839096"
-                            }
-                        }
-                    }
-                }
-
-                Loader {
-                    anchors {
-                        fill: parent
-                        leftMargin: 459
-                        rightMargin: 40
-                        topMargin: signedList.y + signedList.height + 10
-                        bottomMargin: 0
-                    }
-                    sourceComponent: {
-                        if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return pendingSignatures }
-                        else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return readytoBroadcast }
-                        else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return pendingconfirmation }
-                        else { return confirmed }
-                    }
-                }
-
-                QTextButton {
-                    id: removebtn
-                    width: 200
-                    height: 48
-                    anchors {
-                        bottom: parent.bottom
-                        bottomMargin: 40
-                        right: parent.right
-                        rightMargin: (AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED) ||
-                                     (AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED) ? 40 : 236
-                    }
-                    enabled: visible
-                    visible: (AppModel.transactionInfo.status !== NUNCHUCKTYPE.CONFIRMED) &&
-                             (AppModel.transactionInfo.status !== NUNCHUCKTYPE.PENDING_CONFIRMATION)
-                    label.text: "Remove Transaction"
-                    label.font.pixelSize: 16
-                    type: eTypeB
-                    onButtonClicked: {
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
-                    }
-                }
-
-                QTextButton {
-                    id: savetransaction
-                    width: 200
-                    height: 48
-                    anchors {
-                        bottom: parent.bottom
-                        bottomMargin: 40
-                        right: removebtn.left
-                        rightMargin: 16
-                    }
-                    visible: (AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED) ||
-                             (AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED)
-                    enabled: visible
-                    label.text: "Save Transaction"
-                    label.font.pixelSize: 16
-                    type: eTypeB
-                    onButtonClicked: {
-                        imExModal.mode = imExModal.eEXPORT
-                        imExModal.visible = true
-                    }
-                }
-
-                Item {
-                    id: popAdvanced
-                    anchors.fill: parent
-                    enabled: visible
-                    visible: false
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: { popAdvanced.visible = false; }
-                    }
-
-                    Rectangle {
-                        id: pop
-                        width: 264
-                        height: 84
-                        anchors {
-                            right: parent.right
-                            rightMargin: 486
-                            bottom: parent.bottom
-                            bottomMargin: 70
-                        }
-                        radius: 4
-                        color: "#FFFFFF"
-                        visible: false
-                    }
-
-                    DropShadow {
-                        anchors.fill: pop
-                        verticalOffset: 3
-                        cached: true
-                        radius: 16
-                        samples: 24
-                        color: Qt.rgba(0, 0, 0, 0.14)
-                        source: pop
-
-                        Column {
-                            width: 264
-                            height: 64
-                            anchors.centerIn: parent
-                            Rectangle {
-                                width: parent.width
-                                height: 32
-                                color: popdownloadMouse.containsMouse ? "#C9DEF1" : "transparent"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                QImage {
-                                    id: downloadIco
-                                    width: 24
-                                    height: 24
-                                    source: "qrc:/Images/Images/download_031F2B.png"
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                QText {
-                                    width: 188
-                                    height: 24
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: downloadIco.right
-                                    anchors.leftMargin: 8
-                                    text: "Export Transaction"
-                                    color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                                    font.family: "Lato"
-                                    font.pixelSize: 16
-                                }
-                                MouseArea {
-                                    id: popdownloadMouse
-                                    hoverEnabled: true
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        imExModal.mode = imExModal.eEXPORT
-                                        imExModal.visible = true
-                                        popAdvanced.visible = false
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                width: parent.width
-                                height: 32
-                                color: importmouse.containsMouse ? "#C9DEF1" : "transparent"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                QImage {
-                                    id: importIco
-                                    width: 24
-                                    height: 24
-                                    source: "qrc:/Images/Images/import_031F2B.png"
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                QText {
-                                    width: 188
-                                    height: 24
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: importIco.right
-                                    anchors.leftMargin: 8
-                                    text: "Import Signature"
-                                    color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                                    font.family: "Lato"
-                                    font.pixelSize: 16
-                                }
-                                MouseArea {
-                                    id: importmouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    onClicked: {
-                                        imExModal.mode = imExModal.eIMPORT
-                                        imExModal.visible = true
-                                        popAdvanced.visible = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: imExModal
-                    readonly property int eIMPORT: 0
-                    readonly property int eEXPORT: 1
-                    readonly property int eNONE: -1
-                    property int mode: imExModal.eNONE
-                    property var componentsImEx: [importSignature, exportSignature]
-                    visible: false
-                    anchors.fill: parent
-                    radius: 8
-                    color: Qt.rgba(255, 255, 255, 0.7)
-
-                    Item {
-                        width: 600
-                        height: 344
-                        anchors.centerIn: parent
-                        Rectangle {
-                            id: imExModalMask
-                            anchors.fill: parent
-                            radius: 8
-                            visible: false
-                        }
-                        Rectangle {
-                            id: imExModalBg
-                            anchors.fill: parent
-                            radius: 8
-                            visible: false
-                            color: "#F1FAFE"
-                            Rectangle {
-                                height: 4
-                                width: parent.width
-                                color: "#F6D65D"
-                            }
-                        }
-
-                        OpacityMask {
-                            id: imExModalOpacityMask
-                            anchors.fill: imExModalBg
-                            source: imExModalBg
-                            maskSource: imExModalMask
-                            QCloseButton {
-                                anchors {
-                                    right: parent.right
-                                    rightMargin: 16
-                                    top: parent.top
-                                    topMargin: 16
-                                }
-                                onClicked: imExModal.visible = false
-                            }
-
-                            Loader {
-                                anchors.centerIn: parent
-                                sourceComponent: imExModal.mode < 0 ? null : imExModal.componentsImEx[imExModal.mode]
-                            }
-                        }
-
-                        DropShadow {
-                            anchors.fill: imExModalOpacityMask
-                            horizontalOffset: 3
-                            verticalOffset: 3
-                            radius: 8.0
-                            samples: 17
-                            color: "#80000000"
-                            source: imExModalOpacityMask
-                        }
-                    }
-                }
-
-                Component {
-                    id: pendingSignatures
-                    Item {
-                        width: 303
-                        height: 341
-
-                        QText {
-                            id: tit
-                            width: 302
-                            height: 42
-                            text: "Plug in & unlock your Signer to sign this Transaction"
-                            anchors {
-                                horizontalCenter: parent.horizontalCenter
-                                top: parent.top
-                            }
-                            font.pixelSize: 14
-                            font.weight: Font.Bold
-                            wrapMode: Text.WordWrap
-                            color: "#031F2B"
-                        }
-
-                        Image {
-                            id: nodevice
-                            visible: !flickerDeviceList.visible
-                            anchors {
-                                top: tit.bottom
-                                topMargin: 8
-                            }
-                            source: "qrc:/Images/Images/Signer_Level2_2.png"
-                        }
-
-                        Flickable {
-                            id: flickerDeviceList
-                            width: 301
-                            height: 170
-                            clip: true
-                            flickableDirection: Flickable.VerticalFlick
-                            interactive: true;
-                            contentHeight: contentDisplay.height
-                            ScrollBar.vertical: ScrollBar { active: true }
-                            visible: devicelist.count || softwareSignerdevicelist.count
-                            anchors {
-                                top: tit.bottom
-                                topMargin: 8
-                            }
-                            Column {
-                                id: contentDisplay
-                                spacing: 2
-                                QListView {
-                                    id: devicelist
-                                    property int  signerReady: 0
-                                    property bool needPin: false
-                                    visible: devicelist.count
-                                    width: 301
-                                    height: visible ? devicelist.contentHeight : 0
-                                    model: AppModel.deviceList
-                                    spacing: devicelist.count > 1 ? 4 : 0
-                                    currentIndex: (true === AppModel.deviceList.containsSignable && (devicelist.count == 1)) ? 0 : -1
-                                    clip: true
-                                    interactive : false
-                                    delegate: Item {
-                                        width: 301
-                                        height: 54
-                                        Rectangle {
-                                            id: rect
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            width: 298
-                                            height: 49
-                                            color: Qt.rgba(255, 255, 255)
-
-                                            Rectangle {
-                                                visible: index == devicelist.currentIndex
-                                                width: 8
-                                                height: parent.height
-                                                color: "#F6D65D"
-                                            }
-
-                                            Image {
-                                                anchors {
-                                                    left: parent.left
-                                                    leftMargin: 16
-                                                    verticalCenter: parent.verticalCenter
-                                                }
-                                                source: index == devicelist.currentIndex ? "qrc:/Images/Images/RadioEnabled.png" : "qrc:/Images/Images/RadioDeselected.png"
-                                            }
-
-                                            Column {
-                                                width: 240
-                                                height: 37
-                                                anchors {
-                                                    left: parent.left
-                                                    leftMargin: 48
-                                                    verticalCenter: parent.verticalCenter
-                                                }
-                                                QText {
-                                                    width: parent.width
-                                                    height: 21
-                                                    font.family: "Montserrat"
-                                                    font.pixelSize: 14
-                                                    color: "#031F2B"
-                                                    font.weight: Font.DemiBold
-                                                    text: device_type
-                                                    elide: Text.ElideRight
-                                                }
-                                                QText {
-                                                    width: parent.width
-                                                    height: 16
-                                                    font.family: "Lato"
-                                                    font.pixelSize: 12
-                                                    color: "#323E4A"
-                                                    font.capitalization: Font.AllUppercase
-                                                    text: "XFP: " + device_master_fingerprint
-                                                }
-                                            }
-                                        }
-
-                                        DropShadow {
-                                            anchors.fill: rect
-                                            verticalOffset: 2
-                                            cached: true
-                                            radius: 8
-                                            samples: 16
-                                            color: Qt.rgba(0, 0, 0, 0.15)
-                                            source: rect
-                                        }
-
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            visible: !device_usable_to_sign
-                                            color: Qt.rgba(255, 255, 255, 0.5)
-                                        }
-
-                                        MouseArea {
-                                            enabled: device_usable_to_sign
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            anchors.fill: parent
-                                            onClicked: {
-                                                softwareSignerdevicelist.currentIndex = -1
-                                                devicelist.currentIndex = index
-                                                devicelist.needPin = device_needs_pin_sent
-                                            }
-                                        }
-                                    }
-                                }
-
-                                QListView {
-                                    id: softwareSignerdevicelist
-                                    property int  signerReady: 0
-                                    property bool needPassphrase: false
-                                    property string signerId: ""
-                                    visible: softwareSignerdevicelist.count
-                                    width: 301
-                                    height: visible ? softwareSignerdevicelist.contentHeight : 0
-                                    model: AppModel.softwareSignerDeviceList
-                                    currentIndex: devicelist.count === 0 ? (true === AppModel.softwareSignerDeviceList.containsSignable && (softwareSignerdevicelist.count == 1)) ? 0 : -1 : -1
-                                    clip: true
-                                    interactive : false
-                                    delegate: Item {
-                                        width: 301
-                                        height: device_connected ? 54 + 4 : 0
-                                        visible: device_connected
-                                        property bool needPassphrase: device_needs_pass_phrase_sent
-                                        property bool signerId: device_master_signer_id
-
-                                        Rectangle {
-                                            id: rect2
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            width: 298
-                                            height: parent.height - 9
-                                            color: Qt.rgba(255, 255, 255)
-
-                                            Rectangle {
-                                                visible: index == softwareSignerdevicelist.currentIndex
-                                                width: 8
-                                                height: parent.height - 4
-                                                color: "#F6D65D"
-                                            }
-
-                                            Image {
-                                                anchors {
-                                                    left: parent.left
-                                                    leftMargin: 16
-                                                    verticalCenter: parent.verticalCenter
-                                                }
-                                                source: index == softwareSignerdevicelist.currentIndex ? "qrc:/Images/Images/RadioEnabled.png" : "qrc:/Images/Images/RadioDeselected.png"
-                                            }
-
-                                            Column {
-                                                width: 240
-                                                height: 37
-                                                anchors {
-                                                    left: parent.left
-                                                    leftMargin: 48
-                                                    verticalCenter: parent.verticalCenter
-                                                }
-                                                QText {
-                                                    width: parent.width
-                                                    height: 21
-                                                    font.family: "Montserrat"
-                                                    font.pixelSize: 14
-                                                    color: "#031F2B"
-                                                    font.weight: Font.DemiBold
-                                                    text: device_name
-                                                    elide: Text.ElideRight
-                                                }
-                                                QText {
-                                                    width: parent.width
-                                                    height: 16
-                                                    font.family: "Lato"
-                                                    font.pixelSize: 12
-                                                    color: "#323E4A"
-                                                    font.capitalization: Font.AllUppercase
-                                                    text: "XFP: " + device_master_fingerprint
-                                                }
-                                            }
-                                        }
-
-                                        DropShadow {
-                                            anchors.fill: rect2
-                                            verticalOffset: 2
-                                            cached: true
-                                            radius: 8
-                                            samples: 16
-                                            color: Qt.rgba(0, 0, 0, 0.15)
-                                            source: rect2
-                                        }
-
-                                        Rectangle {
-                                            width: 100
-                                            height: (parent.height/2)-4
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            anchors.right: parent.right
-                                            anchors.rightMargin: 9
-                                            color: "#C9DEF1"
-                                            radius: 4
-                                            QText {
-                                                text: "SOFTWARE SIGNER "
-                                                font.pixelSize: 10
-                                                font.weight: Font.ExtraBold
-                                                font.family: "Lato"
-                                                color: "#323E4A"
-                                                anchors.centerIn: parent
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            visible: !device_usable_to_sign
-                                            color: Qt.rgba(255, 255, 255, 0.5)
-                                        }
-
-                                        MouseArea {
-                                            enabled: device_usable_to_sign
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            anchors.fill: parent
-                                            onClicked: {
-                                                devicelist.currentIndex = -1
-                                                softwareSignerdevicelist.currentIndex = index
-                                                softwareSignerdevicelist.needPassphrase = device_needs_pass_phrase_sent
-                                                softwareSignerdevicelist.signerId = device_master_signer_id
-                                            }
-                                        }
-                                    }
-
-                                    Component.onCompleted: {
-                                        if(softwareSignerdevicelist.currentIndex === 0){
-                                            softwareSignerdevicelist.needPassphrase = softwareSignerdevicelist.contentItem.children[0].needPassphrase
-                                            softwareSignerdevicelist.signerId = softwareSignerdevicelist.contentItem.children[0].signerId
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        QRefreshButton {
-                            width: 160
-                            height: 32
-                            label: "Refresh Devices"
-                            fontPixelSize: 14
-                            anchors {
-                                top: tit.bottom
-                                topMargin: 15 + Math.max(nodevice.height, flickerDeviceList.height)
-                                left: flickerDeviceList.left
-                            }
-                            onButtonClicked: {
-                                AppModel.transactionInfo.warningMessage.type = EWARNING.NONE_MSG
-                                AppModel.deviceList.warningMessage.type = EWARNING.NONE_MSG
-                                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST)
-                            }
-                        }
-
-                        Row {
-                            spacing: 232
-                            anchors {
-                                right: parent.right
-                                bottom: parent.bottom
-                                bottomMargin: 40
-                            }
-
-                            QButtonLargeTail {
-                                id: advancedBtn
-                                width: 209
-                                height: 48
-                                type: eSECONDARY
-                                label: "Import/Export"
-                                optionVisible: popAdvanced.visible
-                                onButtonClicked: { popAdvanced.visible = true }
-                            }
-
-                            QTextButton {
-                                id: signbtn
-                                width: 180
-                                height: 48
-                                enabled: ((devicelist.currentIndex != -1) || (softwareSignerdevicelist.currentIndex != -1)) && (AppModel.deviceList.warningMessage.type !== EWARNING.EXCEPTION_MSG)
-                                label.text: "Sign Transaction"
-                                label.font.pixelSize: 16
-                                type: eTypeA
-                                onButtonClicked: {
-                                    AppModel.transactionInfo.warningMessage.type = EWARNING.NONE_MSG
-                                    if(devicelist.currentIndex > -1){
-                                        if(devicelist.needPin){
-                                            pinModel.needshow = true
-                                            pinModel.signerIndex = devicelist.currentIndex
-                                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_PROMT_PIN_REQUEST, devicelist.currentIndex)
-                                        }
-                                        else{
-                                            busyOverlay.visible = true
-                                            busyOverlay.isSoftware = false
-                                            var hwObj = { "isSoftware"    : false,
-                                                          "deviceIndx"    : devicelist.currentIndex };
-                                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SIGN_REQUEST, hwObj)
-                                        }
-                                    }
-                                    else if(softwareSignerdevicelist.currentIndex > -1){
-                                        if(softwareSignerdevicelist.needPassphrase){
-                                            passphraseModel.signerIndex = softwareSignerdevicelist.currentIndex
-                                            passphraseModel.signerId = softwareSignerdevicelist.signerId
-                                            passphraseModel.visible = true
-                                        }
-                                        else{
-                                            busyOverlay.visible = true
-                                            busyOverlay.isSoftware = true
-                                            var swObj = { "isSoftware"    : true,
-                                                          "deviceIndx"    : softwareSignerdevicelist.currentIndex };
-                                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SIGN_REQUEST, swObj)
-                                        }
-                                    }
-                                    else{/**/}
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Component {
-                    id: readytoBroadcast
-                    Item {
-                        width: 303
-                        height: 341
-
-                        QText {
-                            id: tit
-                            width: 301
-                            height: 42
-                            text: "Are you sure you want to broadcast this transaction? Double check before broadcasting."
-                            anchors.top: parent.top
-                            font.pixelSize: 14
-                            font.weight: Font.DemiBold
-                            font.family: "Montserrat"
-                            color: "#031F2B"
-                            wrapMode: Text.WordWrap
-                        }
-
-                        Row {
-                            spacing: 232
-                            anchors {
-                                right: parent.right
-                                bottom: parent.bottom
-                                bottomMargin: 40
-                            }
-                            QButtonIcon {
-                                id: downloadtrans
-                                width: 240
-                                height: 48
-                                label: "Export Transaction"
-                                icons: ["download_031F2B.png","download_9CAEB8.png","download_F1FAFE.png","download_F1FAFE.png"]
-                                fontPixelSize: 16
-                                type: eSECOND
-                                onButtonClicked: {
-                                    imExModal.mode = imExModal.eEXPORT
-                                    imExModal.visible = true
-                                }
-                            }
-
-                            QTextButton {
-                                id: startbroatcast
-                                width: 180
-                                height: 48
-                                label.text: "Start Broadcasting"
-                                label.font.pixelSize: 16
-                                type: eTypeA
-                                enabled: (AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST)
-                                onButtonClicked: {
-                                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_BROADCAST_REQUEST)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Component {
-                    id: pendingconfirmation
-                    Item {
-                        width: 303
-                        height: 341
-
-                        Row {
-                            width: 277
-                            height: 24
-                            spacing: 8
-                            visible: (AppModel.transactionInfo.status !== NUNCHUCKTYPE.REPLACED) && (AppModel.transactionInfo.status !== NUNCHUCKTYPE.NETWORK_REJECTED)
-                            QImage {
-                                source: "qrc:/Images/Images/link.png"
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            QText {
-                                id: tit
-                                width: 301
-                                height: 42
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "View on Blockchain Explorer"
-                                font.capitalization :  Font.AllUppercase
-                                font.family: "Montserrat"
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                                color: mouseExplorerBlockchain.containsMouse ? "#35ABEE":"#031F2B"
-                                wrapMode: Text.WordWrap
-                                MouseArea {
-                                    id: mouseExplorerBlockchain
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        var activeLink = ""
-                                        if(AppSetting.primaryServer === 0){ activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid }
-                                        else{ activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid }
-                                        Qt.openUrlExternally(activeLink)
-                                    }
-                                }
-                            }
-                        }
-
-                        QTextButton {
-                            id:downloadtrans
-                            width: 210
-                            height: 48
-                            anchors {
-                                right: parent.right
-                                bottom: parent.bottom
-                                bottomMargin: 40
-                            }
-                            label.text: "Replace-by-Fee"
-                            label.font.pixelSize: 16
-                            type: eTypeA
-                            onButtonClicked: {
-                                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REPLACE_BY_FEE_REQUEST)
-                            }
-                        }
-                    }
-                }
-
-                Component {
-                    id: confirmed
-                    Item {
-                        width: 303
-                        height: 341
-                        Row {
-                            width: 277
-                            height: 24
-                            spacing: 8
-                            visible: (AppModel.transactionInfo.status !== NUNCHUCKTYPE.REPLACED) && (AppModel.transactionInfo.status !== NUNCHUCKTYPE.NETWORK_REJECTED)
-                            QImage {
-                                source: "qrc:/Images/Images/link.png"
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            QText {
-                                id: tit
-                                width: 301
-                                height: 42
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "View on Blockchain Explorer"
-                                font.capitalization :  Font.AllUppercase
-                                font.family: "Montserrat"
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                                color: mouseExplorerBlockchain2.containsMouse ? "#35ABEE":"#031F2B"
-                                wrapMode: Text.WordWrap
-                                MouseArea {
-                                    id: mouseExplorerBlockchain2
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        var activeLink = ""
-                                        if(AppSetting.primaryServer === 0){ activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid }
-                                        else{ activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid }
-                                        console.log("link: ", activeLink)
-                                        Qt.openUrlExternally(activeLink)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                FileDialog {
-                    id: openfileDialog
-                    fileMode: FileDialog.OpenFile
-                    onAccepted: {
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_REQUEST, openfileDialog.file)
-                        imExModal.mode = imExModal.eNONE
-                        imExModal.visible = false
-                    }
-                }
-
-                FileDialog {
-                    id: savefileDialog
-                    fileMode: FileDialog.SaveFile
-                    onAccepted: {
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_REQUEST, savefileDialog.currentFile)
-                        imExModal.mode = imExModal.eNONE
-                        imExModal.visible = false
-                    }
-                }
-
-                Rectangle {
-                    id: busyOverlay
-                    property bool isSoftware: false
-                    visible: false
-                    anchors.fill: parent
-                    color: Qt.rgba(0, 0, 0, 0.9)
-                    anchors.bottom: parent.bottom
-                    radius: 8
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {}
-                    }
-
-                    Loader {
-                        id: busyIndi
-                        anchors.centerIn: parent
-                        sourceComponent: createBusy
-                    }
-
-                    Component {
-                        id: createBusy
-                        Column {
-                            spacing: 8
-                            Item {
-                                width: 52
-                                height: 52
-                                QBusyIndicator {
-                                    width: 44
-                                    height: 44
-                                    anchors.centerIn: parent
-                                }
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-
-                            QText {
-                                width: 214
-                                height: 36
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                horizontalAlignment: Text.AlignHCenter
-                                color: "#F6D65D"
-                                font.pixelSize: 24
-                                font.weight: Font.DemiBold
-                                font.family: "Montserrat"
-                                text: "Signing Transaction"
-                            }
-                            QText {
-                                width: 328
-                                height: 42
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                horizontalAlignment: Text.AlignHCenter
-                                color: "#F6D65D"
-                                font.pixelSize: 14
-                                wrapMode: Text.WordWrap
-                                font.family: "Lato"
-                                text: busyOverlay.isSoftware ? "Please wait ..." : "Please Confirm to Sign on the Signer Device"
-                            }
-                        }
-                    }
-                }
-
-                QNumPad {
-                    id: pinModel
-                    anchors.fill: parent
-                    visible: pinModel.needshow && (AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                    property bool   needshow: false
-                    property int    signerIndex: -1
-                    property string signerName: ""
-                    onSenPINClicked : {
-                        var deviceObj = {"deviceIndexSelected"   : pinModel.signerIndex,
-                                                 "pinInputted"   : pinModel.pinInputted};
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SEND_PIN_REQUEST, deviceObj)
-                    }
-                }
-
-                QPassphraseInput {
-                    id: passphraseModel
-                    property int    signerIndex: -1
-                    property string signerId: ""
-                    color: Qt.rgba(255, 255, 255, 0.7)
-                    anchors.fill: parent
-                    visible: false
-                    onCloseClicked: {
-                        passphraseModel.visible = false
-                    }
-                    onSendPassphraseClicked: {
-                        var activeSigner = { "mastersignerId"    : passphraseModel.signerId,
-                                             "passphraseInput"   : passphrase };
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SEND_PASSPHRASE, activeSigner)
-                        if(AppModel.transactionInfo.warningMessage.type === EWARNING.NONE_MSG){
-                            busyOverlay.visible = true
-                            busyOverlay.isSoftware = true
-                            var signObj = { "isSoftware"    : true,
-                                            "deviceIndx"    : passphraseModel.signerIndex };
-                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SIGN_REQUEST, signObj)
-                        }
-                        passphraseModel.visible = false
-                        passphraseModel.textInputted = ""
-                    }
-                }
-
-                Connections {
-                    target: AppModel
-                    onFinishedSigningTransaction : {busyOverlay.visible = false}
-                    onSentPINToDeviceResult : {
-                        if(result === EWARNING.NONE_MSG){
-                            pinModel.needshow = false
-                            busyOverlay.visible = true
-                        }
-                        else{
-                            // Warning message
-                            pinModel.warning = "The PIN you entered is incorrect. Please try again."
-                            pinModel.validInput = false
-                            pinModel.pinInputted = ""
-                        }
-                        console.log("onSentPINToDeviceResult ", result)
-                    }
-                }
-
-                Component {
-                    id: exportSignature
-                    Item {
-                        width: 540
-                        height: 270
-                        QText {
-                            id: exporttit
-                            font.family: "Montserrat"
-                            color: "#031F2B"
-                            font.weight: Font.ExtraBold
-                            font.pixelSize: 24
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Export Transaction"
-                        }
-                        Row {
-                            width: parent.width
-                            height: 200
-                            anchors.top: exporttit.bottom
-                            anchors.topMargin: 30
-                            anchors.horizontalCenter: exporttit.horizontalCenter
-                            spacing: 8
-                            Item {
-                                width: 260
-                                height: parent.height
-                                QText {
-                                    font.family: "Montserrat"
-                                    color: "#839096"
-                                    font.weight: Font.ExtraBold
-                                    font.pixelSize: 12
-                                    font.capitalization: Font.AllUppercase
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "Export Via File"
-                                }
-
-                                QButtonIcon {
-                                    id: btndownloadTx
-                                    width: 236
-                                    height: 48
-                                    radius: 24
-                                    anchors.centerIn: parent
-                                    type: eFIRST
-                                    label: "Download [.pspt]"
-                                    icons: ["download_031F2B.png","download_C9DEF1.png","download_C9DEF1.png","download_031F2B.png"]
-                                    fontPixelSize: 16
-                                    onButtonClicked: {
-                                        savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.transactionInfo.txid + ".psbt"
-                                        savefileDialog.open()
-                                    }
-                                }
-                            }
-                            Rectangle { color: "#9CAEB8"; width: 2; height: parent.height }
-                            Item {
-                                width: 260
-                                height: parent.height
-                                QText {
-                                    font.family: "Montserrat"
-                                    color: "#839096"
-                                    font.weight: Font.ExtraBold
-                                    font.pixelSize: 12
-                                    font.capitalization: Font.AllUppercase
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "Export Via QR Code"
-                                }
-
-                                QQrButton {
-                                    width: 100
-                                    height: 100
-                                    anchors.centerIn: parent
-                                    onButtonClicked: {
-                                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE)
-                                        qrcodeExportResult.visible = true
-                                        imExModal.mode = imExModal.eNONE
-                                        imExModal.visible = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Component {
-                    id: importSignature
-                    Item {
-                        width: 540
-                        height: 270
-                        QText {
-                            id: importtit
-                            font.family: "Montserrat"
-                            color: "#031F2B"
-                            font.weight: Font.ExtraBold
-                            font.pixelSize: 24
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Import Transaction"
-                        }
-                        Row {
-                            width: parent.width
-                            height: 200
-                            anchors.top: importtit.bottom
-                            anchors.topMargin: 30
-                            anchors.horizontalCenter: importtit.horizontalCenter
-                            spacing: 8
-                            Item {
-                                width: 260
-                                height: parent.height
-                                QText {
-                                    font.family: "Montserrat"
-                                    color: "#839096"
-                                    font.weight: Font.ExtraBold
-                                    font.pixelSize: 12
-                                    font.capitalization: Font.AllUppercase
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "Import Via File"
-                                }
-
-                                QButtonIcon {
-                                    id: btnuploadTx
-                                    width: 236
-                                    height: 48
-                                    radius: 24
-                                    anchors.centerIn: parent
-                                    type: eFIRST
-                                    label: "Upload [.pspt]"
-                                    icons: ["import_031F2B.png","import_C9DEF1.png","import_C9DEF1.png","import_031F2B.png"]
-                                    fontPixelSize: 16
-                                    onButtonClicked: {
-                                        openfileDialog.open()
-                                    }
-                                }
-                            }
-                            Rectangle { color: "#9CAEB8"; width: 2; height: parent.height }
-                            Item {
-                                width: 260
-                                height: parent.height
-                                QText {
-                                    font.family: "Montserrat"
-                                    color: "#839096"
-                                    font.weight: Font.ExtraBold
-                                    font.pixelSize: 12
-                                    font.capitalization: Font.AllUppercase
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "Import Via QR Code"
-                                }
-
-                                QQrButton {
-                                    width: 100
-                                    height: 100
-                                    anchors.centerIn: parent
-                                    onButtonClicked: {
-                                        qrscaner.visible = true
-                                        imExModal.mode = imExModal.eNONE
-                                        imExModal.visible = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: qrscaner
-                    anchors.fill: parent
-                    color: Qt.rgba(255, 255, 255, 0.7)
-                    radius: 8
-                    visible: false
-
-                    Rectangle {
-                        id: qrmask
-                        width: 500
-                        height: 500
-                        radius: 8
-                        visible: false
-                    }
-
-                    Rectangle {
-                        id: qrbg
-                        width: 500
-                        height: 500
-                        color: "#F1FAFE"
-                        radius: 8
-                        anchors.centerIn: parent
-                        visible: false
-                        Rectangle {
-                            height: 4
-                            width: parent.width
-                            color: "#F6D65D"
-                        }
-                    }
-
-                    Rectangle {
-                        width: 500
-                        height: 500
-                        anchors.centerIn: parent
-                    }
-
-                    OpacityMask {
-                        id: opamask
-                        anchors.fill: qrbg
-                        source: qrbg
-                        maskSource: qrmask
-
-                        QCloseButton {
-                            anchors {
-                                right: parent.right
-                                rightMargin: 16
-                                top: parent.top
-                                topMargin: 16
-                            }
-                            onClicked: qrscaner.visible = false
-                        }
-
-                        QText {
-                            anchors.top: parent.top
-                            anchors.topMargin: 50
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            font.family: "Lato"
-                            font.pixelSize: 30
-                            font.weight: Font.ExtraBold
-                            text: "Scanning for QR code"
-                        }
-
-                        Loader {
-                            id: qrcameraLoader
-                            sourceComponent: qrscaner.visible ? qrcameraComp : null
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: 30
-                        }
-
-                        Connections {
-                            target: qrcameraLoader.item
-                            onScanFinished: {
-                                if(count > 0){
-                                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_QRCODE, result)
-                                }
-                                qrscaner.visible = false
-                            }
-                        }
-                    }
-
-                    DropShadow {
-                        anchors.fill: opamask
-                        horizontalOffset: 3
-                        verticalOffset: 3
-                        radius: 8.0
-                        samples: 17
-                        color: "#80000000"
-                        source: opamask
-                    }
-                }
-
-                Component {
-                    id: qrcameraComp
-                    QQrScanner {
-                        width: 300
-                        height: 300
-                    }
-                }
-
-                QQrExportResult {
-                    id: qrcodeExportResult
-                    anchors.fill: parent
-                    model: AppModel.qrExported
-                    visible: false
-                }
-            }
-        }
-
-        Component {
-            id: txReceived
-            Item {
-                QText {
-                    id: receivedfund
-                    anchors {
-                        left: parent.left
-                        leftMargin: 40
-                        top: parent.top
-                        topMargin: 24
-                    }
-                    text: "Transaction Info"
-                    color: "#031F2B"
-                    font.weight: Font.DemiBold
-                    font.pixelSize: 24
-                }
-
-                Row {
-                    id: status
-                    height: 24
-                    spacing: 8
-                    anchors {
-                        left: receivedfund.right
-                        leftMargin: 8
-                        verticalCenter: receivedfund.verticalCenter
-                    }
-
-                    Rectangle {
-                        width: 4
-                        height: 24
-                        radius: 1
-                        color: indicatorStatusTop.color
-                    }
-
-                    QText {
-                        id: indicatorStatusTop
-                        anchors.verticalCenter: parent.verticalCenter
-                        text:  {
-                            if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "Pending Signatures" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "Ready to Broadcast" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "Pending Confirmations" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return confirmations + " Confirmations" }
-                            else{ return "Replaced by Fee" }
-                        }
-                        color:  {
-                            if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#E02247" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FF7A00" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "#FF7A00" }
-                            else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return "#35ABEE" }
-                            else{  return "#031F2B" }
-                        }
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 14
-                    }
-                }
-
-                Rectangle {
-                    id: contentarea
-                    width: 600
-                    height: 382
-                    anchors.top: parent.top
-                    anchors.topMargin: 84
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    radius: 8
-                    color: Qt.rgba(255, 255, 255, 0.5)
-                    border.color: "#9CAEB8"
-
-                    Column {
-                        anchors.fill: parent
-                        Item {
-                            id: overviewitem
-                            width: parent.width
-                            height: 47
-                            QText {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 24
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "Transaction Overview"
-                                color: "#031F2B"
-                                font.weight: Font.Bold
-                                font.pixelSize: 14
-                            }
-                        }
-
-                        Flickable {
-                            id: flickcontent
-                            width: parent.width
-                            height: parent.height - overviewitem.height
-                            flickableDirection: Flickable.VerticalFlick
-                            clip: true
-                            interactive: contentHeight > flickcontent.height
-                            contentHeight: contentDisp.height
-                            ScrollBar.vertical: ScrollBar { active: true }
-                            Column {
-                                id: contentDisp
-                                width: parent.width
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                spacing: 5
-                                Rectangle {
-                                    width: parent.width - 2
-                                    height: 32
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    color: "#C9DEF1"
-                                    QText {
-                                        text: "RECEIVE ADDRESS"
-                                        font.family: "Lato"
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 10
-                                        color: "#323E4A"
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    QText {
-                                        text: "AMOUNT"
-                                        font.family: "Lato"
-                                        font.weight: Font.Bold
-                                        font.pixelSize: 10
-                                        color: "#323E4A"
-                                        anchors {
-                                            right: parent.right
-                                            rightMargin: 20
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                }
-
-                                // Destination infomation
-                                Repeater {
-                                    model: AppModel.transactionInfo.destinationList
-                                    width: parent.width
-                                    Item {
-                                        width: parent.width
-                                        height: 32
                                         QText {
-                                            width: parent.width*2/3 - 20
-                                            text: destination_address
+                                            width: parent.width
+                                            lineHeightMode: Text.FixedHeight
+                                            lineHeight: 16
                                             wrapMode: Text.WrapAnywhere
                                             font.pixelSize: 12
                                             color: "#031F2B"
                                             font.family: "Lato"
-                                            anchors {
-                                                left: parent.left
-                                                leftMargin: 20
-                                                verticalCenter: parent.verticalCenter
-                                            }
-                                        }
-
-                                        QText {
-                                            width: parent.width*1/3 - 20
-                                            height: 16
-                                            text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                            text: qsTr("$%1 USD").arg(model.destination_amount_usd)
                                             horizontalAlignment: Text.AlignRight
-                                            font.pixelSize: 12
-                                            color: "#031F2B"
-                                            font.family: "Lato"
-                                            anchors {
-                                                right: parent.right
-                                                rightMargin: 20
-                                                verticalCenter: parent.verticalCenter
-                                            }
                                         }
                                     }
                                 }
-
-                                Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    anchors.right: parent.right
-                                    color: "#C9DEF1"
+                            }
+                            Rectangle { width: parent.width; height: 1; color: "#F5F5F5"}
+                            Row {
+                                visible: changeinfo.visible
+                                width: parent.width - 24
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spacing: 12
+                                QText {
+                                    width: 192
+                                    lineHeightMode: Text.FixedHeight
+                                    lineHeight: 20
+                                    wrapMode: Text.WrapAnywhere
+                                    font.pixelSize: 16
+                                    font.weight: Font.Bold
+                                    color: "#031F2B"
+                                    font.family: "Lato"
+                                    text: STR.STR_QML_215
                                 }
-
-                                Item {
-                                    width: parent.width
-                                    height: memodisplay.height
-                                    clip: true
-                                    QTextInputBox {
-                                        id: memodisplay
-                                        textOutput: AppModel.transactionInfo.memo
-                                        placeholder.text: "MEMO"
-                                        color: "transparent"
+                                Column {
+                                    width: 122
+                                    spacing: 4
+                                    QText {
                                         width: parent.width
-                                        heightMin: 64
-                                        botomLineVisible: false
-                                        mode: ePREVIEW_MODE
-                                        onTypingFinished: {
-                                            if(currentText !== AppModel.transactionInfo.memo && currentText !== ""){
-                                                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, currentText)
-                                            }
-                                        }
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 20
+                                        wrapMode: Text.WrapAnywhere
+                                        font.pixelSize: 16
+                                        font.weight: Font.Bold
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                        text: AppModel.transactionInfo.fee + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                    QText {
+                                        width: parent.width
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 16
+                                        wrapMode: Text.WrapAnywhere
+                                        font.pixelSize: 12
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                        text: qsTr("$%1 USD").arg(AppModel.transactionInfo.feeUSD)
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                }
+                            }
+                            Row {
+                                visible: changeinfo.visible
+                                width: parent.width - 24
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spacing: 12
+                                QText {
+                                    width: 192
+                                    lineHeightMode: Text.FixedHeight
+                                    lineHeight: 20
+                                    wrapMode: Text.WrapAnywhere
+                                    font.pixelSize: 16
+                                    font.weight: Font.Bold
+                                    color: "#031F2B"
+                                    font.family: "Lato"
+                                    text: STR.STR_QML_216
+                                }
+                                Column {
+                                    width: 122
+                                    spacing: 4
+                                    QText {
+                                        width: parent.width
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 20
+                                        wrapMode: Text.WrapAnywhere
+                                        font.pixelSize: 16
+                                        font.weight: Font.Bold
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                        text: AppModel.transactionInfo.total + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                    QText {
+                                        width: parent.width
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 16
+                                        wrapMode: Text.WrapAnywhere
+                                        font.pixelSize: 12
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                        text: qsTr("$%1 USD").arg(AppModel.transactionInfo.totalUSD)
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                id: changeinfo
+                                width: parent.width
+                                visible: AppModel.transactionInfo.hasChange
+                                height: changeinfo.visible ? 32 : 0
+                                color: "#F5F5F5"
+                                QText {
+                                    text: STR.STR_QML_217
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 12
+                                    color: "#323E4A"
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                                QText {
+                                    text: STR.STR_QML_214
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 12
+                                    color: "#323E4A"
+                                    anchors {
+                                        right: parent.right
+                                        rightMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                            Row {
+                                visible: changeinfo.visible
+                                width: parent.width - 24
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spacing: 12
+                                QText {
+                                    width: 192
+                                    lineHeightMode: Text.FixedHeight
+                                    lineHeight: 20
+                                    wrapMode: Text.WrapAnywhere
+                                    font.pixelSize: 16
+                                    font.weight: Font.Bold
+                                    color: "#031F2B"
+                                    font.family: "Lato"
+                                    text: AppModel.transactionInfo.change.address
+                                }
+                                Column {
+                                    width: 122
+                                    spacing: 4
+                                    QText {
+                                        width: parent.width
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 20
+                                        wrapMode: Text.WrapAnywhere
+                                        font.pixelSize: 16
+                                        font.weight: Font.Bold
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                        text: AppModel.transactionInfo.change.amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                    QText {
+                                        width: parent.width
+                                        lineHeightMode: Text.FixedHeight
+                                        lineHeight: 16
+                                        wrapMode: Text.WrapAnywhere
+                                        font.pixelSize: 12
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                        text: qsTr("$%1 USD").arg(AppModel.transactionInfo.change.amountUSD)
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                width: parent.width
+                                visible: AppModel.transactionInfo.hasChange
+                                height: 32
+                                color: "#F5F5F5"
+                                QText {
+                                    text: STR.STR_QML_218
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 12
+                                    color: "#323E4A"
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                            QTextInputBoxTypeA {
+                                width: parent.width - 24
+                                placeholderText: "--"
+                                text: AppModel.transactionInfo.memo
+                                backgroundColor: "Transparent"
+                                borderColor: "Transparent"
+                                color: "#000000"
+                                font.family: "Montserrat"
+                                font.pixelSize: 16
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                onTypingFinished: {
+                                    var newMemo = currentText
+                                    if(newMemo === ""){newMemo = "--"}
+                                    if(newMemo !== AppModel.transactionInfo.memo){
+                                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo)
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                width: parent.width
+                                visible: AppModel.transactionInfo.hasChange
+                                height: 32
+                                color: "#F5F5F5"
+                                QText {
+                                    text: STR.STR_QML_219
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 12
+                                    color: "#323E4A"
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                            Item {
+                                width: parent.width
+                                height: 32
+                                QText {
+                                    id: numbersignaturepending
+                                    text: AppModel.transactionInfo.numberSigned + "/" + AppModel.transactionInfo.m
+                                    font.pixelSize: 16
+                                    color: "#031F2B"
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 16
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                    width: 346
+                                    height: 32
+                                    wrapMode: Text.WordWrap
+                                }
+                                Row {
+                                    spacing: 8
+                                    height: 32
+                                    visible: (AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 70
+                                        verticalCenter: numbersignaturepending.verticalCenter
+                                    }
+                                    Rectangle {
+                                        id: indicatorStatus
+                                        width: 4
+                                        height: 24
+                                        radius: 1
+                                        color: "#E02247"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    QText {
+                                        text: STR.STR_QML_220.arg(Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)))
+                                        font.pixelSize: 12
+                                        font.family: "Lato"
+                                        color: indicatorStatus.color
+                                        width: 346
+                                        height: 32
+                                        anchors.verticalCenter: parent.verticalCenter
                                     }
                                 }
                             }
                         }
                     }
                 }
+                Item {
+                    width: 350
+                    height: 480
+                    Column {
+                        width: parent.width
+                        spacing: 8
+                        Row {
+                            spacing: 8
+                            height: 20
+                            QText {
+                                color: "#031F2B"
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                font.weight: Font.Bold
+                                text: STR.STR_QML_289
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QImage {
+                                visible: (AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
+                                width: 16
+                                height: 16
+                                source: "qrc:/Images/Images/OnlineMode/pending_actions-24px.png"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QText {
+                                visible: (AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
+                                color: "#595959"
+                                font.family: "Lato"
+                                font.pixelSize: 12
+                                text: STR.STR_QML_220.arg(Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)))
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
 
-                Row {
-                    width: 257
-                    height: 24
-                    spacing: 8
-                    anchors.top: contentarea.bottom
-                    anchors.topMargin: 14
-                    anchors.right: contentarea.right
-                    visible: (AppModel.transactionInfo.status !== NUNCHUCKTYPE.REPLACED) && (AppModel.transactionInfo.status !== NUNCHUCKTYPE.NETWORK_REJECTED)
-                    QImage {
-                        source: "qrc:/Images/Images/link.png"
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    QText {
-                        id: tit
-                        width: 225
-                        height: 42
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "View on Blockchain Explorer"
-                        font.capitalization :  Font.AllUppercase
-                        font.family: "Montserrat"
-                        font.pixelSize: 12
-                        font.weight: Font.DemiBold
-                        color: mouseExplorerBlockchain3.containsMouse ? "#35ABEE":"#031F2B"
-                        wrapMode: Text.WordWrap
-                        MouseArea {
-                            id: mouseExplorerBlockchain3
-                            hoverEnabled: true
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                var activeLink = ""
-                                if(AppSetting.primaryServer === 0){ activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid }
-                                else{ activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid }
-                                console.log("link: ", activeLink)
-                                Qt.openUrlExternally(activeLink)
+                        Rectangle {
+                            width: 350
+                            height: 451
+                            radius: 12
+                            border.color: "#EAEAEA"
+                            color: "#FFFFFF"
+                            layer.enabled: true
+                            layer.effect: OpacityMask {
+                                maskSource: Rectangle {
+                                    width: 350
+                                    height: 451
+                                    radius: 12
+                                }
+                            }
+                            Loader {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                sourceComponent: transactionAssignedSigners
                             }
                         }
                     }
                 }
-
-                QTextButton {
-                    id: removebtn
-                    width: 200
-                    height: 48
-                    anchors {
-                        bottom: parent.bottom
-                        bottomMargin: 40
-                        right: parent.right
-                        rightMargin: 40
+            }
+            Loader {
+                id: buttons
+                anchors.right: parent.right
+                anchors.rightMargin: 36
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 36
+                sourceComponent: {
+                    if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return btnPendingSignatures }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return btnReadyToBroadcast }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return btnPendingConfirmation }
+                    else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return btnConfirmed }
+                    else { return btnReplacedRejected }
+                }
+            }
+            Loader {
+                id: bottomLeftButtons
+                anchors.left: parent.left
+                anchors.leftMargin: 36
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 36
+                visible: needShowCancel
+                sourceComponent:  needShowCancel ?  cancelTransactionBtn : null
+            }
+        }
+    }
+    Component {
+        id: txReceived
+        Item {
+            Rectangle {
+                id: contentarea
+                width: 728
+                height: 480
+                anchors.top: parent.top
+                anchors.topMargin: 84
+                anchors.horizontalCenter: parent.horizontalCenter
+                radius: 12
+                color: "#FFFFFF"
+                border.color: "#EAEAEA"
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: Rectangle {
+                        width: contentarea.width
+                        height: contentarea.height
+                        radius: 12
                     }
-                    visible: (AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED) ||
-                             (AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED)
-                    enabled: visible
-                    label.text: "Remove Transaction"
-                    label.font.pixelSize: 16
-                    type: eTypeB
-                    onButtonClicked: {
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                }
+                Flickable {
+                    id: flickcontent
+                    anchors.fill: parent
+                    flickableDirection: Flickable.VerticalFlick
+                    clip: true
+                    interactive: contentHeight > flickcontent.height
+                    contentHeight: contentDisp.height
+                    ScrollBar.vertical: ScrollBar { active: true }
+                    Column {
+                        id: contentDisp
+                        width: parent.width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 5
+                        Rectangle {
+                            width: parent.width - 2
+                            height: 32
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            color: "#F5F5F5"
+                            QText {
+                                text: STR.STR_QML_290
+                                font.family: "Lato"
+                                font.weight: Font.Bold
+                                font.pixelSize: 12
+                                color: "#323E4A"
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 20
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            QText {
+                                text: STR.STR_QML_214
+                                font.family: "Lato"
+                                font.weight: Font.Bold
+                                font.pixelSize: 12
+                                color: "#323E4A"
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 20
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+                        // Destination infomation
+                        Repeater {
+                            model: AppModel.transactionInfo.destinationList
+                            width: parent.width
+                            Item {
+                                width: parent.width
+                                height: 40
+                                QText {
+                                    width: parent.width*2/3 - 20
+                                    text: destination_address
+                                    wrapMode: Text.WrapAnywhere
+                                    font.pixelSize: 12
+                                    color: "#031F2B"
+                                    font.family: "Lato"
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 20
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                                Column {
+                                    anchors {
+                                        right: parent.right
+                                        rightMargin: 20
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                    QText {
+                                        width: parent.width*1/3 - 20
+                                        height: 16
+                                        text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        horizontalAlignment: Text.AlignRight
+                                        font.pixelSize: 16
+                                        font.weight: Font.Bold
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                    }
+                                    QText {
+                                        width: parent.width*1/3 - 20
+                                        height: 16
+                                        text: qsTr("$%1 USD").arg(model.destination_amount_usd)
+                                        horizontalAlignment: Text.AlignRight
+                                        font.pixelSize: 12
+                                        color: "#031F2B"
+                                        font.family: "Lato"
+                                    }
+                                }
+                            }
+                        }
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            anchors.right: parent.right
+                            color: "#C9DEF1"
+                        }
+                        Item {
+                            width: parent.width
+                            height: memodisplay.height
+                            clip: true
+                            QTextInputBox {
+                                id: memodisplay
+                                textOutput: AppModel.transactionInfo.memo
+                                placeholder.text: STR.STR_QML_218
+                                color: "transparent"
+                                width: parent.width
+                                heightMin: 64
+                                botomLineVisible: false
+                                mode: ePREVIEW_MODE
+                                onTypingFinished: {
+                                    if(currentText !== AppModel.transactionInfo.memo && currentText !== ""){
+                                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, currentText)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Row {
+                width: 257
+                height: 24
+                spacing: 8
+                anchors.top: contentarea.bottom
+                anchors.topMargin: 14
+                anchors.right: contentarea.right
+                visible: (AppModel.transactionInfo.status !== NUNCHUCKTYPE.REPLACED) && (AppModel.transactionInfo.status !== NUNCHUCKTYPE.NETWORK_REJECTED)
+                QImage {
+                    source: "qrc:/Images/Images/link.png"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QText {
+                    id: tit
+                    height: 42
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: STR.STR_QML_291
+                    font.capitalization :  Font.AllUppercase
+                    font.family: "Montserrat"
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    color: mouseExplorerBlockchain3.containsMouse ? "#35ABEE":"#031F2B"
+                    wrapMode: Text.WordWrap
+                    MouseArea {
+                        id: mouseExplorerBlockchain3
+                        hoverEnabled: true
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            Qt.openUrlExternally(urlActiveLink())
+                        }
+                    }
+                }
+            }
+            QTextButton {
+                id: removebtn
+                width: 200
+                height: 48
+                anchors {
+                    bottom: parent.bottom
+                    bottomMargin: 40
+                    right: parent.right
+                    rightMargin: 40
+                }
+                visible: needShowCancel ? false : (AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED) || (AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED)
+                enabled: visible
+                label.text: STR.STR_QML_292
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                }
+            }
+        }
+    }
+    Component {
+        id: transactionAssignedSigners
+        QListView {
+            id: signerlist
+            clip: true
+            spacing: 16
+            ScrollBar.vertical: ScrollBar { active: true }
+            model: AppModel.transactionInfo.singleSignersAssigned
+            delegate: QTransactionSignerDelegate {
+                width: signerlist.width
+                alreadySigned: model.single_signer_signed_status
+                signername: model.singleSigner_name
+                signerxfp: model.singleSigner_masterFingerPrint
+                signerType: model.single_signer_type
+                signerReadyToSign: model.single_signer_readyToSign
+                isLocaluser: model.single_signer_is_local
+                onSignRequest: {
+                    signingBusyBox.signerType = model.single_signer_type
+                    signingBusyBox.open()
+                    timerSigningTx.fingerPrint = model.singleSigner_masterFingerPrint
+                    timerSigningTx.restart()
+                }
+                onScanRequest: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST)
+                }
+            }
+            section
+            {
+                property: "single_signer_is_local"
+                criteria: ViewSection.FullString
+                delegate: Item {
+                    id: sectionItem
+                    property bool isLocalUser: section === "true"
+                    width: signerlist.width
+                    height: isLocalUser ? 0 : 16
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width
+                        height: 1
+                        visible: !sectionItem.isLocalUser
+                        color: "#EAEAEA"
                     }
                 }
             }
         }
     }
-
-    Rectangle {
-        id: displayAddressBusybox
-        property string addrToVerify: ""
-        anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.7)
-        radius: 8
-        MouseArea {anchors.fill: parent; onClicked: {}}
-        visible: false
-
-        Rectangle {
-            id: busymask
-            width: 500
-            height: 250
-            radius: 8
-            visible: false
-        }
-
-        Rectangle {
-            id: busyboxbg
-            width: 500
-            height: 250
-            color: "#F1FAFE"
-            radius: 8
-            anchors.centerIn: parent
-            visible: false
-            Rectangle {
-                height: 4
-                width: parent.width
-                color: "#F6D65D"
+    // Buttons
+    Component {
+        id: btnPendingSignatures
+        Row {
+            height: 48
+            spacing: 16
+            QTextButton {
+                id: removebtn
+                width: 200
+                height: 48
+                enabled: visible
+                label.text: STR.STR_QML_292
+                label.font.pixelSize: 16
+                type: eTypeB
+                visible: !needShowCancel
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                }
+            }
+            QButtonLargeTail {
+                id: advancedBtn
+                width: 220
+                height: 48
+                type: eSECONDARY
+                label: STR.STR_QML_299
+                optionVisible: imExContextMenu.visible
+                onButtonClicked: {
+                    imExContextMenu.x = 20
+                    imExContextMenu.y = 20 - imExContextMenu.height
+                    imExContextMenu.open()
+                }
+                QContextMenu {
+                    id: imExContextMenu
+                    menuWidth: 320
+                    labels: [
+                        STR.STR_QML_300,
+                        STR.STR_QML_115,
+                        STR.STR_QML_116,
+                        STR.STR_QML_301,
+                        STR.STR_QML_302,
+                        STR.STR_QML_303
+                    ]
+                    icons: [
+                        "qrc:/Images/Images/download_031F2B.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/import_031F2B.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+                    ]
+                    onItemClicked: {
+                        switch(index){
+                        case 0: // Export via file [.psbt]
+                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
+                                    + ".psbt"
+                            savefileDialog.open()
+                            break;
+                        case 1: // Export via QR Keystone
+                            requestExportQRKeyStone()
+                            break;
+                        case 2: "Export via QR Passport"
+                            requestExportQRPassport()
+                            break;
+                        case 3: // Import via file [.psbt]
+                            openfileDialog.open()
+                            break;
+                        case 4: // Import via QR Keystone
+                            requestImportQRKeyStone()
+                            break;
+                        case 5: // Import via QR Passport
+                            requestImportQRPassport()
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
             }
         }
-
+    }
+    Component {
+        id: btnReadyToBroadcast
+        Row {
+            height: 48
+            spacing: 16
+            QTextButton {
+                id: removebtn
+                width: 200
+                height: 48
+                enabled: visible
+                label.text: STR.STR_QML_292
+                visible: !needShowCancel
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                }
+            }
+            QButtonLargeTail {
+                id: advancedBtn
+                width: 220
+                height: 48
+                type: eSECONDARY
+                label: STR.STR_QML_294
+                optionVisible: imExContextMenu.visible
+                onButtonClicked: {
+                    imExContextMenu.x = 20
+                    imExContextMenu.y = 20 - imExContextMenu.height
+                    imExContextMenu.open()
+                }
+                QContextMenu {
+                    id: imExContextMenu
+                    menuWidth: 320
+                    labels: [
+                        STR.STR_QML_300,
+                        STR.STR_QML_115,
+                        STR.STR_QML_116,
+                    ]
+                    icons: [
+                        "qrc:/Images/Images/download_031F2B.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+                    ]
+                    onItemClicked: {
+                        switch(index){
+                        case 0: // Export via file [.psbt]
+                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
+                                    + ".psbt"
+                            savefileDialog.open()
+                            break;
+                        case 1: // Export via QR Keystone
+                            requestExportQRKeyStone()
+                            break;
+                        case 2: // Export via QR Passport
+                            requestExportQRPassport()
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+            }
+            QTextButton {
+                id: startbroatcast
+                width: 180
+                height: 48
+                label.text: STR.STR_QML_295
+//                visible: (NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex || AppModel.transactionInfo.initEventId !== "") ? AppModel.transactionInfo.createByMe : true
+                label.font.pixelSize: 16
+                type: eTypeE
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_BROADCAST_REQUEST)
+                }
+            }
+        }
+    }
+    Component {
+        id: btnPendingConfirmation
+        Row {
+            height: 48
+            spacing: 16
+            QTextButton {
+                id: viewBlockstreamBtn
+                width: 247
+                height: 48
+                label.text: STR.STR_QML_291
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: {
+                    Qt.openUrlExternally(urlActiveLink())
+                }
+            }
+            QTextButton {
+                id: replaceByFeeButton
+                width: 210
+                height: 48
+                label.text: STR.STR_QML_293
+                label.font.pixelSize: 16
+                type: eTypeB
+                visible: needShowRBF
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REPLACE_BY_FEE_REQUEST)
+                }
+            }
+            QButtonLargeTail {
+                id: advancedBtn
+                width: 220
+                height: 48
+                type: eSECONDARY
+                label: STR.STR_QML_294
+                optionVisible: imExContextMenu.visible
+                onButtonClicked: {
+                    imExContextMenu.x = 20
+                    imExContextMenu.y = 20 - imExContextMenu.height
+                    imExContextMenu.open()
+                }
+                QContextMenu {
+                    id: imExContextMenu
+                    menuWidth: 320
+                    labels: [
+                        STR.STR_QML_300,
+                        STR.STR_QML_115,
+                        STR.STR_QML_116,
+                    ]
+                    icons: [
+                        "qrc:/Images/Images/download_031F2B.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+                    ]
+                    onItemClicked: {
+                        switch(index){
+                        case 0: // Export via file [.psbt]
+                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
+                                    + ".psbt"
+                            savefileDialog.open()
+                            break;
+                        case 1: // Export via QR Keystone
+                            requestExportQRKeyStone()
+                            break;
+                        case 1: // Export via QR Passport
+                            requestExportQRPassport()
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: btnConfirmed
+        Row {
+            height: 48
+            spacing: 16
+            QTextButton {
+                id: viewBlockstreamBtn
+                width: 247
+                height: 48
+                label.text: STR.STR_QML_291
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: {
+                    Qt.openUrlExternally(urlActiveLink())
+                }
+            }
+        }
+    }
+    Component {
+        id: btnReplacedRejected
+        Row {
+            height: 48
+            spacing: 16
+            QTextButton {
+                id: removebtn
+                width: 200
+                height: 48
+                enabled: visible
+                label.text: STR.STR_QML_292
+                label.font.pixelSize: 16
+                visible: !needShowCancel
+                type: eTypeB
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                }
+            }
+            QButtonLargeTail {
+                id: advancedBtn
+                width: 220
+                height: 48
+                type: eSECONDARY
+                label: STR.STR_QML_294
+                optionVisible: imExContextMenu.visible
+                onButtonClicked: {
+                    imExContextMenu.x = 20
+                    imExContextMenu.y = 20 - imExContextMenu.height
+                    imExContextMenu.open()
+                }
+                QContextMenu {
+                    id: imExContextMenu
+                    menuWidth: 320
+                    labels: [
+                        STR.STR_QML_300,
+                        STR.STR_QML_115,
+                        STR.STR_QML_116,
+                    ]
+                    icons: [
+                        "qrc:/Images/Images/download_031F2B.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+                    ]
+                    onItemClicked: {
+                        switch(index){
+                        case 0: // Export via file [.psbt]
+                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
+                                    + ".psbt"
+                            savefileDialog.open()
+                            break;
+                        case 1: // Export via QR Keystone
+                            requestExportQRKeyStone()
+                            break;
+                        case 2: // Export via QR Passport
+                            requestExportQRPassport()
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: cancelTransactionBtn
+        QButtonTextLink {
+            height: 48
+            label: STR.STR_QML_296
+            fontPixelSize: 16
+            textColor: ["#CF4018", "#839096", "#35ABEE"]
+            displayIcon: false
+            onButtonClicked: {
+                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_CANCEL_REQUEST)
+            }
+        }
+    }
+    QQrImportScanner {
+        id: qrcodeImport
+        property int qrType: Popup_t.IMPORT_WALLET_QRCODE_KEYSTONE
+        onTagFound: {
+            if(qrType === Popup_t.IMPORT_WALLET_QRCODE_KEYSTONE){
+                if(AppModel.parseKeystoneTransaction(qrcodeImport.tags)){
+                    qrcodeImport.close();
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_QRCODE)
+                }
+            }
+            else if(qrType === Popup_t.IMPORT_WALLET_QRCODE_PASSPORT){
+                if(AppModel.parsePassportTransaction(qrcodeImport.tags)){
+                    qrcodeImport.close();
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_QRCODE)
+                }
+            }
+            else{
+                return;
+            }
+        }
+        onClosed: qrcodeImport.qrType = Popup_t.IMPORT_WALLET_QRCODE_KEYSTONE
+    }
+    QQrExportResult {
+        id: qrcodeExportResult
+        model: AppModel.qrExported
+    }
+    FileDialog {
+        id: openfileDialog
+        fileMode: FileDialog.OpenFile
+        onAccepted: {
+            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_REQUEST, openfileDialog.file)
+        }
+    }
+    FileDialog {
+        id: savefileDialog
+        fileMode: FileDialog.SaveFile
+        onAccepted: {
+            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_REQUEST, savefileDialog.currentFile)
+        }
+    }
+    Popup {
+        id: displayAddressBusybox
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        background: Item{}
+        property string addrToVerify: ""
         Rectangle {
+            id: displayAddressMask
             width: 500
             height: 250
             radius: 8
+            color: "#FFFFFF"
             anchors.centerIn: parent
-        }
-
-        OpacityMask {
-            id: busyboxmask
-            anchors.fill: busyboxbg
-            source: busyboxbg
-            maskSource: busymask
-
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 500
+                    height: 250
+                    radius: 8
+                }
+            }
             QCloseButton {
                 anchors {
                     right: parent.right
@@ -2194,9 +1213,8 @@ QScreen {
                     top: parent.top
                     topMargin: 16
                 }
-                onClicked: { displayAddressBusybox.visible = false ; displayAddressBusybox.addrToVerify = ""}
+                onClicked: {displayAddressBusybox.close()  ; displayAddressBusybox.addrToVerify = ""}
             }
-
             Column {
                 spacing: 16
                 anchors.centerIn: parent
@@ -2205,15 +1223,13 @@ QScreen {
                     height: 70
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-
                 QText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.family: "Lato"
                     font.pixelSize: 14
                     font.weight: Font.Bold
-                    text: "Please check the address on your device"
+                    text: STR.STR_QML_008
                 }
-
                 Rectangle {
                     width: 450
                     height: 60
@@ -2235,22 +1251,126 @@ QScreen {
                 }
             }
         }
-
         DropShadow {
-            anchors.fill: busyboxmask
+            anchors.fill: displayAddressMask
             horizontalOffset: 3
-            verticalOffset: 3
-            radius: 8.0
-            samples: 17
-            color: "#80000000"
-            source: busyboxmask
+            verticalOffset: 5
+            spread: 0
+            radius: 8
+            samples: 30
+            color: "#aa000000"
+            source: displayAddressMask
         }
     }
-
+    Popup {
+        id: signingBusyBox
+        property int signerType: -1
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        background: Item{}
+        Rectangle {
+            id: signingBusyBoxMask
+            width: 300
+            height: 196
+            radius: 24
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 300
+                    height: 196
+                    radius: 24
+                }
+            }
+            Column {
+                spacing: 12
+                anchors.centerIn: parent
+                QBusyIndicator {
+                    width: 70
+                    height: 70
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.Bold
+                    text: STR.STR_QML_297
+                }
+                QText {
+                    width: 252
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    text: signingBusyBox.signerType === NUNCHUCKTYPE.HARDWARE ? STR.STR_QML_298 : STR.STR_QML_122
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                }
+            }
+        }
+        DropShadow {
+            anchors.fill: signingBusyBoxMask
+            horizontalOffset: 3
+            verticalOffset: 5
+            spread: 0
+            radius: 8
+            samples: 30
+            color: "#aa000000"
+            source: signingBusyBoxMask
+        }
+    }
     Connections {
         target: AppModel
-        onPreCheckAddressOnDevice: {
-            displayAddressBusybox.visible = isOnTop ? valid : false
+        onStartDisplayAddress: {
+            if(isOnTop) displayAddressBusybox.open()
+            else displayAddressBusybox.close()
         }
+        onFinishedDisplayAddress: {
+            displayAddressBusybox.close()
+        }
+        onFinishedSigningTransaction : {signingBusyBox.close(); signingBusyBox.signerType = -1}
+    }
+    Timer {
+        id: timerSigningTx
+        property string fingerPrint : ""
+        interval: 500
+        onTriggered: {
+            if(timerSigningTx.fingerPrint !== ""){ QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SIGN_REQUEST, timerSigningTx.fingerPrint)}
+        }
+    }
+    function requestExportQRKeyStone(){
+        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE, "keystone")
+        qrcodeExportResult.open()
+    }
+    function requestExportQRPassport(){
+        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE, "passport")
+        qrcodeExportResult.open()
+    }
+    function requestImportQRKeyStone(){
+        qrcodeImport.qrType = Popup_t.IMPORT_WALLET_QRCODE_KEYSTONE
+        qrcodeImport.open()
+    }
+    function requestImportQRPassport(){
+        qrcodeImport.qrType = Popup_t.IMPORT_WALLET_QRCODE_PASSPORT
+        qrcodeImport.open()
+    }
+    function urlActiveLink(){
+        var activeLink = ""
+        switch(AppSetting.primaryServer){
+        case NUNCHUCKTYPE.MAIN:
+            activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid
+            break;
+        case NUNCHUCKTYPE.TESTNET:
+            activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid
+            break;
+        case NUNCHUCKTYPE.SIGNET:
+            activeLink = AppSetting.signetStream + AppModel.transactionInfo.txid
+            break
+        default: break
+        }
+        return activeLink
     }
 }

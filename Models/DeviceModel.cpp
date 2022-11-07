@@ -1,7 +1,26 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "DeviceModel.h"
 #include <QQmlEngine>
 
-Device::Device() :
+QDevice::QDevice() :
     name_("UNKNOWN"),
     type_("UNKNOWN"),
     path_("UNKNOWN"),
@@ -10,14 +29,13 @@ Device::Device() :
     connected_(false),
     needs_pass_phrase_sent_(false),
     needs_pin_sent_(false),
-    usableToSign_(true),
     usableToAdd_(true),
     master_signer_id_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Device::Device(const QString &fingerprint) :
+QDevice::QDevice(const QString &fingerprint) :
     name_(""),
     type_(""),
     path_(""),
@@ -26,14 +44,13 @@ Device::Device(const QString &fingerprint) :
     connected_(false),
     needs_pass_phrase_sent_(false),
     needs_pin_sent_(false),
-    usableToSign_(true),
     usableToAdd_(true),
     master_signer_id_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Device::Device(const QString &name,
+QDevice::QDevice(const QString &name,
                const QString &type,
                const QString &path,
                const QString &model,
@@ -50,16 +67,15 @@ Device::Device(const QString &name,
     connected_(connected),
     needs_pass_phrase_sent_(needs_pass_phrase_sent),
     needs_pin_sent_(needs_pin_sent),
-    usableToSign_(true),
     usableToAdd_(true),
     master_signer_id_(mastersigner_id)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Device::~Device(){}
+QDevice::~QDevice(){}
 
-QString Device::name() const
+QString QDevice::name() const
 {
     if(name_ == "" || name_.isEmpty() || name_.isNull()){
         return type_;
@@ -67,21 +83,21 @@ QString Device::name() const
     return name_;
 }
 
-QString Device::type() const { return type_;}
+QString QDevice::type() const { return type_;}
 
-QString Device::path() const { return path_;}
+QString QDevice::path() const { return path_;}
 
-QString Device::model() const { return model_;}
+QString QDevice::model() const { return model_;}
 
-QString Device::masterFingerPrint() const { return master_fingerprint_;}
+QString QDevice::masterFingerPrint() const { return master_fingerprint_;}
 
-bool Device::connected() const { return connected_;}
+bool QDevice::connected() const { return connected_;}
 
-bool Device::needsPassPhraseSent() const { return needs_pass_phrase_sent_;}
+bool QDevice::needsPassPhraseSent() const { return needs_pass_phrase_sent_;}
 
-bool Device::needsPinSent() const { return needs_pin_sent_;}
+bool QDevice::needsPinSent() const { return needs_pin_sent_;}
 
-void Device::setName(const QString &name)
+void QDevice::setName(const QString &name)
 {
     if(name_ != name){
         name_ = name;
@@ -89,74 +105,62 @@ void Device::setName(const QString &name)
     }
 }
 
-void Device::setType(const QString &d) {
+void QDevice::setType(const QString &d) {
     if(d != type_){
         type_ = d;
         emit typeChanged();
     }
 }
 
-void Device::setPath(const QString &d) {
+void QDevice::setPath(const QString &d) {
     if(d != path_){
         path_ = d;
         emit pathChanged();
     }
 }
 
-void Device::setModel(const QString &d) {
+void QDevice::setModel(const QString &d) {
     if(d != model_){
         model_ = d;
         emit modelChanged();
     }
 }
 
-void Device::setMasterFingerPrint(const QString &d) {
+void QDevice::setMasterFingerPrint(const QString &d) {
     if(d != master_fingerprint_){
         master_fingerprint_ = d;
         emit masterFingerPrintChanged();
     }
 }
 
-void Device::setConnected(const bool d) {
+void QDevice::setConnected(const bool d) {
     if(d != connected_){
         connected_ = d;
         emit connectedChanged();
     }
 }
 
-void Device::setNeedsPassPhraseSent(const bool d) {
+void QDevice::setNeedsPassPhraseSent(const bool d) {
     if(d != needs_pass_phrase_sent_){
+        DBG_INFO << d;
         needs_pass_phrase_sent_ = d;
         emit needsPassPhraseSentChanged();
     }
 }
 
-void Device::setNeedsPinSent(const bool d) {
+void QDevice::setNeedsPinSent(const bool d) {
     if(d != needs_pin_sent_){
         needs_pin_sent_ = d;
         emit needsPinSentChanged();
     }
 }
 
-bool Device::usableToSign() const
-{
-    return usableToSign_;
-}
-
-void Device::setUsableToSign(bool usable)
-{
-    if(usableToSign_ != usable){
-        usableToSign_ = usable;
-        emit usableToSignChanged();
-    }
-}
-
-bool Device::usableToAdd() const
+bool QDevice::usableToAdd() const
 {
     return usableToAdd_;
 }
 
-void Device::setUsableToAdd(bool usableToAdd)
+void QDevice::setUsableToAdd(bool usableToAdd)
 {
     if(usableToAdd_ != usableToAdd){
         usableToAdd_ = usableToAdd;
@@ -164,12 +168,12 @@ void Device::setUsableToAdd(bool usableToAdd)
     }
 }
 
-QString Device::masterSignerId() const
+QString QDevice::masterSignerId() const
 {
     return master_signer_id_;
 }
 
-void Device::setMasterSignerId(const QString &master_signer_id)
+void QDevice::setMasterSignerId(const QString &master_signer_id)
 {
     if(master_signer_id_ != master_signer_id){
         master_signer_id_ = master_signer_id;
@@ -177,14 +181,13 @@ void Device::setMasterSignerId(const QString &master_signer_id)
     }
 }
 
-DeviceListModel::DeviceListModel(): warningMessage_(QSharedPointer<QWarningMessage>(new QWarningMessage()))
+DeviceListModel::DeviceListModel()
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 DeviceListModel::~DeviceListModel(){
     d_.clear();
-    warningMessage_.clear();
 }
 
 int DeviceListModel::rowCount(const QModelIndex &parent) const{
@@ -210,8 +213,6 @@ QVariant DeviceListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->needsPassPhraseSent();
     case device_needs_pin_sent_role:
         return d_[index.row()]->needsPinSent();
-    case device_usableToSign_role:
-        return d_[index.row()]->usableToSign();
     case device_usableToAdd_role:
         return d_[index.row()]->usableToAdd();
     case device_master_signer_id_role:
@@ -231,7 +232,6 @@ QHash<int, QByteArray> DeviceListModel::roleNames() const {
     roles[device_connected_role] = "device_connected";
     roles[device_needs_pass_phrase_sent_role] = "device_needs_pass_phrase_sent";
     roles[device_needs_pin_sent_role] = "device_needs_pin_sent";
-    roles[device_usableToSign_role] = "device_usable_to_sign";
     roles[device_usableToAdd_role] = "device_usable_to_add";
     roles[device_master_signer_id_role] = "device_master_signer_id";
 
@@ -250,13 +250,13 @@ void DeviceListModel::addDevice(const QString &name,
 {
     beginResetModel();
     if(!contains(master_fingerprint)){
-        d_.append(QSharedPointer<Device>(new Device(name, type, path, model, master_fingerprint, connected, needs_pass_phrase_sent, needs_pin_sent, mastersigner_id)));
+        d_.append(QDevicePtr(new QDevice(name, type, path, model, master_fingerprint, connected, needs_pass_phrase_sent, needs_pin_sent, mastersigner_id)));
     }
     endResetModel();
     emit deviceCountChanged();
 }
 
-void DeviceListModel::addDevice(const QSharedPointer<Device> &d){
+void DeviceListModel::addDevice(const QDevicePtr &d){
     beginResetModel();
     if(d && !contains(d.data()->masterFingerPrint())){
         d_.append(d);
@@ -268,8 +268,8 @@ void DeviceListModel::addDevice(const QSharedPointer<Device> &d){
 void DeviceListModel::updateDeviceList(const QSharedPointer<DeviceListModel> &d)
 {
     beginResetModel();
+    d_.clear();
     if(d){
-        d_.clear();
         for (int var = 0; var < d.data()->rowCount(); var++) {
             d_.append(d.data()->getDeviceByIndex(var));
         }
@@ -287,10 +287,20 @@ QString DeviceListModel::getDevicePathByIndex(const int index){
     }
 }
 
+QString DeviceListModel::getDevicePathByXfp(const QString &xfp)
+{
+    foreach (QDevicePtr it, d_) {
+        if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            return it.data()->path();
+        }
+    }
+    return "";
+}
+
 bool DeviceListModel::deviceNeedPinSent(const QString &xfp)
 {
     bool needPin = false;
-    foreach (QSharedPointer<Device> it, d_) {
+    foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
             needPin = it.data()->needsPinSent();
         }
@@ -301,7 +311,7 @@ bool DeviceListModel::deviceNeedPinSent(const QString &xfp)
 bool DeviceListModel::deviceNeedPinSent(const QString &deviceModel, const QString &deviceType)
 {
     bool needPin = false;
-     foreach (QSharedPointer<Device> it, d_) {
+     foreach (QDevicePtr it, d_) {
          if((0 == QString::compare(deviceModel, it.data()->model(), Qt::CaseInsensitive)) &&
             (0 == QString::compare(deviceType, it.data()->type(), Qt::CaseInsensitive)))
          {
@@ -311,108 +321,62 @@ bool DeviceListModel::deviceNeedPinSent(const QString &deviceModel, const QStrin
      return needPin;
 }
 
-QSharedPointer<Device> DeviceListModel::getDeviceByIndex(const int index){
+QDevicePtr DeviceListModel::getDeviceByIndex(const int index){
     if(0 <= index && index < d_.count() ){
         return d_.at(index);
     }
     else{
-        return QSharedPointer<Device>(NULL);
+        return QDevicePtr(NULL);
     }
 }
 
-QSharedPointer<Device> DeviceListModel::getDeviceByPath(const QString& path){
-    foreach (QSharedPointer<Device> it, d_) {
+QDevicePtr DeviceListModel::getDeviceByPath(const QString& path){
+    foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(path, it.data()->path(), Qt::CaseInsensitive)){
             return it;
         }
     }
-    return QSharedPointer<Device>(NULL);
+    return QDevicePtr(NULL);
 }
 
-QSharedPointer<Device> DeviceListModel::getDeviceByXFP(const QString& xfp){
-    foreach (QSharedPointer<Device> it, d_) {
+QDevicePtr DeviceListModel::getDeviceByXFP(const QString& xfp){
+    foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
             return it;
         }
     }
-    return QSharedPointer<Device>(NULL);
+    return NULL;
 }
 
-QSharedPointer<Device> DeviceListModel::getDeviceNeedPinSent(){
-    foreach (QSharedPointer<Device> it, d_) {
+QDevicePtr DeviceListModel::getDeviceNeedPinSent(){
+    foreach (QDevicePtr it, d_) {
         if(it.data()->needsPinSent()){
             return it;
         }
     }
-    return QSharedPointer<Device>(NULL);
-}
-
-void DeviceListModel::updateDeviceConnected(QString xfp)
-{
-    foreach (QSharedPointer<Device> i, d_) {
-        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            i.data()->setConnected(true);
-        }
-        emit dataChanged(this->index(d_.indexOf(i)),this->index(d_.indexOf(i)));
-    }
+    return QDevicePtr(NULL);
 }
 
 void DeviceListModel::resetDeviceConnected()
 {
-    foreach (QSharedPointer<Device> i, d_) {
+    foreach (QDevicePtr i, d_) {
         i.data()->setConnected(false);
         emit dataChanged(this->index(d_.indexOf(i)),this->index(d_.indexOf(i)));
     }
 }
 
-QSharedPointer<QWarningMessage> DeviceListModel::warningMessagePtr() const
-{
-    return warningMessage_;
-}
-
-QWarningMessage* DeviceListModel::warningMessage() const
-{
-    return warningMessage_.data();
-}
-
-void DeviceListModel::setWarningMessage(const QSharedPointer<QWarningMessage> &warningMessage)
-{
-    warningMessage_ = warningMessage;
-    emit warningMessageChanged();
-}
-
-void DeviceListModel::resetUsableToSign()
-{
-    beginResetModel();
-    foreach (QSharedPointer<Device> it, d_) {
-        it.data()->setUsableToSign(true);
-    }
-    endResetModel();
-}
-
 void DeviceListModel::resetUsableToAdd()
 {
     beginResetModel();
-    foreach (QSharedPointer<Device> it, d_) {
+    foreach (QDevicePtr it, d_) {
         it.data()->setUsableToAdd(false);
     }
     endResetModel();
 }
 
-void DeviceListModel::updateUsableToSign(const QString &fingerprint, bool value)
-{
-    foreach (QSharedPointer<Device> it, d_) {
-        if(0 == QString::compare(fingerprint, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            it.data()->setUsableToSign(value);
-            emit dataChanged(this->index(d_.indexOf(it)),this->index(d_.indexOf(it)));
-        }
-    }
-    emit containsSignableChanged();
-}
-
 void DeviceListModel::updateUsableToAdd(const QString &fingerprint, bool value)
 {
-    foreach (QSharedPointer<Device> it, d_) {
+    foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(fingerprint, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
             it.data()->setUsableToAdd(value);
             emit dataChanged(this->index(d_.indexOf(it)),this->index(d_.indexOf(it)));
@@ -423,8 +387,22 @@ void DeviceListModel::updateUsableToAdd(const QString &fingerprint, bool value)
 
 bool DeviceListModel::contains(const QString &fingerprint)
 {
-    foreach (QSharedPointer<Device> i , d_ ){
+    foreach (QDevicePtr i , d_ ){
         if(0 == QString::compare(fingerprint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DeviceListModel::needScanDevice()
+{
+    if(d_.count() == 0){
+        return true;
+    }
+    foreach (QDevicePtr i , d_ ){
+        DBG_INFO << i.data()->needsPinSent() << i.data()->needsPassPhraseSent();
+        if(i.data()->needsPinSent() || i.data()->needsPassPhraseSent()){
             return true;
         }
     }
@@ -433,18 +411,8 @@ bool DeviceListModel::contains(const QString &fingerprint)
 
 bool DeviceListModel::containsAddable() const
 {
-    foreach (QSharedPointer<Device> i , d_ ){
+    foreach (QDevicePtr i , d_ ){
         if(i.data()->usableToAdd()){
-            return true;
-        }
-    }
-    return false;
-}
-
-bool DeviceListModel::containsSignable() const
-{
-    foreach (QSharedPointer<Device> i , d_ ){
-        if(i.data()->usableToSign()){
             return true;
         }
     }
@@ -455,7 +423,7 @@ QStringList DeviceListModel::getXFPList()
 {
     QStringList ret;
     ret.clear();
-    foreach (QSharedPointer<Device> i , d_ ){
+    foreach (QDevicePtr i , d_ ){
         ret.append(i.data()->masterFingerPrint());
     }
     return ret;
@@ -463,7 +431,7 @@ QStringList DeviceListModel::getXFPList()
 
 bool DeviceListModel::containsNeedPinSent()
 {
-    foreach (QSharedPointer<Device> i , d_ ){
+    foreach (QDevicePtr i , d_ ){
         if(i.data()->needsPinSent()){
             return true;
         }
@@ -474,7 +442,7 @@ bool DeviceListModel::containsNeedPinSent()
 void DeviceListModel::updateDeviceNeedPassphraseSentByMasterSignerId(const QString &id, bool needpassphrase)
 {
     beginResetModel();
-    foreach (QSharedPointer<Device> it, d_) {
+    foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(id, it.data()->masterSignerId(), Qt::CaseInsensitive)){
             it.data()->setUsableToAdd(needpassphrase);
         }
@@ -485,7 +453,7 @@ void DeviceListModel::updateDeviceNeedPassphraseSentByMasterSignerId(const QStri
 void DeviceListModel::notifySoftwareSignerRenamed(const QString& mastersignerid, const QString &newname)
 {
     beginResetModel();
-    foreach (QSharedPointer<Device> i , d_ ){
+    foreach (QDevicePtr i , d_ ){
         if(0 == QString::compare(mastersignerid, i.data()->masterSignerId(), Qt::CaseInsensitive)){
             i.data()->setName(newname);
         }
@@ -493,7 +461,27 @@ void DeviceListModel::notifySoftwareSignerRenamed(const QString& mastersignerid,
     endResetModel();
 }
 
+void DeviceListModel::checkAndUnlockDevice()
+{
+
+}
+
 int DeviceListModel::deviceCount() const
 {
     return d_.count();
+}
+
+int DeviceListModel::getDeviceIndexByXFP(const QString &xfp)
+{
+    for (int i = 0; i < d_.count(); i++) {
+        if(0 == QString::compare(xfp, d_.at(i).data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            return i;
+        }
+    }
+    return -1;
+}
+
+QList<QDevicePtr> DeviceListModel::fullList() const
+{
+    return d_;
 }

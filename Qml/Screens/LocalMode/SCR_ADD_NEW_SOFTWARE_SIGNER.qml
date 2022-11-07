@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 1.4
 import QtQuick.Controls 2.3
@@ -6,58 +25,39 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
     id: rootAddsignerToWallet
-    Rectangle {
-        id: mask
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        QText {
-            width: 163
-            height: 27
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
+        label.text: STR.STR_QML_142
+        onCloseClicked: {
+            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
             }
-            text: "New signer mnemonic"
-            color: "#031F2B"
-            font.family: "Montserrat"
-            font.weight: Font.ExtraBold
-            font.pixelSize: 24
+            else{
+                if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
+                    QMLHandle.sendEvent(EVT.EVT_NEW_SOFTWARE_SIGNER_BACK_TO_WALLET_SIGNER_CONFIGURATION)
+                }
+                else {
+                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
+                }
+            }
         }
-
         QText {
             width: 540
             height: 56
-            text: "Please take a moment to write down this mnemonic phrase. <b>It is your signer's backup</b>. You can use it to recover the signer later."
+            text: STR.STR_QML_143
             anchors {
                 left: parent.left
-                leftMargin: 40
+                leftMargin: 36
                 top: parent.top
-                topMargin: 58
+                topMargin: 65
             }
             verticalAlignment: Text.AlignVCenter
             color: "#031F2B"
@@ -67,24 +67,6 @@ QScreen {
             lineHeightMode: Text.FixedHeight
             lineHeight: 28
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
-            }
-            onClicked: {
-                if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
-                    QMLHandle.sendEvent(EVT.EVT_NEW_SOFTWARE_SIGNER_BACK_TO_WALLET_SIGNER_CONFIGURATION)
-                }
-                else {
-                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
-                }
-            }
-        }
-
         Grid {
             id: gridmmonic
             width: 730
@@ -132,14 +114,37 @@ QScreen {
                 }
             }
         }
-
+        Rectangle {
+            width: 728
+            height: 60
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 120
+            anchors.horizontalCenter: parent.horizontalCenter
+            radius: 8
+            color: "#EAEAEA"
+            Row {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 8
+                QImage {
+                    height: parent.height
+                    width: height
+                    source: "qrc:/Images/Images/info-60px.png"
+                }
+                QText {
+                    height: parent.height
+                    text: STR.STR_QML_144
+                    color: "#031F2B"
+                    font.family: "Lato"
+                }
+            }
+        }
         QButtonTextLink {
-            width: 203
             height: 24
-            label: "BACK TO PREVIOUS"
+            label: STR.STR_QML_059
             anchors {
                 left: parent.left
-                leftMargin: 32
+                leftMargin: 40
                 bottom: parent.bottom
                 bottomMargin: 40
             }
@@ -152,13 +157,12 @@ QScreen {
                 }
             }
         }
-
         QTextButton {
             width: 200
             height: 48
-            label.text: "Continue"
+            label.text: STR.STR_QML_097
             label.font.pixelSize: 16
-            type: eTypeA
+            type: eTypeE
             enabled: (textMnemonic !== "")
             anchors {
                 right: parent.right

@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
@@ -7,111 +26,51 @@ import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../Components/customizes/Chats"
+import "../../../localization/STR_QML.js" as STR
 QScreen {
-    Rectangle {
-        id: mask
-        width: popupWidth
-        height: popupHeight
-        radius: 8
-        visible: false
-    }
 
-    Rectangle {
-        id: content
+    QOnScreenContent {
+        id: contenCenter
         width: popupWidth
         height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        QText {
-            id: scrtitle
-            height: 36
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-            text: "Wallet Info"
-            color: "#031F2B"
-            font.family: "Montserrat"
-            font.weight: Font.ExtraBold
-            font.pixelSize: 24
-        }
-
-        QText {
+        label.text: STR.STR_QML_278
+        extraHeader: QText {
             height: 21
             width: 550
             elide: Text.ElideRight
-            anchors {
-                left: scrtitle.right
-                leftMargin: 8
-                verticalCenter: scrtitle.verticalCenter
-            }
-            text: "(" + AppModel.walletInfo.walletName + ")"
+            text: "(" + wlname.textOutput + ")"
             color: "#031F2B"
             font.family: "Montserrat"
             font.weight: Font.DemiBold
             font.pixelSize: 14
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
-            }
-            onClicked: {
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_BACK_REQUEST)
-            }
+        onCloseClicked: {
+            wlname.applyNameChanged()
+            wldescription.applyDescriptionChanged()
+            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_BACK_REQUEST)
         }
-
-        Column {
+        QNotification {
             id: notification
-            width: parent.width
-            spacing: 8
+            width: 718
+            height: notification.visible ? 70 : 0
+            wrapMode: Text.WordWrap
+            labelWidth: 620
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: listSignerAssigned.isContainColdCard && (AppModel.walletInfo.walletN > 1)
+            label: STR.STR_QML_316
+            currentStatus: EWARNING.WARNING_MSG
+            onCloseRequest: notification.visible = false
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
                 topMargin: 81
             }
-
-            QNotification {
-                id: commonstatus
-                width: 718
-                height: 48
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: AppModel.walletInfo.warningMessage.type !== EWARNING.NONE_MSG
-                label: AppModel.walletInfo.warningMessage.contentDisplay
-                currentStatus: AppModel.walletInfo.warningMessage.type
-                onCloseRequest: AppModel.walletInfo.warningMessage.type = EWARNING.NONE_MSG
-            }
-
-            QNotification {
-                id: coldcardwarning
-                width: 718
-                height: 70
-                wrapMode: Text.WordWrap
-                labelWidth: 620
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_ADD_WALLET_CONFIRMATION) ? listSignerAssigned.isContainColdCard && (AppModel.walletInfo.walletN > 1): false
-                label: "Coldcard requires a multisig configuration file before it can sign transactions. Please choose \"Export\" > \"Export To Coldcard\", then copy the resulting file over to Coldcard."
-                currentStatus: EWARNING.WARNING_MSG
-                onCloseRequest: coldcardwarning.visible = false
-            }
         }
-
         Flickable {
             width: 344
             height: exportwallet.y - y - 10
@@ -126,75 +85,78 @@ QScreen {
                 top: notification.bottom
                 topMargin: 25
             }
-
             Column {
                 id: contentWallets
                 spacing: 8
-
                 QTextInputBox {
                     id: wlname
                     width: 344
                     heightMin: 54
                     mode: ePREVIEW_MODE
                     color: "Transparent"
-                    placeholder.text: "WALLET NAME"
+                    placeholder.text: STR.STR_QML_317
                     textOutput: AppModel.walletInfo.walletName
-                    onTypingFinished: {
-                        if(currentText !== AppModel.walletInfo.walletName && currentText!== ""){
-                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EDIT_NAME, currentText)
+                    onTypingFinished: textOutput = Qt.binding(function(){return currentText;})
+                    onEditingFinished: wlname.applyNameChanged()
+                    function applyNameChanged(){
+                        if(wlname.textOutput !== AppModel.walletInfo.walletName && wlname.textOutput!== ""){
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EDIT_NAME, wlname.textOutput)
                         }
                     }
                 }
-
                 QTextInputBox {
                     id: wldescription
                     width: 344
                     heightMin: 54
                     mode: ePREVIEW_MODE
-                    placeholder.text: "WALLET DESCRIPTION"
+                    placeholder.text: STR.STR_QML_318
                     color: textOutput === "" ? Qt.rgba(201, 222, 241, 0.5) : "Transparent"
                     textOutput: AppModel.walletInfo.walletDescription
                     isEditing: true
-                    onTypingFinished: {
-                        if(currentText !== AppModel.walletInfo.walletDescription){
-                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EDIT_DESCRIPTION, currentText)
+                    onTypingFinished: textOutput = Qt.binding(function(){return currentText;})
+                    onEditingFinished: wldescription.applyDescriptionChanged()
+                    function applyDescriptionChanged(){
+                        if(wldescription.textOutput !== AppModel.walletInfo.walletDescription){
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EDIT_DESCRIPTION, wldescription.textOutput)
                         }
                     }
                 }
-
                 QTextInputBox {
                     id: wltype
                     width: 344
                     heightMin: 54
                     mode: eREADONLY_MODE
                     color: "Transparent"
-                    placeholder.text: "WALLET TYPE"
-                    textOutput: AppModel.walletInfo.walletEscrow ? "One-Time Escrow Wallet" : "Standard Wallet"
+                    placeholder.text: STR.STR_QML_319
+                    textOutput: AppModel.walletInfo.walletEscrow ? STR.STR_QML_029 : STR.STR_QML_028
                 }
-
                 QTextInputBox {
                     id: addresstype
-                    readonly property var addressType_Value: ["Random", "Legacy", "Nested Segwit", "Native Segwit"]
+                    readonly property var addressType_Value: [
+                        STR.STR_QML_065,
+                        STR.STR_QML_064,
+                        STR.STR_QML_063,
+                        STR.STR_QML_062,
+                        STR.STR_QML_553
+                    ]
                     width: 344
                     heightMin: 54
                     mode: eREADONLY_MODE
                     color: "Transparent"
-                    placeholder.text: "ADDRESS TYPE"
+                    placeholder.text: STR.STR_QML_066
                     textOutput: addresstype.addressType_Value[AppModel.walletInfo.walletAddressType]
                 }
-
                 QTextInputBox {
                     id: createdate
                     width: 344
                     heightMin: 54
                     mode: eREADONLY_MODE
                     color: "Transparent"
-                    placeholder.text: "CREATED"
+                    placeholder.text: STR.STR_QML_067
                     textOutput: AppModel.walletInfo.walletCreateDate
                 }
             }
         }
-
         Row {
             id: rightTit
             spacing: 8
@@ -205,14 +167,13 @@ QScreen {
                 topMargin: 25
             }
             QText {
-                text: "Signers:"
+                text: STR.STR_QML_320
                 font.family: "Montserrat"
                 font.weight: Font.DemiBold
                 color: "#031F2B"
                 font.pixelSize: 14
                 verticalAlignment: Text.AlignBottom
             }
-
             QText {
                 text: AppModel.walletInfo.walletM
                 font.family: "Lato"
@@ -221,13 +182,11 @@ QScreen {
                 font.pixelSize: 16
                 verticalAlignment: Text.AlignBottom
             }
-
             Rectangle {
                 width: 1
                 height: 16
                 color: "#839096"
             }
-
             QText {
                 text: AppModel.walletInfo.walletN
                 font.family: "Lato"
@@ -237,7 +196,6 @@ QScreen {
                 verticalAlignment: Text.AlignBottom
             }
         }
-
         QListView {
             id: listSignerAssigned
             property bool isContainColdCard: false
@@ -252,128 +210,140 @@ QScreen {
                 top: rightTit.bottom
                 topMargin: 25
             }
-            interactive: count > 3
             ScrollBar.vertical: ScrollBar { active: true }
             delegate: Item {
+                id: delegateAssignSigners
                 width: 344
-                height: 89
+                height: rect.height + 4
+                property int    signerType: model.single_signer_type
                 Component.onCompleted: { if(single_signer_isColdcard) listSignerAssigned.isContainColdCard = true }
                 Rectangle {
                     id: rect
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 340
-                    height: 86
+                    width: parent.width - 4
+                    height: columnContent.height + 16
                     border.color: single_signer_isColdcard ? "#F6D65D" : "transparent"
                     color: itemMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.7):  Qt.rgba(255, 255, 255)
-                }
-
-                DropShadow {
-                    anchors.fill: rect
-                    verticalOffset: 2
-                    cached: true
-                    radius: 8
-                    samples: 16
-                    color: Qt.rgba(0, 0, 0, 0.15)
-                    source: rect
-                }
-
-                Rectangle {
-                    width: 4
-                    height: 72
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: 16
-                    color: itemMouse.containsMouse ? "#F6D65D" : "#C9DEF1"
-                }
-
-                Column {
-                    width: 280
-                    height: 69
-                    anchors {
-                        left: parent.left
-                        leftMargin: 28
-                        verticalCenter: parent.verticalCenter
+                    radius: 4
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        source: rect
+                        verticalOffset: 3
+                        radius: 8
+                        samples: 16
+                        color: "#80000000"
                     }
-
-                    Item {
-                        width: parent.width
-                        height: 21
-                        QText {
-                            id: signername
-                            width: parent.width - 63
+                    Rectangle {
+                        width: 4
+                        height: columnContent.height
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 16
+                        color: itemMouse.containsMouse ? "#F6D65D" : "#C9DEF1"
+                    }
+                    Column {
+                        id: columnContent
+                        width: parent.width - 40
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 30
+                        spacing: 8
+                        Item {
+                            width: parent.width
                             height: 21
-                            text: singleSigner_name
-                            font.pixelSize: 14
-                            font.weight: Font.DemiBold
-                            font.family: "Montserrat"
-                            color: "#031F2B"
-                            anchors.verticalCenter: parent.verticalCenter
-                            elide: Text.ElideRight
-                        }
-
-                        Rectangle {
-                            width: single_signer_isColdcard ? 79 : 63
-                            height: 21
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.right: parent.right
-                            color: single_signer_isColdcard ? "#F6D65D" : "#C9DEF1"
-                            visible: single_signer_isRemote || single_signer_isColdcard
-                            radius: 4
                             QText {
-                                text: single_signer_isColdcard ? "COLDCARD" : "AIR-GAPPED"
-                                font.family: "Lato"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
+                                id: signername
+                                width: parent.width - (signerTypeText.width + 30)
+                                height: 21
+                                text: model.singleSigner_name
+                                font.pixelSize: 14
+                                font.weight: Font.DemiBold
+                                font.family: "Montserrat"
                                 color: "#031F2B"
+                                anchors.verticalCenter: parent.verticalCenter
+                                elide: Text.ElideRight
+                            }
+                            Rectangle {
+                                width: _txt.paintedWidth + 8*2
+                                height: 21
+                                color: "#FDD95C"
+                                visible: model.single_signer_primary_key
+                                radius: 4
+                                anchors{
+                                    verticalCenter: parent.verticalCenter
+                                    right: _type.left
+                                    rightMargin: 4
+                                }
+                                QText {
+                                    id:_txt
+                                    text: STR.STR_QML_641
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    color: "#031F2B"
+                                }
+                            }
+                            Rectangle {
+                                id:_type
+                                width: signerTypeText.width + 10
+                                height: signerTypeText.height + 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.right: parent.right
+                                color: single_signer_isColdcard ? "#F6D65D" : "#C9DEF1"
+                                radius: 20
+                                QText {
+                                    id: signerTypeText
+                                    text: single_signer_isColdcard ? "COLDCARD" :  GlobalData.signerNames(delegateAssignSigners.signerType)
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    color: "#031F2B"
+                                }
                             }
                         }
-                    }
-
-                    QText {
-                        id: signerXFP
-                        width: parent.width
-                        height: 16
-                        text: "XFP: " + singleSigner_masterFingerPrint
-                        font.capitalization: Font.AllUppercase
-                        font.family: "Lato"
-                        font.pixelSize: 12
-                        color: "#031F2B"
-                    }
-
-                    QText {
-                        id: derivation
-                        width: parent.width
-                        height: 16
-                        text: "BIP32 Path: " + singleSigner_derivationPath
-                        font.family: "Lato"
-                        font.pixelSize: 12
-                        color: "#839096"
-                    }
-
-                    QText {
-                        id: healthCheckDate
-                        width: parent.width
-                        height: 16
-                        text: "Last Heath Check: " + singleSigner_lastHealthCheck
-                        font.family: "Lato"
-                        font.pixelSize: 12
-                        color: "#839096"
+                        QText {
+                            id: signerXFP
+                            width: parent.width
+                            height: 16
+                            text: qsTr("%1 %2").arg(STR.STR_QML_321).arg(model.singleSigner_masterFingerPrint)
+                            font.capitalization: Font.AllUppercase
+                            font.family: "Lato"
+                            font.pixelSize: 12
+                            color: "#031F2B"
+                        }
+                        QText {
+                            id: derivation
+                            width: parent.width
+                            height: 16
+                            text: qsTr("%1 %2").arg(STR.STR_QML_150).arg(model.singleSigner_derivationPath)
+                            font.family: "Lato"
+                            font.pixelSize: 12
+                            color: "#839096"
+                        }
+                        QText {
+                            id: healthCheckDate
+                            width: parent.width
+                            height: 16
+                            text: qsTr("%1 %2").arg(STR.STR_QML_322).arg(model.singleSigner_lastHealthCheck)
+                            font.family: "Lato"
+                            font.pixelSize: 12
+                            color: "#839096"
+                        }
                     }
                 }
-
-
                 MouseArea {
                     id: itemMouse
                     anchors.fill: parent
                     hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, index)
                     }
                 }
             }
         }
-
         QButtonLargeTail {
             id: exportwallet
             width: 198
@@ -384,12 +354,95 @@ QScreen {
                 bottom: parent.bottom
                 bottomMargin: 59
             }
-            label: "Export"
+            label: STR.STR_QML_323
             type: ePRIMARY
-            optionVisible: popExportWallet.visible
-            onButtonClicked: { popExportWallet.visible = true }
+            optionVisible: exportContextMenu.visible
+            onButtonClicked: {
+                exportContextMenu.x = 20
+                exportContextMenu.y = 20 - exportContextMenu.height
+                exportContextMenu.open()
+            }
+            QContextMenu {
+                id: exportContextMenu
+                menuWidth: 400
+                labels: [
+                    STR.STR_QML_324,
+                    STR.STR_QML_325,
+                    STR.STR_QML_326,
+                    STR.STR_QML_327,
+                    STR.STR_QML_328,
+                    STR.STR_QML_329,
+                    STR.STR_QML_330,
+                    STR.STR_QML_674
+                ]
+                icons: [
+                    "qrc:/Images/Images/description.png",
+                    "qrc:/Images/Images/backup.png",
+                    "qrc:/Images/Images/backup.png",
+                    "qrc:/Images/Images/backup.png",
+                    "qrc:/Images/Images/fileDownload.png",
+                    "qrc:/Images/Images/exportqr.png",
+                    "qrc:/Images/Images/exportqr.png",
+                    "qrc:/Images/Images/fileDownload.png"
+                ]
+                onItemClicked: {
+                    switch(index){
+                    case 0: // Export Wallet BSMS File
+                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.DESCRIPTOR
+                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                + ".bsms"
+                        exportwalletDialog.open()
+                        break;
+                    case 1: // Export Wallet Database
+                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.DB
+                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                + "-database.dat"
+                        exportwalletDialog.open()
+                        break;
+                    case 2: // "Export Transaction History (CSV)"
+                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.TRANSACTION_CSV
+                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                + "-tx-history.csv"
+                        exportwalletDialog.open()
+                        break;
+                    case 3: // "Export UTXOs (CSV)"
+                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.UTXO_CSV
+                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                + "-utxos.csv"
+                        exportwalletDialog.open()
+                        break;
+                    case 4: // "Export To Coldcard"
+                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD
+                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                + "-Coldcard-Config.txt"
+                        exportwalletDialog.open()
+                        break;
+                    case 5: // "Export as QR Keystone"
+                        qrcodeExportResult.open()
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, "keystone")
+                        break;
+                    case 6: //"Export as QR Passport"
+                        qrcodeExportResult.open()
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, "passport")
+                        break;
+                    case 7: //"Export wallet to Bitbox"
+                        var addrs = AppModel.walletInfo.walletunUsedAddressList;
+                        if(addrs.length > 0){
+                            displayAddressBusybox.addrToVerify = addrs[0]
+                            AppModel.startDisplayAddress(AppModel.walletInfo.walletId, addrs[0])
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
         }
-
         QButtonLargeTail {
             id: otheraction
             width: 200
@@ -400,14 +453,51 @@ QScreen {
                 bottom: parent.bottom
                 bottomMargin: 59
             }
-            label: "Other Actions"
+            label: STR.STR_QML_331
             type: eSECONDARY
-            optionVisible: popOtherActions.visible
-            onButtonClicked: { popOtherActions.visible = true }
+            optionVisible: othersContextMenu.visible
+            onButtonClicked: {
+                othersContextMenu.x = 20
+                othersContextMenu.y = 20 - othersContextMenu.height
+                othersContextMenu.open()
+            }
+            QContextMenu {
+                id: othersContextMenu
+                labels: [
+                    STR.STR_QML_312,
+                    STR.STR_QML_198,
+                    STR.STR_QML_332,
+                    STR.STR_QML_532
+                ]
+                icons: [
+                    "qrc:/Images/Images/settings-dark.svg",
+                    "qrc:/Images/Images/download.png",
+                    "qrc:/Images/Images/Delete.png",
+                    "qrc:/Images/Images/import_031F2B.png",
+                ]
+                enables: [true, true, true , true]
+                onItemClicked: {
+                    switch(index){
+                    case 0: // "Unspent Outputs"
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST)
+                        break;
+                    case 1: // "Change Addresses"
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST)
+                        break;
+                    case 2: // "Delete Wallet"
+                        modelConfirmDelete.open()
+                        break;
+                    case 3: // Import PSBT
+                        openfileDialog.open()
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
         }
-
         QText {
-            text: "*Export data do not include seeds or private keys."
+            text: STR.STR_QML_333
             anchors {
                 right: parent.right
                 rightMargin: 40
@@ -418,528 +508,37 @@ QScreen {
             font.pixelSize: 12
             color: "#323E4A"
         }
-
-        Item {
-            id: popOtherActions
-            visible: false
-            anchors.fill: parent
-            MouseArea {
-                anchors.fill: parent
-                onClicked: { popOtherActions.visible = false; }
-            }
-
-            Rectangle {
-                id: pop
-                width: 227
-                height: 112
-                anchors {
-                    right: parent.right
-                    rightMargin: 274
-                    bottom: parent.bottom
-                    bottomMargin: 83
-                }
-                radius: 4
-                color: "#FFFFFF"
-                visible: false
-            }
-
-            DropShadow {
-                anchors.fill: pop
-                verticalOffset: 3
-                cached: true
-                radius: 16
-                samples: 24
-                color: Qt.rgba(0, 0, 0, 0.14)
-                source: pop
-                Column {
-                    width: pop.width
-                    height: 96
-                    anchors.centerIn: parent
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseunspentoutput.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico1
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/settings.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico1.verticalCenter
-                            anchors.left: ico1.right
-                            anchors.leftMargin: 8
-                            text: "Unspent Outputs"
-                            color: Qt.rgba(0, 0, 0, 0.87)
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseunspentoutput
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST)
-                                popOtherActions.visible = false
-                            }
-                        }
-                    }
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mousechangeaddress.containsMouse ? "#C9DEF1" : "transparent"
-                        QImage {
-                            id: ico2
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/download.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico2.verticalCenter
-                            anchors.left: ico2.right
-                            anchors.leftMargin: 8
-                            text: "Change Addresses"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mousechangeaddress
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST)
-                                popOtherActions.visible = false
-                            }
-                        }
-                    }
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mousedeletewallet.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico3
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/Delete.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico3.verticalCenter
-                            anchors.left: ico3.right
-                            anchors.leftMargin: 8
-                            text: "Delete Wallet"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mousedeletewallet
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popOtherActions.visible = false
-                                modelConfirmDelete.visible = true
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Item {
-            id: popExportWallet
-            visible: false
-            anchors.fill: parent
-            MouseArea {
-                anchors.fill: parent
-                onClicked: { popExportWallet.visible = false; }
-            }
-
-            Rectangle {
-                id: pop2
-                width: 300
-                height: menuExport.height + 16
-                anchors {
-                    right: parent.right
-                    rightMargin: 60
-                    bottom: parent.bottom
-                    bottomMargin: 82
-                }
-                radius: 4
-                color: "#FFFFFF"
-                visible: false
-            }
-
-            DropShadow {
-                anchors.fill: pop2
-                verticalOffset: 3
-                cached: true
-                radius: 16
-                samples: 24
-                color: Qt.rgba(0, 0, 0, 0.14)
-                source: pop2
-                Column {
-                    id: menuExport
-                    width: pop2.width
-                    anchors.centerIn: parent
-
-                    // Descriptor
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseExportDescriptor.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico22
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/description.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico22.verticalCenter
-                            anchors.left: ico22.right
-                            anchors.leftMargin: 8
-                            text: "Export Wallet BSMS File"
-                            color: Qt.rgba(0, 0, 0, 0.87)
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseExportDescriptor
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popExportWallet.visible = false
-                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.DESCRIPTOR
-                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.walletInfo.walletName + "-Descriptors.bsms"
-                                exportwalletDialog.open()
-                            }
-                        }
-                    }
-
-                    //DB
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseExportDB.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico12
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/backup.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico12.verticalCenter
-                            anchors.left: ico12.right
-                            anchors.leftMargin: 8
-                            text: "Export Wallet Database"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseExportDB
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popExportWallet.visible = false
-                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.DB
-                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.walletInfo.walletName + "-database.dat"
-                                exportwalletDialog.open()
-                            }
-                        }
-                    }
-
-                    //CSV
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseExportTXsCsv.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico112
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/backup.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico112.verticalCenter
-                            anchors.left: ico112.right
-                            anchors.leftMargin: 8
-                            text: "Export Transaction History (CSV)"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseExportTXsCsv
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popExportWallet.visible = false
-                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.TRANSACTION_CSV
-                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.walletInfo.walletName + "-tx-history.csv"
-                                exportwalletDialog.open()
-                            }
-                        }
-                    }
-
-                    //CSV
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseExportUtxoCsv.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico122
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/backup.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico122.verticalCenter
-                            anchors.left: ico122.right
-                            anchors.leftMargin: 8
-                            text: "Export UTXOs (CSV)"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseExportUtxoCsv
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popExportWallet.visible = false
-                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.UTXO_CSV
-                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.walletInfo.walletName + "-utxos.csv"
-                                exportwalletDialog.open()
-                            }
-                        }
-                    }
-
-                    //Coldcard
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseExportColdcard.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico32
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/fileDownload.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico32.verticalCenter
-                            anchors.left: ico32.right
-                            anchors.leftMargin: 8
-                            text: "Export To Coldcard"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseExportColdcard
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popExportWallet.visible = false
-                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD
-                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.walletInfo.walletName + "-Coldcard-Config.txt"
-                                exportwalletDialog.open()
-                            }
-                        }
-                    }
-
-                    //QRcode
-                    Rectangle {
-                        width: parent.width
-                        height: 32
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: mouseExportqr.containsMouse ? "#C9DEF1" : "transparent"
-                        Image {
-                            id: ico41
-                            width: 24
-                            height: 24
-                            anchors.left: parent.left
-                            anchors.leftMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/exportqr.png"
-                        }
-                        QText {
-                            anchors.verticalCenter: ico41.verticalCenter
-                            anchors.left: ico41.right
-                            anchors.leftMargin: 8
-                            text: "Export as QR Code"
-                            color: Qt.rgba(0, 0, 0, 0.87) //#35ABEE
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: mouseExportqr
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                popExportWallet.visible = false
-//                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.COBO
-//                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + AppModel.walletInfo.walletName + "-Cobo-wallet.pspt"
-//                                exportwalletDialog.open()
-
-                                // Without save pspt file
-                                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, "")
-                                qrcodeExportResult.visible = true
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        QQrExportResult {
-            id: qrcodeExportResult
-            anchors.fill: parent
-            model: AppModel.qrExported
-            visible: false
-        }
-
-        Rectangle {
+        QConfirmDeletingTypeA {
             id: modelConfirmDelete
-            anchors.fill: parent
-            visible: false
-            MouseArea {anchors.fill: parent; onClicked: {}}
-            color: Qt.rgba(255, 255, 255, 0.7)
-            radius: 8
-
-            Rectangle {
-                id: modelConfirmDeleteContent
-                width: 488
-                height: 317
-                color: "#F1FAFE"
-                anchors.centerIn: parent
-                radius: 8
-                Rectangle {
-                    width: parent.width
-                    height: 2
-                    color: "Red"
-                    radius: 8
+            modalWidth: 488
+            modalHeight: 317
+            label: STR.STR_QML_334
+            content: STR.STR_QML_335
+            onDeleteRequest: {
+                var wallet = AppModel.walletInfo;
+                if(wallet.isSharedWallet){
+                    confirmDeleteWallet.open()
                 }
-
-                QText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 51
-                    horizontalAlignment: Text.AlignHCenter
-                    text: "Confirm Deleting Wallet"
-                    color: "#031F2B"
-                    font.family: "Montserrat"
-                    font.weight: Font.DemiBold
-                    font.pixelSize: 24
+                else{
+                    QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
                 }
-
-                QText {
-                    width: 355
-                    height: 63
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 91
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignHCenter
-                    text: "Once you delete the wallet, all your data (and metadata such as transaction memos) will be gone. We recommend backing up the wallet descriptors or database, if you want to recover the wallet later."
-                    font.family: "Lato"
-                    font.pixelSize: 14
-                }
-
-                QTextInputBox {
-                    id: inputDelete
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 170
-                    maximumLength: 10
-                    placeholder.text: "Type DELETE to confirm deleiton."
-                }
-
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 50
-                    spacing: 16
-                    QTextButton {
-                        width: 100
-                        height: 32
-                        label.text: "CANCEL"
-                        label.font.pixelSize: 10
-                        type: eTypeB
-                        radius: 12
-                        onButtonClicked: {modelConfirmDelete.visible = false}
-                    }
-
-                    QTextButton {
-                        width: 100
-                        height: 32
-                        label.text: "DELETE"
-                        radius: 12
-                        label.font.pixelSize: 10
-                        type: eTypeA
-                        enabled: (inputDelete.textOutput === "DELETE")
-                        onButtonClicked: {
-                            if(inputDelete.textOutput === "DELETE"){
-                                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo.walletId)
-                            }
-                        }
-                    }
-                }
-            }
-
-            DropShadow {
-                anchors.fill: modelConfirmDeleteContent
-                horizontalOffset: 3
-                verticalOffset: 3
-                radius: 8.0
-                samples: 17
-                color: "#80000000"
-                source: modelConfirmDeleteContent
             }
         }
     }
-
+    QConfirmYesNoPopup {
+        id: confirmDeleteWallet
+        title: STR.STR_QML_661
+        contentText: STR.STR_QML_662
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
+        }
+    }
+    QQrExportResult {
+        id: qrcodeExportResult
+        model: AppModel.qrExported
+    }
     FileDialog {
         id: exportwalletDialog
         property int exportFormat: -1
@@ -954,10 +553,10 @@ QScreen {
             else if(exportFormat === NUNCHUCKTYPE.COLDCARD){
                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_COLDCARD, exportwalletDialog.currentFile)
             }
-            else if(exportFormat === NUNCHUCKTYPE.COBO){
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, exportwalletDialog.currentFile)
-                qrcodeExportResult.visible = true
-            }
+//            else if(exportFormat === NUNCHUCKTYPE.QRCODE){
+//                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, exportwalletDialog.currentFile)
+//                qrcodeExportResult.open()
+//            }
             else if(exportFormat === NUNCHUCKTYPE.TRANSACTION_CSV){
                 var csvTxObj = { "csv_type"     : 1,
                                  "file_path"    : exportwalletDialog.currentFile};
@@ -971,4 +570,102 @@ QScreen {
             else{}
         }
     }
+    FileDialog {
+        id: openfileDialog
+        fileMode: FileDialog.OpenFile
+        onAccepted: {
+            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_IMPORT_PSBT, openfileDialog.file)
+        }
+    }
+    Popup {
+        id: displayAddressBusybox
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        background: Item{}
+        property string addrToVerify: ""
+        Rectangle {
+            id: displayAddressMask
+            width: 500
+            height: 250
+            radius: 8
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 500
+                    height: 250
+                    radius: 8
+                }
+            }
+            QCloseButton {
+                anchors {
+                    right: parent.right
+                    rightMargin: 16
+                    top: parent.top
+                    topMargin: 16
+                }
+                onClicked: {displayAddressBusybox.close()  ; displayAddressBusybox.addrToVerify = ""}
+            }
+            Column {
+                spacing: 16
+                anchors.centerIn: parent
+                QBusyIndicator {
+                    width: 70
+                    height: 70
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 14
+                    font.weight: Font.Bold
+                    text: STR.STR_QML_008
+                }
+                Rectangle {
+                    width: 450
+                    height: 60
+                    color: Qt.rgba(0, 0, 0, 0.1)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QText {
+                        anchors.fill: parent
+                        anchors.leftMargin: 5
+                        anchors.rightMargin: 5
+                        anchors.topMargin: 5
+                        anchors.bottomMargin: 5
+                        wrapMode: Text.WrapAnywhere
+                        horizontalAlignment: Text.AlignHCenter
+                        text: displayAddressBusybox.addrToVerify
+                        anchors.centerIn: parent
+                        font.pixelSize: 18
+                        color: "#323E4A"
+                    }
+                }
+            }
+        }
+        DropShadow {
+            anchors.fill: displayAddressMask
+            horizontalOffset: 3
+            verticalOffset: 5
+            spread: 0
+            radius: 8
+            samples: 30
+            color: "#aa000000"
+            source: displayAddressMask
+        }
+    }
+    Connections {
+        target: AppModel
+        onStartDisplayAddress: {
+            if(isOnTop) displayAddressBusybox.open()
+            else displayAddressBusybox.close()
+        }
+        onFinishedDisplayAddress: {
+            displayAddressBusybox.close()
+        }
+    }
 }
+

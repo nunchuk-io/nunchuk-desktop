@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "UTXOModel.h"
 #include "AppSetting.h"
 #include "qUtils.h"
@@ -199,11 +218,11 @@ QHash<int, QByteArray> UTXOListModel::roleNames() const {
 void UTXOListModel::addUTXO(const QString &txid, const int vout, const QString &address, const qint64 amount, const int height,  const QString &memo)
 {
     beginResetModel();
-    d_.append(QSharedPointer<UTXO>(new UTXO(txid, vout, address, amount, height, memo)));
+    d_.append(QUTXOPtr(new UTXO(txid, vout, address, amount, height, memo)));
     endResetModel();
 }
 
-QSharedPointer<UTXO> UTXOListModel::getUTXOByIndex(const int index)
+QUTXOPtr UTXOListModel::getUTXOByIndex(const int index)
 {
     if(index < 0 || index >= d_.count()){
         DBG_INFO << "Index out of range";
@@ -216,7 +235,7 @@ QSharedPointer<UTXO> UTXOListModel::getUTXOByIndex(const int index)
 
 void UTXOListModel::updateSelected(const QString &txid, const int vout)
 {
-    foreach (QSharedPointer<UTXO> it, d_) {
+    foreach (QUTXOPtr it, d_) {
         if((it.data()->txid() == txid) && (it.data()->vout() == vout)){
             beginResetModel();
             it.data()->setSelected(true);
@@ -227,7 +246,7 @@ void UTXOListModel::updateSelected(const QString &txid, const int vout)
 
 qint64 UTXOListModel::getAmount(const QString &txid, const int vout)
 {
-    foreach (QSharedPointer<UTXO> it, d_) {
+    foreach (QUTXOPtr it, d_) {
         if((it.data()->txid() == txid) && (it.data()->vout() == vout)){
             return it.data()->amountSats();
         }
@@ -275,7 +294,7 @@ void UTXOListModel::requestSort(int role, int order)
 void UTXOListModel::notifyUnitChanged()
 {
     beginResetModel();
-    foreach (QSharedPointer<UTXO> it, d_) {
+    foreach (QUTXOPtr it, d_) {
         if(it.data()){
             emit it.data()->amountChanged();
         }
@@ -285,7 +304,6 @@ void UTXOListModel::notifyUnitChanged()
 
 QString UTXOListModel::amountDisplay()
 {
-
     if(1 == AppSetting::instance()->unit()){
         return QString::number(amountSats());
     }
@@ -307,7 +325,7 @@ int UTXOListModel::amountSats()
 int UTXOListModel::totalAmountSelected()
 {
     int total = 0;
-    foreach (QSharedPointer<UTXO> it, d_) {
+    foreach (QUTXOPtr it, d_) {
         if(it.data()->selected()){
             total += it.data()->amountSats();
         }
@@ -315,42 +333,42 @@ int UTXOListModel::totalAmountSelected()
     return total;
 }
 
-bool sortbyAmountAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyAmountAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (v1.data()->amountSats()) < (v2.data()->amountSats());
 }
 
-bool sortbyAmountDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyAmountDescending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (v1.data()->amountSats()) > (v2.data()->amountSats());
 }
 
-bool sortbyAddressAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyAddressAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (QString::compare((v1.data()->address()), (v2.data()->address())) < 0);
 }
 
-bool sortbyAddressDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyAddressDescending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (QString::compare((v1.data()->address()), (v2.data()->address())) > 0);
 }
 
-bool sortbyHeightAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyHeightAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return v1.data()->height() < v2.data()->height();
 }
 
-bool sortbyHeightDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyHeightDescending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return v1.data()->height() > v2.data()->height();
 }
 
-bool sortbyMemoAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyMemoAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (QString::compare((v1.data()->memo()), (v2.data()->memo())) < 0);
 }
 
-bool sortbyMemoDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2)
+bool sortbyMemoDescending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (QString::compare((v1.data()->memo()), (v2.data()->memo())) > 0);
 }

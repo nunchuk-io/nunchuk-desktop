@@ -1,137 +1,160 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
 import "../origins"
+import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: wldlg
     width: 304
-    height: 64
-    color: walletmouse.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
-
-    property bool isCurrentIndex: false
-    property bool isEscrow: true
-    property string walletName : "Name"
-    property string walletBalance: "0.0000000"
+    height: rowcontent.height
+    color: isCurrentIndex ? Qt.rgba(255, 255, 255, 0.3) : walletmouse.containsMouse ?  Qt.rgba(255, 255, 255, 0.1) : "transparent"
+    property bool   isCurrentIndex: false
+    property bool   isEscrow: false
+    property bool   isShared: false
+    property string walletName      : "Name"
+    property string walletBalance   : "0.0000000"
+    property string walletCurrency  : "0.0000000"
     property string walletM: "0"
     property string walletN: "0"
-
-    Rectangle {
-        width: parent.width
-        height: 1
-        color: "#C9DEF1"
-        opacity: 0.1
-        anchors.bottom: parent.bottom
-    }
-
-    Rectangle {
-        id: indi
-        width: 8
-        height: parent.height
-        color: "#F6D65D"
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        visible: isCurrentIndex
-    }
-
-    Column {
-        width: 216
-        height: isEscrow ? 53 : 37
-        anchors.left: parent.left
-        anchors.leftMargin: 24
-        anchors.verticalCenter: parent.verticalCenter
-        Item {
-            width: 64
-            height: isEscrow ? 16 : 0
-            visible: isEscrow
-            QImage {
-                id: escIco
-                width: 16
-                height: 16
-                anchors {
-                    left: parent.left
-                    verticalCenter: parent.verticalCenter
-                }
-                source: "qrc:/Images/Images/Escrow Wallet.png"
-            }
-
-            QText {
-                width: 47
-                height: 10
-                anchors {
-                    left: escIco.right
-                    leftMargin: 3
-                    verticalCenter: escIco.verticalCenter
-                }
-                text: "ESCROW"
-                color: "#F6D65D"
-                font.pixelSize: 10
-                font.letterSpacing: 0.05
-                lineHeight: 10
-            }
-        }
-
-        QText {
-            id: idWalletName
-            width: 216
-            height: 21
-            text: wldlg.walletName
-            color: "#F1FAFE"
-            font.weight: Font.Bold
-            elide: Text.ElideRight
-            font.pixelSize: 14
-            lineHeight: 21
-        }
-        QText {
-            id: idWalletBalabce
-            width: 208
-            height: 16
-            text: walletBalance + ((AppSetting.unit === 1) ? " sat" : " BTC")
-            color: "#F1FAFE"
-            font.pixelSize: 12
-            lineHeight: 16
-        }
-    }
-
     Row {
-        height: 21
+        id: rowcontent
+        width: parent.width
+        height: content.height + 20
         anchors.verticalCenter: parent.verticalCenter
-        anchors.right: parent.right
-        anchors.rightMargin: 21.5
         spacing: 8
-
-        QText {
-            id: id_walletM
-            text: walletM
-            color: "#F7F7F9"
-            font.pixelSize: 16
-            lineHeight: 21
-            font.weight: Font.DemiBold
-            horizontalAlignment: Text.AlignLeft
-            anchors.verticalCenter: parent.verticalCenter
-        }
         Rectangle {
-            width: 1
-            height: 16
-            color: "#F7F7F9"
+            width: 8
+            height: parent.height
+            color: isCurrentIndex ? "#F6D65D" : "transparent"
             anchors.verticalCenter: parent.verticalCenter
         }
-        QText {
-            id: id_walletN
-            text: walletN
-            color: "#F6D65D"
-            font.pixelSize: 16
-            lineHeight: 21
-            font.weight: Font.DemiBold
-            horizontalAlignment: Text.AlignRight
+        Item {
+            id: content
+            width: 190
+            height: childrenRect.height
             anchors.verticalCenter: parent.verticalCenter
+            Column {
+                width: parent.width
+                spacing: 4
+                Item {
+                    width: parent.width
+                    height: 20
+                    QText {
+                        anchors.fill: parent
+                        text: wldlg.walletName
+                        color: "#FFFFFF"
+                        elide: Text.ElideRight
+                        font.weight: Font.Bold
+                        font.pixelSize: 16
+                    }
+                }
+                Item {
+                    width: parent.width
+                    height: 16
+                    QText {
+                        anchors.fill: parent
+                        text: walletBalance + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                        color: "#FFFFFF"
+                        elide: Text.ElideRight
+                        font.weight: Font.DemiBold
+                        font.pixelSize: 12
+                    }
+                }
+                Item {
+                    width: parent.width
+                    height: 16
+                    QText {
+                        anchors.fill: parent
+                        text: qsTr("$%1 USD").arg(walletCurrency)
+                        color: "#FFFFFF"
+                        elide: Text.ElideRight
+                        font.pixelSize: 12
+                    }
+                }
+            }
         }
-    }
-
-
-    Rectangle {
-        anchors.fill: parent
-        color: Qt.rgba(255, 255, 255, 0.3)
-        visible: isCurrentIndex
+        Item {
+            width: 80
+            height: childrenRect.height
+            anchors.verticalCenter: parent.verticalCenter
+            Column {
+                width: parent.width
+                spacing: 4
+                Item {
+                    width: parent.width
+                    height: 20
+                    QImage {
+                        width: height
+                        height: parent.height
+                        anchors.right: parent.right
+                        visible: isEscrow
+                        source: "qrc:/Images/Images/OnlineMode/Escrow Wallet.png"
+                    }
+                }
+                Item {
+                    width: parent.width
+                    height: 16
+                    Rectangle{
+                        width: 70
+                        height: parent.height
+                        radius: 20
+                        visible: isShared
+                        color: "#EAEAEA"
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 4
+                            QImage {
+                                width: 12
+                                height: 12
+                                source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                            }
+                            QText{
+                                font.family: "Lato"
+                                font.pixelSize: 10
+                                color: "#031F2B"
+                                text: STR.STR_QML_438
+                                font.weight: Font.Bold
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 16
+                    radius: 20
+                    color: "#EAEAEA"
+                    QText {
+                        anchors.centerIn: parent
+                        text: walletN === "1" ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(STR.STR_QML_069);
+                        color: "#031F2B"
+                        font.weight: Font.Bold
+                        font.pixelSize: 10
+                    }
+                }
+            }
+        }
     }
 
     signal buttonClicked()

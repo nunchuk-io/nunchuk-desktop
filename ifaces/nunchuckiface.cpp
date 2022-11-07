@@ -1,20 +1,37 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "nunchuckiface.h"
 #include "nunchucklistener.h"
 #include "QOutlog.h"
 
-nunchukiface::nunchukiface(){}
+nunchukiface::nunchukiface(): nunchukMode_(LOCAL_MODE){}
 
 nunchukiface::~nunchukiface(){}
 
 void nunchukiface::registerCallback()
 {
-#ifndef USING_STUB_API
     AddBalanceListener(balance_listener);
     AddDeviceListener(devices_listener);
     AddTransactionListener(transaction_listener);
     AddBlockListener(block_listener);
     AddBlockchainConnectionListener(blockchain_connection_listener);
-#endif
 }
 
 nunchukiface *nunchukiface::instance() {
@@ -22,52 +39,71 @@ nunchukiface *nunchukiface::instance() {
     return &mInstance;
 }
 
-bool nunchukiface::makeNunchukInstance(const nunchuk::AppSettings& appsettings, const std::string& passphrase, QWarningMessage& msg)
+void nunchukiface::setNunchukMode(int mode)
 {
-#ifdef USING_STUB_API
-//    msg.setWarningMessage(-1014, "makeNunchuckInstance ERROR", EWARNING::WarningType::EXCEPTION_MSG);
-    return true;
-#else
+    nunchukMode_ = mode;
+}
+
+int nunchukiface::nunchukMode() const
+{
+    return nunchukMode_;
+}
+
+void nunchukiface::makeNunchukInstance(const nunchuk::AppSettings& appsettings,
+                                       const std::string& passphrase,
+                                       QWarningMessage& msg)
+{
+    nunchuk_instance_[LOCAL_MODE] = NULL;
     try {
-        nunchuk_instance_ = nunchuk::MakeNunchuk(appsettings, passphrase);
+        nunchuk_instance_[LOCAL_MODE] = nunchuk::MakeNunchuk(appsettings, passphrase);
+        if(nunchuk_instance_[LOCAL_MODE]){
+            this->registerCallback();
+        }
     }
     catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-        nunchuk_instance_ = NULL;
+        nunchuk_instance_[LOCAL_MODE] = NULL;
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION " << e.what();
-        nunchuk_instance_ = NULL;
+        nunchuk_instance_[LOCAL_MODE] = NULL;
     }
-
-    if(nunchuk_instance_){
-        this->registerCallback();
-        return true;
-    }
-    else{
-        return false;
-    }
-#endif
 }
 
-bool nunchukiface::SetPassphrase(const std::string &passphrase, QWarningMessage& msg){
-    DBG_INFO;
-    bool ret = false;
-#ifdef USING_STUB_API
+void nunchukiface::makeNunchukInstanceForAccount(const nunchuk::AppSettings &appsettings,
+                                                 const std::string &passphrase,
+                                                 const std::string &account,
+                                                 QWarningMessage &msg)
+{
+    nunchuk_instance_[ONLINE_MODE] = NULL;
     try {
-        nunchuk::SetPassphrase(passphrase);
-        ret = true;
+        nunchuk_instance_[ONLINE_MODE] = nunchuk::MakeNunchukForAccount(appsettings, passphrase, account);
+        if(nunchuk_instance_[ONLINE_MODE]){
+            this->registerCallback();
+        }
     }
     catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-        ret = false;
+        nunchuk_instance_[ONLINE_MODE] = NULL;
     }
-#else
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION " << e.what();
+        nunchuk_instance_[ONLINE_MODE] = NULL;
+    }
+}
+
+const std::unique_ptr<nunchuk::Nunchuk>& nunchukiface::nunchukinstance() const
+{
+    return nunchuk_instance_[nunchukMode()];
+}
+
+bool nunchukiface::SetPassphrase(const std::string &passphrase, QWarningMessage& msg){
+    bool ret = false;
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->SetPassphrase(passphrase);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->SetPassphrase(passphrase);
             ret = true;
         }
     }
@@ -80,33 +116,22 @@ bool nunchukiface::SetPassphrase(const std::string &passphrase, QWarningMessage&
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 nunchuk::Wallet nunchukiface::CreateWallet(const std::string &name,
-                                             int m,
-                                             int n,
-                                             std::vector<nunchuk::SingleSigner> &signers,
-                                             nunchuk::AddressType address_type,
-                                             bool is_escrow,
-                                             const std::string &desc,
-                                             QWarningMessage& msg)
+                                           int m,
+                                           int n,
+                                           std::vector<nunchuk::SingleSigner> &signers,
+                                           nunchuk::AddressType address_type,
+                                           bool is_escrow,
+                                           const std::string &desc,
+                                           QWarningMessage& msg)
 {
-    DBG_INFO << name;
-    nunchuk::Wallet ret(name, m, n, signers, address_type, is_escrow, 0);
-#ifdef USING_STUB_API
+    nunchuk::Wallet ret(false);
     try {
-        ret = nunchuk::CreateWallet(name, m, n, signers, address_type, is_escrow, desc);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->CreateWallet(name, m, n, signers, address_type, is_escrow, desc);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateWallet(name, m, n, signers, address_type, is_escrow, desc);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -114,29 +139,24 @@ nunchuk::Wallet nunchukiface::CreateWallet(const std::string &name,
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::exception &e) {
-       DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::string nunchukiface::DraftWallet(const std::string &name,
-                                       int m,
-                                       int n,
-                                       std::vector<nunchuk::SingleSigner> &signers,
-                                       nunchuk::AddressType address_type,
-                                       bool is_escrow,
-                                       const std::string &desc,
-                                       QWarningMessage &msg)
+                                      int m,
+                                      int n,
+                                      std::vector<nunchuk::SingleSigner> &signers,
+                                      nunchuk::AddressType address_type,
+                                      bool is_escrow,
+                                      const std::string &desc,
+                                      QWarningMessage &msg)
 {
-    DBG_INFO << name;
     std::string ret = "";
-#ifdef USING_STUB_API
-    ret = nunchuk::DraftWallet(name, m, n, signers, address_type, is_escrow, desc);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->DraftWallet(name, m, n, signers, address_type, is_escrow, desc);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DraftWallet(name, m, n, signers, address_type, is_escrow, desc);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -148,19 +168,15 @@ std::string nunchukiface::DraftWallet(const std::string &name,
         ret = "";
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::vector<nunchuk::Wallet> nunchukiface::GetWallets(QWarningMessage& msg){
 
     std::vector<nunchuk::Wallet> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetWallets();
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetWallets();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetWallets();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -170,22 +186,14 @@ std::vector<nunchuk::Wallet> nunchukiface::GetWallets(QWarningMessage& msg){
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
-    DBG_INFO << ret.size();
     return ret;
 }
 
 nunchuk::Wallet nunchukiface::GetWallet(const std::string &wallet_id, QWarningMessage& msg){
-    DBG_INFO << wallet_id;
-
-    std::vector<nunchuk::SingleSigner> temp;
-    nunchuk::Wallet ret("", 0, 0, temp , nunchuk::AddressType::ANY, 0, 0);
-#ifdef USING_STUB_API
-    ret = nunchuk::GetWallet(wallet_id);
-#else
+    nunchuk::Wallet ret(false);
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetWallet(wallet_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetWallet(wallet_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -195,19 +203,14 @@ nunchuk::Wallet nunchukiface::GetWallet(const std::string &wallet_id, QWarningMe
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::DeleteWallet(const std::string &wallet_id, QWarningMessage &msg){
-    DBG_INFO << wallet_id;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::DeleteWallet(wallet_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->DeleteWallet(wallet_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DeleteWallet(wallet_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -219,19 +222,14 @@ bool nunchukiface::DeleteWallet(const std::string &wallet_id, QWarningMessage &m
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
-bool nunchukiface::UpdateWallet(nunchuk::Wallet &wallet, QWarningMessage &msg){
-    DBG_INFO;
+bool nunchukiface::UpdateWallet(const nunchuk::Wallet &wallet, QWarningMessage &msg){
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::UpdateWallet(wallet);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->UpdateWallet(wallet);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->UpdateWallet(wallet);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -243,22 +241,14 @@ bool nunchukiface::UpdateWallet(nunchuk::Wallet &wallet, QWarningMessage &msg){
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::ExportWallet(const std::string &wallet_id, const std::string &file_path, nunchuk::ExportFormat format, QWarningMessage &msg){
-    DBG_INFO << wallet_id << file_path << (int)format;
-
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::ExportWallet(wallet_id, file_path, format);
-#else
     try {
-        if(nunchuk_instance_){
-            DBG_INFO << "START EXPORT";
-            ret = nunchuk_instance_->ExportWallet(wallet_id, file_path, format);
-            DBG_INFO << "END EXPORT";
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportWallet(wallet_id, file_path, format);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -270,27 +260,14 @@ bool nunchukiface::ExportWallet(const std::string &wallet_id, const std::string 
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 nunchuk::Wallet nunchukiface::ImportWalletDb(const std::string &file_path, QWarningMessage& msg){
-    DBG_INFO << file_path;
-
-    std::vector<nunchuk::SingleSigner> temp;
-    nunchuk::Wallet ret("", 0, 0, temp , nunchuk::AddressType::ANY, 0, 0);
-#ifdef USING_STUB_API
+    nunchuk::Wallet ret(false);
     try {
-        ret = nunchuk::ImportWalletDb(file_path);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportWalletDb(file_path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportWalletDb(file_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -300,24 +277,18 @@ nunchuk::Wallet nunchukiface::ImportWalletDb(const std::string &file_path, QWarn
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Wallet nunchukiface::ImportWalletDescriptor(const std::string& file_path,
-                                                      const std::string& name,
-                                                      const std::string& description,
-                                                      QWarningMessage& msg)
+                                                     const std::string& name,
+                                                     const std::string& description,
+                                                     QWarningMessage& msg)
 {
-    DBG_INFO << file_path;
-    std::vector<nunchuk::SingleSigner> temp;
-    nunchuk::Wallet ret("", 0, 0, temp , nunchuk::AddressType::ANY, 0, 0);
-#ifdef USING_STUB_API
-    ret = nunchuk::ImportWalletDescriptor(file_path, name, description);
-#else
+    nunchuk::Wallet ret(false);
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportWalletDescriptor(file_path, name, description);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportWalletDescriptor(file_path, name, description);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -327,24 +298,14 @@ nunchuk::Wallet nunchukiface::ImportWalletDescriptor(const std::string& file_pat
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::vector<nunchuk::Device> nunchukiface::GetDevices(QWarningMessage& msg){
     std::vector<nunchuk::Device> ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::GetDevices();
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetDevices();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetDevices();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -354,21 +315,14 @@ std::vector<nunchuk::Device> nunchukiface::GetDevices(QWarningMessage& msg){
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
-    DBG_INFO << ret.size();
     return ret;
 }
 
 nunchuk::MasterSigner nunchukiface::CreateMasterSigner(const std::string &name, const nunchuk::Device &device, QWarningMessage& msg){
-    DBG_INFO << name;
-
     nunchuk::MasterSigner ret("", nunchuk::Device(""), 0);
-#ifdef USING_STUB_API
-    ret = nunchuk::CreateMasterSigner(name, device);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->CreateMasterSigner(name, device, create_master_signer_listener);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateMasterSigner(name, device, create_master_signer_listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -378,55 +332,38 @@ nunchuk::MasterSigner nunchukiface::CreateMasterSigner(const std::string &name, 
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::SingleSigner nunchukiface::GetSignerFromMasterSigner(const std::string &mastersigner_id,
-                                                                const nunchuk::WalletType &wallet_type,
-                                                                const nunchuk::AddressType &address_type,
-                                                                int index,
-                                                                QWarningMessage& msg)
+                                                              const nunchuk::WalletType &wallet_type,
+                                                              const nunchuk::AddressType &address_type,
+                                                              int index,
+                                                              QWarningMessage& msg)
 {
-    DBG_INFO << mastersigner_id;
-
     nunchuk::SingleSigner ret("","","","","",0,"");
-#ifdef USING_STUB_API
-    ret = nunchuk::GetSignerFromMasterSigner(mastersigner_id, wallet_type, address_type, index);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetSignerFromMasterSigner(mastersigner_id, wallet_type, address_type, index);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSignerFromMasterSigner(mastersigner_id, wallet_type, address_type, index);
         }
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::SingleSigner nunchukiface::CreateSigner(const std::string &name,
-                                                   const std::string &xpub,
-                                                   const std::string &public_key,
-                                                   const std::string &derivation_path,
-                                                   const std::string &master_fingerprint,
-                                                   QWarningMessage& msg)
+                                                 const std::string &xpub,
+                                                 const std::string &public_key,
+                                                 const std::string &derivation_path,
+                                                 const std::string &master_fingerprint,
+                                                 QWarningMessage& msg)
 {
-    DBG_INFO << name << xpub << public_key << derivation_path << master_fingerprint;
     nunchuk::SingleSigner ret("","","","","",0,"");
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::CreateSigner(name, xpub, public_key, derivation_path, master_fingerprint);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->CreateSigner(name, xpub, public_key, derivation_path, master_fingerprint);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateSigner(name, xpub, public_key, derivation_path, master_fingerprint);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -436,24 +373,18 @@ nunchuk::SingleSigner nunchukiface::CreateSigner(const std::string &name,
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 int nunchukiface::GetCurrentIndexFromMasterSigner(const std::string &mastersigner_id,
-                                                   const nunchuk::WalletType &wallet_type,
-                                                   const nunchuk::AddressType &address_type,
-                                                   QWarningMessage &msg)
+                                                  const nunchuk::WalletType &wallet_type,
+                                                  const nunchuk::AddressType &address_type,
+                                                  QWarningMessage &msg)
 {
-    DBG_INFO << mastersigner_id;
-
     int ret = -1;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetCurrentIndexFromMasterSigner(mastersigner_id, wallet_type, address_type);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetCurrentIndexFromMasterSigner(mastersigner_id, wallet_type, address_type);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetCurrentIndexFromMasterSigner(mastersigner_id, wallet_type, address_type);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -465,29 +396,18 @@ int nunchukiface::GetCurrentIndexFromMasterSigner(const std::string &mastersigne
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = -1;
     }
-#endif
     return ret;
 }
 
 nunchuk::SingleSigner nunchukiface::GetUnusedSignerFromMasterSigner(const std::string &mastersigner_id,
-                                                                      const nunchuk::WalletType &wallet_type,
-                                                                      const nunchuk::AddressType &address_type,
-                                                                      QWarningMessage& msg)
+                                                                    const nunchuk::WalletType &wallet_type,
+                                                                    const nunchuk::AddressType &address_type,
+                                                                    QWarningMessage& msg)
 {
-    DBG_INFO << mastersigner_id << (int)wallet_type << (int)address_type;
     nunchuk::SingleSigner ret("","","","","",0,"");
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::GetUnusedSignerFromMasterSigner(mastersigner_id, wallet_type, address_type);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetUnusedSignerFromMasterSigner(mastersigner_id, wallet_type, address_type);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetUnusedSignerFromMasterSigner(mastersigner_id, wallet_type, address_type);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -497,20 +417,15 @@ nunchuk::SingleSigner nunchukiface::GetUnusedSignerFromMasterSigner(const std::s
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::vector<nunchuk::SingleSigner> nunchukiface::GetSignersFromMasterSigner(const std::string &mastersigner_id, QWarningMessage& msg)
 {
-    DBG_INFO << mastersigner_id;
     std::vector<nunchuk::SingleSigner> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetSignersFromMasterSigner(mastersigner_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetSignersFromMasterSigner(mastersigner_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSignersFromMasterSigner(mastersigner_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -520,21 +435,15 @@ std::vector<nunchuk::SingleSigner> nunchukiface::GetSignersFromMasterSigner(cons
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
-int nunchukiface::GetNumberOfSignersFromMasterSigner(const std::string &mastersigner_id, QWarningMessage &msg)
+bool nunchukiface::HasSigner(const nunchuk::SingleSigner &signer,QWarningMessage& msg)
 {
-    DBG_INFO << mastersigner_id;
-
-    int ret = -1;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetNumberOfSignersFromMasterSigner(mastersigner_id);
-#else
+    bool ret = false;
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetNumberOfSignersFromMasterSigner(mastersigner_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->HasSigner(signer);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -546,20 +455,35 @@ int nunchukiface::GetNumberOfSignersFromMasterSigner(const std::string &mastersi
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = -1;
     }
-#endif
+    return ret;
+}
+
+int nunchukiface::GetNumberOfSignersFromMasterSigner(const std::string &mastersigner_id, QWarningMessage &msg)
+{
+    int ret = -1;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetNumberOfSignersFromMasterSigner(mastersigner_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = -1;
+    }
     return ret;
 }
 
 std::vector<nunchuk::MasterSigner> nunchukiface::GetMasterSigners(QWarningMessage& msg)
 {
-    DBG_INFO;
     std::vector<nunchuk::MasterSigner> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetMasterSigners();
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetMasterSigners();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetMasterSigners();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -569,20 +493,15 @@ std::vector<nunchuk::MasterSigner> nunchukiface::GetMasterSigners(QWarningMessag
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::MasterSigner nunchukiface::GetMasterSigner(const std::string &mastersigner_id, QWarningMessage& msg)
 {
-    DBG_INFO << mastersigner_id;
     nunchuk::MasterSigner ret("", nunchuk::Device(""), 0);
-#ifdef USING_STUB_API
-    ret = nunchuk::GetMasterSigner(mastersigner_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetMasterSigner(mastersigner_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetMasterSigner(mastersigner_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -592,20 +511,15 @@ nunchuk::MasterSigner nunchukiface::GetMasterSigner(const std::string &mastersig
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::DeleteMasterSigner(const std::string &mastersigner_id, QWarningMessage &msg)
 {
-    DBG_INFO << mastersigner_id;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::DeleteMasterSigner(mastersigner_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->DeleteMasterSigner(mastersigner_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DeleteMasterSigner(mastersigner_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -617,20 +531,15 @@ bool nunchukiface::DeleteMasterSigner(const std::string &mastersigner_id, QWarni
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::DeleteRemoteSigner(const std::string &master_fingerprint, const std::string &derivation_path, QWarningMessage &msg)
 {
-    DBG_INFO << master_fingerprint << derivation_path;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::DeleteRemoteSigner(master_fingerprint, derivation_path);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->DeleteRemoteSigner(master_fingerprint, derivation_path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DeleteRemoteSigner(master_fingerprint, derivation_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -642,20 +551,15 @@ bool nunchukiface::DeleteRemoteSigner(const std::string &master_fingerprint, con
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::UpdateRemoteSigner(const nunchuk::SingleSigner &remotesigner, QWarningMessage &msg)
 {
-    DBG_INFO;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::UpdateRemoteSigner(remotesigner);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->UpdateRemoteSigner(remotesigner);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->UpdateRemoteSigner(remotesigner);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -667,20 +571,15 @@ bool nunchukiface::UpdateRemoteSigner(const nunchuk::SingleSigner &remotesigner,
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
-bool nunchukiface::UpdateMasterSigner(nunchuk::MasterSigner &mastersigner, QWarningMessage &msg)
+bool nunchukiface::UpdateMasterSigner(const nunchuk::MasterSigner &mastersigner, QWarningMessage &msg)
 {
-    DBG_INFO;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::UpdateMasterSigner(mastersigner);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->UpdateMasterSigner(mastersigner);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->UpdateMasterSigner(mastersigner);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -692,20 +591,15 @@ bool nunchukiface::UpdateMasterSigner(nunchuk::MasterSigner &mastersigner, QWarn
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 std::vector<nunchuk::SingleSigner> nunchukiface::GetRemoteSigners(QWarningMessage &msg)
 {
-    DBG_INFO;
     std::vector<nunchuk::SingleSigner> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetRemoteSigners();
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetRemoteSigners();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetRemoteSigners();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -715,25 +609,15 @@ std::vector<nunchuk::SingleSigner> nunchukiface::GetRemoteSigners(QWarningMessag
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::string nunchukiface::GetHealthCheckPath()
 {
     std::string ret = "N/A";
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::GetHealthCheckPath();
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        ret = "N/A";
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetHealthCheckPath();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetHealthCheckPath();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -744,32 +628,19 @@ std::string nunchukiface::GetHealthCheckPath()
         DBG_INFO << "THROW EXCEPTION" << e.what();
         ret = "N/A";
     }
-#endif
-    DBG_INFO << ret;
     return ret;
 }
 
 nunchuk::HealthStatus nunchukiface::HealthCheckMasterSigner(const std::string &fingerprint,
-                                                             std::string &message,
-                                                             std::string &signature,
-                                                             std::string &path,
-                                                             QWarningMessage &msg)
+                                                            std::string &message,
+                                                            std::string &signature,
+                                                            std::string &path,
+                                                            QWarningMessage &msg)
 {
-    DBG_INFO << fingerprint << message;
     nunchuk::HealthStatus ret = nunchuk::HealthStatus::FINGERPRINT_NOT_MATCHED;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::HealthCheckMasterSigner(fingerprint, message, signature, path);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-        ret = nunchuk::HealthStatus::FINGERPRINT_NOT_MATCHED;
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->HealthCheckMasterSigner(fingerprint, message, signature, path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->HealthCheckMasterSigner(fingerprint, message, signature, path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -781,22 +652,17 @@ nunchuk::HealthStatus nunchukiface::HealthCheckMasterSigner(const std::string &f
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = nunchuk::HealthStatus::FINGERPRINT_NOT_MATCHED;
     }
-#endif
     return ret;
 }
 
 nunchuk::HealthStatus nunchukiface::HealthCheckSingleSigner(const nunchuk::SingleSigner &signer,
-                                                              const std::string &message,
-                                                              const std::string &signature, QWarningMessage &msg)
+                                                            const std::string &message,
+                                                            const std::string &signature, QWarningMessage &msg)
 {
-    DBG_INFO << message << signature;
     nunchuk::HealthStatus ret = nunchuk::HealthStatus::SIGNATURE_INVALID;
-#ifdef USING_STUB_API
-    ret = nunchuk::HealthCheckSingleSigner(signer, message, signature);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->HealthCheckSingleSigner(signer, message, signature);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->HealthCheckSingleSigner(signer, message, signature);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -808,22 +674,18 @@ nunchuk::HealthStatus nunchukiface::HealthCheckSingleSigner(const nunchuk::Singl
         DBG_INFO << "THROW EXCEPTIONS";
         ret = nunchuk::HealthStatus::FINGERPRINT_NOT_MATCHED;
     }
-#endif
     return ret;
 }
 
 std::vector<nunchuk::Transaction> nunchukiface::GetTransactionHistory(const std::string &wallet_id,
-                                                                        int count,
-                                                                        int skip,
-                                                                        QWarningMessage& msg)
+                                                                      int count,
+                                                                      int skip,
+                                                                      QWarningMessage& msg)
 {
     std::vector<nunchuk::Transaction> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetTransactionHistory(wallet_id, count, skip);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetTransactionHistory(wallet_id, count, skip);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetTransactionHistory(wallet_id, count, skip);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -833,20 +695,15 @@ std::vector<nunchuk::Transaction> nunchukiface::GetTransactionHistory(const std:
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
-    DBG_INFO << "Wallet ID: " << wallet_id << "TXs:" << ret.size();
     return ret;
 }
 
 nunchuk::AppSettings nunchukiface::GetAppSettings(QWarningMessage& msg)
 {
     nunchuk::AppSettings ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetAppSettings();
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetAppSettings();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetAppSettings();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -856,20 +713,15 @@ nunchuk::AppSettings nunchukiface::GetAppSettings(QWarningMessage& msg)
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::AppSettings nunchukiface::UpdateAppSettings(nunchuk::AppSettings &appSettings, QWarningMessage& msg)
 {
     nunchuk::AppSettings ret;
-#ifdef USING_STUB_API
-    msg.setWarningMessage(nunchuk::NunchukException::APP_RESTART_REQUIRED, "Reboot", EWARNING::WarningType::EXCEPTION_MSG);
-    ret = nunchuk::UpdateAppSettings(appSettings);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->UpdateAppSettings(appSettings);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->UpdateAppSettings(appSettings);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -877,28 +729,22 @@ nunchuk::AppSettings nunchukiface::UpdateAppSettings(nunchuk::AppSettings &appSe
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::future_error &e) {
-        DBG_INFO << "THROW EXCEPTION, CAN NOT UPDATE SETTING" << e.what();
+        DBG_INFO << "THROW EXCEPTION, COULD NOT UPDATE SETTING" << e.what();
         msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what();
         msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
-    DBG_INFO;
     return ret;
 }
 
 std::vector<std::string> nunchukiface::GetAddresses(const std::string &wallet_id, bool used, bool internal, QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << used;
     std::vector<std::string> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetAddresses(wallet_id, used, internal);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetAddresses(wallet_id, used, internal);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetAddresses(wallet_id, used, internal);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -908,20 +754,15 @@ std::vector<std::string> nunchukiface::GetAddresses(const std::string &wallet_id
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::string nunchukiface::NewAddress(const std::string &wallet_id, bool internal, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id;
     std::string ret = "";
-#ifdef USING_STUB_API
-    ret = nunchuk::NewAddress(wallet_id, internal);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->NewAddress(wallet_id, internal);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->NewAddress(wallet_id, internal);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -933,21 +774,15 @@ std::string nunchukiface::NewAddress(const std::string &wallet_id, bool internal
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = "";
     }
-#endif
     return ret;
 }
 
 std::vector<nunchuk::UnspentOutput> nunchukiface::GetUnspentOutputs(const std::string &wallet_id, QWarningMessage& msg)
 {
-
-    DBG_INFO << wallet_id;
     std::vector<nunchuk::UnspentOutput> ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetUnspentOutputs(wallet_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetUnspentOutputs(wallet_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetUnspentOutputs(wallet_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -957,32 +792,21 @@ std::vector<nunchuk::UnspentOutput> nunchukiface::GetUnspentOutputs(const std::s
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::CreateTransaction(const std::string& wallet_id,
-                                                       const std::map<std::string, nunchuk::Amount> outputs,
-                                                       const std::string& memo,
-                                                       const std::vector<nunchuk::UnspentOutput> inputs,
-                                                       nunchuk::Amount fee_rate,
-                                                       bool subtract_fee_from_amount,
-                                                       QWarningMessage& msg)
+                                                     const std::map<std::string, nunchuk::Amount> outputs,
+                                                     const std::string& memo,
+                                                     const std::vector<nunchuk::UnspentOutput> inputs,
+                                                     nunchuk::Amount fee_rate,
+                                                     bool subtract_fee_from_amount,
+                                                     QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << fee_rate;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::CreateTransaction(wallet_id, outputs, memo, inputs, fee_rate, subtract_fee_from_amount);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->CreateTransaction(wallet_id, outputs, memo, inputs, fee_rate, subtract_fee_from_amount);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateTransaction(wallet_id, outputs, memo, inputs, fee_rate, subtract_fee_from_amount);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -992,31 +816,20 @@ nunchuk::Transaction nunchukiface::CreateTransaction(const std::string& wallet_i
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::DraftTransaction(const std::string &wallet_id,
-                                                      const std::map<std::string, nunchuk::Amount> outputs,
-                                                      const std::vector<nunchuk::UnspentOutput> inputs,
-                                                      nunchuk::Amount fee_rate,
-                                                      const bool subtract_fee_from_amount,
-                                                      QWarningMessage& msg)
+                                                    const std::map<std::string, nunchuk::Amount> outputs,
+                                                    const std::vector<nunchuk::UnspentOutput> inputs,
+                                                    nunchuk::Amount fee_rate,
+                                                    const bool subtract_fee_from_amount,
+                                                    QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << fee_rate << subtract_fee_from_amount;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::DraftTransaction(wallet_id, outputs, inputs, fee_rate, subtract_fee_from_amount);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->DraftTransaction(wallet_id, outputs, inputs, fee_rate, subtract_fee_from_amount);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DraftTransaction(wallet_id, outputs, inputs, fee_rate, subtract_fee_from_amount);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1026,29 +839,18 @@ nunchuk::Transaction nunchukiface::DraftTransaction(const std::string &wallet_id
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::ReplaceTransaction(const std::string& wallet_id,
-                                                        const std::string &tx_id,
-                                                        nunchuk::Amount new_fee_rate,
-                                                        QWarningMessage& msg)
+                                                      const std::string &tx_id,
+                                                      nunchuk::Amount new_fee_rate,
+                                                      QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << tx_id << new_fee_rate;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::ReplaceTransaction(tx_id, new_fee_rate);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ReplaceTransaction(wallet_id, tx_id, new_fee_rate);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ReplaceTransaction(wallet_id, tx_id, new_fee_rate);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1058,23 +860,18 @@ nunchuk::Transaction nunchukiface::ReplaceTransaction(const std::string& wallet_
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::UpdateTransactionMemo(const std::string &wallet_id,
-                                          const std::string &tx_id,
-                                          const std::string &new_memo,
-                                          QWarningMessage &msg)
+                                         const std::string &tx_id,
+                                         const std::string &new_memo,
+                                         QWarningMessage &msg)
 {
-    DBG_INFO << tx_id;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::UpdateTransactionMemo(wallet_id, tx_id, new_memo);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->UpdateTransactionMemo(wallet_id, tx_id, new_memo);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->UpdateTransactionMemo(wallet_id, tx_id, new_memo);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1086,23 +883,18 @@ bool nunchukiface::UpdateTransactionMemo(const std::string &wallet_id,
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::ExportTransaction(const std::string &wallet_id,
-                                      const std::string &tx_id,
-                                      const std::string &file_path,
-                                      QWarningMessage &msg)
+                                     const std::string &tx_id,
+                                     const std::string &file_path,
+                                     QWarningMessage &msg)
 {
-    DBG_INFO << tx_id;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::ExportTransaction(wallet_id, tx_id, file_path);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ExportTransaction(wallet_id, tx_id, file_path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportTransaction(wallet_id, tx_id, file_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1114,22 +906,17 @@ bool nunchukiface::ExportTransaction(const std::string &wallet_id,
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::ImportTransaction(const std::string &wallet_id,
-                                                       const std::string &file_path,
-                                                       QWarningMessage& msg)
+                                                     const std::string &file_path,
+                                                     QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << file_path;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::ImportTransaction(wallet_id, file_path);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportTransaction(wallet_id, file_path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportTransaction(wallet_id, file_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1139,29 +926,18 @@ nunchuk::Transaction nunchukiface::ImportTransaction(const std::string &wallet_i
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::SignTransaction(const std::string &wallet_id,
-                                                     const std::string &tx_id,
-                                                     const nunchuk::Device &device,
-                                                     QWarningMessage& msg)
+                                                   const std::string &tx_id,
+                                                   const nunchuk::Device &device,
+                                                   QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << tx_id;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::SignTransaction(wallet_id, tx_id, device);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->SignTransaction(wallet_id, tx_id, device);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->SignTransaction(wallet_id, tx_id, device);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1171,28 +947,17 @@ nunchuk::Transaction nunchukiface::SignTransaction(const std::string &wallet_id,
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::BroadcastTransaction(const std::string &wallet_id,
-                                                          const std::string &tx_id,
-                                                          QWarningMessage& msg)
+                                                        const std::string &tx_id,
+                                                        QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << tx_id;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::BroadcastTransaction(wallet_id, tx_id);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->BroadcastTransaction(wallet_id, tx_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->BroadcastTransaction(wallet_id, tx_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1202,22 +967,17 @@ nunchuk::Transaction nunchukiface::BroadcastTransaction(const std::string &walle
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::GetTransaction(const std::string &wallet_id,
-                                                    const std::string &tx_id,
-                                                    QWarningMessage& msg)
+                                                  const std::string &tx_id,
+                                                  QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << tx_id;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetTransaction(wallet_id, tx_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetTransaction(wallet_id, tx_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetTransaction(wallet_id, tx_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1227,22 +987,17 @@ nunchuk::Transaction nunchukiface::GetTransaction(const std::string &wallet_id,
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::DeleteTransaction(const std::string &wallet_id,
-                                      const std::string &tx_id,
-                                      QWarningMessage &msg)
+                                     const std::string &tx_id,
+                                     QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id << tx_id;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::DeleteTransaction(wallet_id, tx_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->DeleteTransaction(wallet_id, tx_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DeleteTransaction(wallet_id, tx_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1254,19 +1009,14 @@ bool nunchukiface::DeleteTransaction(const std::string &wallet_id,
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 void nunchukiface::CacheMasterSignerXPub(const std::string &mastersigner_id, QWarningMessage &msg)
 {
-
-#ifdef USING_STUB_API
-
-#else
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->CacheMasterSignerXPub(mastersigner_id, cache_master_signer_XPub);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->CacheMasterSignerXPub(mastersigner_id, cache_master_signer_XPub);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1276,18 +1026,14 @@ void nunchukiface::CacheMasterSignerXPub(const std::string &mastersigner_id, QWa
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
 }
 
 int nunchukiface::GetChainTip(QWarningMessage &msg)
 {
     int ret = 0;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetChainTip();
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetChainTip();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetChainTip();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1299,20 +1045,15 @@ int nunchukiface::GetChainTip(QWarningMessage &msg)
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = 0;
     }
-#endif
-    DBG_INFO << ret;
     return ret;
 }
 
 bool nunchukiface::ExportHealthCheckMessage(const std::string &message, const std::string &file_path, QWarningMessage &msg)
 {
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::ExportHealthCheckMessage(message, file_path);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ExportHealthCheckMessage(message, file_path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportHealthCheckMessage(message, file_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1324,20 +1065,15 @@ bool nunchukiface::ExportHealthCheckMessage(const std::string &message, const st
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
-    DBG_INFO << message << file_path << ret;
     return ret;
 }
 
 std::string nunchukiface::ImportHealthCheckSignature(const std::string &file_path, QWarningMessage &msg)
 {
     std::string ret = "";
-#ifdef USING_STUB_API
-    ret = nunchuk::ImportHealthCheckSignature(file_path);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportHealthCheckSignature(file_path);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportHealthCheckSignature(file_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1349,21 +1085,15 @@ std::string nunchukiface::ImportHealthCheckSignature(const std::string &file_pat
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = "";
     }
-#endif
-    DBG_INFO << file_path << ret;
     return ret;
 }
 
 nunchuk::Amount nunchukiface::EstimateFee(int conf_target, QWarningMessage &msg)
 {
-    DBG_INFO << conf_target;
     nunchuk::Amount ret = 0;
-#ifdef USING_STUB_API
-    ret = nunchuk::EstimateFee(conf_target);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->EstimateFee(conf_target);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->EstimateFee(conf_target);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1375,20 +1105,15 @@ nunchuk::Amount nunchukiface::EstimateFee(int conf_target, QWarningMessage &msg)
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = 0;
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::ExportUnspentOutputs(const std::string &wallet_id, const std::string &file_path, nunchuk::ExportFormat format, QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << file_path;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::ExportUnspentOutputs(wallet_id, file_path, format);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ExportUnspentOutputs(wallet_id, file_path, format);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportUnspentOutputs(wallet_id, file_path, format);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1400,20 +1125,15 @@ bool nunchukiface::ExportUnspentOutputs(const std::string &wallet_id, const std:
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 bool nunchukiface::ExportTransactionHistory(const std::string &wallet_id, const std::string &file_path, nunchuk::ExportFormat format, QWarningMessage& msg)
 {
-    DBG_INFO << wallet_id << file_path;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::ExportTransactionHistory(wallet_id, file_path, format);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ExportTransactionHistory(wallet_id, file_path, format);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportTransactionHistory(wallet_id, file_path, format);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1425,19 +1145,14 @@ bool nunchukiface::ExportTransactionHistory(const std::string &wallet_id, const 
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 void nunchukiface::DisplayAddressOnDevice(const std::string &wallet_id, const std::string &address, const std::string &device_fingerprint, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id << address;
-#ifdef USING_STUB_API
-    nunchuk::DisplayAddressOnDevice(wallet_id, address, device_fingerprint);
-#else
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->DisplayAddressOnDevice(wallet_id, address, device_fingerprint);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->DisplayAddressOnDevice(wallet_id, address, device_fingerprint);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1447,19 +1162,14 @@ void nunchukiface::DisplayAddressOnDevice(const std::string &wallet_id, const st
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
 }
 
 nunchuk::Amount nunchukiface::GetAddressBalance(const std::string &wallet_id, const std::string &address, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id << address;
     nunchuk::Amount ret = 0;
-#ifdef USING_STUB_API
-    ret = nunchuk::GetAddressBalance(wallet_id, address);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetAddressBalance(wallet_id, address);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetAddressBalance(wallet_id, address);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1471,19 +1181,15 @@ nunchuk::Amount nunchukiface::GetAddressBalance(const std::string &wallet_id, co
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = 0;
     }
-#endif
     return ret;
 }
 
 std::string nunchukiface::GetSelectedWallet(QWarningMessage& msg)
 {
     std::string ret = "";
-#ifdef USING_STUB_API
-    ret = nunchuk::GetSelectedWallet();
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->GetSelectedWallet();
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSelectedWallet();
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1495,17 +1201,14 @@ std::string nunchukiface::GetSelectedWallet(QWarningMessage& msg)
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = "";
     }
-#endif
-    DBG_INFO << ret;
     return ret;
 }
 
 void nunchukiface::PromtPinOnDevice(const nunchuk::Device &device, QWarningMessage &msg)
 {
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->PromtPinOnDevice(device);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->PromtPinOnDevice(device);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1515,18 +1218,13 @@ void nunchukiface::PromtPinOnDevice(const nunchuk::Device &device, QWarningMessa
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
-    DBG_INFO;
 }
 
 void nunchukiface::SendPinToDevice(const nunchuk::Device &device, const std::string &pin, QWarningMessage &msg)
 {
-#ifdef USING_STUB_API
-//     msg.setWarningMessage(2021, "SendPinToDevice FALSE", EWARNING::WarningType::EXCEPTION_MSG);
-#else
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->SendPinToDevice(device, pin);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->SendPinToDevice(device, pin);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1536,20 +1234,30 @@ void nunchukiface::SendPinToDevice(const nunchuk::Device &device, const std::str
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
-    DBG_INFO << pin;
+}
+
+void nunchukiface::SendPassphraseToDevice(const nunchuk::Device &device, const std::string &passphrase, QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->SendPassphraseToDevice(device, passphrase);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
 }
 
 bool nunchukiface::SetSelectedWallet(const std::string &wallet_id, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id;
     bool ret = false;
-#ifdef USING_STUB_API
-    ret = nunchuk::SetSelectedWallet(wallet_id);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->SetSelectedWallet(wallet_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->SetSelectedWallet(wallet_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1561,26 +1269,15 @@ bool nunchukiface::SetSelectedWallet(const std::string &wallet_id, QWarningMessa
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
         ret = false;
     }
-#endif
     return ret;
 }
 
 nunchuk::SingleSigner nunchukiface::CreateCoboSigner(const std::string &name, const std::string &json_info, QWarningMessage &msg)
 {
-    DBG_INFO << name << json_info;
     nunchuk::SingleSigner ret("","","","","",0,"");
-#ifdef USING_STUB_API
     try {
-//        ret = nunchuk::CreateCoboSigner(name, json_info);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->CreateCoboSigner(name, json_info);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateCoboSigner(name, json_info);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1590,26 +1287,15 @@ nunchuk::SingleSigner nunchukiface::CreateCoboSigner(const std::string &name, co
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::vector<std::string> nunchukiface::ExportCoboTransaction(const std::string &wallet_id, const std::string &tx_id, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id << tx_id;
     std::vector<std::string> ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::ExportCoboTransaction(wallet_id, tx_id);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ExportCoboTransaction(wallet_id, tx_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportCoboTransaction(wallet_id, tx_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1619,20 +1305,15 @@ std::vector<std::string> nunchukiface::ExportCoboTransaction(const std::string &
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Transaction nunchukiface::ImportCoboTransaction(const std::string &wallet_id, const std::vector<std::string> &qr_data, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id;
     nunchuk::Transaction ret;
-#ifdef USING_STUB_API
-    ret = nunchuk::ImportCoboTransaction(wallet_id, qr_data);
-#else
     try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportCoboTransaction(wallet_id, qr_data);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportCoboTransaction(wallet_id, qr_data);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1642,26 +1323,15 @@ nunchuk::Transaction nunchukiface::ImportCoboTransaction(const std::string &wall
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 std::vector<std::string> nunchukiface::ExportCoboWallet(const std::string &wallet_id, QWarningMessage &msg)
 {
-    DBG_INFO << wallet_id;
     std::vector<std::string> ret;
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::ExportCoboWallet(wallet_id);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ExportCoboWallet(wallet_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportCoboWallet(wallet_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1671,26 +1341,15 @@ std::vector<std::string> nunchukiface::ExportCoboWallet(const std::string &walle
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Wallet nunchukiface::ImportCoboWallet(const std::vector<std::string> &qr_data, const std::string &description, QWarningMessage &msg)
 {
-    std::vector<nunchuk::SingleSigner> temp;
-    nunchuk::Wallet ret("", 0, 0, temp , nunchuk::AddressType::ANY, 0, 0);
-#ifdef USING_STUB_API
+    nunchuk::Wallet ret(false);
     try {
-        ret = nunchuk::ImportCoboWallet(qr_data, description);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportCoboWallet(qr_data, description);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportCoboWallet(qr_data, description);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1700,26 +1359,15 @@ nunchuk::Wallet nunchukiface::ImportCoboWallet(const std::vector<std::string> &q
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
 nunchuk::Wallet nunchukiface::ImportWalletConfigFile(const std::string &file_path, const std::string &description, QWarningMessage &msg)
 {
-    std::vector<nunchuk::SingleSigner> temp;
-    nunchuk::Wallet ret("", 0, 0, temp , nunchuk::AddressType::ANY, 0, 0);
-#ifdef USING_STUB_API
+    nunchuk::Wallet ret(false);
     try {
-        ret = nunchuk::ImportWalletConfigFile(file_path, description);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->ImportWalletConfigFile(file_path, description);
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportWalletConfigFile(file_path, description);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1729,26 +1377,15 @@ nunchuk::Wallet nunchukiface::ImportWalletConfigFile(const std::string &file_pat
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
 }
 
-nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name, const std::string &mnemonic, const std::string &passphrase, QWarningMessage& msg )
+nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name, const std::string &mnemonic, const std::string &passphrase, QWarningMessage& msg, bool isPrimaryKey)
 {
-    DBG_INFO << name;
     nunchuk::MasterSigner ret("", nunchuk::Device(""), 0);
-#ifdef USING_STUB_API
     try {
-        ret = nunchuk::CreateSoftwareSigner(name, mnemonic, passphrase);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            ret = nunchuk_instance_->CreateSoftwareSigner(name, mnemonic, passphrase, create_software_signer_listener );
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateSoftwareSigner(name, mnemonic, passphrase, create_software_signer_listener,isPrimaryKey);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1758,25 +1395,40 @@ nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
     return ret;
+}
+
+bool nunchukiface::DeletePrimaryKey()
+{
+    if(nunchuk_instance_[nunchukMode()]){
+        return nunchuk_instance_[nunchukMode()]->DeletePrimaryKey();
+    }
+    return false;
+}
+
+std::string nunchukiface::SignLoginMessage(const std::string& mastersigner_id, const std::string& message, QWarningMessage& msg)
+{
+    std::string signature;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            signature = nunchuk_instance_[nunchukMode()]->SignLoginMessage(mastersigner_id, message);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return signature;
 }
 
 void nunchukiface::SendSignerPassphrase(const std::string &mastersigner_id, const std::string &passphrase, QWarningMessage &msg)
 {
-    DBG_INFO << mastersigner_id;
-#ifdef USING_STUB_API
     try {
-        nunchuk::SendSignerPassphrase(mastersigner_id, passphrase);
-    }
-    catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
-    }
-#else
-    try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->SendSignerPassphrase(mastersigner_id, passphrase);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->SendSignerPassphrase(mastersigner_id, passphrase);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1786,18 +1438,13 @@ void nunchukiface::SendSignerPassphrase(const std::string &mastersigner_id, cons
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
 }
 
 void nunchukiface::ClearSignerPassphrase(const std::string &mastersigner_id, QWarningMessage &msg)
 {
-    DBG_INFO << mastersigner_id;
-#ifdef USING_STUB_API
-
-#else
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->ClearSignerPassphrase(mastersigner_id);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->ClearSignerPassphrase(mastersigner_id);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1807,16 +1454,13 @@ void nunchukiface::ClearSignerPassphrase(const std::string &mastersigner_id, QWa
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
 }
 
 void nunchukiface::RescanBlockchain(int start_height, int stop_height, QWarningMessage &msg)
 {
-    DBG_INFO;
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->RescanBlockchain(start_height, stop_height);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->RescanBlockchain(start_height, stop_height);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1826,16 +1470,13 @@ void nunchukiface::RescanBlockchain(int start_height, int stop_height, QWarningM
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-#endif
 }
 
 void nunchukiface::AddBalanceListener(std::function<void (std::string, nunchuk::Amount)> listener)
 {
-    DBG_INFO;
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->AddBalanceListener(listener);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddBalanceListener(listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1844,16 +1485,13 @@ void nunchukiface::AddBalanceListener(std::function<void (std::string, nunchuk::
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION";
     }
-#endif
 }
 
-void nunchukiface::AddTransactionListener(std::function<void (std::string, nunchuk::TransactionStatus)> listener)
+void nunchukiface::AddTransactionListener( std::function<void(std::string, nunchuk::TransactionStatus, std::string)> listener)
 {
-    DBG_INFO;
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->AddTransactionListener(listener);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddTransactionListener(listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1862,16 +1500,13 @@ void nunchukiface::AddTransactionListener(std::function<void (std::string, nunch
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION";
     }
-#endif
 }
 
 void nunchukiface::AddDeviceListener(std::function<void (std::string, bool)> listener)
 {
-    DBG_INFO;
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->AddDeviceListener(listener);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddDeviceListener(listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1880,16 +1515,13 @@ void nunchukiface::AddDeviceListener(std::function<void (std::string, bool)> lis
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION";
     }
-#endif
 }
 
 void nunchukiface::AddBlockListener(std::function<void (int, std::string)> listener)
 {
-    DBG_INFO;
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->AddBlockListener(listener);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddBlockListener(listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1898,16 +1530,13 @@ void nunchukiface::AddBlockListener(std::function<void (int, std::string)> liste
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION";
     }
-#endif
 }
 
 void nunchukiface::AddBlockchainConnectionListener(std::function<void(nunchuk::ConnectionStatus, int)> listener)
 {
-    DBG_INFO;
-#ifndef USING_STUB_API
     try {
-        if(nunchuk_instance_){
-            nunchuk_instance_->AddBlockchainConnectionListener(listener);
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddBlockchainConnectionListener(listener);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1916,6 +1545,224 @@ void nunchukiface::AddBlockchainConnectionListener(std::function<void(nunchuk::C
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION";
     }
-#endif
+}
+
+nunchuk::SingleSigner nunchukiface::ParseKeystoneSigner(const std::string &qr_data,
+                                                        QWarningMessage& msg)
+{
+    nunchuk::SingleSigner ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ParseKeystoneSigner(qr_data);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<std::string> nunchukiface::ExportKeystoneWallet(const std::string &wallet_id,
+                                                            QWarningMessage& msg)
+{
+    std::vector<std::string> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportKeystoneWallet(wallet_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<std::string> nunchukiface::ExportKeystoneTransaction(const std::string &wallet_id,
+                                                                 const std::string &tx_id,
+                                                                 QWarningMessage& msg)
+{
+    std::vector<std::string> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportKeystoneTransaction(wallet_id, tx_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::Transaction nunchukiface::ImportKeystoneTransaction(const std::string &wallet_id,
+                                                             const std::vector<std::string> &qr_data,
+                                                             QWarningMessage& msg)
+{
+    nunchuk::Transaction ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportKeystoneTransaction(wallet_id, qr_data);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::Wallet nunchukiface::ImportKeystoneWallet(const std::vector<std::string> &qr_data,
+                                                   const std::string &description,
+                                                   QWarningMessage &msg)
+{
+    nunchuk::Wallet ret(false);
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportKeystoneWallet(qr_data, description);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<nunchuk::SingleSigner> nunchukiface::ParsePassportSigners(const std::vector<std::string> &qr_data,
+                                                                      QWarningMessage &msg)
+{
+    std::vector<nunchuk::SingleSigner> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ParsePassportSigners(qr_data);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<nunchuk::SingleSigner> nunchukiface::ParseQRSigners(const std::vector<std::string> &qr_data, QWarningMessage &msg)
+{
+    std::vector<nunchuk::SingleSigner> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ParseQRSigners(qr_data);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<nunchuk::SingleSigner> nunchukiface::ParseJSONSigners(const std::string &json_str, QWarningMessage &msg)
+{
+    std::vector<nunchuk::SingleSigner> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ParseJSONSigners(json_str);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<std::string> nunchukiface::ExportPassportWallet(const std::string &wallet_id,
+                                                            QWarningMessage &msg)
+{
+    std::vector<std::string> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportPassportWallet(wallet_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<std::string> nunchukiface::ExportPassportTransaction(const std::string &wallet_id,
+                                                                 const std::string &tx_id,
+                                                                 QWarningMessage &msg)
+{
+    std::vector<std::string> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportPassportTransaction(wallet_id, tx_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::Transaction nunchukiface::ImportPassportTransaction(const std::string &wallet_id,
+                                                             const std::vector<std::string> &qr_data,
+                                                             QWarningMessage &msg)
+{
+    nunchuk::Transaction ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportPassportTransaction(wallet_id, qr_data);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+void nunchukiface::stopInstance()
+{
+    if(nunchuk_instance_[nunchukMode()]){
+        nunchuk_instance_[nunchukMode()].reset();
+    }
 }
 

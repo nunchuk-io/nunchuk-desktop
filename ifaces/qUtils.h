@@ -5,33 +5,8 @@
 #include <string>
 #include <vector>
 #include <QObject>
-#ifdef USING_STUB_API //Just for stub test, will be removed
-#include <amount.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <util/strencodings.h>
-#include <boost/format.hpp>
-#include <iomanip>
-#include <sstream>
-#include <string>
-#else
 #include "nunchuk.h"
-#endif
-
-class EWARNING: public QObject
-{
-    Q_OBJECT
-    Q_ENUMS(WarningType)
-public:
-    enum class WarningType {
-        NONE_MSG,
-        SUCCESS_MSG,
-        WARNING_MSG,
-        ERROR_MSG,
-        EXCEPTION_MSG
-    };
-};
-Q_DECLARE_METATYPE(EWARNING::WarningType)
+#include "QWarningMessage.h"
 
 namespace qUtils {
 
@@ -53,17 +28,34 @@ bool QIsValidDerivationPath(const QString& value);
 
 bool QIsValidFingerPrint(const QString& value);
 
-#ifdef USING_STUB_API
-CAmount CAmountFromValue(const std::string &value, const bool allow_negative = false);
-std::string ValueFromCAmount(const CAmount &amount);
-#endif
-
 QString GenerateMnemonic();
 
 bool CheckMnemonic(const QString& mnemonic);
 
 QStringList GetBIP39WordList();
 
+void SetPassPhrase(const QString& storage_path,
+                   const QString& account,
+                   const QString& old_passphrase,
+                   const QString& new_passphrase);
+
+nunchuk::Wallet ParseWalletDescriptor(const QString& descs,
+                                      QWarningMessage &msg);
+
+nunchuk::Wallet ParseKeystoneWallet(nunchuk::Chain chain,
+                                    const QStringList qrtags,
+                                    QWarningMessage& msg);
+
+std::vector<nunchuk::PrimaryKey> GetPrimaryKeys(const QString &storage_path,
+                                                nunchuk::Chain chain);
+QString GetMasterFingerprint(const QString& mnemonic,
+                             const QString& passphrase);
+QString GetPrimaryKeyAddress(const QString& mnemonic,
+                             const QString& passphrase);
+QString SignLoginMessage(const QString& mnemonic,
+                         const QString& passphrase,
+                         const QString& message);
+void SetChain(nunchuk::Chain chain);
 }
 
 #endif // QUTILS_H

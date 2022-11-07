@@ -1,0 +1,16 @@
+
+#ifndef STATE_ID_SCR_STARTING_CREATE_SIGNER_H
+#define STATE_ID_SCR_STARTING_CREATE_SIGNER_H
+
+#include <QObject>
+#include <QVariant>
+#include "ViewsDefines.h"
+#include "ViewsEnums.h"
+
+void SCR_STARTING_CREATE_SIGNER_Entry(QVariant msg);
+void SCR_STARTING_CREATE_SIGNER_Exit(QVariant msg);
+void EVT_STARTING_CREATE_SIGNER_DUMMY_HANDLER(QVariant msg);
+void EVT_STARTING_CREATE_SIGNER_BACK_HANDLER(QVariant msg);
+void EVT_ONLINE_MODE_ADD_NEW_SIGNER_HANDLER(QVariant msg);
+
+#endif // STATE_ID_SCR_STARTING_CREATE_SIGNER_H

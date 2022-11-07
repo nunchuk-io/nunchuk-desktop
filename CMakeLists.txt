@@ -1,14 +1,24 @@
 cmake_minimum_required( VERSION 3.1 )
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 project(nunchuck-client-qt VERSION 0.1.0)
-set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON)
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
 set( CMAKE_AUTOMOC ON )
 set( CMAKE_AUTORCC ON )
 set( CMAKE_AUTOUIC ON )
+set( CXX_STANDARD "-std=c++20")
+if (WIN32)
+    set(CXX_STANDARD "/std:c++20")
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions ( -DRELEASE_MODE )
+endif()
 
 if(WIN32)
+    set( CMAKE_CXX_FLAGS_RELEASE "/MT" )
+    set( CMAKE_CXX_FLAGS_DEBUG "/MTd" )
     set(VCPKG_TARGET_ARCHITECTURE x64)
     set(VCPKG_CRT_LINKAGE static)
     set(VCPKG_LIBRARY_LINKAGE static)
@@ -22,24 +32,19 @@ endif()
 
 if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE Debug )
+
 endif()
 
+add_definitions ( -DSIGNET_SUPPORT )
 add_definitions ( -Wall )
-add_definitions ( -DQT_USE_QSTRINGBUILDER )
 
 set( DQLIMIT_ONE OFF )
-set( QUSING_STUB_API OFF )
 
 if(DQLIMIT_ONE)
     add_definitions ( -DENABLE_LIMIT )
-endif(QUSING_STUB_API)
+endif(DQLIMIT_ONE)
 
-if(QUSING_STUB_API)
-    add_definitions ( -fno-stack-protector )
-    add_definitions ( -DUSING_STUB_API )
-endif(QUSING_STUB_API)
-
-find_package(Qt5 REQUIRED Qml Quick Core Gui Multimedia)
+find_package(Qt5 REQUIRED Qml Quick Core Gui Multimedia Sql Concurrent Svg)
 if(APPLE)
     find_package(Iconv)
 endif()
@@ -53,6 +58,7 @@ set(QAppEngine_SRCS
     )
 
 set(QAppEngine_MOCS
+    QAppEngine/QOutlog/QOutlog.h
     QAppEngine/QQuickViewer/QQuickViewer.h
     QAppEngine/QQuickViewer/PopupManager/QPopupManager.h
     QAppEngine/QQuickViewer/ScreenManager/QScreenQueue.h
@@ -92,6 +98,30 @@ set(Views_SRCS
     Views/STATE_ID_SCR_WALLET_INFO.cpp
     Views/STATE_ID_SCR_INPUT_PIN.cpp
     Views/STATE_ID_SCR_INPUT_PASSPHRASE.cpp
+    Views/STATE_ID_SCR_LOGIN_ONLINE.cpp
+    Views/STATE_ID_SCR_HOME_ONLINE.cpp
+    Views/STATE_ID_SCR_ONLINE_ADD_CONTACTS.cpp
+    Views/STATE_ID_SCR_PENDING_REQUEST.cpp
+    Views/STATE_ID_SCR_REVIEW_SHARED_WALLET.cpp
+    Views/STATE_ID_SCR_CREATE_SHARED_WALLET.cpp
+    Views/STATE_ID_SCR_CONFIGURE_SHARED_WALLET.cpp
+    Views/STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET.cpp
+    Views/STATE_ID_SCR_SHARED_WL_DEVICE_REGISTRATION.cpp
+    Views/STATE_ID_SCR_SHARED_WALLET_CONFIGURE.cpp
+    Views/STATE_ID_SCR_BACKUP_SHARED_WALLET.cpp
+    Views/STATE_ID_SCR_STARTING_CREATE_SIGNER.cpp
+    Views/STATE_ID_TOAST_MESSAGE_DISPLAY.cpp
+    Views/STATE_ID_SCR_UPDATE_PROFILE.cpp
+    Views/STATE_ID_SCR_RECOVER_SHARED_WALLET.cpp
+    Views/STATE_ID_SCR_CREATE_ACCOUNT.cpp
+    Views/STATE_ID_SCR_CHANGE_PASSWORD.cpp
+    Views/STATE_ID_SCR_PRIMARY_KEY_ACCOUNT.cpp
+    Views/STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.cpp
+    Views/STATE_ID_SCR_SIGN_IN_MANUALLY.cpp
+    Views/STATE_ID_SCR_LOGIN_WITH_SOFTWARE_KEY.cpp
+    Views/STATE_ID_SCR_REPLACE_PRIMARY_KEY.cpp
+    Views/STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION.cpp
+    Views/STATE_ID_SCR_SIGN_IN.cpp
     )
 
 set(Views_MOCS
@@ -103,6 +133,7 @@ set(${PROJECT_NAME}_SRCS
     contrib/nayuki/QrCode.cpp
     Models/AppSetting.cpp
     Models/AppModel.cpp
+    Models/AppOnlineModel.cpp
     Models/DeviceModel.cpp
     Models/Localization.cpp
     Models/MasterSignerModel.cpp
@@ -115,11 +146,27 @@ set(${PROJECT_NAME}_SRCS
     ifaces/QRCodeItem.cpp
     ifaces/QRGenerator.cpp
     ifaces/bridgeifaces.cpp
-    ifaces/nunchuckstub.cpp
     ifaces/nunchuckiface.cpp
     ifaces/nunchucklistener.cpp
     ifaces/qUtils.cpp
+    ifaces/Draco.cpp
+    ifaces/Chats/matrixifaces.cpp
+    ifaces/Chats/matrixbrigde.cpp
+    ifaces/Chats/matrixlistener.cpp
     main.cpp
+    Models/Chats/QConversationModel.cpp
+    Models/Chats/QContactModel.cpp
+    Models/Chats/ClientController.cpp
+    Models/Chats/QLogginManager.cpp
+    Models/Chats/QNunchukRoomModel.cpp
+    Models/Chats/QNunchukMatrixEvent.cpp
+    Models/Chats/QRoomWallet.cpp
+    Models/Chats/QRoomTransaction.cpp
+    Models/Chats/QNunchukRoomUsers.cpp
+    Models/Chats/QRoomCustomEvent.cpp
+    Models/Chats/QWalletSignersModel.cpp
+    Models/Chats/QNunchukImageProvider.cpp
+    Models/Chats/QLoggedInDeviceModel.cpp
     )
 
 set(${PROJECT_NAME}_RSCS
@@ -156,6 +203,8 @@ set(${PROJECT_NAME}_MOCS
     Models/Worker.h
     ifaces/QRCodeItem.h
     ifaces/bridgeifaces.h
+    ifaces/DracoDefines.h
+    localization/STR_CPP.h
     )
 QT5_WRAP_CPP(MOCS ${${PROJECT_NAME}_MOCS})
 
@@ -169,22 +218,27 @@ if(QRCODE_SCANNER)
     add_subdirectory(contrib/qzxing/src qzxing)
 endif(QRCODE_SCANNER)
 
-add_subdirectory(contrib/libnunchuk lib EXCLUDE_FROM_ALL)
+add_subdirectory(contrib/libnunchuk nunchuk EXCLUDE_FROM_ALL)
+
+macro(SET_OPTION option value)
+  set(${option} ${value} CACHE INTERNAL "" FORCE)
+endmacro()
+
+SET_OPTION(Quotient_ENABLE_E2EE  ON)
+add_subdirectory(contrib/quotient quotient EXCLUDE_FROM_ALL)
 
 add_executable ( ${PROJECT_NAME} WIN32 ${QAppEngine_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_VIEWS} ${MOCS})
 
-if(WIN32)
-    target_compile_options("${PROJECT_NAME}" PUBLIC /MT)
-    target_link_options("${PROJECT_NAME}" PUBLIC /INCREMENTAL:NO /NODEFAULTLIB:MSVCRT)
-endif()
-
-target_link_libraries (${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick )
+target_link_libraries (${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )
 
 if(UNIX AND NOT APPLE)
     target_link_libraries("${PROJECT_NAME}" -Wl,--start-group nunchuk)
 else()
     target_link_libraries("${PROJECT_NAME}" nunchuk)
 endif()
+
+target_link_libraries("${PROJECT_NAME}" Quotient Qt5::Sql )
+target_include_directories("${PROJECT_NAME}" PUBLIC "${PROJECT_SOURCE_DIR}/contrib/quotient/lib" )
 
 if(QRCODE_SCANNER)
     if(APPLE)
@@ -200,4 +254,15 @@ if (APPLE AND CMAKE_BUILD_TYPE MATCHES Release)
     SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
+endif()
+
+find_package(Qt5Keychain QUIET)
+if (Qt5Keychain_FOUND)
+    set(USE_KEYCHAIN ON)
+endif()
+if(USE_KEYCHAIN)
+    message( STATUS "Using Qt Keychain ${Qt5Keychain_VERSION} at ${Qt5Keychain_DIR}")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_KEYCHAIN)
+    target_link_libraries(${PROJECT_NAME} ${QTKEYCHAIN_LIBRARIES})
+    include_directories(${QTKEYCHAIN_INCLUDE_DIR})
 endif()

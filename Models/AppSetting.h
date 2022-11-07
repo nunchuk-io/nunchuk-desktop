@@ -6,6 +6,7 @@
 
 #define MAINNET_SERVER  "mainnet.nunchuk.io:51001"
 #define TESTNET_SERVER  "testnet.nunchuk.io:50001"
+#define SIGNET_SERVER   "signet.nunchuk.io:50002"
 #define HWI_PATH        "hwi"
 #define LOCAL_ADDRESS   "127.0.0.1"
 #define TOR_PORT        9050
@@ -13,14 +14,31 @@
 #define CORERPC_TESTNET_PORT        18332
 #define BLOCKSTREAM_TESTNET "https://blockstream.info/testnet/tx/"
 #define BLOCKSTREAM_MAINNET "https://blockstream.info/tx/"
+#define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
 
-class AppSetting : public QObject
+
+class  NunchukSettings : public QSettings {
+
+public:
+    NunchukSettings();
+    ~NunchukSettings();
+    QString groupSetting() const;
+    void setGroupSetting(QString group);
+    void setValue(const QString &key, const QVariant &value);
+    QVariant value(const QString &key, const QVariant &defaultValue = QVariant()) const;
+    bool contains(const QString& key) const;
+private:
+    QString m_group;
+};
+
+class AppSetting : public NunchukSettings
 {
     Q_OBJECT
 
     Q_PROPERTY( int unit                        READ unit                       WRITE setUnit                       NOTIFY unitChanged)
     Q_PROPERTY( QString mainnetServer           READ mainnetServer              WRITE setMainnetServer              NOTIFY mainnetServerChanged)
     Q_PROPERTY( QString testnetServer           READ testnetServer              WRITE setTestnetServer              NOTIFY testnetServerChanged)
+    Q_PROPERTY( QString signetServer            READ signetServer               WRITE setSignetServer               NOTIFY signetServerChanged)
     Q_PROPERTY( bool enableDualServer           READ enableDualServer           WRITE setEnableDualServer           NOTIFY enableDualServerChanged)
     Q_PROPERTY( bool enableCustomizeHWIDriver   READ enableCustomizeHWIDriver   WRITE setEnableCustomizeHWIDriver   NOTIFY enableCustomizeHWIDriverChanged)
     Q_PROPERTY( QString hwiPath                 READ hwiPath                    WRITE setHwiPath                    NOTIFY hwiPathChanged)
@@ -33,7 +51,6 @@ class AppSetting : public QObject
     Q_PROPERTY( int primaryServer               READ primaryServer              WRITE setPrimaryServer              NOTIFY primaryServerChanged)
     Q_PROPERTY( QString secondaryServer         READ secondaryServer            WRITE setSecondaryServer            NOTIFY secondaryServerChanged)
     Q_PROPERTY( bool enableFixedPrecision       READ enableFixedPrecision       WRITE setEnableFixedPrecision       NOTIFY enableFixedPrecisionChanged)
-    Q_PROPERTY( int changePassphraseResult      READ changePassphraseResult     WRITE setChangePassphraseResult     NOTIFY changePassphraseResultChanged)
     Q_PROPERTY( bool enableCertificateFile      READ enableCertificateFile      WRITE setEnableCertificateFile      NOTIFY enableCertificateFileChanged)
     Q_PROPERTY( QString certificateFile         READ certificateFile            WRITE setCertificateFile            NOTIFY certificateFileChanged)
     Q_PROPERTY( bool enableCoreRPC              READ enableCoreRPC              WRITE setEnableCoreRPC              NOTIFY enableCoreRPCChanged)
@@ -46,13 +63,21 @@ class AppSetting : public QObject
     Q_PROPERTY( int syncPercent                 READ syncPercent                                                    NOTIFY syncPercentChanged)
     Q_PROPERTY( bool firstTimeCoreRPC           READ firstTimeCoreRPC           WRITE setFirstTimeCoreRPC           NOTIFY firstTimeCoreRPCChanged)
     Q_PROPERTY( bool firstTimePassPhrase        READ firstTimePassPhrase        WRITE setFirstTimePassPhrase        NOTIFY firstTimePassPhraseChanged)
+    Q_PROPERTY( QString signetStream            READ signetStream               WRITE setSignetStream               NOTIFY signetStreamChanged)
+    Q_PROPERTY( bool enableSignetStream         READ enableSignetStream         WRITE setEnableSignetStream         NOTIFY enableSignetStreamChanged)
+
+    Q_PROPERTY(bool enableDebugMode READ enableDebug WRITE setEnableDebug       NOTIFY enableDebugChanged)
+    Q_PROPERTY(bool isStarted       READ isStarted   WRITE setIsStarted         NOTIFY isStartedChanged)
+    Q_PROPERTY(bool enableMultiDeviceSync       READ enableMultiDeviceSync      WRITE setEnableMultiDeviceSync      NOTIFY enableMultiDeviceSyncChanged)
 public:
     static AppSetting *instance();
     AppSetting(AppSetting &other) = delete;
     AppSetting(AppSetting const &other) = delete;
     void operator=(const AppSetting &other) = delete;
 
+    void setGroupSetting(QString group);
     void resetSetting();
+//    QSettings getSetting();
 
     int unit();
     void setUnit(int unit);
@@ -62,6 +87,9 @@ public:
 
     QString testnetServer();
     void setTestnetServer(const QString &testnetServer);
+
+    QString signetServer();
+    void setSignetServer(const QString &signetServer);
 
     bool enableDualServer();
     void setEnableDualServer(bool enableDualServer);
@@ -114,9 +142,6 @@ public:
     int connectionState() const;
     void setConnectionState(int connectionState);
 
-    int changePassphraseResult() const;
-    void setChangePassphraseResult(int changePassphraseResult);
-
     bool enableCoreRPC();
     void setEnableCoreRPC(bool enableCoreRPC);
 
@@ -141,9 +166,26 @@ public:
     bool firstTimePassPhrase();
     void setFirstTimePassPhrase(bool firstTimePassPhrase);
 
+    QString signetStream();
+    void setSignetStream(const QString &signetStream);
+
+    bool enableSignetStream();
+    void setEnableSignetStream(const bool &enableSignetStream);
+
+    bool enableDebug();
+    void setEnableDebug(bool enableDebugMode);
+
+    bool isStarted();
+    void setIsStarted(bool isStarted);
+    void updateIsStarted(bool isStarted);
+
+    bool enableMultiDeviceSync();
+    void setEnableMultiDeviceSync(bool enableMultiDeviceSync);
+
     enum class Chain : int {
         MAIN,
         TESTNET,
+        SIGNET,
         REGTEST
     };
 
@@ -157,15 +199,6 @@ public:
         SYNCING,
         ONLINE
     };
-
-    enum class ChangePassphraseResult : int {
-        NOT_YET_SET,
-        INVALID_PASSPHRASE,
-        PASSPHRASE_ALREADY_USED,
-        CHANGE_ERROR,
-        CHANGE_SUCCEED
-    };
-
 private:
     AppSetting();
     ~AppSetting();
@@ -173,6 +206,7 @@ private:
     int unit_;
     QString mainnetServer_;
     QString testnetServer_;
+    QString signetServer_;
     bool enableDualServer_;
     bool enableCustomizeHWIDriver_;
     QString hwiPath_;
@@ -189,7 +223,6 @@ private:
     QString executePath_;
     int connectionState_;
     int syncPercent_;
-    int changePassphraseResult_;
     bool enableCertificateFile_;
     QString certificateFile_;
 
@@ -202,13 +235,21 @@ private:
     bool firstTimeCoreRPC_;
     bool firstTimePassPhrase_;
 
+    bool enableSignetStream_;
+    QString signetStream_;
+
     // Settings
-    QSettings settings_;
     void updateUnit();
+
+    bool enableDebugMode_;
+    bool isStarted_;
+
+    bool enableMultiDeviceSync_;
 signals:
     void unitChanged();
     void mainnetServerChanged();
     void testnetServerChanged();
+    void signetServerChanged();
     void enableDualServerChanged();
     void enableCustomizeHWIDriverChanged();
     void hwiPathChanged();
@@ -235,6 +276,11 @@ signals:
     void syncPercentChanged();
     void firstTimeCoreRPCChanged();
     void firstTimePassPhraseChanged();
+    void signetStreamChanged();
+    void enableSignetStreamChanged();
+    void enableDebugChanged();
+    void isStartedChanged(bool isStarted);
+    void enableMultiDeviceSyncChanged();
 };
 
 #endif // APPSETTING_H

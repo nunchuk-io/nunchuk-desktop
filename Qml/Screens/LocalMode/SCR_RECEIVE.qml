@@ -1,82 +1,52 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
-    Rectangle {
-        id: mask
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        Row {
-            spacing: 16
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-
-            QText {
-                id: title
-                height: 36
-                text: "Receive Funds"
-                color: "#031F2B"
-                font.weight: Font.ExtraBold
-                font.family: "Montserrat"
-                font.pixelSize: 24
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            QText {
-                height: 21
-                text: "(" + AppModel.walletInfo.walletName + ")"
-                color: "#031F2B"
-                font.weight: Font.DemiBold
-                font.family: "Montserrat"
-                font.pixelSize: 14
-                anchors.verticalCenter: parent.verticalCenter
-            }
+        label.text: STR.STR_QML_247
+        extraHeader: QText {
+            height: 21
+            text: "(" + AppModel.walletInfo.walletName + ")"
+            color: "#031F2B"
+            font.weight: Font.DemiBold
+            font.family: "Montserrat"
+            font.pixelSize: 14
+            anchors.verticalCenter: parent.verticalCenter
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
-            }
-            onClicked: {
-                QMLHandle.sendEvent(EVT.EVT_RECEIVE_BACK_REQUEST)
-            }
+        onCloseClicked: {
+            QMLHandle.sendEvent(EVT.EVT_RECEIVE_BACK_REQUEST)
         }
-
         Row {
-            width: 215
-            height: 24
-            spacing: 8
+            spacing: 4
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -85,30 +55,25 @@ QScreen {
             }
             QText {
                 id: unuseListTitle
-                width: 156
                 height: 24
-                text: "Unused Address (" + unUsed.count + ")"
+                text: STR.STR_QML_199.arg(unUsed.count)
                 color: "#031F2B"
                 font.weight: Font.DemiBold
                 font.family: "Montserrat"
                 font.pixelSize: 16
                 anchors.verticalCenter: parent.verticalCenter
             }
-
             QText {
-                width: 46
                 height: 16
-                text: "(20 max)"
+                text: qsTr("(%1 max)").arg(MAX_UNUSED_ADDR)
                 color: "#000000"
                 font.family: "Lato"
                 font.pixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
-
         QText {
             id: useListTitle
-            width: 156
             height: 24
             anchors {
                 left: parent.left
@@ -116,13 +81,12 @@ QScreen {
                 top: parent.top
                 topMargin: 387
             }
-            text: "Used Address (" + unUsed.count + ")"
+            text: STR.STR_QML_200.arg(used.count)
             color: "#031F2B"
             font.weight: Font.DemiBold
             font.family: "Montserrat"
             font.pixelSize: 16
         }
-
         QText {
             id: recommentNote
             width: 301
@@ -131,13 +95,12 @@ QScreen {
                 left: useListTitle.left
                 top: useListTitle.bottom
             }
-            text: "An address is marked as used as soon as money is deposited into it. For better privacy, reusing addresses is not recommended."
+            text: STR.STR_QML_201
             color: "#000000"
             wrapMode: Text.WordWrap
             font.family: "Lato"
             font.pixelSize: 10
         }
-
         FocusScope  {
             QListView {
                 id: unUsed
@@ -157,7 +120,8 @@ QScreen {
                 delegate: Rectangle {
                     width: 301
                     height: 40
-                    color:  mouse1.containsMouse ? Qt.rgba(255, 255, 255, 1) : ((unUsed.currentIndex == index) && (unUsed.focus) ? Qt.rgba(255, 255, 255, 0.5) : "#F1FAFE" )
+                    color:  mouse1.containsMouse ? Qt.rgba(255, 255, 255, 1) : ((unUsed.currentIndex == index) && (unUsed.focus) ?
+                                                                                    Qt.rgba(255, 255, 255, 0.5) : "#F1FAFE" )
                     Rectangle {
                         width: 8
                         height: parent.height
@@ -170,7 +134,6 @@ QScreen {
                         color: "#C9DEF1"
                         anchors.bottom: parent.bottom
                     }
-
                     QText {
                         text: modelData
                         width: (unUsed.currentIndex == index) && (unUsed.focus) ? 244 : 237
@@ -184,7 +147,6 @@ QScreen {
                         font.weight: (unUsed.currentIndex == index) && (unUsed.focus) ? Font.Bold : Font.Normal
                         color: (unUsed.currentIndex == index) && (unUsed.focus) ? "#031F2B" : "#839096"
                     }
-
                     MouseArea {
                         id: mouse1
                         hoverEnabled: true
@@ -204,7 +166,6 @@ QScreen {
                     }
                 }
             }
-
             QListView {
                 id: used
                 width: 301
@@ -235,7 +196,6 @@ QScreen {
                         color: "#C9DEF1"
                         anchors.bottom: parent.bottom
                     }
-
                     QText {
                         text: modelData
                         width: (used.currentIndex == index) && (used.focus) ? 244 : 237
@@ -249,7 +209,6 @@ QScreen {
                         font.weight: (used.currentIndex == index) && (used.focus) ? Font.Bold : Font.Normal
                         color: (used.currentIndex == index) && (used.focus) ? "#031F2B" : "#839096"
                     }
-
                     MouseArea {
                         id: mouse2
                         hoverEnabled: true
@@ -264,13 +223,12 @@ QScreen {
                 }
             }
         }
-
         QButtonMedium {
             width: 207
             height: 32
             radius: 20
             type: eOUTLINE_NORMAL
-            label: "Generate New Address"
+            label: STR.STR_QML_202
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -281,7 +239,6 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_BTN_GEN_NEW_ADDRESS)
             }
         }
-
         Rectangle {
             width: 419
             height: 490
@@ -293,13 +250,17 @@ QScreen {
                 top: parent.top
                 topMargin: 121
             }
-
             QButtonIcon {
-                width: 170
+                width: 200
                 height: 24
-                label: "SAVE AS QUICK RECEIVE"
-                icons: ["bookmark_border_24px_031F2B.png", "bookmark_border_24px_9CAEB8.png", "bookmark_border_24px_F1FAFE.png", "bookmark_border_24px_F1FAFE.png"]
-                fontPixelSize: 10
+                label: STR.STR_QML_248
+                icons: [
+                    "bookmark_border_24px_031F2B.png",
+                    "bookmark_border_24px_9CAEB8.png",
+                    "bookmark_border_24px_F1FAFE.png",
+                    "bookmark_border_24px_F1FAFE.png"
+                ]
+                fontPixelSize: 16
                 type: eSECOND
                 anchors {
                     right: parent.right
@@ -311,7 +272,6 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_RECEIVE_SET_QUICK_RECEIVE_ADDRESS, qrCode.textInput)
                 }
             }
-
             Rectangle {
                 color: unUsed.focus ? "#35ABEE" : "#FF7A00"
                 width: 62
@@ -322,17 +282,15 @@ QScreen {
                     topMargin: 72
                     horizontalCenter: parent.horizontalCenter
                 }
-
                 QText {
                     anchors.centerIn: parent
                     color: "#F1FAFE"
                     font.pixelSize: 10
                     font.family: "Lato"
                     font.weight: Font.Bold
-                    text: unUsed.focus ? "UNUSED" : "USED"
+                    text: unUsed.focus ? STR.STR_QML_203 : STR.STR_QML_204
                 }
             }
-
             QRCodeItem {
                 id: qrCode
                 width: 150
@@ -345,7 +303,6 @@ QScreen {
                 }
                 textInput: addressSelected.text
             }
-
             Rectangle {
                 width: 273
                 height: 40
@@ -370,7 +327,6 @@ QScreen {
                     color: "#323E4A"
                 }
             }
-
             Column {
                 spacing: 16
                 anchors {
@@ -381,9 +337,9 @@ QScreen {
                 QButtonIcon {
                     width: 150
                     height: 30
-                    label: "COPY ADDRESS"
+                    label: STR.STR_QML_205
                     icons: ["Copy_031F2B.png", "Copy_9CAEB8.png", "Copy_F1FAFE.png","Copy_F1FAFE.png"]
-                    fontPixelSize: 10
+                    fontPixelSize: 12
                     iconSize: 16
                     type: eSECOND
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -391,13 +347,12 @@ QScreen {
                         QMLHandle.sendEvent(EVT.EVT_RECEIVE_COPY_ADDRESS, qrCode.textInput)
                     }
                 }
-
                 QButtonIcon {
                     width: 150
                     height: 30
-                    label: "VERIFY ON DEVICE"
+                    label: STR.STR_QML_006
                     icons: ["visibility_031F2B.png","visibility_9CAEB8.png","visibility_F1FAFE.png","visibility_F1FAFE.png"]
-                    fontPixelSize: 10
+                    fontPixelSize: 12
                     iconSize: 16
                     type: eSECOND
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -407,11 +362,10 @@ QScreen {
                         anchors.left: parent.right
                         anchors.leftMargin: 8
                         anchors.verticalCenter: parent.verticalCenter
-                        toolTip: "Check the correctness of this address on your device. Make sure your device is connected and unlocked."
+                        toolTip: STR.STR_QML_007
                     }
                 }
             }
-
             Row {
                 height: 36
                 spacing: 8
@@ -420,9 +374,8 @@ QScreen {
                     topMargin: 170
                     horizontalCenter: parent.horizontalCenter
                 }
-
                 QText {
-                    text: "Address Balance:"
+                    text: STR.STR_QML_249
                     font.family: "Lato"
                     font.weight: Font.DemiBold
                     color: "#000000"
@@ -430,7 +383,6 @@ QScreen {
                     font.capitalization: Font.AllUppercase
                     anchors.verticalCenter: parent.verticalCenter
                 }
-
                 QText {
                     text: AppModel.addressBalance + ((AppSetting.unit === 1) ? " sat" : " BTC")
                     font.family: "Montserrat"
@@ -441,7 +393,6 @@ QScreen {
                 }
             }
         }
-
         Rectangle {
             id: displayAddressBusybox
             anchors.fill: parent
@@ -449,7 +400,6 @@ QScreen {
             radius: 8
             MouseArea {anchors.fill: parent; onClicked: {}}
             visible: false
-
             Rectangle {
                 id: busymask
                 width: 500
@@ -457,7 +407,6 @@ QScreen {
                 radius: 8
                 visible: false
             }
-
             Rectangle {
                 id: busyboxbg
                 width: 500
@@ -472,20 +421,17 @@ QScreen {
                     color: "#F6D65D"
                 }
             }
-
             Rectangle {
                 width: 500
                 height: 250
                 radius: 8
                 anchors.centerIn: parent
             }
-
             OpacityMask {
                 id: busyboxmask
                 anchors.fill: busyboxbg
                 source: busyboxbg
                 maskSource: busymask
-
                 QCloseButton {
                     anchors {
                         right: parent.right
@@ -495,7 +441,6 @@ QScreen {
                     }
                     onClicked: { displayAddressBusybox.visible = false }
                 }
-
                 Column {
                     spacing: 16
                     anchors.centerIn: parent
@@ -504,15 +449,13 @@ QScreen {
                         height: 70
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
-
                     QText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         font.family: "Lato"
                         font.pixelSize: 15
                         font.weight: Font.Bold
-                        text: "Please check the address on your device"
+                        text: STR.STR_QML_008
                     }
-
                     Rectangle {
                         width: 450
                         height: 60
@@ -534,7 +477,6 @@ QScreen {
                     }
                 }
             }
-
             DropShadow {
                 anchors.fill: busyboxmask
                 horizontalOffset: 3
@@ -545,15 +487,15 @@ QScreen {
                 source: busyboxmask
             }
         }
-
         Connections {
             target: AppModel
-            onPreCheckAddressOnDevice: {
-                displayAddressBusybox.visible = isOnTop ? valid : false
+            onStartDisplayAddress: {
+                if(isOnTop) displayAddressBusybox.open()
+                else displayAddressBusybox.close()
             }
-//            onFinishedDisplayAddress: {
-//                displayAddressBusybox.visible = false
-//            }
+            onFinishedDisplayAddress: {
+                displayAddressBusybox.close()
+            }
         }
     }
 }

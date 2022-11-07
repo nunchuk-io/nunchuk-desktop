@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include "QWarningMessage.h"
 #include "WalletModel.h"
 #include "DeviceModel.h"
 #include "SingleSignerModel.h"
@@ -16,67 +17,85 @@ class AppModel final : public Controller
 {
     Q_OBJECT
     Q_PROPERTY(int                      chainTip            READ chainTip           NOTIFY chainTipChanged)
-    Q_PROPERTY(WalletListModel*         walletList          READ walletList         NOTIFY walletListChanged)
     Q_PROPERTY(Wallet*                  walletInfo          READ walletInfo         NOTIFY walletInfoChanged)
+    Q_PROPERTY(Wallet*                  newWalletInfo       READ newWalletInfo      NOTIFY newWalletInfoChanged)
+    Q_PROPERTY(WalletListModel*         walletList          READ walletList         NOTIFY walletListChanged)
     Q_PROPERTY(MasterSignerListModel*   masterSignerList    READ masterSignerList   NOTIFY masterSignerListChanged)
     Q_PROPERTY(SingleSignerListModel*   remoteSignerList    READ remoteSignerList   NOTIFY remoteSignerListChanged)
     Q_PROPERTY(DeviceListModel*         deviceList          READ deviceList         NOTIFY deviceListChanged)
     Q_PROPERTY(MasterSigner*            masterSignerInfo    READ masterSignerInfo   NOTIFY masterSignerInfoChanged)
     Q_PROPERTY(SingleSigner*            singleSignerInfo    READ singleSignerInfo   NOTIFY singleSignerInfoChanged)
     Q_PROPERTY(QStringList              walletsUsingSigner  READ walletsUsingSigner NOTIFY walletsUsingSignerChanged)
-    Q_PROPERTY(Wallet*                  newWalletInfo       READ newWalletInfo      NOTIFY newWalletInfoChanged)
-    Q_PROPERTY(TransactionListModel*    transactionHistory  READ transactionHistory NOTIFY transactionHistoryChanged)
+    Q_PROPERTY(Transaction*             transactionInfo     READ transactionInfo    NOTIFY transactionInfoChanged)
     Q_PROPERTY(UTXOListModel*           utxoList            READ utxoList           NOTIFY utxoListChanged)
     Q_PROPERTY(UTXO*                    utxoInfo            READ utxoInfo           NOTIFY utxoInfoChanged)
-    Q_PROPERTY(Transaction*             transactionInfo     READ transactionInfo    NOTIFY transactionInfoChanged)
     Q_PROPERTY(DestinationListModel*    destinationList     READ destinationList    NOTIFY destinationListChanged)
     Q_PROPERTY(int walletListCurrentIndex  READ walletListCurrentIndex  	WRITE setWalletListCurrentIndex  NOTIFY walletListCurrentIndexChanged)
     Q_PROPERTY(int   addSignerStep         READ getAddSignerStep            NOTIFY addSignerStepChanged)
-    Q_PROPERTY(int   cacheXpubsPercentage  READ getCacheXpubsPercentage    	NOTIFY cacheXpubsPercentageChanged)
     Q_PROPERTY(int   addSignerPercentage   READ getAddSignerPercentage    	NOTIFY addSignerPercentageChanged)
-    Q_PROPERTY(QString    estimateFeeEconomical READ getEstimateFeeEconomical  NOTIFY estimateFeeEconomicalChanged)
-    Q_PROPERTY(QString    estimateFeeStandard   READ getEstimateFeeStandard    NOTIFY estimateFeeStandardChanged)
-    Q_PROPERTY(QString    estimateFeePriority   READ getEstimateFeePriority    NOTIFY estimateFeePriorityChanged)
-    Q_PROPERTY(QString    addressBalance        READ addressBalance            NOTIFY addressBalanceChanged)
-    Q_PROPERTY(TransactionListModel*    transactionHistoryShort                READ transactionHistoryShort NOTIFY transactionHistoryChanged)
-    Q_PROPERTY(QStringList      qrExported          READ qrExported            NOTIFY qrExportedChanged)
-    Q_PROPERTY(QString          mnemonic            READ getMnemonic           WRITE setMnemonic NOTIFY mnemonicChanged)
+    Q_PROPERTY(QString   fastestFee        READ fastestFee          NOTIFY fastestFeeChanged)
+    Q_PROPERTY(QString   fastestFeeUSD     READ fastestFeeUSD       NOTIFY fastestFeeChanged)
+    Q_PROPERTY(QString   halfHourFee       READ halfHourFee         NOTIFY halfHourFeeChanged)
+    Q_PROPERTY(QString   halfHourFeeUSD    READ halfHourFeeUSD      NOTIFY halfHourFeeChanged)
+    Q_PROPERTY(QString   hourFee           READ hourFee             NOTIFY hourFeeChanged)
+    Q_PROPERTY(QString   hourFeeUSD        READ hourFeeUSD          NOTIFY hourFeeChanged)
+    Q_PROPERTY(QString   minFee            READ minFee              NOTIFY minFeeChanged)
+    Q_PROPERTY(QString   minFeeUSD         READ minFeeUSD           NOTIFY minFeeChanged)
+    Q_PROPERTY(QString   addressBalance        READ addressBalance            NOTIFY addressBalanceChanged)
+    Q_PROPERTY(QStringList      qrExported          READ qrExported            WRITE setQrExported NOTIFY qrExportedChanged)
+    Q_PROPERTY(QString          mnemonic            READ getMnemonic           WRITE setMnemonic   NOTIFY mnemonicChanged)
     Q_PROPERTY(DeviceListModel* softwareSignerDeviceList                       READ softwareSignerDeviceList         NOTIFY softwareSignerDeviceListChanged)
     Q_PROPERTY(QStringList      suggestMnemonics    READ getSuggestMnemonics   NOTIFY suggestMnemonicsChanged)
     Q_PROPERTY(bool             limitSoftwareSigner READ limitSoftwareSigner   CONSTANT)
+    Q_PROPERTY(int              nunchukMode         READ nunchukMode           NOTIFY nunchukModeChanged)
+    Q_PROPERTY(int              tabIndex            READ tabIndex              WRITE setTabIndex NOTIFY tabIndexChanged)
+    Q_PROPERTY(QWarningMessage* warningMessage      READ warningMessage        NOTIFY warningMessageChanged)
+    Q_PROPERTY(double           exchangeRates       READ getExchangeRates      NOTIFY exchangeRatesChanged)
+    Q_PROPERTY(QString          lasttimeCheckEstimatedFee                      READ lasttimeCheckEstimatedFee     NOTIFY lasttimeCheckEstimatedFeeChanged)
+    Q_PROPERTY(MasterSigner*    primaryKey          READ primaryKey            NOTIFY primaryKeyChanged)
+    Q_PROPERTY(QString          msgKeyHealthcheck   READ msgKeyHealthcheck     WRITE setMsgKeyHealthcheck         NOTIFY msgKeyHealthcheckChanged)
 
 public:
     static AppModel *instance();
     AppModel(AppModel &other) = delete;
     AppModel(AppModel const &other) = delete;
     void operator=(const AppModel &other) = delete;
+    void requestInitialData();
+    void requestGetSigners();
+    void requestGetWallets();
+    void requestSyncWallets(QWalletListModelPtr wallets);
+    void signoutClearData();
 
     WalletListModel *walletList() const;
-    QSharedPointer<WalletListModel> walletListPtr() const;
-    void setWalletList(const QSharedPointer<WalletListModel> &d);
+    QWalletListModelPtr walletListPtr() const;
+    void setWalletList(const QWalletListModelPtr &d);
 
     MasterSignerListModel *masterSignerList() const;
-    QSharedPointer<MasterSignerListModel> masterSignerListPtr() const;
-    void setMasterSignerList(const QSharedPointer<MasterSignerListModel> &d);
+    QMasterSignerListModelPtr masterSignerListPtr() const;
+    void setMasterSignerList(const QMasterSignerListModelPtr &d);
 
     SingleSignerListModel* remoteSignerList() const;
-    QSharedPointer<SingleSignerListModel> remoteSignerListPtr() const;
-    void setRemoteSignerList(const QSharedPointer<SingleSignerListModel> &d);
+    QSingleSignerListModelPtr remoteSignerListPtr() const;
+    void setRemoteSignerList(const QSingleSignerListModelPtr &d);
 
     DeviceListModel *deviceList() const ;
-    QSharedPointer<DeviceListModel> deviceListPtr() const;
-    void setDeviceList(const QSharedPointer<DeviceListModel> &d);
+    QDeviceListModelPtr deviceListPtr() const;
+    void setDeviceList(const QDeviceListModelPtr &d);
+
+    MasterSigner *primaryKey() const;
+    void setPrimaryKey(const QString &userName);
+    QMasterSignerPtr getPrimaryKey() const;
 
     MasterSigner *masterSignerInfo() const;
-    QSharedPointer<MasterSigner> masterSignerInfoPtr() const;
-    void setMasterSignerInfo(const QSharedPointer<MasterSigner> &d);
+    QMasterSignerPtr masterSignerInfoPtr() const;
+    void setMasterSignerInfo(const QMasterSignerPtr &d);
     void setMasterSignerInfo(const int index);
     void updateMasterSignerInfoName(const QString &name);
     void updateSingleSignerInfoName(const QString &name);
 
     SingleSigner *singleSignerInfo();
-    QSharedPointer<SingleSigner> singleSignerInfoPtr() const;
-    void setSingleSignerInfo(const QSharedPointer<SingleSigner> &d);
+    QSingleSignerPtr singleSignerInfoPtr() const;
+    void setSingleSignerInfo(const QSingleSignerPtr &d);
 
     QStringList walletsUsingSigner() const;
     void setWalletsUsingSigner(QStringList d);
@@ -86,36 +105,27 @@ public:
 
     // New wallet
     Wallet *newWalletInfo() const;
-    QSharedPointer<Wallet> newWalletInfoPtr() const;
-    void setNewWalletInfo(const QSharedPointer<Wallet> &d);
+    QWalletPtr newWalletInfoPtr() const;
+    void setNewWalletInfo(const QWalletPtr &d);
 
     // Wallet selection
     Wallet *walletInfo() const;
-    QSharedPointer<Wallet> walletInfoPtr() const;
-    void setWalletInfo(const QSharedPointer<Wallet> &d);
-    void setWalletInfo(const int index);
+    QWalletPtr walletInfoPtr() const;
+    void setWalletInfo(const QWalletPtr &d);
+    void setWalletInfoByIndex(const int index);
 
     // For new transaction
     Transaction *transactionInfo() const;
-    QSharedPointer<Transaction> transactionInfoPtr() const;
-    void setTransactionInfo(const QSharedPointer<Transaction>& d);
-
-    // Transition history
-    TransactionListModel *transactionHistory() const;
-    TransactionListModel *transactionHistoryShort() const;
-    QSharedPointer<Transaction> getTransactionByIndex(const int index) const;
-    QSharedPointer<Transaction> getTransactionByTxid(const QString& txid) const;
-    QSharedPointer<TransactionListModel> transactionHistoryPtr() const;
-    void setTransactionHistory(const QSharedPointer<TransactionListModel> &d);
-    void setTransactionHistoryShort(const QSharedPointer<TransactionListModel> &d);
+    QTransactionPtr transactionInfoPtr() const;
+    void setTransactionInfo(const QTransactionPtr& d);
 
     UTXOListModel *utxoList() const;
-    QSharedPointer<UTXOListModel> utxoListPtr() const;
-    void setUtxoList(const QSharedPointer<UTXOListModel> &utxoList);
+    QUTXOListModelPtr utxoListPtr() const;
+    void setUtxoList(const QUTXOListModelPtr &utxoList);
 
     DestinationListModel* destinationList() const;
-    QSharedPointer<DestinationListModel> destinationListPtr() const;
-    void setDestinationList(const QSharedPointer<DestinationListModel> &destinationList);
+    QDestinationListModelPtr destinationListPtr() const;
+    void setDestinationList(const QDestinationListModelPtr &destinationList);
 
     int walletListCurrentIndex() const;
     void setWalletListCurrentIndex(int walletListCurrentIndex);
@@ -124,17 +134,14 @@ public:
     void setChainTip(int chainTip);
 
     UTXO* utxoInfo() const;
-    QSharedPointer<UTXO> utxoInfoPtr() const;
-    void setUtxoInfo(const QSharedPointer<UTXO> &utxoInfo);
+    QUTXOPtr utxoInfoPtr() const;
+    void setUtxoInfo(const QUTXOPtr &utxoInfo);
 
-    QSharedPointer<Transaction> getTransactionReplaceInfo() const;
-    void setTransactionReplaceInfo(const QSharedPointer<Transaction> &transactionReplaceInfo);
+    QTransactionPtr getTransactionReplaceInfo() const;
+    void setTransactionReplaceInfo(const QTransactionPtr &transactionReplaceInfo);
 
     int getAddSignerStep() const;
     void setAddSignerStep(int addSignerStep);
-
-    int getCacheXpubsPercentage() const;
-    void setCacheXpubsPercentage(int cacheXpubsPercentage);
 
     int getAddSignerPercentage() const;
     void setAddSignerPercentage(int addSignerPercentage);
@@ -142,14 +149,21 @@ public:
     QString getTxidReplacing() const;
     void setTxidReplacing(const QString &txidReplacing);
 
-    QString getEstimateFeePriority() const;
-    void setEstimateFeePriority(int estimateFeePriority);
+    QString fastestFeeUSD() const;
+    QString fastestFee() const;
+    void setFastestFee(qint64 fee);
 
-    QString getEstimateFeeStandard() const;
-    void setEstimateFeeStandard(int estimateFeeStandard);
+    QString halfHourFeeUSD() const;
+    QString halfHourFee() const;
+    void setHalfHourFee(qint64 fee);
 
-    QString getEstimateFeeEconomical() const;
-    void setEstimateFeeEconomical(int estimateFeeEconomical);
+    QString hourFeeUSD() const;
+    QString hourFee() const;
+    void setHourFee(qint64 fee);
+
+    QString minFeeUSD() const;
+    QString minFee() const;
+    void setMinFee(qint64 fee);
 
     void checkDeviceUsableToSign();
     void checkDeviceUsableToAdd();
@@ -163,52 +177,97 @@ public:
     void setMnemonic(const QString &mnemonic);
 
     DeviceListModel *softwareSignerDeviceList() const ;
-    QSharedPointer<DeviceListModel> softwareSignerDeviceListPtr() const;
-    void setSoftwareSignerDeviceList(const QSharedPointer<DeviceListModel> &d);
+    QDeviceListModelPtr softwareSignerDeviceListPtr() const;
+    void setSoftwareSignerDeviceList(const QDeviceListModelPtr &d);
 
     QStringList getSuggestMnemonics() const;
     void setSuggestMnemonics(const QStringList &suggestMnemonics);
 
     bool limitSoftwareSigner() const;
 
+    bool inititalized() const;
+    void setInititalized(bool inititalized);
+
+    int nunchukMode() const;
+    void setNunchukMode(int nunchukMode);
+
+    int tabIndex() const;
+    void setTabIndex(int tabIndex);
+
+    QWarningMessage* warningMessage() const;
+    QWarningMessagePtr warningMessagePtr() const;
+    void setWarningMessage(const QWarningMessagePtr &warningMessage);
+    Q_INVOKABLE void showToast(int code,
+                               const QString &what,
+                               EWARNING::WarningType type,
+                               const QString &explain = "",
+                               POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
+    Q_INVOKABLE void setToast(int code,
+                  const QString &what,
+                  EWARNING::WarningType type,
+                  const QString &explain = "",
+                  POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
+    double getExchangeRates() const;
+    void setExchangeRates(double exchangeRates);
+    QString lasttimeCheckEstimatedFee() const;
+    void setLasttimeCheckEstimatedFee(const QDateTime &lasttime_checkEstimatedFee);
+
+    void startCheckAuthorize();
+    void stopCheckAuthorize();
+
+    void loginSucceed();
+    void nunchukLogin();
+    void matrixLogin();
+    void sign_in(QVariant msg);
+    void create_account(QVariant msg);
+    QString msgKeyHealthcheck() const;
+    void setMsgKeyHealthcheck(const QString &value);
+
 private:
     AppModel();
     ~AppModel();
-    QSharedPointer<WalletListModel> walletList_;
-    QSharedPointer<DeviceListModel> deviceList_;
-    QSharedPointer<MasterSignerListModel> masterSignerList_;
-    QSharedPointer<SingleSignerListModel> remoteSignerList_;
-    QSharedPointer<MasterSigner>    masterSignerInfo_;
-    QSharedPointer<SingleSigner>    singleSignerInfo_;
-    QStringList                     walletsUsingSigner_;
-    QSharedPointer<Wallet>          newWalletInfo_;
-    QSharedPointer<Wallet>          walletInfo_;
-    QSharedPointer<Transaction>     transactionInfo_;
-    QSharedPointer<Transaction>     transactionReplaceInfo_;
-    QSharedPointer<TransactionListModel>  transactionHistory_;
-    QSharedPointer<TransactionListModel>  transactionHistoryShort_;
-    QSharedPointer<UTXOListModel>   utxoList_;
-    QSharedPointer<UTXO>            utxoInfo_;
-    QSharedPointer<DestinationListModel> destinationList_;
-    int                             walletListCurrentIndex_;
-    int                             chainTip_;
-
-    int                             addSignerStep_;
-    int                             cacheXpubsPercentage_;
-    int                             addSignerPercentage_;
-    QString                         txidReplacing_;
-
-    int                             estimateFeePriority_;
-    int                             estimateFeeStandard_;
-    int                             estimateFeeEconomical_;
-    qint64                          addressBalance_;
-
-    QTimer timer_;
-    QStringList                     qrExported_;
-    QString                         mnemonic_;
-    QSharedPointer<DeviceListModel> softwareSignerDeviceList_;
-    QStringList                     suggestMnemonics_;
+    bool                inititalized_[2];
+    QWalletListModelPtr walletList_;
+    QDeviceListModelPtr deviceList_;
+    QMasterSignerListModelPtr masterSignerList_;
+    QSingleSignerListModelPtr remoteSignerList_;
+    QMasterSignerPtr    masterSignerInfo_;
+    QSingleSignerPtr    singleSignerInfo_;
+    QStringList         walletsUsingSigner_;
+    QWalletPtr          newWalletInfo_;
+    QWalletPtr          walletInfo_;
+    QTransactionPtr     transactionInfo_;
+    QTransactionPtr     transactionReplaceInfo_;
+    QTransactionListModelPtr  transactionPending_;
+    QUTXOListModelPtr   utxoList_;
+    QUTXOPtr            utxoInfo_;
+    QDestinationListModelPtr destinationList_;
+    int                 walletListCurrentIndex_;
+    int                 chainTip_;
+    int                 addSignerStep_;
+    int                 addSignerPercentage_;
+    QString             txidReplacing_;
+    qint64              fastestFee_;
+    qint64              halfHourFee_;
+    qint64              hourFee_;
+    qint64              minFee_;
+    qint64              addressBalance_;
+    QTimer              timerRefreshHealthCheck_;
+    QTimer              timerFeeRates_;
+    QTimer              timerCheckAuthorized_;
+    QStringList         qrExported_;
+    QString             mnemonic_;
+    QDeviceListModelPtr softwareSignerDeviceList_;
+    QStringList         suggestMnemonics_;
+    int                 nunchukMode_;
+    int                 m_tabIndex;
+    QWarningMessagePtr warningMessage_;
+    double              exchangeRates_;
+    QDateTime           lasttime_checkEstimatedFee_;
+    QMasterSignerPtr    m_primaryKey;
+    QString             msgKeyHealthcheck_;
 signals:
+    void signalShowToast();
     void walletListChanged();
     void masterSignerListChanged();
     void remoteSignerListChanged();
@@ -220,30 +279,50 @@ signals:
     void newWalletInfoChanged();
     void walletInfoChanged();
     void transactionInfoChanged();
-    void transactionHistoryChanged();
-    void transactionHistoryShortChanged();
+    void transactionPendingChanged();
     void utxoListChanged();
     void destinationListChanged();
     void walletListCurrentIndexChanged();
     void chainTipChanged();
     void utxoInfoChanged();
     void addSignerStepChanged();
-    void cacheXpubsPercentageChanged();
     void addSignerPercentageChanged();
-    void estimateFeePriorityChanged();
-    void estimateFeeStandardChanged();
-    void estimateFeeEconomicalChanged();
+    void fastestFeeChanged();
+    void halfHourFeeChanged();
+    void hourFeeChanged();
+    void minFeeChanged();
     void addressBalanceChanged();
-    void sentPINToDeviceResult(int result);
-    void loginResult(bool succeed);
     void qrExportedChanged();
-    void requireRestartApp();
-    bool preCheckAddressOnDevice(bool valid);
+    bool displayAddressOnDevices();
     void mnemonicChanged();
     void softwareSignerDeviceListChanged();
     void suggestMnemonicsChanged();
+    void nunchukModeChanged();
+    void tabIndexChanged();
+    void warningMessageChanged();
+    void exchangeRatesChanged();
+    void finishGenerateSigner();
+    void lasttimeCheckEstimatedFeeChanged();
+    void primaryKeyChanged();
+    void msgKeyHealthcheckChanged();
 public slots:
-    void timer1sChanged();
+    void timerHealthCheckTimeHandle();
+    void timerFeeRatesHandle();
+    void timerCheckAuthorizedHandle();
+    QString parseKeystoneSigner(QString qr);
+    bool    parseKeystoneWallet(const QString name,
+                                const QString desc,
+                                const QStringList qrtags);
+    bool    parseKeystoneCollabWallet(const QStringList qrtags);
+    bool    parseKeystoneTransaction(const QStringList qrtags);
+    QString parsePassportSigners(QStringList qrtags);
+    QString parseQRSigners(QStringList qrtags);
+    QString parseJSONSigners(QString fileName);
+    bool    parsePassportTransaction(const QStringList qrtags);
+    QString toLocalString(QString in);
+    bool updateSettingRestartRequired();
+    QString getFilePath(const QString in);
+    bool enableDatabaseEncryption(const QString in);
 };
 
 #endif // APPMODEL_H

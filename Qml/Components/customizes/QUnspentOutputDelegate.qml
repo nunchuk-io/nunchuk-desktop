@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
 import "../origins"
@@ -7,7 +26,7 @@ Rectangle {
     property string unspentoutput_memo: ""
     property string unspentoutput_confirmation: ""
     property string unspentoutput_amount: ""
-
+    property bool utxoSelected: false
     property int unspendWidth: 274
     property int memoWidth: 135
     property int confirmedWidth: 180
@@ -42,11 +61,12 @@ Rectangle {
             width: unspendWidth
             height: parent.height
 
-            Image {
+            QImage {
                 id: checkboxutxo
                 width: 24
                 height: 24
-                source: utxo_selected ? (!AppModel.walletInfo.walletEscrow ? iconChecked[0] : iconChecked[1]) : (!AppModel.walletInfo.walletEscrow ? iconUnChecked[0] : iconUnChecked[1])
+                source: utxoSelected ? (!AppModel.walletInfo.walletEscrow ? iconChecked[0] : iconChecked[1]) :
+                                        (!AppModel.walletInfo.walletEscrow ? iconUnChecked[0] : iconUnChecked[1])
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 17

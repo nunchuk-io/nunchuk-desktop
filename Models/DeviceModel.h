@@ -3,10 +3,9 @@
 
 #include <QObject>
 #include <QAbstractListModel>
-#include "QWarningMessage.h"
 #include "QOutlog.h"
 
-class Device : public QObject
+class QDevice : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString deviceName                 READ name                   WRITE setName                 NOTIFY nameChanged                 )
@@ -19,9 +18,9 @@ class Device : public QObject
     Q_PROPERTY(bool deviceNeedsPinSent            READ needsPinSent           WRITE setNeedsPinSent         NOTIFY needsPinSentChanged         )
     Q_PROPERTY(QString masterSignerId             READ masterSignerId         WRITE setMasterSignerId       NOTIFY masterSignerIdChanged)
 public:
-    Device();
-    Device(const QString& fingerprint);
-    Device(const QString& name,
+    QDevice();
+    QDevice(const QString& fingerprint);
+    QDevice(const QString& name,
            const QString& type,
            const QString& path,
            const QString& model,
@@ -31,7 +30,7 @@ public:
            bool needs_pin_sent,
            QString mastersigner_id = "");
 
-    ~Device();
+    ~QDevice();
     QString name() const;
     QString type() const;
     QString path() const;
@@ -40,7 +39,6 @@ public:
     bool connected() const;
     bool needsPassPhraseSent() const;
     bool needsPinSent() const;
-
     void setName(const QString &name);
     void setType(const QString& d);
     void setPath(const QString& d);
@@ -49,10 +47,6 @@ public:
     void setConnected(const bool d);
     void setNeedsPassPhraseSent(const bool d);
     void setNeedsPinSent(const bool d);
-
-    bool usableToSign() const;
-    void setUsableToSign(bool usableToSign);
-
     bool usableToAdd() const;
     void setUsableToAdd(bool usableToAdd);
     QString masterSignerId() const;
@@ -67,9 +61,6 @@ private:
     bool connected_;
     bool needs_pass_phrase_sent_;
     bool needs_pin_sent_;
-
-    //Use for tx only
-    bool usableToSign_;
 
     //Use for add signer
     bool usableToAdd_;
@@ -90,12 +81,11 @@ signals:
     void usableToAddChanged();
     void masterSignerIdChanged();
 };
+typedef QSharedPointer<QDevice> QDevicePtr;
 
 class DeviceListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(QWarningMessage* warningMessage  READ warningMessage NOTIFY warningMessageChanged)
-    Q_PROPERTY(bool containsSignable    READ containsSignable   NOTIFY containsSignableChanged)
     Q_PROPERTY(bool containsAddable     READ containsAddable    NOTIFY containsAddableChanged)
     Q_PROPERTY(int  count               READ deviceCount        NOTIFY deviceCountChanged)
 public:
@@ -114,15 +104,15 @@ public:
                    bool needs_pass_phrase_sent,
                    bool needs_pin_sent,
                    QString mastersigner_id = "");
-    void addDevice(const QSharedPointer<Device> &d);
+    void addDevice(const QDevicePtr &d);
     void updateDeviceList(const  QSharedPointer<DeviceListModel> &d);
-    QSharedPointer<Device> getDeviceByIndex(const int index);
-    QSharedPointer<Device> getDeviceByPath(const QString& path);
-    QSharedPointer<Device> getDeviceByXFP(const QString& xfp);
-    QSharedPointer<Device> getDeviceNeedPinSent();
-    void updateDeviceConnected(QString xfp);
+    QDevicePtr getDeviceByIndex(const int index);
+    QDevicePtr getDeviceByPath(const QString& path);
+    QDevicePtr getDeviceByXFP(const QString& xfp);
+    QDevicePtr getDeviceNeedPinSent();
     void resetDeviceConnected();
     QString getDevicePathByIndex(const int index);
+    QString getDevicePathByXfp(const QString& xfp);
     bool deviceNeedPinSent(const QString& xfp);
     bool deviceNeedPinSent(const QString& deviceModel, const QString& deviceType);
     enum DeviceRoles {
@@ -134,20 +124,9 @@ public:
         device_connected_role,
         device_needs_pass_phrase_sent_role,
         device_needs_pin_sent_role,
-        device_usableToSign_role,
         device_usableToAdd_role,
         device_master_signer_id_role,
     };
-
-    QWarningMessage* warningMessage() const;
-    QSharedPointer<QWarningMessage> warningMessagePtr() const;
-    void setWarningMessage(const QSharedPointer<QWarningMessage> &warningMessage);
-
-    // for tx only
-    void resetUsableToSign();
-    bool containsSignable() const;
-    void updateUsableToSign(const QString &fingerprint, bool value);
-
     void resetUsableToAdd();
     bool containsAddable() const;
     void updateUsableToAdd(const QString &fingerprint, bool value);
@@ -157,17 +136,18 @@ public:
     bool containsNeedPinSent();
     void updateDeviceNeedPassphraseSentByMasterSignerId(const QString &id, bool needpassphrase);
     void notifySoftwareSignerRenamed(const QString &mastersignerid, const QString &newname);
-
+    void checkAndUnlockDevice();
     int deviceCount() const;
-private:
-    QList<QSharedPointer<Device>> d_;
-    QSharedPointer<QWarningMessage> warningMessage_;
+    int getDeviceIndexByXFP(const QString& xfp);
+    QList<QDevicePtr> fullList() const;
     bool contains(const QString &fingerprint);
+    bool needScanDevice();
+private:
+    QList<QDevicePtr> d_;
 signals:
-    void warningMessageChanged();
-    void containsSignableChanged();
     void containsAddableChanged();
     void deviceCountChanged();
 };
+typedef QSharedPointer<DeviceListModel> QDeviceListModelPtr;
 
 #endif // DEVICELISTMODEL_H

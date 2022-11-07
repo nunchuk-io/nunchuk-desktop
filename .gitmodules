@@ -1,3 +1,9 @@
 [submodule "contrib/libnunchuk"]
 	path = contrib/libnunchuk
 	url = https://github.com/nunchuk-io/libnunchuk.git
+[submodule "contrib/quotient"]
+	path = contrib/quotient
+	url = https://github.com/tongvanlinh/libQuotient.git
+[submodule "contrib/qzxing"]
+	path = contrib/qzxing
+	url = https://github.com/ftylitak/qzxing.git

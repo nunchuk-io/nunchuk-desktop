@@ -1,10 +1,72 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "AppSetting.h"
 #include "AppModel.h"
+#include "Draco.h"
 #include "QOutlog.h"
 
-AppSetting::AppSetting() : unit_((int)Unit::BTC),
+NunchukSettings::NunchukSettings():
+    QSettings(QSettings::NativeFormat,
+              QSettings::UserScope,
+              qApp->organizationName(),
+              qApp->applicationName()),
+    m_group("")
+{ }
+
+NunchukSettings::~NunchukSettings()
+{ }
+
+QString NunchukSettings::groupSetting() const
+{
+    return m_group;
+}
+
+void NunchukSettings::setGroupSetting(QString group)
+{
+    DBG_INFO << "Settings with [" << group << "]";
+    m_group = group;
+}
+
+void NunchukSettings::setValue(const QString &key, const QVariant &value)
+{
+    QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
+    QSettings::setValue(realkey, value);
+}
+
+QVariant NunchukSettings::value(const QString &key, const QVariant &defaultValue) const
+{
+    QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
+    return QSettings::value(realkey, defaultValue);
+}
+
+bool NunchukSettings::contains(const QString &key) const
+{
+    QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
+    return QSettings::contains(realkey);
+}
+
+AppSetting::AppSetting() :
+    unit_((int)Unit::BTC),
     mainnetServer_(MAINNET_SERVER),
     testnetServer_(TESTNET_SERVER),
+    signetServer_(SIGNET_SERVER),
     enableDualServer_(false),
     enableCustomizeHWIDriver_(false),
     hwiPath_(HWI_PATH),
@@ -20,7 +82,6 @@ AppSetting::AppSetting() : unit_((int)Unit::BTC),
     storagePath_(""),
     connectionState_((int)ConnectionStatus::SYNCING),
     syncPercent_(0),
-    changePassphraseResult_((int)ChangePassphraseResult::NOT_YET_SET),
     enableCertificateFile_(false),
     certificateFile_(""),
     enableCoreRPC_(false),
@@ -30,10 +91,14 @@ AppSetting::AppSetting() : unit_((int)Unit::BTC),
     coreRPCPassword_(""),
     firstTimeCoreRPC_(true),
     firstTimePassPhrase_(true),
-    settings_(QSettings::NativeFormat, QSettings::UserScope, qApp->organizationName(), qApp->applicationName())
+    enableSignetStream_(false),
+    signetStream_(GLOBAL_SIGNET_EXPLORER),
+    enableDebugMode_(false),
+    isStarted_(false),
+    enableMultiDeviceSync_(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    DBG_INFO << "Setting in:" << settings_.fileName();
+    DBG_INFO << "Setting in:" << NunchukSettings::fileName();
     this->disconnect();
 }
 
@@ -47,11 +112,16 @@ AppSetting *AppSetting::instance()
     return &mInstance;
 }
 
+void AppSetting::setGroupSetting(QString group) {
+    NunchukSettings::setGroupSetting(group);
+}
+
 void AppSetting::resetSetting()
 {
     this->setUnit((int)Unit::BTC);
     this->setMainnetServer(MAINNET_SERVER);
     this->setTestnetServer(TESTNET_SERVER);
+    this->setSignetServer(SIGNET_SERVER);
     this->setEnableDualServer(false);
     this->setEnableCustomizeHWIDriver(false);
     this->setHwiPath(HWI_PATH);
@@ -71,6 +141,8 @@ void AppSetting::resetSetting()
     this->setCoreRPCPort(primaryServer_ == (int)Chain::TESTNET ? CORERPC_TESTNET_PORT : CORERPC_MAINNET_PORT);
     this->setCoreRPCName("");
     this->setCoreRPCPassword("");
+    this->setSignetStream(GLOBAL_SIGNET_EXPLORER);
+    this->setEnableMultiDeviceSync(false);
 }
 
 void AppSetting::updateUnit()
@@ -78,8 +150,13 @@ void AppSetting::updateUnit()
     if(AppModel::instance()->walletList()){
         AppModel::instance()->walletList()->notifyUnitChanged();
     }
-    if(AppModel::instance()->transactionHistory()){
-        AppModel::instance()->transactionHistory()->notifyUnitChanged();
+    if(AppModel::instance()->walletInfo()){
+        if(AppModel::instance()->walletInfo()->transactionHistory()){
+            AppModel::instance()->walletInfo()->transactionHistory()->notifyUnitChanged();
+        }
+        if(AppModel::instance()->walletInfo()->transactionHistoryShort()){
+            AppModel::instance()->walletInfo()->transactionHistoryShort()->notifyUnitChanged();
+        }
     }
     if(AppModel::instance()->utxoList()){
         AppModel::instance()->utxoList()->notifyUnitChanged();
@@ -88,11 +165,11 @@ void AppSetting::updateUnit()
 
 int AppSetting::unit()
 {
-    if(settings_.contains("unit")){
-        unit_ = settings_.value("unit").toInt();
+    if(NunchukSettings::contains("unit")){
+        unit_ = NunchukSettings::value("unit").toInt();
     }
     else{
-        settings_.setValue("unit", unit_);
+        NunchukSettings::setValue("unit", unit_);
     }
     return unit_;
 }
@@ -101,7 +178,7 @@ void AppSetting::setUnit(int unit)
 {
     if(unit_ != unit){
         unit_ = unit;
-        settings_.setValue("unit", unit_);
+        NunchukSettings::setValue("unit", unit_);
         emit unitChanged();
         updateUnit();
     }
@@ -109,11 +186,11 @@ void AppSetting::setUnit(int unit)
 
 QString AppSetting::mainnetServer()
 {
-    if(settings_.contains("mainnestServer")){
-        mainnetServer_ = settings_.value("mainnestServer").toString();
+    if(NunchukSettings::contains("mainnestServer")){
+        mainnetServer_ = NunchukSettings::value("mainnestServer").toString();
     }
     else{
-        settings_.setValue("mainnestServer", mainnetServer_);
+        NunchukSettings::setValue("mainnestServer", mainnetServer_);
     }
     return mainnetServer_;
 }
@@ -122,18 +199,18 @@ void AppSetting::setMainnetServer(const QString &mainnestServer)
 {
     if(mainnetServer_ != mainnestServer){
         mainnetServer_ = mainnestServer;
-        settings_.setValue("mainnestServer", mainnetServer_);
+        NunchukSettings::setValue("mainnestServer", mainnetServer_);
         emit mainnetServerChanged();
     }
 }
 
 QString AppSetting::testnetServer()
 {
-    if(settings_.contains("testnetServer")){
-        testnetServer_ = settings_.value("testnetServer").toString();
+    if(NunchukSettings::contains("testnetServer")){
+        testnetServer_ = NunchukSettings::value("testnetServer").toString();
     }
     else{
-        settings_.setValue("testnetServer", testnetServer_);
+        NunchukSettings::setValue("testnetServer", testnetServer_);
     }
     return testnetServer_;
 }
@@ -142,18 +219,38 @@ void AppSetting::setTestnetServer(const QString &testnetServer)
 {
     if(testnetServer_ != testnetServer){
         testnetServer_ = testnetServer;
-        settings_.setValue("testnetServer", testnetServer_);
+        NunchukSettings::setValue("testnetServer", testnetServer_);
         emit testnetServerChanged();
+    }
+}
+
+QString AppSetting::signetServer()
+{
+    if(NunchukSettings::contains("signetServer")){
+        signetServer_ = NunchukSettings::value("signetServer").toString();
+    }
+    else{
+        NunchukSettings::setValue("signetServer", signetServer_);
+    }
+    return signetServer_;
+}
+
+void AppSetting::setSignetServer(const QString &signetServer)
+{
+    if (signetServer_ != signetServer){
+        signetServer_ = signetServer;
+        NunchukSettings::setValue("signetServer", signetServer_);
+        emit signetServerChanged();
     }
 }
 
 bool AppSetting::enableDualServer()
 {
-    if(settings_.contains("enableDualServer")){
-        enableDualServer_ = settings_.value("enableDualServer").toBool();
+    if(NunchukSettings::contains("enableDualServer")){
+        enableDualServer_ = NunchukSettings::value("enableDualServer").toBool();
     }
     else{
-        settings_.setValue("enableDualServer", enableDualServer_);
+        NunchukSettings::setValue("enableDualServer", enableDualServer_);
     }
     return enableDualServer_;
 }
@@ -162,18 +259,18 @@ void AppSetting::setEnableDualServer(bool enableDualServer)
 {
     if(enableDualServer_ != enableDualServer){
         enableDualServer_ = enableDualServer;
-        settings_.setValue("enableDualServer", enableDualServer_);
+        NunchukSettings::setValue("enableDualServer", enableDualServer_);
         emit enableDualServerChanged();
     }
 }
 
 bool AppSetting::enableCustomizeHWIDriver()
 {
-    if(settings_.contains("enableCustomizeHWIDriver")){
-        enableCustomizeHWIDriver_ = settings_.value("enableCustomizeHWIDriver").toBool();
+    if(NunchukSettings::contains("enableCustomizeHWIDriver")){
+        enableCustomizeHWIDriver_ = NunchukSettings::value("enableCustomizeHWIDriver").toBool();
     }
     else{
-        settings_.setValue("enableCustomizeHWIDriver", enableCustomizeHWIDriver_);
+        NunchukSettings::setValue("enableCustomizeHWIDriver", enableCustomizeHWIDriver_);
     }
     return enableCustomizeHWIDriver_;
 }
@@ -182,18 +279,18 @@ void AppSetting::setEnableCustomizeHWIDriver(bool enableCustomizeHWIDriver)
 {
     if(enableCustomizeHWIDriver_ != enableCustomizeHWIDriver){
         enableCustomizeHWIDriver_ = enableCustomizeHWIDriver;
-        settings_.setValue("enableCustomizeHWIDriver", enableCustomizeHWIDriver_);
+        NunchukSettings::setValue("enableCustomizeHWIDriver", enableCustomizeHWIDriver_);
         emit enableCustomizeHWIDriverChanged();
     }
 }
 
 QString AppSetting::hwiPath()
 {
-    if(settings_.contains("hwiPath")){
-        hwiPath_ = settings_.value("hwiPath").toString();
+    if(NunchukSettings::contains("hwiPath")){
+        hwiPath_ = NunchukSettings::value("hwiPath").toString();
     }
     else{
-        settings_.setValue("hwiPath", hwiPath_);
+        NunchukSettings::setValue("hwiPath", hwiPath_);
     }
     return hwiPath_;
 }
@@ -202,38 +299,38 @@ void AppSetting::setHwiPath(const QString &hwiPath)
 {
     if(hwiPath_ != hwiPath){
         hwiPath_ = hwiPath;
-        settings_.setValue("hwiPath", hwiPath_);
+        NunchukSettings::setValue("hwiPath", hwiPath_);
         emit hwiPathChanged();
     }
 }
 
 bool AppSetting::enableDBEncryption()
 {
-    if(settings_.contains("enableDBEncryption")){
-        enableDBEncryption_ = settings_.value("enableDBEncryption").toBool();
+    if(NunchukSettings::contains("enableDBEncryption")){
+        enableDBEncryption_ = NunchukSettings::value("enableDBEncryption").toBool();
     }
     else{
-        settings_.setValue("enableDBEncryption", enableDBEncryption_);
+        NunchukSettings::setValue("enableDBEncryption", enableDBEncryption_);
     }
+    DBG_INFO << enableDBEncryption_ << groupSetting();
     return enableDBEncryption_;
 }
 
 void AppSetting::setEnableDBEncryption(bool enableDBEncryption)
 {
-    if(enableDBEncryption_ != enableDBEncryption){
-        enableDBEncryption_ = enableDBEncryption;
-        settings_.setValue("enableDBEncryption", enableDBEncryption_);
-        emit enableDBEncryptionChanged();
-    }
+    enableDBEncryption_ = enableDBEncryption;
+    NunchukSettings::setValue("enableDBEncryption", enableDBEncryption_);
+    DBG_INFO << enableDBEncryption << groupSetting();
+    emit enableDBEncryptionChanged();
 }
 
 bool AppSetting::enableTorProxy()
 {
-    if(settings_.contains("enableTorProxy")){
-        enableTorProxy_ = settings_.value("enableTorProxy").toBool();
+    if(NunchukSettings::contains("enableTorProxy")){
+        enableTorProxy_ = NunchukSettings::value("enableTorProxy").toBool();
     }
     else{
-        settings_.setValue("enableTorProxy", enableTorProxy_);
+        NunchukSettings::setValue("enableTorProxy", enableTorProxy_);
     }
     return enableTorProxy_;
 }
@@ -242,18 +339,18 @@ void AppSetting::setEnableTorProxy(bool enableTorProxy)
 {
     if(enableTorProxy_ != enableTorProxy){
         enableTorProxy_ = enableTorProxy;
-        settings_.setValue("enableTorProxy", enableTorProxy_);
+        NunchukSettings::setValue("enableTorProxy", enableTorProxy_);
         emit enableTorProxyChanged();
     }
 }
 
 QString AppSetting::torProxyAddress()
 {
-    if(settings_.contains("torProxyAddress")){
-        torProxyAddress_ = settings_.value("torProxyAddress").toString();
+    if(NunchukSettings::contains("torProxyAddress")){
+        torProxyAddress_ = NunchukSettings::value("torProxyAddress").toString();
     }
     else{
-        settings_.setValue("torProxyAddress", torProxyAddress_);
+        NunchukSettings::setValue("torProxyAddress", torProxyAddress_);
     }
     return torProxyAddress_;
 }
@@ -262,18 +359,18 @@ void AppSetting::setTorProxyAddress(const QString &torProxyAddress)
 {
     if(torProxyAddress_ != torProxyAddress){
         torProxyAddress_ = torProxyAddress;
-        settings_.setValue("torProxyAddress", torProxyAddress_);
+        NunchukSettings::setValue("torProxyAddress", torProxyAddress_);
         emit torProxyAddressChanged();
     }
 }
 
 int AppSetting::torProxyPort()
 {
-    if(settings_.contains("torProxyPort")){
-        torProxyPort_ = settings_.value("torProxyPort").toInt();
+    if(NunchukSettings::contains("torProxyPort")){
+        torProxyPort_ = NunchukSettings::value("torProxyPort").toInt();
     }
     else{
-        settings_.setValue("torProxyPort", torProxyPort_);
+        NunchukSettings::setValue("torProxyPort", torProxyPort_);
     }
     return torProxyPort_;
 }
@@ -282,18 +379,18 @@ void AppSetting::setTorProxyPort(const int torProxyPort)
 {
     if(torProxyPort_ != torProxyPort){
         torProxyPort_ = torProxyPort;
-        settings_.setValue("torProxyPort", torProxyPort_);
+        NunchukSettings::setValue("torProxyPort", torProxyPort_);
         emit torProxyPortChanged();
     }
 }
 
 QString AppSetting::torProxyName()
 {
-    if(settings_.contains("torProxyName")){
-        torProxyName_ = settings_.value("torProxyName").toString();
+    if(NunchukSettings::contains("torProxyName")){
+        torProxyName_ = NunchukSettings::value("torProxyName").toString();
     }
     else{
-        settings_.setValue("torProxyName", torProxyName_);
+        NunchukSettings::setValue("torProxyName", torProxyName_);
     }
     return torProxyName_;
 }
@@ -302,18 +399,18 @@ void AppSetting::setTorProxyName(const QString &torProxyName)
 {
     if(torProxyName_ != torProxyName){
         torProxyName_ = torProxyName;
-        settings_.setValue("torProxyName", torProxyName_);
+        NunchukSettings::setValue("torProxyName", torProxyName_);
         emit torProxyNameChanged();
     }
 }
 
 QString AppSetting::torProxyPassword()
 {
-    if(settings_.contains("torProxyPassword")){
-        torProxyPassword_ = settings_.value("torProxyPassword").toString();
+    if(NunchukSettings::contains("torProxyPassword")){
+        torProxyPassword_ = NunchukSettings::value("torProxyPassword").toString();
     }
     else{
-        settings_.setValue("torProxyPassword", torProxyPassword_);
+        NunchukSettings::setValue("torProxyPassword", torProxyPassword_);
     }
     return torProxyPassword_;
 }
@@ -322,19 +419,26 @@ void AppSetting::setTorProxyPassword(const QString &torProxyPassword)
 {
     if(torProxyPassword_ != torProxyPassword){
         torProxyPassword_ = torProxyPassword;
-        settings_.setValue("torProxyPassword", torProxyPassword_);
+        NunchukSettings::setValue("torProxyPassword", torProxyPassword_);
         emit torProxyPasswordChanged();
     }
 }
 
 int AppSetting::primaryServer()
 {
-    if(settings_.contains("primaryServer")){
-        primaryServer_ = settings_.value("primaryServer").toInt();
+    if(NunchukSettings::contains("primaryServer")){
+        primaryServer_ = NunchukSettings::value("primaryServer").toInt();
     }
     else{
-        settings_.setValue("primaryServer", primaryServer_);
+        NunchukSettings::setValue("primaryServer", primaryServer_);
     }
+#ifndef SIGNET_SUPPORT
+    if(primaryServer_ == (int)Chain::SIGNET)
+    {
+        primaryServer_ = (int)Chain::TESTNET;
+        NunchukSettings::setValue("primaryServer", primaryServer_);
+    }
+#endif
     return primaryServer_;
 }
 
@@ -342,18 +446,18 @@ void AppSetting::setPrimaryServer(int primaryServer)
 {
     if(primaryServer_ != primaryServer){
         primaryServer_ = primaryServer;
-        settings_.setValue("primaryServer", primaryServer_);
+        NunchukSettings::setValue("primaryServer", primaryServer_);
         emit primaryServerChanged();
     }
 }
 
 QString AppSetting::secondaryServer()
 {
-    if(settings_.contains("secondaryServer")){
-        secondaryServer_ = settings_.value("secondaryServer").toString();
+    if(NunchukSettings::contains("secondaryServer")){
+        secondaryServer_ = NunchukSettings::value("secondaryServer").toString();
     }
     else{
-        settings_.setValue("secondaryServer", secondaryServer_);
+        NunchukSettings::setValue("secondaryServer", secondaryServer_);
     }
     return secondaryServer_;
 }
@@ -362,18 +466,18 @@ void AppSetting::setSecondaryServer(const QString &secondaryServer)
 {
     if(secondaryServer_ != secondaryServer){
         secondaryServer_ = secondaryServer;
-        settings_.setValue("secondaryServer", secondaryServer_);
+        NunchukSettings::setValue("secondaryServer", secondaryServer_);
         emit secondaryServerChanged();
     }
 }
 
 bool AppSetting::enableFixedPrecision()
 {
-    if(settings_.contains("enableFixedPrecision")){
-        enableFixedPrecision_ = settings_.value("enableFixedPrecision").toBool();
+    if(NunchukSettings::contains("enableFixedPrecision")){
+        enableFixedPrecision_ = NunchukSettings::value("enableFixedPrecision").toBool();
     }
     else{
-        settings_.setValue("enableFixedPrecision", enableFixedPrecision_);
+        NunchukSettings::setValue("enableFixedPrecision", enableFixedPrecision_);
     }
     return enableFixedPrecision_;
 }
@@ -382,7 +486,7 @@ void AppSetting::setEnableFixedPrecision(bool enableFixedPrecision)
 {
     if(enableFixedPrecision_ != enableFixedPrecision){
         enableFixedPrecision_ = enableFixedPrecision;
-        settings_.setValue("enableFixedPrecision", enableFixedPrecision_);
+        NunchukSettings::setValue("enableFixedPrecision", enableFixedPrecision_);
         emit enableFixedPrecisionChanged();
         if((int)Unit::BTC == unit()){
             updateUnit();
@@ -392,14 +496,14 @@ void AppSetting::setEnableFixedPrecision(bool enableFixedPrecision)
 
 QString AppSetting::certificateFile()
 {
-    if(settings_.contains("certificateFile")){
-        certificateFile_ = settings_.value("certificateFile").toString();
+    if(NunchukSettings::contains("certificateFile")){
+        certificateFile_ = NunchukSettings::value("certificateFile").toString();
         if(certificateFile_.isEmpty() || certificateFile_.isNull() || (certificateFile_ =="")){
             setEnableCertificateFile(false);
         }
     }
     else{
-        settings_.setValue("certificateFile", certificateFile_);
+        NunchukSettings::setValue("certificateFile", certificateFile_);
     }
     return certificateFile_;
 }
@@ -408,18 +512,18 @@ void AppSetting::setCertificateFile(const QString &certificateFile)
 {
     if(certificateFile_ != certificateFile){
         certificateFile_ = certificateFile;
-        settings_.setValue("certificateFile", certificateFile_);
+        NunchukSettings::setValue("certificateFile", certificateFile_);
         emit certificateFileChanged();
     }
 }
 
 bool AppSetting::enableCertificateFile()
 {
-    if(settings_.contains("enableCertificateFile")){
-        enableCertificateFile_ = settings_.value("enableCertificateFile").toBool();
+    if(NunchukSettings::contains("enableCertificateFile")){
+        enableCertificateFile_ = NunchukSettings::value("enableCertificateFile").toBool();
     }
     else{
-        settings_.setValue("enableCertificateFile", enableCertificateFile_);
+        NunchukSettings::setValue("enableCertificateFile", enableCertificateFile_);
     }
     return enableCertificateFile_;
 }
@@ -428,7 +532,7 @@ void AppSetting::setEnableCertificateFile(bool enableCertificateFile)
 {
     if(enableCertificateFile_ != enableCertificateFile){
         enableCertificateFile_ = enableCertificateFile;
-        settings_.setValue("enableCertificateFile", enableCertificateFile_);
+        NunchukSettings::setValue("enableCertificateFile", enableCertificateFile_);
         emit enableCertificateFileChanged();
     }
 }
@@ -472,26 +576,13 @@ void AppSetting::setConnectionState(int connectionState)
     }
 }
 
-int AppSetting::changePassphraseResult() const
-{
-    return changePassphraseResult_;
-}
-
-void AppSetting::setChangePassphraseResult(int changePassphraseResult)
-{
-    if(changePassphraseResult_ != changePassphraseResult){
-        changePassphraseResult_ = changePassphraseResult;
-        emit changePassphraseResultChanged();
-    }
-}
-
 bool AppSetting::enableCoreRPC()
 {
-    if(settings_.contains("enableCoreRPC")){
-        enableCoreRPC_ = settings_.value("enableCoreRPC").toBool();
+    if(NunchukSettings::contains("enableCoreRPC")){
+        enableCoreRPC_ = NunchukSettings::value("enableCoreRPC").toBool();
     }
     else{
-        settings_.setValue("enableCoreRPC", enableCoreRPC_);
+        NunchukSettings::setValue("enableCoreRPC", enableCoreRPC_);
     }
     return enableCoreRPC_;
 }
@@ -500,7 +591,7 @@ void AppSetting::setEnableCoreRPC(bool enableCoreRPC)
 {
     if(enableCoreRPC_ != enableCoreRPC){
         enableCoreRPC_ = enableCoreRPC;
-        settings_.setValue("enableCoreRPC", enableCoreRPC_);
+        NunchukSettings::setValue("enableCoreRPC", enableCoreRPC_);
         setFirstTimeCoreRPC(false);
         emit enableCoreRPCChanged();
     }
@@ -508,11 +599,11 @@ void AppSetting::setEnableCoreRPC(bool enableCoreRPC)
 
 QString AppSetting::coreRPCAddress()
 {
-    if(settings_.contains("coreRPCAddress")){
-        coreRPCAddress_ = settings_.value("coreRPCAddress").toString();
+    if(NunchukSettings::contains("coreRPCAddress")){
+        coreRPCAddress_ = NunchukSettings::value("coreRPCAddress").toString();
     }
     else{
-        settings_.setValue("coreRPCAddress", coreRPCAddress_);
+        NunchukSettings::setValue("coreRPCAddress", coreRPCAddress_);
     }
     return coreRPCAddress_;
 }
@@ -521,18 +612,18 @@ void AppSetting::setCoreRPCAddress(const QString &coreRPCAddress)
 {
     if(coreRPCAddress_ != coreRPCAddress){
         coreRPCAddress_ = coreRPCAddress;
-        settings_.setValue("coreRPCAddress", coreRPCAddress_);
+        NunchukSettings::setValue("coreRPCAddress", coreRPCAddress_);
         emit coreRPCAddressChanged();
     }
 }
 
 int AppSetting::coreRPCPort()
 {
-    if(settings_.contains("coreRPCPort")){
-        coreRPCPort_ = settings_.value("coreRPCPort").toInt();
+    if(NunchukSettings::contains("coreRPCPort")){
+        coreRPCPort_ = NunchukSettings::value("coreRPCPort").toInt();
     }
     else{
-        settings_.setValue("coreRPCPort", coreRPCPort_);
+        NunchukSettings::setValue("coreRPCPort", coreRPCPort_);
     }
     return coreRPCPort_;
 }
@@ -541,18 +632,18 @@ void AppSetting::setCoreRPCPort(const int coreRPCPort)
 {
     if(coreRPCPort_ != coreRPCPort){
         coreRPCPort_ = coreRPCPort;
-        settings_.setValue("coreRPCPort", coreRPCPort_);
+        NunchukSettings::setValue("coreRPCPort", coreRPCPort_);
         emit coreRPCPortChanged();
     }
 }
 
 QString AppSetting::coreRPCName()
 {
-    if(settings_.contains("coreRPCName")){
-        coreRPCName_ = settings_.value("coreRPCName").toString();
+    if(NunchukSettings::contains("coreRPCName")){
+        coreRPCName_ = NunchukSettings::value("coreRPCName").toString();
     }
     else{
-        settings_.setValue("coreRPCName", coreRPCName_);
+        NunchukSettings::setValue("coreRPCName", coreRPCName_);
     }
     return coreRPCName_;
 }
@@ -561,18 +652,18 @@ void AppSetting::setCoreRPCName(const QString &coreRPCName)
 {
     if(coreRPCName_ != coreRPCName){
         coreRPCName_ = coreRPCName;
-        settings_.setValue("coreRPCName", coreRPCName_);
+        NunchukSettings::setValue("coreRPCName", coreRPCName_);
         emit coreRPCNameChanged();
     }
 }
 
 QString AppSetting::coreRPCPassword()
 {
-    if(settings_.contains("coreRPCPassword")){
-        coreRPCPassword_ = settings_.value("coreRPCPassword").toString();
+    if(NunchukSettings::contains("coreRPCPassword")){
+        coreRPCPassword_ = NunchukSettings::value("coreRPCPassword").toString();
     }
     else{
-        settings_.setValue("coreRPCPassword", coreRPCPassword_);
+        NunchukSettings::setValue("coreRPCPassword", coreRPCPassword_);
     }
     return coreRPCPassword_;
 }
@@ -581,7 +672,7 @@ void AppSetting::setCoreRPCPassword(const QString &coreRPCPassword)
 {
     if(coreRPCPassword_ != coreRPCPassword){
         coreRPCPassword_ = coreRPCPassword;
-        settings_.setValue("coreRPCPassword", coreRPCPassword_);
+        NunchukSettings::setValue("coreRPCPassword", coreRPCPassword_);
         emit coreRPCPasswordChanged();
     }
 }
@@ -601,11 +692,11 @@ void AppSetting::setSyncPercent(int syncPercent)
 
 bool AppSetting::firstTimePassPhrase()
 {
-    if(settings_.contains("firstTimePassPhrase")){
-        firstTimePassPhrase_ = settings_.value("firstTimePassPhrase").toBool();
+    if(NunchukSettings::contains("firstTimePassPhrase")){
+        firstTimePassPhrase_ = NunchukSettings::value("firstTimePassPhrase").toBool();
     }
     else{
-        settings_.setValue("firstTimePassPhrase", firstTimePassPhrase_);
+        NunchukSettings::setValue("firstTimePassPhrase", firstTimePassPhrase_);
     }
     return firstTimePassPhrase_;
 }
@@ -614,24 +705,112 @@ void AppSetting::setFirstTimePassPhrase(bool firstTimePassPhrase)
 {
     if(firstTimePassPhrase_ != firstTimePassPhrase){
         firstTimePassPhrase_ = firstTimePassPhrase;
-        settings_.setValue("firstTimePassPhrase", firstTimePassPhrase_);
+        NunchukSettings::setValue("firstTimePassPhrase", firstTimePassPhrase_);
         emit firstTimePassPhraseChanged();
     }
 }
 
+QString AppSetting::signetStream()
+{
+    if(NunchukSettings::contains("signetStream")){
+        signetStream_ = NunchukSettings::value("signetStream").toString();
+    }
+    else{
+        NunchukSettings::setValue("signetStream", signetStream_);
+    }
+    return signetStream_;
+}
+
+void AppSetting::setSignetStream(const QString &signetStream)
+{
+    if (signetStream_ != signetStream){
+        signetStream_ = signetStream;
+        NunchukSettings::setValue("signetStream", signetStream_);
+        emit signetStreamChanged();
+    }
+}
+
+bool AppSetting::enableSignetStream()
+{
+    if(NunchukSettings::contains("enableSignetStream")){
+        enableSignetStream_ = NunchukSettings::value("enableSignetStream").toBool();
+    }
+    else{
+        NunchukSettings::setValue("enableSignetStream", enableSignetStream_);
+    }
+    return enableSignetStream_;
+
+
+}
+
+void AppSetting::setEnableSignetStream(const bool &enableSignetStream)
+{
+    if (enableSignetStream_ != enableSignetStream){
+        enableSignetStream_ = enableSignetStream;
+        NunchukSettings::setValue("enableSignetStream", enableSignetStream_);
+        emit enableSignetStreamChanged();
+    }
+}
+
+bool AppSetting::enableDebug()
+{
+#if 0
+    if(NunchukSettings::contains("enableDebugMode")){
+        enableDebugMode_ = NunchukSettings::value("enableDebugMode").toBool();
+    }
+    else{
+        NunchukSettings::setValue("enableDebugMode", enableDebugMode_);
+    }
+#endif
+    return enableDebugMode_;
+}
+
+void AppSetting::setEnableDebug(bool enableDebugMode)
+{
+    if (enableDebugMode_ != enableDebugMode){
+        enableDebugMode_ = enableDebugMode;
+#if 0
+        //    NunchukSettings::setValue("enableDebugMode", enableDebugMode_);
+#endif
+        emit enableDebugChanged();
+    }
+}
+
+bool AppSetting::isStarted()
+{
+    bool perValue = false;
+    if(NunchukSettings::contains("isStarted")){
+        perValue = NunchukSettings::value("isStarted").toBool();
+    }
+    return isStarted_ || perValue;
+}
+
+void AppSetting::setIsStarted(bool isStarted)
+{
+    if (isStarted_ == isStarted)
+        return;
+    isStarted_ = isStarted;
+    emit isStartedChanged(isStarted_);
+}
+
+void AppSetting::updateIsStarted(bool isStarted)
+{
+    NunchukSettings::setValue("isStarted", isStarted);
+    emit isStartedChanged(isStarted_);
+}
+
 bool AppSetting::firstTimeCoreRPC()
 {
-    if(settings_.contains("firstTimeCoreRPC")){
-        firstTimeCoreRPC_ = settings_.value("firstTimeCoreRPC").toBool();
+    if(NunchukSettings::contains("firstTimeCoreRPC")){
+        firstTimeCoreRPC_ = NunchukSettings::value("firstTimeCoreRPC").toBool();
         if(firstTimeCoreRPC_ && enableCoreRPC_){
             firstTimeCoreRPC_ = false;
         }
     }
     else{
         firstTimeCoreRPC_ = true;
-        settings_.setValue("firstTimeCoreRPC", firstTimeCoreRPC_);
+        NunchukSettings::setValue("firstTimeCoreRPC", firstTimeCoreRPC_);
     }
-    DBG_INFO <<  firstTimeCoreRPC_;
     return firstTimeCoreRPC_;
 }
 
@@ -639,7 +818,28 @@ void AppSetting::setFirstTimeCoreRPC(bool firstTimeCoreRPC)
 {
     if(firstTimeCoreRPC_ != firstTimeCoreRPC){
         firstTimeCoreRPC_ = firstTimeCoreRPC;
-        settings_.setValue("firstTimeCoreRPC", firstTimeCoreRPC_);
+        NunchukSettings::setValue("firstTimeCoreRPC", firstTimeCoreRPC_);
         emit firstTimeCoreRPCChanged();
+    }
+}
+
+bool AppSetting::enableMultiDeviceSync()
+{
+    if(NunchukSettings::contains("enableMultiDeviceSync")){
+        enableMultiDeviceSync_ = NunchukSettings::value("enableMultiDeviceSync").toBool();
+    }
+    else{
+        NunchukSettings::setValue("enableMultiDeviceSync", enableMultiDeviceSync_);
+    }
+    return enableMultiDeviceSync_;
+}
+
+void AppSetting::setEnableMultiDeviceSync(bool enableMultiDeviceSync)
+{
+    if(enableMultiDeviceSync_ != enableMultiDeviceSync){
+        enableMultiDeviceSync_ = enableMultiDeviceSync;
+        NunchukSettings::setValue("enableMultiDeviceSync", enableMultiDeviceSync_);
+        emit enableMultiDeviceSyncChanged();
+        AppModel::instance()->startMultiDeviceSync(enableMultiDeviceSync_);
     }
 }

@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
@@ -5,75 +24,35 @@ import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../Components/customizes/Chats"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
     property string remoteSignerName: AppModel.singleSignerInfo.signerName
     property string remoteSignerXpub: AppModel.singleSignerInfo.signerXpub
+    property string signerType: AppModel.singleSignerInfo.signerType
     property string remoteSignerPublickey: AppModel.singleSignerInfo.signerPublickey
     property string remoteSignerbip32: AppModel.singleSignerInfo.signerDerivationPath
     property string remoteSignerfingerprint: AppModel.singleSignerInfo.signerMasterFingerPrint
     property int remoteSignerHealthStatus: -1
-
     property bool walletEscrow: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO) ? AppModel.walletInfo.walletEscrow :
                                 (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_ADD_SIGNER_TO_WALLET) ? AppModel.newWalletInfo.walletEscrow : false
-
-    Rectangle {
-        id: mask
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        QText {
-            width: 163
-            height: 27
-            anchors {
-                left: parent.left
-                leftMargin: 41
-                top: parent.top
-                topMargin: 24
+        label.text: STR.STR_QML_145
+        onCloseClicked: {
+            if(QMLHandle.onsRequester() === EVT.STATE_ID_SCR_HOME){
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_REMOTE_SIGNER_INFO)
             }
-            text: "Signer Info (Air-Gapped)"
-            color: "#031F2B"
-            font.family: "Montserrat"
-            font.weight: Font.ExtraBold
-            font.pixelSize: 24
-        }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
-            }
-            onClicked: {
-                if(QMLHandle.onsRequester() === EVT.STATE_ID_SCR_HOME){
-                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_REMOTE_SIGNER_INFO)
-                }
-                else {
-                    QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_BACK_WALLET_INFO)
-                }
+            else {
+                QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_BACK_WALLET_INFO)
             }
         }
-
         QNotification {
             id: notification
             anchors {
@@ -83,13 +62,12 @@ QScreen {
             }
             visible: false
         }
-
         QTextInputBox {
             id: signerName
             width: 343
             heightMin: 54
             mode: ePREVIEW_MODE
-            placeholder.text: "Signer Name"
+            placeholder.text: STR.STR_QML_102
             textOutput: remoteSignerName
             leftPading: 0
             rightPading: 50
@@ -108,7 +86,6 @@ QScreen {
                 }
             }
         }
-
         QText {
             id: spectit
             anchors {
@@ -117,12 +94,11 @@ QScreen {
                 top: signerName.bottom
                 topMargin: 24
             }
-            text: "AIR-GAPPED SIGNER SPEC"
+            text: STR.STR_QML_147
             font.family: "Lato"
             font.pixelSize: 10
             font.weight: Font.Bold
         }
-
         Flickable {
             id: specinfo
             width: 328
@@ -142,7 +118,6 @@ QScreen {
                 id: specinfoContent
                 width: 328
                 height: xpubdisplay.height + bip32display.height + fingerPdisplay.height
-
                 Item {
                     id: xpubdisplay
                     width: 328
@@ -159,7 +134,7 @@ QScreen {
                             font.family: "Lato"
                             font.pixelSize: 14
                             anchors.verticalCenter: parent.verticalCenter
-                            text: walletEscrow ? "Public Key:" : "XPUB:"
+                            text: walletEscrow ? STR.STR_QML_148 : STR.STR_QML_149
                         }
                         QText {
                             id: xpubValue
@@ -181,7 +156,6 @@ QScreen {
                         anchors.bottom: parent.bottom
                     }
                 }
-
                 Item {
                     id: bip32display
                     width: 328
@@ -197,7 +171,7 @@ QScreen {
                             font.family: "Lato"
                             font.pixelSize: 14
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "BIP32 Path:"
+                            text: STR.STR_QML_150
                         }
                         QText {
                             id: bip32Value
@@ -219,7 +193,6 @@ QScreen {
                         anchors.bottom: parent.bottom
                     }
                 }
-
                 Item {
                     id: fingerPdisplay
                     width: 328
@@ -234,7 +207,7 @@ QScreen {
                             clip: true
                             color: "#839096"
                             font.family: "Lato"
-                            text: "Master Key Fingerprint:"
+                            text: STR.STR_QML_151
                             font.pixelSize: 14
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -261,7 +234,7 @@ QScreen {
             }
         }
         QText {
-            text: "USED IN WALLETS"
+            text: STR.STR_QML_128
             font.pixelSize: 10
             font.family: "Lato"
             color: "#323E4A"
@@ -272,7 +245,6 @@ QScreen {
             anchors.leftMargin: 56
             visible: usedInWallets.count
         }
-
         QListView {
             id: usedInWallets
             width: 328
@@ -318,7 +290,6 @@ QScreen {
                 }
             }
         }
-
         QText {
             id: healthStatus
             anchors {
@@ -327,13 +298,12 @@ QScreen {
                 top: parent.top
                 topMargin: 80
             }
-            text: "HEALTH CHECK"
+            text: STR.STR_QML_129
             color: "#323E4A"
             font.family: "Montserrat"
             font.weight: Font.DemiBold
             font.pixelSize: 14
         }
-
         QImage {
             id: healthIndicator
             width: 24
@@ -347,7 +317,6 @@ QScreen {
             }
             visible: healthStatustext.visible
         }
-
         Flickable {
             id: healthCheckInput
             width: 344
@@ -363,21 +332,19 @@ QScreen {
                 top: parent.top
                 topMargin: 130
             }
-
             QTextInputBox {
                 id: messageInput
                 width: 344
                 heightMin: 56
-                placeholder.text: "Message to sign"
+                placeholder.text: STR.STR_QML_131
                 textOutput: AppModel.singleSignerInfo.signerMessage
                 maximumLength: 280
                 rightPading: 135
                 onTypingFinished: {AppModel.singleSignerInfo.signerMessage = currentText}
-
                 QTextButton {
                     width: 127
                     height: 24
-                    label.text: "EXPORT MESSAGE"
+                    label.text: STR.STR_QML_152
                     label.font.pixelSize: 10
                     type: eTypeB
                     anchors {
@@ -386,28 +353,28 @@ QScreen {
                         verticalCenter: parent.verticalCenter
                     }
                     onButtonClicked: {
-                        exportMessage.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/" + remoteSignerName + "_message_to_sign.txt"
+                        exportMessage.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                + RoomWalletData.getValidFilename(remoteSignerName)
+                                + "_message_to_sign.txt"
                         exportMessage.open()
                     }
                 }
             }
-
             QTextInputBox {
                 id: signatureInput
                 width: 344
                 heightMin: 80
-                placeholder.text: "Signature"
+                placeholder.text: STR.STR_QML_132
                 textOutput: AppModel.singleSignerInfo.signerSignature
                 rightPading: 145
                 anchors {
                     top: messageInput.bottom
                     topMargin: 16
                 }
-
                 QTextButton {
                     width: 135
                     height: 24
-                    label.text: "IMPORT SIGNATURE"
+                    label.text: STR.STR_QML_252
                     label.font.pixelSize: 10
                     type: eTypeB
                     anchors {
@@ -420,7 +387,6 @@ QScreen {
                     }
                 }
             }
-
             Rectangle {
                 id: healthStatustext
                 width: 343
@@ -432,7 +398,6 @@ QScreen {
                 }
                 radius: 4
                 border.color: (0 === remoteSignerHealthStatus )? "#35ABEE" : (-1 === remoteSignerHealthStatus) ? "Transparent" :"#E02247"
-
                 QText {
                     width: 314
                     height: (-1 === remoteSignerHealthStatus)  ? 48 : 72
@@ -442,16 +407,13 @@ QScreen {
                         horizontalCenter: parent.horizontalCenter
                     }
                     wrapMode: Text.WordWrap
-                    text: (-1 === remoteSignerHealthStatus) ? "Health Check Result Details..." :
-                                                              (0 === remoteSignerHealthStatus) ? "Your signer device is healthy." :
-                                                                                                 "That doesn't seem right. Please double check your signature."
+                    text: (-1 === remoteSignerHealthStatus) ? STR.STR_QML_133 : (0 === remoteSignerHealthStatus) ? STR.STR_QML_134 : STR.STR_QML_253
                     color: (-1 === remoteSignerHealthStatus) ? "#9CAEB8" : "#031F2B"
                     font.pixelSize: 16
                     font.family: "Lato"
                 }
             }
         }
-
         QButtonIcon {
             id: btnhealthCheck
             width: 280
@@ -463,26 +425,18 @@ QScreen {
                 topMargin: 24
             }
             type: eFIRST
-            label: "Run Health Check"
+            label: STR.STR_QML_137
             icons: ["health_031F2B.png", "health_C9DEF1.png", "health_C9DEF1.png", "health_031F2B.png"]
             fontPixelSize: 16
             onButtonClicked: {
+                heathCheckBusyBox.open()
                 QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK)
-                if(AppModel.masterSignerInfo.warningMessage.type === EWARNING.NONE_MSG){
-                    remoteSignerHealthStatus = AppModel.singleSignerInfo.signerHealth
-                    healthStatustext.visible = true
-                }
-                else{
-                    remoteSignerHealthStatus = AppModel.singleSignerInfo.signerHealth
-                    healthStatustext.visible = false
-                }
             }
         }
-
         QTextButton {
             width: 280
             height: 48
-            label.text: "Remove Signer From Manager"
+            label.text: STR.STR_QML_241
             label.font.pixelSize: 16
             type: eTypeB
             anchors {
@@ -492,123 +446,15 @@ QScreen {
                 topMargin: 16
             }
             onButtonClicked: {
-                modelConfirmDelete.visible = true
-            }
-            visible: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_HOME)
-            enabled: !AppModel.singleSignerInfo.isBeingUsed
-        }
-
-        Rectangle {
-            id: modelConfirmDelete
-            anchors.fill: parent
-            visible: false
-            MouseArea {anchors.fill: parent; onClicked: {}}
-            color: Qt.rgba(255, 255, 255, 0.7)
-            radius: 8
-            Rectangle {
-                id: modelConfirmDeleteContent
-                width: 488
-                height: 317
-                color: "#F1FAFE"
-                anchors.centerIn: parent
-                radius: 8
-                Rectangle {
-                    width: parent.width
-                    height: 2
-                    color: "Red"
-                    radius: 8
+                if(AppModel.walletsUsingSigner.length > 0){
+                    _info1.open()
                 }
-
-                QText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 51
-                    horizontalAlignment: Text.AlignHCenter
-                    text: "Confirm Deleting Signer"
-                    color: "#031F2B"
-                    font.family: "Montserrat"
-                    font.weight: Font.DemiBold
-                    font.pixelSize: 24
+                else {
+                    _confirm.open()
                 }
-
-                Column {
-                    width: 355
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 91
-                    spacing: 4
-                    QText {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "Deleting this signer can affect to wallet that is using it"
-                        font.family: "Lato"
-                        font.pixelSize: 14
-                    }
-                    QText {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "Make sure this signer is no longer used in your wallets"
-                        font.family: "Lato"
-                        font.pixelSize: 14
-                    }
-                }
-
-                QTextInputBox {
-                    id: inputDelete
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 150
-                    maximumLength: 10
-                    placeholder.text: "Type DELETE to confirm deletion."
-                }
-
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 50
-                    spacing: 16
-                    QTextButton {
-                        width: 100
-                        height: 32
-                        label.text: "CANCEL"
-                        label.font.pixelSize: 10
-                        type: eTypeB
-                        radius: 12
-                        onButtonClicked: {modelConfirmDelete.visible = false}
-                    }
-
-                    QTextButton {
-                        width: 100
-                        height: 32
-                        label.text: "DELETE"
-                        radius: 12
-                        label.font.pixelSize: 10
-                        type: eTypeA
-                        enabled: (inputDelete.textOutput === "DELETE")
-                        onButtonClicked: {
-                            if(inputDelete.textOutput === "DELETE"){
-                                modelConfirmDelete.visible = false
-                                var remoteSignerObj = { "master_fingerprint"    : remoteSignerfingerprint,
-                                                        "derivation_path"       : remoteSignerbip32 };
-                                QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_DELETE_REQUEST, remoteSignerObj)
-                            }
-                        }
-                    }
-                }
-            }
-
-            DropShadow {
-                anchors.fill: modelConfirmDeleteContent
-                horizontalOffset: 3
-                verticalOffset: 3
-                radius: 8.0
-                samples: 17
-                color: "#80000000"
-                source: modelConfirmDeleteContent
             }
         }
     }
-
     FileDialog {
         id: exportMessage
         fileMode: FileDialog.SaveFile
@@ -616,12 +462,101 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_EXPORT_MESSAGE, exportMessage.currentFile)
         }
     }
-
     FileDialog {
         id: importSignature
         fileMode: FileDialog.OpenFile
         onAccepted: {
             QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_IMPORT_SIGNATURE, importSignature.file)
+        }
+    }
+
+    /*=============================Popup=============================*/
+    QPopupInfo{
+        id:_info1
+        contentText: STR.STR_QML_554
+        onGotItClicked: {
+            close()
+        }
+    }
+    QConfirmYesNoPopup{
+        id:_confirm
+        contentText:STR.STR_QML_243
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            var remoteSignerObj = { "master_fingerprint"    : remoteSignerfingerprint,
+                                    "derivation_path"       : remoteSignerbip32 };
+            QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_DELETE_REQUEST, remoteSignerObj)
+        }
+    }
+
+    Popup {
+        id: heathCheckBusyBox
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        background: Item{}
+        Rectangle {
+            id: boxMask
+            width: popupWidth
+            height: popupHeight
+            radius: 24
+            color: Qt.rgba(0, 0, 0, 0.8)
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: boxMask.width
+                    height: boxMask.height
+                    radius: 24
+                }
+            }
+            Column {
+                spacing: 8
+                anchors.centerIn: parent
+                Item {
+                    width: 52
+                    height: 52
+                    QBusyIndicator {
+                        width: 44
+                        height: 44
+                        anchors.centerIn: parent
+                    }
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QText {
+                    width: 700
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#F6D65D"
+                    font.pixelSize: 24
+                    font.weight: Font.DemiBold
+                    font.family: "Montserrat"
+                    wrapMode: Text.WrapAnywhere
+                    text: STR.STR_QML_140 + remoteSignerName
+                }
+                QText {
+                    width: 328
+                    height: 42
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#F6D65D"
+                    font.pixelSize: 14
+                    wrapMode: Text.WordWrap
+                    font.family: "Lato"
+                    text: STR.STR_QML_122
+                }
+            }
+        }
+    }
+    Connections {
+        target: AppModel
+        onStartHealthCheckRemoteSigner: { }
+        onFinishedHealthCheckRemoteSigner: {
+            heathCheckBusyBox.close()
+            remoteSignerHealthStatus = AppModel.singleSignerInfo.signerHealth
+            healthStatustext.visible = true
         }
     }
 }

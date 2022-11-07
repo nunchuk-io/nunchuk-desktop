@@ -1,36 +1,39 @@
-
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "STATE_ID_SCR_MASTER_SIGNER_INFO.h"
 #include "QQuickViewer.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
+#include "localization/STR_CPP.h"
 
 void SCR_MASTER_SIGNER_INFO_Entry(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()){
-        AppModel::instance()->masterSignerInfo()->warningMessage()->resetWarningMessage();
-        if(AppModel::instance()->masterSignerInfo()->isSoftwareSigner()){
-            QWarningMessage msgwarning;
-            bridge::nunchukClearSignerPassphrase(AppModel::instance()->masterSignerInfo()->id(), msgwarning);
-            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                QSharedPointer<MasterSignerListModel> mastersigners = bridge::nunchukGetMasterSigners();
-                if(mastersigners){
-                    AppModel::instance()->setMasterSignerList(mastersigners);
-                }
-                QSharedPointer<MasterSigner> currentMastersigner = mastersigners.data()->getMasterSignerById(AppModel::instance()->masterSignerInfo()->id());
-                AppModel::instance()->masterSignerInfo()->setNeedPassphraseSent(currentMastersigner.data()->needPassphraseSent());
-            }
-        }
-    }
+
 }
 
 void SCR_MASTER_SIGNER_INFO_Exit(QVariant msg) {
-    AppModel::instance()->masterSignerInfo()->setSignature("");
-    AppModel::instance()->masterSignerInfo()->setMessage(qUtils::QGenerateRandomMessage());
-    AppModel::instance()->setMasterSignerInfo( QSharedPointer<MasterSigner>(new MasterSigner()));
-    AppModel::instance()->setWalletsUsingSigner(QStringList());
-    if(AppModel::instance()->masterSignerInfo()){
-        AppModel::instance()->masterSignerInfo()->warningMessage()->resetWarningMessage();
+    AppModel::instance()->setMasterSignerInfo( QMasterSignerPtr(new MasterSigner()));
+    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+    if(mastersigners){
+        AppModel::instance()->setMasterSignerList(mastersigners);
     }
 }
 
@@ -48,93 +51,97 @@ void EVT_MASTER_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
 
 void EVT_MASTER_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
     if(AppModel::instance()->masterSignerInfo()){
-        AppModel::instance()->masterSignerInfo()->warningMessage()->resetWarningMessage();
-        AppModel::instance()->startHealthCheckMasterSigner(AppModel::instance()->masterSignerInfo()->id(),
-                                                           AppModel::instance()->masterSignerInfo()->message());
+        if(AppModel::instance()->masterSignerInfo()->needPassphraseSent()
+                && (AppModel::instance()->masterSignerInfo()->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE)){
+            QMap<QString, QVariant> passPhraseData;
+            passPhraseData["state_id"] = E::STATE_ID_SCR_MASTER_SIGNER_INFO;
+            passPhraseData["master_signer_xfp"] = AppModel::instance()->masterSignerInfo()->fingerPrint();
+            passPhraseData["master_signer_id"] = AppModel::instance()->masterSignerInfo()->id();
+            passPhraseData["master_signer_msg"] = AppModel::instance()->masterSignerInfo()->message();
+            passPhraseData["is_software"] = true;
+            passPhraseData["is_check_heath"] = true;
+            QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+        }
+        else{
+            AppModel::instance()->startHealthCheckMasterSigner(E::STATE_ID_SCR_MASTER_SIGNER_INFO,
+                                                               AppModel::instance()->masterSignerInfo()->fingerPrint(),
+                                                               AppModel::instance()->masterSignerInfo()->message());
+        }
     }
 }
 
 void EVT_MASTER_SIGNER_INFO_BACK_REQUEST_HANDLER(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()){
-        AppModel::instance()->masterSignerInfo()->warningMessage()->resetWarningMessage();
-    }
+
 }
 
 void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()){
-        AppModel::instance()->masterSignerInfo()->warningMessage()->resetWarningMessage();
+    QString mastersigner_id = msg.toString();
+    if (mastersigner_id == "") {
+        return;
     }
-    if(bridge::nunchukDeleteMasterSigner(msg.toString())){
-        QSharedPointer<MasterSignerListModel> mastersigners = bridge::nunchukGetMasterSigners();
-        if(mastersigners){
+    QMasterSignerPtr key = AppModel::instance()->masterSignerInfoPtr();
+    NunchukType1 func = [](const QString &id){
+        DBG_INFO << "Delete Key " << id;
+        bridge::nunchukDeleteMasterSigner(id);
+        QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+        if (mastersigners) {
             AppModel::instance()->setMasterSignerList(mastersigners);
         }
         QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
-        AppModel::instance()->setMasterSignerInfo( QSharedPointer<MasterSigner>(new MasterSigner()));
+        AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new MasterSigner()));
+        if (AppModel::instance()->walletList()) {
+            AppModel::instance()->walletList()->notifyMasterSignerDeleted(id);
+        }
+    };
+    if(key->needPassphraseSent() && key->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE){
+        QMap<QString, QVariant> passPhraseData;
+        passPhraseData["state_id"] = E::STATE_ID_SCR_MASTER_SIGNER_INFO;
+        passPhraseData["master_signer_id"] = key->id();
+        passPhraseData["is_software"] = true;
+        passPhraseData["is_remove"] = true;
+        passPhraseData["func_remove_key"] = QVariant::fromValue(func);
+        QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+    }
+    else{
+        func(mastersigner_id);
     }
 }
 
 void EVT_MASTER_SIGNER_INFO_BACK_WALLET_INFO_HANDLER(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()){
-        AppModel::instance()->masterSignerInfo()->warningMessage()->resetWarningMessage();
-    }
+
 }
 
 void EVT_MASTER_SIGNER_INFO_PROMT_PIN_HANDLER(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()->device()){
-        QString device_xfp = AppModel::instance()->masterSignerInfo()->device()->masterFingerPrint();
 
-        QSharedPointer<DeviceListModel> deviceList = bridge::nunchukGetDevices();
-        if(deviceList){
-            bool needPinSent = deviceList.data()->containsNeedPinSent();
-            AppModel::instance()->slotFinishScanDevices(deviceList, device_xfp);
-            AppModel::instance()->masterSignerInfo()->device()->setNeedsPinSent(needPinSent);
-            AppModel::instance()->masterSignerList()->updateDeviceNeedPinSent(device_xfp, needPinSent);
-            if(needPinSent){
-                QSharedPointer<Device> selectedDv = AppModel::instance()->deviceList()->getDeviceNeedPinSent() ;
-                QWarningMessage msgwarning;
-                bridge::nunchukPromtPinOnDevice(selectedDv, msgwarning);
-            }
-        }
-    }
 }
 
 void EVT_MASTER_SIGNER_INFO_SEND_PIN_HANDLER(QVariant msg) {
-    QString pinInputted = msg.toString();
-    if(AppModel::instance()->masterSignerInfo()->device()){
-        QSharedPointer<Device> selectedDv = AppModel::instance()->deviceList()->getDeviceNeedPinSent() ;
-        if(selectedDv){
-            QWarningMessage msgwarning;
-            bridge::nunchukSendPinToDevice(selectedDv, pinInputted, msgwarning);
-            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                AppModel::instance()->startHealthCheckMasterSigner(AppModel::instance()->masterSignerInfo()->id(),
-                                                                   AppModel::instance()->masterSignerInfo()->message());
-            }
-        }
-        else{
-            emit AppModel::instance()->sentPINToDeviceResult((int)EWARNING::WarningType::ERROR_MSG);
-        }
-    }
+
 }
 
 void EVT_MASTER_SIGNER_INFO_SEND_PASSPHRASE_HANDLER(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()){
-        QString passphraseInput = msg.toMap().value("passphraseInput").toString();
-        QString mastersignerId  = msg.toMap().value("mastersignerId").toString();
-        QWarningMessage msgwarning;
-        bridge::nunchukSendSignerPassphrase( mastersignerId, passphraseInput, msgwarning);
-        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-            if(AppModel::instance()->masterSignerInfo()){
-                AppModel::instance()->masterSignerInfo()->setNeedPassphraseSent(false);
-            }
-            if(AppModel::instance()->masterSignerList()){
-                AppModel::instance()->masterSignerList()->updateDeviceNeedPassphraseSentById(mastersignerId ,false);
-            }
+
+}
+
+void EVT_MASTER_SIGNER_INFO_GET_XPUBS_HANDLER(QVariant msg) {
+    Q_UNUSED(msg)
+    QMasterSignerPtr signer = AppModel::instance()->masterSignerInfoPtr();
+    if(signer){
+        if(signer->needPassphraseSent() && signer->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE){
+            QMap<QString, QVariant> passPhraseData;
+            passPhraseData["state_id"] = E::STATE_ID_SCR_MASTER_SIGNER_INFO;
+            passPhraseData["master_signer_xfp"] = signer->fingerPrint();
+            passPhraseData["master_signer_id"] = signer->id();
+            passPhraseData["master_signer_msg"] = signer->message();
+            passPhraseData["is_software"] = true;
+            passPhraseData["is_top_up"] = true;
+            QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
         }
-        DBG_INFO << msgwarning.what();
-        AppModel::instance()->masterSignerInfo()->warningMessage()->setWarningMessage(msgwarning.code(),
-                                                                                      msgwarning.what(),
-                                                                                      (EWARNING::WarningType)msgwarning.type(),
-                                                                                      msgwarning.explaination());
+        else{
+            QMap<QString, QVariant> data;
+            data["state_id"] = E::STATE_ID_SCR_MASTER_SIGNER_INFO;
+            data["masterSignerId"] = signer->id();
+            AppModel::instance()->startTopXPUBsMasterSigner(QVariant::fromValue(data));
+        }
     }
 }

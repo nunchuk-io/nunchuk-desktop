@@ -40,6 +40,8 @@ public:
     void setCurrentFlow(int currentFlow);
     int popupTrigger(int popupId) const;
     void setPopupTrigger(int popupId, int trigger);
+    void addImageProvider(const QString &id, QQmlImageProviderBase *provider);
+    QList<QObject *> getQmlObj() const;
 
 private:
     static bool                                         m_register;
@@ -77,9 +79,9 @@ public slots:
     void onVisibleChanged(bool state);
     void sendEvent(uint eventID, QVariant msg = QVariant());
     void notifySendEvent(uint eventID, QVariant msg = QVariant());
-
     // For resize
     void onWidthChanged(int w);
+    void aboutToQuit(QPrivateSignal signal);
 };
 
 #endif // QQUICKVIEWER_H

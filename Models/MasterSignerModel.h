@@ -4,83 +4,84 @@
 #include <QObject>
 #include <QAbstractListModel>
 #include "DeviceModel.h"
-#include "QWarningMessage.h"
 #include "QOutlog.h"
+#include "qUtils.h"
 
 class MasterSigner : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString masterSignerId           READ id                            NOTIFY idChanged)
-    Q_PROPERTY(QString masterSignername         READ name       WRITE setName      NOTIFY nameChanged)
-    Q_PROPERTY(Device* masterSignerDevice       READ device                        NOTIFY deviceChanged)
-    Q_PROPERTY(int masterSignerHealth           READ health     WRITE setHealth    NOTIFY healthChanged)
-    Q_PROPERTY(QString fingerPrint              READ fingerPrint                   NOTIFY fingerPrintChanged)
-    Q_PROPERTY(QString message                  READ message        WRITE setMessage        NOTIFY messageToSignChanged)
-    Q_PROPERTY(QString signature                READ signature      WRITE setSignature      NOTIFY signatureChanged)
-    Q_PROPERTY(QWarningMessage* warningMessage  READ warningMessage     NOTIFY warningMessageChanged)
-    Q_PROPERTY(QString masterSignerPath         READ path               NOTIFY pathChanged)
-    Q_PROPERTY(bool isSoftwareSigner            READ isSoftwareSigner   NOTIFY isSoftwareSignerChanged)
-    Q_PROPERTY(bool needPinSent                 READ needPinSent        NOTIFY needPinSentChanged)
-    Q_PROPERTY(bool needPassphraseSent          READ needPassphraseSent NOTIFY needPassphraseSentChanged)
-    Q_PROPERTY(QString deviceType               READ deviceType         NOTIFY deviceTypeChanged)
-
-    // For add signer to wallet
-    Q_PROPERTY(bool masterSignerChecked         READ checked        WRITE setChecked        NOTIFY checkedChanged)
+    Q_PROPERTY(QString masterSignerId      READ id              NOTIFY idChanged)
+    Q_PROPERTY(QString masterSignername    READ name            WRITE setName      NOTIFY nameChanged)
+    Q_PROPERTY(QDevice* masterSignerDevice  READ device          NOTIFY deviceChanged)
+    Q_PROPERTY(int masterSignerHealth      READ health          WRITE setHealth    NOTIFY healthChanged)
+    Q_PROPERTY(QString fingerPrint         READ fingerPrint     NOTIFY fingerPrintChanged)
+    Q_PROPERTY(QString message             READ message         WRITE setMessage   NOTIFY messageToSignChanged)
+    Q_PROPERTY(QString signature           READ signature       WRITE setSignature NOTIFY signatureChanged)
+    Q_PROPERTY(QString masterSignerPath    READ path               NOTIFY pathChanged)
+    Q_PROPERTY(bool needPinSent            READ needPinSent        NOTIFY needPinSentChanged)
+    Q_PROPERTY(bool needPassphraseSent     READ needPassphraseSent NOTIFY needPassphraseSentChanged)
+    Q_PROPERTY(QString deviceType          READ deviceType         NOTIFY deviceTypeChanged)
+    Q_PROPERTY(bool checked                READ checked        WRITE setChecked    NOTIFY checkedChanged) // For add signer to wallet
+    Q_PROPERTY(bool needXpub               READ needXpub       NOTIFY isNeedXpubChanged)
+    Q_PROPERTY(int  signerType             READ signerType     NOTIFY signerTypeChanged)
+    Q_PROPERTY(QString passphrase          READ passphrase     NOTIFY passphraseChanged)
+    Q_PROPERTY(bool isPrimaryKey           READ isPrimaryKey   WRITE setIsPrimaryKey NOTIFY isPrimaryKeyChanged)
 public:
     MasterSigner();
-    MasterSigner(const QString& id, const QString& name, const QSharedPointer<Device> device, const int health = -1, const bool software = false);
+    MasterSigner(const QString& id,
+                 const QString& name,
+                 const QDevicePtr device,
+                 const int health = -1,
+                 const int signertype = 0,
+                 const nunchuk::PrimaryKey &key = nunchuk::PrimaryKey());
     ~MasterSigner();
-
     QString id() const;
     QString name() const;
-    Device* device() const;
-    QSharedPointer<Device> devicePtr() const;
+    QDevice* device() const;
+    QDevicePtr devicePtr() const;
     int health() const;
     bool connected() const;
     void setId(const QString& d);
     void setName(const QString& d);
-    void setDevice(const QSharedPointer<Device> &d);
+    void setDevice(const QDevicePtr &d);
     void setHealth(const int d);
     QString fingerPrint() const;
-
     QString message() const;
     void setMessage(const QString &message);
-
     QString signature() const;
     void setSignature(const QString &signature);
-
-    QWarningMessage* warningMessage() const;
-    QSharedPointer<QWarningMessage> warningMessagePtr() const;
-    void setWarningMessage(const QSharedPointer<QWarningMessage> &warningMessage);
-
     QString path() const;
     void setPath(const QString &path);
-
-    // For add signer to wallet
-    bool checked() const;
-    void setChecked(const bool checked);
-
-    bool isSoftwareSigner() const;
-    void setIsSoftwareSigner(bool isSoftwareSigner);
-
+    bool checked() const;                   // For add signer to wallet
+    void setChecked(const bool checked);    // For add signer to wallet
     bool needPinSent() const;
     void setNeedPinSent(bool value);
     bool needPassphraseSent() const;
     void setNeedPassphraseSent(bool value);
     QString deviceType() const;
+    bool needXpub() const;
+    void setNeedXpub(bool needXpub);
+    int signerType() const;
+    void setSignerType(int signer_type);
+    QString passphrase() const;
+    void setPassphrase(const QString &passphrase);
+    bool isPrimaryKey() const;
+    void setIsPrimaryKey(bool isPrimaryKey);
+    nunchuk::PrimaryKey primaryKey() const;
 
 private:
     QString id_;
     QString name_;
-    QSharedPointer<Device> device_;
+    QDevicePtr device_;
     int health_;
     QString messageToSign_;
     QString signature_;
-    QSharedPointer<QWarningMessage> warningMessage_;
     QString path_;
-
-    // For add signer to wallet
-    bool checked_;
-    bool isSoftwareSigner_;
+    bool checked_;          // For add signer to wallet
+    bool isNeedXpub_;
+    int signer_type_;
+    QString passphrase_;
+    bool isPrimaryKey_;
+    nunchuk::PrimaryKey primaryKey_;
 signals:
     void idChanged();
     void nameChanged();
@@ -91,17 +92,19 @@ signals:
     void signatureChanged();
     void warningMessageChanged();
     void pathChanged();
-    void isSoftwareSignerChanged();
     void needPinSentChanged();
     void needPassphraseSentChanged();
     void deviceTypeChanged();
-    // For add signer to wallet
-    void checkedChanged();
+    void checkedChanged(); // For add signer to wallet
+    void isNeedXpubChanged();
+    void signerTypeChanged();
+    void passphraseChanged();
+    void isPrimaryKeyChanged();
 };
+typedef QSharedPointer<MasterSigner> QMasterSignerPtr;
 
-bool sortMasterSignerByNameAscending(const QSharedPointer<MasterSigner> &v1, const QSharedPointer<MasterSigner> &v2);
-
-bool sortMasterSignerByNameDescending(const QSharedPointer<MasterSigner> &v1, const QSharedPointer<MasterSigner> &v2);
+bool sortMasterSignerByNameAscending(const QMasterSignerPtr &v1, const QMasterSignerPtr &v2);
+bool sortMasterSignerByNameDescending(const QMasterSignerPtr &v1, const QMasterSignerPtr &v2);
 
 class MasterSignerListModel  : public QAbstractListModel
 {
@@ -111,28 +114,40 @@ public:
     ~MasterSignerListModel();
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
     QHash<int,QByteArray> roleNames() const;
-    void addMasterSigner(const QString& id, const QString& name, const QSharedPointer<Device> device, const int health = -1, const bool software = false);
-    void addMasterSigner(const QSharedPointer<MasterSigner> &d);
-    void updateMasterSignerList(const QSharedPointer<MasterSignerListModel> &d);
+    void addMasterSigner(const QString& id,
+                         const QString& name,
+                         const QDevicePtr device,
+                         const int health = -1,
+                         const int signertype = 0);
+    void addMasterSigner(const QMasterSignerPtr &d);
     void updateMasterSignerName(const QString &signerId, const QString &name);
     void updateDeviceStatus(const QString &fingerprint, const bool connected);
-    QSharedPointer<MasterSigner> getMasterSignerByIndex(const int index);
-    QSharedPointer<MasterSigner> getMasterSignerById(const QString& id);
+    QMasterSignerPtr getMasterSignerByIndex(const int index);
+    QMasterSignerPtr getMasterSignerById(const QString& id);
+    QMasterSignerPtr getMasterSignerByXfp(const QString& xfp);
     QString getMasterSignerNameByFingerPrint(const QString &fingerprint);
-    bool removeMasterSigner(const QSharedPointer<MasterSigner> it);
+    bool removeMasterSigner(const QMasterSignerPtr it);
     bool removeMasterSigner(const QString& masterSignerId);
     void resetUserChecked();
     void setUserChecked(const bool state, const int index);
     void setUserCheckedById(const bool state, const QString& id);
+    void setUserCheckedByFingerprint(const bool state, const QString& xfp);
     bool contains(const QString &masterSignerId);
     bool containsFingerPrint(const QString &fingerprint);
     bool hardwareContainsFingerPrint(const QString &fingerprint);
     void updateDeviceNeedPinSent(const QString &fingerprint, const bool needpin);
     void updateDeviceNeedPassphraseSent(const QString &fingerprint, const bool needpassphrase);
     void updateDeviceNeedPassphraseSentById(const QString &id, const bool needpassphrase);
+    void updateMasterSignerNeedXpubByXfp(const QString &xfp, const bool value);
+    void updateMasterSignerNeedXpubById(const QString &id, const bool value);
+    void resetMasterSignerNeedXpub();
     QStringList getColdCardId() const;
     void requestSort(int role, int order);
+    QList<QMasterSignerPtr> fullList() const;
+    void cleardata();
+    nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
 
     enum MasterSignerRoles {
         master_signer_id_Role,
@@ -142,12 +157,20 @@ public:
         master_signer_fingerPrint_Role,
         master_signer_msg2Sign_Role,
         master_signer_deviceType_Role,
-        master_signer_isSoftware_Role,
+        master_signer_signerType_Role,
         master_signer_need_passphrase_Role,
-        master_signer_need_pin_Role
+        master_signer_need_pin_Role,
+        master_signer_need_xpub_Role,
+        master_signer_primary_key_Role
     };
+
+public slots:
+    int signerCount() const;
+    int signerSelectedCount() const;
 private:
-    QList<QSharedPointer<MasterSigner>> d_;
+    QList<QMasterSignerPtr> d_;
+    std::vector<nunchuk::PrimaryKey> primaryKeys;
 };
+typedef QSharedPointer<MasterSignerListModel> QMasterSignerListModelPtr;
 
 #endif // MASTERSIGNERMODEL_H

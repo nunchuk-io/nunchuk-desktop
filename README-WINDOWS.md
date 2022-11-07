@@ -28,7 +28,8 @@ Following quick steps:
 > Using vcpkg install the dependencies
 ```
 	vcpkg install boost:x64-windows zeromq:x64-windows libevent:x64-windows berkeleydb:x64-windows sqlite3:x64-windows
-	vcpkg install sqlcipher:x64-windows qt5:x64-windows qt5-graphicaleffects:x64-windows qt5-quickcontrols:x64-windows
+	vcpkg install sqlcipher:x64-windows qt5:x64-windows qt5-graphicaleffects:x64-windows qt5-quickcontrols:x64-windows qtKeychain:x64-windows
+	vcpkg integrate install
 ```
 > After install completed. Add to system variable PATH:
 ```
@@ -38,6 +39,16 @@ Following quick steps:
 such as:
 	C:\vcpkg\installed\x64-windows\include
 	C:\vcpkg\installed\x64-windows	
+```
+**Build Oml lib**
+>**Clone project olm from github, To build olm as a shared library run:**
+```
+	open window Powershell
+	git clone https://gitlab.matrix.org/matrix-org/olm.git
+	cd olm
+	cd build
+	cmake ../
+	cmake --build . --config Release -j8
 ```
 
 **Build nunchuck-client-qt**
@@ -55,6 +66,8 @@ such as:
 	cd contrib/libnunchuk/contrib/bitcoin/build_msvc
 	py -3 msvc-autogen.py
 	msbuild /m bitcoin.sln /p:Platform=x64 /p:Configuration=Release /t:build
+	or
+	msbuild -property:Configuration=Release -maxCpuCount -verbosity:minimal bitcoin.sln
 ```
 >**Build nunchuck-client-qt**
 ```

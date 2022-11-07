@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
 import "../origins"
@@ -9,18 +28,20 @@ Rectangle {
     radius: 24
     border.width: 2
     property alias label: text
-
+    property bool processing: false
     state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
 
-    property var backgroundColor: [backgroundColorTypeA, backgroundColorTypeB, backgroundColorTypeC, backgroundColorTypeD]
-    property var borderColor: [borderColorTypeA, borderColorTypeB, borderColorTypeC, borderColorTypeD]
-    property var textColor: [textColorTypeA, textColorTypeB, textColorTypeC, textColorTypeD]
+    property var backgroundColor:   [backgroundColorTypeA,  backgroundColorTypeB,   backgroundColorTypeC,   backgroundColorTypeD,   backgroundColorTypeE,   backgroundColorTypeF]
+    property var borderColor:       [borderColorTypeA,      borderColorTypeB,       borderColorTypeC,       borderColorTypeD,       borderColorTypeE,       borderColorTypeF]
+    property var textColor:         [textColorTypeA,        textColorTypeB,         textColorTypeC,         textColorTypeD,         textColorTypeE,         textColorTypeF]
 
     property int type: eTypeA
     readonly property int eTypeA: 0
     readonly property int eTypeB: 1
     readonly property int eTypeC: 2
     readonly property int eTypeD: 3
+    readonly property int eTypeE: 4
+    readonly property int eTypeF: 5
 
     // Click state
     readonly property int eNORMAL: 0
@@ -43,6 +64,14 @@ Rectangle {
     property var backgroundColorTypeD: ["transparent", "#9FA0A1","transparent", "#8B8C8C"]
     property var borderColorTypeD: ["#FF7A00", "#FF7A00", "#FF7A00", "#FF7A00"]
     property var textColorTypeD: ["#FF7A00", "#FFFFFF", "#FF7A00", "#FFFFFF"]
+
+    property var backgroundColorTypeE: ["#031F2B", "#1A333D","#EAEAEA", "#031F2B"]
+    property var borderColorTypeE: ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"]
+    property var textColorTypeE: ["#FFFFFF", "#FFFFFF", "#595959", "#FFFFFF"]
+
+    property var backgroundColorTypeF: ["#FFFFFF", "#031F2B","#EAEAEA", "#031F2B"]
+    property var borderColorTypeF: ["#FFFFFF", "#031F2B", "#EAEAEA", "#595959"]
+    property var textColorTypeF: ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"]
 
     states: [
         State {
@@ -97,13 +126,12 @@ Rectangle {
 
     QText {
         id: text
-        width: 102
-        height: 14
+        anchors.fill: parent
         anchors.centerIn: rootTextButton
         text: qsTr("TEXT")
         font.weight: Font.DemiBold
         font.pixelSize: 16
-        lineHeight: 16
+        font.family: "Lato"
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
     }

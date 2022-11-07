@@ -2,22 +2,36 @@
 #define NUNCHUCKIFACE_H
 
 #include "QWarningMessage.h"
-#ifdef USING_STUB_API
-#include "nunchuckstub.h"
-#else
 #include <nunchuk.h>
 #include <map>
-#endif
+
+enum nunchukMode {
+    LOCAL_MODE = 0,
+    ONLINE_MODE
+};
 
 class nunchukiface
 {
 public:
     static nunchukiface *instance();
-    bool makeNunchukInstance(const nunchuk::AppSettings &appsettings, const std::string &passphrase, QWarningMessage &msg);
+    void setNunchukMode(int mode);
+    int nunchukMode() const;
 
     nunchukiface(nunchukiface &other) = delete;
     nunchukiface(nunchukiface const &other) = delete;
     void operator=(const nunchukiface &other) = delete;
+
+    void makeNunchukInstance(const nunchuk::AppSettings &appsettings,
+                             const std::string &passphrase,
+                             QWarningMessage &msg);
+
+    void makeNunchukInstanceForAccount(const nunchuk::AppSettings& appsettings,
+                                       const std::string& passphrase,
+                                       const std::string& account,
+                                       QWarningMessage &msg);
+
+    const std::unique_ptr<nunchuk::Nunchuk> &nunchukinstance() const;
+
     bool SetPassphrase(const std::string& passphrase, QWarningMessage &msg);
 
     nunchuk::Wallet CreateWallet(const std::string& name,
@@ -45,7 +59,7 @@ public:
 
     bool DeleteWallet(const std::string& wallet_id, QWarningMessage& msg);
 
-    bool UpdateWallet(nunchuk::Wallet& wallet, QWarningMessage& msg);
+    bool UpdateWallet(const nunchuk::Wallet &wallet, QWarningMessage& msg);
 
     bool ExportWallet(const std::string& wallet_id,
                       const std::string& file_path,
@@ -92,6 +106,8 @@ public:
     std::vector<nunchuk::SingleSigner> GetSignersFromMasterSigner(const std::string& mastersigner_id,
                                                                   QWarningMessage& msg);
 
+    bool HasSigner(const nunchuk::SingleSigner& signer,QWarningMessage& msg);
+
     int GetNumberOfSignersFromMasterSigner(const std::string& mastersigner_id,
                                            QWarningMessage& msg);
 
@@ -111,7 +127,7 @@ public:
                             QWarningMessage &msg);
 
 
-    bool UpdateMasterSigner(nunchuk::MasterSigner& mastersigner,
+    bool UpdateMasterSigner(const nunchuk::MasterSigner &mastersigner,
                             QWarningMessage& msg);
 
     std::vector<nunchuk::SingleSigner> GetRemoteSigners(QWarningMessage& msg);
@@ -235,6 +251,10 @@ public:
 
     void SendPinToDevice(const nunchuk::Device& device, const std::string& pin, QWarningMessage& msg);
 
+    void SendPassphraseToDevice(const nunchuk::Device& device,
+                                const std::string& passphrase,
+                                QWarningMessage& msg);
+
     bool SetSelectedWallet(const std::string& wallet_id, QWarningMessage& msg);
 
     nunchuk::SingleSigner CreateCoboSigner(const std::string& name,
@@ -249,7 +269,8 @@ public:
                                                const std::vector<std::string>& qr_data,
                                                QWarningMessage& msg);
 
-    std::vector<std::string> ExportCoboWallet( const std::string& wallet_id, QWarningMessage& msg);
+    std::vector<std::string> ExportCoboWallet( const std::string& wallet_id,
+                                               QWarningMessage& msg);
 
 
     nunchuk::Wallet ImportCoboWallet(const std::vector<std::string>& qr_data,
@@ -263,7 +284,14 @@ public:
     nunchuk::MasterSigner CreateSoftwareSigner(const std::string& name,
                                                const std::string& mnemonic,
                                                const std::string &passphrase,
-                                               QWarningMessage& msg );
+                                               QWarningMessage& msg,
+                                               bool isPrimaryKey);
+
+    bool DeletePrimaryKey();
+
+    std::string SignLoginMessage(const std::string& mastersigner_id,
+                                 const std::string& message,
+                                 QWarningMessage& msg);
 
     void SendSignerPassphrase(const std::string& mastersigner_id,
                               const std::string& passphrase,
@@ -279,7 +307,7 @@ public:
 
     void AddBalanceListener( std::function<void(std::string, nunchuk::Amount)> listener);
 
-    void AddTransactionListener( std::function<void(std::string, nunchuk::TransactionStatus)> listener);
+    void AddTransactionListener( std::function<void(std::string, nunchuk::TransactionStatus, std::string)> listener);
 
     void AddDeviceListener( std::function<void(std::string, bool)> listener);
 
@@ -287,13 +315,50 @@ public:
 
     void AddBlockchainConnectionListener( std::function<void(nunchuk::ConnectionStatus, int)> listener);
 
+    nunchuk::SingleSigner ParseKeystoneSigner(const std::string& qr_data,
+                                              QWarningMessage& msg);
+
+    std::vector<std::string> ExportKeystoneWallet(const std::string& wallet_id,
+                                                  QWarningMessage& msg);
+
+    std::vector<std::string> ExportKeystoneTransaction(const std::string& wallet_id,
+                                                       const std::string& tx_id,
+                                                       QWarningMessage& msg);
+
+    nunchuk::Transaction ImportKeystoneTransaction(const std::string& wallet_id,
+                                                   const std::vector<std::string>& qr_data,
+                                                   QWarningMessage& msg);
+
+    nunchuk::Wallet ImportKeystoneWallet(const std::vector<std::string>& qr_data,
+                                         const std::string& description,
+                                         QWarningMessage& msg);
+
+    std::vector<nunchuk::SingleSigner> ParsePassportSigners(const std::vector<std::string>& qr_data,
+                                                            QWarningMessage& msg);
+
+    std::vector<nunchuk::SingleSigner> ParseQRSigners(const std::vector<std::string>& qr_data,
+                                                            QWarningMessage& msg);
+
+    std::vector<nunchuk::SingleSigner> ParseJSONSigners(const std::string& json_str,
+                                                            QWarningMessage& msg);
+
+    std::vector<std::string> ExportPassportWallet(const std::string& wallet_id,
+                                                  QWarningMessage& msg);
+
+    std::vector<std::string> ExportPassportTransaction(const std::string& wallet_id,
+                                                       const std::string& tx_id,
+                                                       QWarningMessage& msg);
+
+    nunchuk::Transaction ImportPassportTransaction(const std::string& wallet_id,
+                                                   const std::vector<std::string>& qr_data,
+                                                   QWarningMessage& msg);
+    void stopInstance();
 private:
     nunchukiface();
     ~nunchukiface();
     void registerCallback();
-#ifndef USING_STUB_API
-    std::unique_ptr<nunchuk::Nunchuk> nunchuk_instance_;
-#endif
+    int nunchukMode_;
+    std::unique_ptr<nunchuk::Nunchuk> nunchuk_instance_[2] = {NULL};
 };
 
 #endif // NUNCHUCKIFACE_H

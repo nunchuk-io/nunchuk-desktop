@@ -1,84 +1,59 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
 QScreen {
-    Rectangle {
-        id: mask
+    property int checkedCount: 0
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        Row {
-            spacing: 16
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-
-            QText {
-                id: title
-                width: 210
-                height: 36
-                text: "Unspent Outputs"
-                color: "#031F2B"
-                font.weight: Font.ExtraBold
-                font.family: "Montserrat"
-                font.pixelSize: 24
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            QText {
-                width: 238
-                height: 21
-                text: "(" + AppModel.walletInfo.walletName + ")"
-                color: "#031F2B"
-                font.weight: Font.DemiBold
-                font.family: "Montserrat"
-                font.pixelSize: 14
-                anchors.verticalCenter: title.verticalCenter
-            }
+        label.text: STR.STR_QML_312
+        extraHeader: QText {
+            height: 21
+            text: "(" + AppModel.walletInfo.walletName + ")"
+            color: "#031F2B"
+            font.weight: Font.DemiBold
+            font.family: "Montserrat"
+            font.pixelSize: 14
+            anchors.verticalCenter: parent.verticalCenter
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
+        onCloseClicked: {
+            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_UTXOS)
             }
-            onClicked: {
+            else{
                 QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_UTXOS)
             }
         }
-
         QButtonTextLink {
-            width: 203
             height: 24
-            label: "BACK TO PREVIOUS"
+            label: STR.STR_QML_059
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -86,10 +61,14 @@ QScreen {
                 bottomMargin: 40
             }
             onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_UTXOS_BACK_REQUEST)
+                if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                    QMLHandle.sendEvent(EVT.EVT_UTXO_OUTPUT_BACK_SHARED_WALLET)
+                }
+                else{
+                    QMLHandle.sendEvent(EVT.EVT_UTXOS_BACK_REQUEST)
+                }
             }
         }
-
         Rectangle {
             id: maskofcontent
             width: 720
@@ -97,7 +76,6 @@ QScreen {
             radius: 4
             visible: false
         }
-
         Rectangle {
             id: contentDisplay
             width: 720
@@ -124,7 +102,7 @@ QScreen {
                     id: outputtab
                     width: 274
                     height: 32
-                    label: "UNSPENT OUTPUT"
+                    label: STR.STR_QML_313
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex === 0
                     fontPixelSize: 10
@@ -143,7 +121,7 @@ QScreen {
                     id: memotab
                     width: 135
                     height: 32
-                    label: "MEMO"
+                    label: STR.STR_QML_218
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex === 1
                     fontPixelSize: 10
@@ -162,7 +140,7 @@ QScreen {
                     id: confirmationtab
                     width: 132
                     height: 32
-                    label: "CONFIRMATIONS"
+                    label: STR.STR_QML_314
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex === 2
                     fontPixelSize: 10
@@ -181,7 +159,7 @@ QScreen {
                     id: amounttab
                     width: 180
                     height: 32
-                    label: "AMOUNT"
+                    label: STR.STR_QML_214
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex === 3
                     fontPixelSize: 10
@@ -209,9 +187,13 @@ QScreen {
                 font.family: "Lato"
                 font.pixelSize: 12
                 color: "#323E4A"
-                text: "Transaction Data " + (((currentPage-1) * utxo_lst.rowsOnPage)+1) + " - " + Math.min(currentPage * utxo_lst.rowsOnPage, utxo_lst.count) + " of " + utxo_lst.count
+                text: qsTr("%1 %2 - %3 %4 %5")
+                .arg(STR.STR_QML_315)
+                .arg((((currentPage-1) * utxo_lst.rowsOnPage)+1))
+                .arg(Math.min(currentPage * utxo_lst.rowsOnPage, utxo_lst.count))
+                .arg(STR.STR_QML_057)
+                .arg(utxo_lst.count)
             }
-
             QPageControl {
                 id: pagecontrol
                 totalPage: Math.floor(utxo_lst.count/utxo_lst.rowsOnPage) + (utxo_lst.count % utxo_lst.rowsOnPage == 0 ? 0 : 1)
@@ -226,13 +208,11 @@ QScreen {
                 }
             }
         }
-
         OpacityMask {
             anchors.fill: contentDisplay
             source: contentDisplay
             maskSource: maskofcontent
             cached: true
-
             QListView {
                 id: utxo_lst
                 width: 720
@@ -244,7 +224,6 @@ QScreen {
                 }
                 clip: true
                 interactive: false
-                property int checkedCount: 0
                 readonly property int pageHeight: 400
                 readonly property int rowsOnPage: 5
                 readonly property int rowHeight: utxo_lst.pageHeight/utxo_lst.rowsOnPage
@@ -259,18 +238,17 @@ QScreen {
                     unspentoutput_memo: utxo_memo
                     unspentoutput_confirmation: Math.max(0, (AppModel.chainTip - utxo_height)+1)
                     unspentoutput_amount: utxo_amount
+                    utxoSelected: utxo_selected
                     onButtonClicked: {QMLHandle.sendEvent(EVT.EVT_UTXOS_ITEM_SELECTED, index) }
                     onCheckboxClicked : {
                         utxo_selected = !utxo_selected
-                        if(utxo_selected) utxo_lst.checkedCount++;
-                        else utxo_lst.checkedCount--;
+                        if(utxo_selected) checkedCount++;
+                        else checkedCount--;
                     }
-
-                    Component.onCompleted: { if(AppModel.walletInfo.walletEscrow) {utxo_selected = true; utxo_lst.checkedCount++}; }
+                    Component.onCompleted: { if(utxoSelected) {checkedCount++} }
                 }
             }
         }
-
         QTextButton {
             width: 210
             height: 48
@@ -280,10 +258,10 @@ QScreen {
                 bottom: parent.bottom
                 bottomMargin: 40
             }
-            label.text: "Consolidate Outputs"
+            label.text: STR.STR_QML_304
             label.font.pixelSize: 16
-            type: eTypeA
-            enabled: utxo_lst.checkedCount > 0
+            type: eTypeE
+            enabled: checkedCount > 0
             onButtonClicked: QMLHandle.sendEvent(EVT.EVT_UTXOS_CONSOLIDATE_REQUEST)
         }
     }

@@ -2,8 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>Qml/Popups/ONS_Waiting.qml</file>
-        <file>main_ani01.qml</file>
-        <file>main_ani02.qml</file>
         <file>Qml/Components/customizes/QBoxShadow.qml</file>
         <file>Qml/Components/customizes/QTextButton.qml</file>
         <file>Qml/Components/customizes/QConnection.qml</file>
@@ -35,7 +33,6 @@
         <file>Qml/Components/customizes/QRadioButtonTypeB.qml</file>
         <file>Qml/Components/customizes/QHomeInitialStep1.qml</file>
         <file>Qml/Components/customizes/QHomeInitialStep2.qml</file>
-        <file>main_ani03.qml</file>
         <file>Qml/Components/customizes/QUnspentOutputDelegate.qml</file>
         <file>Qml/Components/customizes/QProgressbar.qml</file>
         <file>Qml/Components/customizes/QCloseButton.qml</file>
@@ -66,7 +63,6 @@
         <file>Qml/Screens/LocalMode/SCR_HOME.qml</file>
         <file>Qml/Screens/LocalMode/SCR_INPUT_PASSPHRASE.qml</file>
         <file>Qml/Screens/LocalMode/SCR_INPUT_PIN.qml</file>
-        <file>Qml/Screens/LocalMode/SCR_LOGIN.qml</file>
         <file>Qml/Screens/LocalMode/SCR_MASTER_SIGNER_INFO.qml</file>
         <file>Qml/Screens/LocalMode/SCR_RECEIVE.qml</file>
         <file>Qml/Screens/LocalMode/SCR_RECOVER_SOFTWARE_SIGNER.qml</file>
@@ -79,34 +75,98 @@
         <file>Qml/Screens/LocalMode/SCR_UTXO_INFO.qml</file>
         <file>Qml/Screens/LocalMode/SCR_UTXOS.qml</file>
         <file>Qml/Screens/LocalMode/SCR_WALLET_INFO.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_HOME_ONLINE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOGIN_ONLINE.qml</file>
+        <file>Qml/Components/customizes/Chats/QConversationPage.qml</file>
+        <file>Qml/Components/customizes/QMenuBar.qml</file>
+        <file>Qml/Components/customizes/QMenuBarItem.qml</file>
+        <file>Qml/Components/customizes/Chats/QContactReceivedDelegate.qml</file>
+        <file>Qml/Components/customizes/Chats/QContactDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ONLINE_ADD_CONTACTS.qml</file>
+        <file>Qml/Components/customizes/Chats/QRoomsPage.qml</file>
+        <file>Qml/Components/customizes/QAvatar.qml</file>
+        <file>Qml/Components/customizes/Chats/QRoomDelegate.qml</file>
+        <file>Qml/Components/customizes/QTextInputBoxTypeC.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CONTACT_PENDING_REQUEST.qml</file>
+        <file>Qml/Components/customizes/Chats/QContactSentDelegate.qml</file>
+        <file>Qml/Components/customizes/Chats/QConversationDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REVIEW_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CREATE_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CONFIGURE_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ASSIGN_SIGNER_TO_SHARED_WALLET.qml</file>
+        <file>Qml/Components/customizes/QSwitchTypeB.qml</file>
+        <file>Qml/Components/customizes/QRadioButtonTypeC.qml</file>
+        <file>Qml/Components/customizes/QVolumeTypeA.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SHARED_WL_DEVICE_REGISTRATION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SHARED_WALLET_CONFIGURE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_BACKUP_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_STARTING_CREATE_SIGNER.qml</file>
+        <file>Qml/Components/customizes/QOnScreenContent.qml</file>
+        <file>Qml/Components/customizes/Chats/QAssignSignerDelegate.qml</file>
+        <file>Qml/Components/customizes/QTextInputBoxTypeA.qml</file>
+        <file>Qml/Components/customizes/Chats/QWalletSignerDelegate.qml</file>
+        <file>Qml/Components/customizes/Chats/QContextMenu.qml</file>
+        <file>Qml/Components/customizes/Chats/QConversationInfo.qml</file>
+        <file>Qml/Components/customizes/QNotificationToast.qml</file>
+        <file>Qml/Popups/TOAST_WARNING.qml</file>
+        <file>Qml/Components/customizes/Chats/QTransactionSignerDelegate.qml</file>
+        <file>Qml/Components/customizes/QQrImportScanner.qml</file>
+        <file>Qml/Global/QGlobal.qml</file>
+        <file>Qml/Global/QWalletData.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_UPDATE_PROFILE.qml</file>
+        <file>Qml/Components/customizes/QLoadCircle.qml</file>
+        <file>Qml/Components/customizes/Chats/QConfirmYesNoPopup.qml</file>
+        <file>Qml/Components/customizes/Chats/QContactDelegatePendingRecv.qml</file>
+        <file>Qml/Components/customizes/Chats/QContactDelegatePendingSent.qml</file>
+        <file>localization/STR_QML.js</file>
+        <file>Qml/Components/customizes/QConfirmDeletingTypeA.qml</file>
+        <file>Qml/Components/customizes/QConfirmCodeDeletion.qml</file>
+        <file>Qml/Components/customizes/QLoggedInDevicesBox.qml</file>
+        <file>Qml/Components/customizes/QLoggedInDeviceDetail.qml</file>
+        <file>Qml/Components/customizes/QPopupInfo.qml</file>
+        <file>Qml/Components/customizes/QIconButton.qml</file>
+        <file>Qml/Components/customizes/Chats/QContentCreateWL.qml</file>
+        <file>Qml/Components/customizes/QAreaWalletDetail.qml</file>
+        <file>Qml/Components/customizes/QTextInputBoxTypeD.qml</file>
+        <file>Qml/Components/customizes/QPopupBusyLoading.qml</file>
+        <file>Qml/Components/customizes/QPopupToast.qml</file>
+        <file>Qml/Components/customizes/QPopupGuestMode.qml</file>
+        <file>Qml/Components/customizes/Chats/QContactInfoPage.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_RECOVER_SHARED_WALLET.qml</file>
+        <file>Qml/Components/customizes/QAddWelcome.qml</file>
+        <file>Qml/Components/customizes/Chats/QBoxWalletInfo.qml</file>
+        <file>Qml/Components/customizes/Chats/QBoxTransactionInfo.qml</file>
+        <file>Qml/Components/customizes/QRequireLogin.qml</file>
+        <file>Qml/Components/customizes/QUserSettingPanel.qml</file>
+        <file>Qml/Components/customizes/QGuestSettingPanel.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CREATE_ACCOUNT.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CHANGE_PASSWORD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_ACCOUNT.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_MANUALLY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOGIN_WITH_SOFTWARE_KEY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REPLACE_PRIMARY_KEY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_CONFIGURATION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN.qml</file>
+        <file>Qml/Screens/LocalMode/SCR_LOGIN.qml</file>
+        <file>Qml/Components/customizes/QPopupInfoVertical.qml</file>
+        <file>Qml/Components/customizes/QConfirmDeletingTypeB.qml</file>
+        <file>Qml/Components/customizes/QBaseButton.qml</file>
     </qresource>
     <qresource prefix="/Images">
-        <file>Images/Plus.png</file>
-        <file>Images/Info.png</file>
         <file>Images/Close.png</file>
         <file>Images/check_circle_outline_24px.png</file>
         <file>Images/edit.png</file>
         <file>Images/error_outline_24px.png</file>
-        <file>Images/arrow_drop_down_24px.png</file>
         <file>Images/Arrow-Right.png</file>
-        <file>Images/Bold.png</file>
-        <file>Images/Italic.png</file>
-        <file>Images/Logo_Palcehoder.png</file>
-        <file>Images/ic_outline-timer.png</file>
-        <file>Images/Plus_d.png</file>
-        <file>Images/Plus_n.png</file>
-        <file>Images/Plus_p.png</file>
         <file>Images/Rectangle 2944.png</file>
         <file>Images/Checked_n.png</file>
         <file>Images/UnChecked_n.png</file>
-        <file>Images/check_circle_outline_24px_checked.png</file>
-        <file>Images/check_circle_outline_24px_uncheck.png</file>
         <file>Images/download.png</file>
         <file>Images/import.png</file>
         <file>Images/StepComplete.png</file>
         <file>Images/RadioDeselected.png</file>
         <file>Images/RadioEnabled.png</file>
-        <file>Images/importWallet.png</file>
         <file>Images/expand_less_24px.png</file>
         <file>Images/expand_more_24px.png</file>
         <file>Images/SignerChecked.png</file>
@@ -115,8 +175,6 @@
         <file>Images/Circular.png</file>
         <file>Images/cached_24px.png</file>
         <file>Images/Signer_Level2.png</file>
-        <file>Images/Signer_Level2_2.png</file>
-        <file>Images/settings.png</file>
         <file>Images/backup.png</file>
         <file>Images/description.png</file>
         <file>Images/fileDownload.png</file>
@@ -139,24 +197,16 @@
         <file>Images/arrow_outline_d.png</file>
         <file>Images/arrow_outline_n.png</file>
         <file>Images/arrow_outline_p.png</file>
-        <file>Images/appsettings.png</file>
         <file>Images/visibility.png</file>
         <file>Images/visibility-off.png</file>
-        <file>Images/NoSigner.png</file>
-        <file>Images/NoWallet.png</file>
-        <file>Images/Step1.png</file>
-        <file>Images/Step2.png</file>
         <file>Images/Logo_bgr.png</file>
         <file>Images/Default.png</file>
         <file>Images/link.png</file>
-        <file>Images/GeneralDevice.png</file>
         <file>Images/Signed.png</file>
         <file>Images/snipbar.png</file>
         <file>Images/Escrow Wallet.png</file>
         <file>Images/close_24px.png</file>
-        <file>Images/Copy_black.png</file>
         <file>Images/tooltip.png</file>
-        <file>Images/cached_24px_F1FAFE.png</file>
         <file>Images/syncing.png</file>
         <file>Images/C1.png</file>
         <file>Images/C2.png</file>
@@ -167,19 +217,12 @@
         <file>Images/exportqr.png</file>
         <file>Images/Copy_9CAEB8.png</file>
         <file>Images/Copy_031F2B.png</file>
-        <file>Images/Copy_C9DEF1.png</file>
         <file>Images/Copy_F1FAFE.png</file>
-        <file>Images/wallet_9CAEB8.png</file>
         <file>Images/wallet_031F2B.png</file>
-        <file>Images/wallet_C9DEF1.png</file>
-        <file>Images/wallet_F1FAFE.png</file>
-        <file>Images/health_9CAEB8.png</file>
         <file>Images/health_031F2B.png</file>
         <file>Images/health_C9DEF1.png</file>
-        <file>Images/health_F1FAFE.png</file>
         <file>Images/d_chevron_24px_9CAEB8.png</file>
         <file>Images/d_chevron_24px_031F2B.png</file>
-        <file>Images/d_chevron_24px_C9DEF1.png</file>
         <file>Images/d_chevron_24px_F1FAFE.png</file>
         <file>Images/bookmark_border_24px_9CAEB8.png</file>
         <file>Images/bookmark_border_24px_031F2B.png</file>
@@ -187,27 +230,124 @@
         <file>Images/bookmark_border_24px_F1FAFE.png</file>
         <file>Images/visibility_9CAEB8.png</file>
         <file>Images/visibility_031F2B.png</file>
-        <file>Images/visibility_C9DEF1.png</file>
         <file>Images/visibility_F1FAFE.png</file>
         <file>Images/backspace-24px-1.png</file>
         <file>Images/backspace-24px-2.png</file>
-        <file>Images/download_9CAEB8.png</file>
         <file>Images/download_031F2B.png</file>
-        <file>Images/download_C9DEF1.png</file>
-        <file>Images/download_F1FAFE.png</file>
-        <file>Images/import_9CAEB8.png</file>
         <file>Images/import_031F2B.png</file>
-        <file>Images/import_C9DEF1.png</file>
-        <file>Images/import_F1FAFE.png</file>
         <file>Images/Device_Icons/bitbox.png</file>
         <file>Images/Device_Icons/coldcard.png</file>
         <file>Images/Device_Icons/ledger.png</file>
         <file>Images/Device_Icons/other.png</file>
         <file>Images/Device_Icons/trezor.png</file>
-        <file>Images/wallet_F6D65D.png</file>
         <file>Images/hardware_add-60px.png</file>
-        <file>Images/software_add-60px.png</file>
+        <file>Images/software_add-60px.svg</file>
         <file>Images/info-60px.png</file>
         <file>Images/warning_amber-60px.png</file>
+        <file>Images/OnlineMode/Gradient_background.png</file>
+        <file>Images/OnlineMode/brucelee.png</file>
+        <file>Images/OnlineMode/DirectMessage.png</file>
+        <file>Images/OnlineMode/check_circle_outline_24px.png</file>
+        <file>Images/OnlineMode/close_24px.png</file>
+        <file>Images/OnlineMode/error_outline_24px.png</file>
+        <file>Images/OnlineMode/error_outline_24px_n.png</file>
+        <file>Images/OnlineMode/check_circle_24px copy.png</file>
+        <file>Images/OnlineMode/close_24px_white.png</file>
+        <file>Images/OnlineMode/Joint wallet_031F2B.png</file>
+        <file>Images/OnlineMode/Joint wallet_FFFFFF.png</file>
+        <file>Images/OnlineMode/more_horiz_24px.png</file>
+        <file>Images/OnlineMode/cancel_red_24dp.png</file>
+        <file>Images/OnlineMode/Inline Edit Button.png</file>
+        <file>Images/OnlineMode/person_add-24px.png</file>
+        <file>Images/OnlineMode/expand_less_24px_FFFFFF.png</file>
+        <file>Images/OnlineMode/switch_indicator_off.png</file>
+        <file>Images/OnlineMode/switch_indicator_on.png</file>
+        <file>Images/OnlineMode/switch_off.png</file>
+        <file>Images/OnlineMode/switch_on.png</file>
+        <file>Images/OnlineMode/compress-24px.png</file>
+        <file>Images/OnlineMode/check_circle_24px.png</file>
+        <file>Images/OnlineMode/pending_actions-24px.png</file>
+        <file>Images/OnlineMode/dot-dot-dot.gif</file>
+        <file>Images/OnlineMode/check_circle_24px_d.png</file>
+        <file>Images/OnlineMode/check_circle_24px_n.png</file>
+        <file>Images/OnlineMode/Export.png</file>
+        <file>Images/OnlineMode/QRCodeScan.png</file>
+        <file>Images/OnlineMode/Backup.png</file>
+        <file>Images/OnlineMode/Device Registration.png</file>
+        <file>Images/OnlineMode/Escrow Wallet.png</file>
+        <file>Images/OnlineMode/Gradient_bg.png</file>
+        <file>Images/OnlineMode/Gradient_overlay.png</file>
+        <file>Images/OnlineMode/error_outline_24px_w.png</file>
+        <file>Images/OnlineMode/warning_amber-24px.png</file>
+        <file>Images/OnlineMode/warning_amber-24px 2.png</file>
+        <file>Images/OnlineMode/monetization_on-24px.png</file>
+        <file>Images/OnlineMode/monetization_on-24px_FFFFFF.png</file>
+        <file>Images/OnlineMode/PendingTransaction.png</file>
+        <file>Images/OnlineMode/help_outline-24px.png</file>
+        <file>Images/OnlineMode/keys.png</file>
+        <file>Images/OnlineMode/Cover.png</file>
+        <file>Images/OnlineMode/history-24px.png</file>
+        <file>Images/Device_Icons/software.svg</file>
+        <file>Images/OnlineMode/addContact.png</file>
+        <file>Images/OnlineMode/downend.png</file>
+        <file>Images/Nunchuk.png</file>
+        <file>Images/email.png</file>
+        <file>Images/twt.png</file>
+        <file>Images/check-outline-dark.svg</file>
+        <file>Images/close-dark.svg</file>
+        <file>Images/close-light.svg</file>
+        <file>Images/error-dark.svg</file>
+        <file>Images/error-light.svg</file>
+        <file>Images/warning-dark.svg</file>
+        <file>Images/OnlineMode/monetization_on-24px_2.png</file>
+        <file>Images/OnlineMode/arrow_outline_right.png</file>
+        <file>Images/OnlineMode/pending_actions-24px 1.png</file>
+        <file>Images/compose-dark.svg</file>
+        <file>Images/left-arrow-dark.svg</file>
+        <file>Images/message-light.svg</file>
+        <file>Images/right-arrow-dark.svg</file>
+        <file>Images/wallet-light.svg</file>
+        <file>Images/accounts-settings-light.svg</file>
+        <file>Images/add-dark.svg</file>
+        <file>Images/add-light.svg</file>
+        <file>Images/change-password-light.svg</file>
+        <file>Images/checkbox-checked-dark.svg</file>
+        <file>Images/checkbox-dark.svg</file>
+        <file>Images/collab-wallet-dark.svg</file>
+        <file>Images/copy-dark.svg</file>
+        <file>Images/developer-settings-light.svg</file>
+        <file>Images/display-unit-light.svg</file>
+        <file>Images/down-arrow-dark.svg</file>
+        <file>Images/hardware-driver-light.svg</file>
+        <file>Images/info-filled-light.svg</file>
+        <file>Images/network-settings-light.svg</file>
+        <file>Images/radio-selected-dark.svg</file>
+        <file>Images/settings-dark.svg</file>
+        <file>Images/settings-light.svg</file>
+        <file>Images/visibility-dark.svg</file>
+        <file>Images/visibility-off-dark.svg</file>
+        <file>Images/wallet-dark.svg</file>
+        <file>Images/account-circle-dark.svg</file>
+        <file>Images/1.Active.svg</file>
+        <file>Images/2.Active.svg</file>
+        <file>Images/compose-white.svg</file>
+        <file>Images/Delete.svg</file>
+        <file>Images/more_options.svg</file>
+        <file>Images/send_a_message.svg</file>
+        <file>Images/groups-24px.svg</file>
+        <file>Images/wallet.svg</file>
+        <file>Images/primary-key-dark.svg</file>
+        <file>Images/secured-dark.svg</file>
+        <file>Images/logo-dark.svg</file>
+        <file>Images/logo-light.svg</file>
+        <file>Images/logo-vertical-dark.svg</file>
+        <file>Images/logo-vertical-light.svg</file>
+        <file>Images/importFile.svg</file>
+        <file>Images/Device_Icons/nfc-key-dark.svg</file>
+        <file>Images/Device_Icons/nfc-key-light.svg</file>
+        <file>Images/Device_Icons/software-key-light.svg</file>
+    </qresource>
+    <qresource prefix="/version">
+        <file>Info.plist</file>
     </qresource>
 </RCC>

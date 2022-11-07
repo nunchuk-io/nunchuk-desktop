@@ -1,42 +1,66 @@
-
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "STATE_ID_SCR_ADD_HARDWARE_SIGNER.h"
 #include "QQuickViewer.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
+#include "localization/STR_CPP.h"
 
 void SCR_ADD_HARDWARE_SIGNER_Entry(QVariant msg) {
     Q_UNUSED(msg);
-    if(AppModel::instance()->deviceList()){
-        AppModel::instance()->deviceList()->warningMessage()->resetWarningMessage();
-    }
-    AppModel::instance()->startScanDevices();
-    AppModel::instance()->setAddSignerStep(0);
-    AppModel::instance()->setCacheXpubsPercentage(0);
+    AppModel::instance()->setMsgKeyHealthcheck("");
+    AppModel::instance()->setAddSignerStep(-1);
     AppModel::instance()->setAddSignerPercentage(0);
     AppModel::instance()->checkDeviceUsableToAdd();
 }
 
 void SCR_ADD_HARDWARE_SIGNER_Exit(QVariant msg) {
     Q_UNUSED(msg);
-    AppModel::instance()->setAddSignerStep(0);
-    AppModel::instance()->setCacheXpubsPercentage(0);
+    AppModel::instance()->setMsgKeyHealthcheck("");
+    AppModel::instance()->setAddSignerStep(-1);
     AppModel::instance()->setAddSignerPercentage(0);
-
-    if(AppModel::instance()->deviceList()){
-        AppModel::instance()->deviceList()->warningMessage()->resetWarningMessage();
-    }
 }
 
 void EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST_HANDLER(QVariant msg) {
     QString signerNameInputted = msg.toMap().value("signerNameInputted").toString();
-    int deviceSelectedIndex    = msg.toMap().value("deviceIndexSelected").toInt();
-    AppModel::instance()->startCreateMasterSigner(signerNameInputted, deviceSelectedIndex);
+    int deviceIndexSelected    = msg.toMap().value("deviceIndexSelected").toInt();
+    if(AppModel::instance()->deviceList()){
+        QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected) ;
+        if(selectedDv){
+            if(selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()){
+                AppModel::instance()->showToast(0,
+                                                0,
+                                                EWARNING::WarningType::WARNING_MSG,
+                                                STR_CPP_095);
+            }
+            else{
+                AppModel::instance()->startCreateMasterSigner(signerNameInputted, deviceIndexSelected);
+            }
+        }
+    }
 }
 
 void EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->setSingleSignerInfo(QSharedPointer<SingleSigner>(new SingleSigner()));
+    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
     // Trimmed input
     QString signerNameInputted = msg.toMap().value("signerNameInputted").toString().simplified();
     QString xpubInputted = msg.toMap().value("xpubInputted").toString().simplified();
@@ -56,38 +80,12 @@ void EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST_HANDLER(QVariant msg) {
     bool isValidXpub = qUtils::QIsValidXPub(xpubInputted, xpubOutput);
     bool inputValid = isValidDerivationPath && isValidFingerPrint && isValidXpub;
     if(inputValid){
-        QWarningMessage msgwarning;
-        QSharedPointer<SingleSigner> ret = bridge::nunchukCreateSigner(signerNameInputted,
-                                                                        xpubOutput,
-                                                                        "",
-                                                                        bip32Inputted,
-                                                                        masterFingerPrintInputted,
-                                                                        msgwarning);
-
-        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && ret){
-            ret.data()->setIsValid(true);
-            ret.data()->setIsRemote(true);
-            AppModel::instance()->setSingleSignerInfo(ret);
-            QSharedPointer<SingleSignerListModel> remoteSigners = bridge::nunchukGetRemoteSigners();
-            if(remoteSigners){
-                AppModel::instance()->setRemoteSignerList(remoteSigners);
-            }
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_REMOTE_SIGNER_RESULT);
-        }
-        else{
-            ret = QSharedPointer<SingleSigner>(new SingleSigner());
-            ret.data()->setName(signerNameInputted);
-            ret.data()->setXpub(xpubOutput);
-            ret.data()->setPublickey("");
-            ret.data()->setDerivationPath(bip32Inputted);
-            ret.data()->setMasterFingerPrint(masterFingerPrintInputted);
-            ret.data()->setIsValid(false);
-            ret.data()->setIsRemote(true);
-            AppModel::instance()->singleSignerInfo()->warningMessage()->setWarningMessage(msgwarning.code(),
-                                                                                          msgwarning.what(),
-                                                                                          (EWARNING::WarningType)msgwarning.type(),
-                                                                                          "Cannot create signer");
-        }
+        AppModel::instance()->startCreateRemoteSigner(signerNameInputted,
+                                                      xpubOutput,
+                                                      "",
+                                                      bip32Inputted,
+                                                      masterFingerPrintInputted,
+                                                      E::EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST);
     }
     else{
        if(AppModel::instance()->singleSignerInfo()){
@@ -96,6 +94,7 @@ void EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST_HANDLER(QVariant msg) {
            AppModel::instance()->singleSignerInfo()->setXpub(!isValidXpub ? "false" : "");
            AppModel::instance()->singleSignerInfo()->setPublickey("");
        }
+       emit AppModel::instance()->finishedCreateRemoteSigner();
     }
 }
 
@@ -109,10 +108,7 @@ void EVT_ADD_MASTER_SIGNER_RESULT_HANDLER(QVariant msg) {
 
 void EVT_ADD_HARDWARE_SIGNER_REFRESH_REQUEST_HANDLER(QVariant msg) {
     Q_UNUSED(msg);
-    if(AppModel::instance()->deviceList()){
-        AppModel::instance()->deviceList()->warningMessage()->resetWarningMessage();
-    }
-    AppModel::instance()->startScanDevices();
+    AppModel::instance()->startScanDevices(E::STATE_ID_SCR_ADD_HARDWARE_SIGNER);
 }
 
 void EVT_ADD_REMOTE_SIGNER_RESULT_HANDLER(QVariant msg) {
@@ -120,30 +116,9 @@ void EVT_ADD_REMOTE_SIGNER_RESULT_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_HARDWARE_SIGNER_SEND_PIN_REQUEST_HANDLER(QVariant msg) {
-    QString signerNameInputted = msg.toMap().value("signerNameInputted").toString();
-    int deviceSelectedIndex    = msg.toMap().value("deviceIndexSelected").toInt();
-    QString pinInputted        = msg.toMap().value("pinInputted").toString();
-    if(deviceSelectedIndex >= 0){
-        QSharedPointer<Device> selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceSelectedIndex) ;
-        if(selectedDv){
-            QWarningMessage msgwarning;
-            bridge::nunchukSendPinToDevice(selectedDv, pinInputted, msgwarning);
-            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                AppModel::instance()->startCreateMasterSigner(signerNameInputted, deviceSelectedIndex);
-                AppModel::instance()->startScanDevices();
-            }
-        }
-        else{
-            emit AppModel::instance()->sentPINToDeviceResult((int)EWARNING::WarningType::ERROR_MSG);
-        }
-    }
+
 }
 
 void EVT_ADD_HARDWARE_SIGNER_PROMT_PIN_REQUEST_HANDLER(QVariant msg) {
-    int deviceSelectedIndex    = msg.toMap().value("deviceIndexSelected").toInt();
-    if(deviceSelectedIndex >= 0){
-        QSharedPointer<Device> selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceSelectedIndex) ;
-        QWarningMessage msgwarning;
-        bridge::nunchukPromtPinOnDevice(selectedDv, msgwarning);
-    }
+
 }

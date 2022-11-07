@@ -1,0 +1,16 @@
+
+#ifndef STATE_ID_SCR_CONFIGURE_SHARED_WALLET_H
+#define STATE_ID_SCR_CONFIGURE_SHARED_WALLET_H
+
+#include <QObject>
+#include <QVariant>
+#include "ViewsDefines.h"
+#include "ViewsEnums.h"
+
+void SCR_CONFIGURE_SHARED_WALLET_Entry(QVariant msg);
+void SCR_CONFIGURE_SHARED_WALLET_Exit(QVariant msg);
+void EVT_CONFIGURE_SHARED_WALLET_REQUEST_HANDLER(QVariant msg);
+void EVT_CONFIGURE_SHARED_WALLET_BACK_HANDLER(QVariant msg);
+void EVT_CONFIGURE_SHARED_WALLET_REVIEW_REQUEST_HANDLER(QVariant msg);
+
+#endif // STATE_ID_SCR_CONFIGURE_SHARED_WALLET_H

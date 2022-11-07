@@ -1,4 +1,22 @@
-
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 #include "STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT.h"
 #include "QQuickViewer.h"
 #include "Models/AppModel.h"
@@ -11,29 +29,12 @@ void SCR_REMOTE_SIGNER_RESULT_Entry(QVariant msg) {
 }
 
 void SCR_REMOTE_SIGNER_RESULT_Exit(QVariant msg) {
-    if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER){
-        QSharedPointer<WalletListModel> walletList = bridge::nunchukGetWallets();
-        if(walletList){
-            AppModel::instance()->setWalletList(walletList);
-            if(walletList->rowCount() > 0){
-                AppModel::instance()->setWalletListCurrentIndex(AppModel::instance()->walletListCurrentIndex());
-                if(AppModel::instance()->walletInfo()){
-                    AppModel::instance()->walletInfo()->warningMessage()->resetWarningMessage();
-                    QSharedPointer<TransactionListModel> transactions = bridge::nunchukGetTransactionHistory(AppModel::instance()->walletInfo()->id());
-                    if(transactions){
-                        AppModel::instance()->setTransactionHistory(transactions);
-                    }
-                }
-            }
-        }
-    }
+
 }
 
 void EVT_REMOTE_SIGNER_RESULT_HEALTH_CHECK_HANDLER(QVariant msg) {
     if(AppModel::instance()->singleSignerInfoPtr()){
-        QWarningMessage msg;
-        int status = (int)bridge::nunchukHealthCheckSingleSigner(AppModel::instance()->singleSignerInfoPtr(), msg);
-        AppModel::instance()->singleSignerInfo()->setHealth(status);
+        AppModel::instance()->startHealthCheckRemoteSigner();
     }
 }
 
@@ -42,7 +43,9 @@ void EVT_REMOTE_SIGNER_RESULT_EDIT_NAME_HANDLER(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_SIGNER_CONFIG_HANDLER(QVariant msg) {
-    AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(AppModel::instance()->singleSignerInfoPtr());
+    if(AppModel::instance()->newWalletInfo() && AppModel::instance()->newWalletInfo()->singleSignersAssigned()){
+        AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(AppModel::instance()->singleSignerInfoPtr());
+    }
     AppModel::instance()->remoteSignerList()->setUserCheckedByFingerprint(true, AppModel::instance()->singleSignerInfo()->masterFingerPrint());
 }
 
@@ -58,6 +61,25 @@ void EVT_REMOTE_SIGNER_RESULT_EXPORT_MESSAGE_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->singleSignerInfo() && (file_path != "")){
         bridge::nunchukExportHealthCheckMessage(file_path, AppModel::instance()->singleSignerInfo()->message());
+    }
+}
+
+void EVT_REMOTE_SIGNER_RESULT_GET_XPUBS_HANDLER(QVariant msg) {
+
+}
+
+
+
+void EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST_HANDLER(QVariant msg) {
+    QString master_fingerprint = msg.toMap().value("master_fingerprint").toString();
+    QString derivation_path    = msg.toMap().value("derivation_path").toString();
+    if(bridge::nunchukDeleteRemoteSigner(master_fingerprint, derivation_path)){
+        QSingleSignerListModelPtr remoteSigners = bridge::nunchukGetRemoteSigners();
+        if(remoteSigners){
+            AppModel::instance()->setRemoteSignerList(remoteSigners);
+        }
+        QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST,E::STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT);
+        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
     }
 }
 

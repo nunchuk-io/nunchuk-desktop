@@ -1,82 +1,58 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
 QScreen {
-    Rectangle {
-        id: mask
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        Row {
-            spacing: 16
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-
-            QText {
-                id: title
-                height: 36
-                text: "Unspent Output Info"
-                color: "#031F2B"
-                font.weight: Font.ExtraBold
-                font.family: "Montserrat"
-                font.pixelSize: 24
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            QText {
-                height: 21
-                text: "(" + AppModel.walletInfo.walletName + ")"
-                color: "#031F2B"
-                font.weight: Font.DemiBold
-                font.family: "Montserrat"
-                font.pixelSize: 14
-                anchors.verticalCenter: title.verticalCenter
-            }
+        label.text: STR.STR_QML_306
+        extraHeader: QText {
+            height: 21
+            text: (NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex) ? "(" + RoomWalletData.walletName + ")": "(" + AppModel.walletInfo.walletName + ")"
+            color: "#031F2B"
+            font.weight: Font.DemiBold
+            font.family: "Montserrat"
+            font.pixelSize: 14
+            anchors.verticalCenter: parent.verticalCenter
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
+        onCloseClicked: {
+            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_UTXO_OUTPUT)
             }
-            onClicked: {
+            else{
                 QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_UTXO_OUTPUT)
             }
         }
-
         QButtonTextLink {
-            width: 203
             height: 24
-            label: "BACK TO PREVIOUS"
+            label: STR.STR_QML_059
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -87,7 +63,6 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_UTXO_INFO_BACK_REQUEST)
             }
         }
-
         Flickable {
             id: flickcontent
             width: 720
@@ -115,7 +90,7 @@ QScreen {
                         width: 360
                         height: parent.height
                         color: "transparent"
-                        placeholder.text: "AMOUNT"
+                        placeholder.text: STR.STR_QML_214
                         mode: eREADONLY_MODE
                         textOutput: AppModel.utxoInfo.amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
                     }
@@ -123,7 +98,7 @@ QScreen {
                         width: 150
                         height: parent.height
                         color: "transparent"
-                        placeholder.text: "CONFIRMATIONS"
+                        placeholder.text: STR.STR_QML_287
                         mode: eREADONLY_MODE
                         textOutput: Math.max(0, (AppModel.chainTip - AppModel.utxoInfo.height)+1)
                     }
@@ -131,7 +106,7 @@ QScreen {
                         width: 150
                         height: parent.height
                         color: "transparent"
-                        placeholder.text: "VOUT"
+                        placeholder.text: STR.STR_QML_307
                         mode: eREADONLY_MODE
                         textOutput: AppModel.utxoInfo.vout
                     }
@@ -141,7 +116,7 @@ QScreen {
                     width: parent.width
                     heightMin: 54
                     color: "transparent"
-                    placeholder.text: "TRANSACTION ID"
+                    placeholder.text: STR.STR_QML_308
                     mode: eREADONLY_MODE
                     textOutput: AppModel.utxoInfo.txid
                 }
@@ -149,7 +124,7 @@ QScreen {
                     width: parent.width
                     heightMin: 54
                     color: "transparent"
-                    placeholder.text: "ADDRESS"
+                    placeholder.text: STR.STR_QML_309
                     mode: eREADONLY_MODE
                     textOutput: AppModel.utxoInfo.address
                 }
@@ -157,17 +132,15 @@ QScreen {
                     width: parent.width
                     heightMin: 54
                     color: "transparent"
-                    placeholder.text: "SCRIPTPUBKEY"
+                    placeholder.text: STR.STR_QML_310
                     mode: eREADONLY_MODE
                     textOutput: AppModel.utxoInfo.scriptPublickey
                 }
             }
         }
-
         QButtonTextLink {
-            width: 203
             height: 24
-            label: "RELATED TRANSACTION"
+            label: STR.STR_QML_311
             direction: eRIGHT
             anchors {
                 right: parent.right

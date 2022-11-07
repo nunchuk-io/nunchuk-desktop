@@ -1,61 +1,44 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
-    Rectangle {
-        id: mask
+    id: signerConfigRoot
+    readonly property int walletAddressType: AppModel.newWalletInfo.walletAddressType
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        QText {
-            opacity: 0.7
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-            text: "Add New Wallet"
-            color: "#031F2B"
-            font.weight: Font.ExtraBold
-            font.pixelSize: 24
+        label.text: STR.STR_QML_021
+        onCloseClicked: {
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION)
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
-            }
-            onClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION)
-            }
-        }
-
         Row {
             id: step
             width: 644
@@ -65,11 +48,11 @@ QScreen {
                 left: parent.left
                 leftMargin: 40
                 top: parent.top
-                topMargin: 84
+                topMargin: 78
             }
             QAddStep {
                 step: 1
-                stepName: "Wallet Configuration"
+                stepName: STR.STR_QML_022
                 currentStep: 2
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -82,7 +65,7 @@ QScreen {
             }
             QAddStep {
                 step: 2
-                stepName: "Signer Configuration"
+                stepName: STR.STR_QML_023
                 currentStep: 2
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -95,12 +78,11 @@ QScreen {
             }
             QAddStep {
                 step: 3
-                stepName: "Confirmation"
+                stepName: STR.STR_QML_024
                 currentStep: 2
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
-
         Rectangle {
             width: 269
             height: 454
@@ -112,7 +94,6 @@ QScreen {
                 top: parent.top
                 topMargin: 139
             }
-
             QText {
                 anchors {
                     left: parent.left
@@ -120,19 +101,18 @@ QScreen {
                     top: parent.top
                     topMargin: 16
                 }
-                text: "Choose from Existing Signers"
+                text: STR.STR_QML_043
                 color: "#031F2B"
                 font.pixelSize: 14
                 font.weight: Font.Bold
             }
-
             Flickable {
                 id: flickerSignerList
                 width: 269
                 height: 190
                 clip: true
                 flickableDirection: Flickable.VerticalFlick
-                interactive: true;//contentHeight > contentDisplay.height
+                interactive: true
                 contentHeight: contentDisplay.height
                 ScrollBar.vertical: ScrollBar { active: true }
                 anchors {
@@ -141,25 +121,18 @@ QScreen {
                     top: parent.top
                     topMargin: 45
                 }
-
                 Column {
                     id: contentDisplay
                     QListView {
                         id: mastersigners
                         width: 269
                         height: 40*mastersigners.count
-                        signal updateState()
-                        property var signerSelected: []
                         clip: true
                         interactive: false
                         model: AppModel.masterSignerList
                         delegate: Rectangle {
                             id: delegateMastersigner
-                            property bool isSelected: false
-                            property string signername: master_signer_name
-                            property bool checkedState: (master_signer_checked || delegateMastersigner.isSelected || (mastersigners.signerSelected[index] === undefined ? false : mastersigners.signerSelected[index]))
-                            enabled: !master_signer_checked
-                            color: delegateMastersigner.checkedState ? Qt.rgba(0, 0, 0, 0.1): "transparent"
+                            color: master_signer_checked ? Qt.rgba(0, 0, 0, 0.1): "transparent"
                             width: 269
                             height: 40
                             Rectangle {
@@ -176,41 +149,34 @@ QScreen {
                                     leftMargin: 16
                                     verticalCenter: parent.verticalCenter
                                 }
-                                Image {
+                                QImage {
                                     width: 24
                                     height: 24
-                                    source: delegateMastersigner.checkedState ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
+                                    source: master_signer_checked ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
                                 }
-
                                 QText {
                                     width: 200
                                     elide: Text.ElideRight
                                     anchors.verticalCenter: parent.verticalCenter
                                     font.pixelSize: 14
-                                    color: delegateMastersigner.checkedState ? "#9CAEB8" :  "#031F2B"
+                                    color: master_signer_checked ? "#9CAEB8" :  "#031F2B"
                                     text: master_signer_name
                                 }
                             }
-
-                            Connections {
-                                target: mastersigners
-                                onUpdateState : {
-                                    delegateMastersigner.isSelected = false
-                                    mastersigners.signerSelected[index] = false
-                                }
-                            }
-
                             Rectangle {
-                                width: 63
+                                width: _txt.paintedWidth + 8*2
                                 height: 21
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.right: parent.right
-                                anchors.rightMargin: 5
-                                color: "#C9DEF1"
+                                color: "#FDD95C"
+                                visible: model.master_signer_primary_key
                                 radius: 4
-                                visible: master_signer_isSoftware
+                                anchors{
+                                    verticalCenter: parent.verticalCenter
+                                    right: _type.left
+                                    rightMargin: 4
+                                }
                                 QText {
-                                    text: "SOFTWARE"
+                                    id:_txt
+                                    text: STR.STR_QML_641
                                     font.family: "Lato"
                                     font.weight: Font.Bold
                                     font.pixelSize: 10
@@ -218,43 +184,69 @@ QScreen {
                                     color: "#031F2B"
                                 }
                             }
-
+                            Rectangle {
+                                id:_type
+                                width: 63
+                                height: 21
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.right: parent.right
+                                anchors.rightMargin: 5
+                                color: "#C9DEF1"
+                                radius: 4
+                                visible: master_signer_type !== NUNCHUCKTYPE.HARDWARE
+                                QText {
+                                    text: GlobalData.signerNames(master_signer_type)
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    color: "#031F2B"
+                                }
+                            }
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked:{
-                                    console.log("master_signer_need_passphrase ", master_signer_need_passphrase)
-                                    if(master_signer_isSoftware && master_signer_need_passphrase && !delegateMastersigner.isSelected){
-                                        passphraseModel.visible = true
-                                        passphraseModel.signerIndex = index
-                                        passphraseModel.signerId = master_signer_id
+                                    if(model.master_signer_primary_key && master_signer_checked === false){
+                                        _warning.model = model
+                                        _warning.open()
                                     }
                                     else{
-                                        delegateMastersigner.isSelected = !delegateMastersigner.isSelected
-                                        mastersigners.signerSelected[index] = delegateMastersigner.isSelected
-                                        delegateMastersigner.checkedState = master_signer_checked || delegateMastersigner.isSelected || (mastersigners.signerSelected[index] === undefined ? false : mastersigners.signerSelected[index])
+                                        if(master_signer_checked){
+                                            if(!signerAssigned.containsSigner(master_signer_fingerPrint)){ model.master_signer_checked = false}
+                                        }
+                                        else{
+                                            if(master_signer_type == NUNCHUCKTYPE.SOFTWARE && master_signer_need_passphrase){
+                                                var signerObj = { "mastersigner_id"    : master_signer_id,
+                                                    "mastersigner_index" : index};
+                                                QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_MASTER_SIGNER_SEND_PASSPHRASE, signerObj)
+                                            }
+                                            else{
+                                                if(signerConfigRoot.walletAddressType === NUNCHUCKTYPE.TAPROOT){
+                                                    var assignedCnt = AppModel.newWalletInfo.walletSingleSignerAssigned.signerCount()
+                                                    var selectedCnt = AppModel.masterSignerList.signerSelectedCount() + AppModel.remoteSignerList.signerSelectedCount()
+                                                    console.log(Math.max(assignedCnt, selectedCnt))
+                                                    if(Math.max(assignedCnt, selectedCnt) === 0) { model.master_signer_checked = true }
+                                                }
+                                                else{ model.master_signer_checked = true}
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-
                     QListView {
                         id: remotesigners
                         width: 269
                         height: 40*remotesigners.count
-                        signal updateState()
-                        property var signerSelected: []
                         clip: true
                         interactive: false
                         model: AppModel.remoteSignerList
                         delegate: Rectangle {
                             id: delegateRemoteSigner
-                            property bool isSelected: false
-                            property bool checkedState: (single_signer_checked || delegateRemoteSigner.isSelected || (remotesigners.signerSelected[index] === undefined ? false : remotesigners.signerSelected[index]))
-                            enabled: !single_signer_checked
-                            color: delegateRemoteSigner.checkedState ? Qt.rgba(0, 0, 0, 0.1): "transparent"
+                            color: single_signer_checked ? Qt.rgba(0, 0, 0, 0.1): "transparent"
                             width: 269
                             height: 40
                             Rectangle {
@@ -271,23 +263,23 @@ QScreen {
                                     leftMargin: 16
                                     verticalCenter: parent.verticalCenter
                                 }
-                                Image {
+                                QImage {
                                     width: 24
                                     height: 24
-                                    source: delegateRemoteSigner.checkedState ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
+                                    source: single_signer_checked ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
                                 }
                                 QText {
                                     width: 150
                                     elide: Text.ElideRight
                                     anchors.verticalCenter: parent.verticalCenter
                                     font.pixelSize: 14
-                                    color: delegateRemoteSigner.checkedState  ? "#9CAEB8" :  "#031F2B"
+                                    color: single_signer_checked  ? "#9CAEB8" :  "#031F2B"
                                     text: singleSigner_name
                                 }
                             }
 
                             Rectangle {
-                                width: 63
+                                width: 70
                                 height: 21
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.right: parent.right
@@ -295,7 +287,7 @@ QScreen {
                                 color: "#C9DEF1"
                                 radius: 4
                                 QText {
-                                    text: "AIR-GAPPED"
+                                    text: STR.STR_QML_045
                                     font.family: "Lato"
                                     font.weight: Font.Bold
                                     font.pixelSize: 10
@@ -303,23 +295,23 @@ QScreen {
                                     color: "#031F2B"
                                 }
                             }
-
-                            Connections {
-                                target: remotesigners
-                                onUpdateState : {
-                                    delegateRemoteSigner.isSelected = false
-                                    remotesigners.signerSelected[index] = false
-                                }
-                            }
-
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked:{
-                                    delegateRemoteSigner.isSelected = !delegateRemoteSigner.isSelected
-                                    remotesigners.signerSelected[index] = delegateRemoteSigner.isSelected
-                                    delegateRemoteSigner.checkedState = (single_signer_checked || delegateRemoteSigner.isSelected || (remotesigners.signerSelected[index] === undefined ? false : remotesigners.signerSelected[index]))
+                                    if(model.single_signer_checked){
+                                        if(!signerAssigned.containsSigner(model.single_signer_checked)){ model.single_signer_checked = false}
+                                    }
+                                    else{
+                                       if(signerConfigRoot.walletAddressType === NUNCHUCKTYPE.TAPROOT){
+                                           var assignedCnt = AppModel.newWalletInfo.walletSingleSignerAssigned.signerCount()
+                                           var selectedCnt = AppModel.masterSignerList.signerSelectedCount() + AppModel.remoteSignerList.signerSelectedCount()
+                                           console.log(Math.max(assignedCnt, selectedCnt))
+                                           if(Math.max(assignedCnt, selectedCnt) === 0) { model.single_signer_checked = true }
+                                       }
+                                       else{ model.single_signer_checked = true}
+                                    }
                                 }
                             }
                         }
@@ -338,28 +330,11 @@ QScreen {
                     top: parent.top
                     topMargin: 257
                 }
-                label: "ASSIGN TO WALLET"
+                label: STR.STR_QML_048
                 icons: ["d_chevron_24px_031F2B.png","d_chevron_24px_9CAEB8.png","d_chevron_24px_F1FAFE.png","d_chevron_24px_F1FAFE.png"]
                 onButtonClicked: {
-                    // Master signers
-                    var masterIndexSelected = [];
-                    for(var i = 0; i < mastersigners.signerSelected.length; i++){
-                        if(true === mastersigners.signerSelected[i]){ masterIndexSelected.push(i); }
-                    }
-                    if(masterIndexSelected.length > 0){
-                        QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER, masterIndexSelected)
-                        mastersigners.updateState()
-                    }
-
-                    // Remote signers
-                    var remoteIndexSelected = [];
-                    for(var j = 0; j < remotesigners.signerSelected.length; j++){
-                        if(true === remotesigners.signerSelected[j]){ remoteIndexSelected.push(j); }
-                    }
-                    if(remoteIndexSelected.length > 0){
-                        QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER, remoteIndexSelected)
-                        remotesigners.updateState()
-                    }
+                    QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER)
+                    QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER)
                 }
             }
 
@@ -370,7 +345,7 @@ QScreen {
                     top: parent.top
                     topMargin: 337
                 }
-                text: "Or Add a New Signer"
+                text: STR.STR_QML_049
                 font.family: "Montserrat"
                 color: "#031F2B"
                 font.weight: Font.DemiBold
@@ -388,14 +363,14 @@ QScreen {
                     topMargin: 400
                 }
                 type: eOUTLINE_NORMAL
-                label: "ADD NEW SIGNER"
+                label: STR.STR_QML_050
                 fontPixelSize: 10
                 onButtonClicked: {
                     QMLHandle.sendEvent(EVT.EVT_ADD_SIGNER_TO_WALLET_REQUEST)
                 }
             }
             QText {
-                text: "Airgapped signers supported"
+                text: STR.STR_QML_051
                 anchors.horizontalCenter: addNewWallet.horizontalCenter
                 anchors.bottom: addNewWallet.top
                 anchors.bottomMargin: 4
@@ -405,7 +380,6 @@ QScreen {
                 visible: false
             }
         }
-
         QText {
             anchors {
                 left: parent.left
@@ -416,7 +390,7 @@ QScreen {
             font.pixelSize: 16
             font.weight: Font.Bold
             color: "#031F2B"
-            text: "Signer Configuration"
+            text: STR.STR_QML_052
         }
         Row {
             anchors {
@@ -433,7 +407,7 @@ QScreen {
                 font.pixelSize: 10
                 font.weight: Font.DemiBold
                 color: "#031F2B"
-                text: "NUMBER OF SIGNERS:"
+                text: STR.STR_QML_053
             }
             QText {
                 anchors.verticalCenter: parent.verticalCenter
@@ -446,10 +420,9 @@ QScreen {
                 anchors.verticalCenter: parent.verticalCenter
                 font.pixelSize: 12
                 color: "#323E4A"
-                text: "(Maximum 15)"
+                text: STR.STR_QML_054
             }
         }
-
         QListView {
             id: signerAssigned
             width: 418
@@ -466,14 +439,15 @@ QScreen {
             model: AppModel.newWalletInfo.walletSingleSignerAssigned
             delegate: Item {
                 id: signerAssigneddlg
-                signal updateSelectedState()
+                property string sigerXfp: model.singleSigner_masterFingerPrint
+                property bool isRemoteSigner: model.single_signer_type === NUNCHUCKTYPE.AIRGAP
                 width: 418
-                height: single_signer_isRemote ? 73 : 53
+                height: signerAssigneddlg.isRemoteSigner ? 73 : 53
                 Rectangle {
                     id: rect
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: 415
-                    height: single_signer_isRemote ? 70 : 50
+                    height: signerAssigneddlg.isRemoteSigner ? 70 : 50
                     color: Qt.rgba(255, 255, 255)
                 }
                 DropShadow {
@@ -485,7 +459,6 @@ QScreen {
                     color: Qt.rgba(0, 0, 0, 0.15)
                     source: rect
                 }
-
                 Rectangle {
                     id: indicatiorValid
                     width: 4
@@ -498,26 +471,23 @@ QScreen {
                         verticalCenter: rect.verticalCenter
                     }
                 }
-
                 Column {
                     id: txt
                     width: 350
-                    height: single_signer_isRemote ? 53 : 37
+                    height: signerAssigneddlg.isRemoteSigner ? 53 : 37
                     anchors {
                         left: parent.left
                         leftMargin: 28
                         verticalCenter: indicatiorValid.verticalCenter
                     }
-
                     Item {
                         width: parent.width
                         height: 21
-
                         QText {
-                            width: parent.width - 63
+                            width: parent.width - (signerAssigneddlg.isRemoteSigner ? 70 : 20)
                             height: 21
                             verticalAlignment: Text.AlignVCenter
-                            text: singleSigner_name
+                            text: model.singleSigner_name
                             font.pixelSize: 14
                             font.weight: Font.DemiBold
                             font.family: "Montserrat"
@@ -525,62 +495,92 @@ QScreen {
                             anchors.verticalCenter: parent.verticalCenter
                             elide: Text.ElideRight
                         }
-
-                        Rectangle {
-                            width: 63
-                            height: 21
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.right: parent.right
-                            color: "#C9DEF1"
-                            visible: single_signer_isRemote
-                            radius: 4
+                    }
+                    Item{
+                        width: parent.width
+                        height: 16
+                        Row{
+                            height: 16
+                            spacing: 5
                             QText {
-                                text: "AIR-GAPPED"
-                                font.family: "Lato"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
+                                width: paintedWidth
+                                height: 16
+                                font.pixelSize: 12
                                 color: "#031F2B"
+                                font.family: "Lato"
+                                text: "XFP: " + model.singleSigner_masterFingerPrint
+                                font.capitalization: Font.AllUppercase
+                            }
+                            Rectangle {
+                                width: _txt1.paintedWidth + 8*2
+                                height: 16
+                                color: "#FDD95C"
+                                visible: model.single_signer_primary_key
+                                radius: 4
+                                QText {
+                                    id:_txt1
+                                    text: STR.STR_QML_641
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    color: "#031F2B"
+                                }
+                            }
+                            Rectangle {
+                                width: 63
+                                height: 16
+                                color: "#C9DEF1"
+                                radius: 4
+                                visible: model.single_signer_type !== NUNCHUCKTYPE.HARDWARE
+                                QText {
+                                    text: GlobalData.signerNames(model.single_signer_type)
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    color: "#031F2B"
+                                }
                             }
                         }
                     }
-
                     QText {
                         width: parent.width
-                        height: 16
-                        font.pixelSize: 12
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: "XFP: " + singleSigner_masterFingerPrint
-                        font.capitalization: Font.AllUppercase
-                    }
-
-                    QText {
-                        width: parent.width
-                        height: single_signer_isRemote ? 16 : 0
-                        visible: single_signer_isRemote
+                        height: signerAssigneddlg.isRemoteSigner ? 16 : 0
+                        visible: signerAssigneddlg.isRemoteSigner
                         font.pixelSize: 10
                         color: "#839096"
                         font.family: "Lato"
-                        text: "BIP32 Path: " + singleSigner_derivationPath
+                        text: STR.STR_QML_055.arg(model.singleSigner_derivationPath)
                     }
                 }
-
                 QImage {
                     anchors {
                         right: parent.right
                         rightMargin: 20
                         verticalCenter: indicatiorValid.verticalCenter
                     }
+                    width: 32
+                    height: 32
                     source: "qrc:/Images/Images/Delete.png"
                     MouseArea {
                         id: dlgRightMouse
                         anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER, index)
                         }
                     }
                 }
+            }
+
+            function containsSigner(xfp){
+                for(var i = 0; i < signerAssigned.count; i++){
+                    var signerxfp = signerAssigned.contentItem.children[i].sigerXfp
+                    if(signerxfp.toUpperCase() === xfp.toUpperCase()){ return true;}
+                }
+                return false;
             }
         }
 
@@ -594,7 +594,6 @@ QScreen {
                 bottomMargin: 111
             }
             color: Qt.rgba(201, 222, 241, 0.5)
-
             Row {
                 id: requiredNumberInfo
                 height: 21
@@ -607,45 +606,50 @@ QScreen {
                 spacing: 4
                 QText {
                     height: 21
-                    font.pixelSize: 10
+                    font.pixelSize: 14
                     font.weight: Font.Bold
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#323E4A"
-                    text: "REQUIRED SIGNATURES:"
+                    text: STR.STR_QML_056
                 }
-                QText {
+                Rectangle{
+                    width: _config.paintedWidth + 10*2
                     height: 21
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: "#35ABEE"
-                    text: AppModel.newWalletInfo.walletM
-                }
-                QText {
-                    height: 21
-                    font.pixelSize: 14
-                    font.weight: Font.DemiBold
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: "#839096"
-                    text: "of"
-                }
-                QText {
-                    height: 21
-                    font.pixelSize: 14
-                    font.weight: Font.DemiBold
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: "#839096"
-                    text: signerAssigned.count
+                    radius: 4
+                    color: "#F1FAFE"
+                    QText {
+                        id:_config
+                        height: 21
+                        width: paintedWidth
+                        anchors.centerIn: parent
+                        text: {
+                            var ret = ""
+                            if(AppModel.newWalletInfo.walletM === 0){
+                                ret = STR.STR_QML_557
+                            }
+                            else if(AppModel.newWalletInfo.walletN === 1 && AppModel.newWalletInfo.walletM === 1){
+                                ret = STR.STR_QML_558
+                            }
+                            else if(AppModel.newWalletInfo.walletN > 1 && AppModel.newWalletInfo.walletM >= 1){
+                                ret = STR.STR_QML_559.arg(AppModel.newWalletInfo.walletM).arg(AppModel.newWalletInfo.walletN)
+                            }
+                            return ret;
+                        }
+                        font.weight: Font.Bold
+                        font.pixelSize: 14
+                        font.family: "Lato"
+                        color: "#323E4A"
+
+                    }
                 }
             }
-
             QText {
                 anchors {
                     left: parent.left
                     leftMargin: 8
                     top: requiredNumberInfo.bottom
                 }
-                text: "Number of Signatures Required to Unlock Funds"
+                text: STR.STR_QML_058
                 font.pixelSize: 12
                 font.family: "Lato"
                 color: "#031F2B"
@@ -663,12 +667,10 @@ QScreen {
                 color: Qt.rgba(255, 255, 255, 0.5)
                 border.color: "#C9DEF1"
                 radius: 4
-
                 Row {
                     height: 21
                     anchors.centerIn: parent
                     spacing: 10
-
                     Rectangle {
                         width: 21
                         height: 21
@@ -681,7 +683,6 @@ QScreen {
                             color: minus.pressed ?"#F1FAFE" : "#031F2B"
                             anchors.centerIn: parent
                         }
-
                         MouseArea {
                             id: minus
                             anchors.fill: parent
@@ -692,7 +693,6 @@ QScreen {
                             }
                         }
                     }
-
                     Item {
                         width: 21
                         height: 21
@@ -704,7 +704,6 @@ QScreen {
                             text: AppModel.newWalletInfo.walletM
                         }
                     }
-
                     Rectangle {
                         width: 21
                         height: 21
@@ -723,7 +722,6 @@ QScreen {
                             color: plusbtn.pressed ?"#F1FAFE" : "#031F2B"
                             anchors.centerIn: parent
                         }
-
                         MouseArea {
                             id: plusbtn
                             anchors.fill: parent
@@ -739,14 +737,13 @@ QScreen {
         }
 
         QButtonTextLink {
-            width: 203
             height: 24
-            label: "BACK TO PREVIOUS"
+            label: STR.STR_QML_059
             anchors {
                 left: parent.left
                 leftMargin: 40
                 bottom: parent.bottom
-                bottomMargin: 43
+                bottomMargin: 40
             }
             onButtonClicked: {
                 QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_BACK)
@@ -756,7 +753,7 @@ QScreen {
         QTextButton {
             width: 120
             height: 48
-            label.text: "Cancel"
+            label.text: STR.STR_QML_035
             label.font.pixelSize: 16
             type: eTypeB
             anchors {
@@ -769,13 +766,12 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION)
             }
         }
-
         QTextButton {
             width: 200
             height: 48
-            label.text: "Next: Review Wallet"
+            label.text: STR.STR_QML_060
             label.font.pixelSize: 16
-            type: eTypeA
+            type: eTypeE
             enabled: (AppModel.newWalletInfo.walletM > 0) && (signerAssigned.count > 0) && (AppModel.newWalletInfo.walletM <= signerAssigned.count)
             anchors {
                 right: parent.right
@@ -784,39 +780,19 @@ QScreen {
                 bottomMargin: 32
             }
             onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_REVIEW)
+                QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_TRY_REVIEW)
             }
         }
-
-        QPassphraseInput {
-            id: passphraseModel
-            property int    signerIndex: -1
-            property string signerId: ""
-            color: Qt.rgba(255, 255, 255, 0.7)
-            anchors.fill: parent
-            visible: false
-            onCloseClicked: {
-                passphraseModel.visible = false
-                passphraseModel.valid = true
-                passphraseModel.errorText = ""
-            }
-            onSendPassphraseClicked: {
-                passphraseModel.valid = true
-                passphraseModel.errorText = ""
-                var signerObj = { "passphraseInput"    : passphrase,
-                                  "mastersignerId"     : passphraseModel.signerId};
-                QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_MASTER_SIGNER_SEND_PASSPHRASE, signerObj)
-                if(AppModel.newWalletInfo.warningMessage.type === EWARNING.NONE_MSG){
-                    mastersigners.contentItem.children[passphraseModel.signerIndex].isSelected = true
-                    mastersigners.signerSelected[passphraseModel.signerIndex] = true
-                    passphraseModel.visible = false
-                    passphraseModel.textInputted = ""
-                    console.log(mastersigners.signerSelected)
-                }
-                else{
-                    passphraseModel.valid = false
-                    passphraseModel.errorText = "Something wrong please try again"
-                }
+        QPopupInfoVertical {
+            id: _warning
+            property var model
+            title: STR.STR_QML_661
+            contentText: STR.STR_QML_669
+            labels: [STR.STR_QML_670,STR.STR_QML_035]
+            onConfirmNo: close()
+            onConfirmYes: {
+                close()
+                model.master_signer_checked = true
             }
         }
     }

@@ -63,6 +63,7 @@ signals:
     void scriptPublickeyChanged();
     void memoChanged();
 };
+typedef QSharedPointer<UTXO> QUTXOPtr;
 
 class UTXOListModel : public QAbstractListModel
 {
@@ -81,7 +82,7 @@ public:
                  const qint64 amount,
                  const int height,
                  const QString &memo);
-    QSharedPointer<UTXO> getUTXOByIndex(const int index);
+    QUTXOPtr getUTXOByIndex(const int index);
     void updateSelected(const QString &txid, const int vout);
     qint64 getAmount(const QString &txid, const int vout);
     void requestSort(int role, int order);
@@ -101,26 +102,27 @@ public:
     QString amountBTC();
     int amountSats();
 private:
-    QList<QSharedPointer<UTXO>> d_;
+    QList<QUTXOPtr> d_;
     int totalAmountSelected();
 signals:
     void amountChanged();
 };
+typedef QSharedPointer<UTXOListModel> QUTXOListModelPtr;
 
 // Sort Amount
-bool sortbyAmountAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
-bool sortbyAmountDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
+bool sortbyAmountAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);
+bool sortbyAmountDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 
 // Sort Address
-bool sortbyAddressAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
-bool sortbyAddressDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
+bool sortbyAddressAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);
+bool sortbyAddressDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 
 // Sort height
-bool sortbyHeightAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
-bool sortbyHeightDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
+bool sortbyHeightAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);
+bool sortbyHeightDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 
 // Sort memo
-bool sortbyMemoAscending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
-bool sortbyMemoDescending(const QSharedPointer<UTXO> &v1, const QSharedPointer<UTXO> &v2);
+bool sortbyMemoAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);
+bool sortbyMemoDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 
 #endif // UNSPENTOUTPUTMODEL_H

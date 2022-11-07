@@ -1,19 +1,11 @@
-[![Nunchuk  Logo](https://nunchuk.io/wp-content/uploads/2021/03/Horizontal-Logo-2.png)](https://nunchuk.io)
+# Build guideline
 
-## About
-This repo contains the source code for the [Nunchuk](https://nunchuk.io) desktop GUI.
+Follow this document to build the application on your platform
 
-Source code for the underlying Bitcoin library can be found at [libnunchuk](https://github.com/nunchuk-io/libnunchuk).
-
-## Build instructions 
-
-Follow these steps to build the application for your platform.
-
-## Tools
+# Tools
 **Qt libraries and Qt Creator**
-
- Download Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers).
- You will also need Visual studio 2017 or 2019 (for Windows).
+ Download the Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers) and install it.
+ Visual studio 2017 or 2019 (for Windows)
 ```
  Notes: 
         Qt version 5.12 or higher is recommended
@@ -25,8 +17,8 @@ Follow these steps to build the application for your platform.
 >**Clone project and fetch submodules**
 >
 ``` 
-	git clone https://github.com/nunchuk-io/nunchuk-desktop
-	cd nunchuk-desktop
+	git clone https://gitlab.com/nunchuck/nunchuck-qt
+	cd nunchuck-qt
 	git submodule update --init --recursive
 ```
 **Build [contrib/libnunchuk](https://github.com/nunchuk-io/libnunchuk)**
@@ -36,7 +28,7 @@ Follow these steps to build the application for your platform.
 ```
 	cd contrib/libnunchuk/contrib/bitcoin
 	./autogen.sh
-	./configure --without-gui --disable-zmq --with-miniupnpc=no # important
+	./configure --without-gui --disable-zmq --with-miniupnpc=no --with-incompatible-bdb --disable-bench --disable-tests -enable-module-ecdh # important
 	make -j8
 	cd ..
 ```
@@ -50,11 +42,11 @@ Follow these steps to build the application for your platform.
 	cd ..
 ```
 
->**Build nunchuk-desktop**
+>**Build nunchuck-client-qt**
 >
 ```
 	Open Qt Creator
-        Open nunchuk-desktop project via CMakeLists.txt
+        Open nunchuck-client-qt project via CMakeLists.txt
 	Select your Kit (include compiler) : Desktop Qt %{Qt:Version} GCC 64bit,  (such as Desktop Qt 5.12.8 GCC 64bit)
 	Run qmake
 	Build

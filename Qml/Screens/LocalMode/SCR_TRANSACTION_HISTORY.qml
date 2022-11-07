@@ -1,3 +1,22 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
@@ -5,74 +24,31 @@ import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
-import "../../Components/customizes"
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
-    Rectangle {
-        id: mask
-        width: popupWidth
-        height: popupHeight
-        radius: 8
-        visible: false
-    }
 
-    Rectangle {
-        id: content
+    QOnScreenContent {
+        id: contenCenter
         width: popupWidth
         height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        QText {
-            id: scrtitle
-            height: 36
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-            text: "Full Transaction History"
-            color: "#031F2B"
-            font.family: "Montserrat"
-            font.weight: Font.ExtraBold
-            font.pixelSize: 24
-        }
-
-        QText {
+        label.text: STR.STR_QML_278
+        extraHeader: QText {
             height: 21
-            anchors {
-                left: scrtitle.right
-                leftMargin: 8
-                verticalCenter: scrtitle.verticalCenter
-            }
+            width: 550
+            elide: Text.ElideRight
             text: "(" + AppModel.walletInfo.walletName + ")"
             color: "#031F2B"
             font.family: "Montserrat"
             font.weight: Font.DemiBold
             font.pixelSize: 14
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
-            }
-            onClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_TRANSACTION_HISTORY)
-            }
+        onCloseClicked: {
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_TRANSACTION_HISTORY)
         }
-
         Rectangle {
             id: maskofcontent
             width: 720
@@ -80,7 +56,6 @@ QScreen {
             radius: 4
             visible: false
         }
-
         Rectangle {
             id: contenthistory
             width: 720
@@ -104,15 +79,32 @@ QScreen {
                 readonly property int transaction_blocktime_role : 12
                 readonly property int transaction_height_role : 13
                 QTableElement {
-                    width: 166
+                    width: transaction_lst.width*0.15
                     height: 32
-                    label: "STATUS"
+                    label: "ADDRESS"
                     fontPixelSize: 10
                     enabled: true
                     isCurrentTab: tabparent.currentTabIndex == 0
                     horizontalAlignment: Text.AlignLeft
                     onTabClicked: {
                         tabparent.currentTabIndex = 0
+                        var sortData = { "sortRole"    : tabparent.transaction_txid_role,
+                                         "sortOrder"   : sortOrder}
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_HISTORY_SORT_REQUEST, sortData)
+                        pagecontrol.currentPage = 1
+                        pagecontrol.pageRequest(pagecontrol.currentPage)
+                    }
+                }
+                QTableElement {
+                    width: transaction_lst.width*0.25
+                    height: 32
+                    label: STR.STR_QML_279
+                    fontPixelSize: 10
+                    enabled: true
+                    isCurrentTab: tabparent.currentTabIndex == 1
+                    horizontalAlignment: Text.AlignLeft
+                    onTabClicked: {
+                        tabparent.currentTabIndex = 1
                         var sortData = { "sortRole"    : tabparent.transaction_status_role,
                                          "sortOrder"   : sortOrder}
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_HISTORY_SORT_REQUEST, sortData)
@@ -121,15 +113,15 @@ QScreen {
                     }
                 }
                 QTableElement {
-                    width: 123
+                    width: transaction_lst.width*0.15
                     height: 32
                     label: "TIME"
                     fontPixelSize: 10
                     enabled: true
-                    isCurrentTab: tabparent.currentTabIndex == 1
+                    isCurrentTab: tabparent.currentTabIndex == 2
                     horizontalAlignment: Text.AlignLeft
                     onTabClicked: {
-                        tabparent.currentTabIndex = 1
+                        tabparent.currentTabIndex = 2
                         var sortData = { "sortRole"    : tabparent.transaction_blocktime_role,
                                          "sortOrder"   : sortOrder}
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_HISTORY_SORT_REQUEST, sortData)
@@ -138,15 +130,15 @@ QScreen {
                     }
                 }
                 QTableElement {
-                    width: 272
+                    width: transaction_lst.width*0.20
                     height: 32
-                    label: "TRANSACTION MEMO"
+                    label: STR.STR_QML_280
                     fontPixelSize: 10
                     enabled: true
-                    isCurrentTab: tabparent.currentTabIndex == 2
+                    isCurrentTab: tabparent.currentTabIndex == 3
                     horizontalAlignment: Text.AlignLeft
                     onTabClicked: {
-                        tabparent.currentTabIndex = 2
+                        tabparent.currentTabIndex = 3
                         var sortData = { "sortRole"    : tabparent.transaction_memo_role,
                                          "sortOrder"   : sortOrder}
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_HISTORY_SORT_REQUEST, sortData)
@@ -155,15 +147,15 @@ QScreen {
                     }
                 }
                 QTableElement {
-                    width: 158
+                    width: transaction_lst.width*0.25
                     height: 32
-                    label: "AMOUNT"
+                    label: STR.STR_QML_214
                     fontPixelSize: 10
                     enabled: true
-                    isCurrentTab: tabparent.currentTabIndex == 3
+                    isCurrentTab: tabparent.currentTabIndex == 4
                     horizontalAlignment: Text.AlignRight
                     onTabClicked: {
-                        tabparent.currentTabIndex = 3
+                        tabparent.currentTabIndex = 4
                         var sortData = { "sortRole"    : tabparent.transaction_total_role,
                                          "sortOrder"   : sortOrder}
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_HISTORY_SORT_REQUEST, sortData)
@@ -172,7 +164,6 @@ QScreen {
                     }
                 }
             }
-
             QText {
                 id: pageinfo
                 property int currentPage: 1
@@ -185,9 +176,13 @@ QScreen {
                 font.family: "Lato"
                 font.pixelSize: 12
                 color: "#323E4A"
-                text: "Transaction Data " + (((currentPage-1)*10)+1) + " - " + Math.min(currentPage*10, transaction_lst.count) + " of " + transaction_lst.count
+                text: qsTr("%1 %2 - %3 %4 %5")
+                .arg(STR.STR_QML_281)
+                .arg(((currentPage-1)*10)+1)
+                .arg(Math.min(currentPage*10, transaction_lst.count))
+                .arg(STR.STR_QML_057)
+                .arg(transaction_lst.count)
             }
-
             QPageControl {
                 id: pagecontrol
                 totalPage: Math.floor(transaction_lst.count/10) + (transaction_lst.count%10 == 0 ? 0 : 1)
@@ -202,18 +197,16 @@ QScreen {
                 }
             }
         }
-
         OpacityMask {
             anchors.fill: contenthistory
             source: contenthistory
             maskSource: maskofcontent
             cached: true
-
             QListView {
                 id: transaction_lst
                 width: 720
                 height: (pagecontrol.currentPage === pagecontrol.totalPage) ? (transaction_lst.count%10)*40 : 400
-                model: AppModel.transactionHistory
+                model: AppModel.walletInfo.transactionHistory
                 anchors {
                     top: parent.top
                     topMargin: 32
@@ -223,13 +216,18 @@ QScreen {
                 delegate: QTransactionDelegate {
                     width: 720
                     height: 40
-                    statusWidth: 166
-                    timeWidth: 123
-                    memoWidth: 252
-                    amountWidth: 178
+                    addressWidth: transaction_lst.width*0.15
+                    statusWidth: transaction_lst.width*0.25
+                    timeWidth: transaction_lst.width*0.15
+                    memoWidth: transaction_lst.width*0.20
+                    amountWidth: transaction_lst.width*0.25
+                    transactionisReceiveTx:transaction_isReceiveTx
+                    transactiontxid:transaction_txid
+                    transactiondestinationList:transaction_destinationList
                     transactionstatus: transaction_status
                     transactionMemo: transaction_memo
-                    transactionAmount: (transaction_isReceiveTx ? "" : "- ") + (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
+                    transactiontotalBTC: (transaction_isReceiveTx ? "" : "- ") + transaction_totalBTC
+                    transactiontotalUSD: (transaction_isReceiveTx ? "" : "- ") + transaction_totalUSD
                     confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
                     transactionDate: transaction_blocktime
                     onButtonClicked: {
@@ -238,6 +236,5 @@ QScreen {
                 }
             }
         }
-
     }
 }

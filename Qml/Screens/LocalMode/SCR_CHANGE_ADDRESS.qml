@@ -1,82 +1,58 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
+import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../../localization/STR_QML.js" as STR
+
 QScreen {
-    Rectangle {
-        id: mask
+    QOnScreenContent {
         width: popupWidth
         height: popupHeight
-        radius: 8
-        visible: false
-    }
-
-    Rectangle {
-        id: content
-        width: popupWidth
-        height: popupHeight
-        color: "#F1FAFE"
-        radius: 8
         anchors.centerIn: parent
-        visible: false
-    }
-
-    OpacityMask {
-        anchors.fill: content
-        source: content
-        maskSource: mask
-
-        Row {
-            spacing: 16
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 24
-            }
-
-            QText {
-                id: title
-                height: 36
-                text: "Change Addresses"
-                color: "#031F2B"
-                font.weight: Font.ExtraBold
-                font.family: "Montserrat"
-                font.pixelSize: 24
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            QText {
-                height: 21
-                text: "(" + AppModel.walletInfo.walletName + ")"
-                color: "#031F2B"
-                font.weight: Font.DemiBold
-                font.family: "Montserrat"
-                font.pixelSize: 14
-                anchors.verticalCenter: parent.verticalCenter
-            }
+        label.text: STR.STR_QML_198
+        extraHeader: QText {
+            height: 21
+            text: "(" + AppModel.walletInfo.walletName + ")"
+            color: "#031F2B"
+            font.weight: Font.DemiBold
+            font.family: "Montserrat"
+            font.pixelSize: 14
+            anchors.verticalCenter: parent.verticalCenter
         }
-
-        QCloseButton {
-            anchors {
-                right: parent.right
-                rightMargin: 16
-                top: parent.top
-                topMargin: 16
+        onCloseClicked: {
+            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_WALLET_CHANGE_ADDRESSES)
             }
-            onClicked: {
+            else{
                 QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_WALLET_CHANGE_ADDRESSES)
             }
         }
-
         Row {
-            width: 215
-            height: 24
-            spacing: 8
+            spacing: 4
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -85,30 +61,25 @@ QScreen {
             }
             QText {
                 id: unuseListTitle
-                width: 156
                 height: 24
-                text: "Unused Address (" + unUsed.count + ")"
+                text: STR.STR_QML_199.arg(unUsed.count)
                 color: "#031F2B"
                 font.weight: Font.DemiBold
                 font.family: "Montserrat"
                 font.pixelSize: 16
                 anchors.verticalCenter: parent.verticalCenter
             }
-
             QText {
-                width: 46
                 height: 16
-                text: "(20 max)"
+                text: qsTr("(%1 max)").arg(MAX_UNUSED_ADDR)
                 color: "#000000"
                 font.family: "Lato"
                 font.pixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
-
         QText {
             id: useListTitle
-            width: 156
             height: 24
             anchors {
                 left: parent.left
@@ -116,13 +87,12 @@ QScreen {
                 top: parent.top
                 topMargin: 387
             }
-            text: "Used Address (" + unUsed.count + ")"
+            text: STR.STR_QML_200.arg(used.count)
             color: "#031F2B"
             font.weight: Font.DemiBold
             font.family: "Montserrat"
             font.pixelSize: 16
         }
-
         QText {
             id: recommentNote
             width: 301
@@ -131,13 +101,12 @@ QScreen {
                 left: useListTitle.left
                 top: useListTitle.bottom
             }
-            text: "An address is marked as used as soon as money is deposited into it. For better privacy, reusing addresses is not recommended."
+            text: STR.STR_QML_201
             color: "#000000"
             wrapMode: Text.WordWrap
             font.family: "Lato"
             font.pixelSize: 10
         }
-
         FocusScope  {
             QListView {
                 id: unUsed
@@ -170,7 +139,6 @@ QScreen {
                         color: "#C9DEF1"
                         anchors.bottom: parent.bottom
                     }
-
                     QText {
                         text: modelData
                         width: (unUsed.currentIndex == index) && (unUsed.focus) ? 244 : 237
@@ -184,7 +152,6 @@ QScreen {
                         font.weight: (unUsed.currentIndex == index) && (unUsed.focus) ? Font.Bold : Font.Normal
                         color: (unUsed.currentIndex == index) && (unUsed.focus) ? "#031F2B" : "#839096"
                     }
-
                     MouseArea {
                         id: mouse1
                         hoverEnabled: true
@@ -202,7 +169,6 @@ QScreen {
                     }
                 }
             }
-
             QListView {
                 id: used
                 width: 301
@@ -233,7 +199,6 @@ QScreen {
                         color: "#C9DEF1"
                         anchors.bottom: parent.bottom
                     }
-
                     QText {
                         text: modelData
                         width: (used.currentIndex == index) && (used.focus) ? 244 : 237
@@ -247,7 +212,6 @@ QScreen {
                         font.weight: (used.currentIndex == index) && (used.focus) ? Font.Bold : Font.Normal
                         color: (used.currentIndex == index) && (used.focus) ? "#031F2B" : "#839096"
                     }
-
                     MouseArea {
                         id: mouse2
                         hoverEnabled: true
@@ -261,13 +225,12 @@ QScreen {
                 }
             }
         }
-
         QButtonMedium {
             width: 207
             height: 32
             radius: 20
             type: eOUTLINE_NORMAL
-            label: "Generate New Address"
+            label: STR.STR_QML_202
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -278,7 +241,6 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_WALLET_CHANGE_ADDRESSES_GEN_NEW_ADDRESS)
             }
         }
-
         Rectangle {
             width: 419
             height: 490
@@ -290,7 +252,6 @@ QScreen {
                 top: parent.top
                 topMargin: 121
             }
-
             Rectangle {
                 color: unUsed.focus ? "#35ABEE" : "#FF7A00"
                 width: 62
@@ -301,17 +262,15 @@ QScreen {
                     topMargin: 72
                     horizontalCenter: parent.horizontalCenter
                 }
-
                 QText {
                     anchors.centerIn: parent
                     color: "#F1FAFE"
                     font.pixelSize: 10
                     font.family: "Lato"
                     font.weight: Font.Bold
-                    text: unUsed.focus ? "UNUSED" : "USED"
+                    text: unUsed.focus ? STR.STR_QML_203 : STR.STR_QML_204
                 }
             }
-
             QRCodeItem {
                 id: qrCode
                 width: 150
@@ -324,7 +283,6 @@ QScreen {
                 }
                 textInput: addressSelected.text
             }
-
             Rectangle {
                 width: 273
                 height: 40
@@ -348,11 +306,10 @@ QScreen {
                     color: "#323E4A"
                 }
             }
-
             QButtonIcon {
                 width: 150
                 height: 24
-                label: "COPY ADDRESS"
+                label: STR.STR_QML_205
                 icons: ["Copy_031F2B.png", "Copy_9CAEB8.png", "Copy_F1FAFE.png","Copy_F1FAFE.png"]
                 fontPixelSize: 10
                 type: eSECOND
@@ -366,12 +323,9 @@ QScreen {
                 }
             }
         }
-
-
         QButtonTextLink {
-            width: 203
             height: 24
-            label: "BACK TO PREVIOUS"
+            label: STR.STR_QML_059
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -379,7 +333,12 @@ QScreen {
                 bottomMargin: 40
             }
             onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_WALLET_CHANGE_ADDRESS_BACK_REQUEST)
+                if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                    QMLHandle.sendEvent(EVT.EVT_CHANGE_ADDRESS_BACK_SHARED_WALLET)
+                }
+                else{
+                    QMLHandle.sendEvent(EVT.EVT_WALLET_CHANGE_ADDRESS_BACK_REQUEST)
+                }
             }
         }
     }
