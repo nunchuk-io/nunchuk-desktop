@@ -35,18 +35,23 @@ void SCR_SIGN_IN_MANUALLY_Exit(QVariant msg) {
 }
 
 void EVT_ADD_PRIMARY_KEY_ACCOUNT_SUCCEED_HANDLER(QVariant msg) {
-    AppModel::instance()->loginSucceed();
-    QString username = ClientController::instance()->getMe().username;
-    AppModel::instance()->setPrimaryKey(username);
-    QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
-
-    if(pKey){
-        QTimer::singleShot(3000,[pKey](){
-            AppModel::instance()->showToast(0,
-                                           STR_CPP_108.arg(pKey->name()),
-                                           EWARNING::WarningType::SUCCESS_MSG,
-                                           STR_CPP_108.arg(pKey->name()));
-        });
+    QMap<QString, QVariant> makeInstanceData;
+    makeInstanceData["state_id"] = E::STATE_ID_SCR_SIGN_IN_MANUALLY;
+    bool ret = AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
+    if(ret){
+        QString username = ClientController::instance()->getMe().username;
+        AppModel::instance()->setPrimaryKey(username);
+        QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+        if(pKey){
+            QTimer::singleShot(3000,[pKey](){
+                AppModel::instance()->showToast(0,
+                                                STR_CPP_108.arg(pKey->name()),
+                                                EWARNING::WarningType::SUCCESS_MSG,
+                                                STR_CPP_108.arg(pKey->name()));
+                QWarningMessage msg;
+                bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
+            });
+        }
     }
 }
 

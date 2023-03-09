@@ -37,7 +37,7 @@ Destination::~Destination() {}
 
 QString Destination::amountDisplay() const
 {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(amountSats());
     }
@@ -198,7 +198,9 @@ Transaction::Transaction() :txid_(""),
     walletId_(""),
     roomId_(""),
     initEventId_(""),
-    createByMe_(true)
+    createByMe_(true),
+    psbt_(""),
+    serverKeyMessage_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -224,7 +226,7 @@ int Transaction::status() const { return status_; }
 
 QString Transaction::feeDisplay() const
 {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(feeSats());
     }
@@ -336,7 +338,7 @@ void Transaction::setSingleSignersAssigned(const QSingleSignerListModelPtr &sing
 
 QString Transaction::subtotalDisplay() const
 {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(subtotalSats());
     }
@@ -348,6 +350,14 @@ QString Transaction::subtotalDisplay() const
 QString Transaction::subtotalBTC() const
 {
     return qUtils::QValueFromAmount(subtotal_);
+}
+
+QString Transaction::subtotalUSD() const
+{
+    double exRates = AppModel::instance()->getExchangeRates()/100000000;
+    double balanceusd = exRates*subtotalSats();
+    QLocale locale(QLocale::English);
+    return locale.toString(balanceusd, 'f', 2);
 }
 
 qint64 Transaction::subtotalSats() const
@@ -365,7 +375,7 @@ void Transaction::setSubtotal(const qint64 subtotal)
 
 QString Transaction::totalDisplay() const
 {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(totalSats());
     }
@@ -557,6 +567,39 @@ void Transaction::setWalletId(const QString &walletId)
     }
 }
 
+QString Transaction::psbt() const
+{
+    return psbt_;
+}
+
+void Transaction::setPsbt(const QString &psbt)
+{
+    if(psbt_ != psbt){
+        psbt_ = psbt;
+        emit psbtChanged();
+    }
+}
+
+QString Transaction::serverKeyMessage() const
+{
+    return serverKeyMessage_;
+}
+
+void Transaction::setServerKeyMessage(const QJsonObject &data)
+{
+    if (status_ == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES) {
+        QJsonObject transaction = data.value("transaction").toObject();
+        QJsonObject spending_limit_reached  = transaction.value("spending_limit_reached").toObject();
+        double time = transaction.value("sign_time_milis").toDouble();
+        if (!spending_limit_reached.isEmpty()) {
+            serverKeyMessage_ = spending_limit_reached.value("message").toString();
+        } else if(time != 0) {
+            serverKeyMessage_ = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString( "hh:mm AP MMM d"));
+        }
+        emit serverKeyMessageChanged();
+    }
+}
+
 int Transaction::numberSigned() const
 {
     return numberSigned_;
@@ -607,8 +650,8 @@ QVariant TransactionListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->isReceiveTx();
     case transaction_replacedTx_role:
         return d_[index.row()]->replacedTxid();
-    case transaction_totalBTC_role:
-        return d_[index.row()]->totalBTC();
+    case transaction_subtotalUSD_role:
+        return d_[index.row()]->subtotalUSD();
     case transaction_totalUSD_role:
         return d_[index.row()]->totalUSD();
     default:
@@ -634,7 +677,7 @@ QHash<int, QByteArray> TransactionListModel::roleNames() const {
     roles[transaction_height_role]          = "transaction_height";
     roles[transaction_isReceiveTx_role]     = "transaction_isReceiveTx";
     roles[transaction_replacedTx_role]      = "transaction_replacedTx";
-    roles[transaction_totalBTC_role]        = "transaction_totalBTC";
+    roles[transaction_subtotalUSD_role]     = "transaction_subtotalUSD";
     roles[transaction_totalUSD_role]        = "transaction_totalUSD";
     return roles;
 }

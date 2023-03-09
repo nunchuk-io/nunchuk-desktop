@@ -228,7 +228,7 @@ QScreen {
                                     anchors.fill: parent
                                     BusyIndicator {
                                         anchors.centerIn: parent
-                                        running: ClientController.isMatrixLoggedIn === false
+                                        running: !ClientController.isMatrixLoggedIn
                                     }
                                 }
                             }
@@ -501,16 +501,13 @@ QScreen {
                     if(ClientController.isNunchukLoggedIn){
                         if(tabselect.currentIndex == 0){
                             ret = conversationContentLoader.sourceItems[conversationContentLoader.eCURRENT_MODE]
-                        }else{
-                            if(ClientController.contacts.count !== 0){
-                                ret = contactInfo
-                            }else{
-                                ret = emptyroomstate
-                            }
                         }
-                    }else{
-                        ret = requireLogin
+                        else{
+                            if(ClientController.contacts.count !== 0){ ret = contactInfo }
+                            else{ ret = emptyroomstate }
+                        }
                     }
+                    else{ ret = requireLogin }
                     return ret
                 }
                 anchors.fill: parent
@@ -618,7 +615,7 @@ QScreen {
             }
             Component {
                 id: requireLogin
-                QRequireLogin{
+                QRequireLogin {
                     anchors.fill: parent
                 }
             }

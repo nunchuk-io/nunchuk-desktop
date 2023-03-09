@@ -24,9 +24,13 @@ public:
     ~NunchukSettings();
     QString groupSetting() const;
     void setGroupSetting(QString group);
+    bool contains(const QString& key) const;
     void setValue(const QString &key, const QVariant &value);
     QVariant value(const QString &key, const QVariant &defaultValue = QVariant()) const;
-    bool contains(const QString& key) const;
+
+    bool containsCommon(const QString& key) const;
+    void setCommonValue(const QString &key, const QVariant &value);
+    QVariant commonValue(const QString &key, const QVariant &defaultValue = QVariant()) const;
 private:
     QString m_group;
 };
@@ -61,13 +65,11 @@ class AppSetting : public NunchukSettings
 
     Q_PROPERTY( int connectionState             READ connectionState                                                NOTIFY connectionStateChanged)
     Q_PROPERTY( int syncPercent                 READ syncPercent                                                    NOTIFY syncPercentChanged)
-    Q_PROPERTY( bool firstTimeCoreRPC           READ firstTimeCoreRPC           WRITE setFirstTimeCoreRPC           NOTIFY firstTimeCoreRPCChanged)
-    Q_PROPERTY( bool firstTimePassPhrase        READ firstTimePassPhrase        WRITE setFirstTimePassPhrase        NOTIFY firstTimePassPhraseChanged)
     Q_PROPERTY( QString signetStream            READ signetStream               WRITE setSignetStream               NOTIFY signetStreamChanged)
     Q_PROPERTY( bool enableSignetStream         READ enableSignetStream         WRITE setEnableSignetStream         NOTIFY enableSignetStreamChanged)
 
     Q_PROPERTY(bool enableDebugMode READ enableDebug WRITE setEnableDebug       NOTIFY enableDebugChanged)
-    Q_PROPERTY(bool isStarted       READ isStarted   WRITE setIsStarted         NOTIFY isStartedChanged)
+    Q_PROPERTY(bool isStarted       READ isStarted                              NOTIFY isStartedChanged)
     Q_PROPERTY(bool enableMultiDeviceSync       READ enableMultiDeviceSync      WRITE setEnableMultiDeviceSync      NOTIFY enableMultiDeviceSyncChanged)
 public:
     static AppSetting *instance();
@@ -133,8 +135,7 @@ public:
     QString certificateFile();
     void setCertificateFile(const QString &certificateFile);
 
-    QString storagePath() const;
-    void setStoragePath(const QString &storagePath);
+    QString storagePath();
 
     QString executePath() const;
     void setExecutePath(const QString &executePath);
@@ -160,12 +161,6 @@ public:
     int syncPercent() const;
     void setSyncPercent(int syncPercent);
 
-    bool firstTimeCoreRPC();
-    void setFirstTimeCoreRPC(bool firstTimeCoreRPC);
-
-    bool firstTimePassPhrase();
-    void setFirstTimePassPhrase(bool firstTimePassPhrase);
-
     QString signetStream();
     void setSignetStream(const QString &signetStream);
 
@@ -176,8 +171,7 @@ public:
     void setEnableDebug(bool enableDebugMode);
 
     bool isStarted();
-    void setIsStarted(bool isStarted);
-    void updateIsStarted(bool isStarted);
+    Q_INVOKABLE void setIsStarted(bool isStarted, bool isSetting);
 
     bool enableMultiDeviceSync();
     void setEnableMultiDeviceSync(bool enableMultiDeviceSync);
@@ -220,7 +214,6 @@ private:
     QString secondaryServer_;
     bool enableFixedPrecision_;
     QString storagePath_;
-    QString executePath_;
     int connectionState_;
     int syncPercent_;
     bool enableCertificateFile_;
@@ -232,9 +225,6 @@ private:
     QString coreRPCName_;
     QString coreRPCPassword_;
 
-    bool firstTimeCoreRPC_;
-    bool firstTimePassPhrase_;
-
     bool enableSignetStream_;
     QString signetStream_;
 
@@ -242,9 +232,8 @@ private:
     void updateUnit();
 
     bool enableDebugMode_;
-    bool isStarted_;
-
     bool enableMultiDeviceSync_;
+    bool isStarted_;
 signals:
     void unitChanged();
     void mainnetServerChanged();

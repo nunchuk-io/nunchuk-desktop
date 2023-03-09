@@ -41,7 +41,7 @@ Item {
     property int tx_status: txObject ? txObject.status : -1
     property string tx_id: txObject ? txObject.txid : ""
     property string to_addr: txObject ? txObject.destinationList.reciever : ""
-    property string tx_amount: txObject ? txObject.total + ((AppSetting.unit === 1) ? " sat" : " BTC") : ""
+    property string tx_amount: txObject ? txObject.total + RoomWalletData.unitValue : ""
     visible: pinTransaction ? true : false
     Rectangle {
         id: bgLastTransaction

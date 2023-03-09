@@ -598,7 +598,7 @@ QScreen {
         id: addSignerStep1
         Column {
             spacing: 8
-            width: 300
+            width: 500
             Item {
                 width: 52
                 height: visible ? 52 : 0
@@ -633,26 +633,49 @@ QScreen {
                 horizontalAlignment: Text.AlignHCenter
                 text: STR.STR_QML_119
             }
-            Item {
-                width: 275
-                height: 48
+            Rectangle {
+                width: 500
+                height: 50
                 anchors.horizontalCenter: parent.horizontalCenter
-                Rectangle {
-                    width: 275
-                    height: 40
+                color: Qt.rgba(255, 255, 255, 0.2)
+                radius: 4
+                QText {
+                    width: parent.width - 50
                     anchors.centerIn: parent
-                    color: Qt.rgba(255, 255, 255, 0.2)
-                    radius: 4
-                    QText {
-                        width: 186
-                        height: 36
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        color: "#F1FAFE"
-                        font.pixelSize: 12
-                        font.family: "Lato"
-                        text: AppModel.msgKeyHealthcheck
-                    }
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#F1FAFE"
+                    font.pixelSize: 14
+                    wrapMode: Text.WrapAnywhere
+                    font.family: "Lato"
+                    text: AppModel.newKeySignMessage
+                }
+            }
+            QText {
+                width: 328
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment: Text.AlignHCenter
+                color: "#F6D65D"
+                font.pixelSize: 14
+                wrapMode: Text.WordWrap
+                font.family: "Lato"
+                text: "Hash"
+            }
+            Rectangle {
+                width: 500
+                height: 50
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: Qt.rgba(255, 255, 255, 0.2)
+                radius: 4
+                QText {
+                    width: parent.width - 50
+                    anchors.centerIn: parent
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#F1FAFE"
+                    font.pixelSize: 14
+                    wrapMode: Text.WrapAnywhere
+                    font.family: "Lato"
+                    text: AppModel.newKeySignMessageSHA256
+                    font.capitalization: Font.AllUppercase
                 }
             }
         }

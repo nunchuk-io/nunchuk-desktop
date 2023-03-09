@@ -115,9 +115,11 @@ void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
             QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
             if(mastersigners){
                 for (QMasterSignerPtr master : mastersigners->fullList()) {
-                    it.data()->singleSignersAssigned()->updateSignerIsLocalAndReadyToSign(master->fingerPrint(),master->signerType());
+                    it.data()->singleSignersAssigned()->updateSignerIsLocalAndReadyToSign(master);
                 }
             }
+            QJsonObject data = Draco::instance()->assistedWalletGetTx(AppModel::instance()->walletInfo()->id(),it->txid());
+            it->setServerKeyMessage(data);
         }
         AppModel::instance()->setTransactionInfo(it);
     }
@@ -177,3 +179,22 @@ void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
         DBG_INFO << file_path << ret;
     }
 }
+
+
+void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
+    QSingleSignerPtr it = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(msg.toInt());
+    if(it) {
+        QMasterSignerPtr signer = QMasterSignerPtr(new MasterSigner());
+        signer.data()->setId(it->masterSignerId());
+        signer.data()->setName(it->name());
+        signer.data()->device()->setType(QString::fromStdString(SignerTypeToStr((nunchuk::SignerType)it->signerType())));
+        signer.data()->device()->setMasterFingerPrint(it->masterFingerPrint());
+        signer.data()->setSignerType(it->signerType());
+
+        AppModel::instance()->setSingleSignerInfo(it);
+        AppModel::instance()->setMasterSignerInfo(signer);
+        AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(AppModel::instance()->masterSignerInfo()->id()));
+    }
+}
+
+

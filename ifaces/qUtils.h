@@ -6,6 +6,7 @@
 #include <vector>
 #include <QObject>
 #include "nunchuk.h"
+#include "utils/enumconverter.hpp"
 #include "QWarningMessage.h"
 
 namespace qUtils {
@@ -35,7 +36,7 @@ bool CheckMnemonic(const QString& mnemonic);
 QStringList GetBIP39WordList();
 
 void SetPassPhrase(const QString& storage_path,
-                   const QString& account,
+                   const QString& account, nunchuk::Chain chain,
                    const QString& old_passphrase,
                    const QString& new_passphrase);
 
@@ -56,6 +57,9 @@ QString SignLoginMessage(const QString& mnemonic,
                          const QString& passphrase,
                          const QString& message);
 void SetChain(nunchuk::Chain chain);
+
+nunchuk::SignerType GetSignerType(const QString& value);
+QString GetSignerTypeString(const nunchuk::SignerType value);
 }
 
 #endif // QUTILS_H

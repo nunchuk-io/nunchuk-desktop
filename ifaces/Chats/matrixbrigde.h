@@ -25,13 +25,6 @@
 
 namespace matrixbrigde {
 
-static QMap<QString, int> signerTypeToInt {
-    { "HARDWARE",           (int)ENUNCHUCK::SignerType::HARDWARE        },
-    { "AIRGAP",             (int)ENUNCHUCK::SignerType::AIRGAP          },
-    { "SOFTWARE",           (int)ENUNCHUCK::SignerType::SOFTWARE        },
-    { "FOREIGN_SOFTWARE",   (int)ENUNCHUCK::SignerType::FOREIGN_SOFTWARE},
-};
-
 QJsonObject stringToJson(const QString& content);
 
 void makeMatrixInstance(const QString &account,

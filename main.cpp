@@ -81,8 +81,13 @@ inline void calculateScaleFactor()
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();
         int screenWidth = rect.width();
+#if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
         int appWidth = QAPP_WIDTH_EXPECTED + (QAPP_GAP_HEIGHT + rect.x()) * primaryScr->devicePixelRatio();
         int appHeight = QAPP_HEIGHT_EXPECTED + (QAPP_GAP_HEIGHT + rect.y()) * primaryScr->devicePixelRatio();
+#else
+        int appWidth = QAPP_WIDTH_EXPECTED + QAPP_GAP_HEIGHT;
+        int appHeight = QAPP_HEIGHT_EXPECTED + QAPP_GAP_HEIGHT;
+#endif
         // assumes that the default desktop resolution is 1080 (scale of 1)
         double scalePref = 1.0;
         if (screenHeight <= appHeight || screenWidth <= appWidth) {
@@ -108,31 +113,16 @@ int main(int argc, char* argv[])
     static int   argc_own = 1;
 
     QGuiApplication app(argc_own, &qt_argv);
-    app.setWindowIcon(QIcon(":/Images/Images/logo-light.svg"));
+    app.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.13");
+    app.setApplicationVersion("1.9.17");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
-
-    AppSetting::instance();
     AppModel::instance();
     Draco::instance();
 
     DBG_INFO << "Execution Path: " << qApp->applicationDirPath();
-    AppSetting::instance()->setExecutePath(qApp->applicationDirPath());
-
-    auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (path.isEmpty()) {
-        DBG_INFO << "Cannot determine settings storage location";
-    }
-    else {
-        QDir d{ path };
-        if (d.mkpath(d.absolutePath()) && QDir::setCurrent(d.absolutePath())) {
-            AppSetting::instance()->setStoragePath(QDir::currentPath());
-            DBG_INFO << "AppDataLocation in" << QDir::currentPath();
-        }
-    }
 
 #ifdef ENABLE_DECODER_QR_CODE
     QZXing::registerQMLTypes();

@@ -225,9 +225,9 @@ QScreen {
                     transactiontxid:transaction_txid
                     transactiondestinationList:transaction_destinationList
                     transactionstatus: transaction_status
-                    transactionMemo: transaction_memo
-                    transactiontotalBTC: (transaction_isReceiveTx ? "" : "- ") + transaction_totalBTC
-                    transactiontotalUSD: (transaction_isReceiveTx ? "" : "- ") + transaction_totalUSD
+                    transactionMemo:   transaction_memo
+                    transactionAmount:   transaction_isReceiveTx ? transaction_subtotal : transaction_total
+                    transactiontotalUSD: transaction_isReceiveTx ? transaction_subtotalUSD : transaction_totalUSD
                     confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
                     transactionDate: transaction_blocktime
                     onButtonClicked: {

@@ -51,7 +51,8 @@ public:
     void setUsableToAdd(bool usableToAdd);
     QString masterSignerId() const;
     void setMasterSignerId(const QString &master_signer_id);
-
+    QString cardId() const;
+    QDevice& setCardId(const QString &card_id);
 private:
     QString name_;
     QString type_;
@@ -67,7 +68,7 @@ private:
 
     //Software signer devices
     QString master_signer_id_;
-
+    QString cardId_;
 signals:
     void typeChanged();
     void pathChanged();
@@ -108,7 +109,7 @@ public:
     void updateDeviceList(const  QSharedPointer<DeviceListModel> &d);
     QDevicePtr getDeviceByIndex(const int index);
     QDevicePtr getDeviceByPath(const QString& path);
-    QDevicePtr getDeviceByXFP(const QString& xfp);
+    QDevicePtr getDeviceByXfp(const QString& xfp);
     QDevicePtr getDeviceNeedPinSent();
     void resetDeviceConnected();
     QString getDevicePathByIndex(const int index);
@@ -134,11 +135,11 @@ public:
     // For verify addr
     QStringList getXFPList();
     bool containsNeedPinSent();
-    void updateDeviceNeedPassphraseSentByMasterSignerId(const QString &id, bool needpassphrase);
-    void notifySoftwareSignerRenamed(const QString &mastersignerid, const QString &newname);
+    void updateNeedPassphraseSentById(const QString &id, bool needpassphrase);
+    void renameById(const QString &id, const QString &newname);
     void checkAndUnlockDevice();
     int deviceCount() const;
-    int getDeviceIndexByXFP(const QString& xfp);
+    int getDeviceIndexByXfp(const QString& xfp);
     QList<QDevicePtr> fullList() const;
     bool contains(const QString &fingerprint);
     bool needScanDevice();

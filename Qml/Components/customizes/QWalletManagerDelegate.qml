@@ -19,6 +19,7 @@
  **************************************************************************/
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
+import DataPool 1.0
 import "../origins"
 import "../../../localization/STR_QML.js" as STR
 
@@ -30,6 +31,7 @@ Rectangle {
     property bool   isCurrentIndex: false
     property bool   isEscrow: false
     property bool   isShared: false
+    property bool   isAssisted: false
     property string walletName      : "Name"
     property string walletBalance   : "0.0000000"
     property string walletCurrency  : "0.0000000"
@@ -72,7 +74,7 @@ Rectangle {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: walletBalance + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                        text: walletBalance + RoomWalletData.unitValue
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.weight: Font.DemiBold
@@ -113,11 +115,41 @@ Rectangle {
                 Item {
                     width: parent.width
                     height: 16
+                    visible: isAssisted
                     Rectangle{
                         width: 70
                         height: parent.height
                         radius: 20
-                        visible: isShared
+                        color: "#EAEAEA"
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 4
+                            QImage {
+                                width: 12
+                                height: 12
+                                source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                            }
+                            QText{
+                                font.family: "Lato"
+                                font.pixelSize: 10
+                                color: "#031F2B"
+                                text: STR.STR_QML_679
+                                font.weight: Font.Bold
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+                }
+                Item {
+                    width: parent.width
+                    height: 16
+                    visible: isShared
+                    Rectangle{
+                        width: 70
+                        height: parent.height
+                        radius: 20
                         color: "#EAEAEA"
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right

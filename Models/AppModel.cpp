@@ -26,6 +26,7 @@
 #include "localization/STR_CPP.h"
 #include <QTimer>
 #include "Chats/matrixbrigde.h"
+#include "utils/enumconverter.hpp"
 
 AppModel::AppModel(): inititalized_{false},
     walletList_(QWalletListModelPtr(new WalletListModel())),
@@ -50,7 +51,7 @@ AppModel::AppModel(): inititalized_{false},
     warningMessage_(QWarningMessagePtr(new QWarningMessage())),
     exchangeRates_(0), lasttime_checkEstimatedFee_(QDateTime::currentDateTime()),
     m_primaryKey(NULL),
-    msgKeyHealthcheck_("")
+    newKeySignMessage_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(&timerRefreshHealthCheck_, SIGNAL(timeout()), this, SLOT(timerHealthCheckTimeHandle()));
@@ -86,16 +87,27 @@ AppModel::~AppModel(){
     disconnect();
 }
 
-QString AppModel::msgKeyHealthcheck() const
+QStringList AppModel::getUserWallets() const
 {
-    return msgKeyHealthcheck_;
+    return mUserWallets;
 }
 
-void AppModel::setMsgKeyHealthcheck(const QString &value)
+QString AppModel::newKeySignMessage() const
 {
-    if(msgKeyHealthcheck_ != value){
-        msgKeyHealthcheck_ = value;
-        emit msgKeyHealthcheckChanged();
+    return newKeySignMessage_;
+}
+
+QString AppModel::newKeySignMessageSHA256() const
+{
+    QByteArray bytes = QCryptographicHash::hash(newKeySignMessage_.toUtf8(), QCryptographicHash::Sha256);
+    return QString(bytes.toHex());
+}
+
+void AppModel::setNewKeySignMessage(const QString &value)
+{
+    if(newKeySignMessage_ != value){
+        newKeySignMessage_ = value;
+        emit newKeySignMessageChanged();
     }
 }
 
@@ -151,21 +163,23 @@ void AppModel::stopCheckAuthorize()
     timerCheckAuthorized_.stop();
 }
 
-void AppModel::loginSucceed()
+bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassphrase)
 {
+    bool ret = true;
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     QWarningMessage nunchukMsg;
     bridge::nunchukSetCurrentMode(ONLINE_MODE);
     QString account = Draco::instance()->Uid();
-    QString dbPassphrase = "";
     bridge::nunchukMakeInstanceForAccount(account,
                                           dbPassphrase,
                                           nunchukMsg);
     if((int)EWARNING::WarningType::NONE_MSG == nunchukMsg.type()){
+        ret = true;
         QString device_id = QString("%1%2").arg(Draco::instance()->deviceId()).arg(Draco::instance()->chatId());
+        Draco::instance()->getMe();
+        Draco::instance()->getCurrentUserSubscription();
         CLIENT_INSTANCE->requestLogin();
         CLIENT_INSTANCE->saveStayLoggedInData();
-        CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
         QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
 
         QWarningMessage matrixMsg;
@@ -173,48 +187,111 @@ void AppModel::loginSucceed()
                                          device_id,
                                          matrixMsg);
         if((int)EWARNING::WarningType::NONE_MSG != matrixMsg.type()){
-            AppModel::instance()->showToast(matrixMsg.code(),
-                                            matrixMsg.what(),
-                                            (EWARNING::WarningType)matrixMsg.type(),
-                                            "");
+            int code = matrixMsg.code();
+            QString what = matrixMsg.what();
+            int type = matrixMsg.type();
+            QTimer::singleShot(500, [code, what, type]() {
+                AppModel::instance()->showToast(code,
+                                                what,
+                                                (EWARNING::WarningType)type,
+                                                "ERROR");
+            });
         }
-        AppModel::instance()->requestGetWallets();
-        AppModel::instance()->requestGetSigners();
+        AppModel::instance()->requestInitialData();
     }
     else if((int)EWARNING::WarningType::EXCEPTION_MSG == nunchukMsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == nunchukMsg.code()){
-        QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, E::STATE_ID_SCR_LOGIN_ONLINE);
+        DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE" << nunchukMsg.code();
+        ret = false;
+        QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+        if(!states.isEmpty() && states.last() != (uint)E::STATE_ID_SCR_UNLOCK_DB)
+        {
+            QTimer::singleShot(500,[msg](){
+                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, msg);
+            });
+        }
+        else{
+            int code = nunchukMsg.code();
+            QString what = nunchukMsg.what();
+            int type = nunchukMsg.type();
+            QTimer::singleShot(500, [code, what, type]() {
+                AppModel::instance()->showToast(code,
+                                                what,
+                                                (EWARNING::WarningType)type,
+                                                "ERROR");
+            });
+        }
     }
     else{
         DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE" << nunchukMsg.code();
-        AppModel::instance()->showToast(nunchukMsg.code(),
-                                        nunchukMsg.what(),
-                                        (EWARNING::WarningType)nunchukMsg.type(),
-                                        "");
+        ret = false;
+        int code = nunchukMsg.code();
+        QString what = nunchukMsg.what();
+        int type = nunchukMsg.type();
+        QTimer::singleShot(500, [code, what, type]() {
+            AppModel::instance()->showToast(code,
+                                            what,
+                                            (EWARNING::WarningType)type,
+                                            "ERROR");
+        });
     }
     qApp->restoreOverrideCursor();
+    return ret;
 }
 
-void AppModel::nunchukLogin()
+bool AppModel::makeNunchukInstanceForAccount(const QVariant msg, const QString &dbPassphrase)
 {
+    bool ret = true;
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     QWarningMessage warningmsg;
     bridge::nunchukSetCurrentMode(ONLINE_MODE);
     QString account = Draco::instance()->Uid();
-    QString pphrase = "";//Draco::instance()->Pid();
     bridge::nunchukMakeInstanceForAccount(account,
-                                                      pphrase,
-                                                      warningmsg);
+                                          dbPassphrase,
+                                          warningmsg);
     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-        AppModel::instance()->requestGetWallets();
-        AppModel::instance()->requestGetSigners();
+        ret = true;
+        AppModel::instance()->requestInitialData();
+    }
+    else if((int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == warningmsg.code()){
+        DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE" << warningmsg.code();
+        ret = false;
+        QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+        if(!states.isEmpty() && states.last() != (uint)E::STATE_ID_SCR_UNLOCK_DB)
+        {
+            QTimer::singleShot(500,[msg](){
+                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, msg);
+            });
+        }
+        else{
+            int code = warningmsg.code();
+            QString what = warningmsg.what();
+            int type = warningmsg.type();
+            QTimer::singleShot(500, [code, what, type]() {
+                AppModel::instance()->showToast(code,
+                                                what,
+                                                (EWARNING::WarningType)type,
+                                                "ERROR");
+            });
+        }
     }
     else{
-        DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE";
+        DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE" << warningmsg.code();
+        ret = false;
+        int code = warningmsg.code();
+        QString what = warningmsg.what();
+        int type = warningmsg.type();
+        QTimer::singleShot(500, [code, what, type]() {
+            AppModel::instance()->showToast(code,
+                                            what,
+                                            (EWARNING::WarningType)type,
+                                            "ERROR");
+        });
     }
     qApp->restoreOverrideCursor();
+    return ret;
 }
 
-void AppModel::matrixLogin()
+void AppModel::makeMatrixInstanceForAccount()
 {
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     QString account = Draco::instance()->Uid();
@@ -226,12 +303,67 @@ void AppModel::matrixLogin()
     if((int)EWARNING::WarningType::NONE_MSG == warningmsg2.type()){
         CLIENT_INSTANCE->requestLogin();
         CLIENT_INSTANCE->saveStayLoggedInData();
-        CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
+    }
+    else {
+        int code = warningmsg2.code();
+        QString what = warningmsg2.what();
+        int type = warningmsg2.type();
+        QTimer::singleShot(500, [code, what, type]() {
+            AppModel::instance()->showToast(code,
+                                            what,
+                                            (EWARNING::WarningType)type,
+                                            "ERROR");
+        });
     }
     qApp->restoreOverrideCursor();
 }
 
-void AppModel::sign_in(QVariant msg)
+bool AppModel::makeNunchukInstance(const QVariant makeInstanceData, const QString &dbPassphrase)
+{
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    bool ret = false;
+    QWarningMessage warningmsg;
+    bridge::nunchukMakeInstance(dbPassphrase, warningmsg);
+    if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+        AppModel::instance()->requestInitialData();
+        ret = true;
+    }
+    else if((int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == warningmsg.code()){
+        ret = false;
+        QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+        if(!states.isEmpty() && states.last() != (uint)E::STATE_ID_SCR_UNLOCK_DB)
+        {
+            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, makeInstanceData);
+        }
+        else{
+            int code = warningmsg.code();
+            QString what = warningmsg.what();
+            int type = warningmsg.type();
+            QTimer::singleShot(500, [code, what, type]() {
+                AppModel::instance()->showToast(code,
+                                                what,
+                                                (EWARNING::WarningType)type,
+                                                "ERROR");
+            });
+        }
+    }
+    else{
+        ret = false;
+        int code = warningmsg.code();
+        QString what = warningmsg.what();
+        int type = warningmsg.type();
+        QTimer::singleShot(500, [code, what, type]() {
+            AppModel::instance()->showToast(code,
+                                            what,
+                                            (EWARNING::WarningType)type,
+                                            "ERROR");
+        });
+    }
+    qApp->restoreOverrideCursor();
+    return ret;
+}
+
+void AppModel::loginNunchuk(QVariant msg)
 {
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     QMap<QString,QVariant> maps = msg.toMap();
@@ -268,7 +400,6 @@ int AppModel::nunchukMode() const
 
 void AppModel::setNunchukMode(int nunchukMode)
 {
-    if(nunchukMode_ == nunchukMode) return;
     nunchukMode_ = nunchukMode;
     emit nunchukModeChanged();
 }
@@ -579,9 +710,16 @@ AppModel *AppModel::instance() {
 
 void AppModel::requestInitialData()
 {
-    DBG_INFO << "IN MODE: " << bridge::nunchukCurrentMode();
-    requestGetSigners();
-    requestGetWallets();
+    if(ONLINE_MODE == bridge::nunchukCurrentMode()){
+        requestCreateUserWallets();
+    }
+//    requestGetSigners();
+//    requestGetWallets();
+    QtConcurrent::run([this]() {
+        startReloadWallets();
+        startReloadMasterSigners();
+        startReloadRemoteSigners();
+    });
 }
 
 void AppModel::requestGetSigners()
@@ -599,7 +737,7 @@ void AppModel::requestGetSigners()
 
 void AppModel::requestGetWallets()
 {
-    DBG_INFO << "IN MODE: " << bridge::nunchukCurrentMode();
+    DBG_INFO << "DATA IN MODE: " << bridge::nunchukCurrentMode();
     QWalletListModelPtr wallets = bridge::nunchukGetWallets();
     if(wallets){
         setWalletList(wallets);
@@ -612,37 +750,158 @@ void AppModel::requestGetWallets()
             setWalletListCurrentIndex(lastIndex);
         }
     }
+    requestSyncSharedWallets();
 }
 
-void AppModel::requestSyncWallets(QWalletListModelPtr wallets)
+void AppModel::requestCreateUserWallets()
 {
-    if(wallets && wallets.data()->rowCount() > 0){
-        if(walletList()) {
-            for (QWalletPtr p : wallets->fullList()) {
-                walletList()->addWallet(p);
-//                walletList()->updateIsSharedWallet(p.data()->id(), p.data()->isSharedWallet());
+    if(CLIENT_INSTANCE->getSubCur().isEmpty()) return;
+    QJsonObject data = Draco::instance()->getAssistedWallets();
+    if(!data.isEmpty()){
+        QJsonArray wallets = data["wallets"].toArray();
+        mUserWallets.clear();
+        for(QJsonValue jv_wallet : wallets){
+            QJsonObject js_wallet = jv_wallet.toObject();
+            QString wallet_id = js_wallet["local_id"].toString();
+            QString status = js_wallet["status"].toString();
+            mUserWallets.append(wallet_id);
+            if(status == "ACTIVE" && !bridge::nunchukHasWallet(wallet_id)){
+                QJsonArray signers = js_wallet["signers"].toArray();
+                for(QJsonValue jv_signer : signers){
+                    QJsonObject js_signer = jv_signer.toObject();
+                    QJsonObject tapsigner = js_signer["tapsigner"].toObject();
+                    QString name = js_signer["name"].toString();
+                    QString xfp = js_signer["xfp"].toString();
+                    if(!tapsigner.isEmpty()){
+                        QString card_id = tapsigner["card_id"].toString();
+                        QString version = tapsigner["version"].toString();
+                        int birth_height = tapsigner["birth_height"].toInt();
+                        bool is_testnet = tapsigner["is_testnet"].toBool();
+                        bridge::AddTapsigner(card_id,xfp,name,version,birth_height,is_testnet);
+                    }
+                    else {
+                        QString xpub = js_signer["xpub"].toString();
+                        QString pubkey = js_signer["pubkey"].toString();
+                        QString derivation_path = js_signer["derivation_path"].toString();
+                        QString type = js_signer["type"].toString();
+                        nunchuk::SingleSigner signer(name.toStdString(), xpub.toStdString(), pubkey.toStdString(), derivation_path.toStdString(), xfp.toStdString(), std::time(0));
+                        if(!bridge::nunchukHasSinger(signer)){
+                            bridge::nunchukCreateSigner(name, xpub, pubkey, derivation_path, xfp, type);
+                        }
+                    }
+                }
+                QWarningMessage msg;
+                QString bsms = js_wallet["bsms"].toString();
+                nunchuk::Wallet w = qUtils::ParseWalletDescriptor(bsms,msg);
+                QString name = js_wallet["name"].toString();
+                QString description = js_wallet["description"].toString();
+                w.set_name(name.toStdString());
+                w.set_description(description.toStdString());
+                bridge::nunchukCreateWallet(w, true,msg);
+            } else if (status == "DELETED" && bridge::nunchukHasWallet(wallet_id)){
+                bridge::nunchukDeleteWallet(wallet_id);
             }
-            walletList()->requestSort(WalletListModel::WalletRoles::wallet_Name_Role, Qt::AscendingOrder);
-            QString currentId = walletInfo() ? walletInfo()->id() : "";
-            if(currentId != ""){
-                int lastIndex = walletList()->getWalletIndexById(currentId);
-                setWalletListCurrentIndex(lastIndex);
+            QWarningMessage msg;
+            nunchuk::Wallet w = nunchukiface::instance()->GetWallet(wallet_id.toStdString(), msg);
+            std::vector<nunchuk::SingleSigner> local_signers = w.get_signers();
+            QJsonArray signers = js_wallet["signers"].toArray();
+            for(QJsonValue jv_signer : signers){
+                QJsonObject js_signer = jv_signer.toObject();
+                QString xfp = js_signer["xfp"].toString();
+                QJsonArray wtags = js_signer["tags"].toArray();
+                std::vector<nunchuk::SingleSigner>::iterator local_signer = std::find_if(local_signers.begin(), local_signers.end(), [&](const nunchuk::SingleSigner &local){
+                    return local.get_master_fingerprint() == xfp.toStdString();
+                });
+                if(wtags.size() != 0){
+                    QWarningMessage msgIn;
+                    if (local_signer != local_signers.end() && local_signer->has_master_signer()) {
+                        nunchuk::MasterSigner m = nunchukiface::instance()->GetMasterSigner(local_signer->get_master_signer_id(),msgIn);
+                        std::vector<nunchuk::SignerTag> tags; // get tags from api signer.tags
+                        for (QJsonValue tag : wtags) {
+                            QString js_tag = tag.toString();
+                            tags.push_back(SignerTagFromStr(js_tag.toStdString()));
+                        }
+                        // Do update
+                        m.set_tags(tags);
+                        nunchukiface::instance()->UpdateMasterSigner(m,msgIn);
+                    } else {
+                        // update for single signer
+                        // skip for now
+                    }
+                }
             }
+
+            if (!wallet_id.isEmpty()) {
+                QJsonObject data = Draco::instance()->assistedWalletGetListTx(wallet_id);
+                QJsonArray transactions = data.value("transactions").toArray();
+                for(QJsonValue js_value : transactions){
+                    QJsonObject transaction = js_value.toObject();
+                    QString status = transaction.value("status").toString();
+                    QString psbt = transaction.value("psbt").toString();
+                    QString note = transaction.value("note").toString();
+                    QString type = transaction.value("type").toString();
+                    if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
+                        QWarningMessage _msg;
+                        QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
+                        bridge::nunchukUpdateTransactionMemo(wallet_id,
+                                                             tran->txid(),
+                                                             note);
+                        long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toInt());
+                        // honey badger feature: schedule broadcast
+                        long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
+
+                        if(type == "SCHEDULED" &&
+                                broadcast_time_milis > current_time_stamp_milis) {
+                            bridge::nunchukUpdateTransactionSchedule(wallet_id, tran->txid(), broadcast_time_milis/1000,msg);
+                        }
+                    }
+                }
+            }
+
         }
-        else{
-            setWalletList(wallets);
-            if(wallets->rowCount() > 0){
-                QString lastWalletId = bridge::nunchukGetSelectedWallet();
-                if(lastWalletId != ""){
-                    int lastIndex = walletList()->getWalletIndexById(lastWalletId);
-                    setWalletListCurrentIndex(lastIndex);
+    }
+}
+
+void AppModel::requestSyncSharedWallets()
+{
+    if(ONLINE_MODE == bridge::nunchukCurrentMode()){
+        if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){
+            if(!CLIENT_INSTANCE->rooms() || !walletList()) return;
+            QList<QRoomWalletPtr> roomWallets = CLIENT_INSTANCE->rooms()->getRoomWallets();
+            for(QRoomWalletPtr roomWwallet : roomWallets){
+                if(!roomWwallet) continue;
+                QString wallet_id = roomWwallet.data()->get_wallet_id();
+                QString room_id = roomWwallet.data()->get_room_id();
+                QString init_event_id = roomWwallet.data()->get_init_event_id();
+                QString wallet_name = roomWwallet.data()->walletName();
+                QWalletPtr final = QWalletPtr(new Wallet());
+                if(!walletList()->containsId(wallet_id)){
+                    final = bridge::nunchukGetWallet(wallet_id);
+                }
+                else{
+                    final = walletList()->getWalletById(wallet_id);
+                }
+                if(final){
+                    final.data()->setIsSharedWallet(true);
+                    final.data()->setRoomId(room_id);
+                    final.data()->setInitEventId(init_event_id);
+                    final.data()->setName(wallet_name);
+                    if(roomWwallet.data()->walletSigners() && final.data()->singleSignersAssigned()){
+                        QList<SignerAssigned> signers = roomWwallet.data()->walletSigners()->fullList();
+                        for(SignerAssigned signer : signers){
+                            final.data()->singleSignersAssigned()->renameByXfp(signer.xfp, signer.name);
+                            final.data()->singleSignersAssigned()->updateIsLocalSigner(signer.xfp, signer.is_localuser);
+                            final.data()->singleSignersAssigned()->updateSignerType(signer.xfp, signer.type);
+                        }
+                    }
+                    walletList()->addSharedWallet(final);
                 }
             }
         }
     }
 }
 
-void AppModel::signoutClearData()
+void AppModel::requestClearData()
 {
     if(walletList()){
         walletList()->cleardata();
@@ -707,7 +966,7 @@ void AppModel::setPrimaryKey(const QString &userName)
             }
         }
     }
-    DBG_INFO << "Login in manually";
+    DBG_INFO << "Login in manually " << list.size();
     m_primaryKey = NULL;
 }
 
@@ -779,23 +1038,23 @@ void AppModel::setMasterSignerInfo(const int index) {
 void AppModel::updateMasterSignerInfoName(const QString &name)
 {
     if(masterSignerList_ && masterSignerInfo_){
-        masterSignerList_.data()->updateMasterSignerName(masterSignerInfo_.data()->id(), name);
+        masterSignerList_.data()->renameById(masterSignerInfo_.data()->id(), name);
     }
     if(walletList_ && masterSignerInfo_) {
-        walletList_.data()->notifyMasterSignerRenamed(masterSignerInfo_->id(), name);
+        walletList_.data()->renameSignerById(masterSignerInfo_->id(), name);
     }
     if(softwareSignerDeviceList_ && masterSignerInfo_) {
-        softwareSignerDeviceList_.data()->notifySoftwareSignerRenamed(masterSignerInfo_->id(), name);
+        softwareSignerDeviceList_.data()->renameById(masterSignerInfo_->id(), name);
     }
 }
 
 void AppModel::updateSingleSignerInfoName(const QString &name)
 {
     if(remoteSignerList_ && singleSignerInfo_){
-        remoteSignerList_.data()->notifyRemoteSignerRenamed(singleSignerInfo_.data()->masterFingerPrint(), name);
+        remoteSignerList_.data()->renameByXfp(singleSignerInfo_.data()->masterFingerPrint(), name);
     }
     if(walletList_ && singleSignerInfo_) {
-        walletList_.data()->notifyMasterSignerRenamed(singleSignerInfo_->masterFingerPrint(), name);
+        walletList_.data()->renameSignerByXfp(singleSignerInfo_->masterFingerPrint(), name);
     }
 }
 
@@ -949,7 +1208,7 @@ void AppModel::setDestinationList(const QDestinationListModelPtr &destinationLis
 
 QString AppModel::addressBalance() const
 {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(addressBalance_);
     }
@@ -986,6 +1245,7 @@ void AppModel::timerFeeRatesHandle()
 void AppModel::timerCheckAuthorizedHandle()
 {
     Draco::instance()->getMe();
+    Draco::instance()->getCurrentUserSubscription();
 }
 
 QString AppModel::parseKeystoneSigner(QString qr)
@@ -1116,14 +1376,6 @@ bool AppModel::parsePassportTransaction(const QStringList qrtags)
     return false;
 }
 
-QString AppModel::toLocalString(QString in)
-{
-    QString amountStr = in.remove(",");
-    qint64 toAmount = amountStr.toLong();
-    QLocale locale(QLocale::English);
-    return locale.toString(toAmount);
-}
-
 bool AppModel::updateSettingRestartRequired()
 {
     QWarningMessage warningmsg;
@@ -1149,10 +1401,23 @@ bool AppModel::enableDatabaseEncryption(const QString in)
     bridge::nunchukSetPassphrase(in, warningmsg);
     if((int)EWARNING::WarningType::NONE_MSG != warningmsg.type()){
         ret = false;
-        showToast(warningmsg.code(),
-                  warningmsg.what(),
-                  (EWARNING::WarningType)warningmsg.type(),
-                  STR_CPP_089);
+        int code = warningmsg.code();
+        QString what = warningmsg.what();
+        int type = warningmsg.type();
+        QTimer::singleShot(500, [code, what, type]() {
+            AppModel::instance()->showToast(code,
+                                            what,
+                                            (EWARNING::WarningType)type,
+                                            STR_CPP_089);
+        });
+    }
+    else{
+        QTimer::singleShot(500, []() {
+            AppModel::instance()->showToast(0,
+                                            STR_CPP_090,
+                                            EWARNING::WarningType::SUCCESS_MSG,
+                                            STR_CPP_090);
+        });
     }
     qApp->restoreOverrideCursor();
     return ret;

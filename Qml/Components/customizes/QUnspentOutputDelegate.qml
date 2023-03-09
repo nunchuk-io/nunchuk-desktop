@@ -19,6 +19,7 @@
  **************************************************************************/
 import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../origins"
 
 Rectangle {
@@ -152,7 +153,7 @@ Rectangle {
                 font.family: "Lato"
                 font.pixelSize: 14
                 color: "#031F2B"
-                text: unspentoutput_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                text: unspentoutput_amount + RoomWalletData.unitValue
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignRight
             }

@@ -178,7 +178,7 @@ QScreen {
                                         font.weight: Font.Bold
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        text: destination_amount + RoomWalletData.unitValue
                                         horizontalAlignment: Text.AlignRight
                                     }
                                     QText {
@@ -224,7 +224,7 @@ QScreen {
                                     font.weight: Font.Bold
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: AppModel.transactionInfo.fee + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                    text: AppModel.transactionInfo.fee + RoomWalletData.unitValue
                                     horizontalAlignment: Text.AlignRight
                                 }
                                 QText {
@@ -268,7 +268,7 @@ QScreen {
                                     font.weight: Font.Bold
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: AppModel.transactionInfo.total + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                    text: AppModel.transactionInfo.total + RoomWalletData.unitValue
                                     horizontalAlignment: Text.AlignRight
                                 }
                                 QText {
@@ -343,7 +343,7 @@ QScreen {
                                     font.weight: Font.Bold
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: AppModel.transactionInfo.change.amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                    text: AppModel.transactionInfo.change.amount + RoomWalletData.unitValue
                                     horizontalAlignment: Text.AlignRight
                                 }
                                 QText {
@@ -633,7 +633,7 @@ QScreen {
                                                 font.pixelSize: 14
                                                 color: "#031F2B"
                                                 horizontalAlignment: Text.AlignRight
-                                                text: utxo_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                                text: utxo_amount + RoomWalletData.unitValue
                                             }
                                         }
                                     }

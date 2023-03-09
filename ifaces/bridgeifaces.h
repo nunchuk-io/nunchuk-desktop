@@ -106,11 +106,14 @@ public:
     };
 
     enum class SignerType {
+        UNKNOWN = -1,
         HARDWARE,
         AIRGAP,
         SOFTWARE,
         FOREIGN_SOFTWARE,
-        TAPSIGNER,
+        NFC,
+        COLDCARD_NFC,
+        SERVER,
     };
 
     enum IN_FLOW {
@@ -169,6 +172,8 @@ std::vector<nunchuk::Wallet> nunchukGetOriginWallets(QWarningMessage &msg);
 QWalletListModelPtr nunchukConvertWallets(std::vector<nunchuk::Wallet> list);
 
 QWalletPtr nunchukGetWallet(const QString &wallet_id);
+
+bool nunchukHasWallet(const QString &wallet_id);
 
 bool nunchukDeleteWallet(const QString& wallet_id);
 
@@ -239,7 +244,7 @@ QSingleSignerPtr nunchukCreateSigner(const QString& name,
                                      const QString& public_key,
                                      const QString& derivation_path,
                                      const QString& master_fingerprint,
-                                     QWarningMessage &msg);
+                                     const QString& type);
 
 nunchuk::SingleSigner nunchukCreateOriginSigner(const QString& name,
                                                 const QString& xpub,
@@ -255,6 +260,10 @@ QWalletPtr nunchukCreateWallet(const QString& name,
                                ENUNCHUCK::AddressType address_type,
                                bool is_escrow,
                                const QString &desc,
+                               QWarningMessage &msg);
+
+QWalletPtr nunchukCreateWallet(const nunchuk::Wallet& wallet,
+                               bool allow_used_signer,
                                QWarningMessage &msg);
 
 nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
@@ -324,6 +333,17 @@ QTransactionPtr nunchukImportTransaction(const QString& wallet_id,
                                          const QString& file_path,
                                          QWarningMessage &msg);
 
+QTransactionPtr nunchukUpdateTransaction(const QString& wallet_id,
+                                         const QString& tx_id,
+                                         const QString& new_txid,
+                                         const QString& raw_tx,
+                                         const QString& reject_msg,
+                                         QWarningMessage& msg);
+
+QTransactionPtr nunchukImportPsbt(const QString& wallet_id,
+                                        const QString& psbt,
+                                        QWarningMessage &msg);
+
 QTransactionPtr nunchukSignTransaction(const QString& wallet_id,
                                        const QString& tx_id,
                                        const QDevicePtr &device,
@@ -369,7 +389,7 @@ bool nunchukExportTransactionHistory(const QString& wallet_id,
                                      const QString& file_path,
                                      nunchuk::ExportFormat format);
 
-void nunchukBalanceChanged(const QString &walletId, const qint64 value);
+void nunchukBalanceChanged(const QString &walletId, const qint64 balance);
 
 void nunchukDevicesChanged(const QString &fingerprint, const bool connected);
 
@@ -484,6 +504,20 @@ QTransactionPtr nunchukImportPassportTransaction(const QString& wallet_id,
                                                  QWarningMessage& msg);
 
 void stopNunchuk();
+
+void AddTapsigner(const QString& card_ident, const QString& xfp,
+                  const QString& name, const QString& version,
+                  int birth_height, bool is_testnet);
+
+void assistedWalletUpdateTx(const QString& wallet_id,
+                            const nunchuk::Transaction &tx);
+
+bool nunchukUpdateTransactionSchedule(const QString& wallet_id,
+                                      const QString& tx_id,
+                                      time_t ts,
+                                      QWarningMessage& msg);
+
+void ForceRefreshWallet(const QString& wallet_id, QWarningMessage &msg);
 }
 
 #endif // BRIDGEINTERFACE_H

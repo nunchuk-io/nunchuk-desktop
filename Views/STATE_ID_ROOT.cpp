@@ -67,30 +67,19 @@ void EVT_STARTING_APPLICATION_LOCALMODE_HANDLER(QVariant msg) {
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     int isPrimaryKey = msg.toInt();
     if(!AppModel::instance()->inititalized()){
-        QWarningMessage warningmsg;
-        bridge::nunchukMakeInstance("", warningmsg);
-        if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-            AppModel::instance()->requestInitialData();
-            if(isPrimaryKey > 0){
-                QQuickViewer::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB,msg);
-            }else{
-                QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
-            }
+        if(isPrimaryKey > 0){
+            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB, msg);
+        }else{
+            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
         }
-        else if((int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == warningmsg.code()){
-            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, E::EVT_STARTING_APPLICATION_LOCALMODE);
-        }
-        else{
-            AppModel::instance()->showToast(warningmsg.code(),
-                                            warningmsg.what(),
-                                            (EWARNING::WarningType)warningmsg.type(),
-                                            "");
-        }
+        QMap<QString, QVariant> makeInstanceData;
+        makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME;
+        AppModel::instance()->makeNunchukInstance(makeInstanceData,"");
     }
     else {
         AppModel::instance()->requestInitialData();
         if(isPrimaryKey > 0){
-            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB,msg);
+            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB, msg);
         }else{
             QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
         }
@@ -188,4 +177,29 @@ void EVT_GOTO_APP_SETTINGS_TAB_HANDLER(QVariant msg) {
 
 }
 
+void EVT_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
 
+}
+
+void EVT_ONS_CLOSE_ALL_REQUEST_HANDLER(QVariant msg) {
+    QQuickViewer::instance()->closeAllPopup();
+}
+
+void EVT_ROOT_SIGN_IN_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
+{
+    QQuickViewer::instance()->sendEvent(E::EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST,true);
+}
+
+void EVT_ROOT_CREATE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
+{
+    QQuickViewer::instance()->sendEvent(E::EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST,false);
+}
+
+void EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST_HANDLER(QVariant msg)
+{
+
+}

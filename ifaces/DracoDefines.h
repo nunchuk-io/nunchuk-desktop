@@ -8,6 +8,9 @@
 #define DRAGON_CHAT_URL         "https://api.nunchuk.io/v1.1/chat"
 #define DRAGON_APP_URL          "https://api.nunchuk.io/v1.1/app"
 
+#define DRAGON_SUBSCRIPTIONS_URL "https://api.nunchuk.io/v1.1/subscriptions"
+#define DRAGON_USER_WALLETS_URL  "https://api.nunchuk.io/v1.1/user-wallets"
+
 struct DracoUser {
     QString id = "";
     QString name = "";
@@ -68,6 +71,17 @@ enum CMD_IDX {
     PRIMARY_KEY_PUBLIC_ADDRESS,
     PRIMARY_KEY_DELETE_CONFIRMTION,
     PRIMARY_KEY_CHANGE_KEY,
+
+    // USER_SUBSCRIPTION
+    USER_SUBCRIPTIONS_CURRENT,
+
+    // ASSISTED_WALLETS
+    ASSISTED_WALLET_GET,
+    ASSISTED_WALLET_CREATE_TX,
+    ASSISTED_WALLET_SIGN_TX,
+    ASSISTED_WALLET_CANCEL_TX,
+    ASSISTED_WALLET_GET_TX,
+    ASSISTED_WALLET_GET_LIST_TX,
     CMD_MAX
 };
 
@@ -110,6 +124,17 @@ const QMap<int, QString> commands {
     { CMD_IDX::PRIMARY_KEY_PUBLIC_ADDRESS   , QString("%1/%2").arg(DRAGON_USER_URL).arg("/pkey/")  },
     { CMD_IDX::PRIMARY_KEY_DELETE_CONFIRMTION, QString("%1/%2").arg(DRAGON_USER_URL).arg("/pkey/delete-confirmation")  },
     { CMD_IDX::PRIMARY_KEY_CHANGE_KEY       , QString("%1/%2").arg(DRAGON_USER_URL).arg("/pkey/change-pkey")  },
+
+    // USER_SUBSCRIPTION
+    { USER_SUBCRIPTIONS_CURRENT             , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("current")  },
+
+    // ASSISTED_WALLETS
+    { ASSISTED_WALLET_GET                   ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets")  },
+    { ASSISTED_WALLET_CREATE_TX             ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { ASSISTED_WALLET_GET_LIST_TX           ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { ASSISTED_WALLET_SIGN_TX               ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sign") },
+    { ASSISTED_WALLET_CANCEL_TX             ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
+    { ASSISTED_WALLET_GET_TX                ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
 };
 
 class DRACO_CODE: public QObject

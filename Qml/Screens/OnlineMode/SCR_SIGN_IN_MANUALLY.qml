@@ -72,7 +72,7 @@ QScreen {
         QOnScreenContent {
             label.text: STR.STR_QML_633
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SIGN_IN_MANUALLY)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             QTextInputBoxTypeB {
                 id: signername
@@ -142,7 +142,7 @@ QScreen {
             anchors.centerIn: parent
             label.text: STR.STR_QML_633
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SIGN_IN_MANUALLY)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             Column{
                 spacing: 24

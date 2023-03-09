@@ -109,18 +109,23 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
                                          const QString &deviceXfp,
                                          bool isSoftware)
 {
-//    DBG_INFO << walletId << deviceXfp << isSoftware << txid;
+    DBG_INFO << walletId << deviceXfp << isSoftware << txid;
     if(AppModel::instance()->transactionInfo()){
         QWarningMessage msgwarning;
         QDevicePtr selectedDv = NULL;
+        DBG_INFO << "selectedDv";
         if(isSoftware){
+            DBG_INFO << "selectedDv";
             if(AppModel::instance()->softwareSignerDeviceList()){
-                selectedDv = AppModel::instance()->softwareSignerDeviceList()->getDeviceByXFP(deviceXfp) ;
+                DBG_INFO << "selectedDv";
+                selectedDv = AppModel::instance()->softwareSignerDeviceList()->getDeviceByXfp(deviceXfp) ;
             }
         }
         else{
+            DBG_INFO << "selectedDv";
             if(AppModel::instance()->deviceList()){
-                selectedDv = AppModel::instance()->deviceList()->getDeviceByXFP(deviceXfp) ;
+                DBG_INFO << "selectedDv";
+                selectedDv = AppModel::instance()->deviceList()->getDeviceByXfp(deviceXfp) ;
             }
         }
         if(AppModel::instance()->transactionInfo()->roomId() != ""){ // shared
@@ -156,6 +161,7 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
         }
         else{
             if(selectedDv){
+                DBG_INFO << "selectedDv";
                 nunchuk::Transaction trans = bridge::nunchukSignTransactionThread(walletId,
                                                                                   txid,
                                                                                   selectedDv,
@@ -312,9 +318,9 @@ void Worker::slotStartCreateWallet(bool backup,
 }
 
 void Worker::slotStartBalanceChanged(const QString &id,
-                                     const qint64 value)
+                                     const qint64 balance)
 {
-    emit finishBalanceChanged(id, value);
+    emit finishBalanceChanged(id, balance);
 }
 
 void Worker::slotStartTransactionChanged(const QString &tx_id,
@@ -781,6 +787,27 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
             }
         }
         QString tx_id = QString::fromStdString(result.get_txid());
+        QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId);
+        if(wallet && wallet->isAssistedWallet()){
+            QJsonObject data = Draco::instance()->assistedWalletSignTx(walletId,tx_id,QString::fromStdString(result.get_psbt()),QString::fromStdString(result.get_memo()));
+            QJsonObject transaction = data.value("transaction").toObject();
+            QString status = transaction.value("status").toString();
+            QString psbt = transaction.value("psbt").toString();
+            if (status == "PENDING_CONFIRMATION" ||
+                status == "CONFIRMED" ||
+                status == "NETWORK_REJECTED"){
+                QWarningMessage _msg;
+                bridge::nunchukImportPsbt(walletId, psbt, _msg);
+                QString id = transaction.value("id").toString();
+                QString hex = transaction.value("hex").toString();
+                QString reject_msg = transaction.value("reject_msg").toString();
+                bridge::nunchukUpdateTransaction(walletId, QString::fromStdString(result.get_txid()), id, hex, reject_msg, _msg);
+            } else if (status == "READY_TO_BROADCAST" ||
+                       status == "PENDING_SIGNATURES") {
+                QWarningMessage _msg;
+                bridge::nunchukImportPsbt(walletId, psbt, _msg);
+            }
+        }
         if(AppModel::instance()->transactionInfo() && (0 == QString::compare(tx_id, AppModel::instance()->transactionInfo()->txid(), Qt::CaseInsensitive))){
             if(0 == QString::compare(walletId, AppModel::instance()->transactionInfo()->walletId(), Qt::CaseInsensitive))
             {
@@ -943,6 +970,20 @@ void Controller::slotFinishCreateSoftwareSigner(const QMasterSignerPtr ret,
             }
             else if(last == (int)E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY){
                 QQuickViewer::instance()->sendEvent(E::EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED);
+            }else if(last == (int)E::STATE_ID_SCR_UNLOCK_DB){
+                QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+                AppModel::instance()->makeMatrixInstanceForAccount();
+                QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+                if(pKey){
+                    QTimer::singleShot(3000,[pKey](){
+                        AppModel::instance()->showToast(0,
+                                                       STR_CPP_108.arg(pKey->name()),
+                                                       EWARNING::WarningType::SUCCESS_MSG,
+                                                       STR_CPP_108.arg(pKey->name()));
+                        QWarningMessage msg;
+                        bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
+                    });
+                }
             }
         }
         else if(QQuickViewer::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
@@ -990,7 +1031,7 @@ void Controller::slotFinishCreateWallet(nunchuk::Wallet ret,
                                                          ret.get_n(),
                                                          QString::fromStdString(ret.get_name()),
                                                          QString::number((int)ret.get_address_type()),
-                                                         ret.get_balance(),
+                                                         ret.get_unconfirmed_balance(),
                                                          QDateTime::fromTime_t(ret.get_create_date()),
                                                          ret.is_escrow(),
                                                          signersAssinged,
@@ -1033,11 +1074,10 @@ void Controller::slotFinishBackupWallet(QString what,
 }
 
 void Controller::slotFinishBalanceChanged(const QString &id,
-                                          const qint64 value)
+                                          const qint64 balance)
 {
     if(AppModel::instance()->walletList()){
-        AppModel::instance()->walletList()->updateBalance(id,
-                                                          value);
+        AppModel::instance()->walletList()->updateBalance(id, balance);
         AppModel::instance()->startGetUsedAddresses(id);
         AppModel::instance()->startGetUnusedAddresses(id);
     }
@@ -1049,6 +1089,7 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
                                               nunchuk::Transaction tx)
 {
     DBG_INFO << tx_id << status << wallet_id;
+    bridge::assistedWalletUpdateTx(wallet_id,tx);
     AppModel::instance()->startGetUsedAddresses(wallet_id);
     AppModel::instance()->startGetUnusedAddresses(wallet_id);
     if(AppModel::instance()->transactionInfo() && (0 == QString::compare(tx_id, AppModel::instance()->transactionInfo()->txid(), Qt::CaseInsensitive))){
@@ -1225,5 +1266,23 @@ void Controller::slotFinishReloadRemoteSigners(std::vector<nunchuk::SingleSigner
 
 void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
 {
-    AppModel::instance()->requestSyncWallets(bridge::nunchukConvertWallets(wallets));
+    QWalletListModelPtr ret = bridge::nunchukConvertWallets(wallets);
+    if(ret){
+        AppModel::instance()->setWalletList(ret);
+        if(ret->rowCount() > 0){
+            QString lastWalletId = bridge::nunchukGetSelectedWallet();
+            int lastIndex = -1;
+            if(lastWalletId != ""){
+                lastIndex = AppModel::instance()->walletList()->getWalletIndexById(lastWalletId);
+            }
+            AppModel::instance()->setWalletListCurrentIndex(lastIndex);
+        }
+    }
+    if(ONLINE_MODE == bridge::nunchukCurrentMode()){
+        if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){
+            if(CLIENT_INSTANCE->rooms()){
+                CLIENT_INSTANCE->rooms()->downloadRoomWallets();
+            }
+        }
+    }
 }

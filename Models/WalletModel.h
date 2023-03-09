@@ -35,7 +35,7 @@ class Wallet : public QObject
     Q_PROPERTY(int creationMode             READ getCreationMode     NOTIFY creationModeChanged)
     Q_PROPERTY(int containsHWSigner         READ getContainsHWSigner NOTIFY containsHWSignerChanged)
     Q_PROPERTY(bool isSharedWallet          READ isSharedWallet      NOTIFY isSharedWalletChanged)
-
+    Q_PROPERTY(bool isAssistedWallet        READ isAssistedWallet    NOTIFY isAssistedWalletChanged)
 public:
     Wallet();
     Wallet(const QString &pr_id,
@@ -119,8 +119,8 @@ public:
     QString roomId() const;
     void setRoomId(const QString &roomId);
     QString initEventId() const;
-    void setInitEventId(const QString &initEventId);
-
+    void setInitEventId(const QString &initEventId);    
+    bool isAssistedWallet() const;
 private:
     QString id_;
     int m_;
@@ -175,6 +175,7 @@ signals:
     void isSharedWalletChanged();
     void roomIdChanged();
     void initEventIdChanged();
+    void isAssistedWalletChanged();
 };
 typedef QSharedPointer<Wallet> QWalletPtr;
 
@@ -201,9 +202,10 @@ public:
                    const bool pr_escrow,
                    QSingleSignerListModelPtr pr_signers,
                    const QString &pr_description);
-    void addWallet(const QWalletPtr &wl);
-    void updateBalance(const QString &walletId, const qint64 value);
-    void updateIsSharedWallet(const QString &walletId, const bool value);
+    void addWallet(const QWalletPtr &wallet);
+    void replaceWallet(const QWalletPtr &wallet);
+    void addSharedWallet(const QWalletPtr &wallet);
+    void updateBalance(const QString &walletId, const qint64 balance);
     void updateAddress(const QString &walletId, const QStringList &used, const QStringList &unused);
     void updateName(const QString &walletId, const QString &value);
     void updateDescription(const QString &walletId, const QString &value);
@@ -216,8 +218,8 @@ public:
     void notifyUnitChanged();
     void updateSignerHealthStatus(const QString& masterSignerId, const int status, const time_t time);
     void notifyMasterSignerDeleted(const QString& masterSignerId);
-    void notifyMasterSignerRenamed(const QString& masterSignerId, const QString& newname);
-    void notifyRemoteSignerRenamed(const QString&fingerprint, const QString &newname);
+    void renameSignerById(const QString& id, const QString& newname);
+    void renameSignerByXfp(const QString& xfp, const QString &newname);
     int getWalletIndexById(const QString& walletId);
     void updateHealthCheckTime();
     void requestSort(int role, int order);
@@ -239,7 +241,8 @@ public:
         wallet_Address_Role,
         wallet_usedAddressList_Role,
         wallet_unUsedAddressList_Role,
-        wallet_isSharedWallet_Role
+        wallet_isSharedWallet_Role,
+        wallet_isAssistedWallet_Role
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

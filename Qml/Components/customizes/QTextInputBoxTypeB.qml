@@ -46,6 +46,7 @@ Column {
     signal upKeyRequest()
     signal enterKeyRequest()
     signal pasteKeyRequest()
+    signal tabKeyRequest()
 
     Row {
         width: parent.width
@@ -113,9 +114,8 @@ Column {
             Keys.onReturnPressed: { enterKeyRequest() }
             Keys.onEnterPressed:  { enterKeyRequest() }
             Keys.onPressed: function (keyEvent) {
-                if (keyEvent.matches(StandardKey.Paste)) {
-                    pasteKeyRequest()
-                }
+                if (keyEvent.matches(StandardKey.Paste)) { pasteKeyRequest() }
+                if (keyEvent.key === Qt.Key_Tab) { keyEvent.accepted = false; tabKeyRequest() }
             }
         }
         QImage {

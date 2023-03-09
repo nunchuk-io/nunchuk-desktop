@@ -73,7 +73,7 @@ QScreen {
             id:keyseeds
             label.text: STR.STR_QML_099
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             QText {
                 width: 540
@@ -129,7 +129,7 @@ QScreen {
                             var targetX = inputmnemonic.x + gridmmonic.x
                             if(textBoxFocus){
                                 suggestionList.currentIndexBox = index
-                                searchingText(inputmnemonic.textInputted)
+                                suggestionList.searchingText(inputmnemonic.textInputted)
                             }
                         }
                         onTextBoxFocusChanged: {
@@ -137,18 +137,20 @@ QScreen {
                                 suggestionList.currentIndexBox = index
                                 suggestionList.y = inputmnemonic.y + inputmnemonic.height + gridmmonic.y
                                 suggestionList.x = inputmnemonic.x + gridmmonic.x
-                                searchingText(inputmnemonic.textInputted)
+                                suggestionList.searchingText(inputmnemonic.textInputted)
                             }
                             else{
                                 if(suggestionList.currentIndexBox === index){
                                     suggestionList.currentIndexBox = -1
                                 }
-                                searchingText("")
+                                suggestionList.searchingText("")
                             }
                         }
                         onDownKeyRequest: {suggestionList.downKeyRequest()  }
                         onUpKeyRequest:   {suggestionList.upKeyRequest()    }
                         onEnterKeyRequest:{suggestionList.enterKeyRequest() }
+                        onPasteKeyRequest: { suggestionList.pasteSequence(index) }
+                        onTabKeyRequest: { suggestionList.enterKeyRequest() }
                     }
                 }
             }
@@ -196,7 +198,61 @@ QScreen {
                 function downKeyRequest() {sglst.downKeyRequest() }
                 function upKeyRequest()   {sglst.upKeyRequest()   }
                 function enterKeyRequest(){sglst.enterKeyRequest()}
+                function pasteSequence(index){
+                    waitPaste.index = index
+                    waitPaste.restart()
+                }
+                function searchingText(str){
+                    modelSearch.clear()
+                    for(var i = 0; i < AppModel.suggestMnemonics.length; i++){
+                        if(str === ""){
+                            var data = {'mnemonic': AppModel.suggestMnemonics[i]};
+                            modelSearch.append(data)
+                        }
+                        else{
+                            var currentText = AppModel.suggestMnemonics[i]
+                            if (currentText.toLowerCase().includes(str.toLowerCase())){
+                                var datafilter = {'mnemonic': AppModel.suggestMnemonics[i]};
+                                modelSearch.append(datafilter)
+                            }
+                        }
+                    }
+                    sglst.currentIndex = 0
+                }
+                ListModel {
+                    id: modelSearch
+                }
+                Timer {
+                    id: waitPaste
+                    property int index: -1
+                    interval: 50
+                    running: false
+                    repeat: false
+                    onTriggered: {
+                        var input = inputrepeater.itemAt(index).textInputted
+                        var nemonics = input.split(" ")
+                        if(nemonics.length === 1){ nemonics = input.split(";") }
+                        if(nemonics.length === 1){ nemonics = input.split(":") }
+                        if(nemonics.length === 1){ nemonics = input.split("-") }
+                        if(nemonics.length === 1){ nemonics = input.split("|") }
+                        if(nemonics.length === 1){ return }
 
+                        if(index > 0){
+                            for(var i = 0; i < index; i++){ inputrepeater.itemAt(i).textInputted = ""}
+                        }
+                        var real_idx = 0;
+                        for(var j = 0; j < nemonics.length; j++){
+                            real_idx = j+index
+                            if(real_idx < 24){
+                                inputrepeater.itemAt(real_idx).textInputted = nemonics[j]
+                            }
+                        }
+                        real_idx = real_idx+1
+                        if(real_idx < 24){
+                            for(var k = real_idx+1; k < 24; k++){ inputrepeater.itemAt(k).textInputted = ""}
+                        }
+                    }
+                }
                 Rectangle {
                     id: bg
                     anchors {
@@ -264,29 +320,8 @@ QScreen {
                 }
             }
 
-            function searchingText(str){
-                modelSearch.clear()
-                for(var i = 0; i < AppModel.suggestMnemonics.length; i++){
-                    if(str === ""){
-                        var data = {'mnemonic': AppModel.suggestMnemonics[i]};
-                        modelSearch.append(data)
-                    }
-                    else{
-                        var currentText = AppModel.suggestMnemonics[i]
-                        if (currentText.toLowerCase().includes(str.toLowerCase())){
-                            var datafilter = {'mnemonic': AppModel.suggestMnemonics[i]};
-                            modelSearch.append(datafilter)
-                        }
-                    }
-                }
-                sglst.currentIndex = 0
-            }
-            ListModel {
-                id: modelSearch
-            }
         }
     }
-
     Component{
         id:enterYourPassphrase
         QOnScreenContent {
@@ -295,7 +330,7 @@ QScreen {
             anchors.centerIn: parent
             label.text: STR.STR_QML_457
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             Column{
                 spacing: 24
@@ -379,13 +414,12 @@ QScreen {
             }
         }
     }
-
     Component{
         id:keyName
         QOnScreenContent {
             label.text: STR.STR_QML_266
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             QTextInputBoxTypeB {
                 id: signername
@@ -438,5 +472,6 @@ QScreen {
             }
         }
     }
+
 }
 

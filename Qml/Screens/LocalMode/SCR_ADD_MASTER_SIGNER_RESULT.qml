@@ -36,6 +36,10 @@ QScreen {
     property int masterSignerHealth: -1
     property int signerType: AppModel.masterSignerInfo.signerType
     property bool isPrimaryKey: AppModel.masterSignerInfo.isPrimaryKey
+    property string messageToSign: AppModel.masterSignerInfo.message
+    property string messageToSignSHA256: AppModel.masterSignerInfo.messageSHA256
+    property bool   isHardwareSigner: (AppModel.masterSignerInfo.signerType === NUNCHUCKTYPE.HARDWARE)
+
     QOnScreenContent {
         id:_content
         width: popupWidth
@@ -508,6 +512,53 @@ QScreen {
                         wrapMode: Text.WordWrap
                         font.family: "Lato"
                         text: STR.STR_QML_141
+                    }
+                    Rectangle {
+                        width: 500
+                        height: 50
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color: Qt.rgba(255, 255, 255, 0.2)
+                        radius: 4
+                        QText {
+                            width: parent.width - 50
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            color: "#F1FAFE"
+                            font.pixelSize: 14
+                            wrapMode: Text.WrapAnywhere
+                            font.family: "Lato"
+                            text: messageToSign
+                        }
+                    }
+                    QText {
+                        width: 328
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        horizontalAlignment: Text.AlignHCenter
+                        color: "#F6D65D"
+                        font.pixelSize: 14
+                        wrapMode: Text.WordWrap
+                        font.family: "Lato"
+                        text: "Hash"
+                        visible: isHardwareSigner
+                    }
+                    Rectangle {
+                        width: 500
+                        height: 50
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color: Qt.rgba(255, 255, 255, 0.2)
+                        radius: 4
+                        visible: isHardwareSigner
+                        QText {
+                            width: parent.width - 50
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            color: "#F1FAFE"
+                            font.pixelSize: 14
+                            wrapMode: Text.WrapAnywhere
+                            font.family: "Lato"
+                            text: messageToSignSHA256
+                            font.capitalization: Font.AllUppercase
+                        }
                     }
                 }
             }

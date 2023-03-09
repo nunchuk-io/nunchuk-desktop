@@ -30,7 +30,8 @@ QDevice::QDevice() :
     needs_pass_phrase_sent_(false),
     needs_pin_sent_(false),
     usableToAdd_(true),
-    master_signer_id_("")
+    master_signer_id_(""),
+    cardId_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -45,7 +46,8 @@ QDevice::QDevice(const QString &fingerprint) :
     needs_pass_phrase_sent_(false),
     needs_pin_sent_(false),
     usableToAdd_(true),
-    master_signer_id_("")
+    master_signer_id_(""),
+    cardId_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -68,7 +70,8 @@ QDevice::QDevice(const QString &name,
     needs_pass_phrase_sent_(needs_pass_phrase_sent),
     needs_pin_sent_(needs_pin_sent),
     usableToAdd_(true),
-    master_signer_id_(mastersigner_id)
+    master_signer_id_(mastersigner_id),
+    cardId_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -179,6 +182,17 @@ void QDevice::setMasterSignerId(const QString &master_signer_id)
         master_signer_id_ = master_signer_id;
         emit masterSignerIdChanged();
     }
+}
+
+QString QDevice::cardId() const
+{
+    return cardId_;
+}
+
+QDevice& QDevice::setCardId(const QString &card_id)
+{
+    cardId_ = card_id;
+    return *this;
 }
 
 DeviceListModel::DeviceListModel()
@@ -339,7 +353,7 @@ QDevicePtr DeviceListModel::getDeviceByPath(const QString& path){
     return QDevicePtr(NULL);
 }
 
-QDevicePtr DeviceListModel::getDeviceByXFP(const QString& xfp){
+QDevicePtr DeviceListModel::getDeviceByXfp(const QString& xfp){
     foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
             return it;
@@ -439,7 +453,7 @@ bool DeviceListModel::containsNeedPinSent()
     return false;
 }
 
-void DeviceListModel::updateDeviceNeedPassphraseSentByMasterSignerId(const QString &id, bool needpassphrase)
+void DeviceListModel::updateNeedPassphraseSentById(const QString &id, bool needpassphrase)
 {
     beginResetModel();
     foreach (QDevicePtr it, d_) {
@@ -450,11 +464,11 @@ void DeviceListModel::updateDeviceNeedPassphraseSentByMasterSignerId(const QStri
     endResetModel();
 }
 
-void DeviceListModel::notifySoftwareSignerRenamed(const QString& mastersignerid, const QString &newname)
+void DeviceListModel::renameById(const QString& id, const QString &newname)
 {
     beginResetModel();
     foreach (QDevicePtr i , d_ ){
-        if(0 == QString::compare(mastersignerid, i.data()->masterSignerId(), Qt::CaseInsensitive)){
+        if(0 == QString::compare(id, i.data()->masterSignerId(), Qt::CaseInsensitive)){
             i.data()->setName(newname);
         }
     }
@@ -471,7 +485,7 @@ int DeviceListModel::deviceCount() const
     return d_.count();
 }
 
-int DeviceListModel::getDeviceIndexByXFP(const QString &xfp)
+int DeviceListModel::getDeviceIndexByXfp(const QString &xfp)
 {
     for (int i = 0; i < d_.count(); i++) {
         if(0 == QString::compare(xfp, d_.at(i).data()->masterFingerPrint(), Qt::CaseInsensitive)){

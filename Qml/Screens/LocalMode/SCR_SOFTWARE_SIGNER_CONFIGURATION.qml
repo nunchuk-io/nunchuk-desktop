@@ -48,17 +48,7 @@ QScreen {
             QOnScreenContent {
                 label.text: STR.STR_QML_266
                 onCloseClicked: {
-                    if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                        QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION)
-                    }
-                    else{
-                        if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
-                            QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_TO_WALLET_SIGNER_CONFIGURATION)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION)
-                        }
-                    }
+                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                 }
                 QTextInputBoxTypeB {
                     id: signername
@@ -118,17 +108,7 @@ QScreen {
             QOnScreenContent {
                 label.text: STR.STR_QML_268
                 onCloseClicked: {
-                    if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                        QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION)
-                    }
-                    else{
-                        if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
-                            QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_TO_WALLET_SIGNER_CONFIGURATION)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION)
-                        }
-                    }
+                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                 }
                 Column {
                     spacing: 20
@@ -263,17 +243,7 @@ QScreen {
             QOnScreenContent {
                 label.text: STR.STR_QML_268_PKEY
                 onCloseClicked: {
-                    if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                        QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION)
-                    }
-                    else{
-                        if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
-                            QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_TO_WALLET_SIGNER_CONFIGURATION)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION)
-                        }
-                    }
+                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                 }
                 Column {
                     spacing: 20

@@ -42,7 +42,7 @@ void EVT_LOGIN_ONLINE_CREATE_ACCOUNT_HANDLER(QVariant msg) {
 }
 
 void EVT_LOGIN_ONLINE_SIGN_IN_HANDLER(QVariant msg) {
-    AppModel::instance()->sign_in(msg);
+    AppModel::instance()->loginNunchuk(msg);
 }
 
 void EVT_LOGIN_ONLINE_SWITCH_LOCAL_MODE_HANDLER(QVariant msg) {
@@ -65,7 +65,9 @@ void EVT_LOGIN_ONLINE_STAY_SIGNED_IN_HANDLER(QVariant msg) {
 }
 
 void EVT_LOGIN_ONLINE_LOGIN_SUCCEED_HANDLER(QVariant msg) {
-    AppModel::instance()->loginSucceed();
+    QMap<QString, QVariant> makeInstanceData;
+    makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME_ONLINE;
+    AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
 }
 
 void EVT_LOGIN_ONLINE_RECOVER_PASSWORD_HANDLER(QVariant msg) {

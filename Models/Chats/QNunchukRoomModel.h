@@ -146,9 +146,11 @@ public:
     void connectRoomServiceSignals();
     bool checkIsLocalUser(const QString userID);
     QList<DracoUser> getNunchukMembers() const;
+    DracoUser getNunchukMemberUser(const QString &input);
     QString getNunchukMemberChatId(const QString &input);
     QString getNunchukMemberName(const QString &input);
     QString getNunchukMemberEmail(const QString& input) ;
+    QString getNunchukMemberAvatar(const QString& input) ;
     void setNunchukMembers(const QList<DracoUser> &nunchukMembers);
 
     QRoomTransactionModel *pendingTxs() const;
@@ -267,6 +269,7 @@ public:
     int getIndex(const QString& id) const;
     Quotient::Connection *connection();
     void downloadRooms();
+    void downloadRoomWallets();
     void checkNunchukSyncRoom();
     int currentIndex() const;
     void setCurrentIndex(int index);
@@ -293,6 +296,7 @@ public:
         room_is_encrypted
     };
 
+    bool containsRoom(const QString& id);
     void doAddRoom(QNunchukRoomPtr r);
     void removeRoomByIndex(const int index);
     void removeAll();
@@ -304,15 +308,20 @@ public:
     void joinRoom(QString roomAliasOrId);
     void createRoomChat(const QStringList invitees_id, const QString &topic, const QString &name, QVariant firstMessage = QVariant());
     bool allHisLoaded();
+
+    // Room wallets
+    QList<QRoomWalletPtr> getRoomWallets() const;
+    void setRoomWallets(const QList<QRoomWalletPtr> &roomWallets);
+
 private:
     Quotient::Connection*   m_connection;
     int                     m_currentIndex;
     QNunchukRoomPtr         m_currentRoom;
     QList<QNunchukRoomPtr>  m_data;
     QList<QNunchukRoomPtr>  m_servive;
+    QList<QRoomWalletPtr>   m_roomWallets;
     QTimer                  m_time;
 private:
-    bool containsRoom(const QString& id);
     bool containsServiceRoom(const QString& id);
     bool containsSyncRoom();
 

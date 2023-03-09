@@ -241,3 +241,12 @@ void EVT_WALLET_INFO_IMPORT_PSBT_HANDLER(QVariant msg) {
         }
     }
 }
+
+void EVT_WALLET_INFO_REFRESH_WALLET_REQUEST_HANDLER(QVariant msg) {
+    DBG_INFO << msg;
+    QString wallet_id = msg.toString();
+    QWarningMessage message;
+    bridge::ForceRefreshWallet(wallet_id,message);
+}
+
+

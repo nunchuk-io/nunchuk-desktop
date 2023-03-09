@@ -39,6 +39,7 @@ public:
     };
 
     nunchuk::RoomWallet nunchukRoomWallet() const;
+    QString get_room_id() const;
     QString get_wallet_id() const;
     void set_wallet_id(const QString& value);
     QString get_init_event_id() const;

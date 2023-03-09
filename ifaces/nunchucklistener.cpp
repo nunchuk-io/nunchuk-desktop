@@ -23,9 +23,14 @@
 #include "QOutlog.h"
 #include <nunchuk.h>
 
-void balance_listener(std::string id, nunchuk::Amount value)
+void balance_listener(std::string id, nunchuk::Amount balance)
 {
-    bridge::nunchukBalanceChanged(QString::fromStdString(id), static_cast<qint64>(value));
+    bridge::nunchukBalanceChanged(QString::fromStdString(id), static_cast<qint64>(balance));
+}
+
+void balances_listener(string id, nunchuk::Amount balance, nunchuk::Amount unconfirmed_balance)
+{
+    bridge::nunchukBalanceChanged(QString::fromStdString(id), static_cast<qint64>(unconfirmed_balance));
 }
 
 void devices_listener(std::string fingerprint, bool connected)

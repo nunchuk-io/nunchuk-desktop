@@ -66,6 +66,8 @@ void EVT_ADD_MASTER_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_CONFIGURATION_HANDLER(QV
             signer.data()->setName(AppModel::instance()->masterSignerInfo()->name());
             signer.data()->setMasterSignerId(masterSignerId);
             signer.data()->setSignerType(AppModel::instance()->masterSignerInfo()->signerType());
+            signer.data()->setDevicetype(AppModel::instance()->masterSignerInfo()->device()->type());
+            signer.data()->setCardId(AppModel::instance()->masterSignerInfo()->device()->cardId());
             signer.data()->setIsValid(false);
             signer.data()->setMasterFingerPrint(AppModel::instance()->masterSignerInfo()->device()->masterFingerPrint());
             if(signer){

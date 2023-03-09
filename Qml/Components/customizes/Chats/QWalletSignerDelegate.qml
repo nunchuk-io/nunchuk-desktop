@@ -36,6 +36,8 @@ Rectangle {
     color: "transparent"
     property string signername: "A B"
     property string signerxfp : "A B"
+    property string username: "A B"
+    property string avatar : "A B"
     property bool   isLocaluser: false
     property string sectionname: ""
     property bool   isAirgappedSigner: false
@@ -49,10 +51,11 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 8
         QAvatar {
-            id: avatar
             width: 36
             height: 36
-            username: signername
+            maxChar: 2
+            username: roomRoot.username
+            avatarUrl: roomRoot.avatar
             anchors.verticalCenter: parent.verticalCenter
             displayStatus: false
         }

@@ -90,7 +90,7 @@ void UTXO::setAddress(const QString &address)
 
 QString UTXO::amountDisplay() const
 {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(amountSats());
     }
@@ -304,8 +304,9 @@ void UTXOListModel::notifyUnitChanged()
 
 QString UTXOListModel::amountDisplay()
 {
-    if(1 == AppSetting::instance()->unit()){
-        return QString::number(amountSats());
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+        QLocale locale(QLocale::English);
+        return locale.toString(amountSats());
     }
     else{
         return amountBTC();
@@ -318,11 +319,6 @@ QString UTXOListModel::amountBTC()
 }
 
 int UTXOListModel::amountSats()
-{
-    return totalAmountSelected();
-}
-
-int UTXOListModel::totalAmountSelected()
 {
     int total = 0;
     foreach (QUTXOPtr it, d_) {

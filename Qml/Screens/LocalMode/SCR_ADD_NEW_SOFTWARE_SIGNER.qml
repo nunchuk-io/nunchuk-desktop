@@ -37,17 +37,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: STR.STR_QML_142
         onCloseClicked: {
-            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
-            }
-            else{
-                if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
-                    QMLHandle.sendEvent(EVT.EVT_NEW_SOFTWARE_SIGNER_BACK_TO_WALLET_SIGNER_CONFIGURATION)
-                }
-                else {
-                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
-                }
-            }
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
         }
         QText {
             width: 540

@@ -82,6 +82,9 @@ void QLogginManager::requestLogout()
 {
     DBG_INFO << "DO NOT SIGNOUT FROM MATRIX - E2EE REQUIRED";
     if(connection()){
+        if(AppSetting::instance()->enableMultiDeviceSync()){
+            AppModel::instance()->startMultiDeviceSync(false);
+        }
         connection()->stopSync();
     }
 }

@@ -24,17 +24,22 @@ import Qt.labs.platform 1.1
 import "../../Components/origins"
 
 Item {
-    QImage {
+    property bool isAssisted: false
+    Item {
         id: area_wldetail
         anchors.fill: parent
-        source: "qrc:/Images/Images/Rectangle 2944.png"
         visible: false
         Row{
             anchors.fill: parent
-            Rectangle {
+            LinearGradient {
                 height: parent.height
                 width: parent.width * 0.6
-                color: "transparent"
+                start: Qt.point(0, 0)
+                end: Qt.point(parent.width * 0.6, 0)
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: isAssisted ? "#2F766D" : "#2F466C" }
+                    GradientStop { position: 1.0; color: isAssisted ? "#1C4A21" : "#031F2B" }
+                }
             }
             Rectangle {
                 width: parent.width * 0.4

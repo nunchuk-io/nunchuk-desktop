@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.1 )
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
-project(nunchuck-client-qt VERSION 0.1.0)
+project(nunchuk-qt VERSION 0.1.0)
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON)
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
@@ -85,7 +85,7 @@ set(Views_SRCS
     Views/STATE_ID_SCR_CREATE_TRANSACTION.cpp
     Views/STATE_ID_SCR_EXPORT_WALLET.cpp
     Views/STATE_ID_SCR_HOME.cpp
-    Views/STATE_ID_SCR_LOGIN.cpp
+    Views/STATE_ID_SCR_UNLOCK_DB.cpp
     Views/STATE_ID_SCR_MASTER_SIGNER_INFO.cpp
     Views/STATE_ID_SCR_RECEIVE.cpp
     Views/STATE_ID_SCR_REMOTE_SIGNER_INFO.cpp
@@ -227,7 +227,19 @@ endmacro()
 SET_OPTION(Quotient_ENABLE_E2EE  ON)
 add_subdirectory(contrib/quotient quotient EXCLUDE_FROM_ALL)
 
-add_executable ( ${PROJECT_NAME} WIN32 ${QAppEngine_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_VIEWS} ${MOCS})
+if(APPLE)
+    # And this part tells CMake where to find and install the file itself
+    set(APP_ICON_MACOSX ${CMAKE_CURRENT_SOURCE_DIR}/Icon.icns)
+    set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    add_executable( ${PROJECT_NAME} MACOSX_BUNDLE ${QAppEngine_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_VIEWS} ${MOCS} ${APP_ICON_MACOSX})
+else()
+    add_executable ( ${PROJECT_NAME} WIN32 ${QAppEngine_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_VIEWS} ${MOCS})
+endif()
+
+if(APPLE)
+    set_target_properties(${PROJECT_NAME}
+        PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist")
+endif()
 
 target_link_libraries (${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )
 
@@ -249,12 +261,6 @@ if(QRCODE_SCANNER)
 
     target_link_libraries (${PROJECT_NAME} Qt5::Multimedia )
 endif(QRCODE_SCANNER)
-
-if (APPLE AND CMAKE_BUILD_TYPE MATCHES Release)
-    SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
-        MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
-endif()
 
 find_package(Qt5Keychain QUIET)
 if (Qt5Keychain_FOUND)

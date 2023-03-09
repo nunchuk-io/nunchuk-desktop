@@ -184,14 +184,18 @@ QString MasterSigner::fingerPrint() const
     }
 }
 
-QString MasterSigner::message() const
+QString MasterSigner::message()
 {
     if(messageToSign_.isEmpty() || messageToSign_.isNull() || messageToSign_ == ""){
-        return qUtils::QGenerateRandomMessage();
+        messageToSign_ = qUtils::QGenerateRandomMessage();
     }
-    else{
-        return messageToSign_;
-    }
+    return messageToSign_;
+}
+
+QString MasterSigner::messageSHA256()
+{
+    QByteArray bytes = QCryptographicHash::hash(messageToSign_.toUtf8(), QCryptographicHash::Sha256);
+    return QString(bytes.toHex());
 }
 
 void MasterSigner::setMessage(const QString &messageToSign)
@@ -364,9 +368,9 @@ void MasterSignerListModel::addMasterSigner(const QMasterSignerPtr &d)
     endResetModel();
 }
 
-void MasterSignerListModel::updateMasterSignerName(const QString &signerId, const QString &name){
+void MasterSignerListModel::renameById(const QString &id, const QString &name){
     foreach (QMasterSignerPtr it, d_) {
-        if(it.data()->id() == signerId){
+        if(it.data()->id() == id){
             beginResetModel();
             it.data()->setName(name);
             endResetModel();

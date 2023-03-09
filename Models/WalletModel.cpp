@@ -114,7 +114,7 @@ QString Wallet::balanceBTC() const
 }
 
 QString Wallet::balanceDisplay() const {
-    if(1 == AppSetting::instance()->unit()){
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
         return locale.toString(balanceSats());
     }
@@ -443,6 +443,11 @@ void Wallet::setInitEventId(const QString &initEventId)
     }
 }
 
+bool Wallet::isAssistedWallet() const
+{
+    return AppModel::instance()->getUserWallets().contains(id_);
+}
+
 WalletListModel::WalletListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -487,6 +492,8 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
             return d_[index.row()]->unUsedAddressList();
         case wallet_isSharedWallet_Role:
             return d_[index.row()]->isSharedWallet();
+        case wallet_isAssistedWallet_Role:
+            return d_[index.row()]->isAssistedWallet();
         default:
             return QVariant();
         }
@@ -520,6 +527,7 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_usedAddressList_Role]      = "wallet_usedAddressList";
     roles[wallet_unUsedAddressList_Role]    = "wallet_unUsedAddressList";
     roles[wallet_isSharedWallet_Role]       = "wallet_isSharedWallet";
+    roles[wallet_isAssistedWallet_Role]     = "wallet_isAssistedWallet";
     return roles;
 }
 
@@ -541,32 +549,49 @@ void WalletListModel::addWallet(const QString &pr_id,
     endResetModel();
 }
 
-void WalletListModel::addWallet(const QWalletPtr &wl)
+void WalletListModel::addWallet(const QWalletPtr &wallet)
 {
-    if(wl && !containsId(wl.data()->id())){
+    if(wallet && !containsId(wallet.data()->id())){
         beginResetModel();
-        d_.append(wl);
+        d_.append(wallet);
         endResetModel();
     }
 }
 
-void WalletListModel::updateBalance(const QString &walletId, const qint64 value)
+void WalletListModel::replaceWallet(const QWalletPtr &wallet)
 {
-    beginResetModel();
-    foreach (QWalletPtr it, d_) {
-        if(0 == QString::compare(walletId, it.data()->id(), Qt::CaseInsensitive)){
-            it.data()->setBalance(value);
+    if(wallet){
+        beginResetModel();
+        for(int i = 0; i < d_.count(); i++){
+            if(0 == QString::compare(wallet.data()->id(), d_.at(i)->id(), Qt::CaseInsensitive)){
+                d_.replace(i, wallet);
+                break;
+            }
         }
+        endResetModel();
     }
-    endResetModel();
 }
 
-void WalletListModel::updateIsSharedWallet(const QString &walletId, const bool value)
+void WalletListModel::addSharedWallet(const QWalletPtr &wallet)
+{
+    if(wallet){
+        beginResetModel();
+        if(containsId(wallet.data()->id())){
+            replaceWallet(wallet);
+        }
+        else{
+            addWallet(wallet);
+        }
+        endResetModel();
+    }
+}
+
+void WalletListModel::updateBalance(const QString &walletId, const qint64 balance)
 {
     beginResetModel();
     foreach (QWalletPtr it, d_) {
         if(0 == QString::compare(walletId, it.data()->id(), Qt::CaseInsensitive)){
-            it.data()->setIsSharedWallet(value);
+            it.data()->setBalance(balance);
         }
     }
     endResetModel();
@@ -717,23 +742,23 @@ void WalletListModel::notifyMasterSignerDeleted(const QString &masterSignerId)
     endResetModel();
 }
 
-void WalletListModel::notifyMasterSignerRenamed(const QString &masterSignerId, const QString &newname)
+void WalletListModel::renameSignerById(const QString &id, const QString &newname)
 {
     beginResetModel();
     foreach (QWalletPtr i , d_ ){
         if(NULL != i.data()->singleSignersAssigned()){
-            i.data()->singleSignersAssigned()->notifyMasterSignerRenamed(masterSignerId, newname);
+            i.data()->singleSignersAssigned()->renameById(id, newname);
         }
     }
     endResetModel();
 }
 
-void WalletListModel::notifyRemoteSignerRenamed(const QString& fingerprint, const QString &newname)
+void WalletListModel::renameSignerByXfp(const QString& xfp, const QString &newname)
 {
     beginResetModel();
     foreach (QWalletPtr i , d_ ){
         if(NULL != i.data()->singleSignersAssigned()){
-            i.data()->singleSignersAssigned()->notifyRemoteSignerRenamed(fingerprint, newname);
+            i.data()->singleSignersAssigned()->renameByXfp(xfp, newname);
         }
     }
     endResetModel();
@@ -809,8 +834,8 @@ void WalletListModel::updateSignerNameInWalletById(const QString &wallet_id, con
     foreach (QWalletPtr it , d_ ){
         if(0 == QString::compare(it.data()->id(), wallet_id, Qt::CaseInsensitive)){
             if(it.data()->singleSignersAssigned()){
-                it.data()->singleSignersAssigned()->notifyRemoteSignerRenamed(xfp, name);
-                it.data()->singleSignersAssigned()->notifyRemoteLocalSigner(xfp);
+                it.data()->singleSignersAssigned()->renameByXfp(xfp, name);
+                it.data()->singleSignersAssigned()->updateIsLocalSigner(xfp, false);
             }
         }
     }

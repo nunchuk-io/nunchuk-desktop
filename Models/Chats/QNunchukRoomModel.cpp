@@ -453,7 +453,6 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
         QJsonObject body = json["body"].toObject();
         cons.matrixType = NUNCHUK_EVENT_WALLET;
         if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_INIT, Qt::CaseInsensitive)){
-            QString wallet_name = body["name"].toString();
             cons.init_event_id = init_event_id;
             cons.init_event_json = json;
             bool isCanceled = !roomWallet() || (0 != QString::compare(cons.init_event_id, roomWallet()->get_init_event_id(), Qt::CaseInsensitive));
@@ -470,8 +469,9 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.messageType = MSG_WALLET_JOIN;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_LEAVE, Qt::CaseInsensitive)){
-            QString join_event_id = json["body"].toObject()["io.nunchuk.relates_to"].toObject()["join_event_id"].toString();
-            QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
+            QJsonObject io_nunchuk_relates_to = body["io.nunchuk.relates_to"].toObject();
+            QString join_event_id = io_nunchuk_relates_to["join_event_id"].toString();
+            QJsonObject init_event = io_nunchuk_relates_to["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
             QString xfp = "";
@@ -486,7 +486,6 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.messageType = MSG_WALLET_LEAVE;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_READY, Qt::CaseInsensitive)){
-            QString join_event_id = json["body"].toObject()["io.nunchuk.relates_to"].toObject()["join_event_id"].toString();
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
@@ -495,7 +494,6 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.messageType = MSG_WALLET_READY;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_CREATE, Qt::CaseInsensitive)){
-            QString join_event_id = json["body"].toObject()["io.nunchuk.relates_to"].toObject()["join_event_id"].toString();
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
@@ -504,7 +502,6 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.messageType = MSG_WALLET_CREATE;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_CANCEL, Qt::CaseInsensitive)){
-            QString join_event_id = json["body"].toObject()["io.nunchuk.relates_to"].toObject()["join_event_id"].toString();
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
@@ -861,7 +858,9 @@ void QNunchukRoom::downloadHistorical()
                     AppSetting::instance()->setSyncPercent(((double)index/m_room->timelineSize())*100);
                 }
                 AppModel::instance()->closePromtNunchukSync();
-                matrixbrigde::RegisterAutoBackup(id(), CLIENT_INSTANCE->accessToken());
+                if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){
+                    matrixbrigde::RegisterAutoBackup(id(), CLIENT_INSTANCE->accessToken());
+                }
                 AppModel::instance()->startReloadWallets();
                 AppModel::instance()->startReloadMasterSigners();
                 AppModel::instance()->startReloadRemoteSigners();
@@ -968,7 +967,7 @@ QList<DracoUser> QNunchukRoom::getNunchukMembers() const
     return m_nunchukMembers;
 }
 
-QString QNunchukRoom::getNunchukMemberChatId(const QString &input)
+DracoUser QNunchukRoom::getNunchukMemberUser(const QString &input)
 {
     QString id_input = input;
     id_input.remove("@");
@@ -980,46 +979,41 @@ QString QNunchukRoom::getNunchukMemberChatId(const QString &input)
         my_id.remove("nunchuk_io_");
         my_id.remove(":nunchuk.io");
         if(0 == QString::compare(my_id, id_input, Qt::CaseInsensitive)){
-            return user.chat_id;
+            return user;
         }
     }
-    return input;
+    DracoUser tmp;
+    tmp.id = input;
+    tmp.name = input;
+    tmp.email = input;
+    tmp.gender = input;
+    tmp.avatar = input;
+    tmp.status = input;
+    tmp.status_text = input;
+    tmp.chat_id = input;
+    tmp.username = input;
+    tmp.login_type = input;
+    return tmp;
+}
+
+QString QNunchukRoom::getNunchukMemberChatId(const QString &input)
+{
+    return getNunchukMemberUser(input).chat_id;
 }
 
 QString QNunchukRoom::getNunchukMemberName(const QString &input)
 {
-    QString id_input = input;
-    id_input.remove("@");
-    id_input.remove("nunchuk_io_");
-    id_input.remove(":nunchuk.io");
-    for(DracoUser user : m_nunchukMembers){
-        QString my_id = user.id;
-        my_id.remove("@");
-        my_id.remove("nunchuk_io_");
-        my_id.remove(":nunchuk.io");
-        if(0 == QString::compare(my_id, id_input, Qt::CaseInsensitive)){
-            return user.name;
-        }
-    }
-    return input;
+    return getNunchukMemberUser(input).name;
 }
 
 QString QNunchukRoom::getNunchukMemberEmail(const QString &input)
 {
-    QString id_input = input;
-    id_input.remove("@");
-    id_input.remove("nunchuk_io_");
-    id_input.remove(":nunchuk.io");
-    for(DracoUser user : m_nunchukMembers){
-        QString my_id = user.id;
-        my_id.remove("@");
-        my_id.remove("nunchuk_io_");
-        my_id.remove(":nunchuk.io");
-        if(0 == QString::compare(my_id, id_input, Qt::CaseInsensitive)){
-            return user.email;
-        }
-    }
-    return input;
+    return getNunchukMemberUser(input).email;
+}
+
+QString QNunchukRoom::getNunchukMemberAvatar(const QString &input)
+{
+    return getNunchukMemberUser(input).avatar;
 }
 
 void QNunchukRoom::setNunchukMembers(const QList<DracoUser> &nunchukMembers)
@@ -1571,7 +1565,7 @@ void QNunchukRoom::nunchukConsumeEvent(const RoomEvent &evt)
 
 void QNunchukRoom::nunchukConsumeSyncEvent(const RoomEvent &evt)
 {
-    if(CLIENT_INSTANCE->isNunchukLoggedIn() && AppSetting::instance()->enableMultiDeviceSync()){
+    if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn() && AppSetting::instance()->enableMultiDeviceSync()){
         QString matrixType = evt.matrixType();
         if(0 == QString::compare(NUNCHUK_EVENT_SYNC, matrixType, Qt::CaseInsensitive)){
             QNunchukMatrixEvent e;
@@ -1689,6 +1683,7 @@ QNunchukRoomListModel::QNunchukRoomListModel(Connection *c):
 {
     m_data.clear();
     m_servive.clear();
+    m_roomWallets.clear();
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -1842,9 +1837,24 @@ void QNunchukRoomListModel::downloadRooms()
                 if(AppSetting::instance()->enableMultiDeviceSync()){
                     AppModel::instance()->startMultiDeviceSync(true);
                 }
+                else{
+                    AppModel::instance()->startMultiDeviceSync(false);
+                }
+                downloadRoomWallets();
             });
         });
     }
+}
+
+void QNunchukRoomListModel::downloadRoomWallets()
+{
+    // Download all shared wallet
+    QWarningMessage warningmsg;
+    QList<QRoomWalletPtr> wallets = matrixbrigde::GetAllRoomWallets(warningmsg);
+    if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+        setRoomWallets(wallets);
+    }
+    AppModel::instance()->requestSyncSharedWallets();
 }
 
 int QNunchukRoomListModel::currentIndex() const
@@ -2116,6 +2126,16 @@ bool QNunchukRoomListModel::allHisLoaded()
         }
     }
     return ret;
+}
+
+QList<QRoomWalletPtr> QNunchukRoomListModel::getRoomWallets() const
+{
+    return m_roomWallets;
+}
+
+void QNunchukRoomListModel::setRoomWallets(const QList<QRoomWalletPtr> &roomWallets)
+{
+    m_roomWallets = roomWallets;
 }
 
 bool QNunchukRoomListModel::containsRoom(const QString &id)

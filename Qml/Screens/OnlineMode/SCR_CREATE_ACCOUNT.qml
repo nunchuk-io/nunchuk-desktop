@@ -34,7 +34,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: ""
         onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_SETTING_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_CREATE_ACCOUNT)
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
         }
         Column{
             anchors.centerIn: parent
@@ -125,7 +125,7 @@ QScreen {
                     type: eTypeB
                     onButtonClicked: {
                         var isSignIn = false;
-                        QMLHandle.sendEvent(EVT.EVT_CREATE_ACCOUNT_PRIMARY_KEY_REQUEST,isSignIn)
+                        QMLHandle.sendEvent(EVT.EVT_CREATE_PRIMARY_KEY_REQUEST,isSignIn)
                     }
                 }
                 QText {

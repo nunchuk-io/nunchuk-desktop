@@ -40,15 +40,20 @@ Rectangle {
     property bool displayStatus: true
     readonly property bool isAvatarUrl: avatarUrl != "";
     readonly property url realSource: isAvatarUrl ? "image://nunchuk/" + avatarUrl : ""
+    property int maxChar: 1
     readonly property QImage url: QImage{
         source: realSource
     }
 
     function getFistCharterName() {
         if(username !== ""){
-            var ret = username.charAt(0)
-            if(username.split(' ').length > 1){ ret += username.split(' ')[(username.split(' ').length - 1)].charAt(0)}
-            return ret;
+            if (maxChar == 1) {
+                var ret = username.charAt(0)
+                if(username.split(' ').length > 1){ ret += username.split(' ')[(username.split(' ').length - 1)].charAt(0)}
+                return ret;
+            } else {
+                return username.substr(0,maxChar)
+            }
         }
         return ""
     }

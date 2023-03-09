@@ -41,7 +41,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: ""
         onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_SETTING_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_LOGIN_WITH_SOFTWARE_KEY)
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
         }
         Column{
             anchors.centerIn: parent

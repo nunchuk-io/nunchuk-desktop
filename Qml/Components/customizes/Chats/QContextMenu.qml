@@ -37,7 +37,7 @@ Menu {
     signal itemClicked(var index)
     background: Rectangle {
         implicitWidth: menuWidth
-        implicitHeight: labels.length*menuHeight
+        implicitHeight: optionMenu.labels.length*menuHeight
         radius: 8
         color: "#FFFFFF"
         layer.enabled: true
@@ -54,10 +54,15 @@ Menu {
         MenuItem {
             id: delegateMenu
             height: menuHeight
-            text: labels[index]
-            icon.source: icons[index]
-            enabled: enables[index]
-            onTriggered: { itemClicked(index) }
+            text: optionMenu.labels[index]
+            icon.source: optionMenu.icons[index]
+            enabled: optionMenu.enables[index]
+            onTriggered: {
+                var cacheEnable = delegateMenu.enabled
+                delegateMenu.enabled = false
+                itemClicked(index)
+                delegateMenu.enabled = cacheEnable
+            }
             background: Rectangle {
                 implicitWidth: menuWidth
                 implicitHeight: menuHeight
@@ -81,18 +86,18 @@ Menu {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: icons[index]
+                    source: optionMenu.icons[index]
                     opacity: delegateMenu.enabled ? 1.0 : 0.7
                 }
                 QText {
-                    text: labels[index]
+                    text: optionMenu.labels[index]
                     color: {
                         if(!delegateMenu.enabled) return "#595959"
-                        if(colors.length == 0){
+                        if(optionMenu.colors.length == 0){
                             "#031F2B"
                         }
                         else{
-                            colors[index]
+                            optionMenu.colors[index]
                         }
                     }
                     width: paintedWidth

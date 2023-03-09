@@ -43,6 +43,10 @@ public:
                                  const std::string& desc,
                                  QWarningMessage& msg);
 
+    nunchuk::Wallet CreateWallet(const nunchuk::Wallet& wallet,
+                                 bool allow_used_signer,
+                                 QWarningMessage& msg);
+
     std::string DraftWallet(const std::string& name,
                             int m,
                             int n,
@@ -55,6 +59,9 @@ public:
     std::vector<nunchuk::Wallet> GetWallets(QWarningMessage& msg);
 
     nunchuk::Wallet GetWallet(const std::string& wallet_id,
+                              QWarningMessage& msg);
+
+    bool HasWallet(const std::string& wallet_id,
                               QWarningMessage& msg);
 
     bool DeleteWallet(const std::string& wallet_id, QWarningMessage& msg);
@@ -91,6 +98,7 @@ public:
                                        const std::string& public_key,
                                        const std::string& derivation_path,
                                        const std::string& master_fingerprint,
+                                       const std::string& type,
                                        QWarningMessage& msg);
 
     int GetCurrentIndexFromMasterSigner( const std::string& mastersigner_id,
@@ -107,6 +115,10 @@ public:
                                                                   QWarningMessage& msg);
 
     bool HasSigner(const nunchuk::SingleSigner& signer,QWarningMessage& msg);
+
+    void AddTapsigner(const std::string& card_ident, const std::string& xfp,
+                      const std::string& name, const std::string& version,
+                      int birth_height, bool is_testnet, QWarningMessage& msg);
 
     int GetNumberOfSignersFromMasterSigner(const std::string& mastersigner_id,
                                            QWarningMessage& msg);
@@ -199,6 +211,17 @@ public:
                                            const std::string& file_path,
                                            QWarningMessage& msg);
 
+    nunchuk::Transaction UpdateTransaction(const std::string& wallet_id,
+                                           const std::string& tx_id,
+                                           const std::string& new_txid,
+                                           const std::string& raw_tx,
+                                           const std::string& reject_msg,
+                                           QWarningMessage& msg);
+
+    nunchuk::Transaction ImportPsbt(const std::string& wallet_id,
+                                           const std::string& psbt,
+                                           QWarningMessage& msg);
+
     nunchuk::Transaction SignTransaction(const std::string& wallet_id,
                                          const std::string& tx_id,
                                          const nunchuk::Device& device,
@@ -210,6 +233,9 @@ public:
 
     nunchuk::Transaction GetTransaction(const std::string& wallet_id,
                                         const std::string& tx_id,
+                                        QWarningMessage& msg);
+
+    nunchuk::TapsignerStatus GetTapsignerStatusFromMasterSigner(const std::string& master_signer_id,
                                         QWarningMessage& msg);
 
     bool DeleteTransaction(const std::string& wallet_id,
@@ -306,6 +332,7 @@ public:
                           QWarningMessage& msg);
 
     void AddBalanceListener( std::function<void(std::string, nunchuk::Amount)> listener);
+    void AddBalancesListener( std::function<void(std::string, nunchuk::Amount, nunchuk::Amount)> listener);
 
     void AddTransactionListener( std::function<void(std::string, nunchuk::TransactionStatus, std::string)> listener);
 
@@ -353,6 +380,15 @@ public:
                                                    const std::vector<std::string>& qr_data,
                                                    QWarningMessage& msg);
     void stopInstance();
+
+    bool UpdateTransactionSchedule(const std::string& wallet_id,
+                                   const std::string& tx_id,
+                                   time_t ts,
+                                   QWarningMessage& msg);
+
+    void ForceRefreshWallet(const std::string& wallet_id,
+                            QWarningMessage& msg);
+
 private:
     nunchukiface();
     ~nunchukiface();

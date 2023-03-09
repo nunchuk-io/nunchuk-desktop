@@ -44,6 +44,12 @@ void NunchukSettings::setGroupSetting(QString group)
     m_group = group;
 }
 
+bool NunchukSettings::contains(const QString &key) const
+{
+    QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
+    return QSettings::contains(realkey);
+}
+
 void NunchukSettings::setValue(const QString &key, const QVariant &value)
 {
     QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
@@ -56,10 +62,19 @@ QVariant NunchukSettings::value(const QString &key, const QVariant &defaultValue
     return QSettings::value(realkey, defaultValue);
 }
 
-bool NunchukSettings::contains(const QString &key) const
+bool NunchukSettings::containsCommon(const QString &key) const
 {
-    QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
-    return QSettings::contains(realkey);
+    return QSettings::contains(key);
+}
+
+void NunchukSettings::setCommonValue(const QString &key, const QVariant &value)
+{
+    QSettings::setValue(key, value);
+}
+
+QVariant NunchukSettings::commonValue(const QString &key, const QVariant &defaultValue) const
+{
+    return QSettings::value(key, defaultValue);
 }
 
 AppSetting::AppSetting() :
@@ -89,13 +104,11 @@ AppSetting::AppSetting() :
     coreRPCPort_(primaryServer_ == (int)Chain::TESTNET ? CORERPC_TESTNET_PORT : CORERPC_MAINNET_PORT),
     coreRPCName_(""),
     coreRPCPassword_(""),
-    firstTimeCoreRPC_(true),
-    firstTimePassPhrase_(true),
     enableSignetStream_(false),
     signetStream_(GLOBAL_SIGNET_EXPLORER),
     enableDebugMode_(false),
-    isStarted_(false),
-    enableMultiDeviceSync_(false)
+    enableMultiDeviceSync_(false),
+    isStarted_(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     DBG_INFO << "Setting in:" << NunchukSettings::fileName();
@@ -312,7 +325,6 @@ bool AppSetting::enableDBEncryption()
     else{
         NunchukSettings::setValue("enableDBEncryption", enableDBEncryption_);
     }
-    DBG_INFO << enableDBEncryption_ << groupSetting();
     return enableDBEncryption_;
 }
 
@@ -320,7 +332,6 @@ void AppSetting::setEnableDBEncryption(bool enableDBEncryption)
 {
     enableDBEncryption_ = enableDBEncryption;
     NunchukSettings::setValue("enableDBEncryption", enableDBEncryption_);
-    DBG_INFO << enableDBEncryption << groupSetting();
     emit enableDBEncryptionChanged();
 }
 
@@ -537,30 +548,24 @@ void AppSetting::setEnableCertificateFile(bool enableCertificateFile)
     }
 }
 
-QString AppSetting::storagePath() const
+QString AppSetting::storagePath()
 {
-    return storagePath_;
-}
-
-void AppSetting::setStoragePath(const QString &storagePath)
-{
-    if(storagePath_ != storagePath){
-        storagePath_ = storagePath;
-        emit storagePathChanged();
+    auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (path.isEmpty()) {
+        DBG_INFO << "Cannot determine settings storage location";
     }
+    else {
+        QDir d{ path };
+        if (d.mkpath(d.absolutePath()) && QDir::setCurrent(d.absolutePath())) {
+            storagePath_ = QDir::currentPath();
+        }
+    }
+    return storagePath_;
 }
 
 QString AppSetting::executePath() const
 {
-    return executePath_;
-}
-
-void AppSetting::setExecutePath(const QString &executePath)
-{
-    if(executePath_ != executePath){
-        executePath_ = executePath;
-        emit executePathChanged();
-    }
+    return qApp->applicationDirPath();
 }
 
 int AppSetting::connectionState() const
@@ -592,7 +597,6 @@ void AppSetting::setEnableCoreRPC(bool enableCoreRPC)
     if(enableCoreRPC_ != enableCoreRPC){
         enableCoreRPC_ = enableCoreRPC;
         NunchukSettings::setValue("enableCoreRPC", enableCoreRPC_);
-        setFirstTimeCoreRPC(false);
         emit enableCoreRPCChanged();
     }
 }
@@ -690,26 +694,6 @@ void AppSetting::setSyncPercent(int syncPercent)
     }
 }
 
-bool AppSetting::firstTimePassPhrase()
-{
-    if(NunchukSettings::contains("firstTimePassPhrase")){
-        firstTimePassPhrase_ = NunchukSettings::value("firstTimePassPhrase").toBool();
-    }
-    else{
-        NunchukSettings::setValue("firstTimePassPhrase", firstTimePassPhrase_);
-    }
-    return firstTimePassPhrase_;
-}
-
-void AppSetting::setFirstTimePassPhrase(bool firstTimePassPhrase)
-{
-    if(firstTimePassPhrase_ != firstTimePassPhrase){
-        firstTimePassPhrase_ = firstTimePassPhrase;
-        NunchukSettings::setValue("firstTimePassPhrase", firstTimePassPhrase_);
-        emit firstTimePassPhraseChanged();
-    }
-}
-
 QString AppSetting::signetStream()
 {
     if(NunchukSettings::contains("signetStream")){
@@ -739,8 +723,6 @@ bool AppSetting::enableSignetStream()
         NunchukSettings::setValue("enableSignetStream", enableSignetStream_);
     }
     return enableSignetStream_;
-
-
 }
 
 void AppSetting::setEnableSignetStream(const bool &enableSignetStream)
@@ -778,48 +760,17 @@ void AppSetting::setEnableDebug(bool enableDebugMode)
 
 bool AppSetting::isStarted()
 {
-    bool perValue = false;
-    if(NunchukSettings::contains("isStarted")){
-        perValue = NunchukSettings::value("isStarted").toBool();
-    }
-    return isStarted_ || perValue;
+    return isStarted_ || NunchukSettings::commonValue("isStarted").toBool();
 }
 
-void AppSetting::setIsStarted(bool isStarted)
+void AppSetting::setIsStarted(bool isStarted, bool isSetting)
 {
-    if (isStarted_ == isStarted)
-        return;
-    isStarted_ = isStarted;
-    emit isStartedChanged(isStarted_);
-}
-
-void AppSetting::updateIsStarted(bool isStarted)
-{
-    NunchukSettings::setValue("isStarted", isStarted);
-    emit isStartedChanged(isStarted_);
-}
-
-bool AppSetting::firstTimeCoreRPC()
-{
-    if(NunchukSettings::contains("firstTimeCoreRPC")){
-        firstTimeCoreRPC_ = NunchukSettings::value("firstTimeCoreRPC").toBool();
-        if(firstTimeCoreRPC_ && enableCoreRPC_){
-            firstTimeCoreRPC_ = false;
-        }
+    if(isSetting){
+        NunchukSettings::setCommonValue("isStarted", isStarted);
+        emit isStartedChanged(isStarted);
     }
     else{
-        firstTimeCoreRPC_ = true;
-        NunchukSettings::setValue("firstTimeCoreRPC", firstTimeCoreRPC_);
-    }
-    return firstTimeCoreRPC_;
-}
-
-void AppSetting::setFirstTimeCoreRPC(bool firstTimeCoreRPC)
-{
-    if(firstTimeCoreRPC_ != firstTimeCoreRPC){
-        firstTimeCoreRPC_ = firstTimeCoreRPC;
-        NunchukSettings::setValue("firstTimeCoreRPC", firstTimeCoreRPC_);
-        emit firstTimeCoreRPCChanged();
+        isStarted_ = isStarted;
     }
 }
 

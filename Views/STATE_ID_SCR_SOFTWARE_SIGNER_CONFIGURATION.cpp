@@ -47,8 +47,9 @@ bool replaceKey(const QString &mnemonic, const QString &passphrase){
 }
 
 void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {
-    QString signername = msg.toMap().value("signername").toString();
-    QString passphrase = msg.toMap().value("passphrase").toString();
+    QMap<QString,QVariant> dataMap = msg.toMap();
+    QString signername = dataMap.value("signername").toString();
+    QString passphrase = dataMap.value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();
     if(QQuickViewer::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY &&
        QQuickViewer::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
@@ -63,6 +64,7 @@ void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {
             }
         }
         else{
+            DBG_INFO << dataMap;
             QQuickViewer::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_REQUEST,msg);
         }
     }

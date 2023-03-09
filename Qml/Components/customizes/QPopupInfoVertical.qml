@@ -40,6 +40,7 @@ Popup {
     background: Item{}
     property string title: STR.STR_QML_024
     property string contentText: STR.STR_QML_466
+    property var lwidths: [0,0]
     property var labels: [STR.STR_QML_432,STR.STR_QML_433]
     property var types: [4,1]
     signal confirmYes()
@@ -89,7 +90,7 @@ Popup {
                 spacing: 12
                 QTextButton {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: label.paintedWidth + 20*2
+                    width: Math.max(lwidths[0],label.paintedWidth + 20*2)
                     height: 36
                     label.text: labels[0]
                     label.font.pixelSize: 12
@@ -98,7 +99,7 @@ Popup {
                 }
                 QTextButton {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: label.paintedWidth + 10*2
+                    width: Math.max(lwidths[1],label.paintedWidth + 10*2)
                     height: 36
                     label.text: labels[1]
                     label.font.pixelSize: 12

@@ -23,6 +23,7 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../../localization/STR_QML.js" as STR
@@ -384,7 +385,7 @@ QScreen {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 QText {
-                    text: AppModel.addressBalance + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                    text: AppModel.addressBalance + RoomWalletData.unitValue
                     font.family: "Montserrat"
                     font.weight: Font.DemiBold
                     color: "#031F2B"

@@ -191,6 +191,7 @@ void QQuickViewer::aboutToQuit(QQuickViewer::QPrivateSignal signal)
 
 void QQuickViewer::doRegisterQML(QObject *objPropose)
 {
+    m_currentScreen = objPropose;
     m_qmlObj.insert(0, objPropose);
     for (QObject* obj: m_qmlObj) {
         if( m_qmlObj.first() == obj){
@@ -333,6 +334,20 @@ QList<QObject *> QQuickViewer::getQmlObj() const
     return m_qmlObj;
 }
 
+bool QQuickViewer::closeAllPopup()
+{
+    bool ret = false;
+    if(NULL != m_popMng){
+        ret = m_popMng->closeAll();
+    }
+    return ret;
+}
+
+QObject *QQuickViewer::getCurrentScreen() const
+{
+    return m_currentScreen;
+}
+
 uint QQuickViewer::onsRequester() const
 {
     return m_popRequester;
@@ -445,15 +460,6 @@ bool QQuickViewer::closePopup(uint id, QVariant msg)
             pop.msg         = msg;
             ret = m_popMng->closePopup(pop);
         }
-    }
-    return ret;
-}
-
-bool QQuickViewer::closeAllPopup()
-{
-    bool ret = false;
-    if(NULL != m_popMng){
-        ret = m_popMng->closeAll();
     }
     return ret;
 }

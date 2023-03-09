@@ -47,15 +47,11 @@ void EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
         QVariantMap primary_key = maps["primary_key"].toMap();
         QString account = primary_key["account"].toString();
         QString address = primary_key["address"].toString();
-        bool isAvailable = Draco::instance()->pkey_username_availability(account);
-        DBG_INFO << isAvailable;
-        if(isAvailable){
-            Draco::instance()->setUid(account);
-            AppModel::instance()->nunchukLogin();
-            AppModel::instance()->setPrimaryKey(account);
-            QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+        AppModel::instance()->setPrimaryKey(account);
+        QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+        if(pKey){
             QString masterId = pKey->id();
-            QString nonce = Draco::instance()->get_pkey_nonce(address,account);
+            QString nonce = Draco::instance()->get_pkey_nonce(address, account);
             QString message = QString("%1%2").arg(account).arg(nonce);
             QWarningMessage warnMsg;
             bridge::nunchukSendSignerPassphrase( masterId, passphrase, warnMsg);
@@ -66,24 +62,21 @@ void EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
             else{
                 Draco::instance()->pkey_signin(address,account,"");
             }
-        }else{
-            AppModel::instance()->setToast(-1,
-                                            STR_CPP_104,
-                                            EWARNING::WarningType::ERROR_MSG,
-                                            "");
         }
     });
 }
 
 void EVT_LOGIN_WITH_SOFTWARE_KEY_SUCCEED_HANDLER(QVariant msg) {
-    AppModel::instance()->matrixLogin();
+    AppModel::instance()->makeMatrixInstanceForAccount();
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
-        QTimer::singleShot(3000,[pKey](){
+        QTimer::singleShot(500,[pKey](){
             AppModel::instance()->showToast(0,
                                            STR_CPP_108.arg(pKey->name()),
                                            EWARNING::WarningType::SUCCESS_MSG,
                                            STR_CPP_108.arg(pKey->name()));
+            QWarningMessage msg;
+            bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
         });
     }
 }

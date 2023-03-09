@@ -18,46 +18,82 @@
  *                                                                        *
  **************************************************************************/
 import QtQuick 2.4
+import QtGraphicalEffects 1.12
 import "../origins"
+import "../../../localization/STR_QML.js" as STR
 
 QImage {
     width: 24
     height: 24
     property string toolTip
+    property string titleStr:STR.STR_QML_339
     property bool showToolTip: false
     property bool rightOfParent: false
+    property int tipWidth: 241
 
     source: "qrc:/Images/Images/tooltip.png"
     Rectangle {
         id: toolTipRectangle
         anchors.left: parent.left
         anchors.leftMargin: rightOfParent ? (-(width - parent.width/2)) : parent.width/2
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: parent.height/2
-        width: 241
-        height: toolTipText.height + 16
+        anchors.verticalCenter: parent.verticalCenter
+//        anchors.bottomMargin: -(parent.height/2)
+        width: tipWidth
+        height: (_title.height + toolTipText.height) + 20
         z: 200
         opacity: toolTip != "" && showToolTip ? 1 : 0
-        color: Qt.rgba(0, 0, 0, 0.7)
-        radius: 4
-        QText {
-            id: toolTipText
-            width: parent.width - 16
-            text: toolTip
-            color: "#F1FAFE"
-            font.pixelSize: 12
-            font.family: "Lato"
-            wrapMode: Text.WordWrap
-            anchors.centerIn: parent
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignJustify
+        color: "#FFFFFF"
+        radius: 12
+        Column{
+            id:_col
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+            spacing: 4
+            QText {
+                id: _title
+                width: parent.width - 16
+                height: paintedHeight
+                text: titleStr
+                color: "#222222"
+                font.pixelSize: 16
+                font.weight: Font.Bold
+                font.family: "Lato"
+                wrapMode: Text.WordWrap
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignLeft
+            }
+            QText {
+                id: toolTipText
+                width: tipWidth - 16
+                height: paintedHeight
+                text: toolTip
+                color: "#222222"
+                font.pixelSize: 12
+                font.family: "Lato"
+                wrapMode: Text.WordWrap
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignLeft
+            }
         }
+
         Behavior on opacity {
             PropertyAnimation {
                 easing.type: Easing.InOutQuad
                 duration: 250
             }
         }
+    }
+    DropShadow {
+        visible: showToolTip
+        anchors.fill: toolTipRectangle
+        horizontalOffset: 3
+        verticalOffset: 5
+        spread: 0
+        radius: 8
+        samples: 30
+        color: "#aa000000"
+        source: toolTipRectangle
     }
     MouseArea {
         id: mouseArea

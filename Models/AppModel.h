@@ -53,7 +53,8 @@ class AppModel final : public Controller
     Q_PROPERTY(double           exchangeRates       READ getExchangeRates      NOTIFY exchangeRatesChanged)
     Q_PROPERTY(QString          lasttimeCheckEstimatedFee                      READ lasttimeCheckEstimatedFee     NOTIFY lasttimeCheckEstimatedFeeChanged)
     Q_PROPERTY(MasterSigner*    primaryKey          READ primaryKey            NOTIFY primaryKeyChanged)
-    Q_PROPERTY(QString          msgKeyHealthcheck   READ msgKeyHealthcheck     WRITE setMsgKeyHealthcheck         NOTIFY msgKeyHealthcheckChanged)
+    Q_PROPERTY(QString    newKeySignMessage       READ newKeySignMessage       NOTIFY newKeySignMessageChanged)
+    Q_PROPERTY(QString    newKeySignMessageSHA256 READ newKeySignMessageSHA256 NOTIFY newKeySignMessageChanged)
 
 public:
     static AppModel *instance();
@@ -63,8 +64,9 @@ public:
     void requestInitialData();
     void requestGetSigners();
     void requestGetWallets();
-    void requestSyncWallets(QWalletListModelPtr wallets);
-    void signoutClearData();
+    void requestCreateUserWallets();
+    void requestSyncSharedWallets();
+    void requestClearData();
 
     WalletListModel *walletList() const;
     QWalletListModelPtr walletListPtr() const;
@@ -215,14 +217,16 @@ public:
     void startCheckAuthorize();
     void stopCheckAuthorize();
 
-    void loginSucceed();
-    void nunchukLogin();
-    void matrixLogin();
-    void sign_in(QVariant msg);
+    bool makeInstanceForAccount(const QVariant msg, const QString &dbPassphrase);
+    bool makeNunchukInstanceForAccount(const QVariant msg, const QString &dbPassphrase);
+    void makeMatrixInstanceForAccount();
+    bool makeNunchukInstance(const QVariant makeInstanceData, const QString &dbPassphrase);
+    void loginNunchuk(QVariant msg);
     void create_account(QVariant msg);
-    QString msgKeyHealthcheck() const;
-    void setMsgKeyHealthcheck(const QString &value);
-
+    QString newKeySignMessage() const;
+    QString newKeySignMessageSHA256() const;
+    void setNewKeySignMessage(const QString &value);
+    QStringList getUserWallets() const;
 private:
     AppModel();
     ~AppModel();
@@ -265,7 +269,8 @@ private:
     double              exchangeRates_;
     QDateTime           lasttime_checkEstimatedFee_;
     QMasterSignerPtr    m_primaryKey;
-    QString             msgKeyHealthcheck_;
+    QString             newKeySignMessage_;
+    QStringList         mUserWallets;
 signals:
     void signalShowToast();
     void walletListChanged();
@@ -304,7 +309,7 @@ signals:
     void finishGenerateSigner();
     void lasttimeCheckEstimatedFeeChanged();
     void primaryKeyChanged();
-    void msgKeyHealthcheckChanged();
+    void newKeySignMessageChanged();
 public slots:
     void timerHealthCheckTimeHandle();
     void timerFeeRatesHandle();
@@ -319,10 +324,9 @@ public slots:
     QString parseQRSigners(QStringList qrtags);
     QString parseJSONSigners(QString fileName);
     bool    parsePassportTransaction(const QStringList qrtags);
-    QString toLocalString(QString in);
-    bool updateSettingRestartRequired();
+    bool    updateSettingRestartRequired();
     QString getFilePath(const QString in);
-    bool enableDatabaseEncryption(const QString in);
+    bool    enableDatabaseEncryption(const QString in);
 };
 
 #endif // APPMODEL_H

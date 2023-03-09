@@ -92,7 +92,7 @@ QScreen {
                     label.font.pixelSize: 16
                     type: eTypeF
                     onButtonClicked: {
-                        AppSetting.isStarted = true
+                        AppSetting.setIsStarted(true,false)
                         QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE)
                     }
                 }
@@ -263,7 +263,7 @@ QScreen {
                     type: eTypeB
                     onButtonClicked: {
                         processing = true
-                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE, 2)
+                        QMLHandle.sendEvent(EVT.EVT_ROOT_CREATE_PRIMARY_KEY_REQUEST,false)
                         processing = false
                     }
                 }
@@ -852,7 +852,7 @@ QScreen {
                     type: eTypeB
                     onButtonClicked: {
                         processing = true
-                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE, 1)
+                        QMLHandle.sendEvent(EVT.EVT_ROOT_SIGN_IN_PRIMARY_KEY_REQUEST)
                         processing = false
                     }
                 }
@@ -911,32 +911,40 @@ QScreen {
             }
             function processingSigninResult(https_code, error_code, error_msg){
                 if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.SIGN_IN_EXCEPTION){
-                    emailaddrs.isValid = false
-                    emailaddrs.errorText = STR.STR_QML_423
-                    emailaddrs.showError = true;
-                }
-                else {
-                    if(https_code === DRACO_CODE.SUCCESSFULL){
-                        if (error_code === DRACO_CODE.RESPONSE_OK){
+                    if (error_code === DRACO_CODE.SIGN_IN_EXCEPTION) {
+                        errorInfo.contentText = error_msg
+                        errorInfo.open()
+                    } else {
+                        emailaddrs.isValid = false
+                        emailaddrs.errorText = error_msg
+                        emailaddrs.showError = true;
+                    }
+                } else {
+                    if(https_code === DRACO_CODE.SUCCESSFULL) {
+                        if (error_code === DRACO_CODE.RESPONSE_OK) {
                             QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_LOGIN_SUCCEED)
-                        }
-                        else if (error_code === DRACO_CODE.LOGIN_NEW_DEVICE){
+                        } else if (error_code === DRACO_CODE.LOGIN_NEW_DEVICE) {
                             commonError.visible = false
                             commonError.text = ""
                             whereAmI = eVERIFY_NEWDEVICE
-                        }
-                        else{
+                        } else {
                             passwd.isValid = false
                             passwd.errorText = error_msg
                             passwd.showError = true
                         }
-                    }
-                    else{
+                    } else {
                         passwd.isValid = false
                         passwd.errorText = error_msg
                     }
                 }
             }
+        }
+    }
+    QPopupInfo{
+        id: errorInfo
+        coverColor: Qt.rgba(255, 255, 255, 0)
+        onGotItClicked: {
+            close()
         }
     }
     Component {
@@ -1060,8 +1068,5 @@ QScreen {
         onResendVerifyNewDeviceCodeResult: {
             //TBD
         }
-    }
-    Component.onCompleted: {
-        ClientController.guestMode = false
     }
 }

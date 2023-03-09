@@ -204,7 +204,7 @@ QScreen {
                                             font.weight: Font.Bold
                                             color: "#031F2B"
                                             font.family: "Lato"
-                                            text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                            text: destination_amount + RoomWalletData.unitValue
                                             horizontalAlignment: Text.AlignRight
                                         }
                                         QText {
@@ -250,7 +250,7 @@ QScreen {
                                         font.weight: Font.Bold
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: AppModel.transactionInfo.fee + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        text: AppModel.transactionInfo.fee + RoomWalletData.unitValue
                                         horizontalAlignment: Text.AlignRight
                                     }
                                     QText {
@@ -294,7 +294,7 @@ QScreen {
                                         font.weight: Font.Bold
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: AppModel.transactionInfo.total + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        text: AppModel.transactionInfo.total + RoomWalletData.unitValue
                                         horizontalAlignment: Text.AlignRight
                                     }
                                     QText {
@@ -369,7 +369,7 @@ QScreen {
                                         font.weight: Font.Bold
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: AppModel.transactionInfo.change.amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        text: AppModel.transactionInfo.change.amount + RoomWalletData.unitValue
                                         horizontalAlignment: Text.AlignRight
                                     }
                                     QText {
@@ -664,7 +664,7 @@ QScreen {
                                     QText {
                                         width: parent.width*1/3 - 20
                                         height: 16
-                                        text: destination_amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                                        text: destination_amount + RoomWalletData.unitValue
                                         horizontalAlignment: Text.AlignRight
                                         font.pixelSize: 16
                                         font.weight: Font.Bold
@@ -783,11 +783,21 @@ QScreen {
                 signerType: model.single_signer_type
                 signerReadyToSign: model.single_signer_readyToSign
                 isLocaluser: model.single_signer_is_local
+                devicetype: model.single_signer_devicetype
+                card_id: model.single_signer_device_cardid
+                serverkeyMessage: AppModel.transactionInfo.serverKeyMessage
                 onSignRequest: {
-                    signingBusyBox.signerType = model.single_signer_type
-                    signingBusyBox.open()
-                    timerSigningTx.fingerPrint = model.singleSigner_masterFingerPrint
-                    timerSigningTx.restart()
+                    if(model.single_signer_type === NUNCHUCKTYPE.SOFTWARE){
+                        _confirm.open()
+                        _confirm.signerType = model.single_signer_type
+                        _confirm.fingerPrint = model.singleSigner_masterFingerPrint
+                    }
+                    else{
+                        signingBusyBox.signerType = model.single_signer_type
+                        signingBusyBox.open()
+                        timerSigningTx.fingerPrint = model.singleSigner_masterFingerPrint
+                        timerSigningTx.restart()
+                    }
                 }
                 onScanRequest: {
                     QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST)
@@ -1101,11 +1111,13 @@ QScreen {
                         STR.STR_QML_300,
                         STR.STR_QML_115,
                         STR.STR_QML_116,
+                        STR.STR_QML_691,
                     ]
                     icons: [
                         "qrc:/Images/Images/download_031F2B.png",
                         "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                        "qrc:/Images/Images/copy-dark.svg"
                     ]
                     onItemClicked: {
                         switch(index){
@@ -1120,6 +1132,9 @@ QScreen {
                             break;
                         case 2: // Export via QR Passport
                             requestExportQRPassport()
+                            break;
+                        case 3: // Copy transaction ID
+                            requestCopyTransactionID()
                             break;
                         default:
                             break;
@@ -1322,6 +1337,20 @@ QScreen {
             source: signingBusyBoxMask
         }
     }
+    QConfirmYesNoPopup{
+        id:_confirm
+        property int signerType: -1
+        property string fingerPrint : ""
+        contentText:STR.STR_QML_687
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            signingBusyBox.signerType = _confirm.signerType
+            signingBusyBox.open()
+            timerSigningTx.fingerPrint = _confirm.fingerPrint
+            timerSigningTx.restart()
+        }
+    }
     Connections {
         target: AppModel
         onStartDisplayAddress: {
@@ -1372,5 +1401,9 @@ QScreen {
         default: break
         }
         return activeLink
+    }
+    function requestCopyTransactionID(){
+        var to_addr = AppModel.transactionInfo ? AppModel.transactionInfo.destinationList.reciever : ""
+        ClientController.copyMessage(to_addr)
     }
 }

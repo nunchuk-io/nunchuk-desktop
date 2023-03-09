@@ -362,7 +362,7 @@ Rectangle {
                     property int tx_status: txObject ? txObject.status : -1
                     property string tx_id: txObject ? txObject.txid : ""
                     property string to_addr: txObject ? txObject.destinationList.reciever : ""
-                    property string tx_amount: txObject ? txObject.total + ((AppSetting.unit === 1) ? " sat" : " BTC") : ""
+                    property string tx_amount: txObject ? txObject.total + RoomWalletData.unitValue : ""
                     property int tx_m: txObject ? txObject.m : 0
                     property int tx_signeds:txObject ? txObject.numberSigned : 0
                     property int tx_pending_signatures: Math.max(0, iteminit.tx_m - iteminit.tx_signeds)

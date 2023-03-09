@@ -35,7 +35,6 @@ class ClientController final : public QObject
     Q_PROPERTY(bool isMatrixLoggedIn             READ isMatrixLoggedIn  NOTIFY isMatrixLoggedInChanged)
     Q_PROPERTY(bool isNewDevice                  READ isNewDevice       WRITE setIsNewDevice NOTIFY enableEncryptionChanged)
     Q_PROPERTY(QVariant user                     READ user              NOTIFY userChanged)
-    Q_PROPERTY(bool guestMode                    MEMBER m_guestMode     NOTIFY guestModeChanged)
 private:
     ClientController();
     ~ClientController();
@@ -90,6 +89,10 @@ public:
     QByteArray readDataFromKeyChain(const QString &key);
     bool saveDataToKeyChain(const QString &key, const QByteArray &data);
     bool deleteDataFromKeyChain(const QString &key);
+
+    QJsonObject getSubCur();
+    void setSubCur(const QJsonObject &sub);
+
 signals:
     void isNunchukLoggedInChanged();
     void contactsChanged();
@@ -152,7 +155,7 @@ private:
     QNunchukImageProvider  *m_imageprovider;
     DracoUser               m_me;
     bool                    m_isNewDevice;
-    bool                    m_guestMode;
+    QJsonObject             m_subCur;
 };
 
 #define CLIENT_INSTANCE     ClientController::instance()

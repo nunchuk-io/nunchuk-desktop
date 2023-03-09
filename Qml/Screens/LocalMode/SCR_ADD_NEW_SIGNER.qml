@@ -68,12 +68,7 @@ QScreen {
                         rightMargin: 36
                     }
                     onClicked: {
-                        if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                            QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SIGNER)
-                        }
+                        QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                     }
                 }
                 Row {
@@ -527,12 +522,7 @@ QScreen {
                         rightMargin: 36
                     }
                     onClicked: {
-                        if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                            QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SIGNER)
-                        }
+                        QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                     }
                 }
                 Row {

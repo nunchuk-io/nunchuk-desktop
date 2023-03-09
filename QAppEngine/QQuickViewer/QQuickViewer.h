@@ -14,6 +14,7 @@ class QQuickViewer : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int currentFlow READ currentFlow WRITE setCurrentFlow NOTIFY currentFlowChanged)
+
 public:
     static QQuickViewer *instance();
     QQuickViewer(QQuickViewer &other) = delete;
@@ -42,7 +43,8 @@ public:
     void setPopupTrigger(int popupId, int trigger);
     void addImageProvider(const QString &id, QQmlImageProviderBase *provider);
     QList<QObject *> getQmlObj() const;
-
+    bool closeAllPopup();
+    QObject *getCurrentScreen() const;
 private:
     static bool                                         m_register;
     static QHash<uint, const APPLICATION_STATE*>        m_stateRegisted;
@@ -58,6 +60,7 @@ private:
     double                                              m_currentScale;
     int                                                 m_currentFlow;
     QMap<int, int>                                      m_PopupTriger;
+    QObject*                                            m_currentScreen;
 private:
     explicit QQuickViewer();
     virtual ~QQuickViewer();
@@ -66,7 +69,6 @@ private:
     bool showScreen(uint id, QVariant msg = QVariant());
     bool showPopup(uint id, QVariant msg = QVariant());
     bool closePopup(uint id, QVariant msg = QVariant());
-    bool closeAllPopup();
     void setOnsRequester(const uint id);
     void collectGarbage();
 signals:

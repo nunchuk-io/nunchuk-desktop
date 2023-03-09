@@ -39,7 +39,7 @@ Column {
         anchors.horizontalCenter: parent.horizontalCenter
     }
     Column {
-        spacing: 0
+        spacing: 1
         anchors.horizontalCenter: parent.horizontalCenter
         QText {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -96,9 +96,45 @@ Column {
                 }
             }
         }
+        Item{
+            width: 97
+            height: 24 + 8
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: ClientController.user.isPremiumUser
+            Rectangle{
+                width: _row.childrenRect.width + 10*2
+                height: 24
+                radius: 20
+                color: "#EAEAEA"
+                anchors{
+                    horizontalCenter: parent.horizontalCenter
+                    bottom: parent.bottom
+                    bottomMargin: 0
+                }
+                Row {
+                    id:_row
+                    anchors.centerIn: parent
+                    spacing: 4
+                    QImage {
+                        width: 12
+                        height: 12
+                        source: "qrc:/Images/Images/subscription-dark.svg"
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QText{
+                        font.family: "Lato"
+                        font.pixelSize: 12
+                        color: "#031F2B"
+                        text: ClientController.user.plan_slug === "iron_hand" ? STR.STR_QML_680 : STR.STR_QML_681
+                        font.weight: Font.Normal
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+        }
     }
     QTextButton {
-        width: 115
+        width: 289
         height: 48
         anchors.horizontalCenter: parent.horizontalCenter
         label.text: STR.STR_QML_512
@@ -106,6 +142,19 @@ Column {
         type: eTypeC
         onButtonClicked: {
             QMLHandle.sendEvent(EVT.EVT_ROOT_UPDATE_PROFILE)
+        }
+    }
+    signal clickManageSubscription()
+    QTextButton {
+        visible: ClientController.user.isPremiumUser
+        width: 289
+        height: 48
+        anchors.horizontalCenter: parent.horizontalCenter
+        label.text: STR.STR_QML_682
+        label.font.pixelSize: 16
+        type: eTypeC
+        onButtonClicked: {
+            clickManageSubscription()
         }
     }
 }

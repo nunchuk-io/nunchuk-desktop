@@ -21,6 +21,7 @@
 #include "qUtils.h"
 #include "bridgeifaces.h"
 #include <QQmlEngine>
+#include "utils/enumconverter.hpp"
 
 SingleSigner::SingleSigner() :  name_(""),
     xpub_(""),
@@ -39,7 +40,9 @@ SingleSigner::SingleSigner() :  name_(""),
     checked_(false),
     readyToSign_(false),
     isLocalSigner_(true),
-    isPrimaryKey_(false)
+    isPrimaryKey_(false),
+    m_devicetype(""),
+    cardId_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -70,7 +73,9 @@ SingleSigner::SingleSigner(const QString &pr_name,
       readyToSign_(false),
       isLocalSigner_(true),
       isPrimaryKey_(false),
-      primaryKey_(key)
+      primaryKey_(key),
+      m_devicetype(""),
+      cardId_("")
 {
     if(key.get_master_fingerprint() != ""){
         isPrimaryKey_ = true;
@@ -375,6 +380,30 @@ void SingleSigner::setPrimaryKey(const nunchuk::PrimaryKey &primaryKey)
     primaryKey_ = primaryKey;
 }
 
+QString SingleSigner::devicetype() const
+{
+    return m_devicetype;
+}
+
+void SingleSigner::setDevicetype(QString devicetype)
+{
+    if (m_devicetype == devicetype)
+        return;
+
+    m_devicetype = devicetype;
+    emit devicetypeChanged();
+}
+
+QString SingleSigner::cardId() const
+{
+    return cardId_;
+}
+
+void SingleSigner::setCardId(const QString &card_id)
+{
+    cardId_ = card_id;
+}
+
 SingleSignerListModel::SingleSignerListModel(){
     primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),(nunchuk::Chain)AppSetting::instance()->primaryServer());
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -426,6 +455,10 @@ QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
         return d_[index.row()]->isLocalSigner();
     case single_signer_primary_key_Role:
         return d_[index.row()]->isPrimaryKey();
+    case single_signer_devicetype_Role:
+        return d_[index.row()]->devicetype();
+    case single_signer_device_cardid_Role:
+        return d_[index.row()]->cardId();
     default:
         return QVariant();
     }
@@ -468,6 +501,8 @@ QHash<int, QByteArray> SingleSignerListModel::roleNames() const
     roles[single_signer_readyToSign_Role]         = "single_signer_readyToSign";
     roles[single_signer_is_local_Role]            = "single_signer_is_local";
     roles[single_signer_primary_key_Role]         = "single_signer_primary_key";
+    roles[single_signer_devicetype_Role]          = "single_signer_devicetype";
+    roles[single_signer_device_cardid_Role]       = "single_signer_device_cardid";
     return roles;
 }
 
@@ -696,37 +731,48 @@ void SingleSignerListModel::notifyMasterSignerDeleted(const QString &masterSigne
     endResetModel();
 }
 
-void SingleSignerListModel::notifyMasterSignerRenamed(const QString &masterSignerId, const QString &newname)
+void SingleSignerListModel::renameById(const QString &id, const QString &newname)
 {
     beginResetModel();
     foreach (QSingleSignerPtr i , d_ ){
-        if(i.data() && masterSignerId == i.data()->masterSignerId()){
+        if(i.data() && id == i.data()->masterSignerId()){
             i.data()->setName(newname);
         }
     }
     endResetModel();
 }
 
-void SingleSignerListModel::notifyRemoteSignerRenamed(const QString &fingerprint, const QString &newname)
+void SingleSignerListModel::renameByXfp(const QString &xfp, const QString &newname)
 {
     beginResetModel();
     foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
             i.data()->setName(newname);
         }
     }
     endResetModel();
 }
 
-void SingleSignerListModel::notifyRemoteLocalSigner(const QString &fingerprint)
+void SingleSignerListModel::updateIsLocalSigner(const QString &xfp, const bool value)
 {
     beginResetModel();
     foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            i.data()->setIsLocalSigner(false);
+        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            i.data()->setIsLocalSigner(value);
         }
     }
     requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_is_local_Role, Qt::AscendingOrder);
+    endResetModel();
+}
+
+void SingleSignerListModel::updateSignerType(const QString &xfp, const int value)
+{
+    beginResetModel();
+    foreach (QSingleSignerPtr i , d_ ){
+        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            i.data()->setSignerType(value);
+        }
+    }
     endResetModel();
 }
 
@@ -810,13 +856,17 @@ void SingleSignerListModel::updateSignerReadyToSign(const QString &xfp)
 #endif
 }
 
-void SingleSignerListModel::updateSignerIsLocalAndReadyToSign(const QString &xfp,int signerType)
+void SingleSignerListModel::updateSignerIsLocalAndReadyToSign(const QMasterSignerPtr &master)
 {
     for (int i = 0; i < d_.count(); i++) {
-        if(0 == QString::compare(xfp, d_.at(i)->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(0 == QString::compare(master->fingerPrint(), d_.at(i)->masterFingerPrint(), Qt::CaseInsensitive)){
             d_[i]->setIsLocalSigner(true);
             d_[i]->setReadyToSign(true);
-            d_[i]->setSignerType(signerType);
+            d_[i]->setSignerType(master->signerType());
+            d_[i]->setDevicetype(master->deviceType());
+            if (master->device()) {
+                d_[i]->setCardId(master->device()->cardId());
+            }
             emit dataChanged(index(i),index(i));
         }
     }

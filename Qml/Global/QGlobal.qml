@@ -85,7 +85,7 @@ QtObject {
         ["transparent", "transparent", "transparent", "transparent"],// eFIFTEEN
     ]
 
-    function icons(type){
+    function icons(type,intType){
         var img = ""
         switch(type){
         case "trezor":    img = "qrc:/Images/Images/Device_Icons/trezor.png"; break
@@ -94,10 +94,35 @@ QtObject {
         case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger.png"; break
         case "software":  img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
         case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
-        default:          img = "qrc:/Images/Images/Device_Icons/other.png"; break
+        default: switch(intType){
+            case NUNCHUCKTYPE.SOFTWARE:  img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
+            case NUNCHUCKTYPE.SERVER: img = "qrc:/Images/Images/Device_Icons/server-key-dark.svg"; break
+            case NUNCHUCKTYPE.COLDCARD_NFC: img = img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
+            default:img = "qrc:/Images/Images/Device_Icons/other.png"; break
+            }
         }
         return img
     }
+
+    function iconTypes(type,intType){
+        var img = ""
+        switch(type){
+        case "trezor":    img = "qrc:/Images/Images/Device_Icons/Trezor.svg"; break
+        case "coldcard":  img = "qrc:/Images/Images/Device_Icons/ColdCard.svg"; break
+        case "bitbox02":  img = "qrc:/Images/Images/Device_Icons/bitbox.png"; break
+        case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger.png"; break
+        case "software":  img = "qrc:/Images/Images/Device_Icons/software_drak.svg"; break
+        case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
+        default: switch(intType){
+            case NUNCHUCKTYPE.SOFTWARE:  img = "qrc:/Images/Images/Device_Icons/software_drak.svg"; break
+            case NUNCHUCKTYPE.SERVER: img = "qrc:/Images/Images/Device_Icons/server-key-dark.svg"; break
+            case NUNCHUCKTYPE.COLDCARD_NFC: img = "qrc:/Images/Images/Device_Icons/ColdCard.svg"; break
+            default:img = "qrc:/Images/Images/Device_Icons/unknown-key-dark.svg"; break
+            }
+        }
+        return img
+    }
+
     function signers(type){
         var n = ""
         switch(type){
@@ -105,7 +130,9 @@ QtObject {
         case NUNCHUCKTYPE.AIRGAP:   n = "AIR-GAPPED"; break
         case NUNCHUCKTYPE.SOFTWARE: n = "SOFTWARE"; break
         case NUNCHUCKTYPE.FOREIGN_SOFTWARE: n = "FOREIGN"; break
-        case NUNCHUCKTYPE.TAPSIGNER: n = "TAPSIGNER"; break
+        case NUNCHUCKTYPE.NFC: n = "NFC"; break
+        case NUNCHUCKTYPE.COLDCARD_NFC: n = "NFC"; break
+        case NUNCHUCKTYPE.SERVER: n = "PLATFORM"; break
         default: n = ""
         }
         return n
@@ -118,7 +145,9 @@ QtObject {
         case NUNCHUCKTYPE.AIRGAP:   name = STR.STR_QML_045; break
         case NUNCHUCKTYPE.SOFTWARE: name = STR.STR_QML_046; break
         case NUNCHUCKTYPE.FOREIGN_SOFTWARE: name = STR.STR_QML_047; break
-        case NUNCHUCKTYPE.TAPSIGNER: name = STR.STR_QML_678; break
+        case NUNCHUCKTYPE.NFC: name = STR.STR_QML_678; break
+        case NUNCHUCKTYPE.COLDCARD_NFC: name = STR.STR_QML_685; break
+        case NUNCHUCKTYPE.SERVER: name = "Platform"; break
         default: name = ""
         }
         return name

@@ -32,7 +32,6 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
-
     QOnScreenContent {
         id: contenCenter
         width: popupWidth
@@ -292,6 +291,7 @@ QScreen {
                                 anchors.right: parent.right
                                 color: single_signer_isColdcard ? "#F6D65D" : "#C9DEF1"
                                 radius: 20
+                                visible: signerTypeText.text !== ""
                                 QText {
                                     id: signerTypeText
                                     text: single_signer_isColdcard ? "COLDCARD" :  GlobalData.signerNames(delegateAssignSigners.signerType)
@@ -463,36 +463,48 @@ QScreen {
             }
             QContextMenu {
                 id: othersContextMenu
-                labels: [
-                    STR.STR_QML_312,
-                    STR.STR_QML_198,
-                    STR.STR_QML_332,
-                    STR.STR_QML_532
-                ]
-                icons: [
-                    "qrc:/Images/Images/settings-dark.svg",
-                    "qrc:/Images/Images/download.png",
-                    "qrc:/Images/Images/Delete.png",
-                    "qrc:/Images/Images/import_031F2B.png",
-                ]
-                enables: [true, true, true , true]
-                onItemClicked: {
-                    switch(index){
-                    case 0: // "Unspent Outputs"
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST)
-                        break;
-                    case 1: // "Change Addresses"
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST)
-                        break;
-                    case 2: // "Delete Wallet"
-                        modelConfirmDelete.open()
-                        break;
-                    case 3: // Import PSBT
-                        openfileDialog.open()
-                        break;
-                    default:
-                        break;
+                labels: {
+                    var ls = [];
+                    ls.push(STR.STR_QML_312)
+                    ls.push(STR.STR_QML_198)
+                    if(!AppModel.walletInfo.isAssistedWallet){
+                        ls.push(STR.STR_QML_332)
                     }
+                    ls.push(STR.STR_QML_532)
+                    if(ClientController.user.isPremiumUser){
+                        ls.push(STR.STR_QML_686)
+                    }
+                    return ls
+                }
+                icons:{
+                    var ls = [];
+                    ls.push("qrc:/Images/Images/settings-dark.svg")
+                    ls.push("qrc:/Images/Images/download.png")
+                    if(!AppModel.walletInfo.isAssistedWallet){
+                        ls.push("qrc:/Images/Images/Delete.png")
+                    }
+                    ls.push("qrc:/Images/Images/import_031F2B.png")
+                    if(ClientController.user.isPremiumUser){
+                        ls.push("qrc:/Images/Images/cached_24px.png")
+                    }
+                    return ls
+                }
+                enables: [true, true, true , true, true]
+                functions: {
+                    var ls = [];
+                    ls.push(function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST); })
+                    ls.push(function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST); })
+                    if(!AppModel.walletInfo.isAssistedWallet){
+                        ls.push(function(){ modelConfirmDelete.open(); })
+                    }
+                    ls.push(function(){ openfileDialog.open(); })
+                    if(ClientController.user.isPremiumUser){
+                        ls.push(function(){ forceRefresh.open(); })
+                    }
+                    return ls
+                }
+                onItemClicked: {
+                    functions[index]()
                 }
             }
         }
@@ -657,6 +669,91 @@ QScreen {
             source: displayAddressMask
         }
     }
+    /*=================Force refresh (advanced)=================*/
+    QConfirmYesNoPopup {
+        id: forceRefresh
+        title: STR.STR_QML_334
+        contentText: STR.STR_QML_689
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            forceRefreshBusybox.open()
+            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REFRESH_WALLET_REQUEST,AppModel.walletInfo.walletId);
+        }
+    }
+    Popup {
+        id: forceRefreshBusybox
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        background: Item{}
+        property string addrToVerify: ""
+        Rectangle {
+            id: forceRefreshMask
+            width: 500
+            height: 250
+            radius: 8
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 500
+                    height: 250
+                    radius: 8
+                }
+            }
+            Column {
+                spacing: 16
+                anchors.centerIn: parent
+                QBusyIndicator {
+                    width: 70
+                    height: 70
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 14
+                    font.weight: Font.Bold
+                    text: STR.STR_QML_122
+                }
+            }
+        }
+        DropShadow {
+            anchors.fill: forceRefreshMask
+            horizontalOffset: 3
+            verticalOffset: 5
+            spread: 0
+            radius: 8
+            samples: 30
+            color: "#aa000000"
+            source: forceRefreshMask
+        }
+        onOpened: {
+            forceRefreshTimer.start()
+        }
+        Timer {
+            id: forceRefreshTimer
+            interval: 5000
+            repeat: false
+            onTriggered: {
+                stop()
+                forceRefreshBusybox.close()
+                _warning.open()
+            }
+        }
+    }
+    QPopupToast{
+        id:_warning
+        x:contenCenter.x + 36
+        y:contenCenter.y + 520
+        warningType:EWARNING.SUCCESS_MSG
+        warningExplain:STR.STR_QML_690
+    }
+    /*==========================================================*/
     Connections {
         target: AppModel
         onStartDisplayAddress: {

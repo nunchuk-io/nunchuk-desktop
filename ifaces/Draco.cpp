@@ -44,7 +44,6 @@ Draco::Draco() :
     m_stayLoggedIn(false)
 {
     m_machineUniqueId = QSysInfo::machineUniqueId();
-    DBG_INFO << QString(m_machineUniqueId);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -162,6 +161,7 @@ void Draco::verifyNewDevice(const QString &pin)
             this->setDracoToken(dataObj["tokenId"].toString());
             this->setExpireSec(dataObj["expireInSeconds"].toInt());
             this->getMe();
+            this->getCurrentUserSubscription();
             CLIENT_INSTANCE->setIsNewDevice(true);
         }
         emit verifyNewDeviceResult(https_code, error_code, error_msg);
@@ -541,7 +541,6 @@ void Draco::createAccount(const QString& name, const QString& email)
             this->setDracoToken(dataObj["tokenId"].toString());
             this->setExpireSec(dataObj["expireInSeconds"].toInt());
             this->setEmailRequested(email);
-            AppSetting::instance()->updateIsStarted(true);
         }
     }
     else{
@@ -571,6 +570,7 @@ void Draco::singin(const QString& email, const QString& password)
                 this->setExpireSec(dataObj["expireInSeconds"].toInt());
                 this->setEmailRequested(email);
                 this->getMe();
+                this->getCurrentUserSubscription();
             }
             else if(error_code == DRACO_CODE::LOGIN_NEW_DEVICE){
                 QJsonObject detailsObj = errorObj["details"].toObject();
@@ -579,7 +579,6 @@ void Draco::singin(const QString& email, const QString& password)
                 this->setEmailRequested(email);
             }
             else{}
-            AppSetting::instance()->updateIsStarted(true);
         }
         emit singinResult(https_code, error_code, error_msg);
     }
@@ -661,6 +660,7 @@ void Draco::changePassword(const QString& oldpassword, const QString& newpasswor
         if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
             this->setPid(newpassword);
             this->getMe();
+            this->getCurrentUserSubscription();
         }
         DBG_INFO << "Draco::CHANGE_PASSWORD " << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
         emit changePasswordResult(https_code, error_code, error_msg);
@@ -1318,10 +1318,10 @@ void Draco::pkey_signup(const QString &address, const QString &username, const Q
                 this->setDeviceId(dataObj["deviceId"].toString());
                 this->setDracoToken(dataObj["tokenId"].toString());
                 this->setExpireSec(dataObj["expireInSeconds"].toInt());
+                this->getMe();
+                this->getCurrentUserSubscription();
+                AppModel::instance()->setPrimaryKey(username);
             }
-            this->getMe();
-            AppModel::instance()->setPrimaryKey(username);
-            AppSetting::instance()->updateIsStarted(true);
         }
         emit signalpkey_signup(https_code, error_code, error_msg);
     }
@@ -1330,7 +1330,7 @@ void Draco::pkey_signup(const QString &address, const QString &username, const Q
     }      
 }
 
-void Draco::pkey_signin(const QString &address, const QString &username, const QString &signature)
+bool Draco::pkey_signin(const QString &address, const QString &username, const QString &signature)
 {
     QJsonObject data;
     if(address != ""){
@@ -1341,6 +1341,7 @@ void Draco::pkey_signin(const QString &address, const QString &username, const Q
     }
     data["signature"] =  signature;
     int https_code = -1;
+    bool ret = false;
     QJsonObject jsonObj = postSync(commands[CMD_IDX::PRIMARY_KEY_SIGNIN], data, https_code);
     if(!jsonObj.isEmpty()){
         QJsonObject errorObj = jsonObj["error"].toObject();
@@ -1350,26 +1351,29 @@ void Draco::pkey_signin(const QString &address, const QString &username, const Q
         if(https_code == DRACO_CODE::SUCCESSFULL) {
             this->setUid(username);
             if(error_code == DRACO_CODE::RESPONSE_OK){
+                ret = true;
                 QJsonObject dataObj = jsonObj["data"].toObject();
                 this->setDeviceId(dataObj["deviceId"].toString());
                 this->setDracoToken(dataObj["tokenId"].toString());
                 this->setExpireSec(dataObj["expireInSeconds"].toInt());
+                this->getMe();
+                this->getCurrentUserSubscription();
+                AppModel::instance()->setPrimaryKey(username);
             }
             else if(error_code == DRACO_CODE::LOGIN_NEW_DEVICE){
+                ret = true;
                 QJsonObject detailsObj = errorObj["details"].toObject();
                 this->setDeviceId(detailsObj["deviceId"].toString());
                 this->setLoginHalfToken(detailsObj["halfToken"].toString());
             }
             else{}
-            this->getMe();
-            AppModel::instance()->setPrimaryKey(username);
-            AppSetting::instance()->updateIsStarted(true);
         }
         emit signalpkey_signin(https_code, error_code, error_msg);
     }
     else{
         DBG_INFO << "ERROR, RETURN IS EMPTY";
     }
+    return ret;
 }
 
 QString Draco::get_pkey_nonce(const QString &address,const QString &username)
@@ -1520,4 +1524,166 @@ void Draco::setStayLoggedIn(bool value)
         m_stayLoggedIn = value;
         emit stayLoggedInChanged();
     }
+}
+
+void Draco::getCurrentUserSubscription()
+{
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::USER_SUBCRIPTIONS_CURRENT];
+    QJsonObject jsonObj = getSync(cmd, QJsonObject(), https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject dataObj = jsonObj["data"].toObject();
+            CLIENT_INSTANCE->setSubCur(dataObj);
+            qInfo() << dataObj;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+}
+
+QJsonObject Draco::getAssistedWallets()
+{
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_GET];
+    QJsonObject jsonObj = getSync(cmd, QJsonObject(), https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject dataObj = jsonObj["data"].toObject();
+            return dataObj;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+    return QJsonObject();
+}
+
+bool Draco::assistedWalletCreateTx(const QString &wallet_id, const QString &psbt, const QString &memo)
+{
+    QJsonObject data;
+    data["psbt"] = psbt;
+    data["note"] = memo;
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_CREATE_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id);
+    QJsonObject jsonObj = postSync(cmd, data, https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            return true;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+    return false;
+}
+
+QJsonObject Draco::assistedWalletSignTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt, const QString &memo)
+{
+    QJsonObject data;
+    data["psbt"] = psbt;
+    data["note"] = memo;
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_SIGN_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id).replace("{transaction_id}",transaction_id);
+    QJsonObject jsonObj = postSync(cmd, data, https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject data = jsonObj.value("data").toObject();
+            return data;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+    return QJsonObject();
+}
+
+bool Draco::assistedWalletCancelTx(const QString &wallet_id, const QString &transaction_id)
+{
+    QJsonObject data;
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_CANCEL_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id).replace("{transaction_id}",transaction_id);
+    QJsonObject jsonObj = deleteSync(cmd, data, https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            return true;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+    return false;
+}
+
+QJsonObject Draco::assistedWalletGetTx(const QString &wallet_id, const QString &transaction_id)
+{
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_GET_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id).replace("{transaction_id}",transaction_id);
+    QJsonObject jsonObj = getSync(cmd, QJsonObject(), https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject data = jsonObj.value("data").toObject();
+            return data;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+    return QJsonObject();
+}
+
+QJsonObject Draco::assistedWalletGetListTx(const QString &wallet_id)
+{
+    QJsonObject data;
+    data["offset"] = "0";
+    data["limit"] = "100";
+    data["statuses"] = "PENDING_SIGNATURES,READY_TO_BROADCAST";
+    data["types"] = "STANDARD,SCHEDULED,CLAIMING,ROLLOVER";
+    int https_code = -1;
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_CREATE_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id);
+    QJsonObject jsonObj = getSync(cmd, data, https_code);
+    if(!jsonObj.isEmpty()){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int error_code = errorObj["code"].toInt();
+        QString error_msg = errorObj["message"].toString();
+        DBG_INFO << QString("https[%1] error[%2] message[%3]").arg(https_code).arg(error_code).arg(error_msg);
+        if(https_code == DRACO_CODE::SUCCESSFULL && error_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject data = jsonObj.value("data").toObject();
+            return data;
+        }
+    }
+    else{
+        DBG_INFO << "ERROR, RETURN IS EMPTY";
+    }
+    return QJsonObject();
 }

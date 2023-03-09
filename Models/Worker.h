@@ -69,7 +69,7 @@ public slots:
 
     // for callback
     void slotStartBalanceChanged(const QString& id,
-                                 const qint64 value);
+                                 const qint64 balance);
 
     void slotStartTransactionChanged(const QString &tx_id,
                                      const int status,
@@ -170,7 +170,7 @@ signals:
 
     // for callback
     void finishBalanceChanged(const QString& id,
-                              const qint64 value);
+                              const qint64 balance);
 
     void finishTransactionChanged(const QString &tx_id,
                                   const int status,
@@ -274,7 +274,7 @@ public slots:
 
     // For callback
     void slotFinishBalanceChanged(const QString& id,
-                                  const qint64 value);
+                                  const qint64 balance);
     void slotFinishTransactionChanged(const QString &tx_id,
                                       const int status,
                                       const QString &wallet_id,
@@ -354,7 +354,7 @@ signals:
 
     // For callback
     void startBalanceChanged(const QString& id,
-                             const qint64 value);
+                             const qint64 balance);
 
     void startTransactionChanged(const QString &tx_id,
                                  const int status,

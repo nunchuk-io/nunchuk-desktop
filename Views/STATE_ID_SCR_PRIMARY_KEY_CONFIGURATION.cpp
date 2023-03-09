@@ -28,12 +28,14 @@
 #include "STATE_ID_SCR_LOGIN_ONLINE.h"
 
 void SCR_PRIMARY_KEY_CONFIGURATION_Entry(QVariant msg) {
-    QString signername = msg.toMap().value("signername").toString();
-    QString passphrase = msg.toMap().value("passphrase").toString();
+    QMap<QString,QVariant> dataMap = msg.toMap();
+    QString signername = dataMap.value("signername").toString();
+    QString passphrase = dataMap.value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();
+    qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
     QString fingerprint = qUtils::GetMasterFingerprint(mnemonic,passphrase);
-    DBG_INFO << fingerprint;
-    QObject *obj = QQuickViewer::instance()->getQmlObj().first();
+    QObject *obj = QQuickViewer::instance()->getCurrentScreen();
+    DBG_INFO << fingerprint << dataMap;
     if(obj){
         obj->setProperty("primaryKeyUsername",fingerprint);
         obj->setProperty("primaryKeyPassphrase",passphrase);
@@ -51,6 +53,7 @@ void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
     QString mnemonic = maps["mnemonic"].toString();
     QString username = maps["username"].toString();
     QString passphrase = maps["passphrase"].toString();
+    DBG_INFO;
     bool isAvail = Draco::instance()->pkey_username_availability(username);
     if(!isAvail){
         QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
@@ -71,6 +74,7 @@ void EVT_PRIMARY_KEY_CONFIGURATION_BACK_HANDLER(QVariant msg) {
 }
 
 void EVT_PRIMARY_KEY_CONFIGURATION_FINISHED_HANDLER(QVariant msg) {
+    DBG_INFO;
     QTimer::singleShot(200,[](){
         AppModel::instance()->showToast(0,
                                         STR_CPP_106,
@@ -82,9 +86,19 @@ void EVT_PRIMARY_KEY_CONFIGURATION_FINISHED_HANDLER(QVariant msg) {
 
 void EVT_PRIMARY_KEY_SIGN_IN_SUCCEED_HANDLER(QVariant msg)
 {
-    AppModel::instance()->loginSucceed();
+    DBG_INFO;
     QString signername = msg.toMap().value("signername").toString();
     QString passphrase = msg.toMap().value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();
-    AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+
+    QMap<QString, QVariant> makeInstanceData;
+    makeInstanceData["state_id"] = E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION;
+    makeInstanceData["signername"] = signername;
+    makeInstanceData["passphrase"] = passphrase;
+    makeInstanceData["mnemonic"] = mnemonic;
+
+    bool ret = AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
+    if(ret){
+        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+    }
 }

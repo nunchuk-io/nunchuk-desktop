@@ -48,4 +48,11 @@ void EVT_CREATE_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
     AppModel::instance()->create_account(msg);
 }
 
+void EVT_CREATE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
+    QMap<QString, QVariant> makeInstanceData;
+    makeInstanceData["state_id"] = E::STATE_ID_SCR_CREATE_ACCOUNT;
+    makeInstanceData["isSignIn"] = msg;
+    QQuickViewer::instance()->sendEvent(E::EVT_CREATE_ACCOUNT_PRIMARY_KEY_REQUEST,msg);
+}
+
 

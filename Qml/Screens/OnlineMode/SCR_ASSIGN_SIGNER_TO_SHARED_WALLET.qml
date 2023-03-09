@@ -158,6 +158,7 @@ QScreen {
                             signerXFP: "XFP: " + model.singleSigner_masterFingerPrint
                             signerType: NUNCHUCKTYPE.AIRGAP
                             checkedState: model.single_signer_checked
+                            devicetype: model.single_signer_devicetype
                             onItemChecked: {
                                 if(model.single_signer_checked){
                                     model.single_signer_checked = false

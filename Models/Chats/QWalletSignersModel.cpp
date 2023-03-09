@@ -56,6 +56,10 @@ QVariant QWalletSignersModel::data(const QModelIndex &index, int role) const
         return m_data[index.row()].type;
     case role_signer_primary_key:
         return m_data[index.row()].isPrimaryKey;
+    case role_username:
+        return m_data[index.row()].username;
+    case role_avatar:
+        return m_data[index.row()].avatar;
     default:
         return QVariant();
     }
@@ -72,6 +76,8 @@ QHash<int, QByteArray> QWalletSignersModel::roleNames() const
     names[role_is_localuser] = "signer_is_localuser";
     names[role_signer_type] = "signer_type";
     names[role_signer_primary_key] ="signer_primary_key";
+    names[role_username] = "username";
+    names[role_avatar] ="avatar";
     return names;
 }
 

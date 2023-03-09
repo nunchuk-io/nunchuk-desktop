@@ -22,6 +22,7 @@ class SingleSigner : public QObject {
     Q_PROPERTY(int     signerHealth             READ health                                         NOTIFY healthChanged)
     Q_PROPERTY(bool    isColdCard               READ isColdCard                                     NOTIFY isColdCardChanged)
     Q_PROPERTY(int     signerType               READ signerType                                     NOTIFY signerTypeChanged)
+    Q_PROPERTY(QString devicetype               READ devicetype                                     NOTIFY devicetypeChanged)
 public:
     SingleSigner();
     SingleSigner(const QString& pr_name,
@@ -74,7 +75,10 @@ public:
     void setIsPrimaryKey(bool isPrimaryKey);
     nunchuk::PrimaryKey primaryKey() const;
     void setPrimaryKey(const nunchuk::PrimaryKey &primaryKey);
-
+    QString devicetype() const;
+    void setDevicetype(QString devicetype);
+    QString cardId() const;
+    void setCardId(const QString &card_id);
 private:
     QString name_;
     QString xpub_;
@@ -96,6 +100,8 @@ private:
     bool isLocalSigner_;
     bool isPrimaryKey_;
     nunchuk::PrimaryKey primaryKey_;
+    QString m_devicetype;
+    QString cardId_;
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -120,13 +126,15 @@ signals:
     void isSoftwareChanged();
     void readyToSignChanged();
     void isLocalSignerChanged();
+    void devicetypeChanged();
 };
 typedef QSharedPointer<SingleSigner> QSingleSignerPtr;
 
 bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
 bool sortSingleSignerByNameDescending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
 bool sortSingleSignerByLocalAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
-
+class MasterSigner;
+typedef QSharedPointer<MasterSigner> QMasterSignerPtr;
 class SingleSignerListModel  : public QAbstractListModel
 {
     Q_OBJECT
@@ -157,16 +165,17 @@ public:
     bool checkUsableToSign(const QString& masterFingerPrint);
     void updateSignerHealthStatus(const QString &masterSignerId, const int status, const time_t time);
     void notifyMasterSignerDeleted(const QString &masterSignerId);
-    void notifyMasterSignerRenamed(const QString &masterSignerId, const QString &newname);
-    void notifyRemoteSignerRenamed(const QString &fingerprint, const QString &newname);
-    void notifyRemoteLocalSigner(const QString &fingerprint);
+    void renameById(const QString &id, const QString &newname);
+    void renameByXfp(const QString &xfp, const QString &newname);
+    void updateIsLocalSigner(const QString &xfp, const bool value);
+    void updateSignerType(const QString &xfp, const int value);
     void resetUserChecked();
     void setUserCheckedByFingerprint(const bool state, const QString fp);
     void setUserChecked(const bool state, const int index);
     void updateHealthCheckTime();
     bool containsDevicesConnected(const QStringList xfp);
     void updateSignerReadyToSign(const QString& xfp);
-    void updateSignerIsLocalAndReadyToSign(const QString& xfp,int signerType);
+    void updateSignerIsLocalAndReadyToSign(const QMasterSignerPtr &master);
     void resetSignerReadyToSign();
     nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
 
@@ -188,7 +197,9 @@ public:
         single_signer_checked_Role,
         single_signer_readyToSign_Role,
         single_signer_is_local_Role,
-        single_signer_primary_key_Role
+        single_signer_primary_key_Role,
+        single_signer_devicetype_Role,
+        single_signer_device_cardid_Role
     };
     void requestSort(int role, int order);
     QList<QSingleSignerPtr> fullList() const;

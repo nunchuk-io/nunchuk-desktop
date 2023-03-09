@@ -110,8 +110,8 @@ Rectangle {
             id: userAvt
             width: 36
             height: 36
-            avatarUrl: ClientController.isMatrixLoggedIn ? ClientController.user.avatar : ""
-            username:  ClientController.isMatrixLoggedIn ? ClientController.user.name : STR.STR_QML_535
+            avatarUrl: ClientController.isNunchukLoggedIn ? ClientController.user.avatar : ""
+            username:  ClientController.isNunchukLoggedIn ? ClientController.user.name : STR.STR_QML_535
             displayStatus: false
             anchors.centerIn: parent
             MouseArea {

@@ -42,6 +42,8 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
                 signer.data()->setName(ret.data()->name());
                 signer.data()->setMasterSignerId(ret.data()->id());
                 signer.data()->setSignerType(ret.data()->signerType());
+                signer.data()->setDevicetype(ret.data()->device()->type());
+                signer.data()->setCardId(ret.data()->device()->cardId());
                 signer.data()->setIsValid(false);
                 signer.data()->setMasterFingerPrint(ret.data()->fingerPrint());
                 if(signer){
@@ -58,7 +60,7 @@ void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
         for (int i = 0; i < AppModel::instance()->remoteSignerList()->rowCount(); i++) {
             QSingleSignerPtr signer = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(i);
             if(signer && signer.data()->checked()){
-                signer.data()->setSignerType((int)ENUNCHUCK::SignerType::AIRGAP);
+                signer.data()->setSignerType((int)signer.data()->signerType());
                 AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
             }
         }
@@ -70,7 +72,9 @@ void EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER_HANDLER(QVariant msg) {
     int signerIndex = msg.toInt();
     QSingleSignerPtr signer = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->getSingleSignerByIndex(signerIndex);
     if(signer){
-        if((int)ENUNCHUCK::SignerType::AIRGAP == signer.data()->signerType()){
+        if((int)ENUNCHUCK::SignerType::SOFTWARE != signer.data()->signerType()
+                && (int)ENUNCHUCK::SignerType::HARDWARE != signer.data()->signerType()
+                && (int)ENUNCHUCK::SignerType::NFC != signer.data()->signerType()){
             AppModel::instance()->remoteSignerList()->setUserCheckedByFingerprint(false, signer->masterFingerPrint());
         }
         else{

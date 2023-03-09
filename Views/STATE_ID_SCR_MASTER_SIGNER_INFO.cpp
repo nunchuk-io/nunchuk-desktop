@@ -30,20 +30,24 @@ void SCR_MASTER_SIGNER_INFO_Entry(QVariant msg) {
 }
 
 void SCR_MASTER_SIGNER_INFO_Exit(QVariant msg) {
-    AppModel::instance()->setMasterSignerInfo( QMasterSignerPtr(new MasterSigner()));
-    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-    if(mastersigners){
-        AppModel::instance()->setMasterSignerList(mastersigners);
-    }
+    AppModel::instance()->startReloadMasterSigners();
 }
 
 void EVT_MASTER_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
     if(AppModel::instance()->masterSignerInfo()){
         if(msg.toString() != AppModel::instance()->masterSignerInfo()->name()){
-            bridge::nunchukUpdateMasterSigner(AppModel::instance()->masterSignerInfo()->id(), msg.toString());
-            AppModel::instance()->updateMasterSignerInfoName(msg.toString());
-            if(AppModel::instance()->masterSignerList()){
-                AppModel::instance()->masterSignerList()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
+            if (AppModel::instance()->masterSignerInfo()->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) {
+                bridge::nunchukUpdateRemoteSigner(msg.toString());
+                AppModel::instance()->updateSingleSignerInfoName(msg.toString());
+                if(AppModel::instance()->remoteSignerList()){
+                    AppModel::instance()->remoteSignerList()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_name_Role, Qt::AscendingOrder);
+                }
+            } else {
+                bridge::nunchukUpdateMasterSigner(AppModel::instance()->masterSignerInfo()->id(), msg.toString());
+                AppModel::instance()->updateMasterSignerInfoName(msg.toString());
+                if(AppModel::instance()->masterSignerList()){
+                    AppModel::instance()->masterSignerList()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
+                }
             }
         }
     }
@@ -82,15 +86,31 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
     QMasterSignerPtr key = AppModel::instance()->masterSignerInfoPtr();
     NunchukType1 func = [](const QString &id){
         DBG_INFO << "Delete Key " << id;
-        bridge::nunchukDeleteMasterSigner(id);
-        QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-        if (mastersigners) {
-            AppModel::instance()->setMasterSignerList(mastersigners);
-        }
-        QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
-        AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new MasterSigner()));
-        if (AppModel::instance()->walletList()) {
-            AppModel::instance()->walletList()->notifyMasterSignerDeleted(id);
+        if (AppModel::instance()->masterSignerInfo()->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) {
+            QSingleSignerPtr ptr = AppModel::instance()->singleSignerInfoPtr();
+            if (ptr) {
+                QString master_fingerprint = ptr->masterFingerPrint();
+                QString derivation_path    = ptr->derivationPath();
+                if(bridge::nunchukDeleteRemoteSigner(master_fingerprint, derivation_path)){
+                    QSingleSignerListModelPtr remoteSigners = bridge::nunchukGetRemoteSigners();
+                    if(remoteSigners){
+                        AppModel::instance()->setRemoteSignerList(remoteSigners);
+                    }
+                    QQuickViewer::instance()->sendEvent(E::EVT_REMOTE_SIGNER_INFO_BACK_HOME);
+                    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+                }
+            }
+        } else {
+            bridge::nunchukDeleteMasterSigner(id);
+            QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+            if (mastersigners) {
+                AppModel::instance()->setMasterSignerList(mastersigners);
+            }
+            QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
+            AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new MasterSigner()));
+            if (AppModel::instance()->walletList()) {
+                AppModel::instance()->walletList()->notifyMasterSignerDeleted(id);
+            }
         }
     };
     if(key->needPassphraseSent() && key->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE){

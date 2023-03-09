@@ -28,30 +28,22 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
-    QImage {
-        id: bug
-        source: "qrc:/Images/Images/Default.png"
-        sourceSize: Qt.size(parent.width, parent.height)
-        smooth: true
-        visible: false
-    }
-    GaussianBlur {
-        anchors.fill: bug
-        source: bug
-        radius: 12
-        samples: 12
-    }
-    Rectangle {
-        width: 1164
-        height: 800
+    QOnScreenContent {
+        id:_content
+        width: popupWidth
+        height: popupHeight
         anchors.centerIn: parent
-        color: "#F1FAFE"
-        radius: 4
+        label.text: STR.STR_QML_239
+        enableHeader: false
         QImage {
-            width: 522
-            height: 522
-            anchors.centerIn: parent
-            source: "qrc:/Images/Images/Logo_bgr.png"
+            width: 120
+            height: 120
+            anchors{
+                horizontalCenter: parent.horizontalCenter
+                top: parent.top
+                topMargin: 150
+            }
+            source: "qrc:/Images/Images/logo-light.svg"
         }
         Item {
             width: 448

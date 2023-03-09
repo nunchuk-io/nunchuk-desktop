@@ -34,7 +34,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: ""
         onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_SETTING_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_CREATE_ACCOUNT)
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
         }
         Column{
             anchors.centerIn: parent
@@ -116,7 +116,7 @@ QScreen {
                     type: eTypeB
                     onButtonClicked: {
                         var isSignIn = true;
-                        QMLHandle.sendEvent(EVT.EVT_SHOW_SIGN_IN_PRIMARY_KEY_REQUEST,isSignIn)
+                        QMLHandle.sendEvent(EVT.EVT_SIGN_IN_PRIMARY_KEY_REQUEST,isSignIn)
                     }
                 }
             }
@@ -124,9 +124,14 @@ QScreen {
     }
     function processingSigninResult(https_code, error_code, error_msg){
         if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.SIGN_IN_EXCEPTION){
-            email.isValid = false
-            email.errorText = STR.STR_QML_423
-            email.showError = true;
+            if (error_code === DRACO_CODE.SIGN_IN_EXCEPTION) {
+                errorInfo.contentText = error_msg
+                errorInfo.open()
+            } else {
+                email.isValid = false
+                email.errorText = error_msg
+                email.showError = true;
+            }
         }
         else {
             if(https_code === DRACO_CODE.SUCCESSFULL){
@@ -147,6 +152,13 @@ QScreen {
                 _password.isValid = false
                 _password.errorText = error_msg
             }
+        }
+    }
+    QPopupInfo{
+        id: errorInfo
+        coverColor: Qt.rgba(255, 255, 255, 0)
+        onGotItClicked: {
+            close()
         }
     }
     Connections {

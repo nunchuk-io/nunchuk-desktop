@@ -6,14 +6,16 @@
 #include "qUtils.h"
 
 struct SignerAssigned {
-    bool is_localuser = false;
     QString name = "";
     QString xfp = "";
     QString xpub = "";
     QString bip32path = "";
     QString joid_id = "";
+    QString username = "";
+    QString avatar = "";
     int     type = 0;
     bool    isPrimaryKey = false;
+    bool is_localuser = false;
 };
 
 class QWalletSignersModel : public QAbstractListModel
@@ -42,7 +44,9 @@ public:
         role_joid_id,
         role_is_localuser,
         role_signer_type,
-        role_signer_primary_key
+        role_signer_primary_key,
+        role_username,
+        role_avatar,
     };
 private:
     QList<SignerAssigned> m_data;

@@ -24,6 +24,7 @@
 #include "Chats/matrixbrigde.h"
 #include "Chats/ClientController.h"
 #include "localization/STR_CPP.h"
+#include "Draco.h"
 
 void SCR_TRANSACTION_INFO_Entry(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
@@ -33,14 +34,16 @@ void SCR_TRANSACTION_INFO_Exit(QVariant msg) {
 }
 
 void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
+    DBG_INFO << msg;
     QString signerXfp = msg.toString();
     if(AppModel::instance()->walletInfo() && AppModel::instance()->transactionInfo() && AppModel::instance()->transactionInfo()->singleSignersAssigned()){
         QString wallet_id = AppModel::instance()->walletInfo()->id();
         QString tx_id = AppModel::instance()->transactionInfo()->txid();
         int signerType = AppModel::instance()->transactionInfo()->singleSignersAssigned()->getSingleSignerByFingerPrint(signerXfp)->signerType();
+        DBG_INFO << signerType;
         if((int)ENUNCHUCK::SignerType::SOFTWARE == signerType){
-            QDevicePtr device = AppModel::instance()->softwareSignerDeviceList()->getDeviceByXFP(signerXfp);
-            int deviceIndex = AppModel::instance()->softwareSignerDeviceList()->getDeviceIndexByXFP(signerXfp);
+            QDevicePtr device = AppModel::instance()->softwareSignerDeviceList()->getDeviceByXfp(signerXfp);
+            int deviceIndex = AppModel::instance()->softwareSignerDeviceList()->getDeviceIndexByXfp(signerXfp);
             if(device){
                 if(device.data()->needsPassPhraseSent()){
                     QMap<QString, QVariant> passPhraseData;
@@ -61,8 +64,9 @@ void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                 }
             }
         }
-        else if((int)ENUNCHUCK::SignerType::HARDWARE == signerType){
-            QDevicePtr device = AppModel::instance()->deviceList()->getDeviceByXFP(signerXfp);
+        else if((int)ENUNCHUCK::SignerType::HARDWARE == signerType
+                || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType){
+            QDevicePtr device = AppModel::instance()->deviceList()->getDeviceByXfp(signerXfp);
             if(device){
                 AppModel::instance()->startSigningTransaction(wallet_id,
                                                               tx_id,
@@ -237,6 +241,10 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
         QString txid = AppModel::instance()->transactionInfo()->txid();
         bool ret = bridge::nunchukDeleteTransaction(wallet_id, txid);
         if(ret){
+            QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
+            if(wallet && wallet->isAssistedWallet()){
+                Draco::instance()->assistedWalletCancelTx(wallet_id,txid);
+            }
             AppModel::instance()->startGetTransactionHistory(wallet_id);
             AppModel::instance()->startGetUsedAddresses(wallet_id);
             AppModel::instance()->startGetUnusedAddresses(wallet_id);

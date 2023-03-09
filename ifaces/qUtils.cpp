@@ -44,15 +44,7 @@ QString qUtils::QValueFromAmount(const qint64 &amount) {
         ret.remove( QRegExp("0+$") ); // Remove any number of trailing 0's
         ret.remove( QRegExp("\\.$") ); // If the last character is just a '.' then remove it
     }
-//    Consider using locale
-//    qlonglong btc = ret.toLongLong();
-//    if(btc > 999){
-//        QLocale locale(QLocale::English);
-//        return locale.toString(btc);
-//    }
-//    else{
-        return ret;
-//    }
+    return ret;
 }
 
 QString qUtils::QGenerateRandomMessage(int message_length)
@@ -150,10 +142,15 @@ QStringList qUtils::GetBIP39WordList()
     return result;
 }
 
-void qUtils::SetPassPhrase(const QString &storage_path, const QString &account, const QString &old_passphrase, const QString &new_passphrase)
+void qUtils::SetPassPhrase(const QString &storage_path,
+                           const QString &account,
+                           nunchuk::Chain chain,
+                           const QString &old_passphrase,
+                           const QString &new_passphrase)
 {
     nunchuk::Utils::SetPassPhrase(storage_path.toStdString(),
                                   account.toStdString(),
+                                  chain,
                                   old_passphrase.toStdString(),
                                   new_passphrase.toStdString());
 }
@@ -218,4 +215,34 @@ QString qUtils::SignLoginMessage(const QString &mnemonic, const QString &passphr
 void qUtils::SetChain(nunchuk::Chain chain)
 {
     nunchuk::Utils::SetChain(chain);
+}
+
+nunchuk::SignerType qUtils::GetSignerType(const QString &value)
+{
+    nunchuk::SignerType ret = nunchuk::SignerType::UNKNOWN;
+    try {
+        ret = SignerTypeFromStr(value.toStdString());
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
+QString qUtils::GetSignerTypeString(const nunchuk::SignerType value)
+{
+    QString ret = "UNKNOWN";
+    try {
+        ret = QString::fromStdString(SignerTypeToStr(value));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
 }

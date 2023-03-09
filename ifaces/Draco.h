@@ -47,7 +47,7 @@ public:
     Q_INVOKABLE void signoutAllDeices();
     Q_INVOKABLE void markAsCompromised(const QString &device_id);
     Q_INVOKABLE void pkey_signup(const QString &address,const QString &username,const QString &signature);
-    Q_INVOKABLE void pkey_signin(const QString &address,const QString &username,const QString &signature);
+    Q_INVOKABLE bool pkey_signin(const QString &address,const QString &username,const QString &signature);
     QString get_pkey_nonce(const QString &address,const QString &username);
     QString pkey_manual_nonce(const QString &address, const QString &username, const QString &nonce, const QString &type = "none");
     Q_INVOKABLE bool pkey_username_availability(const QString &username);
@@ -89,6 +89,17 @@ public:
     QByteArray machineUniqueId() const;
     bool stayLoggedIn() const;
     void setStayLoggedIn(bool value);
+
+    // USER_SUBSCRIPTION
+    void getCurrentUserSubscription();
+
+    // ASSISTED_WALLETS
+    QJsonObject getAssistedWallets();
+    bool assistedWalletCreateTx(const QString &wallet_id, const QString &psbt, const QString &memo);
+    QJsonObject assistedWalletSignTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt, const QString &memo);
+    bool assistedWalletCancelTx(const QString &wallet_id, const QString &transaction_id);
+    QJsonObject assistedWalletGetTx(const QString &wallet_id, const QString &transaction_id);
+    QJsonObject assistedWalletGetListTx(const QString &wallet_id);
 private:
     Draco();
     ~Draco();

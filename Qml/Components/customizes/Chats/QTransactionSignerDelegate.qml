@@ -34,6 +34,8 @@ Rectangle {
     width: 326
     height: columnItem.height
     color: "transparent"
+    property string serverkeyMessage: ""
+    property string devicetype: ""
     property string signername: "A B"
     property string signerxfp : "A B"
     property bool   isLocaluser: true
@@ -42,6 +44,7 @@ Rectangle {
     property bool   signerReadyToSign: true
     property int    signerType: -1
     property int    tx_status: -1
+    property string card_id: ""
     signal signRequest()
     signal scanRequest()
 
@@ -52,16 +55,23 @@ Rectangle {
         Row {
             id: roomDelegateContent
             spacing: 8
-            QAvatar {
-                id: avatar
-                width: 36
-                height: 36
-                username: signername
+            Rectangle {
+                id: _keyIcon
+                width: 48
+                height: 48
+                radius: width
+                color: "#F5F5F5"
                 anchors.verticalCenter: parent.verticalCenter
-                displayStatus: false
+                QImage {
+                    width: 30
+                    height: 30
+                    anchors.centerIn: parent
+                    source: GlobalData.iconTypes(devicetype,signerType)
+                }
             }
+
             Column {
-                width: 185
+                width: 170
                 spacing: 4
                 anchors.verticalCenter: parent.verticalCenter
                 QText{
@@ -73,33 +83,47 @@ Rectangle {
                     color: "#031F2B"
                     elide: Text.ElideRight
                 }
+                Rectangle {
+                    width: typesigner.width + 10
+                    height: 16
+                    color: "#EAEAEA"
+                    visible: isLocaluser && (signerType === NUNCHUCKTYPE.AIRGAP ||
+                                             signerType === NUNCHUCKTYPE.SOFTWARE ||
+                                             signerType === NUNCHUCKTYPE.COLDCARD_NFC ||
+                                             signerType === NUNCHUCKTYPE.NFC)
+                    radius: 8
+                    QText {
+                        id: typesigner
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 10
+                        anchors.centerIn: parent
+                        font.weight: Font.Bold
+                        text: GlobalData.signers(signerType)
+                    }
+                }
                 QText {
                     height: 16
-                    visible: signerxfp !== ""
+                    visible: (signerxfp !== "" || card_id !== "") && signerType !== NUNCHUCKTYPE.SERVER
                     font.family: "Lato"
                     font.pixelSize: 12
                     color: "#031F2B"
-                    text: "XFP: " + signerxfp
-                    font.capitalization: Font.AllUppercase
-                    Rectangle {
-                        width: typesigner.width + 10
-                        height: parent.height
-                        color: "#EAEAEA"
-                        visible: isLocaluser && (signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.SOFTWARE)
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.right
-                        anchors.leftMargin: 8
-                        radius: 20
-                        QText {
-                            id: typesigner
-                            font.family: "Lato"
-                            color: "#031F2B"
-                            font.pixelSize: 10
-                            anchors.centerIn: parent
-                            font.weight: Font.Bold
-                            text: GlobalData.signers(signerType)
+                    text: {
+                        if (signerType === NUNCHUCKTYPE.NFC) {
+                            var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
+                            return "Card ID: .." + textR
+                        } else {
+                            return "XFP: " + signerxfp.toUpperCase()
                         }
                     }
+                }
+                QText {
+                    height: 16
+                    visible: serverkeyMessage !== "" && signerType === NUNCHUCKTYPE.SERVER
+                    font.family: "Lato"
+                    font.pixelSize: 12
+                    color: "#A66800"
+                    text:  serverkeyMessage
                 }
             }
             Loader {
@@ -110,7 +134,10 @@ Rectangle {
                     else{
                         if(AppModel.transactionInfo.status !== NUNCHUCKTYPE.PENDING_SIGNATURES || !isLocaluser) return null;
                         else{
-                            if(signerType === NUNCHUCKTYPE.AIRGAP || (signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE)) return helpComp
+                            if(signerType === NUNCHUCKTYPE.AIRGAP
+                              || signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE
+                              || signerType === NUNCHUCKTYPE.NFC) return helpComp;
+                            else if(signerType === NUNCHUCKTYPE.SERVER) return null;
                             else{
                                 if(signerReadyToSign) return requiredSignature
                                 else requiredScan
@@ -146,10 +173,17 @@ Rectangle {
             QTooltip {
                 width: 24
                 height: 24
+                tipWidth: 270
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 source: "qrc:/Images/Images/OnlineMode/help_outline-24px.png"
-                toolTip: (signerType === NUNCHUCKTYPE.AIRGAP) ? STR.STR_QML_507 : STR.STR_QML_508
+                toolTip: {
+                    switch(signerType){
+                    case NUNCHUCKTYPE.AIRGAP: return STR.STR_QML_507
+                    case NUNCHUCKTYPE.NFC: return STR.STR_QML_688
+                    default: return STR.STR_QML_508
+                    }
+                }
                 rightOfParent: true
             }
         }

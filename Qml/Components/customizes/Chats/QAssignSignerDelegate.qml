@@ -51,7 +51,7 @@ Item {
             width: 30
             height: 30
             anchors.centerIn: parent
-            source: GlobalData.icons("software")
+            source: GlobalData.iconTypes(devicetype,signerType)
         }
     }
     Column {

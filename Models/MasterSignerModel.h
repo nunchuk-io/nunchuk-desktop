@@ -15,6 +15,7 @@ class MasterSigner : public QObject {
     Q_PROPERTY(int masterSignerHealth      READ health          WRITE setHealth    NOTIFY healthChanged)
     Q_PROPERTY(QString fingerPrint         READ fingerPrint     NOTIFY fingerPrintChanged)
     Q_PROPERTY(QString message             READ message         WRITE setMessage   NOTIFY messageToSignChanged)
+    Q_PROPERTY(QString messageSHA256       READ messageSHA256                      NOTIFY messageToSignChanged)
     Q_PROPERTY(QString signature           READ signature       WRITE setSignature NOTIFY signatureChanged)
     Q_PROPERTY(QString masterSignerPath    READ path               NOTIFY pathChanged)
     Q_PROPERTY(bool needPinSent            READ needPinSent        NOTIFY needPinSentChanged)
@@ -45,7 +46,8 @@ public:
     void setDevice(const QDevicePtr &d);
     void setHealth(const int d);
     QString fingerPrint() const;
-    QString message() const;
+    QString message();
+    QString messageSHA256();
     void setMessage(const QString &message);
     QString signature() const;
     void setSignature(const QString &signature);
@@ -67,7 +69,6 @@ public:
     bool isPrimaryKey() const;
     void setIsPrimaryKey(bool isPrimaryKey);
     nunchuk::PrimaryKey primaryKey() const;
-
 private:
     QString id_;
     QString name_;
@@ -122,7 +123,7 @@ public:
                          const int health = -1,
                          const int signertype = 0);
     void addMasterSigner(const QMasterSignerPtr &d);
-    void updateMasterSignerName(const QString &signerId, const QString &name);
+    void renameById(const QString &id, const QString &name);
     void updateDeviceStatus(const QString &fingerprint, const bool connected);
     QMasterSignerPtr getMasterSignerByIndex(const int index);
     QMasterSignerPtr getMasterSignerById(const QString& id);

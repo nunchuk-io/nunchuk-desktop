@@ -78,10 +78,10 @@ class Transaction : public QObject {
     Q_PROPERTY(DestinationListModel* destinationList READ destinationList NOTIFY destinationListChanged)
     Q_PROPERTY(Destination* change READ change NOTIFY changeChanged)
     Q_PROPERTY(SingleSignerListModel* singleSignersAssigned READ singleSignersAssigned NOTIFY singleSignerAssignedChanged)
-    Q_PROPERTY(QString subtotal READ subtotalDisplay NOTIFY subtotalChanged)
-    Q_PROPERTY(QString total READ totalDisplay NOTIFY totalChanged)
-    Q_PROPERTY(QString totalBTC READ totalBTC NOTIFY totalChanged)
-    Q_PROPERTY(QString totalUSD READ totalUSD NOTIFY totalChanged)
+    Q_PROPERTY(QString subtotal     READ subtotalDisplay NOTIFY subtotalChanged)
+    Q_PROPERTY(QString subtotalUSD  READ subtotalUSD     NOTIFY subtotalChanged)
+    Q_PROPERTY(QString total    READ totalDisplay   NOTIFY totalChanged)
+    Q_PROPERTY(QString totalUSD READ totalUSD       NOTIFY totalChanged)
     Q_PROPERTY(int numberSigned READ numberSigned NOTIFY numberSignedChanged)
     Q_PROPERTY(QString blocktime READ blocktimeDisplay NOTIFY blocktimeChanged)
     Q_PROPERTY(bool isReceiveTx READ isReceiveTx NOTIFY isReceiveTxChanged)
@@ -90,6 +90,8 @@ class Transaction : public QObject {
     Q_PROPERTY(QString roomId READ roomId NOTIFY roomIdChanged)
     Q_PROPERTY(QString initEventId READ initEventId NOTIFY initEventIdChanged)
     Q_PROPERTY(bool createByMe READ createByMe NOTIFY createByMeChanged)
+    Q_PROPERTY(QString psbt READ psbt NOTIFY psbtChanged)
+    Q_PROPERTY(QString serverKeyMessage READ serverKeyMessage NOTIFY serverKeyMessageChanged)
 public:
     Transaction();
     ~Transaction();
@@ -119,6 +121,7 @@ public:
     void setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned);
     QString subtotalDisplay() const;
     QString subtotalBTC() const;
+    QString subtotalUSD() const;
     qint64 subtotalSats() const;
     void setSubtotal(const qint64 subtotal);
     QString totalDisplay() const;
@@ -151,7 +154,10 @@ public:
     void setCreateByMe(bool createByMe);
     QString walletId() const;
     void setWalletId(const QString &walletId);
-
+    QString psbt() const;
+    void setPsbt(const QString &psbt);
+    QString serverKeyMessage() const;
+    void setServerKeyMessage(const QJsonObject &data);
 private:
     QString txid_;
     QString memo_;
@@ -177,6 +183,8 @@ private:
     QString roomId_;
     QString initEventId_;
     bool createByMe_;
+    QString psbt_;
+    QString serverKeyMessage_;
 signals:
     void txidChanged();
     void memoChanged();
@@ -201,6 +209,8 @@ signals:
     void initEventIdChanged();
     void createByMeChanged();
     void walletIdChanged();
+    void psbtChanged();
+    void serverKeyMessageChanged();
 };
 typedef QSharedPointer<Transaction> QTransactionPtr;
 
@@ -247,7 +257,7 @@ public:
         transaction_isReceiveTx_role,
         transaction_replacedTx_role,
         transaction_totalUSD_role,
-        transaction_totalBTC_role,
+        transaction_subtotalUSD_role,
     };
 signals:
     void countChanged();

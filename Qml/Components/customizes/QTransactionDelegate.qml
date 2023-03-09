@@ -19,6 +19,7 @@
  **************************************************************************/
 import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../origins"
 import "../../../localization/STR_QML.js" as STR
 
@@ -28,7 +29,7 @@ Rectangle {
     property var transactiontxid: ""
     property int transactionstatus: 0
     property string transactionMemo: ""
-    property string transactiontotalBTC: "0"
+    property string transactionAmount: "0"
     property string transactiontotalUSD: "0"
     property string transactionDate: "--/--/---- ##:## ##"
     property int confirmation: 1
@@ -54,6 +55,8 @@ Rectangle {
             width: addressWidth
             height: parent.height
             Column{
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
                 QText {
                     width: addressWidth
                     text: transactionisReceiveTx ? STR.STR_QML_626_ : STR.STR_QML_626
@@ -79,7 +82,6 @@ Rectangle {
                     elide: Text.ElideMiddle
                     font.weight: Font.DemiBold
                 }
-
             }
         }
 
@@ -174,13 +176,18 @@ Rectangle {
             width: amountWidth
             height: parent.height
             Column{
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
                 QText {
                     id: amountBTC
                     width: amountWidth
                     font.family: "Lato"
                     font.pixelSize: 14
                     color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8" : "#031F2B"
-                    text: transactiontotalBTC + " BTC"
+                    text: {
+                        var sign = (transactionisReceiveTx ? "" : "-")
+                        return qsTr("%1 %2 %3").arg(sign).arg(transactionAmount).arg(RoomWalletData.unitValue)
+                    }
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
@@ -197,8 +204,6 @@ Rectangle {
                     elide: Text.ElideRight
                 }
             }
-
-
         }
     }
 

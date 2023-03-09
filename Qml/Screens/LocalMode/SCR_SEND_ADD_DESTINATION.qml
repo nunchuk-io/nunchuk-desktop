@@ -24,6 +24,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../../localization/STR_QML.js" as STR
@@ -155,7 +156,7 @@ QScreen {
             QText {
                 height: 24
                 width: 140
-                text: AppModel.walletInfo.walletBalance + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                text: AppModel.walletInfo.walletBalance + RoomWalletData.unitValue
                 color: "#000000"
                 font.family: "Lato"
                 font.pixelSize: 16
@@ -236,18 +237,14 @@ QScreen {
                         }
                         QTextInputBox {
                             id: amount
-                            width: 269
+                            width: !removeRowBtn.visible ? 309 : 269
                             heightMin: 56
                             mode: !checkboxSendAll.checked ? eEDIT_MODE : eREADONLY_MODE
                             placeholder.text: STR.STR_QML_261
                             rightPading: 40
-                            validator: (AppSetting.unit === 1) ? intvalidator : doubleValidator
+                            validator: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? intvalidator : doubleValidator
                             border.color: "#DEDEDE"
-                            onTextEdited: {
-                                if(AppSetting.unit === 1){
-                                    amount.textOutput = AppModel.toLocalString(amount.textOutput)
-                                }
-                            }
+//                            onTypingFinished: { if(AppSetting.unit === NUNCHUCKTYPE.SATOSHI){ amount.textOutput = Number(amount.textOutput).toLocaleString(Qt.locale("en-US")) } }
 
                             QText {
                                 color: "#839096"
@@ -259,7 +256,7 @@ QScreen {
                                     right: parent.right
                                     rightMargin: 16
                                 }
-                                text: (AppSetting.unit === 1) ? "sat" : "BTC"
+                                text: RoomWalletData.unitValue
                                 font.pixelSize: 16
                                 font.family: "Lato"
                             }
@@ -302,13 +299,14 @@ QScreen {
                             }
                         }
                         QImage {
+                            id: removeRowBtn
                             width: 32
                             height: 32
                             source: "qrc:/Images/Images/Delete.png"
                             transformOrigin: Item.Center
                             scale: removeRow.pressed ? 0.95 : 1
-                            visible: checkboxMultiDes.checked
-                            enabled: checkboxMultiDes.checked
+                            visible: checkboxMultiDes.checked && destination.count > 1
+                            enabled: visible
                             MouseArea {
                                 id: removeRow
                                 hoverEnabled: true

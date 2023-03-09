@@ -26,6 +26,7 @@
 #include "Draco.h"
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
+#include "localization/STR_CPP.h"
 
 QVariant getPrimaryKey(const nunchuk::PrimaryKey &pkey){
     QVariantMap maps;
@@ -81,16 +82,31 @@ void LOGIN_WITH_SOFTWARE_KEY_BACK_HANDLER(QVariant msg) {
 
 }
 
-void EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST_HANDLER(QVariant msg) {
-
-}
-
 void EVT_PRIMARY_KEY_BACK_TO_CREATE_ACCOUNT_HANDLER(QVariant msg) {
 
 }
 
 void EVT_PRIMARY_KEY_BACK_TO_SIGN_IN_HANDLER(QVariant msg) {
 
+}
+
+void EVT_SELECT_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
+    QVariantMap primary_key = msg.toMap();
+    QString account = primary_key["account"].toString();
+    bool isAvailable = Draco::instance()->pkey_username_availability(account);
+    if(isAvailable){
+        Draco::instance()->setUid(account);
+        primary_key.insert("state_id",E::STATE_ID_SCR_PRIMARY_KEY_ACCOUNT);
+        bool ret = AppModel::instance()->makeNunchukInstanceForAccount(primary_key,"");
+        if(ret){
+            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,msg);
+        }
+    }else{
+        AppModel::instance()->setToast(-1,
+                                        STR_CPP_104,
+                                        EWARNING::WarningType::ERROR_MSG,
+                                        "");
+    }
 }
 
 

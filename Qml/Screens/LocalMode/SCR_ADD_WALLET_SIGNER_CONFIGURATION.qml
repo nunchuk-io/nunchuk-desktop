@@ -208,29 +208,28 @@ QScreen {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked:{
-                                    if(model.master_signer_primary_key && master_signer_checked === false){
-                                        _warning.model = model
-                                        _warning.open()
+                                    if(master_signer_checked){
+                                        if(!signerAssigned.containsSigner(master_signer_fingerPrint)){ model.master_signer_checked = false}
                                     }
                                     else{
-                                        if(master_signer_checked){
-                                            if(!signerAssigned.containsSigner(master_signer_fingerPrint)){ model.master_signer_checked = false}
-                                        }
-                                        else{
-                                            if(master_signer_type == NUNCHUCKTYPE.SOFTWARE && master_signer_need_passphrase){
+                                        if(master_signer_type == NUNCHUCKTYPE.SOFTWARE || model.master_signer_primary_key){
+                                            if (master_signer_need_passphrase) {
                                                 var signerObj = { "mastersigner_id"    : master_signer_id,
                                                     "mastersigner_index" : index};
                                                 QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_MASTER_SIGNER_SEND_PASSPHRASE, signerObj)
+                                            } else {
+                                                _warning.model = model
+                                                _warning.open()
                                             }
-                                            else{
-                                                if(signerConfigRoot.walletAddressType === NUNCHUCKTYPE.TAPROOT){
-                                                    var assignedCnt = AppModel.newWalletInfo.walletSingleSignerAssigned.signerCount()
-                                                    var selectedCnt = AppModel.masterSignerList.signerSelectedCount() + AppModel.remoteSignerList.signerSelectedCount()
-                                                    console.log(Math.max(assignedCnt, selectedCnt))
-                                                    if(Math.max(assignedCnt, selectedCnt) === 0) { model.master_signer_checked = true }
-                                                }
-                                                else{ model.master_signer_checked = true}
+                                        }
+                                        else{
+                                            if(signerConfigRoot.walletAddressType === NUNCHUCKTYPE.TAPROOT){
+                                                var assignedCnt = AppModel.newWalletInfo.walletSingleSignerAssigned.signerCount()
+                                                var selectedCnt = AppModel.masterSignerList.signerSelectedCount() + AppModel.remoteSignerList.signerSelectedCount()
+                                                console.log(Math.max(assignedCnt, selectedCnt))
+                                                if(Math.max(assignedCnt, selectedCnt) === 0) { model.master_signer_checked = true }
                                             }
+                                            else{ model.master_signer_checked = true}
                                         }
                                     }
                                 }
@@ -287,7 +286,7 @@ QScreen {
                                 color: "#C9DEF1"
                                 radius: 4
                                 QText {
-                                    text: STR.STR_QML_045
+                                    text: GlobalData.signerNames(single_signer_type)
                                     font.family: "Lato"
                                     font.weight: Font.Bold
                                     font.pixelSize: 10

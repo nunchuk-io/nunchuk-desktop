@@ -24,6 +24,7 @@
 #include "Chats/matrixbrigde.h"
 #include "Chats/ClientController.h"
 #include "localization/STR_CPP.h"
+#include "Draco.h"
 
 void SCR_CREATE_TRANSACTION_Entry(QVariant msg) {
     AppModel::instance()->startGetEstimatedFee();
@@ -141,6 +142,12 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                          msgwarning);
                 if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                     if(trans){
+                        QWalletPtr ptr = AppModel::instance()->walletInfoPtr();
+                        if(ptr && ptr->isAssistedWallet()){
+                            Draco::instance()->assistedWalletCreateTx(ptr->id(),trans->psbt(),trans->memo());
+                            QJsonObject data = Draco::instance()->assistedWalletGetTx(ptr->id(),trans->txid());
+                            trans->setServerKeyMessage(data);
+                        }
                         trans.data()->setIsReceiveTx(false);
                         AppModel::instance()->setTransactionInfo(trans);
                         wallet_id = AppModel::instance()->transactionInfo()->walletId();

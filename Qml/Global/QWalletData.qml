@@ -21,8 +21,10 @@ pragma Singleton
 import QtQuick 2.4
 import HMIEVENTS 1.0
 import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
 
 QtObject {
+    readonly property string unitValue: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? " sat" : " BTC"
     readonly property QtObject currentRoom: ClientController.rooms ? ClientController.rooms.currentRoom : null
     readonly property QtObject roomWallet : currentRoom ? currentRoom.roomWallet : null
     readonly property bool roomWalletReady: currentRoom && roomWallet
@@ -40,7 +42,7 @@ QtObject {
     readonly property string walletInitId: roomWalletReady ? roomWallet.walletInitId : ""
     readonly property string walletId: roomWalletReady ? roomWallet.walletId : ""
     readonly property bool   isEscrow: roomWalletReady ? roomWallet.walletEscrow : false
-    readonly property string amount: (roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalance : "0" ) + ((AppSetting.unit === 1) ? " sat" : " BTC")
+    readonly property string amount: (roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalance : "0" ) + unitValue
     readonly property string amountBTC: (roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalanceBTC : "0" )
     readonly property string amountUSD: (roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalanceUSD : "0" )
     readonly property string amountCurrency: qsTr("$%1 USD").arg(amountUSD)

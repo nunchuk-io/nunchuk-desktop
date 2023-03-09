@@ -55,7 +55,6 @@ ClientController::ClientController()
     ,m_rooms(NULL)
     ,m_imageprovider(new QNunchukImageProvider())
     ,m_isNewDevice(false)
-    ,m_guestMode(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(NetworkAccessManager::instance(), &QNetworkAccessManager::proxyAuthenticationRequired, this, &ClientController::proxyAuthenticationRequired);
@@ -99,7 +98,6 @@ void ClientController::setConnection(Connection *c)
     }
     emit connectionChanged();
     connectSingleShot(m_connection, &Connection::connected, this, [this]{
-        setIsNunchukLoggedIn(true);
         connection()->loadState();
         connection()->sync();
         connect(m_connection->user(), &User::defaultAvatarChanged, this, &ClientController::onUserAvatarChanged );
@@ -113,6 +111,7 @@ void ClientController::setConnection(Connection *c)
         QTimer::singleShot(1000, [this]() {
             refreshContacts();
         });
+        AppSetting::instance()->setIsStarted(true,true);
         emit userChanged();
     }, Qt::QueuedConnection);
     connectSingleShot(m_connection, &Connection::loggedOut, this, []{
@@ -340,24 +339,24 @@ QStringList ClientController::contactsByStringList()
 
 void ClientController::requestSignout()
 {
-    if(isNunchukLoggedIn()){
-        if(m_loginHandler){
-            m_loginHandler.data()->requestLogout();
-        }
-        if(Draco::instance()->signout()){
-            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
-            setIsNunchukLoggedIn(false);
-            deleteStayLoggedInData();
-            AppSetting::instance()->setGroupSetting("");
-            AppModel::instance()->signoutClearData();
-            if(rooms()){
-                rooms()->removeAll();
-            }
-            if(contacts()){
-                contacts()->removeAll();
-            }
-        }
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    if(m_loginHandler){
+        m_loginHandler.data()->requestLogout();
     }
+    Draco::instance()->signout();
+    QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+    setIsNunchukLoggedIn(false);
+    deleteStayLoggedInData();
+    setSubCur(QJsonObject());
+    AppSetting::instance()->setGroupSetting("");
+    AppModel::instance()->requestClearData();
+    if(rooms()){
+        rooms()->removeAll();
+    }
+    if(contacts()){
+        contacts()->removeAll();
+    }
+    qApp->restoreOverrideCursor();
 }
 
 void ClientController::forgetRoom(const int index)
@@ -474,6 +473,15 @@ QVariant ClientController::user() const
     maps["username"]    = m_me.username;
     maps["login_type"]  = m_me.login_type;
     maps["isPrimaryKey"] = m_me.login_type.localeAwareCompare("PRIMARY_KEY") == 0;
+    QJsonObject plan = CLIENT_INSTANCE->getSubCur()["plan"].toObject();
+    if(plan.isEmpty() == false){
+        QString slug = plan["slug"].toString();
+        maps["plan_slug"]  = slug;
+        maps["isPremiumUser"] = slug == "iron_hand" || slug == "honey_badger" ;
+    }else{
+        maps["plan_slug"]  = "";
+        maps["isPremiumUser"] = false;
+    }
     if(AppModel::instance()->getPrimaryKey()){
         maps["master_fingerprint"] = AppModel::instance()->getPrimaryKey()->fingerPrint();
     }
@@ -530,6 +538,16 @@ bool ClientController::checkStayLoggedIn()
     Draco::instance()->setChatId(QString(chatIdBytes));
     Draco::instance()->setDracoToken(QString(stayLoggedInBytes));
     return true;
+}
+
+QJsonObject ClientController::getSubCur()
+{
+    return m_subCur;
+}
+
+void ClientController::setSubCur(const QJsonObject &sub)
+{
+    m_subCur = sub;
 }
 
 void ClientController::saveStayLoggedInData()

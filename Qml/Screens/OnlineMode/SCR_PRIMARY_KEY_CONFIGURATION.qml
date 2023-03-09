@@ -48,7 +48,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: STR.STR_QML_638
         onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_MASTER_SIGNER_RESULT)
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
         }
         Column{
             spacing: 24

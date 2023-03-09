@@ -47,7 +47,7 @@ Rectangle {
         id: indicator
         width: 30
         height: 30
-        source: GlobalData.icons(devicetype)
+        source: GlobalData.icons(devicetype,signerType)
         anchors.left: parent.left
         anchors.leftMargin: 24
         anchors.verticalCenter: parent.verticalCenter

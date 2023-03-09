@@ -62,6 +62,11 @@ nunchuk::RoomWallet QRoomWallet::nunchukRoomWallet() const
     return m_roomwallet;
 }
 
+QString QRoomWallet::get_room_id() const
+{
+    return QString::fromStdString(m_roomwallet.get_room_id());
+}
+
 QString QRoomWallet::get_wallet_id() const
 {
     return QString::fromStdString(m_roomwallet.get_wallet_id());
@@ -180,13 +185,14 @@ void QRoomWallet::updateSignerInfo(const QJsonObject &json)
     signer.joid_id = json["joid_id"].toString();
     signer.is_localuser = json["is_localuser"].toBool();
     signer.type = json["signer_type"].toInt();
+    signer.username = json["username"].toString();
+    signer.avatar = json["avatar"].toString();
     // Check mine
     if(signer.is_localuser && signer.xfp != ""){
         if((int)ENUNCHUCK::SignerType::SOFTWARE == signer.type || (int)ENUNCHUCK::SignerType::HARDWARE == signer.type){
             if(AppModel::instance()->masterSignerList()){
                 QMasterSignerPtr master = AppModel::instance()->masterSignerList()->getMasterSignerByXfp(signer.xfp);
                 if(master){
-                    signer.name = master.data()->name();
                     signer.type = master.data()->signerType();
                 }
             }
@@ -195,13 +201,13 @@ void QRoomWallet::updateSignerInfo(const QJsonObject &json)
             if(AppModel::instance()->remoteSignerList()){
                 QSingleSignerPtr remote = AppModel::instance()->remoteSignerList()->getSingleSignerByFingerPrint(signer.xfp);
                 if(remote){
-                    signer.name = remote.data()->name();
                     signer.type = (int)ENUNCHUCK::SignerType::AIRGAP;
                 }
             }
         }
         else{ }
     }
+
     walletSigners()->addSigner(signer);
 }
 

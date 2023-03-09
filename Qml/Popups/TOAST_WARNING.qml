@@ -85,7 +85,6 @@ QScreen {
             default: return null
             }
         }
-
     }
     Component{
         id: topComponent

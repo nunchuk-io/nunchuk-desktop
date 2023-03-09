@@ -148,10 +148,10 @@
         <file>Qml/Screens/OnlineMode/SCR_REPLACE_PRIMARY_KEY.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_CONFIGURATION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN.qml</file>
-        <file>Qml/Screens/LocalMode/SCR_LOGIN.qml</file>
         <file>Qml/Components/customizes/QPopupInfoVertical.qml</file>
         <file>Qml/Components/customizes/QConfirmDeletingTypeB.qml</file>
         <file>Qml/Components/customizes/QBaseButton.qml</file>
+        <file>Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/Close.png</file>
@@ -159,7 +159,6 @@
         <file>Images/edit.png</file>
         <file>Images/error_outline_24px.png</file>
         <file>Images/Arrow-Right.png</file>
-        <file>Images/Rectangle 2944.png</file>
         <file>Images/Checked_n.png</file>
         <file>Images/UnChecked_n.png</file>
         <file>Images/download.png</file>
@@ -199,8 +198,6 @@
         <file>Images/arrow_outline_p.png</file>
         <file>Images/visibility.png</file>
         <file>Images/visibility-off.png</file>
-        <file>Images/Logo_bgr.png</file>
-        <file>Images/Default.png</file>
         <file>Images/link.png</file>
         <file>Images/Signed.png</file>
         <file>Images/snipbar.png</file>
@@ -346,6 +343,15 @@
         <file>Images/Device_Icons/nfc-key-dark.svg</file>
         <file>Images/Device_Icons/nfc-key-light.svg</file>
         <file>Images/Device_Icons/software-key-light.svg</file>
+        <file>Images/logo-app.svg</file>
+        <file>Images/subscription-dark.svg</file>
+        <file>Images/Device_Icons/server-key-dark.svg</file>
+        <file>Images/Default.svg</file>
+        <file>Images/Device_Icons/air-gapped-key-dark.svg</file>
+        <file>Images/Device_Icons/ColdCard.svg</file>
+        <file>Images/Device_Icons/software_drak.svg</file>
+        <file>Images/Device_Icons/Trezor.svg</file>
+        <file>Images/Device_Icons/unknown-key-dark.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

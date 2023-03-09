@@ -62,7 +62,7 @@ QScreen {
             anchors.centerIn: parent
             label.text: STR.STR_QML_629
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_SETTING_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_PRIMARY_KEY_ACCOUNT)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             Column{
                 anchors{
@@ -119,11 +119,21 @@ QScreen {
                     bottomMargin: 36
                 }
                 onButtonClicked: {
-                    if(isSignIn){
-                        QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_SIGN_IN)
+                    if(QMLHandle.onsRequester() === EVT.STATE_ID_ROOT){
+                        if(primaryKeySize > 0 && isSignIn){
+                            whereIn = _EXIST_PRIMARY_KEY
+                        }
+                        else{
+                            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
+                        }
                     }
                     else{
-                        QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_CREATE_ACCOUNT)
+                        if(isSignIn){
+                            QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_SIGN_IN)
+                        }
+                        else{
+                            QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_CREATE_ACCOUNT)
+                        }
                     }
                 }
             }
@@ -205,7 +215,7 @@ QScreen {
             anchors.centerIn: parent
             label.text: STR.STR_QML_653
             onCloseClicked: {
-                QMLHandle.sendEvent(EVT.EVT_SETTING_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_PRIMARY_KEY_ACCOUNT)
+                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             }
             Column{
                 spacing: 32
@@ -269,7 +279,7 @@ QScreen {
                                         width: 30
                                         height: 30
                                         anchors.centerIn: parent
-                                        source: GlobalData.icons("software")
+                                        source: GlobalData.icons("software",NUNCHUCKTYPE.SOFTWARE)
                                     }
                                 }
                                 Item{
@@ -327,7 +337,7 @@ QScreen {
                                 cursorShape: Qt.PointingHandCursor
                                 anchors.fill: parent
                                 onClicked: {
-                                    QMLHandle.sendEvent(EVT.EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,modelData)
+                                    QMLHandle.sendEvent(EVT.EVT_SELECT_PRIMARY_KEY_ACCOUNT_REQUEST,modelData)
                                 }
                             }
                         }
@@ -345,13 +355,17 @@ QScreen {
                     bottomMargin: 36
                 }
                 onButtonClicked: {
-                    if(isSignIn){
-                        QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_SIGN_IN)
+                    if(QMLHandle.onsRequester() === EVT.STATE_ID_ROOT){
+                        QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                     }
                     else{
-                        QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_CREATE_ACCOUNT)
+                        if(isSignIn){
+                            QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_SIGN_IN)
+                        }
+                        else{
+                            QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_BACK_TO_CREATE_ACCOUNT)
+                        }
                     }
-
                 }
             }
 

@@ -68,7 +68,7 @@ typedef QSharedPointer<UTXO> QUTXOPtr;
 class UTXOListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(QString  totalAmountSelected  READ amountDisplay  NOTIFY amountChanged)
+    Q_PROPERTY(QString  amountDisplay  READ amountDisplay  NOTIFY amountChanged)
 public:
     UTXOListModel();
     ~UTXOListModel();
@@ -103,7 +103,7 @@ public:
     int amountSats();
 private:
     QList<QUTXOPtr> d_;
-    int totalAmountSelected();
+
 signals:
     void amountChanged();
 };

@@ -30,12 +30,12 @@ void SCR_ADD_HARDWARE_SIGNER_TO_WALLET_Entry(QVariant msg) {
     AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
     AppModel::instance()->setAddSignerStep(-1);
     AppModel::instance()->setAddSignerPercentage(0);
-    AppModel::instance()->setMsgKeyHealthcheck("");
+    AppModel::instance()->setNewKeySignMessage("");
 }
 
 void SCR_ADD_HARDWARE_SIGNER_TO_WALLET_Exit(QVariant msg) {
     Q_UNUSED(msg);
-    AppModel::instance()->setMsgKeyHealthcheck("");
+    AppModel::instance()->setNewKeySignMessage("");
     AppModel::instance()->setAddSignerStep(-1);
     AppModel::instance()->setAddSignerPercentage(0);
 }

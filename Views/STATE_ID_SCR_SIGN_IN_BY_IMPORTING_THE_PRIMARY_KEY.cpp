@@ -29,6 +29,7 @@
 void SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY_Entry(QVariant msg){
     AppModel::instance()->setMnemonic("");
     AppModel::instance()->setSuggestMnemonics(bridge::nunchuckGetBIP39WordList());
+    qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
 }
 
 void SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY_Exit(QVariant msg){
@@ -49,18 +50,26 @@ void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_REQUEST_HANDLER(QVariant msg){
 }
 
 void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SIGN_IN_REQUEST_HANDLER(QVariant msg){
-    AppModel::instance()->nunchukLogin();
     QString signername = msg.toMap().value("signername").toString();
     QString passphrase = msg.toMap().value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();
-    AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+    QMap<QString, QVariant> makeInstanceData;
+    makeInstanceData["state_id"] = E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY;
+    makeInstanceData["signername"] = signername;
+    makeInstanceData["passphrase"] = passphrase;
+    makeInstanceData["mnemonic"] = mnemonic;
+
+    bool ret = AppModel::instance()->makeNunchukInstanceForAccount(makeInstanceData,"");
+    if(ret){
+        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+    }
 }
 
 void EVT_IMPORT_PRIMARY_KEY_WITH_SEED_REQUEST_HANDLER(QVariant msg){
     QString mnemonicinput = msg.toString();
     bool checkmnemonic = qUtils::CheckMnemonic(mnemonicinput);
     if(checkmnemonic){
-        QObject *obj = QQuickViewer::instance()->getQmlObj().first();
+        QObject *obj = QQuickViewer::instance()->getCurrentScreen();
         if(obj){
             obj->setProperty("whereIn",1);
         }
@@ -76,7 +85,7 @@ void EVT_IMPORT_PRIMARY_KEY_WITH_SEED_REQUEST_HANDLER(QVariant msg){
 }
 
 void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED_HANDLER(QVariant msg){
-    AppModel::instance()->matrixLogin();
+    AppModel::instance()->makeMatrixInstanceForAccount();
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
         QTimer::singleShot(3000,[pKey](){
@@ -84,6 +93,8 @@ void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED_HANDLER(QVariant msg){
                                            STR_CPP_108.arg(pKey->name()),
                                            EWARNING::WarningType::SUCCESS_MSG,
                                            STR_CPP_108.arg(pKey->name()));
+            QWarningMessage msg;
+            bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
         });
     }
 }

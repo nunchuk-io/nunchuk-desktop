@@ -232,6 +232,8 @@ QScreen {
                         delegate: QWalletSignerDelegate {
                             width: signerAssigned.width
                             height: 62
+                            username : model.username
+                            avatar: model.avatar
                             signername : model.signer_name
                             signerxfp: model.signer_xfp
                             isLocaluser: model.signer_is_localuser

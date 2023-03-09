@@ -92,7 +92,7 @@ QScreen {
                         color: "transparent"
                         placeholder.text: STR.STR_QML_214
                         mode: eREADONLY_MODE
-                        textOutput: AppModel.utxoInfo.amount + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                        textOutput: AppModel.utxoInfo.amount + RoomWalletData.unitValue
                     }
                     QTextInputBox {
                         width: 150

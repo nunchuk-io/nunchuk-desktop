@@ -165,6 +165,9 @@ QScreen {
                         QUserSettingPanel{
                             id:userPanel
                             visible: ClientController.isNunchukLoggedIn
+                            onClickManageSubscription: {
+                                _ManagerSub.open()
+                            }
                         }
                     }
                     Column {
@@ -318,9 +321,6 @@ QScreen {
                     }
                     function applySettingImmediately() {
                         if(unitselection.anyChanged) { unitselection.applySettings() }
-//                        if(AppModel.updateSettingRestartRequired()){
-//                            modelRestartApp.open()
-//                        }
                     }
                 }
             }
@@ -333,7 +333,7 @@ QScreen {
                     contentWidth: 651; contentHeight: 946
                     interactive: _netCol.childrenRect.height > 890
                     Column {
-                        id:_netCol
+                        id: _netCol
                         anchors.fill: parent
                         anchors.margins: 24
                         spacing: 10
@@ -445,7 +445,7 @@ QScreen {
                             QTextInputBoxTypeB {
                                 id: streamLinkText
                                 label: ""
-                                textInputted:AppSetting.signetStream
+                                textInputted: AppSetting.signetStream
                                 boxWidth: 627-16
                                 boxHeight: 48
                                 isValid: true
@@ -713,35 +713,9 @@ QScreen {
                                     label.font.pixelSize: 16
                                     label.font.family: "Lato"
                                     type: eTypeB
-                                    enabled: servernodeselection.anyChanged
-                                             || devselection.anyChanged
-                                             || corerpcinputdata.anyChanged
-                                             || torproxytitle.anyChanged
-                                             || torinputdata.anyChanged
-                                             || setonCert.anyChanged
-                                             || certPath.anyChanged
                                     onButtonClicked: {
-                                        if(servernodeselection.anyChanged) { corerpcSwitcher.switchOn = AppSetting.enableCoreRPC}
-                                        if(devselection.anyChanged){
-                                            if(AppSetting.primaryServer !== devselection.primaryServer){devselection.primaryServer = AppSetting.primaryServer}
-                                            if(AppSetting.mainnetServer !== mainnetsever.text.textOutput){mainnetsever.text.textOutput = AppSetting.mainnetServer}
-                                            if(AppSetting.testnetServer !== testnetsever.text.textOutput){testnetsever.text.textOutput = AppSetting.testnetServer}
-                                        }
-                                        if(corerpcinputdata.anyChanged){
-                                            if(AppSetting.coreRPCAddress !== corerpcaddress.textInputted) {corerpcaddress.textInputted = AppSetting.coreRPCAddress}
-                                            if((AppSetting.coreRPCPort).toString() !== corerpcport.textInputted){corerpcport.textInputted = AppSetting.coreRPCPort}
-                                            if(AppSetting.coreRPCName !== corerpcproxyname.textInputted){corerpcproxyname.textInputted = AppSetting.coreRPCName}
-                                            if(AppSetting.coreRPCPassword !== corerpcproxypassword.textInputted){corerpcproxypassword.textInputted = AppSetting.coreRPCPassword}
-                                        }
-                                        if(torproxytitle.anyChanged){torSwitcher.switchOn = AppSetting.enableTorProxy}
-                                        if(torinputdata.anyChanged){
-                                            if(AppSetting.torProxyAddress !== toraddress.textInputted){toraddress.textInputted = AppSetting.torProxyAddress}
-                                            if((AppSetting.torProxyPort).toString() !== torport.textInputted){torport.textInputted = AppSetting.torProxyPort}
-                                            if(AppSetting.torProxyName !== torproxyname.textInputted){torproxyname.textInputted = AppSetting.torProxyName}
-                                            if(AppSetting.torProxyPassword !== torproxypassword.textInputted){torproxypassword.textInputted = AppSetting.torProxyPassword}
-                                        }
-                                        if(setonCert.anyChanged){certswitch.switchOn = AppSetting.enableCertificateFile}
-                                        if(certPath.anyChanged){certPathText.textInputted = AppSetting.certificateFile}
+                                        _netCol.resetNetworkSettings()
+                                        _netCol.saveNetworkSettings()
                                     }
                                 }
                                 QTextButton {
@@ -761,21 +735,49 @@ QScreen {
                                              || _streamLink.anyChanged
                                              || _streamEnable.anyChanged
                                     onButtonClicked: {
-                                        if(servernodeselection.anyChanged) { servernodeselection.applySettings() }
-                                        if(devselection.anyChanged){ devselection.applySettings() }
-                                        if(corerpcinputdata.anyChanged){ corerpcinputdata.applySettings() }
-                                        if(torproxytitle.anyChanged){ torproxytitle.applySettings() }
-                                        if(torinputdata.anyChanged){ torinputdata.applySettings() }
-                                        if(setonCert.anyChanged){ setonCert.applySettings() }
-                                        if(certPath.anyChanged){ certPath.applySettings() }
-                                        if(_streamLink.anyChanged){_streamLink.applySettings() }
-                                        if(_streamEnable.anyChanged){_streamEnable.applySettings() }
-                                        if(AppModel.updateSettingRestartRequired()){
-                                            modelRestartApp.open()
-                                        }
+                                        _netCol.saveNetworkSettings()
                                     }
                                 }
                             }
+                        }
+
+                        function saveNetworkSettings() {
+                            if(servernodeselection.anyChanged) { servernodeselection.applySettings() }
+                            if(devselection.anyChanged){ devselection.applySettings() }
+                            if(corerpcinputdata.anyChanged){ corerpcinputdata.applySettings() }
+                            if(torproxytitle.anyChanged){ torproxytitle.applySettings() }
+                            if(torinputdata.anyChanged){ torinputdata.applySettings() }
+                            if(setonCert.anyChanged){ setonCert.applySettings() }
+                            if(certPath.anyChanged){ certPath.applySettings() }
+                            if(_streamLink.anyChanged){_streamLink.applySettings() }
+                            if(_streamEnable.anyChanged){_streamEnable.applySettings() }
+                            if(AppModel.updateSettingRestartRequired()){
+                                modelRestartApp.open()
+                            }
+                        }
+
+                        function resetNetworkSettings() {
+                            corerpcSwitcher.switchOn = false
+                            devselection.primaryServer = NUNCHUCKTYPE.MAIN
+                            mainnetsever.text.textOutput = "mainnet.nunchuk.io:51001"
+                            testnetsever.text.textOutput = "testnet.nunchuk.io:50001"
+                            signetsever.text.textOutput  = "signet.nunchuk.io:50002"
+                            streamswitch.switchOn = false
+                            streamLinkText.textInputted = "https://explorer.bc-2.jp/"
+
+                            corerpcaddress.textInputted = "127.0.0.1"
+                            corerpcport.textInputted = "8332"
+                            corerpcproxyname.textInputted = ""
+                            corerpcproxypassword.textInputted = ""
+
+                            certswitch.switchOn = false
+                            certPathText.textInputted = ""
+
+                            torSwitcher.switchOn = false
+                            toraddress.textInputted = "127.0.0.1"
+                            torport.textInputted = "9050"
+                            torproxyname.textInputted = ""
+                            torproxypassword.textInputted = ""
                         }
                     }
                 }
@@ -839,7 +841,7 @@ QScreen {
                     Item {
                         width: 627
                         height: 48
-                        visible: hwidrivertitle.anyChanged
+                        visible: hwidriverswitch.switchOn
                         QTextButton {
                             width: 189
                             height: 48
@@ -881,7 +883,6 @@ QScreen {
                                 left: parent.left
                                 leftMargin: 24
                             }
-
                             font.family: "Lato"
                             font.pixelSize: 28
                             font.weight: Font.Bold
@@ -966,6 +967,7 @@ QScreen {
                                             newpassword.isValid = true
                                             newpassword.errorText = ""
                                         }
+                                        newpassword.showError = false
                                     }
                                 }
                                 QTextInputBoxTypeB {
@@ -986,15 +988,24 @@ QScreen {
                                     type: eTypeE
                                     anchors.right: parent.right
                                     onButtonClicked: {
-                                        if(newpassword.textInputted === currentpassword.textInputted){
-                                            newpassword.isValid = false
-                                            currentpassword.isValid = false
+                                        if(newpassword.textInputted === currentpassword.textInputted ||
+                                                newpassword.textInputted === "" ||
+                                                currentpassword.textInputted === ""){
                                             if(newpassword.textInputted === ""){
+                                                newpassword.isValid = false
                                                 newpassword.errorText = STR.STR_QML_396
-                                                currentpassword.errorText = STR.STR_QML_396
+                                                newpassword.showError = true
                                             }
-                                            else{
+                                            if(currentpassword.textInputted === ""){
+                                                currentpassword.isValid = false
+                                                currentpassword.errorText = STR.STR_QML_396
+                                                currentpassword.showError = true
+                                            }
+                                            else if(newpassword.textInputted === currentpassword.textInputted){
+                                                newpassword.isValid = false
+                                                currentpassword.isValid = false
                                                 currentpassword.errorText = STR.STR_QML_406
+                                                currentpassword.showError = true
                                             }
                                         }
                                         else{
@@ -1211,7 +1222,7 @@ QScreen {
                                         font.family: "Lato"
                                         font.pixelSize: 16
                                         color: "#CF4018"
-                                        enabled: AppModel.primaryKey
+                                        enabled: ClientController.user.isPrimaryKey ? AppModel.primaryKey : true
                                         opacity: enabled ? 1.0 : 0.3
                                         MouseArea {
                                             id: btnMouseDeleteccount
@@ -1299,6 +1310,7 @@ QScreen {
                 anchors.fill: parent
                 visible: GlobalData.settingIndex === itemsSetting._DATABASE_ENCRYTION
                 enabled: visible
+                onVisibleChanged: { if(!visible){ dbencriptionswitch.switchOn = AppSetting.enableDBEncryption } }
                 Column {
                     id: dbencryptionComp
                     anchors.fill: parent
@@ -1511,7 +1523,10 @@ QScreen {
                             height: 80
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {}
+                            property string twitterLink: "https://twitter.com/nunchuk_io"
+                            onClicked: {
+                                Qt.openUrlExternally(twitterLink)
+                            }
                             Column {
                                 anchors.fill: parent
                                 spacing: 12
@@ -1535,7 +1550,10 @@ QScreen {
                             height: 80
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {}
+                            property string contactLink: "https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=contact@nunchuk.io"
+                            onClicked: {
+                                Qt.openUrlExternally(contactLink)
+                            }
                             Column {
                                 anchors.fill: parent
                                 spacing: 12
@@ -1877,6 +1895,22 @@ QScreen {
                 break
             default:break
             }
+        }
+    }
+
+    QPopupInfoVertical {
+        id: _ManagerSub
+        property string link: "https://nunchuk.io/"
+        lwidths:[252,252]
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_684
+        labels: [STR.STR_QML_341,STR.STR_QML_683]
+        onConfirmNo: {
+            close()
+            Qt.openUrlExternally(link)
+        }
+        onConfirmYes: {
+            close()
         }
     }
 

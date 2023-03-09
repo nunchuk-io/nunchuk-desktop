@@ -27,14 +27,7 @@
 #include "Draco.h"
 
 void SCR_APP_SETTING_Entry(QVariant msg) {
-    QTimer::singleShot(200,[msg](){
-        if(msg.toInt() == 2){
-            QQuickViewer::instance()->sendEvent(E::EVT_SHOW_CREATE_ACCOUNT_REQUEST);
-        }
-        else if(msg.toInt() == 1){
-            QQuickViewer::instance()->sendEvent(E::EVT_SIGN_IN_REQUEST);
-        }
-    });
+
 }
 
 void SCR_APP_SETTING_Exit(QVariant msg) {
@@ -86,7 +79,12 @@ void EVT_APP_SETTING_CHANGE_PASSPHRASE_HANDLER(QVariant msg) {
 
 void EVT_APP_SETTING_REQUEST_RESTART_HANDLER(QVariant msg) {
     qApp->quit();
+#if defined (Q_OS_WIN)
+    QString command = QString("cmd /C \"%1 \"").arg(qApp->applicationFilePath());
+    QProcess::startDetached(command);
+#else
     QProcess::startDetached(qApp->applicationFilePath());
+#endif
     DBG_INFO << "Restart new application's instance";
 }
 
@@ -102,10 +100,3 @@ void EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
 {
     QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY);
 }
-
-
-void EVT_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
-
-}
-
-

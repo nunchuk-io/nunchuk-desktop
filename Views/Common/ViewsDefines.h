@@ -25,7 +25,7 @@
 #define SCR_HOME_ONLINE                     	"qrc:/Qml/Screens/OnlineMode/SCR_HOME_ONLINE.qml"
 #define SCR_INPUT_PASSPHRASE                	"qrc:/Qml/Screens/LocalMode/SCR_INPUT_PASSPHRASE.qml"
 #define SCR_INPUT_PIN                       	"qrc:/Qml/Screens/LocalMode/SCR_INPUT_PIN.qml"
-#define SCR_LOGIN                           	"qrc:/Qml/Screens/LocalMode/SCR_LOGIN.qml"
+#define SCR_UNLOCK_DB                           "qrc:/Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml"
 #define SCR_LOGIN_ONLINE                    	"qrc:/Qml/Screens/OnlineMode/SCR_LOGIN_ONLINE.qml"
 #define SCR_MASTER_SIGNER_INFO              	"qrc:/Qml/Screens/LocalMode/SCR_MASTER_SIGNER_INFO.qml"
 #define SCR_ONLINE_ADD_CONTACTS             	"qrc:/Qml/Screens/OnlineMode/SCR_ONLINE_ADD_CONTACTS.qml"

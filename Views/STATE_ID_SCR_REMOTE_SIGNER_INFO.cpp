@@ -29,11 +29,7 @@ void SCR_REMOTE_SIGNER_INFO_Entry(QVariant msg) {
 }
 
 void SCR_REMOTE_SIGNER_INFO_Exit(QVariant msg) {
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
-    QSingleSignerListModelPtr remoteSigners = bridge::nunchukGetRemoteSigners();
-    if(remoteSigners){
-        AppModel::instance()->setRemoteSignerList(remoteSigners);
-    }
+    AppModel::instance()->startReloadRemoteSigners();
 }
 
 void EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {

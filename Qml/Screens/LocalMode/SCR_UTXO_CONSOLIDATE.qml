@@ -115,7 +115,7 @@ QScreen {
             QText {
                 height: 24
                 width: 140
-                text: AppModel.toLocalString(AppModel.utxoList.totalAmountSelected) + ((AppSetting.unit === 1) ? " sat" : " BTC")
+                text: AppModel.utxoList.amountDisplay + RoomWalletData.unitValue
                 color: "#000000"
                 font.family: "Lato"
                 font.pixelSize: 16
@@ -156,7 +156,7 @@ QScreen {
                         heightMin: 56
                         mode: eREADONLY_MODE
                         placeholder.text: STR.STR_QML_261
-                        textOutput: AppModel.toLocalString(AppModel.utxoList.totalAmountSelected)
+                        textOutput: AppModel.utxoList.amountDisplay
                         color: Qt.rgba(0, 0, 0, 0.1)
                         border.color: "#DEDEDE"
                         rightPading: 40
@@ -170,7 +170,7 @@ QScreen {
                                 right: parent.right
                                 rightMargin: 16
                             }
-                            text: (AppSetting.unit === 1) ? "sat" : "BTC"
+                            text: RoomWalletData.unitValue
                             font.pixelSize: 16
                             font.family: "Lato"
                         }

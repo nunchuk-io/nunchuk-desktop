@@ -262,8 +262,6 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
             QJsonObject jsonObj = stringToJson(evt.get_content());
             ret.data()->updateWalletInfo(jsonObj);
         }
-        QString roomname = room->room()->name();
-        DBG_INFO << roomname << "get_json_content:" << ret.data()->get_json_content();
         QStringList userIds;
         userIds.reserve(room->room()->users().size());
         for (auto u : room->room()->users()){
@@ -281,28 +279,31 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                 signerInfo["xpub"] = "";
                 signerInfo["bip32path"] = it["derivation_path"].toString();
                 signerInfo["joid_id"] = it["join_event_id"].toString();
-                signerInfo["signer_type"] = signerTypeToInt[it["signer_type"].toString()];
+                signerInfo["signer_type"] = (int)qUtils::GetSignerType(it["signer_type"].toString());
                 signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
                 signerInfo["name"] = room->getNunchukMemberEmail(userId);
+                signerInfo["username"] = room->getNunchukMemberName(userId);
+                signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
                 ret.data()->updateSignerInfo(signerInfo);
             }
             if(userIds.contains(userId)){
                 userIds.removeAll(userId);
             }
         }
-        room->setWalletImport(room->createWalletFromJson(json_content_object));
-
         for (QString userId : userIds) {
             QJsonObject signerInfo;
             signerInfo["xfp"] = "";
             signerInfo["xpub"] = "";
             signerInfo["bip32path"] = "";
             signerInfo["joid_id"] = "";
-            signerInfo["signer_type"] = signerTypeToInt["HARDWARE"];
+            signerInfo["signer_type"] = (int)qUtils::GetSignerType("HARDWARE");
             signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
             signerInfo["name"] = room->getNunchukMemberEmail(userId);
+            signerInfo["username"] = room->getNunchukMemberName(userId);
+            signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
             ret.data()->updateSignerInfo(signerInfo);
         }
+        room->setWalletImport(room->createWalletFromJson(json_content_object));
         // Check created wallet
         QString wallet_id = ret.data()->get_wallet_id();
         if(wallet_id != ""){
@@ -427,7 +428,6 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
     else{
         hwiPath = AppSetting::instance()->executePath() + "/hwi";
     }
-    DBG_INFO << "HWI:" << hwiPath;
     setting.set_hwi_path(hwiPath.toStdString());
 
     //  certificate file
@@ -436,7 +436,6 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
         certPath = AppSetting::instance()->certificateFile();
     }
     setting.set_certificate_file(certPath.toStdString());
-    DBG_INFO << "CERTIFICATE FILE:" << certPath;
 
     // Storage path
     setting.set_storage_path(AppSetting::instance()->storagePath().toStdString());
@@ -480,6 +479,69 @@ QNunchukMatrixEvent matrixbrigde::GetEvent(const QString& room_id,const QString 
 QList<QRoomWalletPtr> matrixbrigde::GetAllRoomWallets(QWarningMessage &msg)
 {
     QList<QRoomWalletPtr> ret;
+    std::vector<nunchuk::RoomWallet> wallets = matrixifaces::instance()->GetAllRoomWallets(msg);
+    for(nunchuk::RoomWallet wallet : wallets){
+        if(wallet.get_wallet_id() != "" && wallet.get_finalize_event_id() != "")
+        {
+            QString room_id = QString::fromStdString(wallet.get_room_id());
+            if(CLIENT_INSTANCE->rooms() && CLIENT_INSTANCE->rooms()->containsRoom(room_id)){
+                QNunchukRoomPtr room = CLIENT_INSTANCE->rooms()->getRoomById(room_id);
+                QRoomWalletPtr roomWallet = QRoomWalletPtr( new QRoomWallet(wallet));
+                QWarningMessage msggetevt;
+                QNunchukMatrixEvent evt = GetEvent(roomWallet.data()->get_room_id(),
+                                                   roomWallet.data()->get_init_event_id(),
+                                                   msggetevt);
+                if((int)EWARNING::WarningType::NONE_MSG == msggetevt.type()){
+                    // Wallet info
+                    QJsonObject jsonObj = stringToJson(evt.get_content());
+                    roomWallet.data()->updateWalletInfo(jsonObj);
+                    //Signer info
+                    QStringList userIds;
+                    userIds.reserve(room->room()->users().size());
+                    for (auto u : room->room()->users()){
+                        userIds.append(u->id());
+                    }
+                    QJsonObject json_content_object = stringToJson(roomWallet.data()->get_json_content());
+                    QJsonObject joins = json_content_object["joins"].toObject();
+                    QStringList joins_Id = joins.keys();
+                    for (QString userId : joins_Id) {
+                        QJsonArray joiner = joins[userId].toArray();
+                        for (auto v : joiner) {
+                            QJsonObject it = v.toObject();
+                            QJsonObject signerInfo;
+                            signerInfo["xfp"] = it["master_fingerprint"].toString();
+                            signerInfo["xpub"] = "";
+                            signerInfo["bip32path"] = it["derivation_path"].toString();
+                            signerInfo["joid_id"] = it["join_event_id"].toString();
+                            signerInfo["signer_type"] = (int)qUtils::GetSignerType(it["signer_type"].toString());
+                            signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
+                            signerInfo["name"] = room->getNunchukMemberEmail(userId);
+                            signerInfo["username"] = room->getNunchukMemberName(userId);
+                            signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
+                            roomWallet.data()->updateSignerInfo(signerInfo);
+                        }
+                        if(userIds.contains(userId)){
+                            userIds.removeAll(userId);
+                        }
+                    }
+                    for (QString userId : userIds) {
+                        QJsonObject signerInfo;
+                        signerInfo["xfp"] = "";
+                        signerInfo["xpub"] = "";
+                        signerInfo["bip32path"] = "";
+                        signerInfo["joid_id"] = "";
+                        signerInfo["signer_type"] = (int)qUtils::GetSignerType("HARDWARE");
+                        signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
+                        signerInfo["name"] = room->getNunchukMemberEmail(userId);
+                        signerInfo["username"] = room->getNunchukMemberName(userId);
+                        signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
+                        roomWallet.data()->updateSignerInfo(signerInfo);
+                    }
+                }
+                ret.append(roomWallet);
+            }
+        }
+    }
     return ret;
 }
 

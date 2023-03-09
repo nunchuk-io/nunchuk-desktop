@@ -32,8 +32,6 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: homeroot
-
-
     Component {
         id: step1
         QHomeInitialStep1 {
@@ -46,7 +44,6 @@ QScreen {
             anchors.fill: parent
         }
     }
-
     Component {
         id: step3
         Item {
@@ -59,6 +56,7 @@ QScreen {
                     top: parent.top
                     topMargin: 32
                 }
+                isAssisted: AppModel.walletInfo.isAssistedWallet
                 Row{
                     anchors.fill: parent
                     Item {
@@ -162,6 +160,30 @@ QScreen {
                                     }
                                 }
                             }
+                            Rectangle{
+                                width: 70
+                                height: parent.height
+                                radius: 20
+                                visible: AppModel.walletInfo.isAssistedWallet
+                                color: "#EAEAEA"
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    QImage {
+                                        width: 12
+                                        height: 12
+                                        source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                                    }
+                                    QText{
+                                        font.family: "Lato"
+                                        font.pixelSize: 10
+                                        color: "#031F2B"
+                                        text: STR.STR_QML_679
+                                        font.weight: Font.Bold
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
                         }
 
                         Column {
@@ -178,7 +200,7 @@ QScreen {
                                 font.pixelSize: 28
                                 font.family: "Lato"
                                 font.weight: Font.Bold
-                                text: qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance).arg((AppSetting.unit === 1) ? "sat" : "BTC")
+                                text: qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance).arg(RoomWalletData.unitValue)
                             }
                             QText {
                                 id: wlBalanceCurrency
@@ -421,6 +443,21 @@ QScreen {
                             QMLHandle.sendEvent(EVT.EVT_HOME_TRANSACTION_HISTORY_REQUEST)
                         }
                     }
+                    QText {
+                        id: trans_not_have
+                        anchors {
+                            top: parent.top
+                            topMargin: 100
+                            horizontalCenter: parent.horizontalCenter
+                        }
+                        height: 24
+                        font.weight: Font.Normal
+                        font.pixelSize: 14
+                        color: "#323E4A";
+                        font.family: "Montserrat"
+                        text: STR.STR_QML_692
+                        visible: transaction_lst.count == 0
+                    }
                     QListView {
                         id: transaction_lst
                         width: parent.width
@@ -434,14 +471,14 @@ QScreen {
                         clip: true
                         delegate: QTransactionDelegate {
                             width: transaction_lst.width
-                            height: 40
+                            height: 64
                             transactionisReceiveTx:transaction_isReceiveTx
                             transactiontxid:transaction_txid
                             transactiondestinationList:transaction_destinationList
                             transactionstatus: transaction_status
                             transactionMemo: transaction_memo
-                            transactiontotalBTC: (transaction_isReceiveTx ? "" : "- ") + transaction_totalBTC
-                            transactiontotalUSD: (transaction_isReceiveTx ? "" : "- ") + transaction_totalUSD
+                            transactionAmount: transaction_isReceiveTx ? transaction_subtotal : transaction_total
+                            transactiontotalUSD: transaction_isReceiveTx ? transaction_subtotalUSD : transaction_totalUSD
                             confirmation: Math.max(0, (AppModel.chainTip - transaction_height)+1)
                             transactionDate: transaction_blocktime
                             addressWidth: transaction_lst.width*0.20
@@ -600,21 +637,9 @@ QScreen {
                             Item {
                                 width: parent.width
                                 height: parent.height - 48
-                                QWalletManagerDelegate {
-                                    width: parent.width
-                                    height: 64
-                                    enabled: false
-                                    visible: walletmanagerlst.count == 0
-                                    isEscrow: false
-                                    walletName : STR.STR_QML_014
-                                    walletBalance: "0"
-                                    walletM: "0"
-                                    walletN: "0"
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        color: "#031F2B"
-                                        opacity: 0.5
-                                    }
+                                Loader {
+                                    anchors.fill: parent
+                                    sourceComponent: walletmanagerlst.count != 0 ? null : loadingWalletBusy
                                 }
                                 QListView {
                                     id: walletmanagerlst
@@ -627,6 +652,7 @@ QScreen {
                                         isCurrentIndex: index === walletmanagerlst.currentIndex
                                         isEscrow: model.wallet_Escrow
                                         isShared: model.wallet_isSharedWallet
+                                        isAssisted: model.wallet_isAssistedWallet
                                         walletCurrency: model.wallet_Balance_USD
                                         walletName :model. wallet_name
                                         walletBalance: model.wallet_Balance
@@ -638,7 +664,7 @@ QScreen {
                                             }
                                         }
                                     }
-                                    ScrollBar.vertical: ScrollBar { id: scrollWallet; active: true ;function wheel(up){if(up){decrease()}else{increase()}}}
+                                    ScrollBar.vertical: ScrollBar { id: scrollWallet; stepSize:0.02; active: true ;function wheel(up){if(up){decrease()}else{increase()}}}
                                     MouseArea { anchors.fill: parent;z: 10;propagateComposedEvents: true;onWheel: { scrollWallet.wheel(wheel.angleDelta.y > 0);}}
                                 }
                                 QImage {
@@ -690,18 +716,9 @@ QScreen {
                             Item {
                                 width: parent.width
                                 height: parent.height - 48
-                                QMasterSignerDelegate {
-                                    width: 304
-                                    height: 54
-                                    enabled: false
-                                    visible: !flickerSignerList.signerReady
-                                    signername : STR.STR_QML_016
-                                    signerXFP: "XFP: DEADBEEF"
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        color: "#031F2B"
-                                        opacity: 0.5
-                                    }
+                                Loader {
+                                    anchors.fill: parent
+                                    sourceComponent: flickerSignerList.signerReady ? null : loadingSignerBusy
                                 }
                                 Flickable {
                                     id: flickerSignerList
@@ -712,7 +729,7 @@ QScreen {
                                     flickableDirection: Flickable.VerticalFlick
                                     interactive: true
                                     contentHeight: contentDisplay.height
-                                    ScrollBar.vertical: ScrollBar { id: scrollSigner; active: true ; function wheel(up){if(up){decrease()}else{increase()}}}
+                                    ScrollBar.vertical: ScrollBar { id: scrollSigner; stepSize:0.02; active: true ; function wheel(up){if(up){decrease()}else{increase()}}}
                                     MouseArea { anchors.fill: parent;z: 10;propagateComposedEvents: true;onWheel: { scrollSigner.wheel(wheel.angleDelta.y > 0);}}
                                     Column {
                                         id: contentDisplay
@@ -743,13 +760,18 @@ QScreen {
                                             interactive: false
                                             delegate: QMasterSignerDelegate {
                                                 width: 304
-                                                height: 48
+                                                height: visible ? 48 : 0
                                                 nameWidth: 170
                                                 signername : model.singleSigner_name
+                                                devicetype: model.single_signer_devicetype
                                                 signerXFP: "XFP: " + model.singleSigner_masterFingerPrint
-                                                signerType: NUNCHUCKTYPE.AIRGAP
+                                                signerType: model.single_signer_type
                                                 onButtonClicked: {
-                                                    QMLHandle.sendEvent(EVT.EVT_HOME_REMOTE_SIGNER_INFO_REQUEST, index)
+                                                    if (model.single_signer_type === NUNCHUCKTYPE.COLDCARD_NFC) {
+                                                        QMLHandle.sendEvent(EVT.EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, index)
+                                                    } else {
+                                                        QMLHandle.sendEvent(EVT.EVT_HOME_REMOTE_SIGNER_INFO_REQUEST, index)
+                                                    }
                                                 }
                                             }
                                         }
@@ -1025,13 +1047,69 @@ QScreen {
     }
     QPopupGuestMode{
         id: guestMode
-        onGotItClicked: {
-            close()
+        onGotItClicked: { close() }
+        Component.onCompleted: { if(0 === AppModel.nunchukMode){ guestMode.open() } }
+    }
+
+    readonly property int _LIMIT_WAITING_BUSY: 3000
+    Component {
+        id: loadingWalletBusy
+        Item {
+            anchors.fill: parent
+            QWalletManagerDelegate {
+                visible: !busyIdct.running
+                width: parent.width
+                height: 64
+                enabled: false
+                isEscrow: false
+                walletName : STR.STR_QML_014
+                walletBalance: "0"
+                walletM: "0"
+                walletN: "0"
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#031F2B"
+                    opacity: 0.5
+                }
+            }
+            BusyIndicator {
+                id: busyIdct
+                anchors.centerIn: parent
+                running: true
+            }
+            Timer {
+                interval: _LIMIT_WAITING_BUSY
+                running: true
+                onTriggered: busyIdct.running = false
+            }
         }
-        Component.onCompleted: {
-            if(!ClientController.isNunchukLoggedIn && !ClientController.guestMode){
-                ClientController.guestMode = true
-                guestMode.open()
+    }
+    Component {
+        id: loadingSignerBusy
+        Item {
+            anchors.fill: parent
+            QMasterSignerDelegate {
+                width: 304
+                height: 54
+                enabled: false
+                visible: !busyIdct.running
+                signername : STR.STR_QML_016
+                signerXFP: "XFP: DEADBEEF"
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#031F2B"
+                    opacity: 0.5
+                }
+            }
+            BusyIndicator {
+                id: busyIdct
+                anchors.centerIn: parent
+                running: true
+            }
+            Timer {
+                interval: _LIMIT_WAITING_BUSY
+                running: true
+                onTriggered: busyIdct.running = false
             }
         }
     }
