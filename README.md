@@ -4,7 +4,8 @@ Follow this document to build the application on your platform
 **Qt libraries and Qt Creator**
 
 Download the Qt for your platform [Qt offline installer](https://www.qt.io/offline-installers) and install it.
-Visual studio 2017 or 2019 (for Windows)
+
+For Windows, download Visual studio 2017 or 2019.
 ```
 Notes:
 Qt version 5.12 or higher is recommended
@@ -55,7 +56,7 @@ Run the application
 
 This directory contains all of the udev rules for the supported devices as retrieved from vendor websites and repositories.
 
-These are necessary for the devices to be reachable on linux environments.
+These are necessary for the devices to be reachable on Linux environments.
 - `References` (All rules): https://github.com/bitcoin-core/HWI/tree/master/hwilib/udev
 >**Usage**
 Apply these rules by copying them to `/etc/udev/rules.d/` and notifying `udevadm`.
@@ -81,18 +82,18 @@ Commands:
 >```
 **Run environment**
 
-In some other linux versions, Nunchuk may not be able to run, you can refer to the following solutions:
-1. There is no libfuse2 package by default. The AppImage distribution (and more generally, all existing AppImage's) are built expecting libfuse2 support. This means that AppImage's will not run on Ubuntu 22.04 by default.
-You can try this command by manually before run nunchuk (to install libfuse2):  
+In certain versions of Linux, Nunchuk may not be able to run. Here are a few tips:
+1. There is no libfuse2 package by default. The AppImage distribution (and more generally, all existing AppImages) are built expecting libfuse2 support. This means that the AppImage will not run on Ubuntu 22.04 by default.
+You can try installing libfuse2 manually before running nunchuk:  
 `sudo apt install libfuse2*`
-2. Some linux version need to updated SSL for compatibility package `libssl1.1`
-Try running the appimage from the terminal with `LD_DEBUG=libs` and see what libraries it complains about before the segfault.
-*`(Suggested by nunchuk's user)`*
+2. Certain Linux version needs to update their SSL package. `libssl1.1` is recommended.
+Try running the AppImage from the terminal with `LD_DEBUG=libs` and see what libraries it complains about before the segfault.
+*`(Suggestion by a Nunchuk user)`*
 
 3. Ubuntu update, should keep all the old repositories (end of the update process, when prompted to delete old repositories, files or keep them, just clicked no, keep old files)
-*`(Suggested by nunchuk's user)`*
+*`(Suggestion by a Nunchuk user)`*
 
-# macOS - Notes
+# MacOS - Notes
 **Prerequisites**
 
 Python 3, libusb are required.
