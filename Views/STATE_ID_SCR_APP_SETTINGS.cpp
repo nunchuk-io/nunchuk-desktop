@@ -58,8 +58,8 @@ void EVT_APP_SETTING_DELETE_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
 void EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
-        QString address = QString::fromStdString(pKey->primaryKey().get_address());
-        QString username = QString::fromStdString(pKey->primaryKey().get_account());
+        QString address = QString::fromStdString(pKey->originPrimaryKey().get_address());
+        QString username = QString::fromStdString(pKey->originPrimaryKey().get_account());
         QString nonce = Draco::instance()->get_pkey_nonce(address,username);
         QString message = QString("%1%2").arg(username).arg(nonce);
         QString signature = bridge::SignLoginMessage(pKey->id(),message);

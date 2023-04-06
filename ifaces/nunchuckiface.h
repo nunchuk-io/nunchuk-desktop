@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef NUNCHUCKIFACE_H
 #define NUNCHUCKIFACE_H
 
@@ -62,7 +82,7 @@ public:
                               QWarningMessage& msg);
 
     bool HasWallet(const std::string& wallet_id,
-                              QWarningMessage& msg);
+                   QWarningMessage& msg);
 
     bool DeleteWallet(const std::string& wallet_id, QWarningMessage& msg);
 
@@ -219,8 +239,8 @@ public:
                                            QWarningMessage& msg);
 
     nunchuk::Transaction ImportPsbt(const std::string& wallet_id,
-                                           const std::string& psbt,
-                                           QWarningMessage& msg);
+                                    const std::string& psbt,
+                                    QWarningMessage& msg);
 
     nunchuk::Transaction SignTransaction(const std::string& wallet_id,
                                          const std::string& tx_id,
@@ -236,7 +256,7 @@ public:
                                         QWarningMessage& msg);
 
     nunchuk::TapsignerStatus GetTapsignerStatusFromMasterSigner(const std::string& master_signer_id,
-                                        QWarningMessage& msg);
+                                                                QWarningMessage& msg);
 
     bool DeleteTransaction(const std::string& wallet_id,
                            const std::string& tx_id,
@@ -364,10 +384,10 @@ public:
                                                             QWarningMessage& msg);
 
     std::vector<nunchuk::SingleSigner> ParseQRSigners(const std::vector<std::string>& qr_data,
-                                                            QWarningMessage& msg);
+                                                      QWarningMessage& msg);
 
     std::vector<nunchuk::SingleSigner> ParseJSONSigners(const std::string& json_str,
-                                                            QWarningMessage& msg);
+                                                        QWarningMessage& msg);
 
     std::vector<std::string> ExportPassportWallet(const std::string& wallet_id,
                                                   QWarningMessage& msg);
@@ -388,6 +408,49 @@ public:
 
     void ForceRefreshWallet(const std::string& wallet_id,
                             QWarningMessage& msg);
+
+    // TAPSIGNER
+    nunchuk::MasterSigner ImportTapsignerMasterSigner( const std::vector<unsigned char>& data,
+                                                       const std::string& backup_key,
+                                                       const std::string& name,
+                                                       bool is_primary,
+                                                       QWarningMessage& msg);
+
+    void VerifyTapsignerBackup( const std::vector<unsigned char>& data,
+                                const std::string& backup_key,
+                                const std::string& master_signer_id,
+                                QWarningMessage& msg);
+
+    nunchuk::TapsignerStatus BackupTapsigner(tap_protocol::Tapsigner* tapsigner,
+                                             const std::string& cvc,
+                                             const std::string& master_signer_id,
+                                             QWarningMessage& msg);
+
+    nunchuk::HealthStatus HealthCheckTapsignerMasterSigner(tap_protocol::Tapsigner* tapsigner,
+                                                           const std::string& cvc,
+                                                           const std::string& master_signer_id,
+                                                           std::string& message,
+                                                           std::string& signature,
+                                                           std::string& path,
+                                                           QWarningMessage& msg);
+
+    nunchuk::TapsignerStatus WaitTapsigner(tap_protocol::Tapsigner* tapsigner,
+                                           std::function<bool(int)> progress,
+                                           QWarningMessage& msg);
+
+    void CacheTapsignerMasterSignerXPub(tap_protocol::Tapsigner* tapsigner,
+                                        const std::string& cvc,
+                                        const std::string& master_signer_id,
+                                        QWarningMessage& msg);
+
+    void CacheDefaultTapsignerMasterSignerXPub(tap_protocol::Tapsigner* tapsigner,
+                                               const std::string& cvc,
+                                               const std::string& master_signer_id,
+                                               QWarningMessage& msg);
+
+    std::string SignHealthCheckMessage(const nunchuk::SingleSigner& signer,
+                                       const std::string& message,
+                                       QWarningMessage& msg);
 
 private:
     nunchukiface();

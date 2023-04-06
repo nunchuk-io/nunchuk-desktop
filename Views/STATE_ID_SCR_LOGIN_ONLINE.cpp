@@ -29,7 +29,6 @@
 #include "Chats/matrixbrigde.h"
 
 void SCR_LOGIN_ONLINE_Entry(QVariant msg) {
-    AppModel::instance()->timerFeeRatesHandle();
     bridge::nunchukSetCurrentMode(LOCAL_MODE);
 }
 
@@ -62,12 +61,6 @@ void EVT_LOGIN_ONLINE_FORGOT_PASSWORD_HANDLER(QVariant msg) {
 
 void EVT_LOGIN_ONLINE_STAY_SIGNED_IN_HANDLER(QVariant msg) {
 
-}
-
-void EVT_LOGIN_ONLINE_LOGIN_SUCCEED_HANDLER(QVariant msg) {
-    QMap<QString, QVariant> makeInstanceData;
-    makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME_ONLINE;
-    AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
 }
 
 void EVT_LOGIN_ONLINE_RECOVER_PASSWORD_HANDLER(QVariant msg) {

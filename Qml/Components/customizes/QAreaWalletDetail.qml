@@ -25,6 +25,7 @@ import "../../Components/origins"
 
 Item {
     property bool isAssisted: false
+    property real ratio: 0.55
     Item {
         id: area_wldetail
         anchors.fill: parent
@@ -33,16 +34,16 @@ Item {
             anchors.fill: parent
             LinearGradient {
                 height: parent.height
-                width: parent.width * 0.6
+                width: parent.width * ratio
                 start: Qt.point(0, 0)
-                end: Qt.point(parent.width * 0.6, 0)
+                end: Qt.point(parent.width * ratio, 0)
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: isAssisted ? "#2F766D" : "#2F466C" }
                     GradientStop { position: 1.0; color: isAssisted ? "#1C4A21" : "#031F2B" }
                 }
             }
             Rectangle {
-                width: parent.width * 0.4
+                width: parent.width * (1.0 - ratio)
                 height: parent.height
                 color: "#F5F5F5"
             }

@@ -19,6 +19,7 @@
  **************************************************************************/
 import QtQuick 2.12
 import QtQuick.Controls 2.0
+import QtQuick.Controls.Styles 1.3
 import QtGraphicalEffects 1.0
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
@@ -65,14 +66,6 @@ QScreen {
             modelConfirmUpdateSetting.open()
             return false
         }
-        else{
-            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                QMLHandle.sendEvent(EVT.EVT_APP_SETTING_BACK_TO_ONLINE_MODE)
-            }
-            else{
-                QMLHandle.sendEvent(EVT.EVT_APP_SETTING_BACK_REQUEST)
-            }
-        }
         return true
     }
     Row {
@@ -100,19 +93,13 @@ QScreen {
                 width: 72
                 height: parent.height
                 anchors.verticalCenter: parent.verticalCenter
-                currentIndex: 3
-                labels: [
-                    STR.STR_QML_460,
-                    STR.STR_QML_461,
-                    ClientController.isNunchukLoggedIn ? STR.STR_QML_462 : STR.STR_QML_533
-                ]
                 enables: [
                     ClientController.isNunchukLoggedIn,
                     false,
                     true
                 ]
                 onLocalModeRequest: {
-                    if(closeRequest(NUNCHUCKTYPE.WALLET_TAB) && NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                    if (closeRequest(NUNCHUCKTYPE.WALLET_TAB)) {
                         if(0 === AppModel.nunchukMode){
                             QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE)
                         }
@@ -122,8 +109,8 @@ QScreen {
                     }
                 }
                 onOnlineModeRequest: {
-                    if(closeRequest(NUNCHUCKTYPE.CHAT_TAB) && NUNCHUCKTYPE.WALLET_TAB === AppModel.tabIndex){
-                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
+                    if (closeRequest(NUNCHUCKTYPE.CHAT_TAB)) {
+                        QMLHandle.sendEvent(EVT.EVT_GOTO_HOME_CHAT_TAB)
                     }
                 }
                 onOpenSettingRequest: {
@@ -136,12 +123,13 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_ROOT_UPDATE_PROFILE)
                 }
                 onSigninRequest: {
-                    if(rootSettings.anyChanged){
-                        modelConfirmUpdateSetting.requestTo = NUNCHUCKTYPE.CHAT_TAB
-                        modelConfirmUpdateSetting.open()
-                    }
-                    else{
+                    if (closeRequest(NUNCHUCKTYPE.CHAT_TAB)) {
                         QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
+                    }
+                }
+                onServiceRequest: {
+                    if (closeRequest(NUNCHUCKTYPE.SERVICE_TAB)) {
+                        QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB)
                     }
                 }
             }
@@ -165,24 +153,23 @@ QScreen {
                         QUserSettingPanel{
                             id:userPanel
                             visible: ClientController.isNunchukLoggedIn
-                            onClickManageSubscription: {
-                                _ManagerSub.open()
-                            }
                         }
                     }
                     Column {
                         spacing: 0
                         Repeater {
                             id: itemsSetting
-                            readonly property int _DISPLAY_UNIT_BTC: 0
-                            readonly property int _ACCOUNT_SETTINGS: 1
-                            readonly property int _NETWORK_SETTINGS: 2
-                            readonly property int _HARDWARE_DRIVER: 3
-                            readonly property int _DATABASE_ENCRYTION: 4
-                            readonly property int _DEVELOPER_SETTINGS: 5
-                            readonly property int _ABOUT: 6
+                            readonly property int _DISPLAY_UNIT: 0
+                            readonly property int _LOCAL_CURRENCY: 1
+                            readonly property int _ACCOUNT_SETTINGS: 2
+                            readonly property int _NETWORK_SETTINGS: 3
+                            readonly property int _HARDWARE_DRIVER: 4
+                            readonly property int _DATABASE_ENCRYTION: 5
+                            readonly property int _DEVELOPER_SETTINGS: 6
+                            readonly property int _ABOUT: 7
                             readonly property var setting_map: [
-                                {screen:_DISPLAY_UNIT_BTC,      title:STR.STR_QML_513, icon: "qrc:/Images/Images/display-unit-light.svg"        },
+                                {screen:_DISPLAY_UNIT,          title:STR.STR_QML_513, icon: "qrc:/Images/Images/display-unit-light.svg"        },
+                                {screen:_LOCAL_CURRENCY,        title:STR.STR_QML_741, icon: "qrc:/Images/Images/local-currency-light.svg"      },
                                 {screen:_ACCOUNT_SETTINGS,      title:STR.STR_QML_537, icon: "qrc:/Images/Images/accounts-settings-light.svg"   },
                                 {screen:_NETWORK_SETTINGS,      title:STR.STR_QML_514, icon: "qrc:/Images/Images/network-settings-light.svg"    },
                                 {screen:_HARDWARE_DRIVER,       title:STR.STR_QML_515, icon: "qrc:/Images/Images/hardware-driver-light.svg"     },
@@ -190,7 +177,6 @@ QScreen {
                                 {screen:_DEVELOPER_SETTINGS,    title:STR.STR_QML_588, icon: "qrc:/Images/Images/developer-settings-light.svg"  },
                                 {screen:_ABOUT,                 title:STR.STR_QML_518, icon: "qrc:/Images/Images/info-filled-light.svg"         }
                             ]
-
                             model: setting_map.length
                             Rectangle {
                                 width: settingpanel.width
@@ -214,7 +200,17 @@ QScreen {
                                     }
                                     QText {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: itemsSetting.setting_map[index].title
+                                        text: {
+                                            var scr = itemsSetting.setting_map[index].screen
+                                            var prefix = AppSetting.currency;
+                                            switch(scr) {
+                                            case itemsSetting._LOCAL_CURRENCY:
+                                                return itemsSetting.setting_map[index].title.arg(prefix)
+                                            default:
+                                                return itemsSetting.setting_map[index].title
+                                            }
+                                        }
+
                                         color: "#FFFFFF"
                                         font.family: "Lato"
                                         font.pixelSize: 16
@@ -240,7 +236,7 @@ QScreen {
             color: "#FFFFFF"
             Item {
                 anchors.fill: parent
-                visible: GlobalData.settingIndex === itemsSetting._DISPLAY_UNIT_BTC
+                visible: GlobalData.settingIndex === itemsSetting._DISPLAY_UNIT
                 enabled: visible
                 Column {
                     id: unitselection
@@ -321,6 +317,40 @@ QScreen {
                     }
                     function applySettingImmediately() {
                         if(unitselection.anyChanged) { unitselection.applySettings() }
+                    }
+                }
+            }
+            Item {
+                anchors.fill: parent
+                visible: GlobalData.settingIndex === itemsSetting._LOCAL_CURRENCY
+                enabled: visible
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: 24
+                    spacing: 24
+                    QText {
+                        font.family: "Lato"
+                        font.pixelSize: 28
+                        font.weight: Font.Bold
+                        text: STR.STR_QML_742
+                    }
+                    Item {
+                        width: 627
+                        height: 750
+                        QComboBox {
+                            id: currencies
+                            currentIndex: ProfileSetting.currencyIndex
+                            width: 627
+                            height: 48
+                            model: ProfileSetting.currencies
+                            textRole: "displayName"
+                            onActivated: {
+                                if (ProfileSetting.currencies.length > 0 && currentIndex >=0) {
+                                    var item = ProfileSetting.currencies[currentIndex]
+                                    ProfileSetting.setCurrency(item.currency)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1523,7 +1553,7 @@ QScreen {
                             height: 80
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            property string twitterLink: "https://twitter.com/nunchuk_io"
+                            property string twitterLink: "https://twitter.com/@nunchuk_io"
                             onClicked: {
                                 Qt.openUrlExternally(twitterLink)
                             }
@@ -1755,18 +1785,18 @@ QScreen {
                     onButtonClicked: {
                         rootSettings.applySettings()
                         modelConfirmUpdateSetting.close()
-                        if(AppModel.updateSettingRestartRequired()){
+                        if (AppModel.updateSettingRestartRequired()) {
                             modelRestartApp.open()
-                        }
-                        else{
+                        } else {
                             if(modelConfirmUpdateSetting.requestTo === AppModel.tabIndex){
                                 QMLHandle.sendEvent(EVT.EVT_APP_SETTING_BACK_REQUEST)
                             }
                             else{
                                 if(NUNCHUCKTYPE.CHAT_TAB === modelConfirmUpdateSetting.requestTo){
                                     QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
-                                }
-                                else {
+                                } else if (NUNCHUCKTYPE.SERVICE_TAB === modelConfirmUpdateSetting.requestTo) {
+                                    QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB)
+                                } else if (NUNCHUCKTYPE.WALLET_TAB === modelConfirmUpdateSetting.requestTo) {
                                     if(0 === AppModel.nunchukMode){
                                         QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE)
                                     }
@@ -1896,23 +1926,7 @@ QScreen {
             default:break
             }
         }
-    }
-
-    QPopupInfoVertical {
-        id: _ManagerSub
-        property string link: "https://nunchuk.io/"
-        lwidths:[252,252]
-        title: STR.STR_QML_339
-        contentText: STR.STR_QML_684
-        labels: [STR.STR_QML_341,STR.STR_QML_683]
-        onConfirmNo: {
-            close()
-            Qt.openUrlExternally(link)
-        }
-        onConfirmYes: {
-            close()
-        }
-    }
+    }  
 
     Connections {
         target: Draco

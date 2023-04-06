@@ -113,18 +113,13 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
     if(AppModel::instance()->transactionInfo()){
         QWarningMessage msgwarning;
         QDevicePtr selectedDv = NULL;
-        DBG_INFO << "selectedDv";
         if(isSoftware){
-            DBG_INFO << "selectedDv";
             if(AppModel::instance()->softwareSignerDeviceList()){
-                DBG_INFO << "selectedDv";
                 selectedDv = AppModel::instance()->softwareSignerDeviceList()->getDeviceByXfp(deviceXfp) ;
             }
         }
         else{
-            DBG_INFO << "selectedDv";
             if(AppModel::instance()->deviceList()){
-                DBG_INFO << "selectedDv";
                 selectedDv = AppModel::instance()->deviceList()->getDeviceByXfp(deviceXfp) ;
             }
         }
@@ -663,17 +658,7 @@ void Controller::slotFinishCreateRemoteSigner(const int event,
                                               int code)
 {
     if((int)EWARNING::WarningType::NONE_MSG == type){
-        QSingleSignerPtr signer = QSingleSignerPtr(new SingleSigner());
-        signer.data()->setName(QString::fromStdString(ret.get_name()));
-        signer.data()->setXpub(QString::fromStdString(ret.get_xpub()));
-        signer.data()->setPublickey(QString::fromStdString(ret.get_public_key()));
-        signer.data()->setDerivationPath(QString::fromStdString(ret.get_derivation_path()));
-        signer.data()->setMasterFingerPrint(QString::fromStdString(ret.get_master_fingerprint()));
-        signer.data()->setMasterSignerId(QString::fromStdString(ret.get_master_signer_id()));
-        signer.data()->setlastHealthCheck(QDateTime::fromTime_t(ret.get_last_health_check()));
-        signer.data()->setSignerType((int)ret.get_type());
-
-        signer.data()->setIsValid(true);
+        QSingleSignerPtr signer = QSingleSignerPtr(new QSingleSigner(ret));
         signer.data()->setSignerType((int)ENUNCHUCK::SignerType::AIRGAP);
         AppModel::instance()->setSingleSignerInfo(signer);
         QSingleSignerListModelPtr remoteSigners = bridge::nunchukGetRemoteSigners();
@@ -709,47 +694,16 @@ void Controller::slotFinishScanDevices(const int state_id,
     QDeviceListModelPtr deviceList(new DeviceListModel());
     if(type == (int)EWARNING::WarningType::NONE_MSG){
         for (nunchuk::Device it : ret) {
-            QString type = QString::fromStdString(it.get_type());
-            QString path = QString::fromStdString(it.get_path());
-            QString model = QString::fromStdString(it.get_model());
-            QString master_fingerprint = QString::fromStdString(it.get_master_fingerprint());
-            bool connected = it.connected();
-            bool needs_pass_phrase_sent = it.needs_pass_phrase_sent();
-            bool needs_pin_sent = it.needs_pin_sent();
-            DBG_INFO << model << type << "XFP:" << master_fingerprint << "PPhrase:" << needs_pass_phrase_sent << "PIN:" << needs_pin_sent;
-            if(needs_pin_sent){
-                deviceList.data()->addDevice(type,
-                                             type,
-                                             path,
-                                             model,
-                                             "Locked",
-                                             connected,
-                                             needs_pass_phrase_sent,
-                                             needs_pin_sent);
-            }
-            else if(needs_pass_phrase_sent) {
-                deviceList.data()->addDevice(type,
-                                             type,
-                                             path,
-                                             model,
-                                             "Locked",
-                                             connected,
-                                             needs_pass_phrase_sent,
-                                             needs_pin_sent);
-            }
-            else{
-                if(AppModel::instance()->masterSignerList()){
-                    QString signername = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(master_fingerprint);
-                    deviceList.data()->addDevice(signername,
-                                                 type,
-                                                 path,
-                                                 model,
-                                                 master_fingerprint,
-                                                 connected,
-                                                 needs_pass_phrase_sent,
-                                                 needs_pin_sent);
-                }
-            }
+//            QString type = QString::fromStdString(it.get_type());
+//            QString path = QString::fromStdString(it.get_path());
+//            QString model = QString::fromStdString(it.get_model());
+//            QString master_fingerprint = QString::fromStdString(it.get_master_fingerprint());
+//            bool connected = it.connected();
+//            bool needs_pass_phrase_sent = it.needs_pass_phrase_sent();
+//            bool needs_pin_sent = it.needs_pin_sent();
+//            DBG_INFO << model << type << "XFP:" << master_fingerprint << "PPhrase:" << needs_pass_phrase_sent << "PIN:" << needs_pin_sent;
+            QDevicePtr device = QDevicePtr(new QDevice(it));
+            deviceList.data()->addDevice(device);
         }
         AppModel::instance()->setDeviceList(deviceList);
     }
@@ -843,12 +797,9 @@ void Controller::slotFinishHealthCheckMasterSigner(const int state_id,
             if(mastersigners){
                 AppModel::instance()->setMasterSignerList(mastersigners);
             }
-            QMasterSignerPtr currentMastersigner = mastersigners.data()->getMasterSignerById(AppModel::instance()->masterSignerInfo()->id());
+            QMasterSignerPtr currentMastersigner = mastersigners.data()->getMasterSignerById(id);
             if(currentMastersigner){
                 AppModel::instance()->setMasterSignerInfo(currentMastersigner);
-            }
-            else{
-                AppModel::instance()->masterSignerInfo()->setNeedPassphraseSent(false);
             }
         }
         AppModel::instance()->masterSignerInfo()->setHealth(status);
@@ -884,21 +835,10 @@ void Controller::slotFinishTopXPUBsMasterSigner(const QVariant &data)
         QWarningMessage msg;
         bridge::nunchukClearSignerPassphrase(masterSignerId, msg);
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-            QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-            if(mastersigners){
-                AppModel::instance()->setMasterSignerList(mastersigners);
-            }
-            QMasterSignerPtr currentMastersigner = mastersigners.data()->getMasterSignerById(AppModel::instance()->masterSignerInfo()->id());
-            if(currentMastersigner){
-                AppModel::instance()->setMasterSignerInfo(currentMastersigner);
-            }
-            else{
-                AppModel::instance()->masterSignerInfo()->setNeedPassphraseSent(false);
-            }
-            AppModel::instance()->showToast(code,
-                                            what,
+            AppModel::instance()->showToast(0,
+                                            STR_CPP_097,
                                             EWARNING::WarningType::SUCCESS_MSG,
-                                            STR_CPP_097.arg(AppModel::instance()->masterSignerInfo()->fingerPrint().toUpper()));
+                                            STR_CPP_097);
         }
     }
     else{
@@ -960,7 +900,10 @@ void Controller::slotFinishCreateSoftwareSigner(const QMasterSignerPtr ret,
             QMasterSignerPtr newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(ret.data()->fingerPrint());
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }
-        if(QQuickViewer::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY){
+
+        switch (QQuickViewer::instance()->currentFlow()) {
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY:
+        {
             uint last = QQuickViewer::instance()->getCurrentStates().last();
             if(last == (int)E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION){
                 AppModel::instance()->setToast(0,
@@ -985,19 +928,28 @@ void Controller::slotFinishCreateSoftwareSigner(const QMasterSignerPtr ret,
                     });
                 }
             }
+            break;
         }
-        else if(QQuickViewer::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY:
+        {
             QQuickViewer::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
             AppModel::instance()->setPrimaryKey(ClientController::instance()->getMe().username);
+            break;
         }
-        else{
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER:
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET:
+        {
             QQuickViewer::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
             AppModel::instance()->setToast(0,
                                             STR_CPP_062,
                                             EWARNING::WarningType::SUCCESS_MSG,
                                             STR_CPP_062);
+            break;
         }
-        QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
+        default:
+            QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
+            break;
+        }
     }
     else{
         AppModel::instance()->showToast(code,
@@ -1015,15 +967,7 @@ void Controller::slotFinishCreateWallet(nunchuk::Wallet ret,
     if(type != (int)EWARNING::WarningType::EXCEPTION_MSG){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : ret.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
         QWalletPtr wallet_result = QWalletPtr(new Wallet(QString::fromStdString(ret.get_id()),
@@ -1036,13 +980,6 @@ void Controller::slotFinishCreateWallet(nunchuk::Wallet ret,
                                                          ret.is_escrow(),
                                                          signersAssinged,
                                                          QString::fromStdString(ret.get_description())));
-        // Check coldcard
-        if(AppModel::instance()->masterSignerList() && wallet_result.data()->singleSignersAssigned()){
-            QStringList coldcard_lst = AppModel::instance()->masterSignerList()->getColdCardId();
-            for (int i = 0; i < coldcard_lst.count(); i++) {
-                wallet_result.data()->singleSignersAssigned()->setIsColdCard(coldcard_lst.at(i));
-            }
-        }
         QString wallet_id = QString::fromStdString(ret.get_id());
         AppModel::instance()->walletList()->addWallet(wallet_result);
         AppModel::instance()->resetSignersChecked();
@@ -1239,11 +1176,11 @@ void Controller::slotFinishRemoveAllSigners()
 {
     if(AppModel::instance()->masterSignerList()){
         AppModel::instance()->masterSignerList()->cleardata();
-        AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new MasterSigner));
+        AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new QMasterSigner));
     }
     if(AppModel::instance()->remoteSignerList()){
         AppModel::instance()->remoteSignerList()->cleardata();
-        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner));
+        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner));
     }
     CLIENT_INSTANCE->requestSignout();
 }

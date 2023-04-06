@@ -35,19 +35,24 @@ void SCR_MASTER_SIGNER_INFO_Exit(QVariant msg) {
 
 void EVT_MASTER_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
     if(AppModel::instance()->masterSignerInfo()){
-        if(msg.toString() != AppModel::instance()->masterSignerInfo()->name()){
-            if (AppModel::instance()->masterSignerInfo()->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) {
-                bridge::nunchukUpdateRemoteSigner(msg.toString());
-                AppModel::instance()->updateSingleSignerInfoName(msg.toString());
-                if(AppModel::instance()->remoteSignerList()){
-                    AppModel::instance()->remoteSignerList()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_name_Role, Qt::AscendingOrder);
+        int signerType = AppModel::instance()->masterSignerInfo()->signerType();
+        QString xfp = AppModel::instance()->masterSignerInfo()->fingerPrint();
+        QString newname = msg.toString();
+        AppModel::instance()->masterSignerInfo()->setName(newname);
+        if (signerType == (int)ENUNCHUCK::SignerType::COLDCARD_NFC){
+            if(AppModel::instance()->remoteSignerList()) {
+                QSingleSignerPtr signer = AppModel::instance()->remoteSignerList()->getSingleSignerByFingerPrint(xfp);
+                if(signer){
+                    signer.data()->setName(newname);
                 }
-            } else {
-                bridge::nunchukUpdateMasterSigner(AppModel::instance()->masterSignerInfo()->id(), msg.toString());
-                AppModel::instance()->updateMasterSignerInfoName(msg.toString());
-                if(AppModel::instance()->masterSignerList()){
-                    AppModel::instance()->masterSignerList()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
-                }
+                AppModel::instance()->remoteSignerList()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_name_Role, Qt::AscendingOrder);
+                bridge::nunchukUpdateRemoteSigner(signer);
+            }
+        }
+        else {
+            bridge::nunchukUpdateMasterSigner(AppModel::instance()->masterSignerInfoPtr());
+            if(AppModel::instance()->masterSignerList()){
+                AppModel::instance()->masterSignerList()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
             }
         }
     }
@@ -97,7 +102,7 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
                         AppModel::instance()->setRemoteSignerList(remoteSigners);
                     }
                     QQuickViewer::instance()->sendEvent(E::EVT_REMOTE_SIGNER_INFO_BACK_HOME);
-                    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+                    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
                 }
             }
         } else {
@@ -107,7 +112,7 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
                 AppModel::instance()->setMasterSignerList(mastersigners);
             }
             QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
-            AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new MasterSigner()));
+            AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new QMasterSigner()));
             if (AppModel::instance()->walletList()) {
                 AppModel::instance()->walletList()->notifyMasterSignerDeleted(id);
             }

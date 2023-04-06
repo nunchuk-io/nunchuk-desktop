@@ -215,6 +215,34 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: { itemClicked()}
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: {
+            if (mouse.button === Qt.RightButton) {
+                optionMenu.functions = [function(){
+                    ClientController.leaveCurrentRoom(index)
+                }]
+                optionMenu.popup()
+            }
+            else{
+                itemClicked()
+            }
+        }
+    }
+
+    QContextMenu {
+        id: optionMenu
+        menuWidth: 180
+        labels: [
+            "Delete"
+        ]
+        colors: [
+            "Red"
+        ]
+        icons: [
+            "qrc:/Images/Images/Delete.svg"
+        ]
+        onItemClicked: {
+            functions[index]()
+        }
     }
 }

@@ -32,14 +32,6 @@ void SCR_SIGN_IN_Exit(QVariant msg) {
 
 }
 
-void EVT_LOGIN_SUCCEEDED_HANDLER(QVariant msg) {
-    QTimer::singleShot(0,[](){
-        QMap<QString, QVariant> makeInstanceData;
-        makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME_ONLINE;
-        AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
-    });
-}
-
 void EVT_SHOW_SIGN_IN_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
 
 }

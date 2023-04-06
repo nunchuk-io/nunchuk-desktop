@@ -151,7 +151,22 @@
         <file>Qml/Components/customizes/QPopupInfoVertical.qml</file>
         <file>Qml/Components/customizes/QConfirmDeletingTypeB.qml</file>
         <file>Qml/Components/customizes/QBaseButton.qml</file>
+        <file>Qml/Components/customizes/Chats/QAttachment.qml</file>
         <file>Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml</file>
+        <file>Qml/Components/customizes/QReEnterYourPassword.qml</file>
+        <file>Qml/Components/customizes/QOnScreenContentTypeA.qml</file>
+        <file>Qml/Components/customizes/QOnScreenContentTypeB.qml</file>
+        <file>Qml/Components/customizes/services/QAnswerSecurityQuestion.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_DUMMY_TRANSACTION_INFO.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ENTER_BACKUP_PASSWORD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_ANSER_SECURITY_QUESTION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_SUCCESS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REENTER_YOUR_PASSWORD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SELECT_YOUR_LOCKDOWN_PERIOD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_TAPSIGNER_RECOVERED_SUCCESS.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/Close.png</file>
@@ -327,6 +342,7 @@
         <file>Images/account-circle-dark.svg</file>
         <file>Images/1.Active.svg</file>
         <file>Images/2.Active.svg</file>
+        <file>Images/3.Active.svg</file>
         <file>Images/compose-white.svg</file>
         <file>Images/Delete.svg</file>
         <file>Images/more_options.svg</file>
@@ -352,6 +368,24 @@
         <file>Images/Device_Icons/software_drak.svg</file>
         <file>Images/Device_Icons/Trezor.svg</file>
         <file>Images/Device_Icons/unknown-key-dark.svg</file>
+        <file>Images/OnlineMode/no-image.jpg</file>
+        <file>Images/OnlineMode/attachment.png</file>
+        <file>Images/OnlineMode/video-thumb.png</file>
+        <file>Images/OnlineMode/remove-button.png</file>
+        <file>Images/services-dark.svg</file>
+        <file>Images/subscription-light.svg</file>
+        <file>Images/emergency-dark.svg</file>
+        <file>Images/emergency-lockdown-illustrations.svg</file>
+        <file>Images/3.Active.svg</file>
+        <file>Images/check-dark.svg</file>
+        <file>Images/expand-more-dark.svg</file>
+        <file>Images/inheritance-dark.svg</file>
+        <file>Images/local-currency-dark.svg</file>
+        <file>Images/contact-support-dark.svg</file>
+        <file>Images/contact-support-light.svg</file>
+        <file>Images/local-currency-light.svg</file>
+        <file>Images/chat-empty-state.svg</file>
+        <file>Images/OnlineMode/attach_file.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

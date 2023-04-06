@@ -1,4 +1,24 @@
-﻿#ifndef BRIDGEINTERFACE_H
+﻿/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
+#ifndef BRIDGEINTERFACE_H
 #define BRIDGEINTERFACE_H
 
 #include <QObject>
@@ -34,11 +54,14 @@ class ENUNCHUCK: public QObject
     Q_ENUMS(ConnectionStatus)
     Q_ENUMS(Unit)
     Q_ENUMS(SignerType)
+    Q_ENUMS(RoomType)
     Q_ENUMS(IN_FLOW)
+    Q_ENUMS(ROOM_EVT)
 public:
     enum class TabSelection {
-        CHAT_TAB,
         WALLET_TAB,
+        SERVICE_TAB,
+        CHAT_TAB,
     };
 
     enum class AddressType {
@@ -116,6 +139,13 @@ public:
         SERVER,
     };
 
+    enum class RoomType {
+        SUPPORT_ROOM = 0,
+        SERVICE_ROOM,
+        NUNSYNC_ROOM,
+        GRPCHAT_ROOM
+    };
+
     enum IN_FLOW {
         FLOW_NONE = 0,
         FLOW_PRIMARY_KEY,
@@ -135,6 +165,32 @@ public:
         PASSPHRASE_SIGNING_TX,
         PASSPHRASE_CACHE_XPUB
     };
+
+    enum class ROOM_EVT {
+        INITIALIZE = 0,     //0
+        PLAIN_TEXT,         //1
+        STATE_EVT,          //2
+        WALLET_PAST,        //3
+        WALLET_INIT,        //4
+        WALLET_JOIN,        //5
+        WALLET_LEAVE,       //6
+        WALLET_READY,       //7
+        WALLET_CREATE,      //8
+        WALLET_CANCEL,      //9
+        WALLET_BACKUP,      //10
+        TX_CANCELED,        //11
+        TX_INIT,            //12
+        TX_SIGN,            //13
+        TX_BROADCAST,       //14
+        TX_READY,           //15
+        TX_CANCEL,          //16
+        TX_RECEIVE,         //17
+        EXCEPTION,          //18
+        FILE_IMAGE,         //19
+        FILE_VIDEO,         //20
+        FILE_OTHER,         //21
+        INVALID,            //22
+    };
 };
 Q_DECLARE_METATYPE(ENUNCHUCK::AddressType)
 Q_DECLARE_METATYPE(ENUNCHUCK::Chain)
@@ -145,6 +201,7 @@ Q_DECLARE_METATYPE(ENUNCHUCK::ConnectionStatus)
 Q_DECLARE_METATYPE(ENUNCHUCK::ExportFormat)
 Q_DECLARE_METATYPE(ENUNCHUCK::Unit)
 Q_DECLARE_METATYPE(ENUNCHUCK::SignerType)
+Q_DECLARE_METATYPE(ENUNCHUCK::ROOM_EVT)
 
 typedef void (*NunchukType1)(const QString &str);
 Q_DECLARE_METATYPE(NunchukType1)
@@ -184,6 +241,8 @@ void nunchukUpdateWalletDescription(const QString &wallet_id, const QString &des
 QMasterSignerListModelPtr nunchukGetMasterSigners();
 
 std::vector<nunchuk::MasterSigner> nunchukGetOriginMasterSigners(QWarningMessage &msg);
+
+nunchuk::MasterSigner nunchukGetOriginMasterSigner(const QString &id, QWarningMessage &msg);
 
 QMasterSignerListModelPtr nunchukConvertMasterSigners(std::vector<nunchuk::MasterSigner> list);
 
@@ -227,9 +286,9 @@ bool nunchukDeletePrimaryKey();
 
 bool nunchukDeleteRemoteSigner(const QString& master_fingerprint, const QString& derivation_path);
 
-void nunchukUpdateMasterSigner(const QString& mastersignerId, const QString &name);
+void nunchukUpdateMasterSigner(const QMasterSignerPtr &signer);
 
-void nunchukUpdateRemoteSigner(const QString &newname);
+void nunchukUpdateRemoteSigner(const QSingleSignerPtr &signer);
 
 bool nunchukHasSinger(const nunchuk::SingleSigner& signer);
 
@@ -518,6 +577,16 @@ bool nunchukUpdateTransactionSchedule(const QString& wallet_id,
                                       QWarningMessage& msg);
 
 void ForceRefreshWallet(const QString& wallet_id, QWarningMessage &msg);
+
+QString SignHealthCheckMessage(const QSingleSignerPtr& signer,
+                               const QString& message,
+                               QWarningMessage& msg);
+
+QMasterSignerPtr ImportTapsignerMasterSigner( const std::vector<unsigned char>& data,
+                                              const QString& backup_key,
+                                              const QString& name,
+                                              bool is_primary,
+                                              QWarningMessage& msg);
 }
 
 #endif // BRIDGEINTERFACE_H

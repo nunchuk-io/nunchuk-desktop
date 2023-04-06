@@ -215,7 +215,7 @@ QScreen {
                                             font.pixelSize: 12
                                             color: "#031F2B"
                                             font.family: "Lato"
-                                            text: qsTr("$%1 USD").arg(model.destination_amount_usd)
+                                            text: qsTr("$%1 %2").arg(model.destination_amount_currency).arg(AppSetting.currency)
                                             horizontalAlignment: Text.AlignRight
                                         }
                                     }
@@ -261,7 +261,7 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 USD").arg(AppModel.transactionInfo.feeUSD)
+                                        text: qsTr("$%1 %2").arg(AppModel.transactionInfo.feeCurrency).arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -305,7 +305,7 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 USD").arg(AppModel.transactionInfo.totalUSD)
+                                        text: qsTr("$%1 %2").arg(AppModel.transactionInfo.totalCurrency).arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -380,7 +380,7 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 USD").arg(AppModel.transactionInfo.change.amountUSD)
+                                        text: qsTr("$%1 %2").arg(AppModel.transactionInfo.change.amountCurrency).arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -674,7 +674,7 @@ QScreen {
                                     QText {
                                         width: parent.width*1/3 - 20
                                         height: 16
-                                        text: qsTr("$%1 USD").arg(model.destination_amount_usd)
+                                        text: qsTr("$%1 %2").arg(model.destination_amount_currency).arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                         font.pixelSize: 12
                                         color: "#031F2B"
@@ -786,6 +786,7 @@ QScreen {
                 devicetype: model.single_signer_devicetype
                 card_id: model.single_signer_device_cardid
                 serverkeyMessage: AppModel.transactionInfo.serverKeyMessage
+                tx_status: AppModel.transactionInfo.status
                 onSignRequest: {
                     if(model.single_signer_type === NUNCHUCKTYPE.SOFTWARE){
                         _confirm.open()

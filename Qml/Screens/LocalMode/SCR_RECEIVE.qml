@@ -262,7 +262,7 @@ QScreen {
                     "bookmark_border_24px_F1FAFE.png"
                 ]
                 fontPixelSize: 16
-                type: eSECOND
+                type: eTypeB
                 anchors {
                     right: parent.right
                     rightMargin: 16
@@ -342,7 +342,7 @@ QScreen {
                     icons: ["Copy_031F2B.png", "Copy_9CAEB8.png", "Copy_F1FAFE.png","Copy_F1FAFE.png"]
                     fontPixelSize: 12
                     iconSize: 16
-                    type: eSECOND
+                    type: eTypeB
                     anchors.horizontalCenter: parent.horizontalCenter
                     onButtonClicked: {
                         QMLHandle.sendEvent(EVT.EVT_RECEIVE_COPY_ADDRESS, qrCode.textInput)
@@ -355,7 +355,7 @@ QScreen {
                     icons: ["visibility_031F2B.png","visibility_9CAEB8.png","visibility_F1FAFE.png","visibility_F1FAFE.png"]
                     fontPixelSize: 12
                     iconSize: 16
-                    type: eSECOND
+                    type: eTypeB
                     anchors.horizontalCenter: parent.horizontalCenter
                     onButtonClicked: { QMLHandle.sendEvent(EVT.EVT_RECEIVE_DISPLAY_ADDRESS, qrCode.textInput) }
                     enabled: AppModel.walletInfo.containsHWSigner

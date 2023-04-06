@@ -51,12 +51,9 @@ QString Destination::amountBTC() const
     return qUtils::QValueFromAmount(amount_);
 }
 
-QString Destination::amountUSD() const
+QString Destination::amountCurrency() const
 {
-    double exRates = AppModel::instance()->getExchangeRates()/100000000;
-    double balanceusd = exRates*amountSats();
-    QLocale locale(QLocale::English);
-    return locale.toString(balanceusd, 'f', 2);
+    return qUtils::currencyLocale(amountSats());
 }
 
 qint64 Destination::amountSats() const
@@ -101,8 +98,8 @@ QVariant DestinationListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->amountDisplay();
     case destination_amount_btc_role:
         return d_[index.row()]->amountBTC();
-    case destination_amount_usd_role:
-        return d_[index.row()]->amountUSD();
+    case destination_amount_currency_role:
+        return d_[index.row()]->amountCurrency();
     default:
         return QVariant();
     }
@@ -113,7 +110,7 @@ QHash<int, QByteArray> DestinationListModel::roleNames() const {
     roles[destination_address_role] = "destination_address";
     roles[destination_amount_role] = "destination_amount";
     roles[destination_amount_btc_role] = "destination_amount_btc";
-    roles[destination_amount_usd_role] = "destination_amount_usd";
+    roles[destination_amount_currency_role] = "destination_amount_currency";
     return roles;
 }
 
@@ -205,11 +202,7 @@ Transaction::Transaction() :txid_(""),
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Transaction::~Transaction() {
-    destinationList_.clear();
-    change_.clear() ;
-    singleSignersAssigned_.clear() ;
-}
+Transaction::~Transaction() { }
 
 QString Transaction::txid() const { return txid_; }
 
@@ -240,12 +233,9 @@ QString Transaction::feeBTC() const
     return qUtils::QValueFromAmount(fee_);
 }
 
-QString Transaction::feeUSD() const
+QString Transaction::feeCurrency() const
 {
-    double exRates = AppModel::instance()->getExchangeRates()/100000000;
-    double balanceusd = exRates*feeSats();
-    QLocale locale(QLocale::English);
-    return locale.toString(balanceusd, 'f', 2);
+    return qUtils::currencyLocale(feeSats());
 }
 
 qint64 Transaction::feeSats() const
@@ -265,7 +255,10 @@ Destination *Transaction::change() const { return change_.data(); }
 
 QDestinationPtr Transaction::changePtr() const { return change_; }
 
-SingleSignerListModel *Transaction::singleSignersAssigned() const { return singleSignersAssigned_.data(); }
+SingleSignerListModel *Transaction::singleSignersAssigned() const {
+    singleSignersAssigned_.data()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_is_local_Role, Qt::AscendingOrder);
+    return singleSignersAssigned_.data();
+}
 
 QSingleSignerListModelPtr Transaction::singleSignersAssignedPtr() const { return singleSignersAssigned_; }
 
@@ -352,12 +345,9 @@ QString Transaction::subtotalBTC() const
     return qUtils::QValueFromAmount(subtotal_);
 }
 
-QString Transaction::subtotalUSD() const
+QString Transaction::subtotalCurrency() const
 {
-    double exRates = AppModel::instance()->getExchangeRates()/100000000;
-    double balanceusd = exRates*subtotalSats();
-    QLocale locale(QLocale::English);
-    return locale.toString(balanceusd, 'f', 2);
+    return qUtils::currencyLocale(subtotalSats());
 }
 
 qint64 Transaction::subtotalSats() const
@@ -394,12 +384,9 @@ QString Transaction::totalBTC() const
     return qUtils::QValueFromAmount(total_);
 }
 
-QString Transaction::totalUSD() const
+QString Transaction::totalCurrency() const
 {
-    double exRates = AppModel::instance()->getExchangeRates()/100000000;
-    double balanceusd = exRates*totalSats();
-    QLocale locale(QLocale::English);
-    return locale.toString(balanceusd, 'f', 2);
+    return qUtils::currencyLocale(totalSats());
 }
 
 void Transaction::setTotal(const qint64 total)
@@ -650,10 +637,10 @@ QVariant TransactionListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->isReceiveTx();
     case transaction_replacedTx_role:
         return d_[index.row()]->replacedTxid();
-    case transaction_subtotalUSD_role:
-        return d_[index.row()]->subtotalUSD();
-    case transaction_totalUSD_role:
-        return d_[index.row()]->totalUSD();
+    case transaction_subtotalCurrency_role:
+        return d_[index.row()]->subtotalCurrency();
+    case transaction_totalCurrency_role:
+        return d_[index.row()]->totalCurrency();
     default:
         return QVariant();
     }
@@ -677,8 +664,8 @@ QHash<int, QByteArray> TransactionListModel::roleNames() const {
     roles[transaction_height_role]          = "transaction_height";
     roles[transaction_isReceiveTx_role]     = "transaction_isReceiveTx";
     roles[transaction_replacedTx_role]      = "transaction_replacedTx";
-    roles[transaction_subtotalUSD_role]     = "transaction_subtotalUSD";
-    roles[transaction_totalUSD_role]        = "transaction_totalUSD";
+    roles[transaction_subtotalCurrency_role]     = "transaction_subtotalCurrency";
+    roles[transaction_totalCurrency_role]        = "transaction_totalCurrency";
     return roles;
 }
 

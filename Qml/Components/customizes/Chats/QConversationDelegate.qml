@@ -43,45 +43,33 @@ Item {
     property string timeSection: "value"
     property string txnId: ""
     property string evtId: ""
-    property int messageType: 0     // MSG_INIT_MESSAGE = 0
-                                    // MSG_PURE_STRING,
-                                    // MSG_STATE_EVENT,
-                                    // MSG_WALLET_PAST,
-                                    // MSG_WALLET_INIT,
-                                    // MSG_WALLET_JOIN,
-                                    // MSG_WALLET_LEAVE,
-                                    // MSG_WALLET_READY,
-                                    // MSG_WALLET_CREATE,
-                                    // MSG_WALLET_CANCEL,
-                                    // MSG_WALLET_BACKUP,
-                                    // MSG_TX_PAST,
-                                    // MSG_TX_INIT,
-                                    // MSG_TX_SIGN,
-                                    // MSG_TX_BROADCAST,
-                                    // MSG_TX_READY
-                                    // MSG_TX_CANCEL,
-                                    // MSG_TX_RECEIVE
+    property var  progressObject: null
+    property string file_path: ""
+    property int messageType: 0     // EVT.ROOM_EVT
 
     readonly property var componentType: [
-        initConversationComponent,  // MSG_INIT_MESSAGE = 0,
-        purestringComponent,        // MSG_PURE_STRING,
-        matrixEventComponent,       // MSG_STATE_EVENT
-        pastWalletComponent,        // MSG_WALLET_PAST,
-        initWalletComponent,        // MSG_WALLET_INIT,
-        walletSignersComponent,     // MSG_WALLET_JOIN,
-        walletSignersComponent,     // MSG_WALLET_LEAVE,
-        signersReadyComponent,      // MSG_WALLET_READY,
-        walletCreatedComponent,     // MSG_WALLET_CREATE,
-        walletSignersComponent,     // MSG_WALLET_CANCEL,
-        walletBackupComponent,      // MSG_WALLET_BACKUP,
-        pastTransactionComponent,   // MSG_TX_CANCELED,
-        initTransactionComponent,   // MSG_TX_INIT,
-        transactionEvtComponent,    // MSG_TX_SIGN,
-        broadcastTxComponent,       // MSG_TX_BROADCAST,
-        signersReadyComponent,      // MSG_TX_READY,
-        transactionEvtComponent,    // MSG_TX_CANCEL,
-        receiveTxEvtComponent,      // MSG_TX_RECEIVE,
-        exceptionComponent,         // MSG_TX_EXCEPTION,
+        initConversationComponent,  // EVT.ROOM_EVT.INITIALIZE = 0,
+        purestringComponent,        // EVT.ROOM_EVT.PLAIN_TEXT,
+        matrixEventComponent,       // EVT.ROOM_EVT.STATE_EVT
+        pastWalletComponent,        // EVT.ROOM_EVT.WALLET_PAST,
+        initWalletComponent,        // EVT.ROOM_EVT.WALLET_INIT,
+        walletSignersComponent,     // EVT.ROOM_EVT.WALLET_JOIN,
+        walletSignersComponent,     // EVT.ROOM_EVT.WALLET_LEAVE,
+        signersReadyComponent,      // EVT.ROOM_EVT.WALLET_READY,
+        walletCreatedComponent,     // EVT.ROOM_EVT.WALLET_CREATE,
+        walletSignersComponent,     // EVT.ROOM_EVT.WALLET_CANCEL,
+        walletBackupComponent,      // EVT.ROOM_EVT.WALLET_BACKUP,
+        pastTransactionComponent,   // EVT.ROOM_EVT.TX_CANCELED,
+        initTransactionComponent,   // EVT.ROOM_EVT.TX_INIT,
+        transactionEvtComponent,    // EVT.ROOM_EVT.TX_SIGN,
+        broadcastTxComponent,       // EVT.ROOM_EVT.TX_BROADCAST,
+        signersReadyComponent,      // EVT.ROOM_EVT.TX_READY,
+        transactionEvtComponent,    // EVT.ROOM_EVT.TX_CANCEL,
+        receiveTxEvtComponent,      // EVT.ROOM_EVT.TX_RECEIVE,
+        exceptionComponent,         // EVT.ROOM_EVT.EXCEPTION,
+        fileImageComponent,         // EVT.ROOM_EVT.FILE_IMAGE,
+        fileVideoComponent,         // EVT.ROOM_EVT.FILE_VIDEO,
+        fileOtherComponent,         // EVT.ROOM_EVT.FILE_OTHER,
     ]
     signal requestCancelWallet()
     signal conversationLeftClicked()
@@ -1440,6 +1428,498 @@ Item {
                     lineHeight: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+        }
+    }
+    Component {
+        id: fileImageComponent
+        Row {
+            LayoutMirroring.enabled: isSentByMe
+            LayoutMirroring.childrenInherit: true
+            spacing: 8
+            Item {width: 12; height: 12}
+            QAvatar {
+                id: avatar
+                width: 36
+                height: 36
+                avatarUrl: avatarLink
+                username: sendername
+                visible: !isSentByMe
+                displayStatus: false
+            }
+            Column {
+                id: contentChat
+                spacing: 4
+                QText {
+                    id: contentChatHeader
+                    height: 16
+                    text: sendername
+                    color: "#595959"
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    anchors.left: parent.left
+                    visible: !isSentByMe
+                }
+                Row {
+                    spacing: 4
+                    anchors.left: parent.left
+                    Column {
+                        spacing: 0
+                        Item {
+                            id: chatmessageItem
+                            width: chatMessageBox.width
+                            height: chatMessageBox.height
+                            Item {
+                                id: chatMessageBox
+                                height: messageCol.height + 26
+                                width: Math.max(40, messageCol.width + 50)
+                                anchors.left: parent.left
+                                Rectangle {
+                                    id: maskChat
+                                    width: parent.width - 2
+                                    height: parent.height - 2
+                                    anchors.centerIn: parent
+                                    radius: 24
+                                    Rectangle {
+                                        width: parent.radius
+                                        height: parent.radius
+                                        anchors {
+                                            top: parent.top
+                                            left: parent.left
+                                        }
+                                        color: parent.color
+                                    }
+                                    visible: false
+                                }
+                                Rectangle {
+                                    id: backgroundChat
+                                    width: parent.width - 2
+                                    height: parent.height - 2
+                                    anchors.centerIn: parent
+                                    color: isSentByMe ? "#D0E2FF" : "#FFFFFF"
+                                    visible: false
+                                }
+                                OpacityMask {
+                                    id: backgroundOpacity
+                                    anchors.fill: backgroundChat
+                                    source: backgroundChat
+                                    anchors.centerIn: parent
+                                    maskSource: maskChat
+                                }
+                            }
+                            InnerShadow {
+                                anchors.fill: chatMessageBox
+                                cached: true
+                                horizontalOffset: 0
+                                verticalOffset: 0
+                                radius: 1
+                                samples: 24
+                                color: Qt.rgba(0, 0, 0, 0.8)
+                                smooth: true
+                                source: chatMessageBox
+                                visible: !isSentByMe
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: {
+                                    if (mouse.button === Qt.RightButton) {
+                                        optionMenu.labels = ["Copy message"]
+                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.functions = [function(){
+                                            var txt = ClientController.getPlainText(messageText.text)
+                                            ClientController.copyMessage(txt)
+                                        }]
+                                        optionMenu.popup()
+                                    }
+                                    else{
+                                        conversationLeftClicked()
+                                    }
+                                }
+                            }
+                            Column {
+                                id: messageCol
+                                anchors.left: parent.left
+                                anchors.leftMargin: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 8
+                                QAttachment {
+                                    roomEventID: conversationRoot.evtId
+                                    progressObject: conversationRoot.progressObject
+                                    file_mimeType: _FILE_IMAGE
+                                    file_path: conversationRoot.file_path
+                                }
+                                QText {
+                                    text: messageContent
+                                    color: "#031F2B"
+                                    width: Math.min(conversationRoot.width*0.70, implicitWidth)
+                                    wrapMode: Text.WrapAnywhere
+                                    font.family: "Lato"
+                                    textFormat: Text.RichText
+                                    lineHeight: 1.5
+                                    horizontalAlignment: Text.AlignJustify
+                                    onLinkActivated: Qt.openUrlExternally( link )
+                                }
+                            }
+                        }
+                    }
+                    QText {
+                        id: contentChatFooter
+                        text: messageTime
+                        height: 16
+                        color: "#595959"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: false
+                        onVisibleChanged: {
+                            if(visible) countDown.start()
+                        }
+                        NumberAnimation {
+                            id: countDown
+                            target: contentChatFooter
+                            property: "visible"
+                            duration: 5000
+                            easing.type: Easing.InOutQuad
+                            onStopped: contentChatFooter.visible = false
+                        }
+                    }
+                }
+                QText {
+                    color: "#595959"
+                    font.pixelSize: 14
+                    anchors.left: parent.left
+                    text: (evtId !== "") ? STR.STR_QML_477 : STR.STR_QML_478
+                    visible: isSentByMe ? ((evtId === "") || (index === (RoomWalletData.currentRoom.conversation.count - 1))) : false
+                }
+            }
+        }
+    }
+    Component {
+        id: fileVideoComponent
+        Row {
+            LayoutMirroring.enabled: isSentByMe
+            LayoutMirroring.childrenInherit: true
+            spacing: 8
+            Item {width: 12; height: 12}
+            QAvatar {
+                id: avatar
+                width: 36
+                height: 36
+                avatarUrl: avatarLink
+                username: sendername
+                visible: !isSentByMe
+                displayStatus: false
+            }
+            Column {
+                id: contentChat
+                spacing: 4
+                QText {
+                    id: contentChatHeader
+                    height: 16
+                    text: sendername
+                    color: "#595959"
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    anchors.left: parent.left
+                    visible: !isSentByMe
+                }
+                Row {
+                    spacing: 4
+                    anchors.left: parent.left
+                    Column {
+                        spacing: 0
+                        Item {
+                            id: chatmessageItem
+                            width: chatMessageBox.width
+                            height: chatMessageBox.height
+                            Item {
+                                id: chatMessageBox
+                                height: messageCol.height + 26
+                                width: Math.max(40, messageCol.width + 50)
+                                anchors.left: parent.left
+                                Rectangle {
+                                    id: maskChat
+                                    width: parent.width - 2
+                                    height: parent.height - 2
+                                    anchors.centerIn: parent
+                                    radius: 24
+                                    Rectangle {
+                                        width: parent.radius
+                                        height: parent.radius
+                                        anchors {
+                                            top: parent.top
+                                            left: parent.left
+                                        }
+                                        color: parent.color
+                                    }
+                                    visible: false
+                                }
+                                Rectangle {
+                                    id: backgroundChat
+                                    width: parent.width - 2
+                                    height: parent.height - 2
+                                    anchors.centerIn: parent
+                                    color: isSentByMe ? "#D0E2FF" : "#FFFFFF"
+                                    visible: false
+                                }
+                                OpacityMask {
+                                    id: backgroundOpacity
+                                    anchors.fill: backgroundChat
+                                    source: backgroundChat
+                                    anchors.centerIn: parent
+                                    maskSource: maskChat
+                                }
+                            }
+                            InnerShadow {
+                                anchors.fill: chatMessageBox
+                                cached: true
+                                horizontalOffset: 0
+                                verticalOffset: 0
+                                radius: 1
+                                samples: 24
+                                color: Qt.rgba(0, 0, 0, 0.8)
+                                smooth: true
+                                source: chatMessageBox
+                                visible: !isSentByMe
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: {
+                                    if (mouse.button === Qt.RightButton) {
+                                        optionMenu.labels = ["Copy message"]
+                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.functions = [function(){
+                                            var txt = ClientController.getPlainText(messageText.text)
+                                            ClientController.copyMessage(txt)
+                                        }]
+                                        optionMenu.popup()
+                                    }
+                                    else{
+                                        conversationLeftClicked()
+                                    }
+                                }
+                            }
+                            Column {
+                                id: messageCol
+                                anchors.left: parent.left
+                                anchors.leftMargin: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 8
+                                QAttachment {
+                                    roomEventID: conversationRoot.evtId
+                                    progressObject: conversationRoot.progressObject
+                                    file_mimeType: _FILE_VIDEO
+                                    file_path: conversationRoot.file_path
+                                }
+                                QText {
+                                    text: messageContent
+                                    color: "#031F2B"
+                                    width: Math.min(conversationRoot.width*0.70, implicitWidth)
+                                    wrapMode: Text.WrapAnywhere
+                                    font.family: "Lato"
+                                    textFormat: Text.RichText
+                                    lineHeight: 1.5
+                                    horizontalAlignment: Text.AlignJustify
+                                    onLinkActivated: Qt.openUrlExternally( link )
+                                }
+                            }
+                        }
+                    }
+                    QText {
+                        id: contentChatFooter
+                        text: messageTime
+                        height: 16
+                        color: "#595959"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: false
+                        onVisibleChanged: {
+                            if(visible) countDown.start()
+                        }
+                        NumberAnimation {
+                            id: countDown
+                            target: contentChatFooter
+                            property: "visible"
+                            duration: 5000
+                            easing.type: Easing.InOutQuad
+                            onStopped: contentChatFooter.visible = false
+                        }
+                    }
+                }
+                QText {
+                    color: "#595959"
+                    font.pixelSize: 14
+                    anchors.left: parent.left
+                    text: (evtId !== "") ? STR.STR_QML_477 : STR.STR_QML_478
+                    visible: isSentByMe ? ((evtId === "") || (index === (RoomWalletData.currentRoom.conversation.count - 1))) : false
+                }
+            }
+        }
+    }
+    Component {
+        id: fileOtherComponent
+        Row {
+            LayoutMirroring.enabled: isSentByMe
+            LayoutMirroring.childrenInherit: true
+            spacing: 8
+            Item {width: 12; height: 12}
+            QAvatar {
+                id: avatar
+                width: 36
+                height: 36
+                avatarUrl: avatarLink
+                username: sendername
+                visible: !isSentByMe
+                displayStatus: false
+            }
+            Column {
+                id: contentChat
+                spacing: 4
+                QText {
+                    id: contentChatHeader
+                    height: 16
+                    text: sendername
+                    color: "#595959"
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    anchors.left: parent.left
+                    visible: !isSentByMe
+                }
+                Row {
+                    spacing: 4
+                    anchors.left: parent.left
+                    Column {
+                        spacing: 0
+                        Item {
+                            id: chatmessageItem
+                            width: chatMessageBox.width
+                            height: chatMessageBox.height
+                            Item {
+                                id: chatMessageBox
+                                height: messageCol.height + 26
+                                width: Math.max(40, messageCol.width + 50)
+                                anchors.left: parent.left
+                                Rectangle {
+                                    id: maskChat
+                                    width: parent.width - 2
+                                    height: parent.height - 2
+                                    anchors.centerIn: parent
+                                    radius: 24
+                                    Rectangle {
+                                        width: parent.radius
+                                        height: parent.radius
+                                        anchors {
+                                            top: parent.top
+                                            left: parent.left
+                                        }
+                                        color: parent.color
+                                    }
+                                    visible: false
+                                }
+                                Rectangle {
+                                    id: backgroundChat
+                                    width: parent.width - 2
+                                    height: parent.height - 2
+                                    anchors.centerIn: parent
+                                    color: isSentByMe ? "#D0E2FF" : "#FFFFFF"
+                                    visible: false
+                                }
+                                OpacityMask {
+                                    id: backgroundOpacity
+                                    anchors.fill: backgroundChat
+                                    source: backgroundChat
+                                    anchors.centerIn: parent
+                                    maskSource: maskChat
+                                }
+                            }
+                            InnerShadow {
+                                anchors.fill: chatMessageBox
+                                cached: true
+                                horizontalOffset: 0
+                                verticalOffset: 0
+                                radius: 1
+                                samples: 24
+                                color: Qt.rgba(0, 0, 0, 0.8)
+                                smooth: true
+                                source: chatMessageBox
+                                visible: !isSentByMe
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: {
+                                    if (mouse.button === Qt.RightButton) {
+                                        optionMenu.labels = ["Copy message"]
+                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.functions = [function(){
+                                            var txt = ClientController.getPlainText(messageText.text)
+                                            ClientController.copyMessage(txt)
+                                        }]
+                                        optionMenu.popup()
+                                    }
+                                    else{
+                                        conversationLeftClicked()
+                                    }
+                                }
+                            }
+                            Column {
+                                id: messageCol
+                                anchors.left: parent.left
+                                anchors.leftMargin: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 8
+                                QAttachment {
+                                    roomEventID: conversationRoot.evtId
+                                    progressObject: conversationRoot.progressObject
+                                    file_mimeType: _FILE_OTHER
+                                    file_path: conversationRoot.file_path
+                                }
+                                QText {
+                                    text: messageContent
+                                    color: "#031F2B"
+                                    width: Math.min(conversationRoot.width*0.70, implicitWidth)
+                                    wrapMode: Text.WrapAnywhere
+                                    font.family: "Lato"
+                                    textFormat: Text.RichText
+                                    lineHeight: 1.5
+                                    horizontalAlignment: Text.AlignJustify
+                                    onLinkActivated: Qt.openUrlExternally( link )
+                                }
+                            }
+                        }
+                    }
+                    QText {
+                        id: contentChatFooter
+                        text: messageTime
+                        height: 16
+                        color: "#595959"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: false
+                        onVisibleChanged: {
+                            if(visible) countDown.start()
+                        }
+                        NumberAnimation {
+                            id: countDown
+                            target: contentChatFooter
+                            property: "visible"
+                            duration: 5000
+                            easing.type: Easing.InOutQuad
+                            onStopped: contentChatFooter.visible = false
+                        }
+                    }
+                }
+                QText {
+                    color: "#595959"
+                    font.pixelSize: 14
+                    anchors.left: parent.left
+                    text: (evtId !== "") ? STR.STR_QML_477 : STR.STR_QML_478
+                    visible: isSentByMe ? ((evtId === "") || (index === (RoomWalletData.currentRoom.conversation.count - 1))) : false
                 }
             }
         }

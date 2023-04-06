@@ -48,20 +48,22 @@ QScreen {
         id: step3
         Item {
             anchors.fill: parent
+            anchors.margins: 24
             QAreaWalletDetail{
-                width: parent.width - 48
-                height: parent.height * 0.42
+                id: _walletDes
+                width: parent.width
+                height: parent.height * 0.49
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
-                    topMargin: 32
+                    topMargin: 0
                 }
                 isAssisted: AppModel.walletInfo.isAssistedWallet
                 Row{
                     anchors.fill: parent
                     Item {
                         height: parent.height
-                        width: parent.width * 0.6
+                        width: parent.width * _walletDes.ratio
 
                         QText {
                             id: displayWalletname
@@ -209,7 +211,7 @@ QScreen {
                                 font.pixelSize: 16
                                 font.family: "Lato"
                                 font.weight: Font.Medium
-                                text: qsTr("$%1 USD").arg(AppModel.walletInfo.walletBalanceUSD)
+                                text: qsTr("$%1 %2").arg(AppModel.walletInfo.walletBalanceCurrency).arg(AppSetting.currency)
                             }
                         }
 
@@ -238,8 +240,8 @@ QScreen {
                             spacing: parent.width - 204 *2 - 24*2
                             anchors {
                                 horizontalCenter: parent.horizontalCenter
-                                top: parent.top
-                                topMargin: 294
+                                bottom: parent.bottom
+                                bottomMargin: 24
                             }
                             QTextButton {
                                 label.text: STR.STR_QML_002
@@ -297,7 +299,7 @@ QScreen {
                     }
                     Item {
                         id: area_quickrecevied
-                        width: parent.width * 0.4
+                        width: parent.width * (1.0 - _walletDes.ratio)
                         height: parent.height
                         Column {
                             width: parent.width
@@ -312,30 +314,31 @@ QScreen {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
 
-                            Item{
-                                width: parent.height*0.3 + 50
-                                height: width
+                            Rectangle {
+                                width: 162
+                                height: 162
+                                radius: 12
+                                color: "#FFFFFF"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 QRCodeItem {
                                     id: qrCode
                                     anchors.fill: parent
+                                    anchors.margins: 6
                                     borderWitdh: 6
                                     textInput: AppModel.walletInfo.walletAddress
-                                    visible: false
                                 }
-                                DropShadow {
-                                    anchors.fill: parent
+                                layer.enabled: true
+                                layer.effect: DropShadow {
                                     horizontalOffset: 3
                                     verticalOffset: 3
                                     radius: 8.0
                                     samples: 17
                                     color: "#80000000"
-                                    source: qrCode
                                 }
                             }
 
                             Item{
-                                width: parent.width * 0.8
+                                width: 329
                                 height: 72
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 Rectangle {
@@ -343,37 +346,33 @@ QScreen {
                                     anchors.fill: parent
                                     color: "#FFFFFF"
                                     radius: 4
-                                }
-                                DropShadow {
-                                    anchors.fill: parent
-                                    horizontalOffset: 3
-                                    verticalOffset: 3
-                                    radius: 8.0
-                                    samples: 17
-                                    color: "#80000000"
-                                    source: qrHex
-                                    QText {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 5
-                                        anchors.topMargin: 5
-                                        anchors.rightMargin: 5
-                                        anchors.bottomMargin: 5
-                                        horizontalAlignment: Text.AlignHCenter
-                                        wrapMode: Text.WrapAnywhere
-                                        font.weight: Font.Medium
-                                        font.pixelSize: 16
-                                        color: "#031F2B";
-                                        text: qrCode.textInput
-                                        anchors.centerIn: parent
+                                    layer.enabled: true
+                                    layer.effect: DropShadow {
+                                        horizontalOffset: 3
+                                        verticalOffset: 3
+                                        radius: 8.0
+                                        samples: 17
+                                        color: "#80000000"
                                     }
+                                }
+                                QText {
+                                    z: 1
+                                    anchors.fill: parent
+                                    anchors.margins: 5
+                                    horizontalAlignment: Text.AlignHCenter
+                                    wrapMode: Text.WrapAnywhere
+                                    font.weight: Font.Medium
+                                    font.pixelSize: 16
+                                    color: "#031F2B";
+                                    text: qrCode.textInput
                                 }
                             }
 
                             Row {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                width: parent.width - spacing*2
+                                width: 311
                                 height: 48
-                                spacing: (parent.width - 97 - 175 - 20)/4
+                                spacing: 10
                                 QButtonIcon {
                                     width: 97
                                     height: 48
@@ -381,7 +380,7 @@ QScreen {
                                     icons: ["Copy_031F2B.png", "Copy_031F2B.png", "Copy_9CAEB8.png","Copy_9CAEB8.png"]
                                     fontPixelSize: 16
                                     iconSize: 16
-                                    type: eSECOND
+                                    type: eTypeB
                                     enabled: walletmanagerlst.count > 0
                                     onButtonClicked: {
                                         QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_COPY_ADDRESS, qrCode.textInput)
@@ -394,7 +393,7 @@ QScreen {
                                     icons: ["visibility_031F2B.png","visibility_031F2B.png","visibility_F1FAFE.png","visibility_F1FAFE.png"]
                                     fontPixelSize: 16
                                     iconSize: 16
-                                    type: eSECOND
+                                    type: eTypeB
                                     onButtonClicked: {QMLHandle.sendEvent(EVT.EVT_HOME_DISPLAY_ADDRESS, qrCode.textInput) }
                                     enabled: AppModel.walletInfo.containsHWSigner
                                 }
@@ -411,26 +410,44 @@ QScreen {
                 }
             }
             Item {
-                width: parent.width - 64
+                width: parent.width
                 height: parent.height * 0.45
                 anchors {
                     horizontalCenter: parent.horizontalCenter
-                    bottom: parent.bottom
-                    bottomMargin: 50
+                    top: _walletDes.bottom
+                    topMargin: 24
                 }
                 Item {
                     width: parent.width
                     height: parent.height
                     anchors.right: parent.right
-                    QText {
+                    Row {
                         id: trans_lbl
                         height: 24
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 14
-                        color: "#323E4A";
-                        font.family: "Montserrat"
-                        text: (AppModel.walletInfo !== null) && AppModel.walletInfo.transactionHistory !== null ? STR.STR_QML_010.arg(AppModel.walletInfo.transactionHistory.count) : ""
+                        spacing: 8
+                        visible: AppModel.walletInfo !== null && AppModel.walletInfo.transactionHistory !== null
+                        QText {
+                            height: 24
+                            font.weight: Font.DemiBold
+                            font.pixelSize: 20
+                            color: "#031F2B";
+                            font.family: "Lato"
+                            text: STR.STR_QML_010
+                            verticalAlignment: Text.AlignVCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QText {
+                            height: 24
+                            font.weight: Font.Normal
+                            font.pixelSize: 12
+                            color: "#757575";
+                            font.family: "Lato"
+                            text: STR.STR_QML_010_number.arg(AppModel.walletInfo && AppModel.walletInfo.transactionHistory ? AppModel.walletInfo.transactionHistory.count : 0)
+                            verticalAlignment: Text.AlignVCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                     }
+
                     QButtonTextLink {
                         height: 24
                         label: STR.STR_QML_011
@@ -461,12 +478,12 @@ QScreen {
                     QListView {
                         id: transaction_lst
                         width: parent.width
-                        height: 327
+                        height: 6*64
                         model: AppModel.walletInfo.transactionHistoryShort
                         anchors {
                             left: parent.left
                             top: trans_lbl.bottom
-                            topMargin: 24
+                            topMargin: 12
                         }
                         clip: true
                         delegate: QTransactionDelegate {
@@ -478,7 +495,7 @@ QScreen {
                             transactionstatus: transaction_status
                             transactionMemo: transaction_memo
                             transactionAmount: transaction_isReceiveTx ? transaction_subtotal : transaction_total
-                            transactiontotalUSD: transaction_isReceiveTx ? transaction_subtotalUSD : transaction_totalUSD
+                            transactiontotalCurrency: transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency
                             confirmation: Math.max(0, (AppModel.chainTip - transaction_height)+1)
                             transactionDate: transaction_blocktime
                             addressWidth: transaction_lst.width*0.20
@@ -530,12 +547,6 @@ QScreen {
                 width: 72
                 height: parent.height
                 anchors.verticalCenter: parent.verticalCenter
-                currentIndex: 1
-                labels: [
-                    STR.STR_QML_460,
-                    STR.STR_QML_461,
-                    ClientController.isNunchukLoggedIn ? STR.STR_QML_462 : STR.STR_QML_533
-                ]
                 enables: [
                     ClientController.isNunchukLoggedIn,
                     true,
@@ -553,7 +564,7 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_GOTO_HOME_CHAT_TAB)
                 }
                 onOpenSettingRequest: {
-                    QMLHandle.sendEvent(EVT.EVT_APP_SETTING_REQUEST)
+                    QMLHandle.sendEvent(EVT.EVT_GOTO_APP_SETTINGS_TAB)
                 }
                 onSignoutRequest: {
                     ClientController.requestSignout()
@@ -563,6 +574,9 @@ QScreen {
                 }
                 onSigninRequest: {
                     QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
+                }
+                onServiceRequest: {
+                    QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB)
                 }
             }
             Item {
@@ -653,7 +667,7 @@ QScreen {
                                         isEscrow: model.wallet_Escrow
                                         isShared: model.wallet_isSharedWallet
                                         isAssisted: model.wallet_isAssistedWallet
-                                        walletCurrency: model.wallet_Balance_USD
+                                        walletCurrency: model.wallet_Balance_Currency
                                         walletName :model. wallet_name
                                         walletBalance: model.wallet_Balance
                                         walletM: model.wallet_M
@@ -850,10 +864,10 @@ QScreen {
                                     AppModel.halfHourFee,
                                     AppModel.fastestFee
                                 ]
-                                readonly property var prioritiesFeeUSD: [
-                                    AppModel.hourFeeUSD,
-                                    AppModel.halfHourFeeUSD,
-                                    AppModel.fastestFeeUSD
+                                readonly property var prioritiesFeeCurrency: [
+                                    AppModel.hourFeeCurrency,
+                                    AppModel.halfHourFeeCurrency,
+                                    AppModel.fastestFeeCurrency
                                 ]
                                 width: parent.width - 24
                                 height: 83
@@ -911,7 +925,7 @@ QScreen {
                                                 horizontalAlignment: Text.AlignHCenter
                                                 verticalAlignment: Text.AlignVCenter
                                                 anchors.horizontalCenter: parent.horizontalCenter
-                                                text: qsTr("$%1").arg(rowFeeInfo.prioritiesFeeUSD[index])
+                                                text: qsTr("$%1").arg(rowFeeInfo.prioritiesFeeCurrency[index])
                                             }
                                         }
                                     }

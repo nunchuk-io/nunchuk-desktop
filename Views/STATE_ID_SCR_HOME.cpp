@@ -47,7 +47,7 @@ void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
     newWallet.data()->setCapableCreate(false);
     AppModel::instance()->setNewWalletInfo(newWallet);
     AppModel::instance()->resetSignersChecked();
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET);
 }
 
@@ -82,10 +82,6 @@ void EVT_HOME_TRANSACTION_HISTORY_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_WALLET_INFO_REQUEST_HANDLER(QVariant msg) {
-
-}
-
-void EVT_APP_SETTING_REQUEST_HANDLER(QVariant msg) {
 
 }
 
@@ -180,17 +176,15 @@ void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
     }
 }
 
-
 void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
     QSingleSignerPtr it = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(msg.toInt());
-    if(it) {
-        QMasterSignerPtr signer = QMasterSignerPtr(new MasterSigner());
+    if (it) {
+        QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner());
         signer.data()->setId(it->masterSignerId());
         signer.data()->setName(it->name());
-        signer.data()->device()->setType(QString::fromStdString(SignerTypeToStr((nunchuk::SignerType)it->signerType())));
-        signer.data()->device()->setMasterFingerPrint(it->masterFingerPrint());
-        signer.data()->setSignerType(it->signerType());
-
+        signer.data()->setSignerType((int)it.data()->signerType());
+        signer.data()->setFingerPrint(it.data()->masterFingerPrint());
+        signer.data()->setDeviceType(it.data()->devicetype());
         AppModel::instance()->setSingleSignerInfo(it);
         AppModel::instance()->setMasterSignerInfo(signer);
         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(AppModel::instance()->masterSignerInfo()->id()));

@@ -25,11 +25,13 @@
 #include "Views/Views.h"
 #include "Models/AppModel.h"
 #include "Models/AppSetting.h"
+#include "Models/ProfileSetting.h"
 #include "Models/QWarningMessage.h"
 #include "ifaces/QRCodeItem.h"
 #include "bridgeifaces.h"
 #include "Draco.h"
 #include "Chats/ClientController.h"
+#include "Chats/QUserWallets.h"
 #include "contrib/libnunchuk/src/utils/loguru.hpp"
 
 #ifdef ENABLE_DECODER_QR_CODE
@@ -117,7 +119,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.17");
+    app.setApplicationVersion("1.9.18");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -158,6 +160,8 @@ int main(int argc, char* argv[])
     QQuickViewer::instance()->registerContextProperty("Draco", QVariant::fromValue(Draco::instance()));
     QQuickViewer::instance()->registerContextProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
     QQuickViewer::instance()->registerContextProperty("qapplicationVersion", app.applicationVersion());
+    QQuickViewer::instance()->registerContextProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
+    QQuickViewer::instance()->registerContextProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
     QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),

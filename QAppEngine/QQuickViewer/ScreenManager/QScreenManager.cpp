@@ -34,6 +34,7 @@ bool QScreenManager::showScreen(const APPLICATION_STATE *scr, QVariant msg)
     bool ret = false;
     if((NULL != m_rootObject) && (NULL != scr) && (m_CurrentScreen != scr)){
         QString path = scr->QmlPath;
+        DBG_INFO << path;
         if(!cacheScreen.contains(path)){
             QQmlComponentPtr newComp = getComponent(m_rootObject, path);
             m_context->setContextProperty("QAppScreen", nullptr);

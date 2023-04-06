@@ -55,6 +55,8 @@ ClientController::ClientController()
     ,m_rooms(NULL)
     ,m_imageprovider(new QNunchukImageProvider())
     ,m_isNewDevice(false)
+    ,m_AttachmentEnable(false)
+    ,m_ReadySupport(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(NetworkAccessManager::instance(), &QNetworkAccessManager::proxyAuthenticationRequired, this, &ClientController::proxyAuthenticationRequired);
@@ -346,6 +348,7 @@ void ClientController::requestSignout()
     Draco::instance()->signout();
     QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
     setIsNunchukLoggedIn(false);
+    setAttachmentEnable(false);
     deleteStayLoggedInData();
     setSubCur(QJsonObject());
     AppSetting::instance()->setGroupSetting("");
@@ -437,6 +440,13 @@ void ClientController::createRoomChat(const QStringList &invitees, const QString
         QString roomname = name.join(",");
         QString roomtopic = QString("Private conversation of %1").arg(roomname);
         rooms()->createRoomChat(invitees, roomname, roomname, firstMessage);
+    }
+}
+
+void ClientController::createSupportRoom()
+{
+    if(rooms()){
+        rooms()->createSupportRoom();
     }
 }
 
@@ -537,7 +547,36 @@ bool ClientController::checkStayLoggedIn()
     Draco::instance()->setUid(QString(uIdBytes));
     Draco::instance()->setChatId(QString(chatIdBytes));
     Draco::instance()->setDracoToken(QString(stayLoggedInBytes));
+
+
+    DBG_INFO << QString(uIdBytes) << QString(chatIdBytes);
     return true;
+}
+
+bool ClientController::readySupport() const
+{
+    return m_ReadySupport;
+}
+
+void ClientController::setReadySupport(bool ReadySupport)
+{
+    if(m_ReadySupport != ReadySupport){
+        m_ReadySupport = ReadySupport;
+        emit readySupportChanged();
+    }
+}
+
+bool ClientController::attachmentEnable() const
+{
+    return m_AttachmentEnable;
+}
+
+void ClientController::setAttachmentEnable(bool AttachmentEnable)
+{
+    if(m_AttachmentEnable != AttachmentEnable){
+        m_AttachmentEnable = AttachmentEnable;
+        emit attachmentEnableChanged();
+    }
 }
 
 QJsonObject ClientController::getSubCur()
@@ -548,6 +587,14 @@ QJsonObject ClientController::getSubCur()
 void ClientController::setSubCur(const QJsonObject &sub)
 {
     m_subCur = sub;
+    QJsonObject plan = m_subCur["plan"].toObject();
+    if (plan.isEmpty() == false) {
+        QString slug = plan["slug"].toString();
+        bool isPremiumUser = slug == "iron_hand" || slug == "honey_badger" ;
+        setAttachmentEnable(isPremiumUser);
+    } else {
+        setAttachmentEnable(false);
+    }
 }
 
 void ClientController::saveStayLoggedInData()

@@ -62,14 +62,18 @@ void EVT_ADD_WALLET_TOP_UP_XPUBS_REQUEST_HANDLER(QVariant msg) {
             ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt();
             warningmsg.resetWarningMessage();
             QSingleSignerPtr signer = bridge::nunchukGetUnusedSignerFromMasterSigner(it.data()->masterSignerId(),
-                                                                                                 walletType,
-                                                                                                 addressType,
-                                                                                                 warningmsg);
+                                                                                     walletType,
+                                                                                     addressType,
+                                                                                     warningmsg);
             if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
-                signer.data()->setIsValid(true);
                 AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(msg.toInt(), signer);
+                AppModel::instance()->showToast(0,
+                                                STR_CPP_097,
+                                                EWARNING::WarningType::SUCCESS_MSG,
+                                                STR_CPP_097);
             }
             else{
+                it.data()->setNeedTopUpXpub(true);
                 AppModel::instance()->showToast(warningmsg.code(),
                                                 warningmsg.what(),
                                                 (EWARNING::WarningType)warningmsg.type(),

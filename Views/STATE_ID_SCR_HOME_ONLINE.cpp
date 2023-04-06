@@ -105,21 +105,18 @@ void EVT_HOME_ONLINE_SIGNER_UNAVAILABLE_FOR_SWL_HANDLER(QVariant msg) {
 
 }
 
-void EVT_HOME_ONLINE_APPSETTING_REQUEST_HANDLER(QVariant msg) {
-
-}
-
 void EVT_HOME_SHARED_WALLET_CONFIGURE_HANDLER(QVariant msg) {
 
 }
 
 void EVT_HOME_SHARED_WL_SEND_REQUEST_HANDLER(QVariant msg) {
-    DBG_INFO << msg;
     if(msg.isValid()){
         if(CLIENT_INSTANCE->rooms() == nullptr) return;
         QString room_id = CLIENT_INSTANCE->getRoomIdByWalletId(msg.toString());
         int index = CLIENT_INSTANCE->rooms()->getIndex(room_id);
-        CLIENT_INSTANCE->rooms()->setCurrentIndex(index);
+        if(index >= 0){
+            CLIENT_INSTANCE->rooms()->setCurrentIndex(index);
+        }
     }
     if(CLIENT_CURRENTROOM && CLIENT_CURRENTROOM->roomWallet() && CLIENT_CURRENTROOM->roomWallet()->walletInfo() && AppModel::instance()->walletList()){
         QString wallet_id = CLIENT_CURRENTROOM->roomWallet()->get_wallet_id();
@@ -173,3 +170,7 @@ void EVT_HOME_ONLINE_CANCEL_TRANSACTION_HANDLER(QVariant msg) {
     }
 }
 
+void EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ_HANDLER(QVariant msg)
+{
+    CLIENT_INSTANCE->createSupportRoom();
+}

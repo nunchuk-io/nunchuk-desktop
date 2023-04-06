@@ -18,99 +18,323 @@
  *                                                                        *
  **************************************************************************/
 #include "SingleSignerModel.h"
+#include "AppModel.h"
 #include "qUtils.h"
 #include "bridgeifaces.h"
 #include <QQmlEngine>
 #include "utils/enumconverter.hpp"
 
-SingleSigner::SingleSigner() :  name_(""),
-    xpub_(""),
-    public_key_(""),
-    derivation_path_(""),
-    master_fingerprint_(""),
-    master_signer_id_(""),
-    last_health_check_(QDateTime::fromTime_t(0)),
-    signer_type_(0),
-    signed_(false),
-    isValid_(false),
-    message_(qUtils::QGenerateRandomMessage()),
-    signature_(""),
-    health_(-1),
-    isColdCard_(false),
-    checked_(false),
-    readyToSign_(false),
-    isLocalSigner_(true),
+QSingleSigner::QSingleSigner() :
     isPrimaryKey_(false),
-    m_devicetype(""),
-    cardId_("")
+    isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-SingleSigner::SingleSigner(const QString &pr_name,
-                           const QString &pr_xpub,
-                           const QString &pr_public_key,
-                           const QString &pr_derivation_path,
-                           const QString &pr_master_fingerprint,
-                           const QString &pr_master_signer_id,
-                           const QDateTime& pr_last_health_check,
-                           const nunchuk::PrimaryKey &key)
-    : name_(pr_name),
-      xpub_(pr_xpub),
-      public_key_(pr_public_key),
-      derivation_path_(pr_derivation_path),
-      master_fingerprint_(pr_master_fingerprint),
-      master_signer_id_(pr_master_signer_id),
-      last_health_check_(pr_last_health_check),
-      signer_type_(0),
-      signed_(false),
-      isValid_(false),
-      message_(qUtils::QGenerateRandomMessage()),
-      signature_(""),
-      health_(-1),
-      isColdCard_(false),
-      checked_(false),
-      readyToSign_(false),
-      isLocalSigner_(true),
-      isPrimaryKey_(false),
-      primaryKey_(key),
-      m_devicetype(""),
-      cardId_("")
+QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey):
+    singleSigner_(singleKey),
+    isPrimaryKey_(false),
+    isDraft(false)
 {
-    if(key.get_master_fingerprint() != ""){
-        isPrimaryKey_ = true;
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
+
+QSingleSigner::QSingleSigner(const nunchuk::PrimaryKey& primaryKey):
+    primaryKey_(primaryKey),
+    isPrimaryKey_(true),
+    isDraft(false)
+{
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
+
+QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey, const nunchuk::PrimaryKey& primaryKey):
+    primaryKey_(primaryKey),
+    singleSigner_(singleKey),
+    isPrimaryKey_(true),
+    isDraft(false)
+{
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
+
+QSingleSigner::~QSingleSigner() {}
+
+nunchuk::SingleSigner QSingleSigner::originSingleSigner() const
+{
+    return singleSigner_;
+}
+
+void QSingleSigner::setOriginSingleSigner(const nunchuk::SingleSigner signer)
+{
+    singleSigner_ = signer;
+}
+
+nunchuk::PrimaryKey QSingleSigner::originPrimaryKey() const
+{
+    return primaryKey_;
+}
+
+void QSingleSigner::setOriginPrimaryKey(const nunchuk::PrimaryKey key)
+{
+    primaryKey_ = key;
+    setIsPrimaryKey(true);
+}
+
+QString QSingleSigner::name() {
+    return QString::fromStdString(singleSigner_.get_name());
+}
+
+void QSingleSigner::setName(const QString &d) {
+    singleSigner_.set_name(d.toStdString());
+    emit nameChanged();
+}
+
+QString QSingleSigner::xpub() {
+    if(isDraft){
+        return xpub_;
     }
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    else{
+        return QString::fromStdString(singleSigner_.get_xpub());
+    }
 }
 
-SingleSigner::~SingleSigner() {
-
+void QSingleSigner::setXpub(const QString &d) {
+    if(isDraft && d != xpub_){
+        xpub_ = d;
+        emit xpubChanged();
+    }
 }
 
-QString SingleSigner::name() const {return name_;}
+QString QSingleSigner::publickey() {
+    if(isDraft){
+        return public_key_;
+    }
+    else{
+        return QString::fromStdString(singleSigner_.get_public_key());
+    }
+}
 
-QString SingleSigner::xpub() const {return xpub_;}
+void QSingleSigner::setPublickey(const QString &d) {
+    if(isDraft && d != public_key_){
+        public_key_ = d;
+        emit publickeyChanged();
+    }
+}
 
-QString SingleSigner::publickey() const {return public_key_;}
+QString QSingleSigner::derivationPath() {
+    if(isDraft){
+        return derivation_path_;
+    }
+    else {
+        return QString::fromStdString(singleSigner_.get_derivation_path());
+    }
+}
 
-QString SingleSigner::derivationPath() const {return derivation_path_;}
+void QSingleSigner::setDerivationPath(const QString &d) {
+    if(isDraft && d != derivation_path_){
+        derivation_path_ = d;
+        emit derivationPathChanged();
+    }
+}
 
-QString SingleSigner::masterFingerPrint() const {return  master_fingerprint_;}
+QString QSingleSigner::masterFingerPrint() {
+    if(isDraft){
+        return  master_fingerprint_;
+    }
+    else{
+        return QString::fromStdString(singleSigner_.get_master_fingerprint());
+    }
+}
 
-QString SingleSigner::masterSignerId() const {return master_signer_id_;}
+void QSingleSigner::setMasterFingerPrint(const QString &d) {
+    if(isDraft && d != master_fingerprint_){
+        master_fingerprint_ = d;
+        emit masterFingerPrintChanged();
+    }
+}
 
-QString SingleSigner::lastHealthCheck() {
-    if(0 == last_health_check_.toTime_t()){
+QString QSingleSigner::masterSignerId() {
+    if(isDraft){
+        return master_signer_id_;
+    }
+    else{
+        return QString::fromStdString(singleSigner_.get_master_signer_id());
+    }
+}
+
+void QSingleSigner::setMasterSignerId(const QString &d)
+{
+    if(isDraft && d != master_signer_id_){
+        master_signer_id_ = d;
+        emit masterSignerIdChanged();
+    }
+}
+
+QString QSingleSigner::lastHealthCheck() {
+    time_t time = singleSigner_.get_last_health_check();
+    if(0 == time){
         return "N/A"; // There is no time
     }
-    return this->timeGapCalculationShort(last_health_check_); // last_health_check_.toString( "MM/dd/yyyy hh:mm AP" );
+    return this->timeGapCalculationShort(QDateTime::fromTime_t(time)); // last_health_check_.toString( "MM/dd/yyyy hh:mm AP" );
 }
 
-QDateTime SingleSigner::lastHealthCheckDateTime() const {
-    return last_health_check_;
+QDateTime QSingleSigner::lastHealthCheckDateTime() const {
+    return QDateTime::fromTime_t(singleSigner_.get_last_health_check());
 }
 
-QString SingleSigner::timeGapCalculationShort(QDateTime in)
+bool QSingleSigner::signerSigned() const
+{
+    return signed_;
+}
+
+void QSingleSigner::setSignerSigned(const bool d)
+{
+    if(d != signed_){
+        signed_ = d;
+        emit signerSignedChanged();
+    }
+}
+
+bool QSingleSigner::needTopUpXpub() const
+{
+    return needTopUpXpub_;
+}
+
+void QSingleSigner::setNeedTopUpXpub(bool needTopUpXpub)
+{
+    if(needTopUpXpub_ != needTopUpXpub){
+        needTopUpXpub_ = needTopUpXpub;
+        emit needTopUpXpubChanged();
+    }
+}
+
+QString QSingleSigner::message() const
+{
+    return message_;
+}
+
+void QSingleSigner::setMessage(const QString &message)
+{
+    if(message_ != message){
+        message_ = message;
+        emit messageChanged();
+    }
+}
+
+QString QSingleSigner::signature() const
+{
+    return signature_;
+}
+
+void QSingleSigner::setSignature(const QString &signature)
+{
+    if(signature_ != signature){
+        signature_ = signature;
+        emit signatureChanged();
+    }
+}
+
+int QSingleSigner::health() const
+{
+    return health_;
+}
+
+void QSingleSigner::setHealth(int health)
+{
+    if(health_ != health){
+        health_ = health;
+        emit healthChanged();
+    }
+}
+
+bool QSingleSigner::checked() const
+{
+    return checked_;
+}
+
+void QSingleSigner::setChecked(const bool checked)
+{
+    if(checked != checked_){
+        checked_ = checked;
+        emit checkedChanged();
+    }
+}
+
+bool QSingleSigner::readyToSign() const
+{
+    return readyToSign_;
+}
+
+void QSingleSigner::setReadyToSign(bool available)
+{
+    if(readyToSign_ != available){
+        readyToSign_ = available;
+        emit readyToSignChanged();
+    }
+}
+
+int QSingleSigner::signerType() const
+{
+    return (int)singleSigner_.get_type();
+}
+
+void QSingleSigner::setSignerType(int signer_type)
+{
+    singleSigner_.set_type((nunchuk::SignerType)signer_type);
+    emit signerTypeChanged();
+}
+
+bool QSingleSigner::isColdCard()
+{
+    if(AppModel::instance()->masterSignerList()){
+        return AppModel::instance()->masterSignerList()->isColdCard(masterFingerPrint());
+    }
+    return false;
+}
+
+bool QSingleSigner::isLocalSigner()
+{
+    if(AppModel::instance()->masterSignerList()){
+        return AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
+    }
+    return false;
+}
+
+bool QSingleSigner::isPrimaryKey() const
+{
+    return isPrimaryKey_;
+}
+
+void QSingleSigner::setIsPrimaryKey(bool isPrimaryKey)
+{
+    isPrimaryKey_ = isPrimaryKey;
+    emit isPrimaryKeyChanged();
+}
+
+QString QSingleSigner::devicetype() const
+{
+    return m_devicetype;
+}
+
+void QSingleSigner::setDevicetype(QString devicetype)
+{
+    if (m_devicetype == devicetype)
+        return;
+
+    m_devicetype = devicetype;
+    emit devicetypeChanged();
+}
+
+QString QSingleSigner::cardId() const
+{
+    return cardId_;
+}
+
+void QSingleSigner::setCardId(const QString &card_id)
+{
+    cardId_ = card_id;
+}
+
+QString QSingleSigner::timeGapCalculationShort(QDateTime in)
 {
     QDateTime today = QDateTime::currentDateTime();
     qint64 secs = in.secsTo(today);
@@ -143,7 +367,7 @@ QString SingleSigner::timeGapCalculationShort(QDateTime in)
     }
 }
 
-QString SingleSigner::timeGapCalculation(QDateTime in)
+QString QSingleSigner::timeGapCalculation(QDateTime in)
 {
     QDateTime today = QDateTime::currentDateTime();
     qint64 secs = in.secsTo(today);
@@ -181,228 +405,6 @@ QString SingleSigner::timeGapCalculation(QDateTime in)
     }
 }
 
-bool SingleSigner::signerSigned() const
-{
-    return signed_;
-}
-
-void SingleSigner::setName(const QString &d) {
-    if(d != name_){
-        name_ = d;
-        emit nameChanged();
-    }
-}
-
-void SingleSigner::setXpub(const QString &d) {
-    if(d != xpub_){
-        xpub_ = d;
-        emit xpubChanged();
-    }
-}
-
-void SingleSigner::setPublickey(const QString &d) {
-    if(d != public_key_){
-        public_key_ = d;
-        emit publickeyChanged();
-    }
-}
-
-void SingleSigner::setDerivationPath(const QString &d) {
-    if(d != derivation_path_){
-        derivation_path_ = d;
-        emit derivationPathChanged();
-    }
-}
-
-void SingleSigner::setMasterFingerPrint(const QString &d) {
-    if(d != master_fingerprint_){
-        master_fingerprint_ = d;
-        emit masterFingerPrintChanged();
-    }
-}
-
-void SingleSigner::setMasterSignerId(const QString &d) {
-    if(d != master_signer_id_){
-        master_signer_id_ = d;
-        emit masterSignerIdChanged();
-    }
-}
-
-void SingleSigner::setlastHealthCheck(const QDateTime& d) {
-    if(d != last_health_check_){
-        last_health_check_ = d;
-        emit lastHealthCheckChanged();
-    }
-}
-
-void SingleSigner::setSignerSigned(const bool d)
-{
-    if(d != signed_){
-        signed_ = d;
-        emit signerSignedChanged();
-    }
-}
-
-bool SingleSigner::isValid() const
-{
-    return isValid_;
-}
-
-void SingleSigner::setIsValid(bool isValid)
-{
-    if(isValid_ != isValid){
-        isValid_ = isValid;
-        emit isValidChanged();
-    }
-}
-
-QString SingleSigner::message() const
-{
-    return message_;
-}
-
-void SingleSigner::setMessage(const QString &message)
-{
-    if(message_ != message){
-        message_ = message;
-        emit messageChanged();
-    }
-}
-
-QString SingleSigner::signature() const
-{
-    return signature_;
-}
-
-void SingleSigner::setSignature(const QString &signature)
-{
-    if(signature_ != signature){
-        signature_ = signature;
-        emit signatureChanged();
-    }
-}
-
-int SingleSigner::health() const
-{
-    return health_;
-}
-
-void SingleSigner::setHealth(int health)
-{
-    if(health_ != health){
-        health_ = health;
-        emit healthChanged();
-    }
-}
-
-bool SingleSigner::isColdCard() const
-{
-    return isColdCard_;
-}
-
-void SingleSigner::setIsColdCard(const bool isColdCard)
-{
-    if(isColdCard_ != isColdCard){
-        isColdCard_ = isColdCard;
-        emit isColdCardChanged();
-    }
-}
-
-bool SingleSigner::checked() const
-{
-    return checked_;
-}
-
-void SingleSigner::setChecked(const bool checked)
-{
-    if(checked != checked_){
-        checked_ = checked;
-        emit checkedChanged();
-    }
-}
-
-bool SingleSigner::readyToSign() const
-{
-    return readyToSign_;
-}
-
-void SingleSigner::setReadyToSign(bool available)
-{
-    if(readyToSign_ != available){
-        readyToSign_ = available;
-        emit readyToSignChanged();
-    }
-}
-
-int SingleSigner::signerType() const
-{
-    return signer_type_;
-}
-
-void SingleSigner::setSignerType(int signer_type)
-{
-    if(signer_type_ != signer_type){
-        signer_type_ = signer_type;
-        emit signerTypeChanged();
-    }
-}
-
-bool SingleSigner::isLocalSigner() const
-{
-    return isLocalSigner_;
-}
-
-void SingleSigner::setIsLocalSigner(bool isLocalSigner)
-{
-    if(isLocalSigner_ != isLocalSigner){
-        isLocalSigner_ = isLocalSigner;
-        emit isLocalSignerChanged();
-    }
-}
-
-bool SingleSigner::isPrimaryKey() const
-{
-    return isPrimaryKey_;
-}
-
-void SingleSigner::setIsPrimaryKey(bool isPrimaryKey)
-{
-    isPrimaryKey_ = isPrimaryKey;
-}
-
-nunchuk::PrimaryKey SingleSigner::primaryKey() const
-{
-    return primaryKey_;
-}
-
-void SingleSigner::setPrimaryKey(const nunchuk::PrimaryKey &primaryKey)
-{
-    primaryKey_ = primaryKey;
-}
-
-QString SingleSigner::devicetype() const
-{
-    return m_devicetype;
-}
-
-void SingleSigner::setDevicetype(QString devicetype)
-{
-    if (m_devicetype == devicetype)
-        return;
-
-    m_devicetype = devicetype;
-    emit devicetypeChanged();
-}
-
-QString SingleSigner::cardId() const
-{
-    return cardId_;
-}
-
-void SingleSigner::setCardId(const QString &card_id)
-{
-    cardId_ = card_id;
-}
 
 SingleSignerListModel::SingleSignerListModel(){
     primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),(nunchuk::Chain)AppSetting::instance()->primaryServer());
@@ -437,8 +439,8 @@ QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
         return d_[index.row()]->signerSigned();
     case single_signer_type_Role:
         return d_[index.row()]->signerType();
-    case single_signer_signed_isValid_Role:
-        return d_[index.row()]->isValid();
+    case single_signer_need_Topup_Xpub_Role:
+        return d_[index.row()]->needTopUpXpub();
     case single_signer_signed_message_Role:
         return d_[index.row()]->message();
     case single_signer_signed_signature_Role:
@@ -474,6 +476,7 @@ bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &va
     }
     else if(role == single_signer_checked_Role){
         d_[index.row()]->setChecked(value.toBool());
+        DBG_INFO;
     }
     else{ }
     emit dataChanged(index, index, { role } );
@@ -492,7 +495,7 @@ QHash<int, QByteArray> SingleSignerListModel::roleNames() const
     roles[single_signer_last_health_check_Role]   = "singleSigner_lastHealthCheck";
     roles[single_signer_signed_status_Role]       = "single_signer_signed_status";
     roles[single_signer_type_Role]                = "single_signer_type";
-    roles[single_signer_signed_isValid_Role]      = "single_signer_signed_isValid";
+    roles[single_signer_need_Topup_Xpub_Role]     = "single_signer_need_Topup_Xpub";
     roles[single_signer_signed_message_Role]      = "single_signer_signed_message";
     roles[single_signer_signed_signature_Role]    = "single_signer_signed_signature";
     roles[single_signer_health_Role]              = "single_signer_signed_health";
@@ -524,8 +527,7 @@ void SingleSignerListModel::addSingleSigner(const QSingleSignerPtr &d)
     if(d && !containsSigner(d.data()->masterFingerPrint(), d.data()->derivationPath())){
         nunchuk::PrimaryKey key = containPrimaryKey(d->masterFingerPrint());
         if(key.get_master_fingerprint() != ""){
-            d->setPrimaryKey(key);
-            d->setIsPrimaryKey(true);
+            d->setOriginPrimaryKey(key);
         }
         d_.append(d);
     }
@@ -554,40 +556,17 @@ void SingleSignerListModel::updateSignatures(const QString &masterfingerprint, c
 bool SingleSignerListModel::needTopUpXpubs() const
 {
     foreach (QSingleSignerPtr i , d_ ){
-        if(((int)ENUNCHUCK::SignerType::AIRGAP != i.data()->signerType()) && (!i.data()->isValid())){
+        if(i.data()->needTopUpXpub()){
             return true;
         }
     }
     return false;
 }
 
-void SingleSignerListModel::initIsColdCard()
-{
-    beginResetModel();
-    for (int var = 0; var < d_.count(); var++) {
-        d_[var]->setIsColdCard(false);
-    }
-    endResetModel();
-}
-
-void SingleSignerListModel::setIsColdCard(const QString &id)
-{
-    beginResetModel();
-    if(id != ""){
-        foreach (QSingleSignerPtr i , d_ ){
-            if(i.data()->masterSignerId() == id){
-                i.data()->setIsColdCard(true);
-            }
-        }
-    }
-    endResetModel();
-}
-
 QSingleSignerPtr SingleSignerListModel::getSingleSignerByIndex(const int index) {
     if(index < 0 || index >= d_.count()){
         DBG_INFO << "Index out of range";
-        QSingleSignerPtr fail(NULL);
-        return fail;
+        return NULL;
     }
     else {
         return d_.at(index);
@@ -609,21 +588,6 @@ bool SingleSignerListModel::removeSingleSignerByIndex(const int index)
     d_.removeAt(index);
     endResetModel();
     return false;
-}
-
-bool SingleSignerListModel::removeSingleSignerByFingerprint(const QString &fp)
-{
-    bool ret = false;
-    beginResetModel();
-    foreach (QSingleSignerPtr it, d_) {
-        if(0 == QString::compare(fp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            d_.removeAll(it);
-            ret = true;
-            break;
-        }
-    }
-    endResetModel();
-    return ret;
 }
 
 QString SingleSignerListModel::getMasterSignerIdByIndex(const int index)
@@ -671,6 +635,16 @@ int SingleSignerListModel::getnumberSigned() {
     return ret;
 }
 
+bool SingleSignerListModel::containsHardwareKey()
+{
+    foreach (QSingleSignerPtr i , d_ ){
+        if(i.data()->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool SingleSignerListModel::containsSigner(const QString &xfp, const QString &path)
 {
     foreach (QSingleSignerPtr i , d_ ){
@@ -714,7 +688,7 @@ void SingleSignerListModel::updateSignerHealthStatus(const QString &masterSigner
     foreach (QSingleSignerPtr i , d_ ){
         if(i.data() && masterSignerId == i.data()->masterSignerId()){
             i.data()->setHealth(status);
-            i.data()->setlastHealthCheck(QDateTime::fromTime_t(time));
+//            i.data()->setlastHealthCheck(QDateTime::fromTime_t(time));
         }
     }
     endResetModel();
@@ -731,46 +705,13 @@ void SingleSignerListModel::notifyMasterSignerDeleted(const QString &masterSigne
     endResetModel();
 }
 
-void SingleSignerListModel::renameById(const QString &id, const QString &newname)
+void SingleSignerListModel::updateSignerOfRoomWallet(const SignerAssigned &signer)
 {
     beginResetModel();
     foreach (QSingleSignerPtr i , d_ ){
-        if(i.data() && id == i.data()->masterSignerId()){
-            i.data()->setName(newname);
-        }
-    }
-    endResetModel();
-}
-
-void SingleSignerListModel::renameByXfp(const QString &xfp, const QString &newname)
-{
-    beginResetModel();
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            i.data()->setName(newname);
-        }
-    }
-    endResetModel();
-}
-
-void SingleSignerListModel::updateIsLocalSigner(const QString &xfp, const bool value)
-{
-    beginResetModel();
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            i.data()->setIsLocalSigner(value);
-        }
-    }
-    requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_is_local_Role, Qt::AscendingOrder);
-    endResetModel();
-}
-
-void SingleSignerListModel::updateSignerType(const QString &xfp, const int value)
-{
-    beginResetModel();
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            i.data()->setSignerType(value);
+        if(!i.data()->isLocalSigner() && 0 == QString::compare(signer.xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            i.data()->setName(signer.name);
+            i.data()->setSignerType(signer.type);
         }
     }
     endResetModel();
@@ -837,30 +778,12 @@ void SingleSignerListModel::updateSignerReadyToSign(const QString &xfp)
             emit dataChanged(index(i),index(i));
         }
     }
-#if 0
-    beginResetModel();
-    foreach (QSingleSignerPtr it, d_) {
-        if(((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType()) || ((int)ENUNCHUCK::SignerType::SOFTWARE == it.data()->signerType())){
-            it.data()->setReadyToSign(true);
-        }
-        else{
-            if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-                it.data()->setReadyToSign(true);
-            }
-            else{
-                it.data()->setReadyToSign(false);
-            }
-        }
-    }
-    endResetModel();
-#endif
 }
 
 void SingleSignerListModel::updateSignerIsLocalAndReadyToSign(const QMasterSignerPtr &master)
 {
     for (int i = 0; i < d_.count(); i++) {
         if(0 == QString::compare(master->fingerPrint(), d_.at(i)->masterFingerPrint(), Qt::CaseInsensitive)){
-            d_[i]->setIsLocalSigner(true);
             d_[i]->setReadyToSign(true);
             d_[i]->setSignerType(master->signerType());
             d_[i]->setDevicetype(master->deviceType());
@@ -934,22 +857,7 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
 {
     QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
     for (QSingleSignerPtr signer : d_) {
-        QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-        ret.data()->setName(signer.data()->name());
-        ret.data()->setXpub(signer.data()->xpub());
-        ret.data()->setPublickey(signer.data()->publickey());
-        ret.data()->setDerivationPath(signer.data()->derivationPath());
-        ret.data()->setMasterFingerPrint(signer.data()->masterFingerPrint());
-        ret.data()->setMasterSignerId(signer.data()->masterSignerId());
-        ret.data()->setlastHealthCheck(signer.data()->lastHealthCheckDateTime());
-        ret.data()->setSignerType(signer.data()->signerType());
-        ret.data()->setIsColdCard(signer.data()->isColdCard());
-        ret.data()->setIsLocalSigner(signer.data()->isLocalSigner());
-        ret.data()->setMessage(signer.data()->message());
-        ret.data()->setSignature(signer.data()->signature());
-        ret.data()->setHealth(signer.data()->health());
-        ret.data()->setIsPrimaryKey(signer.data()->isPrimaryKey());
-        //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
         clone.data()->addSingleSigner(ret);
     }
     return clone;

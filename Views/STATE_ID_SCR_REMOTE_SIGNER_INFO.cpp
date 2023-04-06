@@ -41,10 +41,10 @@ void EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
 void EVT_REMOTE_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
     if(AppModel::instance()->singleSignerInfo()){
         if(msg.toString() != AppModel::instance()->singleSignerInfo()->name()){
-            bridge::nunchukUpdateRemoteSigner(msg.toString());
-            AppModel::instance()->updateSingleSignerInfoName(msg.toString());
+            AppModel::instance()->singleSignerInfo()->setName(msg.toString());
+            bridge::nunchukUpdateRemoteSigner(AppModel::instance()->singleSignerInfoPtr());
             if(AppModel::instance()->remoteSignerList()){
-                AppModel::instance()->remoteSignerList()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_name_Role, Qt::AscendingOrder);
+                AppModel::instance()->remoteSignerList()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
             }
         }
     }
@@ -74,7 +74,7 @@ void EVT_REMOTE_SIGNER_INFO_DELETE_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->setRemoteSignerList(remoteSigners);
         }
         QQuickViewer::instance()->sendEvent(E::EVT_REMOTE_SIGNER_INFO_BACK_HOME);
-        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     }
 }
 

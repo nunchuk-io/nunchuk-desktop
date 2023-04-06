@@ -37,6 +37,7 @@
 #include "ViewsEnums.h"
 #include "Draco.h"
 #include "localization/STR_CPP.h"
+#include <QTextDocumentFragment>
 
 QNunchukRoom::QNunchukRoom(Room *r):
     m_room(r),
@@ -58,6 +59,8 @@ QNunchukRoom::QNunchukRoom(Room *r):
     if(m_room){
         QQmlEngine::setObjectOwnership(m_room, QQmlEngine::CppOwnership);
     }
+    qmlRegisterType<FileTransferInfo>();
+    qRegisterMetaType<FileTransferInfo>();
 }
 
 QNunchukRoom::~QNunchukRoom()
@@ -73,6 +76,17 @@ bool QNunchukRoom::isServerNoticeRoom() const
 bool QNunchukRoom::isNunchukSyncRoom() const
 {
     return m_room ? (m_room->tagNames().contains(NUNCHUK_ROOM_SYNC)) : false;
+}
+
+bool QNunchukRoom::isSupportRoom() const
+{
+    QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
+    return m_room ? (m_room->tagNames().contains(tagname)) : false;
+}
+
+bool QNunchukRoom::isDirectChat() const
+{
+    return m_room ? m_room->isDirectChat() : false;
 }
 
 QString QNunchukRoom::localUserName() const
@@ -119,6 +133,48 @@ QStringList QNunchukRoom::userNames()
     return ret;
 }
 
+QStringList QNunchukRoom::talkersName()
+{
+    QStringList ret;
+    ret.clear();
+    if(m_room){
+        QString local_id = room()->localUser()->id();
+        for (int i = 0; i < m_room->users().count(); ++i) {
+            if(m_room->users().at(i)){
+                QString user_id = m_room->users().at(i)->id();
+                if(isDirectChat() && 0 == QString::compare(user_id, local_id, Qt::CaseInsensitive)){
+                    continue;
+                }
+                else{
+                    ret.append(m_room->users().at(i)->name(m_room));
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+QStringList QNunchukRoom::talkersAvatar()
+{
+    QStringList ret;
+    ret.clear();
+    if(m_room){
+        QString local_id = room()->localUser()->id();
+        for (int i = 0; i < m_room->users().count(); ++i) {
+            if(m_room->users().at(i)){
+                QString user_id = m_room->users().at(i)->id();
+                if(isDirectChat() && 0 == QString::compare(user_id, local_id, Qt::CaseInsensitive)){
+                    continue;
+                }
+                else{
+                    ret.append(m_room->users().at(i)->avatarMediaId(m_room));
+                }
+            }
+        }
+    }
+    return ret;
+}
+
 QString QNunchukRoom::roomAvatar()
 {
     if(m_room && userCount() == 2){
@@ -133,12 +189,23 @@ QString QNunchukRoom::roomAvatar()
 QString QNunchukRoom::roomName()
 {
     if(m_room){
-        if(userCount() == 2){
-            int targetId = userNames().indexOf(m_room->localUser()->name()) == 0 ? 1 : 0 ;
-            return userNames().at(targetId);
+        if(isServerNoticeRoom() ) {
+            return "Nunchuk Service";
+        }
+        else if(isNunchukSyncRoom()){
+            return "Nunchuk Sync";
+        }
+        else if(isSupportRoom()){
+            return "Support";
         }
         else{
-            return m_room->name() != "" ? m_room->name() : m_room->displayName() != "" ? m_room->displayName() : userNames().join(", ");
+            if(userCount() == 2 || isDirectChat()){
+                int targetId = userNames().indexOf(m_room->localUser()->name()) == 0 ? 1 : 0 ;
+                return userNames().at(targetId);
+            }
+            else{
+                return m_room->name() != "" ? m_room->name() : m_room->displayName() != "" ? m_room->displayName() : userNames().join(", ");
+            }
         }
     }
     else{
@@ -279,7 +346,7 @@ void QNunchukRoom::sendMessage(const QString &message)
             cons.receiver =  m_room->localUser()->displayname(room());
             cons.timestamp = QDateTime::currentDateTime().toTime_t();
             cons.message = Quotient::prettyPrint(message);
-            cons.messageType = MSG_PURE_STRING;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT;
             cons.txnId = txnId;
             conversation()->addMessage(cons);
             conversation()->requestSortByTimeAscending();
@@ -302,6 +369,74 @@ void QNunchukRoom::sendReaction(const QString &react)
         }
         else{
             DBG_INFO << "SEND FALSE";
+        }
+    }
+}
+
+void QNunchukRoom::sendFile(const QString& description, const QString localFile)
+{
+    if(m_room){
+        QString filepath = qUtils::QGetFilePath(localFile);
+        if(filepath == "") return;
+        int file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+
+        QMimeDatabase db;
+        QMimeType mime = db.mimeTypeForFile(filepath);
+        QString file_caption = QFileInfo(localFile).fileName();
+        if (mime.name().startsWith("image/")) {
+            file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_IMAGE;
+        } else if (mime.name().startsWith("video/")) {
+            file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_VIDEO;
+        } else {
+            file_mimeType = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+        }
+        auto txnId = m_room->postFile(description.isEmpty()
+                                                 ? QUrl(filepath).fileName()
+                                                 : description,
+                                             QUrl::fromLocalFile(filepath));
+        QObject::connect(m_room, &Room::fileTransferCompleted,
+                         [=](QString id, QUrl /*localFile*/, QUrl /*mxcUrl*/) {
+            if (id == txnId) {
+                DBG_INFO << "fileTransferCompleted";
+            }
+        });
+        QObject::connect(m_room, &Room::fileTransferFailed, [=](QString id, QString /*error*/) {
+            if (id == txnId) {
+                DBG_INFO << "fileTransferFailed";
+            }
+        });
+        QObject::connect( m_room, &Room::fileTransferProgress, [=](QString id, qint64 progress, qint64 total) {
+            if (id == txnId) {
+                qDebug() << "fileTransferProgress:" << progress << total;
+            }
+        });
+
+        if(validatePendingEvent(txnId)){
+            Conversation cons;
+            cons.sendByMe = true;
+            cons.sender   = m_room->localUser()->displayname(room()) != "" ? m_room->localUser()->displayname(room()) : m_room->localUser()->id();
+            cons.receiver =  m_room->localUser()->displayname(room());
+            cons.timestamp = QDateTime::currentDateTime().toTime_t();
+            cons.messageType = file_mimeType;
+            cons.file_path =  QUrl::fromLocalFile(filepath).toString();
+            cons.txnId = txnId;
+
+            if(file_mimeType == (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER){
+                if(description != ""){
+                    QString messageInput = QString("%1 \n %2").arg(file_caption).arg(description);
+                    cons.message = Quotient::prettyPrint(messageInput);
+                }
+                else{
+                    cons.message = Quotient::prettyPrint(file_caption);
+                }
+            }
+            else{
+                cons.message = Quotient::prettyPrint(description);
+            }
+            conversation()->addMessage(cons);
+            conversation()->requestSortByTimeAscending();
+            this->setLastMessage(cons);
+            this->setLasttimestamp(cons);
         }
     }
 }
@@ -403,14 +538,7 @@ bool QNunchukRoom::joinWalletUseSignerFromWalletImport(const QString &id, const 
             break;
         }
     }
-
-    QSingleSignerPtr signerPtr = QSingleSignerPtr(new SingleSigner(QString::fromStdString(signer.get_name()),
-                                                                   QString::fromStdString(signer.get_xpub()),
-                                                                   QString::fromStdString(signer.get_public_key()),
-                                                                   QString::fromStdString(signer.get_derivation_path()),
-                                                                   QString::fromStdString(signer.get_master_fingerprint()),
-                                                                   QString::fromStdString(signer.get_master_signer_id()),
-                                                                   QDateTime::fromTime_t(signer.get_last_health_check())));
+    QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
     if(signerPtr && bridge::nunchukHasSinger(signer)){
         QWarningMessage msgWarning;
         matrixbrigde::JoinWallet(this->id(), signerPtr, msgWarning);
@@ -456,7 +584,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_id = init_event_id;
             cons.init_event_json = json;
             bool isCanceled = !roomWallet() || (0 != QString::compare(cons.init_event_id, roomWallet()->get_init_event_id(), Qt::CaseInsensitive));
-            cons.messageType = isCanceled  ? MSG_WALLET_PAST : MSG_WALLET_INIT;
+            cons.messageType = isCanceled  ? (int)ENUNCHUCK::ROOM_EVT::WALLET_PAST : (int)ENUNCHUCK::ROOM_EVT::WALLET_INIT;
             cons.message = QString(QJsonDocument(body).toJson(QJsonDocument::Compact));
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_JOIN, Qt::CaseInsensitive)){
@@ -466,7 +594,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             QString init_event_id = init_event["event_id"].toString();
             cons.message = STR_CPP_011.arg(xfp).arg(wallet_name);
             cons.init_event_id = init_event_id;
-            cons.messageType = MSG_WALLET_JOIN;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_JOIN;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_LEAVE, Qt::CaseInsensitive)){
             QJsonObject io_nunchuk_relates_to = body["io.nunchuk.relates_to"].toObject();
@@ -483,7 +611,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             }
             cons.message = STR_CPP_012.arg(xfp).arg(wallet_name);
             cons.init_event_id = init_event_id;
-            cons.messageType = MSG_WALLET_LEAVE;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_LEAVE;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_READY, Qt::CaseInsensitive)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
@@ -491,7 +619,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             QString init_event_id = init_event["event_id"].toString();
             cons.message = STR_CPP_013.arg(wallet_name);
             cons.init_event_id = init_event_id;
-            cons.messageType = MSG_WALLET_READY;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_READY;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_CREATE, Qt::CaseInsensitive)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
@@ -499,7 +627,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             QString init_event_id = init_event["event_id"].toString();
             cons.message = STR_CPP_014.arg(wallet_name);
             cons.init_event_id = init_event_id;
-            cons.messageType = MSG_WALLET_CREATE;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_CREATE;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_CANCEL, Qt::CaseInsensitive)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
@@ -507,7 +635,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             QString init_event_id = init_event["event_id"].toString();
             cons.message = STR_CPP_015.arg(wallet_name);
             cons.init_event_id = init_event_id;
-            cons.messageType = MSG_WALLET_CANCEL;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_CANCEL;
         }
         else {
             return false;
@@ -523,34 +651,34 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
         if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_INIT, Qt::CaseInsensitive)){
             cons.init_event_id = init_event_id;
             cons.message = QString(QJsonDocument(body).toJson(QJsonDocument::Compact));
-            cons.messageType = MSG_TX_INIT;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_INIT;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_SIGN, Qt::CaseInsensitive)){
             QString xfp = body["master_fingerprint"].toString();
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_016.arg(xfp);
-            cons.messageType = MSG_TX_SIGN;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_SIGN;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_BROADCAST, Qt::CaseInsensitive)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_017;
-            cons.messageType = MSG_TX_BROADCAST;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_BROADCAST;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_READY, Qt::CaseInsensitive)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_018;
-            cons.messageType = MSG_TX_READY;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_READY;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
         else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_CANCEL, Qt::CaseInsensitive)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_019;
-            cons.messageType = MSG_TX_CANCEL;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
@@ -561,7 +689,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             if((int)EWARNING::WarningType::NONE_MSG == roomTxWarning.type() && tx_id != ""){
                 cons.init_event_id = tx_id;
                 cons.message = STR_CPP_020;
-                cons.messageType = MSG_TX_RECEIVE;
+                cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE;
                 cons.init_event_json = json;
             }
         }
@@ -576,7 +704,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
         if(0 == QString::compare(msgtype, NUNCHUK_EVENT_EXCEPTION, Qt::CaseInsensitive)){
             cons.init_event_id = init_event_id;
             cons.init_event_json = json;
-            cons.messageType = MSG_EXCEPTION;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::EXCEPTION;
             cons.message = QString(QJsonDocument(body).toJson(QJsonDocument::Compact));
         }
     }
@@ -596,12 +724,28 @@ void QNunchukRoom::setWalletImport(const nunchuk::Wallet &walletImport)
     m_walletImport = walletImport;
 }
 
+int QNunchukRoom::roomType()
+{
+    if(isServerNoticeRoom() ) {
+        return (int)ENUNCHUCK::RoomType::SERVICE_ROOM;
+    }
+    else if(isNunchukSyncRoom()){
+        return (int)ENUNCHUCK::RoomType::NUNSYNC_ROOM;
+    }
+    else if(isSupportRoom()){
+        return (int)ENUNCHUCK::RoomType::SUPPORT_ROOM;
+    }
+    else{
+        return (int)ENUNCHUCK::RoomType::GRPCHAT_ROOM;
+    }
+}
+
 void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &roomid)
 {
     if(roomWallet() && roomWallet()->get_wallet_id() != ""){
         if(cons.init_event_id != ""){ // FIXME FOR CHECK DUP RECIEVED TX EVT
             QtConcurrent::run([this, cons, roomid]() {
-                if(cons.messageType == MSG_TX_RECEIVE){
+                if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_RECEIVE){
                     QString wallet_id = this->roomWallet() ? this->roomWallet()->get_wallet_id() : "";
                     QString tx_id = cons.init_event_id;
                     QWarningMessage txWarning;
@@ -696,6 +840,14 @@ void QNunchukRoom::cancelWallet()
         matrixbrigde::CancelWallet(id(), STR_CPP_010, msgwarning);
         emit signalFinishCancelWallet(msgwarning.what(), (int)msgwarning.type(), msgwarning.code());
     });
+}
+
+void QNunchukRoom::downloadFile(const QString &eventId, const QUrl &localFilename)
+{
+    if(m_room){
+        DBG_INFO << eventId;
+        m_room->downloadFile(eventId, localFilename);
+    }
 }
 
 void QNunchukRoom::setTags(const QString &newtag)
@@ -877,20 +1029,19 @@ void QNunchukRoom::downloadHistorical()
                     if(!roomWallet()){
                         Conversation init;
                         init.timestamp = -100;
-                        init.messageType = MSG_INIT_MESSAGE;
-                        conversation()->addMessage_(init);
+                        init.messageType = (int)ENUNCHUCK::ROOM_EVT::INITIALIZE;
+                        conversation()->addHistoryMessage(init);
                     }
                     for (auto it = m_room->messageEvents().rbegin(); it != m_room->messageEvents().rend(); ++it){
                         Conversation cons = createConversation(**it);
-                        if(cons.messageType != INVALID_MESSAGE){
-                            conversation()->addMessage_(cons);
+                        if(cons.messageType != (int)ENUNCHUCK::ROOM_EVT::INVALID){
+                            conversation()->addHistoryMessage(cons);
                         }
                     }
                     conversation()->requestSortByTimeAscending(false);
                     this->setLastMessage(conversation()->lastMessage());
                     this->setLasttimestamp(conversation()->lastTime());
                     if(conversation()->lastIndex() == 0){
-                        DBG_INFO << "getMoreContents " << roomName() << allHisLoaded();
                         if(allHisLoaded() == false){
                             getMoreContents(10);
                         }
@@ -1102,21 +1253,19 @@ QString QNunchukRoom::lastMessage() const
 
 void QNunchukRoom::setLastMessage(const Conversation &cons)
 {
-    QString lastMessage;
+    QString lastmsg;
     QString picname = cons.sendByMe ? "You" : cons.sender;
-    if(cons.messageType == MSG_PURE_STRING){
+    if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT){
         if(0 == QString::compare(cons.matrixType, NUNCHUK_ROOM_ENCRYPTED, Qt::CaseInsensitive)){
             m_IsEncrypted = true;
-        }else{
+        }
+        else{
             m_IsEncrypted = false;
         }
-        lastMessage = QString("<b>%1</b>: %2").arg(picname).arg(cons.message);
     }
-    else{
-        lastMessage = QString("%1").arg(cons.message);
-    }
-    if(m_lastMessage != lastMessage){
-        m_lastMessage = lastMessage;
+    lastmsg = QString("<b>%1</b>: %2").arg(picname).arg(QTextDocumentFragment::fromHtml(cons.message).toPlainText().isEmpty() ? "sent an attachment": cons.message );
+    if(m_lastMessage != lastmsg){
+        m_lastMessage = lastmsg;
         emit lastMessageChanged();
     }
 }
@@ -1308,157 +1457,200 @@ bool QNunchukRoom::extractNunchukEvent(const RoomEvent &evt, Conversation &cons)
     return extractNunchukEvent(evt.matrixType(),evt.id(),evt.contentJson(),cons);
 }
 
-QString QNunchukRoom::eventToString(const RoomEvent &evt, Qt::TextFormat format, bool removeReply) const
+void QNunchukRoom::eventToConversation(const RoomEvent& evt, Conversation &result, Qt::TextFormat format)
 {
-    Q_UNUSED(removeReply)
-    if(!m_room){ return "";}
-    const bool prettyPrint = (format == Qt::RichText);
-    using namespace Quotient;
-    return switchOnType( evt, [prettyPrint](const RoomMessageEvent& e){
-        using namespace MessageEventContent;
-        QString plainBody;
-        // 1. prettyPrint/HTML
-        if (prettyPrint && e.hasTextContent() &&
-                e.mimeType().name() != "text/plain") {
-            auto htmlBody = static_cast<const TextContent*>(e.content())->body;
-            htmlBody.replace(utils::userPillRegExp, "<b>\\1</b>");
-            htmlBody.replace(utils::strikethroughRegExp, "<s>\\1</s>");
-            return htmlBody;
-        }
+    if(m_room){
+        using namespace Quotient;
+        const bool prettyPrint = (format == Qt::RichText);
+        bool    hasFileContent = false;
+        int     file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
 
-        // 2. prettyPrint/text 3. plainText/HTML 4. plainText/text
-        if (e.hasTextContent() && e.content() && e.mimeType().name() == "text/plain") {  // 2/4
-            plainBody = static_cast<const TextContent*>(e.content())->body;
-        } else {
-            plainBody = e.plainBody();
-        }
-        if (prettyPrint) {
-            return Quotient::prettyPrint(plainBody);
-        }
-        return plainBody;
-    },
-    [=](const RoomMemberEvent& e) {
-        // FIXME: Rewind to the name that was at the time of this event
-        auto subjectName = this->m_room->user(e.userId())->displayname(room());
-        QString content = "";
-        // The below code assumes senderName output in AuthorRole
-        switch (e.membership()) {
-        case Membership::Invite:
-        {
-            if (e.repeatsState()){
-                content = STR_CPP_021.arg(subjectName);
+        const auto message = switchOnType( evt,
+        [&](const RoomMessageEvent& e){
+            using namespace MessageEventContent;
+            if (e.hasFileContent()) {
+                auto fileCaption = prettyPrint ? Quotient::prettyPrint(e.plainBody()) : e.plainBody();
+                hasFileContent = true;
+                auto filename = e.content()->fileInfo()->originalName.toHtmlEscaped();
+                if(e.msgtype() == RoomMessageEvent::MsgType::Image){
+                    file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_IMAGE;
+                    fileCaption = fileCaption.remove(filename);
+                }
+                else if(e.msgtype() == RoomMessageEvent::MsgType::Video){
+                    file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_VIDEO;
+                    fileCaption = fileCaption.remove(filename);
+                }
+                else{
+                    file_mimeType  = (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER;
+                }
+                return fileCaption;
+            }
+            else{
+                QString plainBody;
+                // 1. prettyPrint/HTML
+                if (prettyPrint && e.mimeType().name() != "text/plain") {
+                    auto htmlBody = static_cast<const TextContent*>(e.content())->body;
+                    htmlBody.replace(utils::userPillRegExp, "<b>\\1</b>");
+                    htmlBody.replace(utils::strikethroughRegExp, "<s>\\1</s>");
+                    return htmlBody;
+                }
+                // 2. prettyPrint/text 3. plainText/HTML 4. plainText/text
+                if (e.content() && e.mimeType().name() == "text/plain") {  // 2/4
+                    plainBody = static_cast<const TextContent*>(e.content())->body;
+                }
+                else {
+                    plainBody = e.plainBody();
+                }
+                if (prettyPrint) {
+                    return Quotient::prettyPrint(plainBody);
+                }
+                return plainBody;
+            }
+        },
+        [=](const RoomMemberEvent& e) {
+            // FIXME: Rewind to the name that was at the time of this event
+            auto subjectName = this->m_room->user(e.userId())->displayname(room());
+            QString content = "";
+            // The below code assumes senderName output in AuthorRole
+            switch (e.membership()) {
+            case Membership::Invite:
+            {
+                if (e.repeatsState()){
+                    content = STR_CPP_021.arg(subjectName);
+                    return content;
+                }
+            }
+            case Membership::Join:
+            {
+                if (e.repeatsState()){
+                    content = STR_CPP_022;
+                    return content;
+                }
+                if (!e.prevContent() || e.membership() != e.prevContent()->membership) {
+                    content = e.membership() == Membership::Invite ? STR_CPP_023.arg(subjectName) : STR_CPP_024;
+                    return content;
+                }
+                QString text{};
+                if (e.isRename()) {
+                    if (e.displayName().isEmpty())
+                        text = STR_CPP_025;
+                    else
+                        text = STR_CPP_026.arg(e.displayName().toHtmlEscaped());
+                }
+                if (e.isAvatarUpdate()) {
+                    if (!text.isEmpty())
+                        text += STR_CPP_027;
+                    if (e.avatarUrl().isEmpty())
+                        text += STR_CPP_028;
+                    else if (!e.prevContent()->avatarUrl)
+                        text += STR_CPP_029;
+                    else
+                        text += STR_CPP_030;
+                }
+                content = text;
                 return content;
             }
-        }
-        case Membership::Join:
-        {
-            if (e.repeatsState()){
-                content = STR_CPP_022;
+            case Membership::Leave:
+            {
+                if (e.prevContent() &&e.prevContent()->membership == Membership::Invite) {
+                    content = (e.senderId() != e.userId()) ? STR_CPP_031.arg(subjectName)
+                                                           : STR_CPP_032;
+                    return content;
+                }
+                if (e.prevContent() && e.prevContent()->membership == Membership::Ban) {
+                    content = (e.senderId() != e.userId()) ? STR_CPP_033.arg(subjectName)
+                                                           : STR_CPP_034;
+                    return content;
+                }
+                QString ret = (e.senderId() != e.userId()) ? STR_CPP_035.arg(subjectName, e.contentJson()["reason"_ls].toString().toHtmlEscaped()) : STR_CPP_036;
+                content = ret;
+                if(m_room && isSupportRoom()){
+                    DBG_INFO << content;
+                    int member_size = m_room->users().size();
+                    if(member_size < 2){
+                        emit roomNeedTobeLeaved(id());
+                    }
+                }
                 return content;
             }
-            if (!e.prevContent() || e.membership() != e.prevContent()->membership) {
-                content = e.membership() == Membership::Invite ? STR_CPP_023.arg(subjectName) : STR_CPP_024;
+            case Membership::Ban:
+            {
+                QString ret = (e.senderId() != e.userId())
+                        ? STR_CPP_037
+                          .arg(subjectName, e.contentJson()["reason"_ls]
+                          .toString()
+                          .toHtmlEscaped())
+                        : STR_CPP_038;
+                content = ret;
                 return content;
             }
-            QString text{};
-            if (e.isRename()) {
-                if (e.displayName().isEmpty())
-                    text = STR_CPP_025;
-                else
-                    text = STR_CPP_026.arg(e.displayName().toHtmlEscaped());
+            case Membership::Knock:
+            {
+                content = STR_CPP_039;
+                return content;
             }
-            if (e.isAvatarUpdate()) {
-                if (!text.isEmpty())
-                    text += STR_CPP_027;
-                if (e.avatarUrl().isEmpty())
-                    text += STR_CPP_028;
-                else if (!e.prevContent()->avatarUrl)
-                    text += STR_CPP_029;
-                else
-                    text += STR_CPP_030;
+            default:;
             }
-            content = text;
+            content = STR_CPP_040;
             return content;
+        },
+        [=](const RoomCanonicalAliasEvent& e) {
+            QString content = (e.alias().isEmpty()) ? STR_CPP_042 : STR_CPP_043.arg(e.alias());
+            return content;
+        },
+        [=](const RoomNameEvent& e) {
+            QString content = (e.name().isEmpty()) ? STR_CPP_044 : STR_CPP_045.arg(e.name().toHtmlEscaped());
+            return content;
+        },
+        [=](const RoomTopicEvent& e) {
+            QString content = (e.topic().isEmpty()) ? STR_CPP_046 :
+                                                      STR_CPP_047.arg(prettyPrint ? Quotient::prettyPrint(e.topic())
+                                                                                  : e.topic());
+            return content;
+        },
+        [=](const RoomAvatarEvent& e) {
+            QString content = STR_CPP_048;
+            return content;
+        },
+        [=](const EncryptedEvent& e) {
+            QString content = STR_CPP_099;
+            return content;
+        },
+        [=](const EncryptionEvent& e) {
+            QString content = STR_CPP_049;
+            return content;
+        },
+        [=](const RoomCreateEvent& e) {
+            QString content = (e.isUpgrade() ? STR_CPP_050 : STR_CPP_051).arg(e.version().isEmpty() ? "1" : e.version().toHtmlEscaped());
+            return content;
+        },
+        [=] (const RoomTombstoneEvent& e) {
+            QString content = STR_CPP_052.arg(e.serverMessage().toHtmlEscaped());
+            return content;
+        },
+        [=](const StateEventBase& e) {
+            // A small hack for state events from TWIM bot
+            QString content = e.stateKey() == "twim" ? tr("updated the database", "TWIM bot updated the database")
+                                                     : e.stateKey().isEmpty() ? tr("updated %1 state", "%1 - Matrix event type").arg(e.matrixType())
+                                                                              : tr("updated %1 state for %2","%1 - Matrix event type, %2 - state key").arg(e.matrixType(), e.stateKey().toHtmlEscaped());
+            return content;
+        },
+        tr("Unknown event")
+        );
+
+        result.message = message;
+        if(evt.isStateEvent()){
+            result.messageType = (int)ENUNCHUCK::ROOM_EVT::STATE_EVT;
         }
-        case Membership::Leave:
-        {
-            if (e.prevContent() &&e.prevContent()->membership == Membership::Invite) {
-                content = (e.senderId() != e.userId()) ? STR_CPP_031.arg(subjectName)
-                                                       : STR_CPP_032;
-                return content;
+        else {
+            if(hasFileContent){
+                result.messageType = file_mimeType;
             }
-            if (e.prevContent() && e.prevContent()->membership == Membership::Ban) {
-                content = (e.senderId() != e.userId()) ? STR_CPP_033.arg(subjectName)
-                                                       : STR_CPP_034;
-                return content;
+            else{
+                result.messageType = (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT;
             }
-            QString ret = (e.senderId() != e.userId()) ? STR_CPP_035.arg(subjectName, e.contentJson()["reason"_ls].toString().toHtmlEscaped()) : STR_CPP_036;
-            content = ret;
-            return content;
         }
-        case Membership::Ban:
-        {
-            QString ret = (e.senderId() != e.userId())
-                    ? STR_CPP_037
-                      .arg(subjectName, e.contentJson()["reason"_ls]
-                      .toString()
-                      .toHtmlEscaped())
-                    : STR_CPP_038;
-            content = ret;
-            return content;
-        }
-        case Membership::Knock:
-        {
-            content = STR_CPP_039;
-            return content;
-        }
-        default:;
-        }
-        content = STR_CPP_040;
-        return content;
-    },
-    [=](const RoomCanonicalAliasEvent& e) {
-        QString content = (e.alias().isEmpty()) ? STR_CPP_042 : STR_CPP_043.arg(e.alias());
-        return content;
-    },
-    [=](const RoomNameEvent& e) {
-        QString content = (e.name().isEmpty()) ? STR_CPP_044 : STR_CPP_045.arg(e.name().toHtmlEscaped());
-        return content;
-    },
-    [=](const RoomTopicEvent& e) {
-        QString content = (e.topic().isEmpty()) ? STR_CPP_046 :
-                                                  STR_CPP_047.arg(prettyPrint ? Quotient::prettyPrint(e.topic())
-                                                                                             : e.topic());
-        return content;
-    },
-    [=](const RoomAvatarEvent& e) {
-        QString content = STR_CPP_048;
-        return content;
-    },
-    [=](const EncryptedEvent& e) {
-        QString content = STR_CPP_099;
-        return content;
-    },
-    [=](const EncryptionEvent& e) {
-        QString content = STR_CPP_049;
-        return content;
-    },
-    [=](const RoomCreateEvent& e) {
-        QString content = (e.isUpgrade() ? STR_CPP_050 : STR_CPP_051).arg(e.version().isEmpty() ? "1" : e.version().toHtmlEscaped());
-        return content;
-    },
-    [=] (const RoomTombstoneEvent& e) {
-        QString content = STR_CPP_052.arg(e.serverMessage().toHtmlEscaped());
-        return content;
-    },
-    [=](const StateEventBase& e) {
-        // A small hack for state events from TWIM bot
-        QString content = e.stateKey() == "twim" ? tr("updated the database", "TWIM bot updated the database")
-                                                 : e.stateKey().isEmpty() ? tr("updated %1 state", "%1 - Matrix event type").arg(e.matrixType())
-                                                                          : tr("updated %1 state for %2","%1 - Matrix event type, %2 - state key").arg(e.matrixType(), e.stateKey().toHtmlEscaped());
-        return content;
-    },
-    tr("Unknown event"));
+    }
 }
 
 void QNunchukRoom::receiveMessage(int fromIndex, int toIndex)
@@ -1479,7 +1671,7 @@ void QNunchukRoom::receiveMessage(int fromIndex, int toIndex)
                     setRoomWallet(matrixbrigde::ReloadRoomWallet(this));
                 }
                 Conversation cons = createConversation(*lastEvent);
-                if(cons.messageType != INVALID_MESSAGE){
+                if(cons.messageType != (int)ENUNCHUCK::ROOM_EVT::INVALID){
                     if(toIndex < m_room->maxTimelineIndex() ){
                         conversation()->insertMessage(pos, cons);
                     }
@@ -1487,10 +1679,10 @@ void QNunchukRoom::receiveMessage(int fromIndex, int toIndex)
                         conversation()->addMessage(cons);
                     }
                     pos++;
-                    if(cons.messageType == MSG_WALLET_CANCEL){
+                    if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::WALLET_CANCEL){
                         this->updateCancelWallet(cons.init_event_id);
                     }
-                    if(cons.messageType == MSG_TX_CANCEL){
+                    if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL){
                         this->updateCancelTransaction(cons);
                     }
                 }
@@ -1529,8 +1721,7 @@ Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
             || (0 == QString::compare(matrixType, NUNCHUK_ROOM_ENCRYPTED, Qt::CaseInsensitive))
             || (0 == QString::compare(matrixType, NUNCHUK_ROOM_ENCRYPTION, Qt::CaseInsensitive)))
     {
-        cons.message = eventToString(evt);
-        cons.messageType  = evt.isStateEvent() ? MSG_STATE_EVENT : MSG_PURE_STRING;
+        eventToConversation(evt, cons, Qt::RichText);
     }
     else if((0 == QString::compare(matrixType, NUNCHUK_EVENT_WALLET, Qt::CaseInsensitive)) ||
              (0 == QString::compare(matrixType, NUNCHUK_EVENT_TRANSACTION, Qt::CaseInsensitive)) ||
@@ -1538,7 +1729,7 @@ Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
     {
         bool ret = extractNunchukEvent(evt, cons);
         if(!ret){
-            cons.messageType = INVALID_MESSAGE;
+            cons.messageType = (int)ENUNCHUCK::ROOM_EVT::INVALID;
         }
     }
     else{
@@ -1657,13 +1848,13 @@ nunchuk::Wallet QNunchukRoom::createWalletFromJson(const QJsonObject &json)
     nunchuk::Wallet wallet(false);
     if(signers.size() > 0){
         try {
-            wallet.set_m(m);
-            wallet.set_n(n);
             wallet.set_signers(signers);
             wallet.set_address_type(address_type);
+            wallet.set_description(description.toStdString());
+            wallet.set_m(m);
+            wallet.set_n(n);
             wallet.set_escrow(is_escrow);
             wallet.set_name(name.toStdString());
-            wallet.set_description(description.toStdString());
         } catch (const nunchuk::NunchukException &e) {
             DBG_INFO << "nunchuk::NunchukException: " << e.what() << m << n << signers.size();
         }
@@ -1727,6 +1918,8 @@ QVariant QNunchukRoomListModel::data(const QModelIndex &index, int role) const
         return m_data[index.row()].data()->roomAvatar();
     case room_is_encrypted:
         return m_data[index.row()].data()->isEncrypted();
+    case room_type:
+        return m_data[index.row()].data()->roomType();
     default:
         return QVariant();
     }
@@ -1737,6 +1930,7 @@ QHash<int, QByteArray> QNunchukRoomListModel::roleNames() const
     QHash<int, QByteArray> names;
     names[room_id]         = "id";
     names[room_name]       = "name";
+    names[room_type]       = "room_type";
     names[room_joinstate]  = "joinstate";
     names[room_unreadmsg_count] = "unreadCount";
     names[room_last_timestamp]  = "lasttimestamp";
@@ -1782,7 +1976,7 @@ int QNunchukRoomListModel::getIndex(const QString &id) const
             return i;
         }
     }
-    return 0;
+    return -1;
 }
 
 Connection *QNunchukRoomListModel::connection()
@@ -1793,6 +1987,7 @@ Connection *QNunchukRoomListModel::connection()
 void QNunchukRoomListModel::downloadRooms()
 {
     if(connection()){
+        CLIENT_INSTANCE->setReadySupport(true);
         connect(&m_time, &QTimer::timeout, connection(), &Connection::capabilitiesLoaded);
         m_time.setSingleShot(true);
         m_time.start(10000);
@@ -1833,13 +2028,14 @@ void QNunchukRoomListModel::downloadRooms()
                         currentRoom()->conversation()->refresh();
                     }
                 }
-                emit this->finishedDownloadRoom();
                 if(AppSetting::instance()->enableMultiDeviceSync()){
                     AppModel::instance()->startMultiDeviceSync(true);
                 }
                 else{
                     AppModel::instance()->startMultiDeviceSync(false);
                 }
+                emit finishedDownloadRoom();
+                CLIENT_INSTANCE->setReadySupport(true);
                 downloadRoomWallets();
             });
         });
@@ -1959,10 +2155,6 @@ void QNunchukRoomListModel::updateTransactionMemo(const QString& wallet_id, cons
 
 void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
 {
-    DBG_INFO << r.data()->roomName()
-             << "> Encryption:" << r.data()->room()->usesEncryption()
-             << "> isSyncRoom:" << r.data()->isNunchukSyncRoom()
-             << "> isServices:" << r.data()->isServerNoticeRoom();
     if( r.data()->isServerNoticeRoom() || r.data()->isNunchukSyncRoom()){
         if(!r.data()->id().isEmpty() && !containsServiceRoom(r.data()->id()) ){
             m_servive.append(r);
@@ -1977,20 +2169,19 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
     else{
         if(!r.data()->id().isEmpty() && !containsRoom(r.data()->id()) ){
             QList<DracoUser> users = Draco::instance()->getRoomMembers(r.data()->id());
-            DBG_INFO << "number of User in room: " << users.size();
-            if(users.size() > 0){
-                beginResetModel();
-                m_data.append(r);
-                r.data()->setNunchukMembers(users);
-                r.data()->connectRoomSignals();
-                connect(r.data(),         &QNunchukRoom::roomNameChanged, this, [=] { refresh(r); });
-                connect(r.data(),         &QNunchukRoom::lastMessageChanged, this, [=] { refresh(r); });
-                connect(r.data(),         &QNunchukRoom::lasttimestampChanged, this, [=] { resort(); });
-                connect(r.data()->room(), &Room::unreadMessagesChanged, this, [=] { refresh(r); });
-                connect(r.data()->room(), &Room::typingChanged, this, [=] { refresh(r); });
-                connect(r.data()->room(), &Room::unreadMessagesChanged, this, &QNunchukRoomListModel::totalUnreadChanged);
-                endResetModel();
-            }
+            DBG_INFO << "//FIXME" << r.data()->id() << users.size() << r.data()->roomName() <<  r.data()->room()->tagNames();
+            beginResetModel();
+            m_data.append(r);
+            r.data()->setNunchukMembers(users);
+            r.data()->connectRoomSignals();
+            connect(r.data(),         &QNunchukRoom::roomNameChanged, this, [=] { refresh(r); });
+            connect(r.data(),         &QNunchukRoom::lastMessageChanged, this, [=] { refresh(r); });
+            connect(r.data(),         &QNunchukRoom::lasttimestampChanged, this, [=] { resort(); });
+            connect(r.data(),         &QNunchukRoom::roomNeedTobeLeaved, this, &QNunchukRoomListModel::roomNeedTobeLeaved);
+            connect(r.data()->room(), &Room::unreadMessagesChanged, this, [=] { refresh(r); });
+            connect(r.data()->room(), &Room::typingChanged, this, [=] { refresh(r); });
+            connect(r.data()->room(), &Room::unreadMessagesChanged, this, &QNunchukRoomListModel::totalUnreadChanged);
+            endResetModel();
         }
     }
     emit this->countChanged();
@@ -2005,6 +2196,19 @@ void QNunchukRoomListModel::removeRoomByIndex(const int index)
     }
     else{
         setCurrentIndex(-1);
+    }
+    endResetModel();
+    emit countChanged();
+}
+
+void QNunchukRoomListModel::removeRoomById(const QString &id)
+{
+    beginResetModel();
+    for( QNunchukRoomPtr it: m_data){
+        if(it && (0 == QString::compare(it.data()->id(), id, Qt::CaseInsensitive))){
+            m_data.removeOne(it);
+            break;
+        }
     }
     endResetModel();
     emit countChanged();
@@ -2089,8 +2293,6 @@ void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const 
         stateEvt.type = "m.room.encryption";
         stateEvt.content["algorithm"] = "m.megolm.v1.aes-sha2";
         const QVector<CreateRoomJob::StateEvent> in_initialState = {stateEvt};
-//        const QVector<CreateRoomJob::Invite3pid> in_invite3pids = {};
-//        const QJsonObject in_creationContent = {};
 
         auto createJob = connection()->createRoom(in_visibility,
                                                   in_alias,
@@ -2104,16 +2306,51 @@ void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const 
                                                   in_invite3pids,
                                                   in_creationContent*/);
         connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
-//            connection()->room(createJob->roomId())->activateEncryption();
             if(!firstMessage.isNull() && firstMessage.toString() != ""){
                 connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
             }
         });
-        connect(createJob, &BaseJob::failure, this, [] {
-            DBG_INFO << "Failed to join the room";
+        connect(createJob, &BaseJob::failure, this, [createJob] {
+            DBG_INFO << "//FIXME Failed to create the room";
+            AppModel::instance()->showToast(createJob->error(),
+                                            "Failed to create the room",
+                                            EWARNING::WarningType::EXCEPTION_MSG,
+                                            createJob->errorString());
         });
     }
     emit countChanged();
+}
+
+void QNunchukRoomListModel::createSupportRoom()
+{
+    if((int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer()
+            || (int)ENUNCHUCK::Chain::TESTNET == (int)AppSetting::instance()->primaryServer())
+    {
+        if(connection()){
+            QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
+            if(containsSupportRoom(tagname)){
+                return;
+            }
+            CLIENT_INSTANCE->setReadySupport(false);
+            auto createJob = connection()->createDirectChat("@support:nunchuk.io");
+            createJob->setMaxRetries(0);
+            connect(createJob, &BaseJob::success, this, [this, createJob, tagname] {
+                Quotient::Room *newroom = connection()->room(createJob->roomId());
+                if(newroom){
+                    newroom->addTag(tagname);
+                }
+                CLIENT_INSTANCE->setReadySupport(true);
+            });
+            connect(createJob, &BaseJob::failure, this, [createJob] {
+                AppModel::instance()->showToast(createJob->error(),
+                                                createJob->errorString(),
+                                                EWARNING::WarningType::EXCEPTION_MSG,
+                                                "Failed to create support room");
+                CLIENT_INSTANCE->setReadySupport(true);
+            });
+        }
+        emit countChanged();
+    }
 }
 
 bool QNunchukRoomListModel::allHisLoaded()
@@ -2162,6 +2399,22 @@ bool QNunchukRoomListModel::containsSyncRoom()
 {
     foreach (QNunchukRoomPtr it, m_servive) {
         if(it.data()->isNunchukSyncRoom()){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QNunchukRoomListModel::containsSupportRoom(const QString& tagname){
+    foreach (QNunchukRoomPtr it, m_data) {
+        if(it.data()->room() && it.data()->room()->tagNames().contains(tagname)){
+            if(it.data()->room()->joinedCount()){
+                it.data()->room()->inviteToRoom("@support:nunchuk.io");
+                int index = getIndex(it.data()->room()->id());
+                if(index >= 0){
+                    setCurrentIndex(index);
+                }
+            }
             return true;
         }
     }
@@ -2217,10 +2470,12 @@ void QNunchukRoomListModel::invitedRoom(Room *room, Room *prev)
 
 void QNunchukRoomListModel::joinedRoom(Room *room, Room *prev)
 {
+//    connectSingleShot(room, &Room::tagsChanged, this, [this, room] {
+//        DBG_INFO << "FIXME Room::tags" << room->name() << (int)room->joinState() << room->tagNames();
+//    });
     connectSingleShot(room, &Room::baseStateLoaded, this, [this, room] {
-        DBG_INFO << "joinedRoom Room::baseStateLoaded" << room->name() << (int)room->joinState() << room->tagNames();
         m_time.stop();
-        QTimer::singleShot(500, [this, room]() {
+        QTimer::singleShot(3000, [this, room]() {
             QNunchukRoomPtr newRoom = QNunchukRoomPtr(new QNunchukRoom(room), &QObject::deleteLater);
             doAddRoom(newRoom);
             if( !newRoom.data()->isServerNoticeRoom() && !newRoom.data()->isNunchukSyncRoom()){
@@ -2235,13 +2490,19 @@ void QNunchukRoomListModel::joinedRoom(Room *room, Room *prev)
 
 void QNunchukRoomListModel::leftRoom(Room *room, Room *prev)
 {
-    DBG_INFO << room->name() << (int)room->joinState();
+    DBG_INFO << room->id() << (int)room->joinState();
+    if(room && connection()){
+        removeRoomById(room->id());
+    }
     emit countChanged();
 }
 
 void QNunchukRoomListModel::aboutToDeleteRoom(Room *room)
 {
     DBG_INFO << room->name() << (int)room->joinState();
+    if(room && connection()){
+        removeRoomById(room->id());
+    }
     emit countChanged();
 }
 
@@ -2268,6 +2529,14 @@ void QNunchukRoomListModel::resort()
     qSort(m_data.begin(), m_data.end(), sortRoomListByTimeDescending);
     endResetModel();
     setCurrentIndex(m_data.indexOf(currentRoomPtr()));
+}
+
+void QNunchukRoomListModel::roomNeedTobeLeaved(const QString &id)
+{
+    int index = getIndex(id);
+    if(index >= 0){
+        leaveRoom(index);
+    }
 }
 
 bool sortRoomListTimeAscending(const QNunchukRoomPtr &v1, const QNunchukRoomPtr &v2)

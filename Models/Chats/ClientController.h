@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef CLIENTCONTROLLER_H
 #define CLIENTCONTROLLER_H
 
@@ -35,6 +55,8 @@ class ClientController final : public QObject
     Q_PROPERTY(bool isMatrixLoggedIn             READ isMatrixLoggedIn  NOTIFY isMatrixLoggedInChanged)
     Q_PROPERTY(bool isNewDevice                  READ isNewDevice       WRITE setIsNewDevice NOTIFY enableEncryptionChanged)
     Q_PROPERTY(QVariant user                     READ user              NOTIFY userChanged)
+    Q_PROPERTY(bool attachmentEnable             READ attachmentEnable  NOTIFY attachmentEnableChanged)
+    Q_PROPERTY(bool readySupport                 READ readySupport      NOTIFY readySupportChanged)
 private:
     ClientController();
     ~ClientController();
@@ -93,6 +115,12 @@ public:
     QJsonObject getSubCur();
     void setSubCur(const QJsonObject &sub);
 
+    bool attachmentEnable() const;
+    void setAttachmentEnable(bool AttachmentEnable);
+
+    bool readySupport() const;
+    void setReadySupport(bool ReadySupport);
+
 signals:
     void isNunchukLoggedInChanged();
     void contactsChanged();
@@ -106,6 +134,8 @@ signals:
     void enableEncryptionChanged();
     void userChanged();
     void guestModeChanged();
+    void attachmentEnableChanged();
+    void readySupportChanged();
 
 public slots:
     void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
@@ -127,6 +157,7 @@ public slots:
     void leaveRoom(const int index);
     void joinRoom(QString roomAliasOrId);
     void createRoomChat(const QStringList& invitees, const QStringList &name, QVariant firstMessage = QVariant());
+    void createSupportRoom();
     void sendMessage(const QString& msg);
     QString getPlainText(const QString &msg);
     void copyMessage(const QString &msg);
@@ -156,6 +187,8 @@ private:
     DracoUser               m_me;
     bool                    m_isNewDevice;
     QJsonObject             m_subCur;
+    bool                    m_AttachmentEnable;
+    bool                    m_ReadySupport;
 };
 
 #define CLIENT_INSTANCE     ClientController::instance()

@@ -82,12 +82,13 @@ QScreen {
                 }
             }
             Rectangle{
-                width: 55
+                width: signerTypeText.implicitWidth+10
                 height: 24
                 radius: 20
                 color: "#EAEAEA"
                 QText {
-                    text: GlobalData.signers(signerType)
+                    id: signerTypeText
+                    text: GlobalData.signerNames(signerType)
                     font.family: "Lato"
                     font.weight: Font.Medium
                     font.pixelSize: 12

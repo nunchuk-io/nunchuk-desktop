@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef APPMODEL_H
 #define APPMODEL_H
 
@@ -23,8 +43,8 @@ class AppModel final : public Controller
     Q_PROPERTY(MasterSignerListModel*   masterSignerList    READ masterSignerList   NOTIFY masterSignerListChanged)
     Q_PROPERTY(SingleSignerListModel*   remoteSignerList    READ remoteSignerList   NOTIFY remoteSignerListChanged)
     Q_PROPERTY(DeviceListModel*         deviceList          READ deviceList         NOTIFY deviceListChanged)
-    Q_PROPERTY(MasterSigner*            masterSignerInfo    READ masterSignerInfo   NOTIFY masterSignerInfoChanged)
-    Q_PROPERTY(SingleSigner*            singleSignerInfo    READ singleSignerInfo   NOTIFY singleSignerInfoChanged)
+    Q_PROPERTY(QMasterSigner*           masterSignerInfo    READ masterSignerInfo   NOTIFY masterSignerInfoChanged)
+    Q_PROPERTY(QSingleSigner*           singleSignerInfo    READ singleSignerInfo   NOTIFY singleSignerInfoChanged)
     Q_PROPERTY(QStringList              walletsUsingSigner  READ walletsUsingSigner NOTIFY walletsUsingSignerChanged)
     Q_PROPERTY(Transaction*             transactionInfo     READ transactionInfo    NOTIFY transactionInfoChanged)
     Q_PROPERTY(UTXOListModel*           utxoList            READ utxoList           NOTIFY utxoListChanged)
@@ -34,13 +54,13 @@ class AppModel final : public Controller
     Q_PROPERTY(int   addSignerStep         READ getAddSignerStep            NOTIFY addSignerStepChanged)
     Q_PROPERTY(int   addSignerPercentage   READ getAddSignerPercentage    	NOTIFY addSignerPercentageChanged)
     Q_PROPERTY(QString   fastestFee        READ fastestFee          NOTIFY fastestFeeChanged)
-    Q_PROPERTY(QString   fastestFeeUSD     READ fastestFeeUSD       NOTIFY fastestFeeChanged)
+    Q_PROPERTY(QString   fastestFeeCurrency     READ fastestFeeCurrency       NOTIFY fastestFeeChanged)
     Q_PROPERTY(QString   halfHourFee       READ halfHourFee         NOTIFY halfHourFeeChanged)
-    Q_PROPERTY(QString   halfHourFeeUSD    READ halfHourFeeUSD      NOTIFY halfHourFeeChanged)
+    Q_PROPERTY(QString   halfHourFeeCurrency    READ halfHourFeeCurrency      NOTIFY halfHourFeeChanged)
     Q_PROPERTY(QString   hourFee           READ hourFee             NOTIFY hourFeeChanged)
-    Q_PROPERTY(QString   hourFeeUSD        READ hourFeeUSD          NOTIFY hourFeeChanged)
+    Q_PROPERTY(QString   hourFeeCurrency        READ hourFeeCurrency          NOTIFY hourFeeChanged)
     Q_PROPERTY(QString   minFee            READ minFee              NOTIFY minFeeChanged)
-    Q_PROPERTY(QString   minFeeUSD         READ minFeeUSD           NOTIFY minFeeChanged)
+    Q_PROPERTY(QString   minFeeCurrency         READ minFeeCurrency           NOTIFY minFeeChanged)
     Q_PROPERTY(QString   addressBalance        READ addressBalance            NOTIFY addressBalanceChanged)
     Q_PROPERTY(QStringList      qrExported          READ qrExported            WRITE setQrExported NOTIFY qrExportedChanged)
     Q_PROPERTY(QString          mnemonic            READ getMnemonic           WRITE setMnemonic   NOTIFY mnemonicChanged)
@@ -50,11 +70,10 @@ class AppModel final : public Controller
     Q_PROPERTY(int              nunchukMode         READ nunchukMode           NOTIFY nunchukModeChanged)
     Q_PROPERTY(int              tabIndex            READ tabIndex              WRITE setTabIndex NOTIFY tabIndexChanged)
     Q_PROPERTY(QWarningMessage* warningMessage      READ warningMessage        NOTIFY warningMessageChanged)
-    Q_PROPERTY(double           exchangeRates       READ getExchangeRates      NOTIFY exchangeRatesChanged)
     Q_PROPERTY(QString          lasttimeCheckEstimatedFee                      READ lasttimeCheckEstimatedFee     NOTIFY lasttimeCheckEstimatedFeeChanged)
-    Q_PROPERTY(MasterSigner*    primaryKey          READ primaryKey            NOTIFY primaryKeyChanged)
-    Q_PROPERTY(QString    newKeySignMessage       READ newKeySignMessage       NOTIFY newKeySignMessageChanged)
-    Q_PROPERTY(QString    newKeySignMessageSHA256 READ newKeySignMessageSHA256 NOTIFY newKeySignMessageChanged)
+    Q_PROPERTY(QMasterSigner*    primaryKey         READ originPrimaryKey       NOTIFY primaryKeyChanged)
+    Q_PROPERTY(QString    newKeySignMessage         READ newKeySignMessage       NOTIFY newKeySignMessageChanged)
+    Q_PROPERTY(QString    newKeySignMessageSHA256   READ newKeySignMessageSHA256 NOTIFY newKeySignMessageChanged)
 
 public:
     static AppModel *instance();
@@ -84,18 +103,16 @@ public:
     QDeviceListModelPtr deviceListPtr() const;
     void setDeviceList(const QDeviceListModelPtr &d);
 
-    MasterSigner *primaryKey() const;
+    QMasterSigner *originPrimaryKey() const;
     void setPrimaryKey(const QString &userName);
     QMasterSignerPtr getPrimaryKey() const;
 
-    MasterSigner *masterSignerInfo() const;
+    QMasterSigner *masterSignerInfo() const;
     QMasterSignerPtr masterSignerInfoPtr() const;
     void setMasterSignerInfo(const QMasterSignerPtr &d);
     void setMasterSignerInfo(const int index);
-    void updateMasterSignerInfoName(const QString &name);
-    void updateSingleSignerInfoName(const QString &name);
 
-    SingleSigner *singleSignerInfo();
+    QSingleSigner *singleSignerInfo();
     QSingleSignerPtr singleSignerInfoPtr() const;
     void setSingleSignerInfo(const QSingleSignerPtr &d);
 
@@ -151,19 +168,19 @@ public:
     QString getTxidReplacing() const;
     void setTxidReplacing(const QString &txidReplacing);
 
-    QString fastestFeeUSD() const;
+    QString fastestFeeCurrency() const;
     QString fastestFee() const;
     void setFastestFee(qint64 fee);
 
-    QString halfHourFeeUSD() const;
+    QString halfHourFeeCurrency() const;
     QString halfHourFee() const;
     void setHalfHourFee(qint64 fee);
 
-    QString hourFeeUSD() const;
+    QString hourFeeCurrency() const;
     QString hourFee() const;
     void setHourFee(qint64 fee);
 
-    QString minFeeUSD() const;
+    QString minFeeCurrency() const;
     QString minFee() const;
     void setMinFee(qint64 fee);
 
@@ -209,8 +226,11 @@ public:
                   EWARNING::WarningType type,
                   const QString &explain = "",
                   POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
-    double getExchangeRates() const;
+    double exchangeRates() const;
     void setExchangeRates(double exchangeRates);
+    double btcRates() const;
+    void setBtcRates(double btcRates);
+
     QString lasttimeCheckEstimatedFee() const;
     void setLasttimeCheckEstimatedFee(const QDateTime &lasttime_checkEstimatedFee);
 
@@ -227,6 +247,7 @@ public:
     QString newKeySignMessageSHA256() const;
     void setNewKeySignMessage(const QString &value);
     QStringList getUserWallets() const;
+
 private:
     AppModel();
     ~AppModel();
@@ -267,6 +288,7 @@ private:
     int                 m_tabIndex;
     QWarningMessagePtr warningMessage_;
     double              exchangeRates_;
+    double              btcRates_;
     QDateTime           lasttime_checkEstimatedFee_;
     QMasterSignerPtr    m_primaryKey;
     QString             newKeySignMessage_;
@@ -310,6 +332,7 @@ signals:
     void lasttimeCheckEstimatedFeeChanged();
     void primaryKeyChanged();
     void newKeySignMessageChanged();
+    void btcRatesChanged();
 public slots:
     void timerHealthCheckTimeHandle();
     void timerFeeRatesHandle();

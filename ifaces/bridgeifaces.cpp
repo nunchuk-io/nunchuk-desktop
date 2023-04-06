@@ -117,6 +117,7 @@ void bridge::nunchukMakeInstanceForAccount(const QString &account,
     bool encrypted = (passphrase == "") ? false : true;
     AppSetting::instance()->setGroupSetting(account);
     AppSetting::instance()->setEnableDBEncryption(encrypted);
+    qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
 
     nunchuk::AppSettings setting;
     // Chain setting
@@ -301,6 +302,7 @@ QTransactionPtr bridge::convertTransaction(nunchuk::Transaction in, const QStrin
 
 
 QWalletListModelPtr bridge::nunchukGetWallets() {
+    DBG_INFO;
     QWarningMessage msg;
     std::vector<nunchuk::Wallet> resultWallets = nunchukiface::instance()->GetWallets(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
@@ -308,15 +310,7 @@ QWalletListModelPtr bridge::nunchukGetWallets() {
         for (nunchuk::Wallet it : resultWallets) {
             QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
             for (nunchuk::SingleSigner signer : it.get_signers()) {
-                QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-                ret.data()->setName(QString::fromStdString(signer.get_name()));
-                ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-                ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-                ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-                ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-                ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-                ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-                ret.data()->setSignerType((int)signer.get_type());
+                QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
                 signersAssinged.data()->addSingleSigner(ret);
             }
             QString id = QString::fromStdString(it.get_id());
@@ -348,15 +342,7 @@ QWalletListModelPtr bridge::nunchukConvertWallets(std::vector<nunchuk::Wallet> l
     for (nunchuk::Wallet it : list) {
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : it.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
         QString id = QString::fromStdString(it.get_id());
@@ -392,15 +378,7 @@ QWalletPtr bridge::nunchukGetWallet(const QString &wallet_id)
         walletResult.data()->setEscrow(wallet.is_escrow());
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : wallet.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
         walletResult.data()->setSigners(signersAssinged);
@@ -418,44 +396,22 @@ QMasterSignerListModelPtr bridge::nunchukGetMasterSigners() {
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QMasterSignerListModelPtr masterSignerlist(new MasterSignerListModel());
         for (nunchuk::MasterSigner it : masterSignerList_result) {
-            QString master_signer_id = QString::fromStdString(it.get_id());
-            QString master_signer_name = QString::fromStdString(it.get_name()) == "" ? "UNKNOWN" : QString::fromStdString(it.get_name());
-            QString type = QString::fromStdString(it.get_device().get_type());
-            QString path = QString::fromStdString(it.get_device().get_path());
-            QString model = QString::fromStdString(it.get_device().get_model());
-            QString master_fingerprint = QString::fromStdString(it.get_device().get_master_fingerprint());
-            bool connected = it.get_device().connected();
-            bool needs_pass_phrase_sent = it.get_device().needs_pass_phrase_sent();
-            bool needs_pin_sent = it.get_device().needs_pin_sent();
+            QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner(it));
             int signer_type = (int)it.get_type();
-            int health = -1;
             if(signer_type == (int)ENUNCHUCK::SignerType::SERVER){
                 continue;
             }
-            QDevicePtr device(new QDevice(master_signer_name,
-                                         type, path, model,
-                                         master_fingerprint,
-                                         connected,
-                                         needs_pass_phrase_sent,
-                                         needs_pin_sent));
-            nunchuk::TapsignerStatus tapsigner = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(master_fingerprint.toStdString(),msg);
-            device->setCardId(QString::fromStdString(tapsigner.get_card_ident()));
-            masterSignerlist.data()->addMasterSigner(master_signer_id,
-                                                     master_signer_name,
-                                                     device,
-                                                     health,
-                                                     signer_type);
             if(signer_type == (int)ENUNCHUCK::SignerType::SOFTWARE){
-                AppModel::instance()->softwareSignerDeviceList()->addDevice(master_signer_name,
-                                                                            type,
-                                                                            path,
-                                                                            model,
-                                                                            master_fingerprint,
-                                                                            false,
-                                                                            needs_pass_phrase_sent,
-                                                                            needs_pin_sent,
-                                                                            master_signer_id);
+                AppModel::instance()->softwareSignerDeviceList()->addDevice(QDevicePtr(new QDevice(it.get_device())));
             }
+            if(signer_type == (int)ENUNCHUCK::SignerType::NFC){
+                QWarningMessage msgGetTap;
+                nunchuk::TapsignerStatus tapsigner = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(it.get_device().get_master_fingerprint(), msgGetTap);
+                if((int)EWARNING::WarningType::NONE_MSG == msgGetTap.type()){
+                    signer.data()->device()->setCardId(QString::fromStdString(tapsigner.get_card_ident()));
+                }
+            }
+            masterSignerlist.data()->addMasterSigner(signer);
         }
         return masterSignerlist;
     }
@@ -467,56 +423,37 @@ QMasterSignerListModelPtr bridge::nunchukGetMasterSigners() {
 std::vector<nunchuk::MasterSigner> bridge::nunchukGetOriginMasterSigners(QWarningMessage& msg)
 {
     std::vector<nunchuk::MasterSigner> singers = nunchukiface::instance()->GetMasterSigners(msg);
-    std::vector<nunchuk::MasterSigner> ret;
-    for (nunchuk::MasterSigner signer: singers) {
-        if((int)signer.get_type() == (int)ENUNCHUCK::SignerType::SERVER) {
-            continue;
-        }
-        ret.push_back(signer);
-    }
-    return ret;
+    singers.erase(std::remove_if(singers.begin(), singers.end(), [](const nunchuk::MasterSigner& signer) {
+        return signer.get_type() == nunchuk::SignerType::SERVER;
+    }), singers.end());
+    return singers;
+}
+
+nunchuk::MasterSigner bridge::nunchukGetOriginMasterSigner(const QString &id, QWarningMessage &msg)
+{
+    return nunchukiface::instance()->GetMasterSigner(id.toStdString(), msg);
 }
 
 QMasterSignerListModelPtr bridge::nunchukConvertMasterSigners(std::vector<nunchuk::MasterSigner> list)
 {
     QMasterSignerListModelPtr masterSignerlist(new MasterSignerListModel());
     for (nunchuk::MasterSigner it : list) {
-        QString master_signer_id = QString::fromStdString(it.get_id());
-        QString master_signer_name = QString::fromStdString(it.get_name()) == "" ? "UNKNOWN" : QString::fromStdString(it.get_name());
-        QString type = QString::fromStdString(it.get_device().get_type());
-        QString path = QString::fromStdString(it.get_device().get_path());
-        QString model = QString::fromStdString(it.get_device().get_model());
-        QString master_fingerprint = QString::fromStdString(it.get_device().get_master_fingerprint());
-        bool connected = it.get_device().connected();
-        bool needs_pass_phrase_sent = it.get_device().needs_pass_phrase_sent();
-        bool needs_pin_sent = it.get_device().needs_pin_sent();
+        QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner(it));
         int signer_type = (int)it.get_type();
-        int health = -1;
-        QDevicePtr device(new QDevice(master_signer_name,
-                                     type, path, model,
-                                     master_fingerprint,
-                                     connected,
-                                     needs_pass_phrase_sent,
-                                     needs_pin_sent));
-        QWarningMessage msg;
-        nunchuk::TapsignerStatus tapsigner = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(master_fingerprint.toStdString(),msg);
-        device->setCardId(QString::fromStdString(tapsigner.get_card_ident()));
-        masterSignerlist.data()->addMasterSigner(master_signer_id,
-                                                 master_signer_name,
-                                                 device,
-                                                 health,
-                                                 signer_type);
-        if(signer_type == (int)ENUNCHUCK::SignerType::SOFTWARE){
-            AppModel::instance()->softwareSignerDeviceList()->addDevice(master_signer_name,
-                                                                        type,
-                                                                        path,
-                                                                        model,
-                                                                        master_fingerprint,
-                                                                        false,
-                                                                        needs_pass_phrase_sent,
-                                                                        needs_pin_sent,
-                                                                        master_signer_id);
+        if(signer_type == (int)ENUNCHUCK::SignerType::SERVER){
+            continue;
         }
+        if(signer_type == (int)ENUNCHUCK::SignerType::SOFTWARE){
+            AppModel::instance()->softwareSignerDeviceList()->addDevice(QDevicePtr(new QDevice(it.get_device())));
+        }
+        if(signer_type == (int)ENUNCHUCK::SignerType::NFC){
+            QWarningMessage msgGetTap;
+            nunchuk::TapsignerStatus tapsigner = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(it.get_device().get_master_fingerprint(), msgGetTap);
+            if((int)EWARNING::WarningType::NONE_MSG == msgGetTap.type()){
+                signer.data()->device()->setCardId(QString::fromStdString(tapsigner.get_card_ident()));
+            }
+        }
+        masterSignerlist.data()->addMasterSigner(signer);
     }
     return masterSignerlist;
 }
@@ -526,19 +463,8 @@ QDeviceListModelPtr bridge::nunchukGetDevices(QWarningMessage& msg) {
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QDeviceListModelPtr deviceList(new DeviceListModel());
         for (nunchuk::Device it : deviceList_result) {
-            QString type = QString::fromStdString(it.get_type());
-            QString path = QString::fromStdString(it.get_path());
-            QString model = QString::fromStdString(it.get_model());
-            QString master_fingerprint = QString::fromStdString(it.get_master_fingerprint());
-            bool connected = it.connected();
-            bool needs_pass_phrase_sent = it.needs_pass_phrase_sent();
-            bool needs_pin_sent = it.needs_pin_sent();
-
-            QString signername = "";
-            if(AppModel::instance()->masterSignerList()){
-                signername = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(master_fingerprint);
-            }
-            deviceList.data()->addDevice(signername, type, path, model, master_fingerprint, connected, needs_pass_phrase_sent, needs_pin_sent);
+            QDevicePtr device = QDevicePtr(new QDevice(it));
+            deviceList.data()->addDevice(device);
         }
         return deviceList;
     }
@@ -563,7 +489,6 @@ nunchuk::HealthStatus bridge::nunchukHealthCheckMasterSigner(const QString& xfp,
     nunchuk::HealthStatus ret = nunchukiface::instance()->HealthCheckMasterSigner(xfp.toStdString(), in_message, out_signature, out_path, msg);
     signature = QString::fromStdString(out_signature);
     path = QString::fromStdString(out_path);
-    DBG_INFO << (int)ret << xfp << in_message << out_signature << out_path;
     return ret;
 }
 
@@ -596,7 +521,6 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                                                    const int deviceIndex,
                                                    QWarningMessage &msg)
 {
-    DBG_INFO << name << deviceIndex;
     QString devicePathSelected = "";
     if(NULL != AppModel::instance()->deviceList()){
         devicePathSelected = AppModel::instance()->deviceList()->getDevicePathByIndex(deviceIndex);
@@ -604,12 +528,9 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             if(devices){
                 QDevicePtr selectedDv = devices->getDeviceByPath(devicePathSelected);
-                QMasterSignerPtr resultmasterSinger =  QMasterSignerPtr(new MasterSigner("", name, selectedDv));
                 QString in_message = qUtils::QGenerateRandomMessage();
-                resultmasterSinger.data()->setMessage(in_message);
                 AppModel::instance()->setNewKeySignMessage(in_message);
                 if(selectedDv.data()){
-                    DBG_INFO << "Device: " << selectedDv.data()->masterFingerPrint();
                     QString out_signature = "";
                     QString out_path = "";
                     AppModel::instance()->setAddSignerStep(1);
@@ -619,9 +540,6 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                                                                                                                    out_path,
                                                                                                                    msg);
                     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-                        resultmasterSinger.data()->setHealth((int)healthResult);
-                        resultmasterSinger.data()->setPath(out_path);
-
                         if(ENUNCHUCK::HealthStatus::SUCCESS == healthResult){
                             nunchuk::Device dv(selectedDv.data()->type().toStdString(),
                                                selectedDv.data()->path().toStdString(),
@@ -632,16 +550,11 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                             AppModel::instance()->setAddSignerStep(2);
                             nunchuk::MasterSigner masterSigner = nunchukiface::instance()->CreateMasterSigner(name.toStdString(), dv, msg);
                             if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-                                resultmasterSinger.data()->setId(QString::fromStdString(masterSigner.get_id()));
-                                resultmasterSinger.data()->setName(QString::fromStdString(masterSigner.get_name()));
-                                resultmasterSinger.data()->device()->setType(QString::fromStdString(masterSigner.get_device().get_type()));
-                                resultmasterSinger.data()->device()->setPath(QString::fromStdString(masterSigner.get_device().get_path()));
-                                resultmasterSinger.data()->device()->setModel(QString::fromStdString(masterSigner.get_device().get_model()));
-                                resultmasterSinger.data()->device()->setMasterFingerPrint(QString::fromStdString(masterSigner.get_device().get_master_fingerprint()));
-                                resultmasterSinger.data()->device()->setConnected(masterSigner.get_device().connected());
-                                resultmasterSinger.data()->device()->setNeedsPassPhraseSent(masterSigner.get_device().needs_pass_phrase_sent());
-                                resultmasterSinger.data()->device()->setNeedsPinSent(masterSigner.get_device().needs_pin_sent());
-                                return resultmasterSinger;
+                                QMasterSignerPtr signer =  QMasterSignerPtr(new QMasterSigner(masterSigner));
+                                signer.data()->setMessage(in_message);
+                                signer.data()->setHealth((int)healthResult);
+                                signer.data()->setPath(out_path);
+                                return signer;
                             }
                         }
                     }
@@ -671,15 +584,7 @@ QSingleSignerPtr bridge::nunchukGetSignerFromMasterSigner(const QString &masters
                                                                                        index,
                                                                                        msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-        ret.data()->setName(QString::fromStdString(signer.get_name()));
-        ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-        ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-        ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-        ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-        ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-        ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-        ret.data()->setSignerType((int)signer.get_type());
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         return ret;
     }
     else{
@@ -697,19 +602,11 @@ QSingleSignerPtr bridge::nunchukGetUnusedSignerFromMasterSigner(const QString &m
                                                                                              (nunchuk::AddressType)address_type,
                                                                                              msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-        ret.data()->setName(QString::fromStdString(signer.get_name()));
-        ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-        ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-        ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-        ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-        ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-        ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-        ret.data()->setSignerType((int)signer.get_type());
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         return ret;
     }
     else{
-        return NULL;
+        return QSingleSignerPtr();
     }
 }
 
@@ -729,15 +626,7 @@ QSingleSignerPtr bridge::nunchukCreateSigner(const QString &name,
                                                                           type.toStdString(),
                                                                           msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-        ret.data()->setName(QString::fromStdString(signer.get_name()));
-        ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-        ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-        ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-        ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-        ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-        ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-        ret.data()->setSignerType((int)signer.get_type());
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         return ret;
     }
     else{
@@ -795,15 +684,7 @@ QWalletPtr bridge::nunchukCreateWallet(const QString &name,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -832,15 +713,7 @@ QWalletPtr bridge::nunchukCreateWallet(const nunchuk::Wallet &wallet, bool allow
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -1003,15 +876,7 @@ QWalletPtr bridge::nunchukImportWallet(const QString &dbFile,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -1047,15 +912,7 @@ QWalletPtr bridge::nunchukImportWalletDescriptor(const QString &dbFile,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -1299,15 +1156,12 @@ bool bridge::nunchukDeleteRemoteSigner(const QString &master_fingerprint, const 
     return nunchukiface::instance()->DeleteRemoteSigner(master_fingerprint.toStdString(), derivation_path.toStdString(), msg);
 }
 
-void bridge::nunchukUpdateMasterSigner(const QString& mastersignerId, const QString &name )
+void bridge::nunchukUpdateMasterSigner(const QMasterSignerPtr &signer )
 {
-    QWarningMessage msg;
-    nunchuk::MasterSigner masterSigner = nunchukiface::instance()->GetMasterSigner(mastersignerId.toStdString(), msg);
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        masterSigner.set_name(name.toStdString());
-        QtConcurrent::run([masterSigner]() {
+    if(signer){
+        QtConcurrent::run([signer]() {
             QWarningMessage msg;
-            nunchukiface::instance()->UpdateMasterSigner(masterSigner, msg);
+            nunchukiface::instance()->UpdateMasterSigner(signer.data()->originMasterSigner(), msg);
         });
     }
 }
@@ -1635,17 +1489,10 @@ QSingleSignerListModelPtr bridge::nunchukGetRemoteSigners()
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr remoteSignerlist(new SingleSignerListModel());
         for (nunchuk::SingleSigner signer : remoteignerList_result) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId("");
-            ret.data()->setSignerType((int)signer.get_type());
             if((int)signer.get_type() == (int)ENUNCHUCK::SignerType::SERVER){
                 continue;
             }
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             remoteSignerlist.data()->addSingleSigner(ret);
         }
         return remoteSignerlist;
@@ -1658,47 +1505,28 @@ QSingleSignerListModelPtr bridge::nunchukGetRemoteSigners()
 std::vector<nunchuk::SingleSigner> bridge::nunchukGetOriginRemoteSigners(QWarningMessage& msg)
 {
     std::vector<nunchuk::SingleSigner> singers = nunchukiface::instance()->GetRemoteSigners(msg);
-    std::vector<nunchuk::SingleSigner> ret;
-    for (nunchuk::SingleSigner signer: singers) {
-        if((int)signer.get_type() == (int)ENUNCHUCK::SignerType::SERVER){
-            continue;
-        }
-        ret.push_back(signer);
-    }
-    return ret;
+    singers.erase(std::remove_if(singers.begin(), singers.end(), [](const nunchuk::SingleSigner& signer) {
+        return signer.get_type() == nunchuk::SignerType::SERVER;
+    }), singers.end());
+    return singers;
 }
 
 QSingleSignerListModelPtr bridge::nunchukConvertRemoteSigners(std::vector<nunchuk::SingleSigner> list)
 {
     QSingleSignerListModelPtr remoteSignerlist(new SingleSignerListModel());
     for (nunchuk::SingleSigner signer : list) {
-        QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-        ret.data()->setName(QString::fromStdString(signer.get_name()));
-        ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-        ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-        ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-        ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-        ret.data()->setMasterSignerId("");
-        ret.data()->setSignerType((int)signer.get_type());
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         remoteSignerlist.data()->addSingleSigner(ret);
     }
     return remoteSignerlist;
 }
 
-void bridge::nunchukUpdateRemoteSigner(const QString &newname)
+void bridge::nunchukUpdateRemoteSigner(const QSingleSignerPtr &signer)
 {
-    if(AppModel::instance()->singleSignerInfo()) {
-        nunchuk::SingleSigner nunchukSigner(newname.toStdString(),
-                                            AppModel::instance()->singleSignerInfo()->xpub().toStdString(),
-                                            AppModel::instance()->singleSignerInfo()->publickey().toStdString(),
-                                            AppModel::instance()->singleSignerInfo()->derivationPath().toStdString(),
-                                            AppModel::instance()->singleSignerInfo()->masterFingerPrint().toStdString(),
-                                            AppModel::instance()->singleSignerInfo()->lastHealthCheckDateTime().toTime_t(),
-                                            AppModel::instance()->singleSignerInfo()->masterSignerId().toStdString());
-        nunchukSigner.set_type(nunchuk::SignerType(AppModel::instance()->singleSignerInfo()->signerType()));
-        QtConcurrent::run([nunchukSigner]() {
+    if(signer) {
+        QtConcurrent::run([signer]() {
             QWarningMessage msg;
-            nunchukiface::instance()->UpdateRemoteSigner(nunchukSigner, msg);
+            nunchukiface::instance()->UpdateRemoteSigner(signer.data()->originSingleSigner(), msg);
         });
     }
 }
@@ -1781,14 +1609,7 @@ QSingleSignerPtr bridge::nunchukCreateCoboSigner(const QString &name, const QStr
                                                                               json_info.toStdString(),
                                                                               msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-        ret.data()->setName(QString::fromStdString(signer.get_name()));
-        ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-        ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-        ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-        ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-        ret.data()->setMasterSignerId("");
-        ret.data()->setSignerType((int)signer.get_type());
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         return ret;
     }
     else{
@@ -1854,15 +1675,7 @@ QWalletPtr bridge::nunchukImportCoboWallet(const QStringList &qr_data,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -1895,15 +1708,7 @@ QWalletPtr bridge::nunchukImportWalletConfigFile(const QString &file_path,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -1934,25 +1739,14 @@ void bridge::nunchukRescanBlockchain(int start_height, int stop_height)
 
 QMasterSignerPtr bridge::nunchukCreateSoftwareSigner(const QString &name, const QString &mnemonic, const QString &passphrase, QWarningMessage &msg,bool isPrimaryKey)
 {
-    QMasterSignerPtr resultSoftSinger =  QMasterSignerPtr(new MasterSigner());
-    resultSoftSinger.data()->setName(name);
     nunchuk::MasterSigner masterSigner = nunchukiface::instance()->CreateSoftwareSigner(name.toStdString(),
                                                                                         mnemonic.toStdString(),
                                                                                         passphrase.toStdString(),
                                                                                         msg,
                                                                                         isPrimaryKey);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        resultSoftSinger.data()->setId(QString::fromStdString(masterSigner.get_id()));
-        resultSoftSinger.data()->setName(QString::fromStdString(masterSigner.get_name()));
-        resultSoftSinger.data()->device()->setType(QString::fromStdString(masterSigner.get_device().get_type()));
-        resultSoftSinger.data()->device()->setPath(QString::fromStdString(masterSigner.get_device().get_path()));
-        resultSoftSinger.data()->device()->setModel(QString::fromStdString(masterSigner.get_device().get_model()));
-        resultSoftSinger.data()->device()->setMasterFingerPrint(QString::fromStdString(masterSigner.get_device().get_master_fingerprint()));
-        resultSoftSinger.data()->device()->setConnected(/*masterSigner.get_device().connected()*/false);
-        resultSoftSinger.data()->device()->setNeedsPassPhraseSent(masterSigner.get_device().needs_pass_phrase_sent());
-        resultSoftSinger.data()->device()->setNeedsPinSent(masterSigner.get_device().needs_pin_sent());
-        resultSoftSinger.data()->setSignerType((int)masterSigner.get_type());
-        return resultSoftSinger;
+        QMasterSignerPtr signer =  QMasterSignerPtr(new QMasterSigner(masterSigner));
+        return signer;
     }
     return NULL;
 }
@@ -1966,6 +1760,9 @@ QString bridge::SignLoginMessage(const QString &mastersigner_id, const QString &
 void bridge::nunchukSendSignerPassphrase(const QString &mastersigner_id, const QString &passphrase, QWarningMessage &msg)
 {
     nunchukiface::instance()->SendSignerPassphrase(mastersigner_id.toStdString(), passphrase.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        AppModel::instance()->masterSignerList()->reloadOriginMasterSignerById(mastersigner_id);
+    }
     emit AppModel::instance()->finishSendPassphraseToDevice(msg.type());
 }
 
@@ -1977,6 +1774,9 @@ QStringList bridge::nunchuckGetBIP39WordList()
 void bridge::nunchukClearSignerPassphrase(const QString &mastersigner_id, QWarningMessage &msg)
 {
     nunchukiface::instance()->ClearSignerPassphrase(mastersigner_id.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        AppModel::instance()->masterSignerList()->reloadOriginMasterSignerById(mastersigner_id);
+    }
 }
 
 int bridge::nunchukCurrentMode()
@@ -2096,15 +1896,7 @@ QWalletPtr bridge::nunchukImportKeystoneWallet(const QList<QString> &qr_data,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerListModelPtr signersAssinged( new SingleSignerListModel);
         for (nunchuk::SingleSigner signer : walletResult.get_signers()) {
-            QSingleSignerPtr ret = QSingleSignerPtr(new SingleSigner());
-            ret.data()->setName(QString::fromStdString(signer.get_name()));
-            ret.data()->setXpub(QString::fromStdString(signer.get_xpub()));
-            ret.data()->setPublickey(QString::fromStdString(signer.get_public_key()));
-            ret.data()->setDerivationPath(QString::fromStdString(signer.get_derivation_path()));
-            ret.data()->setMasterFingerPrint(QString::fromStdString(signer.get_master_fingerprint()));
-            ret.data()->setMasterSignerId(QString::fromStdString(signer.get_master_signer_id()));
-            ret.data()->setlastHealthCheck(QDateTime::fromTime_t(signer.get_last_health_check()));
-            ret.data()->setSignerType((int)signer.get_type());
+            QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             signersAssinged.data()->addSingleSigner(ret);
         }
 
@@ -2340,7 +2132,10 @@ void bridge::assistedWalletUpdateTx(const QString& wallet_id, const nunchuk::Tra
                 nunchukUpdateTransaction(wallet_id, QString::fromStdString(tx.get_txid()), transaction_id, hex, reject_msg,msg);
             } else if (status == "READY_TO_BROADCAST" ||
                        status == "PENDING_SIGNATURES") {
-                nunchukImportPsbt(wallet_id, psbt,msg);
+                auto tx = nunchukImportPsbt(wallet_id, psbt,msg);
+                if (tx->psbt() != psbt) {
+                    Draco::instance()->assistedSyncTx(wallet_id,transaction_id,psbt);
+                }
             }
         }
     }
@@ -2354,4 +2149,32 @@ bool bridge::nunchukUpdateTransactionSchedule(const QString &wallet_id, const QS
 void bridge::ForceRefreshWallet(const QString &wallet_id, QWarningMessage &msg)
 {
     nunchukiface::instance()->ForceRefreshWallet(wallet_id.toStdString(),msg);
+}
+
+QString bridge::SignHealthCheckMessage(const QSingleSignerPtr &signer, const QString &message, QWarningMessage &msg)
+{
+    return QString::fromStdString(nunchukiface::instance()->SignHealthCheckMessage(signer.data()->originSingleSigner(), message.toStdString(), msg));
+}
+
+QMasterSignerPtr bridge::ImportTapsignerMasterSigner( const std::vector<unsigned char>& data,
+                                                      const QString& backup_key,
+                                                      const QString& name,
+                                                      bool is_primary,
+                                                      QWarningMessage& msg)
+{
+    nunchuk::MasterSigner it = nunchukiface::instance()->ImportTapsignerMasterSigner(data,
+                                                                                     backup_key.toStdString(),
+                                                                                     name.toStdString(),
+                                                                                     is_primary,
+                                                                                     msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner(it));
+        QWarningMessage msgGetTap;
+        nunchuk::TapsignerStatus tapsigner = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(it.get_device().get_master_fingerprint(), msgGetTap);
+        if((int)EWARNING::WarningType::NONE_MSG == msgGetTap.type()){
+            signer.data()->device()->setCardId(QString::fromStdString(tapsigner.get_card_ident()));
+        }
+        return signer;
+    }
+    return NULL;
 }

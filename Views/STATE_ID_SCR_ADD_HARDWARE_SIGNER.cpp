@@ -60,7 +60,7 @@ void EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     // Trimmed input
     QString signerNameInputted = msg.toMap().value("signerNameInputted").toString().simplified();
     QString xpubInputted = msg.toMap().value("xpubInputted").toString().simplified();
@@ -88,13 +88,11 @@ void EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST_HANDLER(QVariant msg) {
                                                       E::EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST);
     }
     else{
-       if(AppModel::instance()->singleSignerInfo()){
-           AppModel::instance()->singleSignerInfo()->setDerivationPath(!isValidDerivationPath ? "false" : "");
-           AppModel::instance()->singleSignerInfo()->setMasterFingerPrint(!isValidFingerPrint ? "false" : "");
-           AppModel::instance()->singleSignerInfo()->setXpub(!isValidXpub ? "false" : "");
-           AppModel::instance()->singleSignerInfo()->setPublickey("");
-       }
-       emit AppModel::instance()->finishedCreateRemoteSigner();
+        AppModel::instance()->singleSignerInfo()->setDerivationPath(!isValidDerivationPath ? "false" : "");
+        AppModel::instance()->singleSignerInfo()->setMasterFingerPrint(!isValidFingerPrint ? "false" : "");
+        AppModel::instance()->singleSignerInfo()->setXpub(!isValidXpub ? "false" : "");
+        AppModel::instance()->singleSignerInfo()->setPublickey("");
+        emit AppModel::instance()->finishedCreateRemoteSigner();
     }
 }
 

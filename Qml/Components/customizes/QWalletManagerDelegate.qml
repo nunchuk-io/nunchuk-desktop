@@ -86,7 +86,7 @@ Rectangle {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: qsTr("$%1 USD").arg(walletCurrency)
+                        text: qsTr("$%1 %2").arg(walletCurrency).arg(AppSetting.currency)
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.pixelSize: 12

@@ -189,7 +189,7 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 USD").arg(model.destination_amount_usd)
+                                        text: qsTr("$%1 %2").arg(model.destination_amount_currency).arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -235,7 +235,7 @@ QScreen {
                                     font.pixelSize: 12
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: qsTr("$%1 USD").arg(AppModel.transactionInfo.feeUSD)
+                                    text: qsTr("$%1 %2").arg(AppModel.transactionInfo.feeCurrency).arg(AppSetting.currency)
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }
@@ -279,7 +279,7 @@ QScreen {
                                     font.pixelSize: 12
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: qsTr("$%1 USD").arg(AppModel.transactionInfo.totalUSD)
+                                    text: qsTr("$%1 %2").arg(AppModel.transactionInfo.totalCurrency).arg(AppSetting.currency)
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }
@@ -354,7 +354,7 @@ QScreen {
                                     font.pixelSize: 12
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: qsTr("$%1 USD").arg(AppModel.transactionInfo.change.amountUSD)
+                                    text: qsTr("$%1 %2").arg(AppModel.transactionInfo.change.amountCurrency).arg(AppSetting.currency)
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }

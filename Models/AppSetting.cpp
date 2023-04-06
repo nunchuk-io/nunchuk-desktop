@@ -794,3 +794,23 @@ void AppSetting::setEnableMultiDeviceSync(bool enableMultiDeviceSync)
         AppModel::instance()->startMultiDeviceSync(enableMultiDeviceSync_);
     }
 }
+
+QString AppSetting::currency()
+{
+    if(NunchukSettings::contains("currency")){
+        m_currency = NunchukSettings::value("currency").toString();
+    }
+    else{
+        NunchukSettings::setValue("currency", m_currency);
+    }
+    return m_currency;
+}
+
+void AppSetting::setCurrency(QString currency)
+{
+    if (m_currency != currency){
+        m_currency = currency;
+        NunchukSettings::setValue("currency", m_currency);
+        emit currencyChanged();
+    }
+}

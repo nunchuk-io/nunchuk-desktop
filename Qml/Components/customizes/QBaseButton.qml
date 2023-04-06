@@ -23,112 +23,21 @@ import DataPool 1.0
 import "../origins"
 
 Rectangle {
-    id: idBtn
-    // type enum
-    readonly property int eFIRST  : 0
-    readonly property int eSECOND : 1
-    readonly property int eTHIRD  : 2
-    readonly property int eFOURD  : 3
-    readonly property int eFIVE   : 4
-    readonly property int eSIX    : 5
-    readonly property int eSEVEN  : 6
-    readonly property int eEIGHT  : 7
-    readonly property int eNINE   : 8
-    readonly property int eTEN    : 9
-    readonly property int eELEVEN : 10
-    readonly property int eTWELVE : 11
-    readonly property int eTHIRTEEN:12
-    readonly property int eFOURTEEN:13
-    readonly property int eFIFTEEN :14
+    property int type: eTypeA
+    readonly property int eTypeA: 0
+    readonly property int eTypeB: 1
+    readonly property int eTypeC: 2
+    readonly property int eTypeD: 3
+    readonly property int eTypeE: 4
+    readonly property int eTypeF: 5
+    readonly property int eTypeG: 6
 
-    // State enum
-    readonly property int eDEFAULT  : 0
-    readonly property int eDISABLE  : 1
-    readonly property int eHOVER    : 2
-    readonly property int eCLICKED  : 3
-
+    // Click state
+    readonly property int eNORMAL: 0
+    readonly property int eHOVER : 1
+    readonly property int eDISABLE: 2
+    readonly property int eCLICKED: 3
     property var backgroundColor: GlobalData.backgroundColor[type]
     property var borderColor: GlobalData.borderColor[type]
     property var textColor: GlobalData.textColor[type]
-
-    property var icons : ["", "", "", ""]
-    property int type: eFIRST
-    border.width: 1
-    radius: 20
-    state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
-    states: [
-        State {
-            name: "default"
-            PropertyChanges {
-                target: idBtn
-                color: backgroundColor[eDEFAULT]
-                border.color: borderColor[eDEFAULT]
-            }
-            PropertyChanges {
-                target: idText
-                color: textColor[eDEFAULT]
-            }
-            PropertyChanges {
-                target: idIcon
-                source: "qrc:/Images/Images/" + icons[eDEFAULT]
-            }
-        },
-        State {
-            name: "hover"
-            PropertyChanges {
-                target: idBtn
-                color: backgroundColor[eHOVER]
-                border.color: borderColor[eHOVER]
-            }
-            PropertyChanges {
-                target: idText
-                color: textColor[eHOVER]
-            }
-            PropertyChanges {
-                target: idIcon
-                source: "qrc:/Images/Images/" + icons[eHOVER]
-            }
-        },
-        State {
-            name: "disable"
-            PropertyChanges {
-                target: idBtn
-                color: backgroundColor[eDISABLE]
-                border.color: borderColor[eDISABLE]
-            }
-            PropertyChanges {
-                target: idText
-                color: textColor[eDISABLE]
-            }
-            PropertyChanges {
-                target: idIcon
-                source: "qrc:/Images/Images/" + icons[eDISABLE]
-            }
-        },
-        State {
-            name: "clicked"
-            PropertyChanges {
-                target: idBtn
-                color: backgroundColor[eCLICKED]
-                border.color: borderColor[eCLICKED]
-            }
-            PropertyChanges {
-                target: idText
-                color: textColor[eCLICKED]
-            }
-            PropertyChanges {
-                target: idIcon
-                source: "qrc:/Images/Images/" + icons[eCLICKED]
-            }
-        }
-    ]
-
-    signal buttonClicked()
-    MouseArea {
-        id: btnMouse
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        anchors.fill: parent
-        onClicked: idBtn.buttonClicked()
-    }
 }

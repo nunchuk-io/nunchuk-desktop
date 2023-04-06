@@ -204,7 +204,7 @@ QScreen {
                 id: signerAssigneddlg
                 property int          signerType: model.single_signer_type
                 property bool isRemoteSigner: model.single_signer_type === NUNCHUCKTYPE.AIRGAP || model.single_signer_type === NUNCHUCKTYPE.FOREIGN_SOFTWARE
-                property bool isNeedGetXpubs:  (!signerAssigneddlg.isRemoteSigner && !model.single_signer_signed_isValid)
+                property bool isNeedGetXpubs:  model.single_signer_need_Topup_Xpub
                 width: 343
                 height: signerAssigneddlg.isRemoteSigner ? 73 : 53
                 Rectangle {
@@ -229,7 +229,7 @@ QScreen {
                     width: 4
                     height: parent.height - 18
                     radius: 2
-                    color: model.single_signer_signed_isValid ? "#C9DEF1" : "#FF7A00"
+                    color: model.single_signer_need_Topup_Xpub ? "#C9DEF1" : "#FF7A00"
                     anchors {
                         left: parent.left
                         leftMargin: 16
@@ -619,11 +619,12 @@ QScreen {
         busyOverlay.visible = true
         indexSignerNeedGetXpub = num
         nameSignerNeedGetXpub = name
-        generateSignerTimer.restart()
+        topUpXpubSignerTimer.restart()
     }
     Timer {
-        id: generateSignerTimer
+        id: topUpXpubSignerTimer
         interval: 1000
+        repeat: false
         onTriggered: {
             QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_TOP_UP_XPUBS_REQUEST, indexSignerNeedGetXpub)
         }
@@ -649,7 +650,6 @@ QScreen {
             indexSignerNeedGetXpub = -1
             nameSignerNeedGetXpub = ""
             busyIndi.sourceComponent = null
-            generateSignerTimer.stop()
         }
         onFinishedCreateWallet: {
             busyIndi.sourceComponent = null

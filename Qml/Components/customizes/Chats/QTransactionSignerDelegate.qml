@@ -111,7 +111,7 @@ Rectangle {
                     text: {
                         if (signerType === NUNCHUCKTYPE.NFC) {
                             var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
-                            return "Card ID: .." + textR
+                            return "Card ID: ••" + textR
                         } else {
                             return "XFP: " + signerxfp.toUpperCase()
                         }
@@ -132,13 +132,13 @@ Rectangle {
                 sourceComponent: {
                     if(alreadySigned ) return signedComp
                     else{
-                        if(AppModel.transactionInfo.status !== NUNCHUCKTYPE.PENDING_SIGNATURES || !isLocaluser) return null;
+                        if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES || !isLocaluser) return null;
                         else{
                             if(signerType === NUNCHUCKTYPE.AIRGAP
                               || signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE
                               || signerType === NUNCHUCKTYPE.NFC) return helpComp;
                             else if(signerType === NUNCHUCKTYPE.SERVER) return null;
-                            else{
+                            else {
                                 if(signerReadyToSign) return requiredSignature
                                 else requiredScan
                             }
@@ -148,7 +148,7 @@ Rectangle {
             }
         }
         Row {
-            visible: (AppModel.transactionInfo.status !== NUNCHUCKTYPE.PENDING_SIGNATURES) ?
+            visible: (tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES) ?
                          false : !alreadySigned && !signerReadyToSign && (signerType === NUNCHUCKTYPE.HARDWARE)
             height: 16
             spacing: 4

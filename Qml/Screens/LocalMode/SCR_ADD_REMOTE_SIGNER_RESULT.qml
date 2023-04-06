@@ -36,14 +36,17 @@ QScreen {
     property string remoteSignerPublickey: AppModel.singleSignerInfo.signerPublickey
     property string remoteSignerbip32: AppModel.singleSignerInfo.signerDerivationPath
     property string remoteSignerfingerprint: AppModel.singleSignerInfo.signerMasterFingerPrint
+    property bool   isPrimaryKey: AppModel.singleSignerInfo.isPrimaryKey
+    property int    signerType: AppModel.singleSignerInfo.signerType
     property int remoteSignerHealthStatus: -1
     property bool walletEscrow: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO) ? AppModel.walletInfo.walletEscrow :
                                 (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_ADD_SIGNER_TO_WALLET) ? AppModel.newWalletInfo.walletEscrow : false
     QOnScreenContent {
+        id:_content
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_145
+        label.text: STR.STR_QML_126
         onCloseClicked: {
             if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
                 QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT)
@@ -57,6 +60,45 @@ QScreen {
                 }
             }
         }
+
+        Row{
+            anchors {
+                left: _content.label.right
+                leftMargin: 12
+                verticalCenter: _content.label.verticalCenter
+            }
+            Rectangle{
+                width: 89
+                height: 24
+                radius: 20
+                color: "#FDD95C"
+                visible: isPrimaryKey
+                QText {
+                    text: STR.STR_QML_641
+                    font.family: "Lato"
+                    font.weight: Font.Medium
+                    font.pixelSize: 12
+                    anchors.centerIn: parent
+                    color: "#031F2B"
+                }
+            }
+            Rectangle{
+                width: signerTypeText.implicitWidth+10
+                height: 24
+                radius: 20
+                color: "#EAEAEA"
+                QText {
+                    id: signerTypeText
+                    text: GlobalData.signerNames(signerType)
+                    font.family: "Lato"
+                    font.weight: Font.Medium
+                    font.pixelSize: 12
+                    anchors.centerIn: parent
+                    color: "#031F2B"
+                }
+            }
+        }
+
         QNotification {
             id: notification
             anchors {
@@ -422,7 +464,7 @@ QScreen {
                 top: healthCheckInput.bottom
                 topMargin: 24
             }
-            type: eFIRST
+            type: eTypeA
             label: STR.STR_QML_137
             icons: ["health_031F2B.png", "health_C9DEF1.png", "health_C9DEF1.png", "health_031F2B.png"]
             fontPixelSize: 16

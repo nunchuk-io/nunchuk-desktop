@@ -22,12 +22,15 @@ import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.1
 import QtQuick.Controls.Styles 1.4
 import QtGraphicalEffects 1.12
+import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
-import "../../../Components/customizes"
 import "../../../Components/origins"
+import "../../../Components/customizes"
+import "../../../Components/customizes/Chats"
 import "../../../../localization/STR_QML.js" as STR
 
 Row {
@@ -35,6 +38,8 @@ Row {
     spacing: 0
     property bool  createRoom: false
     property alias modelCoversation: listView.model
+    readonly property bool attachmentSupported: ClientController.attachmentEnable
+
     signal createRoomDone()
     signal triggerEditGroupName()
     signal triggerAddMembers()
@@ -316,14 +321,17 @@ Row {
                             spacing: -8
                             anchors.verticalCenter: parent.verticalCenter
                             Repeater {
-                                model: (RoomWalletData.currentRoom !== null) ? RoomWalletData.currentRoom.userCount : 0
+                                model: (RoomWalletData.currentRoom !== null) ? RoomWalletData.currentRoom.talkersName : 0
                                 QAvatar {
                                     id: avatarheader
                                     width: 36
                                     height: 36
-                                    avatarUrl: RoomWalletData.currentRoom.users.get(index).avatar + RoomWalletData.currentRoom.users.change
-                                    username: RoomWalletData.currentRoom.users.get(index).name + RoomWalletData.currentRoom.users.change
+                                    username:  RoomWalletData.currentRoom.talkersName[index] + RoomWalletData.currentRoom.users.change
+                                    avatarUrl: RoomWalletData.currentRoom.talkersAvatar[index] + RoomWalletData.currentRoom.users.change
                                     displayStatus: false
+                                    Component.onCompleted: {
+                                        console.log(username);
+                                    }
                                 }
                             }
                         }
@@ -342,6 +350,7 @@ Row {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             enabled: ClientController.rooms ? ClientController.rooms.count > 0 : false
+                            visible: RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM)
                             onEnabledChanged: {
                                 if(chatinfoMouse.enabled === false){
                                     conversationInfo.width = 0
@@ -374,6 +383,7 @@ Row {
         spacing: 0
         QListView {
             id: listView
+            property bool instantiated: false
             readonly property bool noNeedMoreContent: RoomWalletData.currentRoom === null ? true : RoomWalletData.currentRoom.allHisLoaded
             readonly property int indicatorY: (contentY-originY) * (height/contentHeight)
             readonly property int indicatorMaxY: height-scrollContact.size*height
@@ -384,7 +394,6 @@ Row {
             clip: true
             focus: true
             enabled: RoomWalletData.currentRoom !== null && !createRoom
-            currentIndex: (RoomWalletData.currentRoom !== null && RoomWalletData.currentRoom.conversation !== null) ? RoomWalletData.currentRoom.conversation.currentIndex : 0
             delegate: MouseArea{
                 width: listView.width
                 height: cons.height == 0 ? 0 : (cons.height + 8)
@@ -403,6 +412,8 @@ Row {
                     init_event_id: model.init_event_id
                     txnId: model.txnId
                     evtId: model.evtId
+                    progressObject: model.progressInfo
+                    file_path: model.file_path
                     onRequestCancelWallet: conversationPageRoot.requestCancelWallet()
                 }
                 onWheel: {
@@ -413,30 +424,22 @@ Row {
                     }
                 }
             }
-            add: Transition {
-                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 300 }
-                NumberAnimation { property: "scale"  ; from: 1.5; to: 1; duration: 300 }
-            }
-            highlightFollowsCurrentItem: true
-            onModelChanged: {
-                var currentIndexFocus = 0;
-                if(RoomWalletData.currentRoom && RoomWalletData.currentRoom.conversation){
-                    currentIndexFocus = RoomWalletData.currentRoom.conversation.currentIndex
-                }
-                listView.positionViewAtIndex(currentIndexFocus, ListView.End)
-            }
-            onCurrentIndexChanged: { listView.positionViewAtIndex(currentIndex, ListView.End) }
+            onCountChanged: { if(instantiated) positionViewAtEnd() }
             onContentYChanged: ensurePreviousContent()
             Component.onCompleted: {
-                var currentIndexFocus = 0;
-                if(RoomWalletData.currentRoom && RoomWalletData.currentRoom.conversation){
-                    currentIndexFocus = RoomWalletData.currentRoom.conversation.currentIndex
-                }
-                listView.positionViewAtIndex(currentIndexFocus, ListView.End)
+                positionViewAtEnd()
+                instantiated = true;
             }
             function ensurePreviousContent() {
                 if (noNeedMoreContent) return
                 if(contentY < originY){ if(RoomWalletData.currentRoom) { RoomWalletData.currentRoom.getMoreContents() } }
+            }
+            function positionViewAtEnd() {
+                // Scroll to the last item in the list
+                var lastIndex = listView.count - 1
+                if (lastIndex >= 0) {
+                    listView.positionViewAtIndex(lastIndex, ListView.End)
+                }
             }
             section
             {
@@ -565,7 +568,7 @@ Row {
                     transformOrigin: Item.Center
                     source: "qrc:/Images/Images/OnlineMode/downend.png"
                 }
-                onClicked:  { listView.positionViewAtIndex((listView.count-1), ListView.End) }
+                onClicked:  { listView.positionViewAtEnd()}
             }
         }
         Item {
@@ -605,18 +608,172 @@ Row {
                     background: Rectangle {
                         anchors.fill: parent
                         radius: 8
-                        border.color: "#DEDEDE"
+                        border.color: attachedFile.containsDrag ? "red" : "#DEDEDE"
                         color: "#FFFFFF"
                     }
                     onActiveFocusChanged:{ if(activeFocus){RoomWalletData.currentRoom.markFiveMessagesAsRead()}}
+                    DropArea {
+                        id: attachedFile
+                        property string fileLocalPath: ""
+                        property int    file_mimType: filePlaceHolder._FILE_OTHER
+                        enabled: attachmentSupported
+                        anchors.fill: parent
+                        onDropped: {
+                            attachedFile.fileLocalPath = ""
+                            if(drop.urls.length > 1){ AppModel.showToast(-696, STR.STR_QML_696, EWARNING.EXCEPTION_MSG, "Error"); }
+                            else{
+                                var fileDropped = drop.urls[0]
+                                attachedFile.validateFileExtension(fileDropped)
+                                attachedFile.fileLocalPath = fileDropped
+                            }
+                        }
+
+                        function validateFileExtension(filePath) {
+                            const filters_image = ['png', 'jpg', 'jpeg'];
+                            const filters_video = ['mp4'];
+                            const filters_other = ['mp4'];
+                            var extension = filePath.split('.').pop();
+                            if(filters_image.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_IMAGE}
+                            else if(filters_video.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_VIDEO}
+                            else{ attachedFile.file_mimType = filePlaceHolder._FILE_OTHER }
+                        }
+                    }
                 }
-                Loader {
-                    id: commandButton
-                    sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : btnCreateSharedWallet
+
+                Rectangle {
+                    width: 60
+                    height: 60
+                    radius: 4
+                    anchors.right: messageField.right
+                    anchors.rightMargin: messageField.leftPadding
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: -height/2
+                    visible: attachmentSupported && (attachedFile.fileLocalPath !== "")
+                    QAttachment {
+                        id: filePlaceHolder
+                        width: 60
+                        height: 60
+                        sourceSize.width: filePlaceHolder.width
+                        sourceSize.height: filePlaceHolder.height
+                        fillMode: Image.PreserveAspectCrop
+                        file_mimeType: attachedFile.file_mimType
+                        file_path: attachedFile.fileLocalPath
+                        layer.enabled: true
+                        layer.effect: OpacityMask {
+                            maskSource: Rectangle {
+                                width: 60
+                                height: 60
+                                radius: 4
+                            }
+                        }
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 4
+                            opacity: 0.6
+                            visible: attachMouse.containsMouse || removeAttachMouse.containsMouse
+                        }
+                    }
+                    MouseArea {
+                        id: attachMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    QImage {
+                        width: 32
+                        height: 32
+                        sourceSize.width: width
+                        sourceSize.height: height
+                        source: "qrc:/Images/Images/OnlineMode/remove-button.png"
+                        anchors.left: parent.right
+                        anchors.leftMargin: -16
+                        anchors.bottom: parent.top
+                        anchors.bottomMargin: -16
+                        visible: attachMouse.containsMouse || removeAttachMouse.containsMouse
+                        MouseArea {
+                            id: removeAttachMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked:{ attachedFile.fileLocalPath = ""}
+                        }
+                    }
+                }
+
+                Row {
+                    spacing: 4
                     anchors {
                         left: messageField.right
                         leftMargin: 12
                         verticalCenter: messageField.verticalCenter
+                    }
+                    MouseArea {
+                        id: selectFileBtn
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        width: childrenRect.width
+                        height: childrenRect.height
+                        visible: (attachmentSupported && RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM))
+                        enabled: visible
+                        anchors.verticalCenter: parent.verticalCenter
+                        QImage {
+                            width: 24
+                            height: 24
+                            scale: selectFileBtn.pressed ? 1: selectFileBtn.containsMouse ? 1.1 : 1
+                            transformOrigin: Item.Center
+                            source: "qrc:/Images/Images/OnlineMode/attach_file.svg"
+                        }
+                        onClicked:{
+                            console.log(selectFileBtn.mouseX, selectFileBtn.mouseY, " | " , selectFileBtn.x, selectFileBtn.y)
+                            fileContextMenu.x = selectFileBtn.mouseX - fileContextMenu.menuWidth
+                            fileContextMenu.y = selectFileBtn.mouseY - fileContextMenu.height
+                            fileContextMenu.open()
+                        }
+                        QContextMenu {
+                            id: fileContextMenu
+                            menuWidth: 250
+                            labels: [
+                                STR.STR_QML_745,
+                                STR.STR_QML_746
+                            ]
+                            icons: [
+                                "qrc:/Images/Images/description.png",
+                                "qrc:/Images/Images/import_031F2B.png"
+                            ]
+                            enables: [
+                                true,
+                                true
+                            ]
+                            onItemClicked: {
+                                switch(index){
+                                case 0: // Send Photos or videos
+                                    openfileDialog.nameFilters = ["Image files (*.png *.jpg *.jpeg)", "Video files (*.mp4)"]
+                                    openfileDialog.open()
+                                    break;
+                                case 1: // Send any file
+                                    openfileDialog.nameFilters = ["All files (*.*)"]
+                                    openfileDialog.open()
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    Loader {
+                        sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : btnCreateSharedWallet
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM)
+                    }
+                }
+            }
+            Connections{
+                target: ClientController.rooms
+                onCurrentIndexChanged:{
+                    attachedFile.fileLocalPath = ""
+                    messageField.text = "";
+                    if(RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM)){
+                        conversationInfo.width = 0
                     }
                 }
             }
@@ -625,7 +782,13 @@ Row {
                     headerLoader.item.processCreateRoom(messageField.text)
                 }
                 else{
-                    if(RoomWalletData.currentRoom !== null && messageField.text !== "") {RoomWalletData.currentRoom.sendMessage(messageField.text)}
+                    if(attachmentSupported && (attachedFile.fileLocalPath !== "")){
+                        RoomWalletData.currentRoom.sendFile(messageField.text, attachedFile.fileLocalPath)
+                        attachedFile.fileLocalPath = ""
+                    }
+                    else{
+                        if(RoomWalletData.currentRoom !== null && messageField.text !== "") {RoomWalletData.currentRoom.sendMessage(messageField.text)}
+                    }
                     messageField.text = "";
                 }
             }
@@ -635,6 +798,7 @@ Row {
         id: conversationInfo
         width: 0
         height: parent.height
+        visible: RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM) && (width !== 0)
     }
     Component {
         id: btnCreateSharedWallet
@@ -682,6 +846,17 @@ Row {
             enabled: RoomWalletData.currentRoom
             onClicked:{
                 QMLHandle.sendEvent(EVT.EVT_HOME_SHARED_WL_SEND_REQUEST)
+            }
+        }
+    }
+    FileDialog {
+        id: openfileDialog
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["Image files (*.png *.jpg *.jpeg)", "Video files (*.mp4)"]
+        onAccepted: {
+            if(attachmentSupported && (openfileDialog.file !== "")){
+                RoomWalletData.currentRoom.sendFile("", openfileDialog.file)
+                attachedFile.fileLocalPath = ""
             }
         }
     }

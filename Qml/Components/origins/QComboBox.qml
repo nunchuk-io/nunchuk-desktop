@@ -17,8 +17,87 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.1
+import QtQuick 2.12
+import QtQuick.Controls 2.0
+import QtQuick.Controls.Styles 1.3
+import QtGraphicalEffects 1.0
+import Qt.labs.platform 1.1
 
 ComboBox {
+    id: control
+    width: 627
+    height: 48
+    validator: IntValidator {
+        top: 0
+        bottom: 8
+    }
+    background: Rectangle{
+        width: control.width
+        height: control.height
+        radius: 8
+        color:"#FFFFFF"
+        border.color: "#DEDEDE"
+        border.width: 1
+    }
+    indicator: Image {
+        id: name
+        width: 24
+        height: 24
+        x: control.width - width - control.rightPadding
+        y: control.topPadding + (control.availableHeight - height) / 2
+        source: "qrc:/Images/Images/expand-more-dark.svg"
+    }
+    popup: Popup {
+        y: control.height
+        width: control.width
+        implicitHeight: Math.min(contentItem.implicitHeight, 768)
+        padding: 0
+        background: Rectangle {
+            anchors.fill: parent
+            border.width: 1
+            border.color: "#DEDEDE"
+            color:"#FFFFFF"
+            radius: 8
+            layer.enabled: true
+            layer.effect: DropShadow {
+                horizontalOffset: 3
+                verticalOffset: 3
+                radius: 8.0
+                samples: 17
+                color: "#80000000"
+            }
+        }
+        contentItem: ListView {
+            clip: true
+            implicitHeight: contentHeight
+            model: control.popup.visible ? control.delegateModel : null
+            currentIndex: control.highlightedIndex
+//          section.property: "currency"
+//          section.criteria: ViewSection.FirstCharacter
+//          section.delegate: Label {
+//              x: 10
+//              text: section
+//          }
+            ScrollIndicator.vertical: ScrollIndicator { }
+        }
+    }
+    delegate: ItemDelegate {
+        text: modelData.displayName
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width
+        height: 48
+        QImage {
+            anchors {
+                right: parent.right
+                rightMargin: 24
+                verticalCenter: parent.verticalCenter
+            }
+            visible: control.currentIndex === index
+            width: 24; height: 24;
+            source: "qrc:/Images/Images/check-dark.svg"
+        }
+        font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
+        font.pixelSize: 16
+        highlighted: control.highlightedIndex == index
+    }
 }

@@ -27,7 +27,7 @@
 
 void SCR_ADD_HARDWARE_SIGNER_TO_WALLET_Entry(QVariant msg) {
     Q_UNUSED(msg);
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     AppModel::instance()->setAddSignerStep(-1);
     AppModel::instance()->setAddSignerPercentage(0);
     AppModel::instance()->setNewKeySignMessage("");
@@ -60,7 +60,7 @@ void EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER_HANDLER(QVariant msg) {
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     // Trimmed input
     QString signerNameInputted = msg.toMap().value("signerNameInputted").toString().simplified();
     QString xpubOrPublInputted = msg.toMap().value("xpubOrPublInputted").toString().simplified();

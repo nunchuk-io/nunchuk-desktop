@@ -34,13 +34,16 @@ import "../../../localization/STR_QML.js" as STR
 Rectangle {
     color: "#FFFFFF"
     signal addButtonClicked()
+    signal supportButtonClicked()
     property string btnTextLink: "btnTextLink"
     property string titleSuggest: "titleSuggest"
     property string titleWelcome: "titleWelcome"
     property string content: "content"
     property string icon: "icon"
     property int contentHeight: 180
+    property bool isPremiumUser: ClientController.user.isPremiumUser
     Column {
+        visible: !isPremiumUser
         width: 600
         anchors.centerIn: parent
         spacing: 12
@@ -122,6 +125,37 @@ Rectangle {
                 samples: 30
                 color: "#aa000000"
                 source: rectEmptyState
+            }
+        }
+    }
+    Column {
+        visible: isPremiumUser
+        width: 600
+        anchors.centerIn: parent
+        spacing: 12
+        QText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            font.family: "Montserrat"
+            font.pixelSize: 44
+            horizontalAlignment: Text.AlignHCenter
+            text: titleWelcome
+            color: "#000000"
+        }
+        QImage {
+            width: 600
+            height: 280
+            source: "qrc:/Images/Images/chat-empty-state.svg"
+        }
+
+        QTextButton {
+            width: 343
+            height: 48
+            type: eTypeB
+            label.text: STR.STR_QML_743
+            anchors.horizontalCenter: parent.horizontalCenter
+            label.font.pixelSize: 16
+            onButtonClicked: {
+                supportButtonClicked()
             }
         }
     }

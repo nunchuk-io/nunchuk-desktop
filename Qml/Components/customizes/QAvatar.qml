@@ -43,6 +43,7 @@ Rectangle {
     property int maxChar: 1
     readonly property QImage url: QImage{
         source: realSource
+        asynchronous: true
     }
 
     function getFistCharterName() {

@@ -26,6 +26,7 @@
 #include "bridgeifaces.h"
 #include "Draco.h"
 #include "Chats/ClientController.h"
+#include "ProfileSetting.h"
 
 void ROOT_Entry(QVariant msg) {
     Q_UNUSED(msg);
@@ -36,6 +37,7 @@ void ROOT_Exit(QVariant msg) {
 }
 
 void EVT_ONS_CLOSE_REQUEST_HANDLER(QVariant msg) {
+    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
     switch (msg.toInt()) {
     case E::STATE_ID_SCR_SEND:
     case E::STATE_ID_SCR_ADD_WALLET:
@@ -101,18 +103,28 @@ void EVT_ROOT_PROMT_PASSPHRASE_HANDLER(QVariant msg) {
 
 void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
     if(CLIENT_INSTANCE->isNunchukLoggedIn()){
-        QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
-    }
-    else{
-        QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
-        QTimer::singleShot(100, []() {
-            if(CLIENT_INSTANCE->checkStayLoggedIn()){
-                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_ONLINE_LOGIN_SUCCEED);
-            }
+        QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+        QTimer::singleShot(1000, []() {
+            emit CLIENT_INSTANCE->contactsChanged();
         });
     }
-    QTimer::singleShot(1000, []() {
-        emit CLIENT_INSTANCE->contactsChanged();
+    else {
+        if (CLIENT_INSTANCE->checkStayLoggedIn()) {
+            Draco::instance()->getMe();
+            if(Draco::instance()->Uid() == CLIENT_INSTANCE->getMe().email){
+                QQuickViewer::instance()->sendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
+            }
+            else{
+                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+            }
+        }
+        else{
+            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+        }
+    }
+    QTimer::singleShot(0,[=]{
+        AppModel::instance()->timerFeeRatesHandle();
+        ProfileSetting::instance()->createCurrencies();
     });
 }
 
@@ -200,6 +212,24 @@ void EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST_HANDLER(QVariant msg)
+{
+
+}
+
+void EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_NUNCHUK_LOGIN_SUCCEEDED_HANDLER(QVariant msg) {
+    DBG_INFO;
+    QTimer::singleShot(1000,[](){
+        QMap<QString, QVariant> makeInstanceData;
+        makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME_ONLINE;
+        AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
+    });
+}
+
+void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
 {
 
 }

@@ -100,7 +100,7 @@ QScreen {
 
         QButtonTextLink {
             height: 48
-            label: "Back to previous"
+            label: STR.STR_QML_059
             fontPixelSize: 16
             anchors {
                 left: parent.left

@@ -41,7 +41,6 @@ Wallet::Wallet() :
     description_(""),
     descriptior_(""),
     creationMode_((int)CreationMode::CREATE_NEW_WALLET),
-    containsHWSigner_(false),
     isSharedWallet_(false),
     roomId_(""),
     initEventId_("")
@@ -74,7 +73,6 @@ Wallet::Wallet(const QString &pr_id,
     description_(pr_description),
     descriptior_(""),
     creationMode_((int)CreationMode::CREATE_NEW_WALLET),
-    containsHWSigner_(false),
     isSharedWallet_(false),
     roomId_(""),
     initEventId_("")
@@ -123,12 +121,9 @@ QString Wallet::balanceDisplay() const {
     }
 }
 
-QString Wallet::balanceUSD() const
+QString Wallet::balanceCurrency() const
 {
-    double exRates = AppModel::instance()->getExchangeRates()/100000000;
-    double balanceusd = exRates*balanceSats();
-    QLocale locale(QLocale::English);
-    return locale.toString(balanceusd, 'f', 2);
+    return qUtils::currencyLocale(balanceSats());
 }
 
 QString Wallet::createDate() const {
@@ -380,15 +375,10 @@ void Wallet::setCreationMode(int creationMode)
 
 bool Wallet::getContainsHWSigner() const
 {
-    return containsHWSigner_;
-}
-
-void Wallet::setContainsHWSigner(bool containsHWSigner)
-{
-    if(containsHWSigner_ != containsHWSigner){
-        containsHWSigner_ = containsHWSigner;
-        emit containsHWSignerChanged();
+    if(singleSignersAssigned_){
+        return singleSignersAssigned_.data()->containsHardwareKey();
     }
+    return false;
 }
 
 int Wallet::nShared() const
@@ -478,8 +468,8 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
             return qVariantFromValue(d_[index.row()]->balanceDisplay());
         case wallet_BalanceBTC_Role:
             return qVariantFromValue(d_[index.row()]->balanceBTC());
-        case wallet_BalanceUSD_Role:
-            return qVariantFromValue(d_[index.row()]->balanceUSD());
+        case wallet_BalanceCurrency_Role:
+            return qVariantFromValue(d_[index.row()]->balanceCurrency());
         case wallet_Escrow_Role:
             return d_[index.row()]->escrow();
         case wallet_SingleSignerList_Role:
@@ -519,7 +509,7 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_AddressType_Role]  = "wallet_AddressType";
     roles[wallet_Balance_Role]      = "wallet_Balance";
     roles[wallet_BalanceBTC_Role]   = "wallet_Balance_BTC";
-    roles[wallet_BalanceUSD_Role]   = "wallet_Balance_USD";
+    roles[wallet_BalanceCurrency_Role]   = "wallet_Balance_Currency";
     roles[wallet_createDate_Role]   = "wallet_CreateDate";
     roles[wallet_Escrow_Role]       = "wallet_Escrow";
     roles[wallet_SingleSignerList_Role]     = "wallet_singleSignersAssigned";
@@ -742,28 +732,6 @@ void WalletListModel::notifyMasterSignerDeleted(const QString &masterSignerId)
     endResetModel();
 }
 
-void WalletListModel::renameSignerById(const QString &id, const QString &newname)
-{
-    beginResetModel();
-    foreach (QWalletPtr i , d_ ){
-        if(NULL != i.data()->singleSignersAssigned()){
-            i.data()->singleSignersAssigned()->renameById(id, newname);
-        }
-    }
-    endResetModel();
-}
-
-void WalletListModel::renameSignerByXfp(const QString& xfp, const QString &newname)
-{
-    beginResetModel();
-    foreach (QWalletPtr i , d_ ){
-        if(NULL != i.data()->singleSignersAssigned()){
-            i.data()->singleSignersAssigned()->renameByXfp(xfp, newname);
-        }
-    }
-    endResetModel();
-}
-
 int WalletListModel::getWalletIndexById(const QString &walletId)
 {
     for (int i = 0; i < d_.count(); i++) {
@@ -829,13 +797,12 @@ void WalletListModel::updateSharedWalletById(const QString &wallet_id, const QSt
     endResetModel();
 }
 
-void WalletListModel::updateSignerNameInWalletById(const QString &wallet_id, const QString &xfp, const QString &name)
+void WalletListModel::updateSignerOfRoomWallet(const QString &wallet_id, const SignerAssigned &signer)
 {
     foreach (QWalletPtr it , d_ ){
         if(0 == QString::compare(it.data()->id(), wallet_id, Qt::CaseInsensitive)){
             if(it.data()->singleSignersAssigned()){
-                it.data()->singleSignersAssigned()->renameByXfp(xfp, name);
-                it.data()->singleSignersAssigned()->updateIsLocalSigner(xfp, false);
+                it.data()->singleSignersAssigned()->updateSignerOfRoomWallet(signer);
             }
         }
     }

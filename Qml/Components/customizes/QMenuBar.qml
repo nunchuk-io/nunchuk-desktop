@@ -21,6 +21,7 @@ import QtQuick 2.4
 import QtQuick.Controls 2.1
 import QtQuick.Controls.Styles 1.4
 import QtGraphicalEffects 1.0
+import NUNCHUCKTYPE 1.0
 import "../origins"
 import "../customizes"
 import "../customizes/Chats"
@@ -34,14 +35,19 @@ Rectangle {
     property alias labels: psContextMenu.labels
     property alias enables: psContextMenu.enables
     property string username: "Guest"
-    property int currentIndex: 0
-    property var icons: [
-        "qrc:/Images/Images/message-light.svg",
-        "qrc:/Images/Images/wallet-light.svg"
-    ]
-
+    property int currentId: AppModel.tabIndex
+    property var icons: {
+        var ls = [];
+        ls.push({id:NUNCHUCKTYPE.WALLET_TAB,icon:"qrc:/Images/Images/wallet-light.svg"})
+        if (ClientController.user.isPremiumUser) {
+            ls.push({id:NUNCHUCKTYPE.SERVICE_TAB,icon:"qrc:/Images/Images/services-dark.svg"})
+        }
+        ls.push({id:NUNCHUCKTYPE.CHAT_TAB,icon:"qrc:/Images/Images/message-light.svg"})
+        return ls
+    }
     signal onlineModeRequest()
     signal localModeRequest()
+    signal serviceRequest()
     signal openSettingRequest()
     signal signoutRequest()
     signal signinRequest()
@@ -68,7 +74,7 @@ Rectangle {
         anchors.topMargin: 35
         Repeater {
             id: chatlist
-            model: 2
+            model: icons.length
             QMenuBarItem {
                 width: 48
                 height: 48
@@ -77,18 +83,21 @@ Rectangle {
                     try{
                         show = ClientController.rooms.totalUnread > 0 || ClientController.contactsReceived.count > 0
                     }catch(e){}
-                    return index == 0 && show
+                    return icons[index].id === NUNCHUCKTYPE.CHAT_TAB && show
                 }
 
-                icon: icons[index]
-                isCurrentItem: currentIndex === index
+                icon: icons[index].icon
+                isCurrentItem: currentId === icons[index].id
                 onButtonClicked: {
-                    switch (index) {
-                    case 0:
+                    switch (icons[index].id) {
+                    case NUNCHUCKTYPE.CHAT_TAB:
                         onlineModeRequest()
                         break;
-                    case 1:
+                    case NUNCHUCKTYPE.WALLET_TAB:
                         localModeRequest()
+                        break;
+                    case NUNCHUCKTYPE.SERVICE_TAB:
+                        serviceRequest()
                         break;
                     default:
                         break;

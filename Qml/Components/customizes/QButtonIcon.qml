@@ -23,12 +23,90 @@ import DataPool 1.0
 import "../origins"
 
 QBaseButton {
-    id: idRootStyle1
+    id: idBtn
     property string label: "Value"
     property int fontPixelSize: 10
     property int iconSize: 24
     property bool iconInRight: false
+    property var icons : ["", "", "", ""]
+    border.width: 1
+    radius: 20
+    state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
+    states: [
+        State {
+            name: "default"
+            PropertyChanges {
+                target: idBtn
+                color: backgroundColor[eNORMAL]
+                border.color: borderColor[eNORMAL]
+            }
+            PropertyChanges {
+                target: idText
+                color: textColor[eNORMAL]
+            }
+            PropertyChanges {
+                target: idIcon
+                source: "qrc:/Images/Images/" + icons[eNORMAL]
+            }
+        },
+        State {
+            name: "hover"
+            PropertyChanges {
+                target: idBtn
+                color: backgroundColor[eHOVER]
+                border.color: borderColor[eHOVER]
+            }
+            PropertyChanges {
+                target: idText
+                color: textColor[eHOVER]
+            }
+            PropertyChanges {
+                target: idIcon
+                source: "qrc:/Images/Images/" + icons[eHOVER]
+            }
+        },
+        State {
+            name: "disable"
+            PropertyChanges {
+                target: idBtn
+                color: backgroundColor[eDISABLE]
+                border.color: borderColor[eDISABLE]
+            }
+            PropertyChanges {
+                target: idText
+                color: textColor[eDISABLE]
+            }
+            PropertyChanges {
+                target: idIcon
+                source: "qrc:/Images/Images/" + icons[eDISABLE]
+            }
+        },
+        State {
+            name: "clicked"
+            PropertyChanges {
+                target: idBtn
+                color: backgroundColor[eCLICKED]
+                border.color: borderColor[eCLICKED]
+            }
+            PropertyChanges {
+                target: idText
+                color: textColor[eCLICKED]
+            }
+            PropertyChanges {
+                target: idIcon
+                source: "qrc:/Images/Images/" + icons[eCLICKED]
+            }
+        }
+    ]
 
+    signal buttonClicked()
+    MouseArea {
+        id: btnMouse
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        anchors.fill: parent
+        onClicked: idBtn.buttonClicked()
+    }
     Row {
         anchors.centerIn: parent
         spacing: 8

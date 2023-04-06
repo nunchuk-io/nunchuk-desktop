@@ -1924,3 +1924,187 @@ void nunchukiface::ForceRefreshWallet(const std::string &wallet_id, QWarningMess
     }
 }
 
+nunchuk::MasterSigner nunchukiface::ImportTapsignerMasterSigner(const std::vector<unsigned char> &data,
+                                                                const std::string &backup_key,
+                                                                const std::string &name,
+                                                                bool is_primary,
+                                                                QWarningMessage &msg)
+{
+    nunchuk::MasterSigner ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportTapsignerMasterSigner(data,
+                                                                          backup_key,
+                                                                          name,
+                                                                          ImportTapsignerMasterSignerProgress,
+                                                                          is_primary);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+void nunchukiface::VerifyTapsignerBackup(const std::vector<unsigned char> &data,
+                                         const std::string &backup_key,
+                                         const std::string &master_signer_id,
+                                         QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->VerifyTapsignerBackup(data,
+                                                                    backup_key,
+                                                                    master_signer_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+nunchuk::TapsignerStatus nunchukiface::BackupTapsigner(tap_protocol::Tapsigner *tapsigner,
+                                                       const std::string &cvc,
+                                                       const std::string &master_signer_id,
+                                                       QWarningMessage &msg)
+{
+    nunchuk::TapsignerStatus ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->BackupTapsigner(tapsigner,
+                                                                    cvc,
+                                                                    master_signer_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::HealthStatus nunchukiface::HealthCheckTapsignerMasterSigner(tap_protocol::Tapsigner *tapsigner,
+                                                                     const std::string &cvc,
+                                                                     const std::string &master_signer_id,
+                                                                     std::string &message,
+                                                                     std::string &signature,
+                                                                     std::string &path,
+                                                                     QWarningMessage &msg)
+{
+    nunchuk::HealthStatus ret = nunchuk::HealthStatus::SIGNATURE_INVALID;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->HealthCheckTapsignerMasterSigner(tapsigner,
+                                                                                     cvc,
+                                                                                     master_signer_id,
+                                                                                     message,
+                                                                                     signature,
+                                                                                     path);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::TapsignerStatus nunchukiface::WaitTapsigner(tap_protocol::Tapsigner *tapsigner,
+                                                     std::function<bool (int)> progress,
+                                                     QWarningMessage &msg)
+{
+    nunchuk::TapsignerStatus ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->WaitTapsigner(tapsigner,
+                                                                  progress);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+void nunchukiface::CacheTapsignerMasterSignerXPub(tap_protocol::Tapsigner *tapsigner,
+                                                  const std::string &cvc,
+                                                  const std::string &master_signer_id,
+                                                  QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->CacheTapsignerMasterSignerXPub(tapsigner,
+                                                                             cvc,
+                                                                             master_signer_id,
+                                                                             CacheTapsignerMasterSignerXPubProgress);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+void nunchukiface::CacheDefaultTapsignerMasterSignerXPub(tap_protocol::Tapsigner *tapsigner,
+                                                         const std::string &cvc,
+                                                         const std::string &master_signer_id,
+                                                         QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->CacheDefaultTapsignerMasterSignerXPub(tapsigner,
+                                                                                    cvc,
+                                                                                    master_signer_id,
+                                                                                    CacheDefaultTapsignerMasterSignerXPubProgress);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+std::string nunchukiface::SignHealthCheckMessage(const nunchuk::SingleSigner &signer,
+                                                 const std::string &message,
+                                                 QWarningMessage& msg)
+{
+    std::string ret = "";
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->SignHealthCheckMessage(signer,
+                                                                     message);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}

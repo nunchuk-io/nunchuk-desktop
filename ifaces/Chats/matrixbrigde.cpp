@@ -326,9 +326,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                     ret.data()->setWalletInfo(realWl);
                 }
                 for (SignerAssigned signer : ret.data()->walletSigners()->fullList()) {
-                    if(!signer.is_localuser ){
-                        AppModel::instance()->walletList()->updateSignerNameInWalletById(wallet_id, signer.xfp, signer.name);
-                    }
+                    AppModel::instance()->walletList()->updateSignerOfRoomWallet(wallet_id, signer);
                 }
                 if(AppModel::instance()->walletList()->rowCount() == 1){
                     AppModel::instance()->setWalletListCurrentIndex(0);
@@ -397,6 +395,7 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
                                       QWarningMessage &msg)
 {
     AppSetting::instance()->setGroupSetting(account);
+    qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
     nunchuk::AppSettings setting;
 
     // Chain setting

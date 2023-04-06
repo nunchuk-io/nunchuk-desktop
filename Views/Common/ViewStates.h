@@ -1,3 +1,23 @@
+/************************************************************************* 
+* This file is part of the Nunchuk software (https://nunchuk.io/)        * 
+* Copyright (C) 2020-2022 Enigmo                                         * 
+* Copyright (C) 2022 Nunchuk                                             * 
+*                                                                        * 
+* This program is free software; you can redistribute it and/or          * 
+* modify it under the terms of the GNU General Public License            * 
+* as published by the Free Software Foundation; either version 3         * 
+* of the License, or (at your option) any later version.                 * 
+*                                                                        * 
+* This program is distributed in the hope that it will be useful,        * 
+* but WITHOUT ANY WARRANTY; without even the implied warranty of         * 
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          * 
+* GNU General Public License for more details.                           * 
+*                                                                        * 
+* You should have received a copy of the GNU General Public License      * 
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.  * 
+*                                                                        * 
+**************************************************************************/
+
 
 #ifndef VIEWSTATES_H
 #define VIEWSTATES_H
@@ -25,10 +45,16 @@
 #include "STATE_ID_SCR_CREATE_NEW_SEED.h"
 #include "STATE_ID_SCR_CREATE_SHARED_WALLET.h"
 #include "STATE_ID_SCR_CREATE_TRANSACTION.h"
+#include "STATE_ID_SCR_DUMMY_TRANSACTION_INFO.h"
+#include "STATE_ID_SCR_ENTER_BACKUP_PASSWORD.h"
 #include "STATE_ID_SCR_HOME.h"
 #include "STATE_ID_SCR_HOME_ONLINE.h"
 #include "STATE_ID_SCR_INPUT_PASSPHRASE.h"
 #include "STATE_ID_SCR_INPUT_PIN.h"
+#include "STATE_ID_SCR_KEY_RECOVERY.h"
+#include "STATE_ID_SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION.h"
+#include "STATE_ID_SCR_LOCKDOWN_ANSER_SECURITY_QUESTION.h"
+#include "STATE_ID_SCR_LOCKDOWN_SUCCESS.h"
 #include "STATE_ID_SCR_LOGIN_ONLINE.h"
 #include "STATE_ID_SCR_LOGIN_WITH_SOFTWARE_KEY.h"
 #include "STATE_ID_SCR_MASTER_SIGNER_INFO.h"
@@ -39,10 +65,13 @@
 #include "STATE_ID_SCR_RECEIVE.h"
 #include "STATE_ID_SCR_RECOVER_SHARED_WALLET.h"
 #include "STATE_ID_SCR_RECOVER_SOFTWARE_SIGNER.h"
+#include "STATE_ID_SCR_REENTER_YOUR_PASSWORD.h"
 #include "STATE_ID_SCR_REMOTE_SIGNER_INFO.h"
 #include "STATE_ID_SCR_REPLACE_PRIMARY_KEY.h"
 #include "STATE_ID_SCR_REVIEW_SHARED_WALLET.h"
+#include "STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD.h"
 #include "STATE_ID_SCR_SEND.h"
+#include "STATE_ID_SCR_SERVICE_SETTINGS.h"
 #include "STATE_ID_SCR_SHARED_WALLET_CONFIGURE.h"
 #include "STATE_ID_SCR_SHARED_WL_DEVICE_REGISTRATION.h"
 #include "STATE_ID_SCR_SIGN_IN.h"
@@ -50,6 +79,7 @@
 #include "STATE_ID_SCR_SIGN_IN_MANUALLY.h"
 #include "STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION.h"
 #include "STATE_ID_SCR_STARTING_CREATE_SIGNER.h"
+#include "STATE_ID_SCR_TAPSIGNER_RECOVERED_SUCCESS.h"
 #include "STATE_ID_SCR_TRANSACTION_HISTORY.h"
 #include "STATE_ID_SCR_TRANSACTION_INFO.h"
 #include "STATE_ID_SCR_UNLOCK_DB.h"

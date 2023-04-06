@@ -29,15 +29,17 @@ QtObject {
     property int    stateID     : -1
     property string fingerPrint : ""
     property int    settingIndex: 0
+    property int    serviceIndex: 0
     property bool   customMsgHealthcheck: false
     property var backgroundColor: [
-        ["#F6D65D", "#9CAEB8", "#96833B", "#B8A048"],                  // eFIRST
-        ["transparent", "transparent", "#031F2B", "#1A333D"],          // eSECOND
-        ["transparent", "#F1FAFE", "#F1FAFE", "#c5cdd1"],              // eTHIRD
-        ["transparent", "transparent", "#96833B", "#B8A048"],          // eFOURD
-        ["transparent", Qt.rgba(218, 222, 224, 0.1), "transparent", Qt.rgba(218, 222, 224, 0.4)],         // eFIVE
+        ["#F6D65D", "#96833B", "#9CAEB8", "#B8A048"],
+        ["transparent", "#031F2B", "transparent", "#1A333D"],
+        ["transparent", Qt.rgba(218, 222, 224, 0.1), "transparent", Qt.rgba(218, 222, 224, 0.4)],
+        ["transparent", "#9FA0A1","transparent", "#8B8C8C"],
+        ["#031F2B", "#1A333D","#EAEAEA", "#031F2B"],
+        ["#FFFFFF", "#031F2B","#EAEAEA", "#031F2B"],
+        ["#FFFFFF", "#031F2B","#EAEAEA", "#1A333D"],
 
-        ["transparent", "transparent", "transparent", "transparent"], // eSIX
         ["transparent", "transparent", "transparent", "transparent"], // eSEVEN
         ["transparent", "transparent", "transparent", "transparent"], // eEIGHT
         ["transparent", "transparent", "transparent", "transparent"], // eNINE
@@ -49,13 +51,14 @@ QtObject {
         ["transparent", "transparent", "transparent", "transparent"]  // eFIFTEEN
     ]
     property var borderColor: [
-        ["transparent", "transparent", "transparent", "#F6D65D"],       // eFIRST
-        ["#031F2B", "#9CAEB8", "#031F2B", "#031F2B"],                   // eSECOND
-        ["#F1FAFE", "#9CAEB8", "transparent", "#F1FAFE"],               // eTHIRD
-        ["#F6D65D", "#839096", "transparent", "#F6D65D"],               // eFOURD
-        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],                   // eFIVE
+        ["transparent", "transparent", "transparent", "#F6D65D"],
+        ["#031F2B", "#031F2B", "#9CAEB8", "#031F2B"],
+        ["#F1FAFE", Qt.rgba(241, 250, 254, 0.4), "#F1FAFE", "#F1FAFE"],
+        ["#FF7A00", "#FF7A00", "#FF7A00", "#FF7A00"],
+        ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"],
+        ["#FFFFFF", "#031F2B", "#EAEAEA", "#595959"],
+        ["#FFFFFF", "#FFFFFF", "#EAEAEA", "#FFFFFF"],
 
-        ["transparent", "transparent", "transparent", "transparent"],   // eSIX
         ["transparent", "transparent", "transparent", "transparent"],   // eSEVEN
         ["transparent", "transparent", "transparent", "transparent"],   // eEIGHT
         ["transparent", "transparent", "transparent", "transparent"],   // eNINE
@@ -67,13 +70,14 @@ QtObject {
         ["transparent", "transparent", "transparent", "transparent"]    // eFIFTEEN
     ]
     property var textColor: [
-        ["#031F2B", "#C9DEF1", "#C9DEF1", "#031F2B"],// eFIRST
-        ["#031F2B", "#9CAEB8", "#F1FAFE", "#F1FAFE"],// eSECOND
-        ["#F1FAFE", "#9CAEB8", "#031F2B", "#031F2B"],// eTHIRD
-        ["#F6D65D", "#839096", "#C9DEF1", "#031F2B"],// eFOURD
-        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],// eFIVE
+        ["#031F2B", "#C9DEF1", "#C9DEF1", "#031F2B"],
+        ["#031F2B", "#F1FAFE", "#9CAEB8", "#F1FAFE"],
+        ["#F1FAFE", "#F1FAFE", "#F1FAFE", "#F1FAFE"],
+        ["#FF7A00", "#FFFFFF", "#FF7A00", "#FFFFFF"],
+        ["#FFFFFF", "#FFFFFF", "#595959", "#FFFFFF"],
+        ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
+        ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
 
-        ["transparent", "transparent", "transparent", "transparent"],// eSIX
         ["transparent", "transparent", "transparent", "transparent"],// eSEVEN
         ["transparent", "transparent", "transparent", "transparent"],// eEIGHT
         ["transparent", "transparent", "transparent", "transparent"],// eNINE
@@ -131,7 +135,7 @@ QtObject {
         case NUNCHUCKTYPE.SOFTWARE: n = "SOFTWARE"; break
         case NUNCHUCKTYPE.FOREIGN_SOFTWARE: n = "FOREIGN"; break
         case NUNCHUCKTYPE.NFC: n = "NFC"; break
-        case NUNCHUCKTYPE.COLDCARD_NFC: n = "NFC"; break
+        case NUNCHUCKTYPE.COLDCARD_NFC: n = "COLDCARD-NFC"; break
         case NUNCHUCKTYPE.SERVER: n = "PLATFORM"; break
         default: n = ""
         }
@@ -146,7 +150,7 @@ QtObject {
         case NUNCHUCKTYPE.SOFTWARE: name = STR.STR_QML_046; break
         case NUNCHUCKTYPE.FOREIGN_SOFTWARE: name = STR.STR_QML_047; break
         case NUNCHUCKTYPE.NFC: name = STR.STR_QML_678; break
-        case NUNCHUCKTYPE.COLDCARD_NFC: name = STR.STR_QML_685; break
+        case NUNCHUCKTYPE.COLDCARD_NFC: name = "COLDCARD-NFC"; break
         case NUNCHUCKTYPE.SERVER: name = "Platform"; break
         default: name = ""
         }

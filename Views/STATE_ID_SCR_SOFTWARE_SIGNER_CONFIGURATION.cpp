@@ -37,8 +37,8 @@ void SCR_SOFTWARE_SIGNER_CONFIGURATION_Exit(QVariant msg) {
 bool replaceKey(const QString &mnemonic, const QString &passphrase){
     QMasterSignerPtr curKey = AppModel::instance()->getPrimaryKey();
     if(!curKey) return false;
-    QString curAddress = QString::fromStdString(curKey->primaryKey().get_address());
-    QString curUsername = QString::fromStdString(curKey->primaryKey().get_account());
+    QString curAddress = QString::fromStdString(curKey->originPrimaryKey().get_address());
+    QString curUsername = QString::fromStdString(curKey->originPrimaryKey().get_account());
     QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
     QString nonce = Draco::instance()->pkey_manual_nonce(curAddress,curUsername,address,"change_pkey");
     QString curSignature = bridge::SignLoginMessage(curKey->id(),nonce);

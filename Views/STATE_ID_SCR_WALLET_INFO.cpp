@@ -32,11 +32,7 @@ void SCR_WALLET_INFO_Entry(QVariant msg) {
 }
 
 void SCR_WALLET_INFO_Exit(QVariant msg) {
-    if(AppModel::instance()->walletInfo()){
-        if(AppModel::instance()->walletInfo()->singleSignersAssigned()){
-            AppModel::instance()->walletInfo()->singleSignersAssigned()->initIsColdCard();
-        }
-    }
+
 }
 
 void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg) {
@@ -65,7 +61,9 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
         if(wallet->isSharedWallet()){
             QString roomId = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet->id());
             int index = CLIENT_INSTANCE->rooms()->getIndex(roomId);
-            ClientController::instance()->leaveRoom(index);
+            if(index >= 0){
+                ClientController::instance()->leaveRoom(index);
+            }
         }
     }
 }

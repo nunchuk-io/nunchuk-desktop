@@ -92,12 +92,6 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
             QWarningMessage msgwarning;
             bridge::nunchukSendSignerPassphrase( master_signer_id, passphraseInput, msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-                if(mastersigners){
-                    AppModel::instance()->setMasterSignerList(mastersigners);
-                }
-                QMasterSignerPtr currentMastersigner = mastersigners.data()->getMasterSignerById(AppModel::instance()->masterSignerInfo()->id());
-                AppModel::instance()->masterSignerInfo()->setNeedPassphraseSent(currentMastersigner.data()->needPassphraseSent());
                 bool isCheckHealth = passPhraseObject.toMap().value("is_check_heath").toBool();
                 bool isTopUp = passPhraseObject.toMap().value("is_top_up").toBool();
                 bool isRemove = passPhraseObject.toMap().value("is_remove").toBool();
@@ -111,7 +105,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
                     DBG_INFO << "CONTINUE TOP UP SIGNER";
                     QMap<QString, QVariant> data;
                     data["state_id"] = state_id;
-                    data["masterSignerId"] = currentMastersigner->id();
+                    data["masterSignerId"] = master_signer_id;
                     QTimer::singleShot(100,[=](){
                         AppModel::instance()->startTopXPUBsMasterSigner(QVariant::fromValue(data));
                     });
@@ -143,17 +137,9 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
         QWarningMessage msgwarning;
         bridge::nunchukSendSignerPassphrase( mastersigner_id, passphraseInput, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-            DBG_INFO << "CONTINUE ADD SIGNER TO WALLET";
             if(AppModel::instance()->masterSignerList()){
-                AppModel::instance()->masterSignerList()->updateDeviceNeedPassphraseSentById(mastersigner_id, false);
                 AppModel::instance()->masterSignerList()->setUserChecked(true, mastersigner_index);
             }
-        }
-        else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_079);
         }
         QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         break;

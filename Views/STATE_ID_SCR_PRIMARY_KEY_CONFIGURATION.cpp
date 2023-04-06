@@ -48,7 +48,7 @@ void SCR_PRIMARY_KEY_CONFIGURATION_Exit(QVariant msg) {
 }
 
 void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->setMasterSignerInfo( QMasterSignerPtr(new MasterSigner()));
+    AppModel::instance()->setMasterSignerInfo( QMasterSignerPtr(new QMasterSigner()));
     QMap<QString,QVariant> maps = msg.toMap();
     QString mnemonic = maps["mnemonic"].toString();
     QString username = maps["username"].toString();
@@ -86,7 +86,6 @@ void EVT_PRIMARY_KEY_CONFIGURATION_FINISHED_HANDLER(QVariant msg) {
 
 void EVT_PRIMARY_KEY_SIGN_IN_SUCCEED_HANDLER(QVariant msg)
 {
-    DBG_INFO;
     QString signername = msg.toMap().value("signername").toString();
     QString passphrase = msg.toMap().value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();

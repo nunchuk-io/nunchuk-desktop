@@ -38,13 +38,12 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
         for (int i = 0; i < AppModel::instance()->masterSignerList()->rowCount(); i++) {
             QMasterSignerPtr ret = AppModel::instance()->masterSignerList()->getMasterSignerByIndex(i);
             if(ret && ret.data()->checked()){
-                QSingleSignerPtr signer = QSingleSignerPtr(new SingleSigner());
+                QSingleSignerPtr signer = QSingleSignerPtr(new QSingleSigner());
                 signer.data()->setName(ret.data()->name());
                 signer.data()->setMasterSignerId(ret.data()->id());
                 signer.data()->setSignerType(ret.data()->signerType());
                 signer.data()->setDevicetype(ret.data()->device()->type());
                 signer.data()->setCardId(ret.data()->device()->cardId());
-                signer.data()->setIsValid(false);
                 signer.data()->setMasterFingerPrint(ret.data()->fingerPrint());
                 if(signer){
                     AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
@@ -72,30 +71,13 @@ void EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER_HANDLER(QVariant msg) {
     int signerIndex = msg.toInt();
     QSingleSignerPtr signer = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->getSingleSignerByIndex(signerIndex);
     if(signer){
-        if((int)ENUNCHUCK::SignerType::SOFTWARE != signer.data()->signerType()
-                && (int)ENUNCHUCK::SignerType::HARDWARE != signer.data()->signerType()
-                && (int)ENUNCHUCK::SignerType::NFC != signer.data()->signerType()){
-            AppModel::instance()->remoteSignerList()->setUserCheckedByFingerprint(false, signer->masterFingerPrint());
-        }
-        else{
-            AppModel::instance()->masterSignerList()->setUserCheckedById(false, signer.data()->masterSignerId());
-            QMasterSignerPtr target_sn = AppModel::instance()->masterSignerList()->getMasterSignerById(signer.data()->masterSignerId());
-            if(target_sn && target_sn->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE){
-                QWarningMessage warningmsg;
-                bridge::nunchukClearSignerPassphrase(signer.data()->masterSignerId(), warningmsg);
-                if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-                    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-                    QMasterSignerPtr currentMastersigner = mastersigners.data()->getMasterSignerById(signer.data()->masterSignerId());
-                    if(currentMastersigner){
-                        AppModel::instance()->masterSignerList()->updateDeviceNeedPassphraseSent(signer.data()->masterFingerPrint(),
-                                                                                                 currentMastersigner.data()->needPassphraseSent());
-                    }
-                    else{
-                        AppModel::instance()->masterSignerList()->updateDeviceNeedPassphraseSent(signer.data()->masterFingerPrint(),
-                                                                                                 false);
-                    }
-                }
-            }
+        QString xfp = signer.data()->masterFingerPrint();
+        QString master_signer_id = signer.data()->masterSignerId();
+        AppModel::instance()->masterSignerList()->setUserCheckedByFingerprint(false, xfp);
+        AppModel::instance()->remoteSignerList()->setUserCheckedByFingerprint(false, xfp);
+        if(signer->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE){
+            QWarningMessage warningmsg;
+            bridge::nunchukClearSignerPassphrase(master_signer_id, warningmsg);
         }
     }
     AppModel::instance()->newWalletInfo()->singleSignersAssigned()->removeSingleSignerByIndex(signerIndex);
@@ -142,20 +124,23 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
             QSingleSignerPtr it = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->getSingleSignerByIndex(i);
             DBG_INFO << "signerType " << it.data()->signerType() << it.data()->isPrimaryKey();
             if(it && !((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType())){
-                if(!(it.data()->isValid())){
+                if(!(it.data()->needTopUpXpub())){
                     // Request cached xpub
                     QWarningMessage warningmsg;
                     QSingleSignerPtr signer = bridge::nunchukGetUnusedSignerFromMasterSigner(it.data()->masterSignerId(),
-                                                                                                         walletType,
-                                                                                                         addressType,
-                                                                                                         warningmsg);
+                                                                                             walletType,
+                                                                                             addressType,
+                                                                                             warningmsg);
                     if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
-                        signer.data()->setIsValid(true);
                         signer.data()->setIsPrimaryKey(it.data()->isPrimaryKey());
                         AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(i, signer);
+                        AppModel::instance()->showToast(0,
+                                                        STR_CPP_067,
+                                                        EWARNING::WarningType::SUCCESS_MSG,
+                                                        STR_CPP_067);
                     }
                     else{
-                        it.data()->setIsValid(false);
+                        it.data()->setNeedTopUpXpub(true);
                     }
                 }
             }

@@ -30,7 +30,7 @@ Rectangle {
     property int transactionstatus: 0
     property string transactionMemo: ""
     property string transactionAmount: "0"
-    property string transactiontotalUSD: "0"
+    property string transactiontotalCurrency: "0"
     property string transactionDate: "--/--/---- ##:## ##"
     property int confirmation: 1
 
@@ -193,12 +193,12 @@ Rectangle {
                     elide: Text.ElideRight
                 }
                 QText {
-                    id: amountUSD
+                    id: amountCurrency
                     width: amountWidth
                     font.family: "Lato"
                     font.pixelSize: 14
                     color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8" : "#031F2B"
-                    text: transactiontotalUSD + " USD"
+                    text: transactiontotalCurrency + " " + AppSetting.currency
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight

@@ -18,144 +18,63 @@
  *                                                                        *
  **************************************************************************/
 #include "DeviceModel.h"
+#include "AppModel.h"
 #include <QQmlEngine>
 
-QDevice::QDevice() :
-    name_("UNKNOWN"),
-    type_("UNKNOWN"),
-    path_("UNKNOWN"),
-    model_("UNKNOWN"),
-    master_fingerprint_("UNKNOWN"),
-    connected_(false),
-    needs_pass_phrase_sent_(false),
-    needs_pin_sent_(false),
-    usableToAdd_(true),
-    master_signer_id_(""),
-    cardId_("")
+QDevice::QDevice(): isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QDevice::QDevice(const QString &fingerprint) :
-    name_(""),
-    type_(""),
-    path_(""),
-    model_(""),
-    master_fingerprint_(fingerprint),
-    connected_(false),
-    needs_pass_phrase_sent_(false),
-    needs_pin_sent_(false),
-    usableToAdd_(true),
-    master_signer_id_(""),
-    cardId_("")
-{
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-}
-
-QDevice::QDevice(const QString &name,
-               const QString &type,
-               const QString &path,
-               const QString &model,
-               const QString &master_fingerprint,
-               bool connected,
-               bool needs_pass_phrase_sent,
-               bool needs_pin_sent,
-               QString mastersigner_id) :
-    name_(name),
-    type_(type),
-    path_(path),
-    model_(model),
-    master_fingerprint_(master_fingerprint),
-    connected_(connected),
-    needs_pass_phrase_sent_(needs_pass_phrase_sent),
-    needs_pin_sent_(needs_pin_sent),
-    usableToAdd_(true),
-    master_signer_id_(mastersigner_id),
-    cardId_("")
+QDevice::QDevice(const nunchuk::Device &device) : device_(device)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 QDevice::~QDevice(){}
 
-QString QDevice::name() const
+QString QDevice::name()
 {
-    if(name_ == "" || name_.isEmpty() || name_.isNull()){
-        return type_;
+    QString name = "";
+    QString xfp = QString::fromStdString(device_.get_master_fingerprint());
+    if(AppModel::instance()->masterSignerList()){
+        name = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(xfp);
     }
-    return name_;
+    if(name == ""){
+        name = QString::fromStdString(device_.get_type());
+    }
+    return name;
 }
 
-QString QDevice::type() const { return type_;}
-
-QString QDevice::path() const { return path_;}
-
-QString QDevice::model() const { return model_;}
-
-QString QDevice::masterFingerPrint() const { return master_fingerprint_;}
-
-bool QDevice::connected() const { return connected_;}
-
-bool QDevice::needsPassPhraseSent() const { return needs_pass_phrase_sent_;}
-
-bool QDevice::needsPinSent() const { return needs_pin_sent_;}
-
-void QDevice::setName(const QString &name)
-{
-    if(name_ != name){
-        name_ = name;
-        emit nameChanged();
-    }
+QString QDevice::type() const {
+    return QString::fromStdString(device_.get_type());
 }
 
-void QDevice::setType(const QString &d) {
-    if(d != type_){
-        type_ = d;
-        emit typeChanged();
-    }
+QString QDevice::path() const {
+    return QString::fromStdString(device_.get_path());
 }
 
-void QDevice::setPath(const QString &d) {
-    if(d != path_){
-        path_ = d;
-        emit pathChanged();
-    }
+QString QDevice::model() const {
+    return QString::fromStdString(device_.get_model());
 }
 
-void QDevice::setModel(const QString &d) {
-    if(d != model_){
-        model_ = d;
-        emit modelChanged();
+QString QDevice::masterFingerPrint() const {
+    if(needsPinSent() || needsPassPhraseSent()){
+        return "Locked";
     }
+    return QString::fromStdString(device_.get_master_fingerprint());
 }
 
-void QDevice::setMasterFingerPrint(const QString &d) {
-    if(d != master_fingerprint_){
-        master_fingerprint_ = d;
-        emit masterFingerPrintChanged();
-    }
+bool QDevice::connected() const {
+    return device_.connected();
 }
 
-void QDevice::setConnected(const bool d) {
-    if(d != connected_){
-        connected_ = d;
-        emit connectedChanged();
-    }
+bool QDevice::needsPassPhraseSent() const {
+    return device_.needs_pass_phrase_sent();
 }
 
-void QDevice::setNeedsPassPhraseSent(const bool d) {
-    if(d != needs_pass_phrase_sent_){
-        DBG_INFO << d;
-        needs_pass_phrase_sent_ = d;
-        emit needsPassPhraseSentChanged();
-    }
-}
-
-void QDevice::setNeedsPinSent(const bool d) {
-    if(d != needs_pin_sent_){
-        needs_pin_sent_ = d;
-        emit needsPinSentChanged();
-    }
+bool QDevice::needsPinSent() const {
+    return device_.needs_pin_sent();
 }
 
 bool QDevice::usableToAdd() const
@@ -173,15 +92,14 @@ void QDevice::setUsableToAdd(bool usableToAdd)
 
 QString QDevice::masterSignerId() const
 {
-    return master_signer_id_;
-}
-
-void QDevice::setMasterSignerId(const QString &master_signer_id)
-{
-    if(master_signer_id_ != master_signer_id){
-        master_signer_id_ = master_signer_id;
-        emit masterSignerIdChanged();
+    QString id = "";
+    if(AppModel::instance()->masterSignerList()){
+        QMasterSignerPtr signer = AppModel::instance()->masterSignerList()->getMasterSignerByXfp(masterFingerPrint());
+        if(signer){
+            id = signer.data()->id();
+        }
     }
+    return id;
 }
 
 QString QDevice::cardId() const
@@ -189,10 +107,19 @@ QString QDevice::cardId() const
     return cardId_;
 }
 
-QDevice& QDevice::setCardId(const QString &card_id)
+void QDevice::setCardId(const QString &card_id)
 {
     cardId_ = card_id;
-    return *this;
+}
+
+nunchuk::Device QDevice::originDevice() const
+{
+    return device_;
+}
+
+void QDevice::setOriginDevice(const nunchuk::Device &device)
+{
+    device_ = device;
 }
 
 DeviceListModel::DeviceListModel()
@@ -252,28 +179,10 @@ QHash<int, QByteArray> DeviceListModel::roleNames() const {
     return roles;
 }
 
-void DeviceListModel::addDevice(const QString &name,
-                                const QString &type,
-                                const QString &path,
-                                const QString &model,
-                                const QString &master_fingerprint,
-                                bool connected,
-                                bool needs_pass_phrase_sent,
-                                bool needs_pin_sent,
-                                QString mastersigner_id)
-{
+void DeviceListModel::addDevice(const QDevicePtr &device){
     beginResetModel();
-    if(!contains(master_fingerprint)){
-        d_.append(QDevicePtr(new QDevice(name, type, path, model, master_fingerprint, connected, needs_pass_phrase_sent, needs_pin_sent, mastersigner_id)));
-    }
-    endResetModel();
-    emit deviceCountChanged();
-}
-
-void DeviceListModel::addDevice(const QDevicePtr &d){
-    beginResetModel();
-    if(d && !contains(d.data()->masterFingerPrint())){
-        d_.append(d);
+    if(device && !contains(device.data()->masterFingerPrint())){
+        d_.append(device);
     }
     endResetModel();
     emit deviceCountChanged();
@@ -371,14 +280,6 @@ QDevicePtr DeviceListModel::getDeviceNeedPinSent(){
     return QDevicePtr(NULL);
 }
 
-void DeviceListModel::resetDeviceConnected()
-{
-    foreach (QDevicePtr i, d_) {
-        i.data()->setConnected(false);
-        emit dataChanged(this->index(d_.indexOf(i)),this->index(d_.indexOf(i)));
-    }
-}
-
 void DeviceListModel::resetUsableToAdd()
 {
     beginResetModel();
@@ -441,38 +342,6 @@ QStringList DeviceListModel::getXFPList()
         ret.append(i.data()->masterFingerPrint());
     }
     return ret;
-}
-
-bool DeviceListModel::containsNeedPinSent()
-{
-    foreach (QDevicePtr i , d_ ){
-        if(i.data()->needsPinSent()){
-            return true;
-        }
-    }
-    return false;
-}
-
-void DeviceListModel::updateNeedPassphraseSentById(const QString &id, bool needpassphrase)
-{
-    beginResetModel();
-    foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(id, it.data()->masterSignerId(), Qt::CaseInsensitive)){
-            it.data()->setUsableToAdd(needpassphrase);
-        }
-    }
-    endResetModel();
-}
-
-void DeviceListModel::renameById(const QString& id, const QString &newname)
-{
-    beginResetModel();
-    foreach (QDevicePtr i , d_ ){
-        if(0 == QString::compare(id, i.data()->masterSignerId(), Qt::CaseInsensitive)){
-            i.data()->setName(newname);
-        }
-    }
-    endResetModel();
 }
 
 void DeviceListModel::checkAndUnlockDevice()

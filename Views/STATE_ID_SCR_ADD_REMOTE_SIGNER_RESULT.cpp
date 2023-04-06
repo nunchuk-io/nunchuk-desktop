@@ -43,10 +43,7 @@ void EVT_REMOTE_SIGNER_RESULT_EDIT_NAME_HANDLER(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_SIGNER_CONFIG_HANDLER(QVariant msg) {
-    if(AppModel::instance()->newWalletInfo() && AppModel::instance()->newWalletInfo()->singleSignersAssigned()){
-        AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(AppModel::instance()->singleSignerInfoPtr());
-    }
-    AppModel::instance()->remoteSignerList()->setUserCheckedByFingerprint(true, AppModel::instance()->singleSignerInfo()->masterFingerPrint());
+
 }
 
 void EVT_REMOTE_SIGNER_RESULT_IMPORT_SIGNATURE_HANDLER(QVariant msg) {
@@ -79,7 +76,7 @@ void EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->setRemoteSignerList(remoteSigners);
         }
         QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST,E::STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT);
-        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new SingleSigner()));
+        AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     }
 }
 

@@ -112,4 +112,9 @@ const static QString STR_CPP_106 = QString("Account has been created successfull
 const static QString STR_CPP_107 = QString("Refresh limit exceeded. Please wait a few minutes");
 const static QString STR_CPP_108 = QString("Signed in with [<b>%1</b>]");
 const static QString STR_CPP_109 = QString("Your account has successfully been deleted");
+const static QString STR_CPP_110 = QString("TAPSIGNER has been recovered.");
+const static QString STR_CPP_111 = QString("No internet connection. Please try again");
+const static QString STR_CPP_112 = QString("Error");
+const static QString STR_CPP_113 = QString("Invalid Backup Password");
+const static QString STR_CPP_114 = QString("Your account has been signed out");
 #endif // STR_CPP_H

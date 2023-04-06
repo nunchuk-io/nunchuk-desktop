@@ -42,7 +42,6 @@ Popup {
     property string contentText: STR.STR_QML_466
     property var lwidths: [0,0]
     property var labels: [STR.STR_QML_432,STR.STR_QML_433]
-    property var types: [4,1]
     signal confirmYes()
     signal confirmNo()
     Rectangle {
@@ -94,7 +93,7 @@ Popup {
                     height: 36
                     label.text: labels[0]
                     label.font.pixelSize: 12
-                    type: types[0]
+                    type: eTypeE
                     onButtonClicked: {confirmYes()}
                 }
                 QTextButton {
@@ -103,7 +102,7 @@ Popup {
                     height: 36
                     label.text: labels[1]
                     label.font.pixelSize: 12
-                    type: eTypeF
+                    type: eTypeB
                     onButtonClicked: {confirmNo()}
                 }
             }

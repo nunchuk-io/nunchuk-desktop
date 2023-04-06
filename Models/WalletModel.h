@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef WALLETLISTMODEL_H
 #define WALLETLISTMODEL_H
 
@@ -18,7 +38,7 @@ class Wallet : public QObject
     Q_PROPERTY(QString walletAddressType    READ addressType    WRITE setAddressType        NOTIFY addressTypeChanged)
     Q_PROPERTY(QString walletBalance        READ balanceDisplay                             NOTIFY balanceChanged)
     Q_PROPERTY(QString walletBalanceBTC     READ balanceBTC                                 NOTIFY balanceChanged)
-    Q_PROPERTY(QString walletBalanceUSD     READ balanceUSD                                 NOTIFY balanceChanged)
+    Q_PROPERTY(QString walletBalanceCurrency     READ balanceCurrency                                 NOTIFY balanceChanged)
     Q_PROPERTY(QString walletCreateDate     READ createDate                                 NOTIFY createDateChanged)
     Q_PROPERTY(bool walletEscrow            READ escrow            WRITE setEscrow          NOTIFY escrowChanged)
     Q_PROPERTY(SingleSignerListModel*   walletSingleSignerAssigned READ singleSignersAssigned   NOTIFY singleSignersAssignedChanged)
@@ -29,7 +49,7 @@ class Wallet : public QObject
     Q_PROPERTY(QStringList walletunUsedAddressList  READ unUsedAddressList  NOTIFY unUsedAddressChanged)
     Q_PROPERTY(QStringList walletusedChangedAddressList    READ usedChangeAddressList       NOTIFY usedChangeAddressChanged)
     Q_PROPERTY(QStringList walletunUsedChangedAddressList  READ unUsedChangeddAddressList   NOTIFY unUsedChangeAddressChanged)
-    Q_PROPERTY(bool capableCreate           READ capableCreate  WRITE setCapableCreate  NOTIFY capableCreateChanged)
+    Q_PROPERTY(bool capableCreate           READ capableCreate                              NOTIFY capableCreateChanged)
     Q_PROPERTY(QString walletDescription    READ description    WRITE setDescription    NOTIFY descriptionChanged)
     Q_PROPERTY(QString walletDescriptior    READ descriptior                            NOTIFY descriptiorChanged)
     Q_PROPERTY(int creationMode             READ getCreationMode     NOTIFY creationModeChanged)
@@ -65,7 +85,7 @@ public:
     qint64 balanceSats() const;
     QString balanceBTC() const;
     QString balanceDisplay() const;
-    QString balanceUSD() const;
+    QString balanceCurrency() const;
     QString createDate() const;
     QDateTime createDateDateTime() const;
     bool escrow() const;
@@ -111,7 +131,6 @@ public:
     int getCreationMode() const;
     void setCreationMode(int creationMode);
     bool getContainsHWSigner() const;
-    void setContainsHWSigner(bool containsHWSigner);
     int nShared() const;
     void setNShared(int d);
     bool isSharedWallet() const;
@@ -145,7 +164,6 @@ private:
     QString description_;
     QString descriptior_;
     int creationMode_;
-    bool containsHWSigner_;
     bool isSharedWallet_;
     QString roomId_;
     QString initEventId_;
@@ -218,14 +236,12 @@ public:
     void notifyUnitChanged();
     void updateSignerHealthStatus(const QString& masterSignerId, const int status, const time_t time);
     void notifyMasterSignerDeleted(const QString& masterSignerId);
-    void renameSignerById(const QString& id, const QString& newname);
-    void renameSignerByXfp(const QString& xfp, const QString &newname);
     int getWalletIndexById(const QString& walletId);
     void updateHealthCheckTime();
     void requestSort(int role, int order);
     bool containsId(const QString& id);
     void updateSharedWalletById(const QString &wallet_id, const QString &room_id, const QString &init_id, const QString &name);
-    void updateSignerNameInWalletById(const QString &wallet_id, const QString &xfp, const QString &name);
+    void updateSignerOfRoomWallet(const QString &wallet_id, const SignerAssigned &signer);
     enum WalletRoles {
         wallet_Id_Role,
         wallet_Name_Role,
@@ -234,7 +250,7 @@ public:
         wallet_AddressType_Role,
         wallet_Balance_Role,
         wallet_BalanceBTC_Role,
-        wallet_BalanceUSD_Role,
+        wallet_BalanceCurrency_Role,
         wallet_createDate_Role,
         wallet_Escrow_Role,
         wallet_SingleSignerList_Role,

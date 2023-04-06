@@ -21,98 +21,90 @@
 #include <QQmlEngine>
 #include "bridgeifaces.h"
 
-MasterSigner::MasterSigner():
-    id_(""),
-    name_("UNKNOW"),
-    device_(new QDevice()),
-    health_(-1),
-    messageToSign_(""),
-    signature_(""),
-    path_(""),
-    checked_(false),
-    isNeedXpub_(false),
-    signer_type_(0),
-    passphrase_(""),
-    isPrimaryKey_(false)
+QMasterSigner::QMasterSigner(): isPrimaryKey_(false), isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-MasterSigner::MasterSigner(const QString &id,
-                           const QString& name,
-                           const QDevicePtr device,
-                           const int health,
-                           const int signertype,
-                           const nunchuk::PrimaryKey &key) :
-    id_(id),
-    name_(name),
-    device_(device),
-    health_(health),
-    messageToSign_(""),
-    signature_(""),
-    path_(""),
-    checked_(false),
-    isNeedXpub_(false),
-    signer_type_(signertype),
-    isPrimaryKey_(false),
-    primaryKey_(key)
+QMasterSigner::QMasterSigner(const nunchuk::MasterSigner &signer) : masterSigner_(signer), isPrimaryKey_(false)
 {
-    if(key.get_master_fingerprint() != ""){
-        isPrimaryKey_ = true;
-    }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-MasterSigner::~MasterSigner(){
-    device_.clear();
-}
-
-QString MasterSigner::id() const{
-    return id_;
-}
-
-QString MasterSigner::name() const { return name_;}
-
-QDevice *MasterSigner::device() const {
-    return device_.data();
-}
-
-QDevicePtr MasterSigner::devicePtr() const
+QMasterSigner::QMasterSigner(const nunchuk::PrimaryKey &key) : primaryKey_(key), isPrimaryKey_(true)
 {
-    return device_;
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-int MasterSigner::health() const {return health_;}
+QMasterSigner::~QMasterSigner(){
 
-bool MasterSigner::connected() const
-{
-    if(device_.data()){
-        return device_.data()->connected();
+}
+
+QString QMasterSigner::id() const{
+    if(isDraft){
+        return id_;
     }
-    return false;
+    else{
+        return QString::fromStdString(masterSigner_.get_id());
+    }
 }
 
-void MasterSigner::setId(const QString &d){
-    if(d != id_){
+void QMasterSigner::setId(const QString &d){
+    if(isDraft && d != id_){
         id_ = d;
         emit idChanged();
     }
 }
 
-void MasterSigner::setName(const QString &d) {
-    if(d != name_){
-        name_ = d;
-        emit nameChanged();
+QString QMasterSigner::name() const {
+    if(isDraft){
+        return name_;
+    }
+    else{
+        return QString::fromStdString(masterSigner_.get_name());
     }
 }
 
-void MasterSigner::setDevice(const QDevicePtr &d) {
-    device_ = d;
-    emit deviceChanged();
-    emit fingerPrintChanged();
+void QMasterSigner::setName(const QString &d) {
+    if(isDraft){
+        name_ = d;
+    }
+    else{
+        masterSigner_.set_name(d.toStdString());
+    }
+    emit nameChanged();
 }
 
-void MasterSigner::setHealth(const int d)
+QDevice *QMasterSigner::device() {
+    if(!device_){
+        if(isDraft){
+            device_ = QDevicePtr(new QDevice());
+        }
+        else{
+            device_ = QDevicePtr(new QDevice(masterSigner_.get_device()));
+        }
+    }
+    return device_.data();
+}
+
+QDevicePtr QMasterSigner::devicePtr()
+{
+    if(!device_){
+        if(isDraft){
+            device_ = QDevicePtr(new QDevice());
+        }
+        else{
+            device_ = QDevicePtr(new QDevice(masterSigner_.get_device()));
+        }
+    }
+    return device_;
+}
+
+int QMasterSigner::health() const {
+    return health_;
+}
+
+void QMasterSigner::setHealth(const int d)
 {
     if(d != health_){
         health_ = d;
@@ -120,12 +112,22 @@ void MasterSigner::setHealth(const int d)
     }
 }
 
-bool MasterSigner::checked() const
+bool QMasterSigner::connected() const
+{
+    if(!device_){
+        return false;
+    }
+    else{
+        return masterSigner_.get_device().connected();
+    }
+}
+
+bool QMasterSigner::checked() const
 {
     return checked_;
 }
 
-void MasterSigner::setChecked(const bool checked)
+void QMasterSigner::setChecked(const bool checked)
 {
     if(checked != checked_){
         checked_ = checked;
@@ -133,58 +135,63 @@ void MasterSigner::setChecked(const bool checked)
     }
 }
 
-bool MasterSigner::needPinSent() const
+bool QMasterSigner::needPinSent() const
 {
-    return device_ ? device_.data()->needsPinSent() : false;
+    return masterSigner_.get_device().needs_pin_sent();
 }
 
-void MasterSigner::setNeedPinSent(bool value)
+bool QMasterSigner::needPassphraseSent() const
 {
-    if(device_){
-        device_.data()->setNeedsPinSent(value);
-        emit needPinSentChanged();
+    return masterSigner_.get_device().needs_pass_phrase_sent();
+}
+
+QString QMasterSigner::deviceType() const
+{
+    if(isDraft){
+        return deviceType_;
+    }
+    else{
+        return QString::fromStdString(masterSigner_.get_device().get_type());
     }
 }
 
-bool MasterSigner::needPassphraseSent() const
+void QMasterSigner::setDeviceType(const QString &d)
 {
-    return device_ ? device_.data()->needsPassPhraseSent() : false;
-}
-
-void MasterSigner::setNeedPassphraseSent(bool value)
-{
-    if(device_){
-        device_.data()->setNeedsPassPhraseSent(value);
-        emit needPassphraseSentChanged();
+    if(isDraft){
+        deviceType_ = d;
+        emit deviceTypeChanged();
     }
 }
 
-QString MasterSigner::deviceType() const
-{
-    return device_ ? device_.data()->type() : "";
-}
-
-bool MasterSigner::needXpub() const
+bool QMasterSigner::needXpub() const
 {
     return isNeedXpub_;
 }
 
-void MasterSigner::setNeedXpub(bool isNeedXpub)
+void QMasterSigner::setNeedXpub(bool isNeedXpub)
 {
     isNeedXpub_ = isNeedXpub;
 }
 
-QString MasterSigner::fingerPrint() const
+QString QMasterSigner::fingerPrint() const
 {
-    if(device_){
-        return device_.data()->masterFingerPrint();
+    if(isDraft){
+        return xfp_;
     }
     else{
-        return "";
+        return QString::fromStdString(masterSigner_.get_device().get_master_fingerprint());
     }
 }
 
-QString MasterSigner::message()
+void QMasterSigner::setFingerPrint(const QString &d)
+{
+    if(isDraft){
+        xfp_ = d;
+        emit fingerPrintChanged();
+    }
+}
+
+QString QMasterSigner::message()
 {
     if(messageToSign_.isEmpty() || messageToSign_.isNull() || messageToSign_ == ""){
         messageToSign_ = qUtils::QGenerateRandomMessage();
@@ -192,13 +199,12 @@ QString MasterSigner::message()
     return messageToSign_;
 }
 
-QString MasterSigner::messageSHA256()
+QString QMasterSigner::messageSHA256()
 {
-    QByteArray bytes = QCryptographicHash::hash(messageToSign_.toUtf8(), QCryptographicHash::Sha256);
-    return QString(bytes.toHex());
+    return qUtils::GetSHA256(messageToSign_);
 }
 
-void MasterSigner::setMessage(const QString &messageToSign)
+void QMasterSigner::setMessage(const QString &messageToSign)
 {
     if(messageToSign_ != messageToSign){
         messageToSign_ = messageToSign;
@@ -206,12 +212,12 @@ void MasterSigner::setMessage(const QString &messageToSign)
     }
 }
 
-QString MasterSigner::signature() const
+QString QMasterSigner::signature() const
 {
     return signature_;
 }
 
-void MasterSigner::setSignature(const QString &signature)
+void QMasterSigner::setSignature(const QString &signature)
 {
     if(signature_ != signature){
         signature_ = signature;
@@ -219,62 +225,77 @@ void MasterSigner::setSignature(const QString &signature)
     }
 }
 
-QString MasterSigner::path() const
+QString QMasterSigner::path() const
 {
     return path_;
 }
 
-void MasterSigner::setPath(const QString &path)
+void QMasterSigner::setPath(const QString &d)
 {
-    if(path_ != path){
-        path_ = path;
+    if(path_ != d){
+        path_ = d;
         emit pathChanged();
     }
 }
 
-
-int MasterSigner::signerType() const
+int QMasterSigner::signerType() const
 {
-    return signer_type_;
+    if(isDraft){
+        return signer_type_;
+    }
+    else{
+        return (int)masterSigner_.get_type();
+    }
 }
 
-void MasterSigner::setSignerType(int signer_type)
+void QMasterSigner::setSignerType(int signer_type)
 {
-    if(signer_type_ != signer_type){
+    if(isDraft){
         signer_type_ = signer_type;
         emit signerTypeChanged();
     }
 }
 
-QString MasterSigner::passphrase() const
+QString QMasterSigner::passphrase() const
 {
     return passphrase_;
 }
 
-void MasterSigner::setPassphrase(const QString &passphrase){
+void QMasterSigner::setPassphrase(const QString &passphrase){
     if(passphrase_ != passphrase){
         passphrase_ = passphrase;
         emit passphraseChanged();
     }
 }
 
-bool MasterSigner::isPrimaryKey() const
+bool QMasterSigner::isPrimaryKey() const
 {
     return isPrimaryKey_;
 }
 
-void MasterSigner::setIsPrimaryKey(bool isPrimaryKey)
+void QMasterSigner::setIsPrimaryKey(bool isPrimaryKey)
 {
     if (isPrimaryKey_ == isPrimaryKey)
         return;
 
     isPrimaryKey_ = isPrimaryKey;
+    setIsPrimaryKey(true);
     emit isPrimaryKeyChanged();
 }
 
-nunchuk::PrimaryKey MasterSigner::primaryKey() const
+nunchuk::PrimaryKey QMasterSigner::originPrimaryKey() const
 {
     return primaryKey_;
+}
+
+nunchuk::MasterSigner QMasterSigner::originMasterSigner() const
+{
+    return masterSigner_;
+}
+
+void QMasterSigner::setOriginMasterSigner(const nunchuk::MasterSigner &signer)
+{
+    masterSigner_ = signer;
 }
 
 MasterSignerListModel::MasterSignerListModel() {
@@ -347,18 +368,6 @@ QHash<int, QByteArray> MasterSignerListModel::roleNames() const {
     return roles;
 }
 
-void MasterSignerListModel::addMasterSigner(const QString &id,
-                                            const QString& name,
-                                            const QDevicePtr device,
-                                            const int health ,
-                                            const int signertype){
-    beginResetModel();
-    if(!contains(id)){
-        d_.append(QMasterSignerPtr(new MasterSigner(id, name, device, health, signertype,containPrimaryKey(device->masterFingerPrint()))));
-    }
-    endResetModel();
-}
-
 void MasterSignerListModel::addMasterSigner(const QMasterSignerPtr &d)
 {
     beginResetModel();
@@ -366,28 +375,6 @@ void MasterSignerListModel::addMasterSigner(const QMasterSignerPtr &d)
         d_.append(d);
     }
     endResetModel();
-}
-
-void MasterSignerListModel::renameById(const QString &id, const QString &name){
-    foreach (QMasterSignerPtr it, d_) {
-        if(it.data()->id() == id){
-            beginResetModel();
-            it.data()->setName(name);
-            endResetModel();
-        }
-    }
-}
-
-void MasterSignerListModel::updateDeviceStatus(const QString &fingerprint, const bool connected)
-{
-    foreach (QMasterSignerPtr it, d_) {
-        if(it.data()->device()){
-            if(it.data()->device()->masterFingerPrint() == fingerprint){
-                it.data()->device()->setConnected(connected);
-                emit dataChanged(this->index(d_.indexOf(it)),this->index(d_.indexOf(it)));
-            }
-        }
-    }
 }
 
 QMasterSignerPtr MasterSignerListModel::getMasterSignerByIndex(const int index) {
@@ -514,49 +501,6 @@ bool MasterSignerListModel::containsFingerPrint(const QString &fingerprint)
     return false;
 }
 
-bool MasterSignerListModel::hardwareContainsFingerPrint(const QString &fingerprint)
-{
-    foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->fingerPrint(), Qt::CaseInsensitive)
-                && i.data()->signerType() == 0){
-            return true;
-        }
-    }
-    return false;
-}
-
-void MasterSignerListModel::updateDeviceNeedPinSent(const QString &fingerprint, const bool needpin)
-{
-    beginResetModel();
-    foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->fingerPrint(), Qt::CaseInsensitive)){
-            i.data()->device()->setNeedsPinSent(needpin);
-        }
-    }
-}
-
-void MasterSignerListModel::updateDeviceNeedPassphraseSent(const QString &fingerprint, const bool needpassphrase)
-{
-    beginResetModel();
-    foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->fingerPrint(), Qt::CaseInsensitive)){
-            i.data()->setNeedPassphraseSent(needpassphrase);
-        }
-    }
-    endResetModel();
-}
-
-void MasterSignerListModel::updateDeviceNeedPassphraseSentById(const QString &id, const bool needpassphrase)
-{
-    beginResetModel();
-    foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(id, i.data()->id(), Qt::CaseInsensitive)){
-            i.data()->setNeedPassphraseSent(needpassphrase);
-        }
-    }
-    endResetModel();
-}
-
 void MasterSignerListModel::updateMasterSignerNeedXpubById(const QString &id, const bool value)
 {
     beginResetModel();
@@ -598,6 +542,21 @@ QStringList MasterSignerListModel::getColdCardId() const
         }
     }
     return ret;
+}
+
+bool MasterSignerListModel::isColdCard(const QString &xfp)
+{
+    foreach (QMasterSignerPtr i , d_ ){
+        if(i.data()->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC){
+            return true;
+        }
+        else{
+            if(i.data()->device() && 0 == QString::compare("coldcard", i.data()->device()->type(), Qt::CaseInsensitive)){
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void MasterSignerListModel::requestSort(int role, int order)
@@ -656,6 +615,21 @@ nunchuk::PrimaryKey MasterSignerListModel::containPrimaryKey(const QString &fing
         }
     }
     return nunchuk::PrimaryKey();
+}
+
+void MasterSignerListModel::reloadOriginMasterSignerById(const QString &id)
+{
+    beginResetModel();
+    foreach (QMasterSignerPtr i , d_ ){
+        if(0 == QString::compare(id, i.data()->id(), Qt::CaseInsensitive)){
+            QWarningMessage msg;
+            nunchuk::MasterSigner signer = bridge::nunchukGetOriginMasterSigner(id, msg);
+            if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+                i.data()->setOriginMasterSigner(signer);
+            }
+        }
+    }
+    endResetModel();
 }
 
 bool sortMasterSignerByNameAscending(const QMasterSignerPtr &v1, const QMasterSignerPtr &v2)

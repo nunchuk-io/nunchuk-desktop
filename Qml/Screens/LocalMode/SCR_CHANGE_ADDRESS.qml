@@ -312,7 +312,7 @@ QScreen {
                 label: STR.STR_QML_205
                 icons: ["Copy_031F2B.png", "Copy_9CAEB8.png", "Copy_F1FAFE.png","Copy_F1FAFE.png"]
                 fontPixelSize: 10
-                type: eSECOND
+                type: eTypeB
                 anchors {
                     top: qrCode.bottom
                     topMargin: 75

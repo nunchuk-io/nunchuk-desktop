@@ -122,6 +122,17 @@ set(Views_SRCS
     Views/STATE_ID_SCR_REPLACE_PRIMARY_KEY.cpp
     Views/STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION.cpp
     Views/STATE_ID_SCR_SIGN_IN.cpp
+    Views/STATE_ID_SCR_SERVICE_SETTINGS.cpp
+    Views/STATE_ID_SCR_LOCKDOWN_SUCCESS.cpp
+    Views/STATE_ID_SCR_REENTER_YOUR_PASSWORD.cpp
+    Views/STATE_ID_SCR_KEY_RECOVERY.cpp
+    Views/STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD.cpp
+    Views/STATE_ID_SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION.cpp
+    Views/STATE_ID_SCR_LOCKDOWN_ANSER_SECURITY_QUESTION.cpp
+    Views/STATE_ID_SCR_ENTER_BACKUP_PASSWORD.cpp
+    Views/STATE_ID_SCR_LOCKDOWN_SUCCESS.cpp
+    Views/STATE_ID_SCR_TAPSIGNER_RECOVERED_SUCCESS.cpp
+    Views/STATE_ID_SCR_DUMMY_TRANSACTION_INFO.cpp
     )
 
 set(Views_MOCS
@@ -133,6 +144,8 @@ set(${PROJECT_NAME}_SRCS
     contrib/nayuki/QrCode.cpp
     Models/AppSetting.cpp
     Models/AppModel.cpp
+    Models/ServiceSetting.cpp
+    Models/ProfileSetting.cpp
     Models/AppOnlineModel.cpp
     Models/DeviceModel.cpp
     Models/Localization.cpp
@@ -167,6 +180,7 @@ set(${PROJECT_NAME}_SRCS
     Models/Chats/QWalletSignersModel.cpp
     Models/Chats/QNunchukImageProvider.cpp
     Models/Chats/QLoggedInDeviceModel.cpp
+    Models/Chats/QUserWallets.cpp
     )
 
 set(${PROJECT_NAME}_RSCS

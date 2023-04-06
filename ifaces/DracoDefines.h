@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef DRACODEFINES_H
 #define DRACODEFINES_H
 #include <QObject>
@@ -7,6 +27,7 @@
 #define DRAGON_USER_URL         "https://api.nunchuk.io/v1.1/user"
 #define DRAGON_CHAT_URL         "https://api.nunchuk.io/v1.1/chat"
 #define DRAGON_APP_URL          "https://api.nunchuk.io/v1.1/app"
+#define DRAGON_FOREX_URL        "https://api.nunchuk.io/v1.1/forex"
 
 #define DRAGON_SUBSCRIPTIONS_URL "https://api.nunchuk.io/v1.1/subscriptions"
 #define DRAGON_USER_WALLETS_URL  "https://api.nunchuk.io/v1.1/user-wallets"
@@ -30,6 +51,20 @@ struct DracoDevice {
     QString lastIP = "";
     QString lastTs = "";
     bool thisId = false;
+};
+
+struct SecurityQuestion {
+    QString id = "";
+    QString question = "";
+    QString answer = "";
+    bool is_answered = false;
+    bool is_changed = false;
+};
+
+struct lockDownReqiredInfo {
+    int     type = 0;
+    int     required_signatures = 0;
+    int     required_answers = 0;
 };
 
 enum CMD_IDX {
@@ -82,7 +117,63 @@ enum CMD_IDX {
     ASSISTED_WALLET_CANCEL_TX,
     ASSISTED_WALLET_GET_TX,
     ASSISTED_WALLET_GET_LIST_TX,
+
+    // SEC_QUES
+    SEC_QUES_GET,
+    SEC_QUES_SET,
+    SEC_QUES_CREATE,
+    SEC_QUES_UPDATE,
+    SEC_QUES_VERIFY_ANSWER,
+    SEC_QUES_REQUIRED_SIGNATURES,
+
+    //LOCK_DOWN
+    LOCKDOWN_SET,
+    LOCKDOWN_REQUIRED_SIGNATURES,
+    LOCKDOWN_GET_PERIOD,
+
+    //GET_RANDOM_NONCE
+    GET_RANDOM_NONCE,
+    VERIFY_PASSWORD_TOKEN,
+
+    //USER_KEYS
+    USER_KEYS_DOWNLOAD_BACKUP,
+
+    TX_SYNC,
+    GET_CURRENCIES,
+
     CMD_MAX
+};
+
+enum class TARGET_ACTION {
+    EMERGENCY_LOCKDOWN = 0,
+    DOWNLOAD_KEY_BACKUP,
+    UPDATE_SEC_QUES,
+    UPDATE_INHERITANCE_PLAN,
+    UPDATE_SERVER_KEY,
+};
+
+enum class LOCKDOWN_REQUIRED_TYPE_INT {
+    NONE,           // ERROR
+    SIGN_MESSAGE,   // NOT SUPPORT FOR NOW
+    SIGN_DUMMY_TX,
+    SECURITY_QUESTION,
+    SECURITY_QUESTION_AND_SIGN_DUMMY_TX   // NOT SUPPORT FOR NOW
+};
+
+const QMap<int, QString> target_actions_command {
+    { (int)TARGET_ACTION::EMERGENCY_LOCKDOWN        , "EMERGENCY_LOCKDOWN"      },
+    { (int)TARGET_ACTION::DOWNLOAD_KEY_BACKUP       , "DOWNLOAD_KEY_BACKUP"     },
+    { (int)TARGET_ACTION::UPDATE_SEC_QUES           , "UPDATE_SEC_QUES"         },
+    { (int)TARGET_ACTION::UPDATE_INHERITANCE_PLAN   , "UPDATE_INHERITANCE_PLAN" },
+    { (int)TARGET_ACTION::UPDATE_SERVER_KEY         , "UPDATE_SERVER_KEY"       },
+};
+
+const QMap<QString, int> lockdown_required_type {
+    { "NONE"                                ,(int)LOCKDOWN_REQUIRED_TYPE_INT::NONE                                },
+    { "SIGN_MESSAGE"                        ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SIGN_MESSAGE                        },
+    { "SIGN_DUMMY_TX"                       ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SIGN_DUMMY_TX                       },
+    { "SECURITY_QUESTION"                   ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SECURITY_QUESTION                   },
+    { "SECURITY_QUESTION_AND_SIGN_DUMMY_TX" ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SECURITY_QUESTION_AND_SIGN_DUMMY_TX },
 };
 
 const QMap<int, QString> commands {
@@ -126,15 +217,38 @@ const QMap<int, QString> commands {
     { CMD_IDX::PRIMARY_KEY_CHANGE_KEY       , QString("%1/%2").arg(DRAGON_USER_URL).arg("/pkey/change-pkey")  },
 
     // USER_SUBSCRIPTION
-    { USER_SUBCRIPTIONS_CURRENT             , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("current")  },
+    { CMD_IDX::USER_SUBCRIPTIONS_CURRENT    , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("current")  },
 
     // ASSISTED_WALLETS
-    { ASSISTED_WALLET_GET                   ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets")  },
-    { ASSISTED_WALLET_CREATE_TX             ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
-    { ASSISTED_WALLET_GET_LIST_TX           ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
-    { ASSISTED_WALLET_SIGN_TX               ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sign") },
-    { ASSISTED_WALLET_CANCEL_TX             ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
-    { ASSISTED_WALLET_GET_TX                ,QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
+    { CMD_IDX::ASSISTED_WALLET_GET          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets")  },
+    { CMD_IDX::ASSISTED_WALLET_CREATE_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { CMD_IDX::ASSISTED_WALLET_GET_LIST_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { CMD_IDX::ASSISTED_WALLET_SIGN_TX      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sign") },
+    { CMD_IDX::ASSISTED_WALLET_CANCEL_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
+    { CMD_IDX::ASSISTED_WALLET_GET_TX       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
+
+    // SEC_QUES
+    { CMD_IDX::SEC_QUES_GET                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions") },
+    { CMD_IDX::SEC_QUES_SET                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions") },
+    { CMD_IDX::SEC_QUES_CREATE              , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions") },
+    { CMD_IDX::SEC_QUES_UPDATE              , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions/update") },
+    { CMD_IDX::SEC_QUES_VERIFY_ANSWER       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions/verify-answer") },
+    { CMD_IDX::SEC_QUES_REQUIRED_SIGNATURES , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions/calculate-required-signatures") },
+
+    // LOCK_DOWN
+    { CMD_IDX::LOCKDOWN_SET                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("lockdown/lock") },
+    { CMD_IDX::LOCKDOWN_REQUIRED_SIGNATURES , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("lockdown/calculate-required-signatures") },
+    { CMD_IDX::LOCKDOWN_GET_PERIOD          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("lockdown/period") },
+
+    //USER_WALLET
+    { CMD_IDX::GET_RANDOM_NONCE             , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("nonce") },
+    { CMD_IDX::VERIFY_PASSWORD_TOKEN        , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("verified-password-token")  },
+
+    //USER_KEYS
+    { CMD_IDX::USER_KEYS_DOWNLOAD_BACKUP    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("user-keys/{key_id_or_xfp}/download-backup") },
+
+    { CMD_IDX::TX_SYNC                      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sync") },
+    { CMD_IDX::GET_CURRENCIES               , QString("%1/%2").arg(DRAGON_FOREX_URL).arg("currencies") },
 };
 
 class DRACO_CODE: public QObject

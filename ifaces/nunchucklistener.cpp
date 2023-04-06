@@ -69,3 +69,18 @@ bool create_software_signer_listener(int progress)
     AppModel::instance()->setAddSignerPercentage(progress);
     return true;
 }
+
+bool CacheTapsignerMasterSignerXPubProgress(int percent)
+{
+    return true;
+}
+
+bool CacheDefaultTapsignerMasterSignerXPubProgress(int percent)
+{
+    return true;
+}
+
+bool ImportTapsignerMasterSignerProgress(int percent)
+{
+    return true;
+}

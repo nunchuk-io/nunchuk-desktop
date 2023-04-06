@@ -19,7 +19,9 @@
  **************************************************************************/
 #include "qUtils.h"
 #include "AppSetting.h"
+#include "AppModel.h"
 #include "QOutlog.h"
+#include <QCryptographicHash>
 
 qint64 qUtils::QAmountFromValue(const QString &value, const bool allow_negative) {
     qint64 ret = -1;
@@ -245,4 +247,161 @@ QString qUtils::GetSignerTypeString(const nunchuk::SignerType value)
         DBG_INFO << "THROW EXCEPTION" << e.what();
     }
     return ret;
+}
+
+QString qUtils::GetSHA256(const QString &value)
+{
+    QString ret = value;
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::SHA256(value.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        QByteArray bytes = QCryptographicHash::hash(value.toUtf8(), QCryptographicHash::Sha256);
+        ret = QString(bytes.toHex());
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        QByteArray bytes = QCryptographicHash::hash(value.toUtf8(), QCryptographicHash::Sha256);
+        ret = QString(bytes.toHex());
+    }
+    return ret;
+}
+
+QString qUtils::CreateRequestToken(const QString &signature, const QString &fingerprint)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::CreateRequestToken(signature.toStdString(), fingerprint.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
+QString qUtils::GetPartialSignature(const nunchuk::SingleSigner &signer, const QString &signed_psbt)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::GetPartialSignature(signer, signed_psbt.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
+QString qUtils::GetHealthCheckMessage(const QString &body,
+                                      QWarningMessage &msg)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::GetHealthCheckMessage(body.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QString qUtils::GetHealthCheckDummyTx(const nunchuk::Wallet &wallet,
+                                      const QString &body,
+                                      QWarningMessage &msg)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::GetHealthCheckDummyTx(wallet, body.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::Transaction qUtils::DecodeDummyTx(const nunchuk::Wallet &wallet,
+                                           const QString &psbt,
+                                           QWarningMessage &msg)
+{
+    nunchuk::Transaction ret;
+    try {
+        ret = nunchuk::Utils::DecodeDummyTx(wallet, psbt.toStdString());
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::Transaction qUtils::DecodeTx(const nunchuk::Wallet &wallet,
+                                      const QString &psbt,
+                                      const nunchuk::Amount &sub_amount,
+                                      const nunchuk::Amount &fee,
+                                      const nunchuk::Amount &fee_rate,
+                                      QWarningMessage &msg)
+{
+    nunchuk::Transaction ret;
+    try {
+        ret = nunchuk::Utils::DecodeTx(wallet, psbt.toStdString(), sub_amount, fee, fee_rate);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QString qUtils::CreateRequestToken(const QString &signature,
+                                   const QString &fingerprint,
+                                   QWarningMessage &msg)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::CreateRequestToken(signature.toStdString(), fingerprint.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QString qUtils::currencyLocale(qint64 amountSats)
+{
+    double btRates = AppModel::instance()->btcRates()/100000000;
+    double exRates = AppModel::instance()->exchangeRates();
+    double balanceCurrency = btRates*exRates*amountSats;
+    QLocale locale(QLocale::English);
+    QString output = locale.toString(balanceCurrency, 'f', 8);
+    while (output.endsWith('0') && output.contains('.')) {
+        output = output.chopped(1);
+    }
+    if (output.endsWith('.')) {
+        output = output.chopped(1);
+    }
+    return output;
 }

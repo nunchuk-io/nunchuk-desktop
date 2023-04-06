@@ -103,7 +103,7 @@ Rectangle {
     }
     Rectangle {
         id:_Type
-        width: 70
+        width: 85
         height: 21
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right

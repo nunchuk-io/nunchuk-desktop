@@ -136,7 +136,7 @@ QScreen {
         else {
             if(https_code === DRACO_CODE.SUCCESSFULL){
                 if (error_code === DRACO_CODE.RESPONSE_OK){
-                    QMLHandle.sendEvent(EVT.EVT_LOGIN_SUCCEEDED)
+                    QMLHandle.sendEvent(EVT.EVT_NUNCHUK_LOGIN_SUCCEEDED)
                 }
                 else if (error_code === DRACO_CODE.LOGIN_NEW_DEVICE){
                     commonError.visible = false

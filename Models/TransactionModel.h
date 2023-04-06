@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef TRANSACTIONLISTMODEL_H
 #define TRANSACTIONLISTMODEL_H
 
@@ -13,14 +33,14 @@ class Destination : public QObject {
     Q_PROPERTY(QString address  READ address        NOTIFY addressChanged)
     Q_PROPERTY(QString amount   READ amountDisplay  NOTIFY amountChanged)
     Q_PROPERTY(QString amountBTC   READ amountBTC   NOTIFY amountChanged)
-    Q_PROPERTY(QString amountUSD   READ amountUSD   NOTIFY amountChanged)
+    Q_PROPERTY(QString amountCurrency   READ amountCurrency   NOTIFY amountChanged)
 public:
     Destination();
     Destination(const QString &address, const qint64 amount);
     ~Destination();
     QString amountDisplay() const;
     QString amountBTC() const;
-    QString amountUSD() const;
+    QString amountCurrency() const;
     qint64 amountSats() const;
     void setAmount(const qint64 value);
 
@@ -34,7 +54,7 @@ signals:
     void addressChanged();
     void amountChanged();
 };
-typedef QSharedPointer<Destination> QDestinationPtr;
+typedef OurSharedPointer<Destination> QDestinationPtr;
 
 class DestinationListModel : public QAbstractListModel
 {
@@ -55,13 +75,13 @@ public:
         destination_address_role,
         destination_amount_role,
         destination_amount_btc_role,
-        destination_amount_usd_role
+        destination_amount_currency_role
     };
     QString reciever();
 private:
     QList<QDestinationPtr> d_;
 };
-typedef QSharedPointer<DestinationListModel> QDestinationListModelPtr;
+typedef OurSharedPointer<DestinationListModel> QDestinationListModelPtr;
 
 class Transaction : public QObject {
     Q_OBJECT
@@ -71,7 +91,7 @@ class Transaction : public QObject {
     Q_PROPERTY(int status READ status NOTIFY statusChanged)
     Q_PROPERTY(QString fee READ feeDisplay NOTIFY feeChanged)
     Q_PROPERTY(QString feeBTC READ feeBTC NOTIFY feeChanged)
-    Q_PROPERTY(QString feeUSD READ feeUSD NOTIFY feeChanged)
+    Q_PROPERTY(QString feeCurrency READ feeCurrency NOTIFY feeChanged)
     Q_PROPERTY(QString feeRate READ feeRate NOTIFY feeRateChanged)
     Q_PROPERTY(int m READ m NOTIFY mChanged)
     Q_PROPERTY(bool hasChange READ hasChange NOTIFY hasChangeChanged)
@@ -79,9 +99,9 @@ class Transaction : public QObject {
     Q_PROPERTY(Destination* change READ change NOTIFY changeChanged)
     Q_PROPERTY(SingleSignerListModel* singleSignersAssigned READ singleSignersAssigned NOTIFY singleSignerAssignedChanged)
     Q_PROPERTY(QString subtotal     READ subtotalDisplay NOTIFY subtotalChanged)
-    Q_PROPERTY(QString subtotalUSD  READ subtotalUSD     NOTIFY subtotalChanged)
+    Q_PROPERTY(QString subtotalCurrency  READ subtotalCurrency     NOTIFY subtotalChanged)
     Q_PROPERTY(QString total    READ totalDisplay   NOTIFY totalChanged)
-    Q_PROPERTY(QString totalUSD READ totalUSD       NOTIFY totalChanged)
+    Q_PROPERTY(QString totalCurrency READ totalCurrency       NOTIFY totalChanged)
     Q_PROPERTY(int numberSigned READ numberSigned NOTIFY numberSignedChanged)
     Q_PROPERTY(QString blocktime READ blocktimeDisplay NOTIFY blocktimeChanged)
     Q_PROPERTY(bool isReceiveTx READ isReceiveTx NOTIFY isReceiveTxChanged)
@@ -103,7 +123,7 @@ public:
     void setStatus(int status);
     QString feeDisplay() const;
     QString feeBTC() const;
-    QString feeUSD() const;
+    QString feeCurrency() const;
     qint64 feeSats() const;
     void setFee(const qint64 fee);
     int m() const; // number of signatures required
@@ -121,12 +141,12 @@ public:
     void setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned);
     QString subtotalDisplay() const;
     QString subtotalBTC() const;
-    QString subtotalUSD() const;
+    QString subtotalCurrency() const;
     qint64 subtotalSats() const;
     void setSubtotal(const qint64 subtotal);
     QString totalDisplay() const;
     QString totalBTC() const;
-    QString totalUSD() const;
+    QString totalCurrency() const;
     qint64 totalSats() const;
     void setTotal(const qint64 total);
     int numberSigned() const;
@@ -212,7 +232,7 @@ signals:
     void psbtChanged();
     void serverKeyMessageChanged();
 };
-typedef QSharedPointer<Transaction> QTransactionPtr;
+typedef OurSharedPointer<Transaction> QTransactionPtr;
 
 class TransactionListModel : public QAbstractListModel
 {
@@ -256,8 +276,8 @@ public:
         transaction_height_role,
         transaction_isReceiveTx_role,
         transaction_replacedTx_role,
-        transaction_totalUSD_role,
-        transaction_subtotalUSD_role,
+        transaction_totalCurrency_role,
+        transaction_subtotalCurrency_role,
     };
 signals:
     void countChanged();
@@ -265,7 +285,7 @@ private:
     bool contains(const QString &tx_id);
     QList<QTransactionPtr> d_;
 };
-typedef QSharedPointer<TransactionListModel> QTransactionListModelPtr;
+typedef OurSharedPointer<TransactionListModel> QTransactionListModelPtr;
 
 // Sort Block time
 bool sortTXsByBlocktimeAscending(const QTransactionPtr &v1, const QTransactionPtr &v2);

@@ -227,7 +227,7 @@ QScreen {
                     transactionstatus: transaction_status
                     transactionMemo:   transaction_memo
                     transactionAmount:   transaction_isReceiveTx ? transaction_subtotal : transaction_total
-                    transactiontotalUSD: transaction_isReceiveTx ? transaction_subtotalUSD : transaction_totalUSD
+                    transactiontotalCurrency: transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency
                     confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
                     transactionDate: transaction_blocktime
                     onButtonClicked: {

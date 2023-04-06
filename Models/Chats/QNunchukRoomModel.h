@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef QNUNCHUKROOM_H
 #define QNUNCHUKROOM_H
 
@@ -61,22 +81,25 @@ public:
 class QNunchukRoom: public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString              roomid         READ id              CONSTANT)
-    Q_PROPERTY(int                  userCount      READ userCount       NOTIFY userCountChanged)
-    Q_PROPERTY(QStringList          userNames      READ userNames       NOTIFY userNamesChanged)
-    Q_PROPERTY(QString              roomName       READ roomName        WRITE  setRoomName   NOTIFY roomNameChanged)
-    Q_PROPERTY(QConversationModel*  conversation   READ conversation    NOTIFY conversationChanged)
-    Q_PROPERTY(QString              lastTimestamp  READ lasttimestamp   NOTIFY lasttimestampChanged)
-    Q_PROPERTY(QString              lastMessage    READ lastMessage     NOTIFY lastMessageChanged)
-    Q_PROPERTY(QNunchukRoomUsers*   users          READ users           NOTIFY usersChanged)
-    Q_PROPERTY(QString              typingNames    READ typingNames     NOTIFY typingNamesChanged)
-    Q_PROPERTY(bool                 allHisLoaded   READ allHisLoaded    NOTIFY allHisLoadedChanged)
-    Q_PROPERTY(QRoomWallet*         roomWallet     READ roomWallet      NOTIFY roomWalletChanged)
-    Q_PROPERTY(QRoomTransactionModel* pendingTxs   READ pendingTxs      NOTIFY pendingTxsChanged)
-    Q_PROPERTY(QRoomTransactionModel* txs          READ txs             NOTIFY txsChanged)
-    Q_PROPERTY(int                  unreadCount    READ unreadCount     NOTIFY unreadCountChanged)
-    Q_PROPERTY(QRoomTransaction* pinTransaction    READ pinTransaction  NOTIFY pinTransactionChanged)
-    Q_PROPERTY(QString roomAvatar                  READ roomAvatar      NOTIFY usersChanged)
+    Q_PROPERTY(QString              roomid         READ id                                  CONSTANT)
+    Q_PROPERTY(int                  userCount      READ userCount                           NOTIFY userCountChanged)
+    Q_PROPERTY(QStringList          userNames      READ userNames                           NOTIFY userNamesChanged)
+    Q_PROPERTY(QString              roomName       READ roomName        WRITE  setRoomName  NOTIFY roomNameChanged)
+    Q_PROPERTY(QConversationModel*  conversation   READ conversation                        NOTIFY conversationChanged)
+    Q_PROPERTY(QString              lastTimestamp  READ lasttimestamp                       NOTIFY lasttimestampChanged)
+    Q_PROPERTY(QString              lastMessage    READ lastMessage                         NOTIFY lastMessageChanged)
+    Q_PROPERTY(QNunchukRoomUsers*   users          READ users                               NOTIFY usersChanged)
+    Q_PROPERTY(QString              typingNames    READ typingNames                         NOTIFY typingNamesChanged)
+    Q_PROPERTY(bool                 allHisLoaded   READ allHisLoaded                        NOTIFY allHisLoadedChanged)
+    Q_PROPERTY(QRoomWallet*         roomWallet     READ roomWallet                          NOTIFY roomWalletChanged)
+    Q_PROPERTY(QRoomTransactionModel* pendingTxs   READ pendingTxs                          NOTIFY pendingTxsChanged)
+    Q_PROPERTY(QRoomTransactionModel* txs          READ txs                                 NOTIFY txsChanged)
+    Q_PROPERTY(int                  unreadCount    READ unreadCount                         NOTIFY unreadCountChanged)
+    Q_PROPERTY(QRoomTransaction*    pinTransaction READ pinTransaction                      NOTIFY pinTransactionChanged)
+    Q_PROPERTY(QString              roomAvatar     READ roomAvatar                          NOTIFY usersChanged)
+    Q_PROPERTY(int                  roomType       READ roomType                            CONSTANT)
+    Q_PROPERTY(QStringList          talkersName    READ talkersName                         NOTIFY usersChanged)
+    Q_PROPERTY(QStringList          talkersAvatar  READ talkersAvatar                       NOTIFY usersChanged)
 public:
     QNunchukRoom(Room* r);
     ~QNunchukRoom();
@@ -90,12 +113,16 @@ public:
     };
     bool isServerNoticeRoom() const;
     bool isNunchukSyncRoom() const;
+    bool isSupportRoom() const;
+    bool isDirectChat() const;
     QString localUserName() const;
     QString id() const;
     QStringList aliases() const;
     QString status() const;
     int userCount() const;
     QStringList userNames();
+    QStringList talkersName();
+    QStringList talkersAvatar();
     QString roomAvatar();
     QString roomName();
     void setRoomName(const QString& name);
@@ -127,6 +154,7 @@ public:
 
     Q_INVOKABLE void sendMessage(const QString& message);
     Q_INVOKABLE void sendReaction(const QString& react);
+    Q_INVOKABLE void sendFile(const QString &description, const QString localFile);
     Q_INVOKABLE void inviteToRoom(const QString& memberId);
     Q_INVOKABLE void kickMember(const QString &memberId);
     Q_INVOKABLE void banMember(const QString& userId);
@@ -138,6 +166,7 @@ public:
     Q_INVOKABLE bool getXpub(const QString& id);
     Q_INVOKABLE void finalizeWallet();
     Q_INVOKABLE void cancelWallet();
+    Q_INVOKABLE void downloadFile(const QString& eventId, const QUrl& localFilename = {});
 
     void setTags(const QString& newtag);
     void setDisplayed(bool displayed);
@@ -170,7 +199,7 @@ public:
     bool extractNunchukEvent(const QString &matrixType, const QString &init_event_id, const QJsonObject& json, Conversation &cons) ;
     nunchuk::Wallet walletImport() const;
     void setWalletImport(const nunchuk::Wallet &walletImport);
-
+    int roomType();
 private:
     Quotient::Room          *m_room;
     QConversationModelPtr   m_conversation;
@@ -189,7 +218,7 @@ private:
 private:
     bool validatePendingEvent(const QString& txnId);
     bool extractNunchukEvent(const RoomEvent& evt, Conversation &cons) ;
-    QString eventToString(const RoomEvent& evt, Qt::TextFormat format = Qt::RichText, bool removeReply = true) const ;
+    void eventToConversation(const RoomEvent& evt, Conversation &result, Qt::TextFormat format = Qt::RichText);
     void receiveMessage(int fromIndex, int toIndex);
     Conversation createConversation(const RoomEvent& evt) ;
     void nunchukConsumeEvent(const RoomEvent& evt) ;
@@ -244,6 +273,7 @@ signals:
     void signalFinishCancelWallet(QString what, int type, int code);
     void signalFinishedGetPendingTxs(QRoomTransactionModelPtr txs);
     void pinTransactionChanged();
+    void roomNeedTobeLeaved(const QString& id);
 };
 Q_DECLARE_METATYPE(Conversation)
 Q_DECLARE_METATYPE(nunchuk::RoomTransaction)
@@ -285,6 +315,7 @@ public:
     enum RoomRoles {
         room_id,
         room_name,
+        room_type,
         room_joinstate,
         room_unreadmsg_count,
         room_last_timestamp,
@@ -299,6 +330,7 @@ public:
     bool containsRoom(const QString& id);
     void doAddRoom(QNunchukRoomPtr r);
     void removeRoomByIndex(const int index);
+    void removeRoomById(const QString& id);
     void removeAll();
 
     // Room operation
@@ -307,6 +339,7 @@ public:
     void leaveRoom(const int index);
     void joinRoom(QString roomAliasOrId);
     void createRoomChat(const QStringList invitees_id, const QString &topic, const QString &name, QVariant firstMessage = QVariant());
+    void createSupportRoom();
     bool allHisLoaded();
 
     // Room wallets
@@ -324,6 +357,7 @@ private:
 private:
     bool containsServiceRoom(const QString& id);
     bool containsSyncRoom();
+    bool containsSupportRoom(const QString &tagname);
 
 signals:
     void currentIndexChanged();
@@ -343,6 +377,7 @@ public slots:
     // refresh room
     void refresh(QNunchukRoomPtr room, const QVector<int>& roles = {});
     void resort();
+    void roomNeedTobeLeaved(const QString& id);
 };
 
 typedef QSharedPointer<QNunchukRoomListModel> QNunchukRoomListModelPtr;

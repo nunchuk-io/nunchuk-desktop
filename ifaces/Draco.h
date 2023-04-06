@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #ifndef DRACO_H
 #define DRACO_H
 
@@ -30,7 +50,7 @@ public:
     Q_INVOKABLE void createAccount(const QString& name, const QString& email);
     Q_INVOKABLE void singin(const QString &email, const QString &password);
     Q_INVOKABLE bool signout();
-    Q_INVOKABLE void exchangeRates();
+    void exchangeRates(const QString &currency);
     Q_INVOKABLE void feeRates();
     Q_INVOKABLE void verifyNewDevice(const QString &pin);
     Q_INVOKABLE void resendVerifyNewDeviceCode();
@@ -42,25 +62,26 @@ public:
     Q_INVOKABLE bool deleteCurrentUser();
     Q_INVOKABLE bool sendDeleteConfirmation(const QString &code);
     Q_INVOKABLE void setUserProfile(const QString& name, const QString& avartaPath);
-    void checkForUpdate();
     Q_INVOKABLE void signoutDeice(const QString &device_id);
     Q_INVOKABLE void signoutAllDeices();
     Q_INVOKABLE void markAsCompromised(const QString &device_id);
     Q_INVOKABLE void pkey_signup(const QString &address,const QString &username,const QString &signature);
     Q_INVOKABLE bool pkey_signin(const QString &address,const QString &username,const QString &signature);
+    Q_INVOKABLE bool pkey_username_availability(const QString &username);
+    Q_INVOKABLE void changePassword(const QString &oldpassword, const QString &newpassword);
+    Q_INVOKABLE QVariant requestFriends(const QVariant emails);
+
+    void checkForUpdate();
     QString get_pkey_nonce(const QString &address,const QString &username);
     QString pkey_manual_nonce(const QString &address, const QString &username, const QString &nonce, const QString &type = "none");
-    Q_INVOKABLE bool pkey_username_availability(const QString &username);
     bool pkey_delete_confirmation(const QString &signed_message);
     bool pkey_change_pkey(const QString &new_key, const QString &old_signed_message, const QString &new_signed_message);
     void recoverPassword(const QString& email, const QString& forgotToken, const QString& newpassword);
     void forgotPassword(const QString &email);
-    Q_INVOKABLE void changePassword(const QString &oldpassword, const QString &newpassword);
     void getMe();
     void getMepKey(const QString &public_address);
     //Frriend/Contacts
     DracoUser search(const QString& email);
-    Q_INVOKABLE QVariant requestFriends(const QVariant emails);
     bool requestSingleFriend(const QString& email);
     bool requestMutipleFriend(const QStringList& email, QStringList &failed_emails);
     QList<DracoUser> getContacts();
@@ -100,17 +121,54 @@ public:
     bool assistedWalletCancelTx(const QString &wallet_id, const QString &transaction_id);
     QJsonObject assistedWalletGetTx(const QString &wallet_id, const QString &transaction_id);
     QJsonObject assistedWalletGetListTx(const QString &wallet_id);
+    void assistedSyncTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt);
+
+    bool verifyPasswordToken(const QString &password, const int action, QString &errormsg_or_token);
+    QString randomNonce();
+
+    bool secQuesGet(QJsonArray& output, QString& errormsg);
+
+    bool secQuesAnswer(QList<SecurityQuestion> answers,
+                       QString& secQuesToken,
+                       int& correct_answer,
+                       QString& errormsg);
+
+    bool lockdownPeriods(QJsonArray& output, QString& errormsg);
+
+    bool lockdownRequiredSignatures(const QString &period_id,
+                                    const QString &wallet_id,
+                                    lockDownReqiredInfo& output,
+                                    QString& errormsg);
+    bool lockdownByAnswerSecQues(const QString& passwordToken,
+                                 const QString& secQuesToken,
+                                 const QString& period_id,
+                                 const QString& wallet_id,
+                                 QString& until_time,
+                                 QString& errormsg);
+    bool lockdownBySignDummyTx(const QStringList &signatures,
+                               const QString& passwordToken,
+                               const QString& period_id,
+                               const QString& wallet_id,
+                               QString& until_time,
+                               QString& errormsg);
+
+    bool userKeysDownloadBackup(const QString& verify_token,
+                                const QString& xfpOrId,
+                                const QList<SecurityQuestion> answers,
+                                QString& output,
+                                QString& errormsg);
+
+    bool getCurrencies(QJsonObject& output, QString& errormsg);
+    void btcRates();
 private:
     Draco();
     ~Draco();
-    QJsonObject postSync(const QString &cmd, QJsonObject data, int &https_code);
-    QJsonObject getSync(const QString &cmd, QJsonObject data, int& https_code);
-    QJsonObject putSync(const QString &cmd, QJsonObject data, int& https_code);
-    QJsonObject deleteSync(const QString &cmd, QJsonObject data, int& https_code);
+    QJsonObject postSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject postSync(const QString &cmd, QMap<QString, QString> params, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     static Draco* m_instance;
-    QNetworkAccessManager *m_dracoManager;
-    QNetworkAccessManager *m_exchangesMng;
-    QNetworkAccessManager *m_feeRateMng;
     QString m_uid;
     QString m_pid;
     QString m_emailRequested;

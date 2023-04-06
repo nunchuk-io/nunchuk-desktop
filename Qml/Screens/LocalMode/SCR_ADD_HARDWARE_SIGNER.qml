@@ -423,7 +423,7 @@ QScreen {
                         icons: ["importFile.svg", "importFile.svg", "importFile.svg","importFile.svg"]
                         fontPixelSize: 16
                         iconSize: 16
-                        type: eFIVE
+                        type: eTypeE
                         radius: 24
                         onButtonClicked: {
                             fileDialog.open()

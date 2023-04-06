@@ -186,7 +186,7 @@ QScreen {
                             }
                             Rectangle {
                                 id:_type
-                                width: 63
+                                width: 85
                                 height: 21
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.right: parent.right
@@ -195,6 +195,7 @@ QScreen {
                                 radius: 4
                                 visible: master_signer_type !== NUNCHUCKTYPE.HARDWARE
                                 QText {
+                                    id: signerTypeText
                                     text: GlobalData.signerNames(master_signer_type)
                                     font.family: "Lato"
                                     font.weight: Font.Bold
@@ -278,7 +279,7 @@ QScreen {
                             }
 
                             Rectangle {
-                                width: 70
+                                width: 85
                                 height: 21
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.right: parent.right
@@ -323,7 +324,7 @@ QScreen {
                 width: 161
                 height: 32
                 iconInRight: true
-                type: eSECOND
+                type: eTypeB
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
@@ -527,7 +528,7 @@ QScreen {
                                 }
                             }
                             Rectangle {
-                                width: 63
+                                width: 85
                                 height: 16
                                 color: "#C9DEF1"
                                 radius: 4

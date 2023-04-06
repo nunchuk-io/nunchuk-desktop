@@ -32,7 +32,8 @@ var STR_QML_006 = qsTr("Verify on device")
 var STR_QML_007 = qsTr("Check the correctness of this address on your device. Make sure your device is connected and unlocked.")
 var STR_QML_008 = qsTr("Please check the address on your device")
 var STR_QML_009 = qsTr("Member keys (%1 of %2)")
-var STR_QML_010 = qsTr("Recent transactions (Total: %1)")
+var STR_QML_010 = qsTr("Recent transactions")
+var STR_QML_010_number = qsTr("(%1 total)")
 var STR_QML_011 = qsTr("View all transactions")
 var STR_QML_012 = qsTr("Mainnet")
 var STR_QML_013 = qsTr("Testnet")
@@ -824,3 +825,72 @@ var STR_QML_689 = qsTr("Are you sure you want to perform a force refresh? This p
 var STR_QML_690 = qsTr("The wallet has been refreshed")
 var STR_QML_691 = qsTr("Copy transaction ID")
 var STR_QML_692 = qsTr("You don't have any transaction yet")
+var STR_QML_693 = qsTr("Couldn't determine how to open the file, opening its folder instead")
+var STR_QML_694 = qsTr("Couldn't determine how to open the file or its folder.")
+var STR_QML_695 = qsTr("Attachment file is invalid")
+var STR_QML_696 = qsTr("Allow only one file")
+
+var STR_QML_697 = qsTr("Emergency lockdown")
+var STR_QML_698 = qsTr("Key recovery")
+var STR_QML_699 = qsTr("Your subscription")
+var STR_QML_700 = qsTr("Order new hardware")
+var STR_QML_701 = qsTr("Support")
+var STR_QML_702 = qsTr("Emergency")
+
+var STR_QML_703 = qsTr("If you feel that there is an imminent threat or \n \
+just want to disable wallet access temporarily, you can activate the emergency lockdown. \n \
+Please note the following:")
+var STR_QML_704 = qsTr("Once you have entered the lockdown, no one—including yourself—will be able to \n \
+sign in to your account and access your wallet.")
+var STR_QML_705 = qsTr("There is no way to end the lockdown early.")
+var STR_QML_706 = qsTr("Access will be automatically re-enabled once the lockdown period ends.")
+var STR_QML_707 = qsTr("Get additional wallets")
+var STR_QML_708 = qsTr("Start key recovery")
+var STR_QML_709 = qsTr("Re-enter your password")
+var STR_QML_710 = qsTr("For security, please re-enter your password.")
+
+var STR_QML_711 = qsTr("Select your lockdown period")
+var STR_QML_712 = qsTr("Your access will be automatically re-enabled once the lockdown period ends.")
+
+var STR_QML_716 = qsTr("Answer security question")
+var STR_QML_717 = qsTr("What is your nickname when you were young?")
+var STR_QML_718 = qsTr("Answer")
+var STR_QML_719 = qsTr("Please answer the following question. Answer is case-sensitive.")
+var STR_QML_720 = qsTr("Your account is now under lockdown")
+var STR_QML_721 = qsTr("The lockdown will last <b>%1</b>.")
+
+var STR_QML_722 = qsTr("If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \n \
+TAPSIGNER’s private key using the encrypted backup from our server. Please note the \n \
+following:")
+var STR_QML_723 = qsTr("Once you have entered the lockdown, no one—including yourself—will \n \
+be able to sign in to your account and access your wallet.")
+var STR_QML_724 = qsTr("There is no way to end the lockdown early.")
+
+var STR_QML_725 = qsTr("Enter Backup Password")
+var STR_QML_726 = qsTr("Please enter the Backup Password for [<b>%1</b>] (card ID: <b>••%2</b>).")
+var STR_QML_727 = qsTr("Backup Password")
+var STR_QML_728 = qsTr("The key recovery procedure currently only supports TAPSIGNER.")
+var STR_QML_729 = qsTr("Please select the TAPSIGNER you want to recover")
+var STR_QML_730 = qsTr("TAPSIGNER recovered")
+var STR_QML_731 = qsTr("Your TAPSIGNER’s private key has been successfully recovered and \n \
+converted into a software key. Please note the following:")
+var STR_QML_732 = qsTr("The software key is stored on this device")
+var STR_QML_733 = qsTr("You can continue signing transactions using this software key")
+var STR_QML_734 = qsTr("If you suspect that someone has gained possession of the key, we recommend that you roll \n \
+over your balance to a new wallet.")
+var STR_QML_735 = qsTr("You can order new hardware by using the referral links on our website. Sign in and navigate to the Hardware Replacement page.")
+var STR_QML_736 = qsTr("Inheritance planning")
+var STR_QML_737 = qsTr("Claim an inheritance")
+var STR_QML_738 = qsTr("Platform key co-signing policies")
+var STR_QML_739 = qsTr("TAPSIGNER has been recovered.")
+var STR_QML_740 = qsTr("The password is printed on the back of the TAPSIGNER. You should have had a copy of this \n \
+when setting up the TAPSIGNER for the first time.")
+var STR_QML_741 = qsTr("Local currency (%1)")
+var STR_QML_742 = qsTr("Local currency")
+var STR_QML_743 = qsTr("Need support? Chat with an expert")
+var STR_QML_744 = qsTr("You currently do not have any TAPSIGNER added.")
+var STR_QML_745 = qsTr("Photos and videos")
+var STR_QML_746 = qsTr("Upload file")
+
+
+

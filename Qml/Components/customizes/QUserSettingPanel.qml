@@ -144,17 +144,4 @@ Column {
             QMLHandle.sendEvent(EVT.EVT_ROOT_UPDATE_PROFILE)
         }
     }
-    signal clickManageSubscription()
-    QTextButton {
-        visible: ClientController.user.isPremiumUser
-        width: 289
-        height: 48
-        anchors.horizontalCenter: parent.horizontalCenter
-        label.text: STR.STR_QML_682
-        label.font.pixelSize: 16
-        type: eTypeC
-        onButtonClicked: {
-            clickManageSubscription()
-        }
-    }
 }

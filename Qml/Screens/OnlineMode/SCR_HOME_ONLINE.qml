@@ -39,7 +39,6 @@ QScreen {
             QMenuBar {
                 width: 72
                 height: homeonlineroot.height
-                currentIndex: 0
                 onLocalModeRequest: {
                     if(0 === AppModel.nunchukMode){
                         QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE)
@@ -49,10 +48,9 @@ QScreen {
                     }
                 }
                 onOnlineModeRequest: {
-                    QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
                 }
                 onOpenSettingRequest: {
-                    QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_APPSETTING_REQUEST)
+                    QMLHandle.sendEvent(EVT.EVT_GOTO_APP_SETTINGS_TAB)
                 }
                 onSignoutRequest: {
                     ClientController.requestSignout()
@@ -62,6 +60,9 @@ QScreen {
                 }
                 onUpdateProfileRequest: {
                     QMLHandle.sendEvent(EVT.EVT_ROOT_UPDATE_PROFILE)
+                }
+                onServiceRequest: {
+                    QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB)
                 }
             }
             Rectangle {
@@ -585,9 +586,19 @@ QScreen {
                     titleWelcome: STR.STR_QML_379
                     content: STR.STR_QML_368
                     icon:"qrc:/Images/Images/OnlineMode/addContact.png"
-                    enabled: ClientController.isNunchukLoggedIn
+                    enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
                     onAddButtonClicked: {
+                        preventTimer.start()
                         QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
+                    }
+                    onSupportButtonClicked: {
+                        preventTimer.start()
+                        QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ)
+                    }
+                    Timer {
+                        id: preventTimer
+                        interval: 5000
+                        repeat: false
                     }
                 }
             }

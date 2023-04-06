@@ -58,24 +58,7 @@ void EVT_ADD_MASTER_SIGNER_FINISHED_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_MASTER_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_CONFIGURATION_HANDLER(QVariant msg) {
-    if(AppModel::instance()->masterSignerInfo()){
-        QString masterSignerId = AppModel::instance()->masterSignerInfo()->id();
-        if((ENUNCHUCK::HealthStatus::SUCCESS == (ENUNCHUCK::HealthStatus)AppModel::instance()->masterSignerInfo()->health()) && ("" != masterSignerId) )
-        {
-            QSingleSignerPtr signer = QSingleSignerPtr(new SingleSigner());
-            signer.data()->setName(AppModel::instance()->masterSignerInfo()->name());
-            signer.data()->setMasterSignerId(masterSignerId);
-            signer.data()->setSignerType(AppModel::instance()->masterSignerInfo()->signerType());
-            signer.data()->setDevicetype(AppModel::instance()->masterSignerInfo()->device()->type());
-            signer.data()->setCardId(AppModel::instance()->masterSignerInfo()->device()->cardId());
-            signer.data()->setIsValid(false);
-            signer.data()->setMasterFingerPrint(AppModel::instance()->masterSignerInfo()->device()->masterFingerPrint());
-            if(signer){
-                AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
-                AppModel::instance()->masterSignerList()->setUserCheckedById(true, masterSignerId);
-            }
-        }
-    }
+
 }
 
 void EVT_ADD_MASTER_SIGNER_RESULT_PROMT_PIN_HANDLER(QVariant msg) {
@@ -120,7 +103,7 @@ void EVT_ADD_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->setMasterSignerList(mastersigners);
         }
         QQuickViewer::instance()->sendEvent(E::EVT_ADD_MASTER_SIGNER_FINISHED);
-        AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new MasterSigner()));
+        AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new QMasterSigner()));
         if (AppModel::instance()->walletList()) {
             AppModel::instance()->walletList()->notifyMasterSignerDeleted(id);
         }
