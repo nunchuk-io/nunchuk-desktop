@@ -218,7 +218,7 @@ void nunchukMakeInstanceForAccount(const QString &account,
                                    const QString &passphrase,
                                    QWarningMessage &msg);
 
-QTransactionPtr convertTransaction(nunchuk::Transaction in, const QString &wallet_id);
+QTransactionPtr convertTransaction(const nunchuk::Transaction& in, const QString &wallet_id);
 
 void nunchukSetPassphrase(const QString &passphrase, QWarningMessage &msg);
 
@@ -227,6 +227,8 @@ QWalletListModelPtr nunchukGetWallets();
 std::vector<nunchuk::Wallet> nunchukGetOriginWallets(QWarningMessage &msg);
 
 QWalletListModelPtr nunchukConvertWallets(std::vector<nunchuk::Wallet> list);
+
+QWalletPtr convertWallet(const nunchuk::Wallet &wallet);
 
 QWalletPtr nunchukGetWallet(const QString &wallet_id);
 
@@ -239,6 +241,8 @@ void nunchukDeleteAllWallet();
 void nunchukUpdateWalletName(const QString& wallet_id, const QString &name);
 
 void nunchukUpdateWalletDescription(const QString &wallet_id, const QString &description);
+
+void nunchukUpdateWalletGapLimit(const QString& wallet_id, int gap_limit);
 
 QMasterSignerListModelPtr nunchukGetMasterSigners();
 
@@ -405,12 +409,7 @@ QTransactionPtr nunchukImportPsbt(const QString& wallet_id,
                                         const QString& psbt,
                                         QWarningMessage &msg);
 
-QTransactionPtr nunchukSignTransaction(const QString& wallet_id,
-                                       const QString& tx_id,
-                                       const QDevicePtr &device,
-                                       QWarningMessage &msg);
-
-nunchuk::Transaction nunchukSignTransactionThread(const QString &wallet_id,
+nunchuk::Transaction nunchukSignTransaction(const QString &wallet_id,
                                                   const QString &tx_id,
                                                   const QDevicePtr &device,
                                                   QWarningMessage& msg);

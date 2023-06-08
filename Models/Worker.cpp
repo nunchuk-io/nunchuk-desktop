@@ -110,7 +110,8 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
                                          bool isSoftware)
 {
     DBG_INFO << walletId << deviceXfp << isSoftware << txid;
-    if(AppModel::instance()->transactionInfo()){
+    QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
+    if(transaction){
         QWarningMessage msgwarning;
         QDevicePtr selectedDv = NULL;
         if(isSoftware){
@@ -123,10 +124,10 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
                 selectedDv = AppModel::instance()->deviceList()->getDeviceByXfp(deviceXfp) ;
             }
         }
-        if(AppModel::instance()->transactionInfo()->roomId() != ""){ // shared
-            QNunchukRoom* room = CLIENT_INSTANCE->GetRoomById(AppModel::instance()->transactionInfo()->roomId());
-            if(room){
-                QString init_event_id = AppModel::instance()->transactionInfo()->initEventId();
+        if(transaction.data()->roomId() != ""){ // shared
+            QNunchukRoom* room = CLIENT_INSTANCE->GetRoomById(transaction.data()->roomId());
+            if(room && selectedDv){
+                QString init_event_id = transaction.data()->initEventId();
                 QWarningMessage signwarning;
                 matrixbrigde::SignTransaction(room->id(),init_event_id, selectedDv, signwarning);
                 nunchuk::Transaction trans = bridge::nunchukGetOriginTransaction(walletId,
@@ -156,11 +157,7 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
         }
         else{
             if(selectedDv){
-                DBG_INFO << "selectedDv";
-                nunchuk::Transaction trans = bridge::nunchukSignTransactionThread(walletId,
-                                                                                  txid,
-                                                                                  selectedDv,
-                                                                                  msgwarning);
+                nunchuk::Transaction trans = bridge::nunchukSignTransaction(walletId, txid, selectedDv, msgwarning);
                 emit finishSigningTransaction(walletId,
                                               trans,
                                               msgwarning.what(),
@@ -663,8 +660,6 @@ void Controller::scanDevicesSync()
                                         STR_CPP_056);
     }
     AppModel::instance()->deviceList()->updateDeviceList(deviceList);
-    AppModel::instance()->checkDeviceUsableToSign();
-    AppModel::instance()->checkDeviceUsableToAdd();
 }
 
 void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
@@ -740,18 +735,12 @@ void Controller::slotFinishScanDevices(const int state_id,
                                        std::vector<nunchuk::Device> ret,
                                        QString what,
                                        int type,
-                                       int code) {
+                                       int code)
+{
+    DBG_INFO;
     QDeviceListModelPtr deviceList(new DeviceListModel());
     if(type == (int)EWARNING::WarningType::NONE_MSG){
         for (nunchuk::Device it : ret) {
-//            QString type = QString::fromStdString(it.get_type());
-//            QString path = QString::fromStdString(it.get_path());
-//            QString model = QString::fromStdString(it.get_model());
-//            QString master_fingerprint = QString::fromStdString(it.get_master_fingerprint());
-//            bool connected = it.connected();
-//            bool needs_pass_phrase_sent = it.needs_pass_phrase_sent();
-//            bool needs_pin_sent = it.needs_pin_sent();
-//            DBG_INFO << model << type << "XFP:" << master_fingerprint << "PPhrase:" << needs_pass_phrase_sent << "PIN:" << needs_pin_sent;
             QDevicePtr device = QDevicePtr(new QDevice(it));
             deviceList.data()->addDevice(device);
         }
@@ -764,8 +753,9 @@ void Controller::slotFinishScanDevices(const int state_id,
                                         (EWARNING::WarningType)type,
                                         STR_CPP_056);
     }
-    AppModel::instance()->checkDeviceUsableToSign();
-    AppModel::instance()->checkDeviceUsableToAdd();
+    if(AppModel::instance()->transactionInfo() && AppModel::instance()->transactionInfo()->singleSignersAssigned()){
+        emit AppModel::instance()->transactionInfo()->singleSignerAssignedChanged();
+    }
     emit finishedScanDevices();
     emit checkAndUnlockDevice(state_id);
 }
@@ -825,8 +815,10 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
                                         what,
                                         (EWARNING::WarningType)type,
                                         STR_CPP_059);
+        if(!isSoftware){
+            startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
+        }
     }
-    AppModel::instance()->checkDeviceUsableToSign();
     emit finishedSigningTransaction();
 }
 
@@ -1077,18 +1069,19 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
 {
     qApp->setOverrideCursor(Qt::WaitCursor);
     QTransactionPtr trans = bridge::convertTransaction(tx, wallet_id);
-    if(AppModel::instance()->walletList()){
+    if(trans && AppModel::instance()->walletList()){
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
         if(wallet){
             wallet.data()->updateTransaction(tx_id, trans);
             if(wallet.data()->isAssistedWallet()){
                 bridge::assistedWalletUpdateTx(wallet_id, tx);
             }
-        }
-    }
-    if(AppModel::instance()->transactionInfo()){
-        if(0 == QString::compare(tx_id, AppModel::instance()->transactionInfo()->txid(), Qt::CaseInsensitive)){
-            AppModel::instance()->setTransactionInfo(trans);
+            if(AppModel::instance()->transactionInfo()){
+                if((0 == QString::compare(wallet_id, AppModel::instance()->transactionInfo()->walletId(), Qt::CaseInsensitive))
+                        && (0 == QString::compare(tx_id, AppModel::instance()->transactionInfo()->txid(), Qt::CaseInsensitive))){
+                    AppModel::instance()->setTransactionInfo(trans);
+                }
+            }
         }
     }
     CLIENT_INSTANCE->transactionChanged(wallet_id, tx_id, status, tx.get_height());
@@ -1187,8 +1180,6 @@ void Controller::slotCheckAndUnlockDevice(const int state_id)
             }
             else{ continue;}
         }
-        AppModel::instance()->checkDeviceUsableToSign();
-        AppModel::instance()->checkDeviceUsableToAdd();
     }
     emit finishedScanDevices();
 }

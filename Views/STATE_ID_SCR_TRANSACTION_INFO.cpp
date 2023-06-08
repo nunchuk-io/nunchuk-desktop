@@ -36,11 +36,17 @@ void SCR_TRANSACTION_INFO_Exit(QVariant msg) {
 void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
     DBG_INFO << msg;
     QString signerXfp = msg.toString();
-    if(AppModel::instance()->walletInfo() && AppModel::instance()->transactionInfo() && AppModel::instance()->transactionInfo()->singleSignersAssigned()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
-        QString tx_id = AppModel::instance()->transactionInfo()->txid();
-        int signerType = AppModel::instance()->transactionInfo()->singleSignersAssigned()->getSingleSignerByFingerPrint(signerXfp)->signerType();
-        DBG_INFO << signerType;
+    QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+    if(wallet && transaction && transaction.data()->singleSignersAssigned()){
+        QString wallet_id = wallet.data()->id();
+        QString tx_id = transaction.data()->txid();
+        QSingleSignerPtr signer = transaction.data()->singleSignersAssigned()->getSingleSignerByFingerPrint(signerXfp);
+        if(!signer){
+            //FIXME SHOW TOAST ?
+            emit AppModel::instance()->finishedSigningTransaction();
+        }
+        int signerType = signer.data()->signerType();
         if((int)ENUNCHUCK::SignerType::SOFTWARE == signerType){
             QDevicePtr device = AppModel::instance()->softwareSignerDeviceList()->getDeviceByXfp(signerXfp);
             int deviceIndex = AppModel::instance()->softwareSignerDeviceList()->getDeviceIndexByXfp(signerXfp);
@@ -64,8 +70,7 @@ void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                 }
             }
         }
-        else if((int)ENUNCHUCK::SignerType::HARDWARE == signerType
-                || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType){
+        else if((int)ENUNCHUCK::SignerType::HARDWARE == signerType || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType){
             QDevicePtr device = AppModel::instance()->deviceList()->getDeviceByXfp(signerXfp);
             if(device){
                 AppModel::instance()->startSigningTransaction(wallet_id,
@@ -73,8 +78,13 @@ void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                               device.data()->masterFingerPrint(),
                                                               false);
             }
+            else{
+                //FIXME SHOW TOAST ?
+                emit AppModel::instance()->finishedSigningTransaction();
+            }
         }
         else{
+            //FIXME SHOW TOAST ?
             DBG_INFO << "SIGNER IS NOT SOFTWARE OR HARDWARE";
             emit AppModel::instance()->finishedSigningTransaction();
         }

@@ -21,12 +21,12 @@
 #include "AppModel.h"
 #include <QQmlEngine>
 
-QDevice::QDevice(): isDraft(true)
+QDevice::QDevice(): m_isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QDevice::QDevice(const nunchuk::Device &device) : device_(device)
+QDevice::QDevice(const nunchuk::Device &device) : m_device(device)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -36,55 +36,54 @@ QDevice::~QDevice(){}
 QString QDevice::name()
 {
     QString name = "";
-    QString xfp = QString::fromStdString(device_.get_master_fingerprint());
+    QString xfp = QString::fromStdString(m_device.get_master_fingerprint());
     if(AppModel::instance()->masterSignerList()){
         name = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(xfp);
     }
     if(name == ""){
-        name = QString::fromStdString(device_.get_type());
+        name = QString::fromStdString(m_device.get_type());
     }
     return name;
 }
 
 QString QDevice::type() const {
-    return QString::fromStdString(device_.get_type());
+    return QString::fromStdString(m_device.get_type());
 }
 
 QString QDevice::path() const {
-    return QString::fromStdString(device_.get_path());
+    return QString::fromStdString(m_device.get_path());
 }
 
 QString QDevice::model() const {
-    return QString::fromStdString(device_.get_model());
+    return QString::fromStdString(m_device.get_model());
 }
 
 QString QDevice::masterFingerPrint() const {
-    return QString::fromStdString(device_.get_master_fingerprint());
+    return QString::fromStdString(m_device.get_master_fingerprint());
 }
 
 bool QDevice::connected() const {
-    return device_.connected();
+    return m_device.connected();
 }
 
 bool QDevice::needsPassPhraseSent() const {
-    return device_.needs_pass_phrase_sent();
+    return m_device.needs_pass_phrase_sent();
 }
 
 bool QDevice::needsPinSent() const {
-    return device_.needs_pin_sent();
+    return m_device.needs_pin_sent();
 }
 
-bool QDevice::usableToAdd() const
+bool QDevice::usableToAdd()
 {
-    return usableToAdd_;
-}
-
-void QDevice::setUsableToAdd(bool usableToAdd)
-{
-    if(usableToAdd_ != usableToAdd){
-        usableToAdd_ = usableToAdd;
-        emit usableToAddChanged();
+    bool used = false;
+    if(AppModel::instance()->masterSignerList()){
+        used = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
     }
+    if(!used && AppModel::instance()->remoteSignerList()){
+        used = AppModel::instance()->remoteSignerList()->containsFingerPrint(masterFingerPrint());
+    }
+    return !used;
 }
 
 QString QDevice::masterSignerId() const
@@ -101,22 +100,22 @@ QString QDevice::masterSignerId() const
 
 QString QDevice::cardId() const
 {
-    return cardId_;
+    return m_cardId;
 }
 
 void QDevice::setCardId(const QString &card_id)
 {
-    cardId_ = card_id;
+    m_cardId = card_id;
 }
 
 nunchuk::Device QDevice::originDevice() const
 {
-    return device_;
+    return m_device;
 }
 
 void QDevice::setOriginDevice(const nunchuk::Device &device)
 {
-    device_ = device;
+    m_device = device;
 }
 
 DeviceListModel::DeviceListModel()
@@ -277,24 +276,14 @@ QDevicePtr DeviceListModel::getDeviceNeedPinSent(){
     return QDevicePtr(NULL);
 }
 
-void DeviceListModel::resetUsableToAdd()
-{
-    beginResetModel();
-    foreach (QDevicePtr it, d_) {
-        it.data()->setUsableToAdd(false);
-    }
-    endResetModel();
-}
-
-void DeviceListModel::updateUsableToAdd(const QString &fingerprint, bool value)
+bool DeviceListModel::containsFingerPrint(const QString &xfp)
 {
     foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(fingerprint, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            it.data()->setUsableToAdd(value);
-            emit dataChanged(this->index(d_.indexOf(it)),this->index(d_.indexOf(it)));
+        if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            return true;
         }
     }
-    emit containsAddableChanged();
+    return false;
 }
 
 bool DeviceListModel::contains(const QString &fingerprint)
@@ -315,16 +304,6 @@ bool DeviceListModel::needScanDevice()
     foreach (QDevicePtr i , d_ ){
         DBG_INFO << i.data()->needsPinSent() << i.data()->needsPassPhraseSent();
         if(i.data()->needsPinSent() || i.data()->needsPassPhraseSent()){
-            return true;
-        }
-    }
-    return false;
-}
-
-bool DeviceListModel::containsAddable() const
-{
-    foreach (QDevicePtr i , d_ ){
-        if(i.data()->usableToAdd()){
             return true;
         }
     }

@@ -47,7 +47,7 @@ void EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ_HANDLER(QVariant msg)
     int feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
     bool manualFee = msg.toMap().value("manualFee").toBool();
     bool manualOutput = msg.toMap().value("manualOutput").toBool();
-    if(!manualFee) feeRate = -1;
+    if(!manualFee) feeRate = 1000;//default value
     DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
     QUserWallets::instance()->inheritanceCreateDraftTransaction(feeRate);
 }

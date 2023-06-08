@@ -184,8 +184,6 @@ public:
     QString minFee() const;
     void setMinFee(qint64 fee);
 
-    void checkDeviceUsableToSign();
-    void checkDeviceUsableToAdd();
     void resetSignersChecked();
     QString addressBalance() const;
     void setAddressBalance(const qint64 &addressBalance);

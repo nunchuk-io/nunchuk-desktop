@@ -355,10 +355,6 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
                 m_signers = wallet->singleSignersAssigned()->clone();
             }
         }
-        m_signers.data()->resetSignerReadyToSign();
-        for (QMasterSignerPtr master : AppModel::instance()->masterSignerList()->fullList()) {
-            m_signers.data()->updateSignerIsLocalAndReadyToSign(master);
-        }
         m_signers.data()->initSignatures();
         std::map<std::string, bool> signers = m_transaction.get_signers();
         for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
@@ -367,12 +363,6 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
         m_signers.data()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_is_local_Role, Qt::AscendingOrder);
     }
     return m_signers.data();
-}
-
-void Transaction::setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned)
-{
-    m_signers = singleSignersAssigned;
-    emit singleSignerAssignedChanged();
 }
 
 int Transaction::numberSigned()
@@ -694,8 +684,9 @@ void TransactionListModel::updateTransaction(const QString &tx_id, const QTransa
             }
         }
         if(!existed){
+            beginInsertRows(QModelIndex(), rowCount(), rowCount());
             m_data.append(tx);
-            emit dataChanged(index(m_data.count()-1),index(m_data.count()-1));
+            endInsertRows();
             emit countChanged();
         }
     }

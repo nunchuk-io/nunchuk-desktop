@@ -87,20 +87,20 @@ public:
     bool startRecovery(const QString& backup_password);
 
     QMasterSigner *signer() const;
-
+    //Inheritance
     Q_INVOKABLE int inheritanceCheck(const QString& magic = "", const QString& environment = "PRODUCTION");
     bool inheritanceGetPlan(const QString &magic_inpputed, const QString& wallet_id);
     int inheritanceDownloadBackup(const QString& magic, const QString& backup_password);
     bool inheritanceClaimRequest(const nunchuk::Wallet wallet, const nunchuk::Transaction txSigned, const QString& magic);
     int inheritanceClaimStatus(const QJsonObject& data, const QString& autho);
     bool inheritanceCreateTx(const nunchuk::SingleSigner& signer, const QJsonObject& data, const QString& autho);
-
     void setInheritanceAddress(const QString& to_wallet_id);
     void setInheritanceAddressNewTransaction(const QString& address);
     void inheritanceCreateDraftTransaction(double fee_rate = 1000.0);
     void inheritanceSignTransaction();
 
-    bool serverKeyGetCurrentPolicies();
+    // For co-signing policies
+    bool serverKeyGetCurrentPolicies(const QString& wallet_id);
     QJsonObject serverKeyBody();
     bool serverKeyUpdatePolicies();
     bool serverKeyUpdatePoliciesSucceed();
@@ -120,6 +120,7 @@ signals:
     void securityQuestionChanged();
     void serverKeyDummyTransactionAlert();
     void securityQuestionClosed();
+    void thereNoAssistedWalletAlert();
 private:
     QString m_passwordToken;
     QString m_secQuesToken;

@@ -113,7 +113,7 @@ QScreen {
                             topMargin: 16
                         }
                         spacing: 8
-                        currentIndex: (devicelist.count) == 1 && AppModel.deviceList.containsAddable? 0 : -1
+                        currentIndex: -1
                         clip: true
                         interactive : devicelist.count > 3
                         ScrollBar.vertical: ScrollBar { active: true }
@@ -193,7 +193,7 @@ QScreen {
                                         font.pixelSize: 10
                                         font.weight: Font.ExtraBold
                                         font.family: "Lato"
-                                        color: "#F1FAFE"
+                                        color: "#E0E0E0"
                                         anchors.centerIn: parent
                                     }
                                 }
@@ -203,11 +203,11 @@ QScreen {
                                 enabled: device_usable_to_add
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: { devicelist.currentIndex = index }
-                            }
-                            Component.onCompleted: {
-                                if(0 === devicelist.currentIndex && index === devicelist.currentIndex){
+                                onClicked: {
                                     devicelist.currentIndex = index
+                                    if(signerName.textOutput === ""){
+                                        signerName.textOutput = device_type
+                                    }
                                 }
                             }
                         }

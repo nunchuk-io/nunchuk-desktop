@@ -508,32 +508,6 @@ void AppModel::setMinFee(qint64 fee)
     }
 }
 
-void AppModel::checkDeviceUsableToSign()
-{
-    if( transactionInfo() && transactionInfo()->singleSignersAssigned()){
-        if(deviceList()){
-            transactionInfo()->singleSignersAssigned()->resetSignerReadyToSign();
-            for (QDevicePtr signer : deviceList()->fullList()) {
-                transactionInfo()->singleSignersAssigned()->updateSignerReadyToSign(signer.data()->masterFingerPrint());
-            }
-        }
-    }
-}
-
-void AppModel::checkDeviceUsableToAdd()
-{
-    if(deviceList() && masterSignerList()){
-        deviceList()->resetUsableToAdd();
-        for (int i = 0; i < deviceList()->rowCount(); i++) {
-            QDevicePtr dv = deviceList()->getDeviceByIndex(i);
-            if(dv){
-                bool usable = masterSignerList()->containsFingerPrint(dv.data()->masterFingerPrint());
-                deviceList()->updateUsableToAdd(dv.data()->masterFingerPrint(), !usable);
-            }
-        }
-    }
-}
-
 void AppModel::resetSignersChecked()
 {
     if(masterSignerList_){

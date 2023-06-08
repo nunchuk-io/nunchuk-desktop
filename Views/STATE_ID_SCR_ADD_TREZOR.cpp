@@ -28,7 +28,6 @@ void SCR_ADD_TREZOR_Entry(QVariant msg) {
     AppModel::instance()->setNewKeySignMessage("");
     AppModel::instance()->setAddSignerWizard(0);
     AppModel::instance()->setAddSignerPercentage(0);
-    AppModel::instance()->checkDeviceUsableToAdd();
 }
 
 void SCR_ADD_TREZOR_Exit(QVariant msg) {

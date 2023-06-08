@@ -120,4 +120,5 @@ const static QString STR_CPP_114 = QString("Your account has been signed out");
 const static QString STR_CPP_115 = QString("Invalid password. Unable to restore backup.");
 const static QString STR_CPP_116 = QString("The Magic Phrase you entered does not match the one that you requested.");
 const static QString STR_CPP_117 = QString("Policies have been updated");
+const static QString STR_CPP_118 = QString("Could not claim inheritance");
 #endif // STR_CPP_H

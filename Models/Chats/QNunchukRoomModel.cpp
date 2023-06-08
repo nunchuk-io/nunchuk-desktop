@@ -2560,6 +2560,7 @@ void QNunchukRoomListModel::roomNeedTobeLeaved(const QString &id)
 
 void QNunchukRoomListModel::synchonizesUserDataFinished()
 {
+    DBG_INFO;
     AppModel::instance()->closePromtNunchukSync();
     AppModel::instance()->startReloadWallets();
     AppModel::instance()->startReloadMasterSigners();

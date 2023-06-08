@@ -157,13 +157,18 @@ QScreen {
                                 readonly property int _GET_ADDITIONAL_WALLETS: 7
                                 readonly property int _ORDER_NEW_HARDWARE: 8
                                 readonly property int _MANAGE_SUBSCRIPTION: 9
+                                function isHoneyBadger(){
+                                    return ClientController.user.plan_slug === "honey_badger"
+                                }
+
                                 readonly property var setting_map: [
                                     {screen:_EMERGENCY,             visible: true, enable:false,  title:STR.STR_QML_702, icon: "qrc:/Images/Images/emergency-light.svg"   ,action: function(){} },
                                     {screen:_EMERGENCY_LOCKDOWN,    visible: true, enable:true,  title:STR.STR_QML_697, icon: ""   ,action: function(){} },
                                     {screen:_KEY_RECOVERY,          visible: true, enable:true,  title:STR.STR_QML_698, icon: ""   ,action: function(){} },
-                                    {screen:_INHERITANCE_PLANING,   visible: false, enable:false,  title:STR.STR_QML_736, icon: "qrc:/Images/Images/inheritance-light.svg"   ,action: function(){} },
-                                    {screen:_CLAIM_AN_INHERITANCE,  visible: true, enable:true,  title:STR.STR_QML_737, icon: ""   ,action: function(){
+                                    {screen:_INHERITANCE_PLANING,   visible: isHoneyBadger(), enable:false,  title:STR.STR_QML_736, icon: "qrc:/Images/Images/inheritance-light.svg"   ,action: function(){} },
+                                    {screen:_CLAIM_AN_INHERITANCE,  visible: isHoneyBadger(), enable:true,  title:STR.STR_QML_737, icon: ""   ,action: function(){
                                         GlobalData.serviceIndex = _CLAIM_AN_INHERITANCE
+                                        ServiceSetting.claimInheritanceStatus = ServiceType.CI_NONE
                                         _claim.claimClear()
                                     } },
                                     {screen:_YOUR_SUBSCRIPTION,     visible: true, enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){} },
@@ -1096,6 +1101,10 @@ QScreen {
                         if (GlobalData.serviceIndex === itemsSetting._PLATFORM_KEY_CO_SIGNING_POLICIES) {
                             _Security.close()
                         }
+                    }
+                    onThereNoAssistedWalletAlert: {
+                        _info1.contentText = STR.STR_QML_839
+                        _info1.open();
                     }
                 }
                 Connections {

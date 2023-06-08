@@ -987,3 +987,12 @@ var STR_QML_829 = qsTr("Follow Trezor’s instruction on how to set up your devi
 var STR_QML_830 = qsTr("Please ensure that the Trezor device is connected to this computer, and click on Refresh")
 var STR_QML_831 = qsTr("Adding Trezor...")
 var STR_QML_832 = qsTr("Trezor added successfully")
+var STR_QML_833 = qsTr("Gap limit has been updated")
+var STR_QML_834 = qsTr("Gap limit cannot exceed 100.")
+
+var STR_QML_835 = qsTr("Save")
+var STR_QML_836 = qsTr("Effective package fee rate: %1 sat/vB")
+var STR_QML_837 = qsTr("Select an assisted wallet")
+var STR_QML_838 = qsTr("Which wallet do you want to select?")
+
+var STR_QML_839 = qsTr("This feature is only available with an assisted wallet. Please create one first.")

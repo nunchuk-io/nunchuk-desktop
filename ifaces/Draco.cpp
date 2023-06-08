@@ -349,7 +349,7 @@ QJsonObject Draco::postSync(const QString &cmd, QMap<QString, QString> params, Q
 QJsonObject Draco::getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QJsonObject ret;
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
+    OurSharedPointer<QNetworkAccessManager> manager(new QNetworkAccessManager);
     QUrl url = QUrl::fromUserInput(commandByNetwork(cmd));
     if(!data.isEmpty()){
         QUrlQuery params;
@@ -369,7 +369,7 @@ QJsonObject Draco::getSync(const QString &cmd, QJsonObject data, int &reply_code
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
+    OurSharedPointer<QNetworkReply> reply(manager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -391,7 +391,7 @@ QJsonObject Draco::getSync(const QString &cmd, QJsonObject data, int &reply_code
                                         EWARNING::WarningType::EXCEPTION_MSG,
                                         STR_CPP_112);
     }
-    reply.release()->deleteLater();
+//    reply.release()->deleteLater();
     return ret;
 }
 

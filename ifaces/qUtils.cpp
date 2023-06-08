@@ -429,5 +429,5 @@ int qUtils::Precision(double input)
             lastDigit = i;
         }
     }
-    return lastDigit;
+    return qMax(lastDigit,2);
 }

@@ -34,6 +34,13 @@ import "../../../localization/STR_QML.js" as STR
 QScreen {
     property string walletId: ""
     property int currentSelect: -1
+    function isValid()
+    {
+        var balance = ServiceSetting.inheritance.balanceSats // sats
+        var minFee = parseInt(AppModel.minFee)*1000; // sats
+        return balance <= minFee
+    }
+
     QOnScreenContentTypeB {
         id:_withdraw
         visible: ServiceSetting.claimInheritanceFlow === ServiceType.WITHDRAW_TO_NUNCHUK_WALLET
@@ -79,7 +86,7 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE)
         }
         onNextClicked: {
-            if (ServiceSetting.inheritance.balance <= parseInt(AppModel.minFee)) {
+            if (isValid()) {
                 AppModel.showToast(-1,
                                STR.STR_QML_816,
                                EWARNING.ERROR_MSG,
@@ -277,7 +284,7 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE)
         }
         onNextClicked: {
-            if (ServiceSetting.inheritance.balance <= parseInt(AppModel.minFee)) {
+            if (isValid()) {
                 AppModel.showToast(-1,
                                STR.STR_QML_816,
                                EWARNING.ERROR_MSG,

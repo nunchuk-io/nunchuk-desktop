@@ -222,6 +222,7 @@
         <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR_ASK.qml</file>
         <file>Qml/Components/customizes/QAddAssistedWalletSigner.qml</file>
         <file>Qml/Components/customizes/QProgressbarTypeA.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SELECT_WALLET_CO_SIGN_POLICE.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>

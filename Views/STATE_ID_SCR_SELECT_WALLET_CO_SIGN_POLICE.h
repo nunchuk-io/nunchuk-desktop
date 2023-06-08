@@ -19,20 +19,16 @@
 **************************************************************************/
 
 
-#ifndef STATE_ID_SCR_REENTER_YOUR_PASSWORD_H
-#define STATE_ID_SCR_REENTER_YOUR_PASSWORD_H
+#ifndef STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_H
+#define STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_H
 
 #include <QObject>
 #include <QVariant>
 #include "ViewsDefines.h"
 #include "ViewsEnums.h"
 
-void SCR_REENTER_YOUR_PASSWORD_Entry(QVariant msg);
-void SCR_REENTER_YOUR_PASSWORD_Exit(QVariant msg);
-void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg);
-void EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER(QVariant msg);
-void EVT_KEY_RECOVERY_REQUEST_HANDLER(QVariant msg);
-void EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER(QVariant msg);
-void EVT_WALLET_CO_SIGN_POLICE_REQUEST_HANDLER(QVariant msg);
+void SCR_SELECT_WALLET_CO_SIGN_POLICE_Entry(QVariant msg);
+void SCR_SELECT_WALLET_CO_SIGN_POLICE_Exit(QVariant msg);
+void EVT_SELECT_WALLET_REQUEST_HANDLER(QVariant msg);
 
-#endif // STATE_ID_SCR_REENTER_YOUR_PASSWORD_H
+#endif // STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_H

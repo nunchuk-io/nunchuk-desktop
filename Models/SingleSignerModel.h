@@ -100,8 +100,7 @@ public:
     bool checked() const;
     void setChecked(const bool checked);
 
-    bool readyToSign() const;
-    void setReadyToSign(bool readyToSign);
+    bool readyToSign();
 
     bool isColdCard();
 
@@ -113,7 +112,7 @@ public:
     QString devicetype() const;
     void setDevicetype(QString devicetype);
 
-    QString cardId() const;
+    QString cardId();
     void setCardId(const QString &card_id);
 private:
     QString xpub_ = "";
@@ -128,7 +127,6 @@ private:
     int health_ = -1;
     // For add signer to wallet
     bool checked_ = false;
-    bool readyToSign_ = false;
     QString m_devicetype = "";
     QString cardId_ = "";
 
@@ -196,7 +194,7 @@ public:
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &fp);
     int getnumberSigned();
     bool containsHardwareKey();
-    bool contains(const QString& masterFingerPrint);
+    bool containsFingerPrint(const QString& masterFingerPrint);
     bool containsSigner(const QString &xfp, const QString &path);
     bool checkUsableToSign(const QString& masterFingerPrint);
     void updateSignerHealthStatus(const QString &masterSignerId, const int status, const time_t time);
@@ -206,10 +204,6 @@ public:
     void setUserCheckedByFingerprint(const bool state, const QString fp);
     void setUserChecked(const bool state, const int index);
     void updateHealthCheckTime();
-    bool containsDevicesConnected(const QStringList xfp);
-    void updateSignerReadyToSign(const QString& xfp);
-    void updateSignerIsLocalAndReadyToSign(const QMasterSignerPtr &master);
-    void resetSignerReadyToSign();
     nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
 
     enum SingleSignerRoles {

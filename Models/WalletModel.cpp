@@ -419,6 +419,19 @@ bool Wallet::isAssistedWallet() const
     return AppModel::instance()->getUserWallets().contains(m_id);
 }
 
+int Wallet::gapLimit() const
+{
+    return m_gapLimit;
+}
+
+void Wallet::setGapLimit(int gap_limit)
+{
+    if(m_gapLimit != gap_limit){
+        m_gapLimit = gap_limit;
+        emit gapLimitChanged();
+    }
+}
+
 WalletListModel::WalletListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -621,7 +634,7 @@ QStringList WalletListModel::walletListByFingerPrint(const QString &masterFinger
     QStringList ret;
     foreach (QWalletPtr i , d_ ){
         if(NULL != i.data()->singleSignersAssigned()){
-            bool exist = i.data()->singleSignersAssigned()->contains(masterFingerPrint);
+            bool exist = i.data()->singleSignersAssigned()->containsFingerPrint(masterFingerPrint);
             if(true == exist){
                 if(i.data()->escrow()){
                     ret << QString("%1 [%2/%3]").arg(i.data()->name()).arg(i.data()->m()).arg(i.data()->n());

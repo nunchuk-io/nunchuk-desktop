@@ -30,7 +30,6 @@ void SCR_ADD_HARDWARE_SIGNER_Entry(QVariant msg) {
     AppModel::instance()->setNewKeySignMessage("");
     AppModel::instance()->setAddSignerStep(-1);
     AppModel::instance()->setAddSignerPercentage(0);
-    AppModel::instance()->checkDeviceUsableToAdd();
 }
 
 void SCR_ADD_HARDWARE_SIGNER_Exit(QVariant msg) {

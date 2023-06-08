@@ -96,8 +96,9 @@ void EVT_HOME_WALLET_COPY_ADDRESS_HANDLER(QVariant msg) {
 void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
     qApp->setOverrideCursor(Qt::WaitCursor);
     QString txid = msg.toString();
-    if(txid != "" && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
-        QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(txid);
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+    if(txid != "" && wallet && wallet.data()->transactionHistory()){
+        QTransactionPtr it = wallet.data()->transactionHistory()->getTransactionByTxid(txid);
         if(it){
             QString wallet_id = it.data()->walletId();
             if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn() && CLIENT_INSTANCE->rooms()){
@@ -112,8 +113,10 @@ void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
                     }
                 }
             }
-            QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id, txid);
-            it->setServerKeyMessage(data);
+            if(wallet.data()->isAssistedWallet()){
+                QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id, txid);
+                it->setServerKeyMessage(data);
+            }
         }
         AppModel::instance()->setTransactionInfo(it);
     }

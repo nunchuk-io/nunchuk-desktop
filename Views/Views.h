@@ -100,6 +100,7 @@ static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER_ASK                      
 static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR_ASK                       = {E::STATE_ID_SCR_ADD_TREZOR_ASK                      , SCR_ADD_TREZOR_ASK_Entry                      , SCR_ADD_TREZOR_ASK_Exit                      , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR_ASK                       };
 static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER                           = {E::STATE_ID_SCR_ADD_LEDGER                          , SCR_ADD_LEDGER_Entry                          , SCR_ADD_LEDGER_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_LEDGER                           };
 static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR                           = {E::STATE_ID_SCR_ADD_TREZOR                          , SCR_ADD_TREZOR_Entry                          , SCR_ADD_TREZOR_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR                           };
+static const APPLICATION_STATE STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE         = {E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE        , SCR_SELECT_WALLET_CO_SIGN_POLICE_Entry        , SCR_SELECT_WALLET_CO_SIGN_POLICE_Exit        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SELECT_WALLET_CO_SIGN_POLICE         };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const STATE_TRIGGER STATE_ID_ROOT_trigger[25] = 
@@ -695,12 +696,13 @@ static const STATE_TRIGGER STATE_ID_SCR_RECOVER_SOFTWARE_SIGNER_trigger[5] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_REENTER_YOUR_PASSWORD_trigger[4] = 
+static const STATE_TRIGGER STATE_ID_SCR_REENTER_YOUR_PASSWORD_trigger[5] = 
 {
-	{E::EVT_INPUT_PASSWORD_REQUEST             , EVT_INPUT_PASSWORD_REQUEST_HANDLER             , NULL                                      },
-	{E::EVT_REENTER_YOUR_PASSWORD_BACK         , EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER         , &STATE_ID_SCR_SERVICE_SETTINGS            },
-	{E::EVT_KEY_RECOVERY_REQUEST               , EVT_KEY_RECOVERY_REQUEST_HANDLER               , &STATE_ID_SCR_KEY_RECOVERY                },
-	{E::EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST, EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER, &STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD },
+	{E::EVT_INPUT_PASSWORD_REQUEST             , EVT_INPUT_PASSWORD_REQUEST_HANDLER             , NULL                                       },
+	{E::EVT_REENTER_YOUR_PASSWORD_BACK         , EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER         , &STATE_ID_SCR_SERVICE_SETTINGS             },
+	{E::EVT_KEY_RECOVERY_REQUEST               , EVT_KEY_RECOVERY_REQUEST_HANDLER               , &STATE_ID_SCR_KEY_RECOVERY                 },
+	{E::EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST, EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER, &STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD  },
+	{E::EVT_WALLET_CO_SIGN_POLICE_REQUEST      , EVT_WALLET_CO_SIGN_POLICE_REQUEST_HANDLER      , &STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -733,6 +735,14 @@ static const STATE_TRIGGER STATE_ID_SCR_REVIEW_SHARED_WALLET_trigger[2] =
 {
 	{E::EVT_REVIEW_SHARED_WALLET_BACK         , EVT_REVIEW_SHARED_WALLET_BACK_HANDLER         , &STATE_ID_SCR_CONFIGURE_SHARED_WALLET        },
 	{E::EVT_REVIEW_SHARED_WALLET_INVITE_SIGNER, EVT_REVIEW_SHARED_WALLET_INVITE_SIGNER_HANDLER, &STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger[1] = 
+{
+	{E::EVT_SELECT_WALLET_REQUEST, EVT_SELECT_WALLET_REQUEST_HANDLER, NULL  },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -949,7 +959,7 @@ static const STATE_TRIGGER STATE_ID_SCR_WALLET_CHANGE_ADDRESSES_trigger[4] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_WALLET_INFO_trigger[16] = 
+static const STATE_TRIGGER STATE_ID_SCR_WALLET_INFO_trigger[17] = 
 {
 	{E::EVT_WALLET_INFO_EDIT_NAME                 , EVT_WALLET_INFO_EDIT_NAME_HANDLER                 , NULL                                  },
 	{E::EVT_WALLET_INFO_REMOVE                    , EVT_WALLET_INFO_REMOVE_HANDLER                    , NULL                                  },
@@ -962,6 +972,7 @@ static const STATE_TRIGGER STATE_ID_SCR_WALLET_INFO_trigger[16] =
 	{E::EVT_WALLET_INFO_EDIT_DESCRIPTION          , EVT_WALLET_INFO_EDIT_DESCRIPTION_HANDLER          , NULL                                  },
 	{E::EVT_WALLET_INFO_IMPORT_PSBT               , EVT_WALLET_INFO_IMPORT_PSBT_HANDLER               , NULL                                  },
 	{E::EVT_WALLET_INFO_REFRESH_WALLET_REQUEST    , EVT_WALLET_INFO_REFRESH_WALLET_REQUEST_HANDLER    , NULL                                  },
+	{E::EVT_WALLET_INFO_GAP_LIMIT_REQUEST         , EVT_WALLET_INFO_GAP_LIMIT_REQUEST_HANDLER         , NULL                                  },
 	{E::EVT_WALLET_INFO_BACK_REQUEST              , EVT_WALLET_INFO_BACK_REQUEST_HANDLER              , &STATE_ID_SCR_HOME                    },
 	{E::EVT_WALLET_INFO_UTXOS_REQUEST             , EVT_WALLET_INFO_UTXOS_REQUEST_HANDLER             , &STATE_ID_SCR_UTXOS                   },
 	{E::EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST    , EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST_HANDLER    , &STATE_ID_SCR_WALLET_CHANGE_ADDRESSES },
@@ -980,7 +991,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[72] = 
+static const STATE_SYSTEM STATE_ALL[73] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1054,6 +1065,7 @@ static const STATE_SYSTEM STATE_ALL[72] =
 	{E::STATE_ID_SCR_ADD_TREZOR_ASK                      , STATE_ID_SCR_ADD_TREZOR_ASK_trigger                      , ALEN(STATE_ID_SCR_ADD_TREZOR_ASK_trigger)                      , &STATE_ID_SCR_ADD_TREZOR_ASK                       },
 	{E::STATE_ID_SCR_ADD_LEDGER                          , STATE_ID_SCR_ADD_LEDGER_trigger                          , ALEN(STATE_ID_SCR_ADD_LEDGER_trigger)                          , &STATE_ID_SCR_ADD_LEDGER                           },
 	{E::STATE_ID_SCR_ADD_TREZOR                          , STATE_ID_SCR_ADD_TREZOR_trigger                          , ALEN(STATE_ID_SCR_ADD_TREZOR_trigger)                          , &STATE_ID_SCR_ADD_TREZOR                           },
+	{E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE        , STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger        , ALEN(STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger)        , &STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE         },
 
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

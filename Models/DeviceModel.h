@@ -51,8 +51,7 @@ public:
     bool connected() const;
     bool needsPassPhraseSent() const;
     bool needsPinSent() const;
-    bool usableToAdd() const;
-    void setUsableToAdd(bool usableToAdd);
+    bool usableToAdd();
     QString masterSignerId() const;
     QString cardId() const;
     void setCardId(const QString &card_id);
@@ -61,14 +60,9 @@ public:
     void setOriginDevice(const nunchuk::Device &device);
 
 private:
-    bool isDraft = true;
-    //Use for add signer
-    bool usableToAdd_ = true;
-
-    //Software signer devices
-    QString cardId_ = "";
-
-    nunchuk::Device device_;
+    bool m_isDraft = true;
+    QString m_cardId = "";
+    nunchuk::Device m_device;
 signals:
     void typeChanged();
     void pathChanged();
@@ -87,7 +81,6 @@ typedef QSharedPointer<QDevice> QDevicePtr;
 class DeviceListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(bool containsAddable     READ containsAddable    NOTIFY containsAddableChanged)
     Q_PROPERTY(int  count               READ deviceCount        NOTIFY deviceCountChanged)
 public:
     DeviceListModel();
@@ -117,9 +110,7 @@ public:
         device_usableToAdd_role,
         device_master_signer_id_role,
     };
-    void resetUsableToAdd();
-    bool containsAddable() const;
-    void updateUsableToAdd(const QString &fingerprint, bool value);
+    bool containsFingerPrint(const QString& xfp);
 
     // For verify addr
     QStringList getXFPList();
@@ -132,7 +123,6 @@ public:
 private:
     QList<QDevicePtr> d_;
 signals:
-    void containsAddableChanged();
     void deviceCountChanged();
 };
 typedef QSharedPointer<DeviceListModel> QDeviceListModelPtr;

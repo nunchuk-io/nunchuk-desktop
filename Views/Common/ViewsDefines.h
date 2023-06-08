@@ -71,6 +71,7 @@
 #define SCR_REMOTE_SIGNER_INFO              	 "qrc:/Qml/Screens/LocalMode/SCR_REMOTE_SIGNER_INFO.qml"
 #define SCR_REPLACE_PRIMARY_KEY                  "qrc:/Qml/Screens/OnlineMode/SCR_REPLACE_PRIMARY_KEY.qml"
 #define SCR_REVIEW_SHARED_WALLET            	 "qrc:/Qml/Screens/OnlineMode/SCR_REVIEW_SHARED_WALLET.qml"
+#define SCR_SELECT_WALLET_CO_SIGN_POLICE         "qrc:/Qml/Screens/OnlineMode/SCR_SELECT_WALLET_CO_SIGN_POLICE.qml"
 #define SCR_SELECT_YOUR_LOCKDOWN_PERIOD          "qrc:/Qml/Screens/OnlineMode/SCR_SELECT_YOUR_LOCKDOWN_PERIOD.qml"
 #define SCR_SEND                            	 "qrc:/Qml/Screens/LocalMode/SCR_SEND_ADD_DESTINATION.qml"
 #define SCR_SERVICE_SETTINGS                     "qrc:/Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml"

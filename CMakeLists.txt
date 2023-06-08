@@ -140,6 +140,7 @@ set(Views_SRCS
     Views/STATE_ID_SCR_ADD_LEDGER_ASK.cpp
     Views/STATE_ID_SCR_ADD_TREZOR.cpp
     Views/STATE_ID_SCR_ADD_TREZOR_ASK.cpp
+    Views/STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE.cpp
     )
 
 set(Views_MOCS
@@ -260,6 +261,10 @@ endif()
 if(APPLE)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist")
+endif()
+
+if(WIN32)
+#    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE FALSE)
 endif()
 
 target_link_libraries (${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )

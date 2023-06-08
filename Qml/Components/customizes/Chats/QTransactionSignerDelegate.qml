@@ -136,12 +136,10 @@ Rectangle {
                 sourceComponent: {
                     if(alreadySigned ) return signedComp
                     else{
-                        if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES || !isLocaluser) return null;
+                        if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES) return null;
                         else{
                             if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){ return helpComp; }
-                            else if(signerType === NUNCHUCKTYPE.AIRGAP
-                                    || signerType === NUNCHUCKTYPE.NFC
-                                    || signerType === NUNCHUCKTYPE.UNKNOWN ) { return keysignOption; }
+                            else if(signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.NFC || signerType === NUNCHUCKTYPE.UNKNOWN ) { return keysignOption; }
                             else if(signerType === NUNCHUCKTYPE.SERVER) { return null; }
                             else {
                                 if(signerReadyToSign){ return requiredSignature}

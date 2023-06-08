@@ -224,7 +224,7 @@ QScreen {
                             topMargin: 12
                         }
                         spacing: 8
-                        currentIndex: (devicelist.count) == 1 && AppModel.deviceList.containsAddable? 0 : -1
+                        currentIndex: -1
                         clip: true
                         interactive : devicelist.count > 3
                         ScrollBar.vertical: ScrollBar { active: true }
@@ -284,12 +284,6 @@ QScreen {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    devicelist.currentIndex = index
-                                    signerName = device_type
-                                }
-                            }
-                            Component.onCompleted: {
-                                if(0 === devicelist.currentIndex && index === devicelist.currentIndex){
                                     devicelist.currentIndex = index
                                     signerName = device_type
                                 }

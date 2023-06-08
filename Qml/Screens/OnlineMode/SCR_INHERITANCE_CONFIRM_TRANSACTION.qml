@@ -49,8 +49,8 @@ QScreen {
             }
             onSignalCreateTransaction: {
                 createTxBusyBox.open()
-                timerCreateTx.destinationData = msg
                 timerCreateTx.restart()
+                QMLHandle.sendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, msg)
             }
             onRequestSort: {
             }
@@ -67,7 +67,6 @@ QScreen {
             onButtonClicked: {
                 if(_content.contentItem.manualFeeValid){
                     _content.contentItem.requestCreateTransaction()
-                    QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST)
                 }
                 else{
                     confirmLowFee.open()
@@ -82,7 +81,6 @@ QScreen {
         onConfirmYes: {
             close()
             _content.contentItem.requestCreateTransaction()
-            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST)
         }
     }
     Popup {
@@ -146,10 +144,9 @@ QScreen {
     }
     Timer {
         id: timerCreateTx
-        property var destinationData
         interval: 500
         onTriggered: {
-            QMLHandle.sendEvent(EVT.EVT_CREATE_TRANSACTION_SIGN_REQUEST, timerCreateTx.destinationData)
+            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST)
             createTxBusyBox.close()
         }
     }

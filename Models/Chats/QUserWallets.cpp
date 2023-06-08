@@ -589,12 +589,14 @@ bool QUserWallets::inheritanceClaimRequest(const nunchuk::Wallet wallet, const n
             QString reject_msg = transaction.value("reject_msg").toString();
             bridge::nunchukUpdateTransaction(QString::fromStdString(wallet.get_id()), QString::fromStdString(txSigned.get_txid()), id, hex, reject_msg, _msg);
         }
+        mInheritance.balance = 0;//BTC
+        emit ServiceSetting::instance()->inheritanceChanged();
     }
     else {
         AppModel::instance()->showToast(0,
                                         errormsg,
                                         EWARNING::WarningType::ERROR_MSG,
-                                        STR_CPP_112);
+                                        STR_CPP_118);
     }
     return ret;
 }
@@ -623,7 +625,7 @@ int QUserWallets::inheritanceClaimStatus(const QJsonObject& data, const QString&
             mInheritance.magic = inheritance["magic"].toString();
             mInheritance.note = inheritance["note"].toString();
             mInheritance.balance = result["balance"].toDouble();//BTC
-            emit ServiceSetting::instance()->inheritanceChanged();;
+            emit ServiceSetting::instance()->inheritanceChanged();
         }
         QJsonObject buffer_period_countdown = result["buffer_period_countdown"].toObject();
         if (!buffer_period_countdown.isEmpty()) {
@@ -747,17 +749,23 @@ void QUserWallets::inheritanceSignTransaction()
     auto signer = mInheritance.wallet.get_signers().front();
     QWarningMessage msg;
     nunchuk::Transaction signed_tx = nunchukiface::instance()->SignTransaction(mInheritance.wallet, mInheritance.tx, nunchuk::Device(signer.get_master_signer_id()),msg);
+    DBG_INFO << msg.type();
     if (NONE_MSG == msg.type()) {
         QTransactionPtr trans = bridge::convertTransaction(signed_tx, QString::fromStdString(signer.get_master_signer_id()));
         AppModel::instance()->setTransactionInfo(trans);
         inheritanceClaimRequest(mInheritance.wallet, signed_tx, mInheritance.magic);
+    } else {
+        AppModel::instance()->showToast(msg.code(),
+                                        msg.what(),
+                                        (EWARNING::WarningType)msg.type(),
+                                        STR_CPP_059);
     }
 }
 
-bool QUserWallets::serverKeyGetCurrentPolicies()
+bool QUserWallets::serverKeyGetCurrentPolicies(const QString& wallet_id)
 {
     QWarningMessage msgWallet;
-    nunchuk::Wallet wallet = nunchukiface::instance()->GetWallet(m_wallet_id.toStdString(), msgWallet);; // Get current Assisted wallet = <get assisted wallet>
+    nunchuk::Wallet wallet = nunchukiface::instance()->GetWallet(wallet_id.toStdString(), msgWallet);; // Get current Assisted wallet = <get assisted wallet>
     nunchuk::SingleSigner server_key;// Get server key from wallet type = <SignerType::SERVER>
     for (auto key : wallet.get_signers()) {
         if (key.get_type() == nunchuk::SignerType::SERVER) {
@@ -766,7 +774,7 @@ bool QUserWallets::serverKeyGetCurrentPolicies()
     }
     mCoSigning.m_server_key = server_key;
     mCoSigning.key_id_or_xfp = QString::fromStdString(server_key.get_master_fingerprint());
-    mCoSigning.wallet_id = m_wallet_id;
+    mCoSigning.wallet_id = wallet_id;
     QJsonObject output;
     QString errormsg = "";
     bool ret = Draco::instance()->serverKeysGet(mCoSigning.key_id_or_xfp, output, errormsg);
@@ -787,8 +795,9 @@ bool QUserWallets::serverKeyGetCurrentPolicies()
             // Iron hand
         } else {
             //Honey badger
+            QLocale locale(QLocale::English);
             maps["interval"] = spendlimit["interval"].toString(); //[ DAILY, WEEKLY, MONTHLY, YEARLY ]
-            maps["limit"] = spendlimit["limit"].toInt(); //unit is interval
+            maps["limit"] = locale.toString(spendlimit["limit"].toDouble(), 'f', qUtils::Precision(spendlimit["limit"].toDouble())); //unit is interval
             maps["currency"] = spendlimit["currency"].toString();
         }
         ServiceSetting::instance()->setKeyCoSigning(QVariant::fromValue(maps));
@@ -808,7 +817,7 @@ QJsonObject QUserWallets::serverKeyBody()
     QMap<QString,QVariant> plans = CLIENT_INSTANCE->user().toMap();
     if (plans["plan_slug"] == "honey_badger") {
         spending_limit["interval"] = maps["interval"].toString();
-        spending_limit["limit"] = maps["limit"].toInt();
+        spending_limit["limit"] = maps["limit"].toDouble();
         spending_limit["currency"] = maps["currency"].toString();
     }
 

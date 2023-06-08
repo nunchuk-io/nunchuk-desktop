@@ -19,20 +19,20 @@
 **************************************************************************/
 
 
-#ifndef STATE_ID_SCR_REENTER_YOUR_PASSWORD_H
-#define STATE_ID_SCR_REENTER_YOUR_PASSWORD_H
+#include "STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE.h"
+#include "Chats/QUserWallets.h"
 
-#include <QObject>
-#include <QVariant>
-#include "ViewsDefines.h"
-#include "ViewsEnums.h"
+void SCR_SELECT_WALLET_CO_SIGN_POLICE_Entry(QVariant msg) {
 
-void SCR_REENTER_YOUR_PASSWORD_Entry(QVariant msg);
-void SCR_REENTER_YOUR_PASSWORD_Exit(QVariant msg);
-void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg);
-void EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER(QVariant msg);
-void EVT_KEY_RECOVERY_REQUEST_HANDLER(QVariant msg);
-void EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER(QVariant msg);
-void EVT_WALLET_CO_SIGN_POLICE_REQUEST_HANDLER(QVariant msg);
+}
 
-#endif // STATE_ID_SCR_REENTER_YOUR_PASSWORD_H
+void SCR_SELECT_WALLET_CO_SIGN_POLICE_Exit(QVariant msg) {
+
+}
+
+void EVT_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
+    QString wallet_id = msg.toString();
+    QUserWallets::instance()->serverKeyGetCurrentPolicies(wallet_id);
+    QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE);
+}
+

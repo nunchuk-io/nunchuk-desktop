@@ -55,6 +55,7 @@ class Wallet : public QObject
     Q_PROPERTY(int          containsHWSigner                        READ getContainsHWSigner                            NOTIFY containsHWSignerChanged)
     Q_PROPERTY(bool         isSharedWallet                          READ isSharedWallet                                 NOTIFY isSharedWalletChanged)
     Q_PROPERTY(bool         isAssistedWallet                        READ isAssistedWallet                               NOTIFY isAssistedWalletChanged)
+    Q_PROPERTY(int gapLimit                 			      READ gapLimit            NOTIFY gapLimitChanged)
 public:
     Wallet();
     Wallet(const QString &pr_id,
@@ -135,6 +136,8 @@ public:
     QString initEventId() const;
     void setInitEventId(const QString &initEventId);    
     bool isAssistedWallet() const;
+    int gapLimit() const;
+    void setGapLimit(int gap_limit);
 private:
     QString m_id;
     int m_m;
@@ -154,6 +157,7 @@ private:
     QStringList m_usedChangeAddressList;
     QStringList m_unUsedChangedAddressList;
     // capable to create wallet
+
     bool m_capableCreate;
     QString m_description;
     QString m_descriptior;
@@ -161,6 +165,8 @@ private:
     bool m_isSharedWallet;
     QString m_roomId;
     QString m_initEventId;
+    int m_gapLimit {0};
+
 signals:
     void idChanged();
     void mChanged();
@@ -187,6 +193,7 @@ signals:
     void roomIdChanged();
     void initEventIdChanged();
     void isAssistedWalletChanged();
+    void gapLimitChanged();
 };
 typedef QSharedPointer<Wallet> QWalletPtr;
 

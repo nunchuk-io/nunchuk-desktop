@@ -94,6 +94,7 @@ QVariant ServiceSetting::inheritance() const
     else{
         maps["balance"] = locale.toString(balance, 'f', qUtils::Precision(balance));
     }
+    maps["balanceSats"] = balanceSats;
     maps["balanceCurrency"] = qUtils::currencyLocale(balanceSats);
     maps["note"] = QUserWallets::instance()->inheritance().note;
     return QVariant::fromValue(maps);

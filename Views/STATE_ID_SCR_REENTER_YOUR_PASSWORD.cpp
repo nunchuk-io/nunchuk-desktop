@@ -52,11 +52,28 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         break;
     case E::STATE_ID_SCR_SERVICE_SETTINGS:
         if (QUserWallets::instance()->requestServerKeyVerifyPassword(password)) {
-            emit QUserWallets::instance()->serverKeyVerifyPasswordAlert();
-            QUserWallets::instance()->serverKeyGetCurrentPolicies();
-            QTimer::singleShot(100,[=](){
-                QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION);
-            });
+            QStringList walletIds = AppModel::instance()->getUserWallets();
+            QString m_wallet_id {};
+            if (walletIds.size() > 0) {
+                m_wallet_id = walletIds.first();
+            } else {
+                m_wallet_id = "";
+            }
+            if (walletIds.size() == 1) {
+                emit QUserWallets::instance()->serverKeyVerifyPasswordAlert();
+                QUserWallets::instance()->serverKeyGetCurrentPolicies(walletIds.first());
+                QTimer::singleShot(100,[=](){
+                    QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE);
+                });
+            } else if (walletIds.size() > 1) {
+                emit QUserWallets::instance()->serverKeyVerifyPasswordAlert();
+                QQuickViewer::instance()->sendEvent(E::EVT_WALLET_CO_SIGN_POLICE_REQUEST);
+            } else {
+                emit QUserWallets::instance()->thereNoAssistedWalletAlert();
+                QTimer::singleShot(100,[=](){
+                    QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE);
+                });
+            }
         }
         break;
     default:
@@ -76,3 +93,6 @@ void EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER(QVariant msg) {
 
 }
 
+void EVT_WALLET_CO_SIGN_POLICE_REQUEST_HANDLER(QVariant msg) {
+
+}

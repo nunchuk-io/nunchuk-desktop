@@ -247,17 +247,24 @@ void QSingleSigner::setChecked(const bool checked)
     }
 }
 
-bool QSingleSigner::readyToSign() const
+bool QSingleSigner::readyToSign()
 {
-    return readyToSign_;
-}
-
-void QSingleSigner::setReadyToSign(bool available)
-{
-    if(readyToSign_ != available){
-        readyToSign_ = available;
-        emit readyToSignChanged();
+    bool signAble = false;
+    if((int)ENUNCHUCK::SignerType::HARDWARE == signerType() || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType()){
+        if(AppModel::instance()->deviceList()){
+            return AppModel::instance()->deviceList()->containsFingerPrint(masterFingerPrint());
+        }
+        else{
+            return false;
+        }
     }
+    else if((int)ENUNCHUCK::SignerType::SOFTWARE == signerType()){
+        signAble = true;
+    }
+    else{
+        signAble = false;
+    }
+    return signAble;
 }
 
 int QSingleSigner::signerType() const
@@ -281,10 +288,14 @@ bool QSingleSigner::isColdCard()
 
 bool QSingleSigner::isLocalSigner()
 {
+    bool isLocal = false;
     if(AppModel::instance()->masterSignerList()){
-        return AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
+        isLocal = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
     }
-    return false;
+    if(!isLocal && AppModel::instance()->remoteSignerList()){
+        isLocal = AppModel::instance()->remoteSignerList()->containsFingerPrint(masterFingerPrint());
+    }
+    return isLocal;
 }
 
 bool QSingleSigner::isPrimaryKey() const
@@ -312,8 +323,16 @@ void QSingleSigner::setDevicetype(QString devicetype)
     emit devicetypeChanged();
 }
 
-QString QSingleSigner::cardId() const
+QString QSingleSigner::cardId()
 {
+    if((int)ENUNCHUCK::SignerType::NFC == signerType()){
+        if(AppModel::instance()->masterSignerList()){
+            QMasterSignerPtr signer = AppModel::instance()->masterSignerList()->getMasterSignerByXfp(masterFingerPrint());
+            if(signer){
+                cardId_ = signer->device() ? signer->device()->cardId() : "";
+            }
+        }
+    }
     return cardId_;
 }
 
@@ -644,7 +663,7 @@ bool SingleSignerListModel::containsSigner(const QString &xfp, const QString &pa
     return false;
 }
 
-bool SingleSignerListModel::contains(const QString &masterFingerPrint)
+bool SingleSignerListModel::containsFingerPrint(const QString &masterFingerPrint)
 {
     foreach (QSingleSignerPtr i , d_ ){
         if(0 == QString::compare(masterFingerPrint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
@@ -656,7 +675,7 @@ bool SingleSignerListModel::contains(const QString &masterFingerPrint)
 
 bool SingleSignerListModel::checkUsableToSign(const QString &masterFingerPrint)
 {
-    bool isContains = contains(masterFingerPrint);
+    bool isContains = containsFingerPrint(masterFingerPrint);
     if(isContains){
         foreach (QSingleSignerPtr i , d_ ){
             if(0 == QString::compare(masterFingerPrint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)) {
@@ -741,59 +760,6 @@ void SingleSignerListModel::updateHealthCheckTime()
     beginResetModel();
     foreach (QSingleSignerPtr it, d_) {
         it.data()->lastHealthCheckChanged();
-    }
-    endResetModel();
-}
-
-bool SingleSignerListModel::containsDevicesConnected(const QStringList xfp)
-{
-    for (int i = 0; i < xfp.count(); i++) {
-        foreach (QSingleSignerPtr it, d_) {
-            if(((int)ENUNCHUCK::SignerType::HARDWARE == it.data()->signerType()) && (0 == QString::compare(xfp.at(i), it.data()->masterFingerPrint(), Qt::CaseInsensitive))){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-void SingleSignerListModel::updateSignerReadyToSign(const QString &xfp)
-{
-    for (int i = 0; i < d_.count(); i++) {
-        if(0 == QString::compare(xfp, d_.at(i)->masterFingerPrint(), Qt::CaseInsensitive)){
-            d_[i]->setReadyToSign(true);
-            emit dataChanged(index(i),index(i));
-        }
-    }
-}
-
-void SingleSignerListModel::updateSignerIsLocalAndReadyToSign(const QMasterSignerPtr &master)
-{
-    for (int i = 0; i < d_.count(); i++) {
-        if(0 == QString::compare(master->fingerPrint(), d_.at(i)->masterFingerPrint(), Qt::CaseInsensitive)){
-            d_[i]->setReadyToSign(true);
-            d_[i]->setSignerType(master->signerType());
-            d_[i]->setDevicetype(master->deviceType());
-            if (master->device()) {
-                d_[i]->setCardId(master->device()->cardId());
-            }
-            emit dataChanged(index(i),index(i));
-        }
-    }
-}
-
-void SingleSignerListModel::resetSignerReadyToSign()
-{
-    beginResetModel();
-    foreach (QSingleSignerPtr it, d_) {
-        if(((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType())
-                || ((int)ENUNCHUCK::SignerType::SOFTWARE == it.data()->signerType())
-                || it.data()->signerSigned()){
-            it.data()->setReadyToSign(true);
-        }
-        else{
-            it.data()->setReadyToSign(false);
-        }
     }
     endResetModel();
 }

@@ -42,8 +42,11 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
     bool manualOutput = msg.toMap().value("manualOutput").toBool();
     if(!manualFee) feeRate = -1;
 
-    if(AppModel::instance()->transactionInfo()){
-        QString wallet_id = AppModel::instance()->transactionInfo()->walletId();
+    QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+
+    if(transaction){
+        QString wallet_id = transaction.data()->walletId();
         if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_INFO){
             DBG_INFO << "REPLACE BY FEE REQUEST";
             if(AppModel::instance()->getTxidReplacing() != ""){
@@ -93,11 +96,8 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
             if(AppModel::instance()->destinationList()){
                 outputs = AppModel::instance()->destinationList()->getOutputs();
             }
-            QString memo = "";
-            if(AppModel::instance()->transactionInfo()){
-                memo = AppModel::instance()->transactionInfo()->memo();
-            }
-            if(AppModel::instance()->walletInfo()->isSharedWallet() || (int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex() ){
+            QString memo = transaction.data()->memo();
+            if(wallet && wallet.data()->isSharedWallet()){
                 QString room_id = CLIENT_INSTANCE->getRoomIdByWalletId(wallet_id);
                 if(room_id != ""){
                     QWarningMessage msginit;
@@ -136,10 +136,9 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                          msgwarning);
                 if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                     if(trans){
-                        QWalletPtr ptr = AppModel::instance()->walletInfoPtr();
-                        if(ptr && ptr->isAssistedWallet()){
-                            Draco::instance()->assistedWalletCreateTx(ptr->id(),trans->psbt(),trans->memo());
-                            QJsonObject data = Draco::instance()->assistedWalletGetTx(ptr->id(),trans->txid());
+                        if(wallet.data()->isAssistedWallet()){
+                            Draco::instance()->assistedWalletCreateTx(wallet.data()->id(), trans->psbt(), trans->memo());
+                            QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet.data()->id(), trans->txid());
                             trans->setServerKeyMessage(data);
                         }
                         AppModel::instance()->setTransactionInfo(trans);

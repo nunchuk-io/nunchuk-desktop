@@ -253,4 +253,11 @@ void EVT_WALLET_INFO_REFRESH_WALLET_REQUEST_HANDLER(QVariant msg) {
     bridge::ForceRefreshWallet(wallet_id,message);
 }
 
-
+void EVT_WALLET_INFO_GAP_LIMIT_REQUEST_HANDLER(QVariant msg)
+{
+    if (AppModel::instance()->walletInfo()){
+        QString wallet_id = AppModel::instance()->walletInfo()->id();
+        uint gap_limit = msg.toUInt();
+        bridge::nunchukUpdateWalletGapLimit(wallet_id,gap_limit);
+    }
+}

@@ -172,8 +172,6 @@ public:
     void setWalletId(const QString &walletId);
 
     SingleSignerListModel* singleSignersAssigned();
-    void setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned);
-
     int numberSigned();
 
     QString replacedTxid() const;
