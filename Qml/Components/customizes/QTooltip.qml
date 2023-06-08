@@ -20,6 +20,8 @@
 import QtQuick 2.4
 import QtGraphicalEffects 1.12
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QImage {

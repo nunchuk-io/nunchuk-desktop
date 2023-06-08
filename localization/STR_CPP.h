@@ -117,4 +117,7 @@ const static QString STR_CPP_111 = QString("No internet connection. Please try a
 const static QString STR_CPP_112 = QString("Error");
 const static QString STR_CPP_113 = QString("Invalid Backup Password");
 const static QString STR_CPP_114 = QString("Your account has been signed out");
+const static QString STR_CPP_115 = QString("Invalid password. Unable to restore backup.");
+const static QString STR_CPP_116 = QString("The Magic Phrase you entered does not match the one that you requested.");
+const static QString STR_CPP_117 = QString("Policies have been updated");
 #endif // STR_CPP_H

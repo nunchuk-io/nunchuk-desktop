@@ -25,25 +25,24 @@
 #include "bridgeifaces.h"
 
 Wallet::Wallet() :
-    id_(""),
-    m_(0),
-    n_(0),
-    nShared_(0),
-    name_(""),
-    addressType_(QString::number((int)ENUNCHUCK::AddressType::NATIVE_SEGWIT)), // Default is NATIVE_SEGWIT
-    balance_(0),
-    createDate_(QDateTime::currentDateTime()),
-    escrow_(false),
-    singleSignersAssigned_(QSingleSignerListModelPtr(new SingleSignerListModel())),
-    transactionHistory_(QTransactionListModelPtr(new TransactionListModel())),
-    transactionHistoryShort_(QTransactionListModelPtr(new TransactionListModel())),
-    capableCreate_(true),
-    description_(""),
-    descriptior_(""),
-    creationMode_((int)CreationMode::CREATE_NEW_WALLET),
-    isSharedWallet_(false),
-    roomId_(""),
-    initEventId_("")
+    m_id(""),
+    m_m(0),
+    n_n(0),
+    m_nShared(0),
+    m_name(""),
+    m_addressType(QString::number((int)ENUNCHUCK::AddressType::NATIVE_SEGWIT)), // Default is NATIVE_SEGWIT
+    m_balance(0),
+    m_createDate(QDateTime::currentDateTime()),
+    m_escrow(false),
+    m_signers(QSingleSignerListModelPtr(new SingleSignerListModel())),
+    m_transactionHistory(QTransactionListModelPtr(new TransactionListModel())),
+    m_capableCreate(true),
+    m_description(""),
+    m_descriptior(""),
+    m_creationMode((int)CreationMode::CREATE_NEW_WALLET),
+    m_isSharedWallet(false),
+    m_roomId(""),
+    m_initEventId("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -58,57 +57,58 @@ Wallet::Wallet(const QString &pr_id,
                const bool pr_escrow,
                const QSingleSignerListModelPtr& pr_signers,
                const QString &pr_description) :
-    id_(pr_id),
-    m_(pr_m),
-    n_(pr_n),
-    nShared_(0),
-    name_(pr_name),
-    addressType_(pr_addrType),
-    balance_(pr_balance),
-    createDate_(pr_createDate),
-    escrow_(pr_escrow),
-    singleSignersAssigned_(pr_signers),
-    address_("There is no unused address"),
-    capableCreate_(true),
-    description_(pr_description),
-    descriptior_(""),
-    creationMode_((int)CreationMode::CREATE_NEW_WALLET),
-    isSharedWallet_(false),
-    roomId_(""),
-    initEventId_("")
+    m_id(pr_id),
+    m_m(pr_m),
+    n_n(pr_n),
+    m_nShared(0),
+    m_name(pr_name),
+    m_addressType(pr_addrType),
+    m_balance(pr_balance),
+    m_createDate(pr_createDate),
+    m_escrow(pr_escrow),
+    m_signers(pr_signers),
+    m_transactionHistory(QTransactionListModelPtr(new TransactionListModel())),
+    m_address("There is no unused address"),
+    m_capableCreate(true),
+    m_description(pr_description),
+    m_descriptior(""),
+    m_creationMode((int)CreationMode::CREATE_NEW_WALLET),
+    m_isSharedWallet(false),
+    m_roomId(""),
+    m_initEventId("")
 {
-    unUsedAddressList_.clear();
-    usedAddressList_.clear();
-    usedChangeAddressList_.clear();
-    unUsedChangedAddressList_.clear();
+    m_unUsedAddressList.clear();
+    m_usedAddressList.clear();
+    m_usedChangeAddressList.clear();
+    m_unUsedChangedAddressList.clear();
 }
 
 Wallet::~Wallet(){
 
 }
 
-QString Wallet::id() const {return id_;}
+QString Wallet::id() const {return m_id;}
 
-int Wallet::m() const { return m_;}
+int Wallet::m() const { return m_m;}
 
 int Wallet::n() {
-    n_ = singleSignersAssigned_.data()->rowCount();
-    return n_;
+    n_n = m_signers.data()->rowCount();
+    return n_n;
 }
 
-QString Wallet::name() const {return name_;}
+QString Wallet::name() const {return m_name;}
 
-QString Wallet::addressType() const {return addressType_;}
+QString Wallet::addressType() const {return m_addressType;}
 
 qint64 Wallet::balanceSats() const
 {
     //2100000000000000 Max
-    return balance_;
+    return m_balance;
 }
 
 QString Wallet::balanceBTC() const
 {
-    return qUtils::QValueFromAmount(balance_);
+    return qUtils::QValueFromAmount(m_balance);
 }
 
 QString Wallet::balanceDisplay() const {
@@ -127,315 +127,296 @@ QString Wallet::balanceCurrency() const
 }
 
 QString Wallet::createDate() const {
-    if(0 == createDate_.toTime_t()){
+    if(0 == m_createDate.toTime_t()){
         return "--/--/----"; // There is no time
     }
 //    return createDate_.toOffsetFromUtc(QDateTime::currentDateTime().offsetFromUtc()).toString(Qt::ISODate);
-    return createDate_.toString( "MM/dd/yyyy hh:mm AP" );
+    return m_createDate.toString( "MM/dd/yyyy hh:mm AP" );
 }
 
-QDateTime Wallet::createDateDateTime() const {return createDate_;}
+QDateTime Wallet::createDateDateTime() const {return m_createDate;}
 
-bool Wallet::escrow() const {return escrow_;}
+bool Wallet::escrow() const {return m_escrow;}
 
 void Wallet::setId(const QString &d)
 {
-    if(d != id_){
-        id_ = d;
+    if(d != m_id){
+        m_id = d;
         emit idChanged();
     }
 }
 
 void Wallet::setM(const int d) {
-    if(d != m_){
-        m_ = qMax(0, d);
+    if(d != m_m){
+        m_m = qMax(0, d);
         emit mChanged();
     }
 }
 
 void Wallet::setN(const int d) {
-    if(d != n_){
-        n_ = qMax(0, d);
+    if(d != n_n){
+        n_n = qMax(0, d);
         emit nChanged();
     }
 }
 
 void Wallet::setName(const QString &d) {
-    if(d != name_){
-        name_ = d;
+    if(d != m_name){
+        m_name = d;
         emit nameChanged();
     }
 }
 
 void Wallet::setAddressType(const QString &d) {
-    if(d != addressType_){
-        addressType_ = d;
+    if(d != m_addressType){
+        m_addressType = d;
         emit addressTypeChanged();
     }
 }
 
 void Wallet::setBalance(const qint64 d) {
-    if(d != balance_){
-        balance_ = d;
+    if(d != m_balance){
+        m_balance = d;
         emit balanceChanged();
     }
 }
 
 void Wallet::setCreateDate(const QDateTime &d) {
-    if(d != createDate_){
-        createDate_ = d;
+    if(d != m_createDate){
+        m_createDate = d;
         emit createDateChanged();
     }
 }
 
 void Wallet::setEscrow(const bool d) {
-    if(d != escrow_){
-        escrow_ = d;
+    if(d != m_escrow){
+        m_escrow = d;
         emit escrowChanged();
     }
 }
 
 void Wallet::setSigners(const QSingleSignerListModelPtr &d){
-    singleSignersAssigned_ = d;
+    m_signers = d;
     emit nChanged();
     emit singleSignersAssignedChanged();
 }
 
 QString Wallet::descriptior() const
 {
-    return descriptior_;
+    return m_descriptior;
 }
 
 void Wallet::setDescriptior(const QString &descriptior)
 {
-    descriptior_ = descriptior;
+    m_descriptior = descriptior;
 }
 
 SingleSignerListModel* Wallet::singleSignersAssigned() const {
-    return singleSignersAssigned_.data();
+    return m_signers.data();
 }
 
 QSingleSignerListModelPtr Wallet::singleSignersAssignedPtr() const
 {
-    return singleSignersAssigned_;
+    return m_signers;
 }
 
 QString Wallet::address() const {
-    return address_;
+    return m_address;
 }
 
 void Wallet::setAddress(const QString &d){
-    if(d != address_){
-        address_ = d;
+    if(d != m_address){
+        m_address = d;
         emit addressChanged();
     }
 }
 
 QStringList Wallet::usedAddressList() const {
-    return usedAddressList_;
+    return m_usedAddressList;
 }
 
 void Wallet::setUsedAddressList(const QStringList &d){
-    if(d != usedAddressList_){
-        usedAddressList_ = d;
+    if(d != m_usedAddressList){
+        m_usedAddressList = d;
         emit usedAddressChanged();
     }
 }
 
 QStringList Wallet::unUsedAddressList() const {
-    return unUsedAddressList_;
+    return m_unUsedAddressList;
 }
 
 void Wallet::setunUsedAddressList(const QStringList &d){
-    unUsedAddressList_ = d;
+    m_unUsedAddressList = d;
     emit unUsedAddressChanged();
-    if(unUsedAddressList_.isEmpty()){
+    if(m_unUsedAddressList.isEmpty()){
         setAddress("There is no avaialable address");
     }
     else{
-        setAddress(unUsedAddressList_.first());
+        setAddress(m_unUsedAddressList.first());
     }
 }
 
 bool Wallet::capableCreate() const
 {
-    return capableCreate_;
+    return m_capableCreate;
 }
 
 void Wallet::setCapableCreate(bool capableCreate)
 {
-    if(capableCreate_ != capableCreate){
-        capableCreate_ = capableCreate;
+    if(m_capableCreate != capableCreate){
+        m_capableCreate = capableCreate;
         emit capableCreateChanged();
     }
 }
 
 QString Wallet::description() const
 {
-    return description_;
+    return m_description;
 }
 
 void Wallet::setDescription(const QString &description)
 {
-    if(description_ != description){
-        description_ = description;
+    if(m_description != description){
+        m_description = description;
         emit descriptionChanged();
     }
 }
 
 QStringList Wallet::usedChangeAddressList() const
 {
-    return usedChangeAddressList_;
+    return m_usedChangeAddressList;
 }
 
 void Wallet::setUsedChangeAddressList(const QStringList &usedChangeAddressList)
 {
-    if(usedChangeAddressList_ != usedChangeAddressList){
-        usedChangeAddressList_ = usedChangeAddressList;
+    if(m_usedChangeAddressList != usedChangeAddressList){
+        m_usedChangeAddressList = usedChangeAddressList;
         emit usedChangeAddressChanged();
     }
 }
 
 QStringList Wallet::unUsedChangeddAddressList() const
 {
-    return unUsedChangedAddressList_;
+    return m_unUsedChangedAddressList;
 }
 
 void Wallet::setUnUsedChangeddAddressList(const QStringList &unUseChangeddAddressList)
 {
-    if(unUsedChangedAddressList_ != unUseChangeddAddressList){
-        unUsedChangedAddressList_ = unUseChangeddAddressList;
+    if(m_unUsedChangedAddressList != unUseChangeddAddressList){
+        m_unUsedChangedAddressList = unUseChangeddAddressList;
         emit unUsedChangeAddressChanged();
     }
 }
 
 TransactionListModel *Wallet::transactionHistory() const{
-    if(transactionHistory_.data()){
-        return transactionHistory_.data();
-    }
-    return NULL;
+    return m_transactionHistory.data();
 }
 
 QTransactionPtr Wallet::getTransactionByIndex(const int index) const
 {
-    if(transactionHistory_.data()){
-         return transactionHistory_.data()->getTransactionByIndex(index);
+    if(m_transactionHistory.data()){
+         return m_transactionHistory.data()->getTransactionByIndex(index);
     }
     return NULL;
 }
 
 QTransactionPtr Wallet::getTransactionByTxid(const QString &txid) const
 {
-    if(transactionHistory_.data()){
-         return transactionHistory_.data()->getTransactionByTxid(txid);
+    if(m_transactionHistory.data()){
+         return m_transactionHistory.data()->getTransactionByTxid(txid);
     }
     return NULL;
 }
 
-QTransactionListModelPtr Wallet::transactionHistoryPtr() const {
-    return transactionHistory_;
-}
-
 void Wallet::setTransactionHistory(const QTransactionListModelPtr &d) {
-    transactionHistory_ = d;
-    if(transactionHistory_){
-        transactionHistory_.data()->requestSort(TransactionListModel::TransactionRoles::transaction_blocktime_role, Qt::DescendingOrder);
+    m_transactionHistory = d;
+    if(m_transactionHistory){
+        m_transactionHistory->requestSort(TransactionListModel::TransactionRoles::transaction_blocktime_role, Qt::DescendingOrder);
     }
-    setTransactionHistoryShort(d);
     emit transactionHistoryChanged();
 }
 
-TransactionListModel *Wallet::transactionHistoryShort() const
+void Wallet::updateTransaction(const QString txid, const QTransactionPtr &tx)
 {
-    return transactionHistoryShort_.data();
-}
-
-QTransactionListModelPtr Wallet::transactionHistoryShortPtr() const
-{
-    return transactionHistoryShort_;
-}
-
-void Wallet::setTransactionHistoryShort(const QTransactionListModelPtr &d) {
-    transactionHistoryShort_ = QTransactionListModelPtr(d.data()->getTransactionShortList());
-    if(transactionHistoryShort_){
-        transactionHistoryShort_.data()->requestSort(TransactionListModel::TransactionRoles::transaction_blocktime_role, Qt::DescendingOrder);
+    if(m_transactionHistory){
+         m_transactionHistory.data()->updateTransaction(txid, tx);
     }
-    emit transactionHistoryShortChanged();
 }
 
 int Wallet::getCreationMode() const
 {
-    return creationMode_;
+    return m_creationMode;
 }
 
 void Wallet::setCreationMode(int creationMode)
 {
-    creationMode_ = creationMode;
+    m_creationMode = creationMode;
 }
 
 bool Wallet::getContainsHWSigner() const
 {
-    if(singleSignersAssigned_){
-        return singleSignersAssigned_.data()->containsHardwareKey();
+    if(m_signers){
+        return m_signers.data()->containsHardwareKey();
     }
     return false;
 }
 
 int Wallet::nShared() const
 {
-    return nShared_;
+    return m_nShared;
 }
 
 void Wallet::setNShared(int d)
 {
-    if(d != nShared_){
-        nShared_ = qMax(0, d);
+    if(d != m_nShared){
+        m_nShared = qMax(0, d);
         emit nSharedChanged();
     }
 }
 
 bool Wallet::isSharedWallet() const
 {
-    return isSharedWallet_;
+    return m_isSharedWallet;
 }
 
 void Wallet::setIsSharedWallet(bool isShared)
 {
-    if(isSharedWallet_ != isShared){
-        isSharedWallet_ = isShared;
+    if(m_isSharedWallet != isShared){
+        m_isSharedWallet = isShared;
         emit isSharedWalletChanged();
     }
 }
 
 QString Wallet::roomId() const
 {
-    return roomId_;
+    return m_roomId;
 }
 
 void Wallet::setRoomId(const QString &roomId)
 {
-    if(roomId_ != roomId){
-        roomId_ = roomId;
+    if(m_roomId != roomId){
+        m_roomId = roomId;
         emit roomIdChanged();
     }
 }
 
 QString Wallet::initEventId() const
 {
-    return initEventId_;
+    return m_initEventId;
 }
 
 void Wallet::setInitEventId(const QString &initEventId)
 {
-    if(initEventId_ != initEventId){
-        initEventId_ = initEventId;
+    if(m_initEventId != initEventId){
+        m_initEventId = initEventId;
         emit initEventIdChanged();
     }
 }
 
 bool Wallet::isAssistedWallet() const
 {
-    return AppModel::instance()->getUserWallets().contains(id_);
+    return AppModel::instance()->getUserWallets().contains(m_id);
 }
 
 WalletListModel::WalletListModel(){
@@ -551,14 +532,13 @@ void WalletListModel::addWallet(const QWalletPtr &wallet)
 void WalletListModel::replaceWallet(const QWalletPtr &wallet)
 {
     if(wallet){
-        beginResetModel();
         for(int i = 0; i < d_.count(); i++){
             if(0 == QString::compare(wallet.data()->id(), d_.at(i)->id(), Qt::CaseInsensitive)){
                 d_.replace(i, wallet);
+                emit dataChanged(index(i),index(i));
                 break;
             }
         }
-        endResetModel();
     }
 }
 
@@ -578,13 +558,12 @@ void WalletListModel::addSharedWallet(const QWalletPtr &wallet)
 
 void WalletListModel::updateBalance(const QString &walletId, const qint64 balance)
 {
-    beginResetModel();
-    foreach (QWalletPtr it, d_) {
-        if(0 == QString::compare(walletId, it.data()->id(), Qt::CaseInsensitive)){
-            it.data()->setBalance(balance);
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
+            d_.at(i)->setBalance(balance);
+            emit dataChanged(index(i),index(i));
         }
     }
-    endResetModel();
 }
 
 void WalletListModel::updateAddress(const QString &walletId, const QStringList &used, const QStringList &unused)
@@ -601,22 +580,20 @@ void WalletListModel::updateAddress(const QString &walletId, const QStringList &
 
 void WalletListModel::updateName(const QString &walletId, const QString &value)
 {
-    foreach (QWalletPtr it, d_) {
-        if(0 == QString::compare(walletId, it.data()->id(), Qt::CaseInsensitive)){
-            beginResetModel();
-            it.data()->setName(value);
-            endResetModel();
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
+            d_.at(i)->setName(value);
+            emit dataChanged(index(i),index(i));
         }
     }
 }
 
 void WalletListModel::updateDescription(const QString &walletId, const QString &value)
 {
-    foreach (QWalletPtr it, d_) {
-        if(0 == QString::compare(walletId, it.data()->id(), Qt::CaseInsensitive)){
-            beginResetModel();
-            it.data()->setDescription(value);
-            endResetModel();
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
+            d_.at(i)->setDescription(value);
+            emit dataChanged(index(i),index(i));
         }
     }
 }
@@ -701,13 +678,13 @@ void WalletListModel::removeWallet(const QString &walletId)
 
 void WalletListModel::notifyUnitChanged()
 {
-    beginResetModel();
-    foreach (QWalletPtr it, d_) {
-        if(it.data()){
-            it.data()->balanceChanged();
+    const QVector<int>& roles = {};
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i).data()){
+            const auto idx = index(i);
+            emit dataChanged(idx, idx, roles);
         }
     }
-    endResetModel();
 }
 
 void WalletListModel::updateSignerHealthStatus(const QString &masterSignerId, const int status, const time_t time)

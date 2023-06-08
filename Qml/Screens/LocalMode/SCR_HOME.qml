@@ -27,6 +27,8 @@ import Qt.labs.platform 1.1
 import DataPool 1.0
 import "../../Components/customizes"
 import "../../Components/origins"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../../localization/STR_QML.js" as STR
 
@@ -211,15 +213,26 @@ QScreen {
                                 font.pixelSize: 16
                                 font.family: "Lato"
                                 font.weight: Font.Medium
-                                text: qsTr("$%1 %2").arg(AppModel.walletInfo.walletBalanceCurrency).arg(AppSetting.currency)
+                                text: qsTr("%1%2 %3")
+                                .arg(AppSetting.currencySymbol)
+                                .arg(AppModel.walletInfo.walletBalanceCurrency)
+                                .arg(AppSetting.currency)
                             }
                         }
 
                         QButtonTextLink {
                             height: 24
                             label: STR.STR_QML_574
-                            icon: ["qrc:/Images/Images/OnlineMode/arrow_outline_right.png", "qrc:/Images/Images/OnlineMode/arrow_outline_right.png", "qrc:/Images/Images/OnlineMode/arrow_outline_right.png"]
-                            textColor: ["#FFFFFF", "#FFFFFA", "#FFFFFF"]
+                            icon: [
+                                "qrc:/Images/Images/OnlineMode/arrow_outline_right.png",
+                                "qrc:/Images/Images/OnlineMode/arrow_outline_right.png",
+                                "qrc:/Images/Images/OnlineMode/arrow_outline_right.png"
+                            ]
+                            textColor: [
+                                "#FFFFFF",
+                                "#FFFFFA",
+                                "#FFFFFF"
+                            ]
                             direction: eRIGHT
                             _mirror:false
                             enabled: walletmanagerlst.count > 0
@@ -233,7 +246,6 @@ QScreen {
                                 QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST)
                             }
                         }
-
 
                         Row {
                             id: buttongHandles
@@ -250,7 +262,7 @@ QScreen {
                                 enabled: walletmanagerlst.count > 0
                                 onButtonClicked: {
                                     if(AppModel.walletInfo.isSharedWallet){
-                                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE)
+                                        QMLHandle.sendEvent(EVT.EVT_GOTO_HOME_CHAT_TAB)
                                         QMLHandle.sendEvent(EVT.EVT_HOME_SHARED_WL_SEND_REQUEST,AppModel.walletInfo.walletId)
                                     }
                                     else{
@@ -373,11 +385,11 @@ QScreen {
                                 width: 311
                                 height: 48
                                 spacing: 10
-                                QButtonIcon {
+                                QIconTextButton {
                                     width: 97
                                     height: 48
                                     label: STR.STR_QML_005
-                                    icons: ["Copy_031F2B.png", "Copy_031F2B.png", "Copy_9CAEB8.png","Copy_9CAEB8.png"]
+                                    icons: ["copy-dark.svg", "copy-light.svg", "copy-dark.svg","copy-light.svg"]
                                     fontPixelSize: 16
                                     iconSize: 16
                                     type: eTypeB
@@ -386,11 +398,16 @@ QScreen {
                                         QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_COPY_ADDRESS, qrCode.textInput)
                                     }
                                 }
-                                QButtonIcon {
+                                QIconTextButton {
                                     width: 175
                                     height: 48
                                     label: STR.STR_QML_006
-                                    icons: ["visibility_031F2B.png","visibility_031F2B.png","visibility_F1FAFE.png","visibility_F1FAFE.png"]
+                                    icons: [
+                                        "visibility_031F2B.png",
+                                        "visibility_031F2B.png",
+                                        "visibility_F1FAFE.png",
+                                        "visibility_F1FAFE.png"
+                                    ]
                                     fontPixelSize: 16
                                     iconSize: 16
                                     type: eTypeB
@@ -479,7 +496,9 @@ QScreen {
                         id: transaction_lst
                         width: parent.width
                         height: 6*64
-                        model: AppModel.walletInfo.transactionHistoryShort
+                        model: AppModel.walletInfo.transactionHistory
+                        interactive: false
+                        cacheBuffer: 0
                         anchors {
                             left: parent.left
                             top: trans_lbl.bottom
@@ -491,7 +510,7 @@ QScreen {
                             height: 64
                             transactionisReceiveTx:transaction_isReceiveTx
                             transactiontxid:transaction_txid
-                            transactiondestinationList:transaction_destinationList
+                            transactiondestinationList: transaction_destinationDisp_role
                             transactionstatus: transaction_status
                             transactionMemo: transaction_memo
                             transactionAmount: transaction_isReceiveTx ? transaction_subtotal : transaction_total
@@ -507,7 +526,6 @@ QScreen {
                                 QMLHandle.sendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transaction_txid)
                             }
                         }
-                        ScrollBar.vertical: ScrollBar { active: true }
                     }
                     BusyIndicator {
                         id: notxWaiting
@@ -668,7 +686,7 @@ QScreen {
                                         isShared: model.wallet_isSharedWallet
                                         isAssisted: model.wallet_isAssistedWallet
                                         walletCurrency: model.wallet_Balance_Currency
-                                        walletName :model. wallet_name
+                                        walletName :model.wallet_name
                                         walletBalance: model.wallet_Balance
                                         walletM: model.wallet_M
                                         walletN: model.wallet_N
@@ -747,6 +765,31 @@ QScreen {
                                     MouseArea { anchors.fill: parent;z: 10;propagateComposedEvents: true;onWheel: { scrollSigner.wheel(wheel.angleDelta.y > 0);}}
                                     Column {
                                         id: contentDisplay
+                                        QAddAssistedWalletSigner{
+                                            visible: false
+                                            addTitle: STR.STR_QML_810
+                                            addText: STR.STR_QML_811
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            onCancel: {
+
+                                            }
+                                            onAdd: {
+                                                QMLHandle.sendEvent(EVT.EVT_ASK_LEDGER_REQ)
+                                            }
+                                        }
+                                        QAddAssistedWalletSigner{
+                                            visible: false
+                                            addTitle: STR.STR_QML_813
+                                            addText: STR.STR_QML_814
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            onCancel: {
+
+                                            }
+                                            onAdd: {
+                                                QMLHandle.sendEvent(EVT.EVT_ASK_TREZOR_REQ)
+                                            }
+                                        }
+
                                         QListView {
                                             id: mastersignerlist
                                             width: 304
@@ -925,7 +968,9 @@ QScreen {
                                                 horizontalAlignment: Text.AlignHCenter
                                                 verticalAlignment: Text.AlignVCenter
                                                 anchors.horizontalCenter: parent.horizontalCenter
-                                                text: qsTr("$%1").arg(rowFeeInfo.prioritiesFeeCurrency[index])
+                                                text: qsTr("%1%2")
+                                                .arg(AppSetting.currencySymbol)
+                                                .arg(rowFeeInfo.prioritiesFeeCurrency[index])
                                             }
                                         }
                                     }
@@ -1062,7 +1107,9 @@ QScreen {
     QPopupGuestMode{
         id: guestMode
         onGotItClicked: { close() }
-        Component.onCompleted: { if(0 === AppModel.nunchukMode){ guestMode.open() } }
+        Component.onCompleted: {
+            if(!ClientController.isNunchukLoggedIn){ guestMode.open() }
+        }
     }
 
     readonly property int _LIMIT_WAITING_BUSY: 3000
@@ -1124,6 +1171,154 @@ QScreen {
                 interval: _LIMIT_WAITING_BUSY
                 running: true
                 onTriggered: busyIdct.running = false
+            }
+        }
+    }
+
+    /*=========================================SYNC=========================================*/
+    Connections {
+        target: AppModel
+        onOpenPromtNunchukSync: {
+            syncProgressBox.open()
+        }
+        onClosePromtNunchukSync: {
+            syncProgressBox.close()
+        }
+    }
+
+    Timer {
+        id: syncPopupTimeOut
+        interval: 10000
+        repeat: false
+        running: false
+        onTriggered: syncProgressBox.close()
+    }
+
+    Popup {
+        id: syncProgressBox
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        background: Item{}
+        Loader {
+            id: boxmask
+            anchors.centerIn: parent
+            sourceComponent: first4sSync
+        }
+        DropShadow {
+            anchors.fill: boxmask
+            horizontalOffset: 3
+            verticalOffset: 5
+            spread: 0
+            radius: 8
+            samples: 30
+            color: "#aa000000"
+            source: boxmask
+        }
+        onOpened: {
+            boxmask.sourceComponent = first4sSync
+            timer4s.restart()
+        }
+        onClosed: {
+            boxmask.sourceComponent = null
+            timer4s.stop()
+        }
+        Timer {
+            id: timer4s
+            interval: 4000
+            repeat: false
+            running: false
+            onTriggered: {
+                boxmask.sourceComponent = after4sSync
+                syncPopupTimeOut.restart()
+            }
+        }
+    }
+    Component {
+        id: first4sSync
+        Rectangle {
+            width: 300
+            height: 128
+            radius: 24
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 300
+                    height: 128
+                    radius: 24
+                }
+            }
+            Column {
+                spacing: 12
+                anchors.centerIn: parent
+                QBusyIndicator {
+                    width: 70
+                    height: 70
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.Bold
+                    text: STR.STR_QML_387
+                }
+            }
+        }
+    }
+    Component {
+        id: after4sSync
+        Rectangle {
+            width: 300
+            height: 252
+            radius: 24
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 300
+                    height: 252
+                    radius: 24
+                }
+            }
+            Column {
+                spacing: 12
+                anchors.centerIn: parent
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                    text: STR.STR_QML_388
+                }
+                QText {
+                    width: 228
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 28
+                    wrapMode: Text.WordWrap
+                    text: STR.STR_QML_389
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                ProgressBar {
+                    width: 228
+                    height: 8
+                    from: 0
+                    to: 100
+                    value: AppSetting.syncPercent
+                    onValueChanged: {
+                        if(value < 100){
+                            syncPopupTimeOut.restart()
+                        }
+                    }
+                }
             }
         }
     }

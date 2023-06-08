@@ -28,6 +28,8 @@ import DataPool 1.0
 import Qt.labs.platform 1.1
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: roots

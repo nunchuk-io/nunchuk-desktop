@@ -200,6 +200,7 @@ public:
     nunchuk::Wallet walletImport() const;
     void setWalletImport(const nunchuk::Wallet &walletImport);
     int roomType();
+    void synchonizesUserData();
 private:
     Quotient::Room          *m_room;
     QConversationModelPtr   m_conversation;
@@ -354,11 +355,14 @@ private:
     QList<QNunchukRoomPtr>  m_servive;
     QList<QRoomWalletPtr>   m_roomWallets;
     QTimer                  m_time;
+
+    //Watcher for syncing
+    QFutureWatcher<void>    m_watcherSync;
 private:
     bool containsServiceRoom(const QString& id);
     bool containsSyncRoom();
     bool containsSupportRoom(const QString &tagname);
-
+    void synchonizesUserData();
 signals:
     void currentIndexChanged();
     void currentRoomChanged();
@@ -378,6 +382,7 @@ public slots:
     void refresh(QNunchukRoomPtr room, const QVector<int>& roles = {});
     void resort();
     void roomNeedTobeLeaved(const QString& id);
+    void synchonizesUserDataFinished();
 };
 
 typedef QSharedPointer<QNunchukRoomListModel> QNunchukRoomListModelPtr;

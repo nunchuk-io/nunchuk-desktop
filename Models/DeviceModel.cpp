@@ -59,9 +59,6 @@ QString QDevice::model() const {
 }
 
 QString QDevice::masterFingerPrint() const {
-    if(needsPinSent() || needsPassPhraseSent()){
-        return "Locked";
-    }
     return QString::fromStdString(device_.get_master_fingerprint());
 }
 

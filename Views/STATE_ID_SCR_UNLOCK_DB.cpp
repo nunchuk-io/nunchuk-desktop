@@ -69,7 +69,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->setPrimaryKey(username);
             QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
             if(pKey){
-                QTimer::singleShot(3000,[pKey](){
+                timeoutHandler(3000,[pKey](){
                     AppModel::instance()->showToast(0,
                                                     STR_CPP_108.arg(pKey->name()),
                                                     EWARNING::WarningType::SUCCESS_MSG,
@@ -107,7 +107,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             QString signername = dataMap.value("signername").toString();
             QString passphrase = dataMap.value("passphrase").toString();
             QString mnemonic   = dataMap.value("mnemonic").toString();
-            QTimer::singleShot(3000,[signername,passphrase,mnemonic](){
+            timeoutHandler(3000,[signername,passphrase,mnemonic](){
                 AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
             });
         }

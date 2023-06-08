@@ -54,12 +54,8 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                           msgwarning);
                 if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                     if(trans){
-                        trans.data()->setIsReceiveTx(false);
                         AppModel::instance()->setTransactionInfo(trans);
-                        wallet_id = AppModel::instance()->transactionInfo()->walletId();
-                        AppModel::instance()->startGetTransactionHistory(wallet_id);
-                        AppModel::instance()->startGetUsedAddresses(wallet_id);
-                        AppModel::instance()->startGetUnusedAddresses(wallet_id);
+                        AppModel::instance()->requestSyncWalletDb(wallet_id);
                         QQuickViewer::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                         AppModel::instance()->setTxidReplacing("");
                     }
@@ -119,9 +115,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                         QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                     if((int)EWARNING::WarningType::NONE_MSG == msginit.type()){
-                        AppModel::instance()->startGetTransactionHistory(wallet_id);
-                        AppModel::instance()->startGetUsedAddresses(wallet_id);
-                        AppModel::instance()->startGetUnusedAddresses(wallet_id);
+                        AppModel::instance()->requestSyncWalletDb(wallet_id);
                     }
                     else{
                         AppModel::instance()->showToast(msginit.code(),
@@ -148,12 +142,8 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                             QJsonObject data = Draco::instance()->assistedWalletGetTx(ptr->id(),trans->txid());
                             trans->setServerKeyMessage(data);
                         }
-                        trans.data()->setIsReceiveTx(false);
                         AppModel::instance()->setTransactionInfo(trans);
-                        wallet_id = AppModel::instance()->transactionInfo()->walletId();
-                        AppModel::instance()->startGetTransactionHistory(wallet_id);
-                        AppModel::instance()->startGetUsedAddresses(wallet_id);
-                        AppModel::instance()->startGetUnusedAddresses(wallet_id);
+                        AppModel::instance()->requestSyncWalletDb(wallet_id);
                         QQuickViewer::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                     }
                 }
@@ -246,7 +236,6 @@ void EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX_HANDLER(QVariant msg) {
                     trans.data()->setFee(AppModel::instance()->transactionInfo()->feeSats());
                 }
             }
-            trans.data()->setIsReceiveTx(false);
             AppModel::instance()->setTransactionInfo(trans);
         }
     }

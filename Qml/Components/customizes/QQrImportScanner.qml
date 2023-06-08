@@ -22,6 +22,8 @@ import QtGraphicalEffects 1.12
 import QtQuick.Controls 2.5
 import QRCodeItem 1.0
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Popup {
     id: qrscaner

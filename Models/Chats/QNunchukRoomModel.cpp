@@ -179,7 +179,7 @@ QString QNunchukRoom::roomAvatar()
 {
     if(m_room && userCount() == 2){
         int targetId = userNames().indexOf(m_room->localUser()->name()) == 0 ? 1 : 0 ;
-        return m_room->users().at(targetId)->avatarMediaId();
+        return (targetId != -1) ? m_room->users().at(targetId)->avatarMediaId() : "";
     }
     else{
         return "";
@@ -198,10 +198,13 @@ QString QNunchukRoom::roomName()
         else if(isSupportRoom()){
             return "Support";
         }
+        else if(isDirectChat()){
+            return m_room->name() != "" ? m_room->name() : m_room->displayName() != "" ? m_room->displayName() : userNames().join(", ");
+        }
         else{
-            if(userCount() == 2 || isDirectChat()){
+            if(userCount() == 2){
                 int targetId = userNames().indexOf(m_room->localUser()->name()) == 0 ? 1 : 0 ;
-                return userNames().at(targetId);
+                return (targetId != -1) ? userNames().at(targetId) : "Unknown";
             }
             else{
                 return m_room->name() != "" ? m_room->name() : m_room->displayName() != "" ? m_room->displayName() : userNames().join(", ");
@@ -740,6 +743,13 @@ int QNunchukRoom::roomType()
     }
 }
 
+void QNunchukRoom::synchonizesUserData()
+{
+    for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
+        nunchukConsumeSyncEvent(**e);
+    }
+}
+
 void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &roomid)
 {
     if(roomWallet() && roomWallet()->get_wallet_id() != ""){
@@ -776,9 +786,7 @@ void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &r
                 }
             });
         }
-        AppModel::instance()->startGetTransactionHistory(roomWallet()->get_wallet_id());
-        AppModel::instance()->startGetUsedAddresses(roomWallet()->get_wallet_id());
-        AppModel::instance()->startGetUnusedAddresses(roomWallet()->get_wallet_id());
+        AppModel::instance()->requestSyncWalletDb(roomWallet()->get_wallet_id());
     }
 }
 
@@ -1002,20 +1010,9 @@ void QNunchukRoom::downloadHistorical()
         }
         else if(isNunchukSyncRoom()){
             QtConcurrent::run([this]() {
-                AppModel::instance()->openPromtNunchukSync();
-                int index = 0;
-                for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
-                    index++;
-                    nunchukConsumeSyncEvent(**e);
-                    AppSetting::instance()->setSyncPercent(((double)index/m_room->timelineSize())*100);
-                }
-                AppModel::instance()->closePromtNunchukSync();
                 if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){
                     matrixbrigde::RegisterAutoBackup(id(), CLIENT_INSTANCE->accessToken());
                 }
-                AppModel::instance()->startReloadWallets();
-                AppModel::instance()->startReloadMasterSigners();
-                AppModel::instance()->startReloadRemoteSigners();
             });
         }
         else{
@@ -1048,9 +1045,7 @@ void QNunchukRoom::downloadHistorical()
                     }
 
                     if(roomWallet()){
-                        AppModel::instance()->startGetTransactionHistory(roomWallet()->get_wallet_id());
-                        AppModel::instance()->startGetUsedAddresses(roomWallet()->get_wallet_id());
-                        AppModel::instance()->startGetUnusedAddresses(roomWallet()->get_wallet_id());
+                        AppModel::instance()->requestSyncWalletDb(roomWallet()->get_wallet_id());
                         bool isCreator = conversation()->isWalletCreator(roomWallet()->get_init_event_id());
                         roomWallet()->setIsCreator(isCreator);
                     }
@@ -1876,6 +1871,7 @@ QNunchukRoomListModel::QNunchukRoomListModel(Connection *c):
     m_servive.clear();
     m_roomWallets.clear();
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    QObject::connect(&m_watcherSync, &QFutureWatcher<void>::finished, this, &QNunchukRoomListModel::synchonizesUserDataFinished);
 }
 
 QNunchukRoomListModel::~QNunchukRoomListModel()
@@ -1994,7 +1990,7 @@ void QNunchukRoomListModel::downloadRooms()
         connectSingleShot(connection(), &Connection::capabilitiesLoaded, this, [this] {
             DBG_INFO << "downloadRooms Connection::capabilitiesLoaded";
             m_time.stop();
-            QTimer::singleShot(300, [this]() {
+            timeoutHandler(300, [this]() {
                 connect(connection(), &Connection::joinedRoom,  this, &QNunchukRoomListModel::joinedRoom);
                 connect(connection(), &Connection::newRoom,     this, &QNunchukRoomListModel::newRoom);
                 connect(connection(), &Connection::leftRoom,    this, &QNunchukRoomListModel::leftRoom);
@@ -2034,6 +2030,7 @@ void QNunchukRoomListModel::downloadRooms()
                 else{
                     AppModel::instance()->startMultiDeviceSync(false);
                 }
+                synchonizesUserData();
                 emit finishedDownloadRoom();
                 CLIENT_INSTANCE->setReadySupport(true);
                 downloadRoomWallets();
@@ -2155,6 +2152,7 @@ void QNunchukRoomListModel::updateTransactionMemo(const QString& wallet_id, cons
 
 void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
 {
+    if(!r){return;}
     if( r.data()->isServerNoticeRoom() || r.data()->isNunchukSyncRoom()){
         if(!r.data()->id().isEmpty() && !containsServiceRoom(r.data()->id()) ){
             m_servive.append(r);
@@ -2169,19 +2167,18 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
     else{
         if(!r.data()->id().isEmpty() && !containsRoom(r.data()->id()) ){
             QList<DracoUser> users = Draco::instance()->getRoomMembers(r.data()->id());
-            DBG_INFO << "//FIXME" << r.data()->id() << users.size() << r.data()->roomName() <<  r.data()->room()->tagNames();
-            beginResetModel();
+            beginInsertRows(QModelIndex(), rowCount(), rowCount());
             m_data.append(r);
+            endInsertRows();
             r.data()->setNunchukMembers(users);
             r.data()->connectRoomSignals();
-            connect(r.data(),         &QNunchukRoom::roomNameChanged, this, [=] { refresh(r); });
-            connect(r.data(),         &QNunchukRoom::lastMessageChanged, this, [=] { refresh(r); });
-            connect(r.data(),         &QNunchukRoom::lasttimestampChanged, this, [=] { resort(); });
-            connect(r.data(),         &QNunchukRoom::roomNeedTobeLeaved, this, &QNunchukRoomListModel::roomNeedTobeLeaved);
-            connect(r.data()->room(), &Room::unreadMessagesChanged, this, [=] { refresh(r); });
-            connect(r.data()->room(), &Room::typingChanged, this, [=] { refresh(r); });
-            connect(r.data()->room(), &Room::unreadMessagesChanged, this, &QNunchukRoomListModel::totalUnreadChanged);
-            endResetModel();
+            connect(r.data(),         &QNunchukRoom::roomNameChanged,       this, [this, r] { refresh(r); });
+            connect(r.data(),         &QNunchukRoom::lastMessageChanged,    this, [this, r] { refresh(r); });
+            connect(r.data(),         &QNunchukRoom::lasttimestampChanged,  this, [this, r] { resort(); });
+            connect(r.data(),         &QNunchukRoom::roomNeedTobeLeaved,    this, &QNunchukRoomListModel::roomNeedTobeLeaved);
+            connect(r.data()->room(), &Room::unreadMessagesChanged,         this, [this, r] { refresh(r); });
+            connect(r.data()->room(), &Room::typingChanged,                 this, [this, r] { refresh(r); });
+            connect(r.data()->room(), &Room::unreadMessagesChanged,         this, &QNunchukRoomListModel::totalUnreadChanged);
         }
     }
     emit this->countChanged();
@@ -2421,6 +2418,28 @@ bool QNunchukRoomListModel::containsSupportRoom(const QString& tagname){
     return false;
 }
 
+void QNunchukRoomListModel::synchonizesUserData()
+{
+    AppModel::instance()->openPromtNunchukSync();
+    QFuture<void> future = QtConcurrent::run([=]() {
+        QList<QNunchukRoomPtr> syncRooms;
+        syncRooms.clear();
+        foreach (QNunchukRoomPtr it, m_servive) {
+            if(it.data()->isNunchukSyncRoom()){
+                syncRooms.append(it);
+            }
+        }
+        for(int i = 0; i< syncRooms.count(); i++){
+            int percent = ((double)(i+1)/syncRooms.count())*100;
+            AppSetting::instance()->setSyncPercent(percent);
+            if(syncRooms.at(i).data()){
+                syncRooms.at(i).data()->synchonizesUserData();
+            }
+        }
+    });
+    m_watcherSync.setFuture(future);
+}
+
 void QNunchukRoomListModel::checkNunchukSyncRoom()
 {
     if(connection() && !containsSyncRoom()){
@@ -2475,7 +2494,7 @@ void QNunchukRoomListModel::joinedRoom(Room *room, Room *prev)
 //    });
     connectSingleShot(room, &Room::baseStateLoaded, this, [this, room] {
         m_time.stop();
-        QTimer::singleShot(3000, [this, room]() {
+        timeoutHandler(3000, [this, room]() {
             QNunchukRoomPtr newRoom = QNunchukRoomPtr(new QNunchukRoom(room), &QObject::deleteLater);
             doAddRoom(newRoom);
             if( !newRoom.data()->isServerNoticeRoom() && !newRoom.data()->isNunchukSyncRoom()){
@@ -2537,6 +2556,14 @@ void QNunchukRoomListModel::roomNeedTobeLeaved(const QString &id)
     if(index >= 0){
         leaveRoom(index);
     }
+}
+
+void QNunchukRoomListModel::synchonizesUserDataFinished()
+{
+    AppModel::instance()->closePromtNunchukSync();
+    AppModel::instance()->startReloadWallets();
+    AppModel::instance()->startReloadMasterSigners();
+    AppModel::instance()->startReloadRemoteSigners();
 }
 
 bool sortRoomListTimeAscending(const QNunchukRoomPtr &v1, const QNunchukRoomPtr &v2)

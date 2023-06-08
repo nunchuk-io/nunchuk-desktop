@@ -19,6 +19,8 @@
  **************************************************************************/
 import QtQuick 2.4
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Item {
     id: tabroot

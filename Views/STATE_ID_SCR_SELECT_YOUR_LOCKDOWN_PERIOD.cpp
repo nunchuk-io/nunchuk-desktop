@@ -17,10 +17,10 @@ void EVT_INPUT_DAYS_VALUE_REQUEST_HANDLER(QVariant msg) {
     QString period_id = msg.toMap()["id"].toString();
     if (QUserWallets::instance()->lockdownRequired(period_id)) {
         int type = QUserWallets::instance()->lockdownType();
-        if ((int)LOCKDOWN_REQUIRED_TYPE_INT::SIGN_DUMMY_TX == type) {
+        if ((int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX == type) {
             QUserWallets::instance()->createDummyTx();
             QQuickViewer::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
-        } else if ((int)LOCKDOWN_REQUIRED_TYPE_INT::SECURITY_QUESTION == type) {
+        } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION == type) {
             if (QUserWallets::instance()->createSecurityQuestions()) {
                 QQuickViewer::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
             }

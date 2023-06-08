@@ -20,10 +20,10 @@
 #include "QWalletSignersModel.h"
 #include "QOutlog.h"
 #include "AppSetting.h"
+#include "AppModel.h"
 
 QWalletSignersModel::QWalletSignersModel()
 {
-    primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),(nunchuk::Chain)AppSetting::instance()->primaryServer());
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -96,7 +96,7 @@ void QWalletSignersModel::addSigner(SignerAssigned signer)
 {
     beginResetModel();
     if(signer.xfp == "" || !constains(signer.xfp)){
-        nunchuk::PrimaryKey key = containPrimaryKey(signer.xfp);
+        nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(signer.xfp);
         if(key.get_master_fingerprint() != ""){
             signer.isPrimaryKey = true;
         }
@@ -150,16 +150,6 @@ SignerAssigned QWalletSignersModel::getSignerByIndex(const int index)
 QList<SignerAssigned> QWalletSignersModel::fullList() const
 {
     return m_data;
-}
-
-nunchuk::PrimaryKey QWalletSignersModel::containPrimaryKey(const QString &fingerprint)
-{
-    for(nunchuk::PrimaryKey key: primaryKeys){
-        if(key.get_master_fingerprint() == fingerprint.toStdString()){
-            return key;
-        }
-    }
-    return nunchuk::PrimaryKey();
 }
 
 bool sortWalletSigners(const SignerAssigned &v1, const SignerAssigned &v2)

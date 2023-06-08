@@ -83,23 +83,23 @@ DestinationListModel::DestinationListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-DestinationListModel::~DestinationListModel(){d_.clear();}
+DestinationListModel::~DestinationListModel(){m_data.clear();}
 
 int DestinationListModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return d_.count();
+    return m_data.count();
 }
 
 QVariant DestinationListModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case destination_address_role:
-        return d_[index.row()]->address();
+        return m_data[index.row()]->address();
     case destination_amount_role:
-        return d_[index.row()]->amountDisplay();
+        return m_data[index.row()]->amountDisplay();
     case destination_amount_btc_role:
-        return d_[index.row()]->amountBTC();
+        return m_data[index.row()]->amountBTC();
     case destination_amount_currency_role:
-        return d_[index.row()]->amountCurrency();
+        return m_data[index.row()]->amountCurrency();
     default:
         return QVariant();
     }
@@ -118,7 +118,7 @@ void DestinationListModel::addDestination(const QString &address, const qint64 a
     qint64 am = 0;
     if(!contains(address, am)){
         beginResetModel();
-        d_.append(QDestinationPtr(new Destination(address, amount)));
+        m_data.append(QDestinationPtr(new Destination(address, amount)));
         endResetModel();
     }
 }
@@ -126,7 +126,7 @@ void DestinationListModel::addDestination(const QString &address, const qint64 a
 QMap<QString, qint64> DestinationListModel::getOutputs() const
 {
     QMap<QString, qint64> outputs;
-    foreach (QDestinationPtr i , d_ ){
+    foreach (QDestinationPtr i , m_data ){
         outputs[i->address()] = i->amountSats();
     }
     return outputs;
@@ -134,7 +134,7 @@ QMap<QString, qint64> DestinationListModel::getOutputs() const
 
 bool DestinationListModel::contains(const QString &address, qint64 &amount)
 {
-    foreach (QDestinationPtr i , d_ ){
+    foreach (QDestinationPtr i , m_data ){
         if(address == i.data()->address()){
             amount = i.data()->amountSats();
             return true;
@@ -145,7 +145,7 @@ bool DestinationListModel::contains(const QString &address, qint64 &amount)
 
 qint64 DestinationListModel::getAmountByAddress(const QString &address)
 {
-    foreach (QDestinationPtr i , d_ ){
+    foreach (QDestinationPtr i , m_data ){
         if(address == i.data()->address()){
             return i.data()->amountSats();
         }
@@ -156,7 +156,7 @@ qint64 DestinationListModel::getAmountByAddress(const QString &address)
 void DestinationListModel::notifyUnitChanged()
 {
     beginResetModel();
-    foreach (QDestinationPtr it, d_) {
+    foreach (QDestinationPtr it, m_data) {
         if(it.data()){
             it.data()->amountChanged();
         }
@@ -166,56 +166,86 @@ void DestinationListModel::notifyUnitChanged()
 
 QString DestinationListModel::reciever()
 {
-    if(d_.count() > 2){
+    if(m_data.count() > 2){
         return "multiple addresses";
     }
     else{
-        return (d_.count() == 0 ? "unknown" : d_.at(0).data()->address());
+        return (m_data.count() == 0 ? "unknown" : m_data.at(0).data()->address());
     }
 }
 
-Transaction::Transaction() :txid_(""),
-    memo_(""),
-    status_(-1),
-    fee_(0),
-    m_(0),
-    hasChange_(false),
-    destinationList_(QDestinationListModelPtr(new DestinationListModel())),
-    change_(QDestinationPtr(new Destination())),
-    singleSignersAssigned_(QSingleSignerListModelPtr(new (SingleSignerListModel))),
-    subtotal_(0),
-    total_(0),
-    numberSigned_(0),
-    blocktime_(-2),
-    height_(0),
-    isReceiveTx_(false),
-    subtractFromFeeAmount_(false),
-    feeRate_(0),
-    replacedTxid_(""),
-    walletId_(""),
-    roomId_(""),
-    initEventId_(""),
-    createByMe_(true),
-    psbt_(""),
-    serverKeyMessage_("")
+void DestinationListModel::clearAll()
+{
+    m_data.clear();
+}
+
+Transaction::Transaction() :
+    m_destinations(QDestinationListModelPtr(new DestinationListModel())),
+    m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
+    m_change(QDestinationPtr(new Destination())),
+    m_walletId(""),
+    m_roomId(""),
+    m_initEventId(""),
+    m_createByMe(true),
+    m_serverKeyMessage("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 Transaction::~Transaction() { }
 
-QString Transaction::txid() const { return txid_; }
-
-QString Transaction::memo() const {
-    if(memo_.isEmpty() || memo_ == ""){
-        return "--";
-    }
-    else{
-        return memo_;
-    }
+bool Transaction::isReceiveTx() const
+{
+    return m_transaction.is_receive();
 }
 
-int Transaction::status() const { return status_; }
+void Transaction::setIsReceiveTx(bool receive)
+{
+    m_transaction.set_receive(receive);
+    emit isReceiveTxChanged();
+}
+
+QString Transaction::txid() const {
+    return QString::fromStdString(m_transaction.get_txid());
+}
+
+QString Transaction::memo() const {
+    QString memo = QString::fromStdString(m_transaction.get_memo());
+    if(memo.isEmpty() || memo == ""){
+        memo = "--";
+    }
+    return memo;
+}
+
+void Transaction::setMemo(const QString &memo)
+{
+    m_transaction.set_memo(memo.toStdString());
+    emit memoChanged();
+}
+
+int Transaction::status() const {
+    return (int)m_transaction.get_status();
+}
+
+void Transaction::setStatus(int status)
+{
+    m_transaction.set_status((nunchuk::TransactionStatus)status);
+    emit statusChanged();
+}
+
+int Transaction::m() const {
+    return m_transaction.get_m();
+}
+
+int Transaction::height() const
+{
+    return m_transaction.get_height();
+}
+
+void Transaction::setHeight(const int value){
+    m_transaction.set_height(value);
+    emit heightChanged();
+}
 
 QString Transaction::feeDisplay() const
 {
@@ -230,7 +260,7 @@ QString Transaction::feeDisplay() const
 
 QString Transaction::feeBTC() const
 {
-    return qUtils::QValueFromAmount(fee_);
+    return qUtils::QValueFromAmount(feeSats());
 }
 
 QString Transaction::feeCurrency() const
@@ -240,93 +270,130 @@ QString Transaction::feeCurrency() const
 
 qint64 Transaction::feeSats() const
 {
-    return fee_;
-}
-
-int Transaction::m() const { return m_; }
-
-bool Transaction::hasChange() const { return hasChange_; }
-
-DestinationListModel *Transaction::destinationList() const { return destinationList_.data(); }
-
-QDestinationListModelPtr Transaction::destinationListPtr() const { return destinationList_; }
-
-Destination *Transaction::change() const { return change_.data(); }
-
-QDestinationPtr Transaction::changePtr() const { return change_; }
-
-SingleSignerListModel *Transaction::singleSignersAssigned() const {
-    singleSignersAssigned_.data()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_is_local_Role, Qt::AscendingOrder);
-    return singleSignersAssigned_.data();
-}
-
-QSingleSignerListModelPtr Transaction::singleSignersAssignedPtr() const { return singleSignersAssigned_; }
-
-void Transaction::setTxid(const QString &txid)
-{
-    if(txid_ != txid){
-        txid_ = txid;
-        emit txidChanged();
-    }
-}
-
-void Transaction::setMemo(const QString &memo)
-{
-    if(memo_ != memo){
-        memo_ = memo;
-        emit memoChanged();
-    }
-}
-
-void Transaction::setStatus(int status)
-{
-    if(status_ != status){
-        status_ = status;
-        emit statusChanged();
-    }
+    return m_transaction.get_fee();
 }
 
 void Transaction::setFee(const qint64 fee)
 {
-    if(fee_ != fee){
-        fee_ = fee;
-        emit feeChanged();
+    m_transaction.set_fee(fee);
+    emit feeChanged();
+}
+
+bool Transaction::subtractFromFeeAmount() const
+{
+    return m_transaction.subtract_fee_from_amount();
+}
+
+QString Transaction::feeRate() const
+{
+    qint16 rate = m_transaction.get_fee_rate();
+    return QString::number((double)rate/1000, 'f', 2);
+}
+
+QString Transaction::psbt() const
+{
+    return QString::fromStdString(m_transaction.get_psbt());
+}
+
+bool Transaction::hasChange() const {
+    int index_change = m_transaction.get_change_index();
+    if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
+        return true;
+    }
+    else{
+        return false;
     }
 }
 
-void Transaction::setM(int m)
+Destination *Transaction::change() {
+    if(!m_change){
+        m_change = QDestinationPtr(new Destination());
+    }
+    int index_change = m_transaction.get_change_index();
+    if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
+        std::pair<std::string, int> change_ret = m_transaction.get_outputs().at(index_change);
+        m_change.data()->setAddress(QString::fromStdString(change_ret.first));
+        m_change.data()->setAmount(change_ret.second);
+    }
+    return m_change.data();
+}
+
+QString Transaction::blocktimeDisplay() const
 {
-    if(m_ != m){
-        m_ = m;
-        emit mChanged();
+    if(0 >= m_transaction.get_blocktime()){
+        return "--/--/----"; // There is no time
+    }
+    else{
+        return QDateTime::fromTime_t(m_transaction.get_blocktime()).toString( "MM/dd/yyyy hh:mm AP");
     }
 }
 
-void Transaction::setHasChange(bool hasChange)
+time_t Transaction::blocktime() const
 {
-    if(hasChange_ != hasChange){
-        hasChange_ = hasChange;
-        emit hasChangeChanged();
+    return m_transaction.get_blocktime();
+}
+
+QString Transaction::walletId() const
+{
+    return m_walletId;
+}
+
+void Transaction::setWalletId(const QString &walletId)
+{
+    if(m_walletId != walletId){
+        m_walletId = walletId;
+        emit walletIdChanged();
     }
 }
 
-void Transaction::setDestinationList(const QDestinationListModelPtr &destinationList)
-{
-    destinationList_ = destinationList;
-    emit destinationListChanged();
-}
-
-void Transaction::setChange(const QDestinationPtr &change)
-{
-    change_ = change;
-    emit changeChanged();
+SingleSignerListModel *Transaction::singleSignersAssigned() {
+    if(m_signers){
+        QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId());
+        if(wallet){
+            setRoomId(wallet->roomId());
+            if(m_signers.data()->rowCount() == 0){
+                m_signers = wallet->singleSignersAssigned()->clone();
+            }
+        }
+        m_signers.data()->resetSignerReadyToSign();
+        for (QMasterSignerPtr master : AppModel::instance()->masterSignerList()->fullList()) {
+            m_signers.data()->updateSignerIsLocalAndReadyToSign(master);
+        }
+        m_signers.data()->initSignatures();
+        std::map<std::string, bool> signers = m_transaction.get_signers();
+        for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
+            m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second);
+        }
+        m_signers.data()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_is_local_Role, Qt::AscendingOrder);
+    }
+    return m_signers.data();
 }
 
 void Transaction::setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned)
 {
-    singleSignersAssigned_ = singleSignersAssigned;
-    singleSignersAssigned_.data()->initSignatures();
+    m_signers = singleSignersAssigned;
     emit singleSignerAssignedChanged();
+}
+
+int Transaction::numberSigned()
+{
+    int number_signed = 0;
+    std::map<std::string, bool> signers = m_transaction.get_signers();
+    for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
+        if(it->second) { number_signed++; }
+    }
+
+    for (std::pair<std::string, nunchuk::Amount> item : m_transaction.get_inputs()) {
+        if(AppModel::instance()->utxoList()){
+            AppModel::instance()->utxoList()->updateSelected(QString::fromStdString(item.first), item.second);
+        }
+    }
+    return number_signed;
+}
+
+QString Transaction::subtotalCurrency() const
+{
+    return qUtils::currencyLocale(subtotalSats());
 }
 
 QString Transaction::subtotalDisplay() const
@@ -340,27 +407,19 @@ QString Transaction::subtotalDisplay() const
     }
 }
 
-QString Transaction::subtotalBTC() const
-{
-    return qUtils::QValueFromAmount(subtotal_);
-}
-
-QString Transaction::subtotalCurrency() const
-{
-    return qUtils::currencyLocale(subtotalSats());
-}
-
 qint64 Transaction::subtotalSats() const
 {
-    return subtotal_;
+    return m_transaction.get_sub_amount();
 }
 
-void Transaction::setSubtotal(const qint64 subtotal)
+QString Transaction::subtotalBTC() const
 {
-    if(subtotal_ != subtotal){
-        subtotal_ = subtotal;
-        emit subtotalChanged();
-    }
+    return qUtils::QValueFromAmount(subtotalSats());
+}
+
+QString Transaction::totalCurrency() const
+{
+    return qUtils::currencyLocale(totalSats());
 }
 
 QString Transaction::totalDisplay() const
@@ -376,271 +435,184 @@ QString Transaction::totalDisplay() const
 
 qint64 Transaction::totalSats() const
 {
-    return total_;
+    return (subtotalSats() + feeSats());
 }
 
 QString Transaction::totalBTC() const
 {
-    return qUtils::QValueFromAmount(total_);
+    return qUtils::QValueFromAmount(totalSats());
 }
 
-QString Transaction::totalCurrency() const
-{
-    return qUtils::currencyLocale(totalSats());
-}
-
-void Transaction::setTotal(const qint64 total)
-{
-    if(total_ != total){
-        total_ = total;
-        emit totalChanged();
+DestinationListModel *Transaction::destinationList() {
+    if(!m_destinations){
+        m_destinations = QDestinationListModelPtr(new DestinationListModel());
     }
-}
+    m_destinations.data()->clearAll();
 
-void Transaction::setNumberSigned(int numberSigned)
-{
-    numberSigned_ = numberSigned;
-    emit numberSignedChanged();
-}
-
-QString Transaction::blocktimeDisplay() const
-{
-    if(0 >= blocktime_){
-        return "--/--/----"; // There is no time
+    std::vector<nunchuk::TxOutput> addrs;
+    if(isReceiveTx()){
+        addrs = m_transaction.get_receive_outputs();
+        for (std::pair<std::string, nunchuk::Amount> item : addrs) {
+            m_destinations.data()->addDestination(QString::fromStdString(item.first), item.second);
+        }
     }
     else{
-        //        return QDateTime::fromTime_t(blocktime_).toOffsetFromUtc(QDateTime::currentDateTime().offsetFromUtc()).toString(Qt::ISODate);
-        return QDateTime::fromTime_t(blocktime_).toString( "MM/dd/yyyy hh:mm AP");
+        addrs = m_transaction.get_outputs();
+        int index_change = m_transaction.get_change_index();
+        for (int i = 0; i < (int)addrs.size(); i++){
+            if(index_change != i){
+                std::pair<std::string, nunchuk::Amount> item = addrs.at(i);
+                m_destinations.data()->addDestination(QString::fromStdString(item.first), item.second);
+            }
+        }
     }
-}
-
-time_t Transaction::blocktime() const
-{
-    return blocktime_;
-}
-
-void Transaction::setBlocktime(const time_t blocktime)
-{
-    if(blocktime_ != blocktime){
-        blocktime_ = blocktime;
-        emit blocktimeChanged();
-    }
-}
-
-int Transaction::height() const
-{
-    return height_;
-}
-
-void Transaction::setHeight(int height)
-{
-    if(height_ != height){
-        height_ = height;
-        emit heightChanged();
-    }
-}
-
-bool Transaction::isReceiveTx() const
-{
-    return isReceiveTx_;
-}
-
-void Transaction::setIsReceiveTx(bool isReceiveTx)
-{
-    if(isReceiveTx_ != isReceiveTx){
-        isReceiveTx_ = isReceiveTx;
-        emit isReceiveTxChanged();
-    }
-}
-
-bool Transaction::subtractFromFeeAmount() const
-{
-    return subtractFromFeeAmount_;
-}
-
-void Transaction::setSubtractFromFeeAmount(bool subtractFromFeeAmount)
-{
-    if(subtractFromFeeAmount_ != subtractFromFeeAmount){
-        subtractFromFeeAmount_ = subtractFromFeeAmount;
-        emit subtractFromFeeAmountChanged();
-    }
-}
-
-QString Transaction::feeRate() const
-{
-    return QString::number((double)feeRate_/1000, 'f', 2);
-}
-
-void Transaction::setFeeRate(qint64 feeRate)
-{
-    if(feeRate_ != feeRate){
-        feeRate_ = feeRate;
-        emit feeRateChanged();
-    }
+    return m_destinations.data();
 }
 
 QString Transaction::replacedTxid() const
 {
-    return replacedTxid_;
-}
-
-void Transaction::setReplacedTxid(const QString &replacedTxid)
-{
-    if(replacedTxid_ != replacedTxid){
-        replacedTxid_ = replacedTxid;
-        emit replacedTxidChanged();
-    }
+    return QString::fromStdString(m_transaction.get_replaced_by_txid());
 }
 
 nunchuk::Transaction Transaction::nunchukTransaction() const
 {
-    return transaction_;
+    return m_transaction;
 }
 
 void Transaction::setNunchukTransaction(const nunchuk::Transaction &tx)
 {
-    transaction_ = tx;
+    m_transaction = tx;
 }
 
 QString Transaction::roomId() const
 {
-    return roomId_;
+    return m_roomId;
 }
 
 void Transaction::setRoomId(const QString &roomId)
 {
-    if(roomId_ != roomId){
-        roomId_ = roomId;
+    if(m_roomId != roomId){
+        m_roomId = roomId;
         emit roomIdChanged();
     }
 }
 
 QString Transaction::initEventId() const
 {
-    return initEventId_;
+    return m_initEventId;
 }
 
 void Transaction::setInitEventId(const QString &initEventId)
 {
-    if(initEventId_ != initEventId){
-        initEventId_ = initEventId;
+    if(m_initEventId != initEventId){
+        m_initEventId = initEventId;
         emit initEventIdChanged();
     }
 }
 
 bool Transaction::createByMe() const
 {
-    return createByMe_;
+    return m_createByMe;
 }
 
 void Transaction::setCreateByMe(bool createByMe)
 {
-    if(createByMe_ != createByMe){
-        createByMe_ = createByMe;
+    if(m_createByMe != createByMe){
+        m_createByMe = createByMe;
         emit createByMeChanged();
-    }
-}
-
-QString Transaction::walletId() const
-{
-    return walletId_;
-}
-
-void Transaction::setWalletId(const QString &walletId)
-{
-    if(walletId_ != walletId){
-        walletId_ = walletId;
-        emit walletIdChanged();
-    }
-}
-
-QString Transaction::psbt() const
-{
-    return psbt_;
-}
-
-void Transaction::setPsbt(const QString &psbt)
-{
-    if(psbt_ != psbt){
-        psbt_ = psbt;
-        emit psbtChanged();
     }
 }
 
 QString Transaction::serverKeyMessage() const
 {
-    return serverKeyMessage_;
+    return m_serverKeyMessage;
 }
 
 void Transaction::setServerKeyMessage(const QJsonObject &data)
 {
-    if (status_ == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES) {
+    if (status() == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES) {
         QJsonObject transaction = data.value("transaction").toObject();
         QJsonObject spending_limit_reached  = transaction.value("spending_limit_reached").toObject();
         double time = transaction.value("sign_time_milis").toDouble();
         if (!spending_limit_reached.isEmpty()) {
-            serverKeyMessage_ = spending_limit_reached.value("message").toString();
+            m_serverKeyMessage = spending_limit_reached.value("message").toString();
         } else if(time != 0) {
-            serverKeyMessage_ = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString( "hh:mm AP MMM d"));
+            m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString( "hh:mm AP MMM d"));
         }
         emit serverKeyMessageChanged();
     }
 }
 
-int Transaction::numberSigned() const
+QString Transaction::destination()
 {
-    return numberSigned_;
+    QString ret = "";
+    std::vector<nunchuk::TxOutput> addrs;
+    if(isReceiveTx()){
+        addrs = m_transaction.get_receive_outputs();
+        ret = addrs.size() > 0 ? QString::fromStdString(addrs.at(0).first) : "";
+    }
+    else{
+        addrs = m_transaction.get_outputs();
+        int index_change = m_transaction.get_change_index();
+        if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
+            addrs.erase(addrs.begin() + index_change);
+        }
+        ret = addrs.size() > 0 ? QString::fromStdString(addrs.at(0).first) : "";
+    }
+    return ret;
 }
 
 TransactionListModel::TransactionListModel() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-TransactionListModel::~TransactionListModel() {d_.clear();}
+TransactionListModel::~TransactionListModel() {m_data.clear();}
 
 int TransactionListModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return d_.count();
+    return m_data.count();
 }
 
 QVariant TransactionListModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case transaction_txid_role:
-        return d_[index.row()]->txid();
+        return m_data[index.row()]->txid();
     case transaction_memo_role:
-        return d_[index.row()]->memo();
+        return m_data[index.row()]->memo();
     case transaction_status_role:
-        return d_[index.row()]->status();
+        return m_data[index.row()]->status();
     case transaction_fee_role:
-        return d_[index.row()]->feeDisplay();
+        return m_data[index.row()]->feeDisplay();
     case transaction_m_role:
-        return d_[index.row()]->m();
+        return m_data[index.row()]->m();
     case transaction_hasChange_role:
-        return d_[index.row()]->hasChange();
+        return m_data[index.row()]->hasChange();
     case transaction_destinationList_role:
-        return qVariantFromValue(d_[index.row()]->destinationList());
+        return qVariantFromValue(m_data[index.row()]->destinationList());
+    case transaction_destinationDisp_role:
+        return m_data[index.row()]->destination();
     case transaction_change_role:
-        return qVariantFromValue(d_[index.row()]->change());
+        return qVariantFromValue(m_data[index.row()]->change());
     case transaction_singleSignersAssigned_role:
-        return qVariantFromValue(d_[index.row()]->singleSignersAssigned());
+        return qVariantFromValue(m_data[index.row()]->singleSignersAssigned());
     case transaction_subtotal_role:
-        return d_[index.row()]->subtotalDisplay();
+        return m_data[index.row()]->subtotalDisplay();
     case transaction_total_role:
-        return d_[index.row()]->totalDisplay();
+        return m_data[index.row()]->totalDisplay();
     case transaction_numberSigned_role:
-        return d_[index.row()]->numberSigned();
+        return m_data[index.row()]->numberSigned();
     case transaction_blocktime_role:
-        return d_[index.row()]->blocktimeDisplay();
+        return m_data[index.row()]->blocktimeDisplay();
     case transaction_height_role:
-        return d_[index.row()]->height();
+        return m_data[index.row()]->height();
     case transaction_isReceiveTx_role:
-        return d_[index.row()]->isReceiveTx();
+        return m_data[index.row()]->isReceiveTx();
     case transaction_replacedTx_role:
-        return d_[index.row()]->replacedTxid();
+        return m_data[index.row()]->replacedTxid();
     case transaction_subtotalCurrency_role:
-        return d_[index.row()]->subtotalCurrency();
+        return m_data[index.row()]->subtotalCurrency();
     case transaction_totalCurrency_role:
-        return d_[index.row()]->totalCurrency();
+        return m_data[index.row()]->totalCurrency();
     default:
         return QVariant();
     }
@@ -655,6 +627,7 @@ QHash<int, QByteArray> TransactionListModel::roleNames() const {
     roles[transaction_m_role]               = "transaction_m";
     roles[transaction_hasChange_role]       = "transaction_hasChange";
     roles[transaction_destinationList_role] = "transaction_destinationList";
+    roles[transaction_destinationDisp_role] = "transaction_destinationDisp_role";
     roles[transaction_change_role]          = "transaction_change_role";
     roles[transaction_singleSignersAssigned_role]  = "transaction_singleSignersAssigned";
     roles[transaction_subtotal_role]        = "transaction_subtotal";
@@ -671,18 +644,18 @@ QHash<int, QByteArray> TransactionListModel::roleNames() const {
 
 QTransactionPtr TransactionListModel::getTransactionByIndex(const int index)
 {
-    if(index < 0 || index >= d_.count()){
+    if(index < 0 || index >= m_data.count()){
         DBG_INFO << "Index out of range";
         return NULL;
     }
     else {
-        return d_.at(index);
+        return m_data.at(index);
     }
 }
 
 QTransactionPtr TransactionListModel::getTransactionByTxid(const QString &txid)
 {
-    foreach (QTransactionPtr i , d_ ){
+    foreach (QTransactionPtr i , m_data ){
         if(txid == i.data()->txid()){
             return i;
         }
@@ -690,83 +663,50 @@ QTransactionPtr TransactionListModel::getTransactionByTxid(const QString &txid)
     return NULL;
 }
 
-TransactionListModel *TransactionListModel::getTransactionShortList(const int cnt)
-{
-    TransactionListModel* result = new TransactionListModel();
-    int max = min(d_.count(), cnt);
-    for (int var = 0; var < max; var++) {
-        result->addTransaction(d_[var]);
-    }
-    return result;
-}
-
 void TransactionListModel::addTransaction(const QTransactionPtr &d){
     if(d){
         if(!contains(d.data()->txid())){
-            beginResetModel();
-            d_.append(d);
-            endResetModel();
+            m_data.append(d);
+        }
+    }
+}
+
+void TransactionListModel::updateTransactionMemo(const QString &tx_id, const QString &memo)
+{
+    for (int i = 0; i < m_data.count(); i++) {
+        if(m_data.at(i) && (0 == QString::compare(tx_id, m_data.at(i).data()->txid(), Qt::CaseInsensitive))){
+            m_data.at(i)->setMemo(memo);
+            emit dataChanged(index(i),index(i));
+        }
+    }
+}
+
+void TransactionListModel::updateTransaction(const QString &tx_id, const QTransactionPtr &tx)
+{
+    if(tx){
+        bool existed = false;
+        for (int i = 0; i < m_data.count(); i++) {
+            if(m_data.at(i) && (0 == QString::compare(tx_id, m_data.at(i).data()->txid(), Qt::CaseInsensitive))){
+                m_data.at(i)->setNunchukTransaction(tx.data()->nunchukTransaction());
+                emit dataChanged(index(i),index(i));
+                existed = true;
+                break;
+            }
+        }
+        if(!existed){
+            m_data.append(tx);
+            emit dataChanged(index(m_data.count()-1),index(m_data.count()-1));
             emit countChanged();
         }
     }
 }
 
-void TransactionListModel::updateTransactionStatus(const QString &tx_id, const int status)
-{
-    foreach (QTransactionPtr i , d_ ){
-        if(tx_id == i.data()->txid()){
-            beginResetModel();
-            i.data()->setStatus(status);
-            endResetModel();
-        }
-    }
-    requestSort(TransactionListModel::TransactionRoles::transaction_blocktime_role, Qt::DescendingOrder);
-}
-
-void TransactionListModel::updateTransactionMemo(const QString &tx_id, const QString &memo)
-{
-    beginResetModel();
-    foreach (QTransactionPtr i , d_ ){
-        if(tx_id == i.data()->txid()){
-            i.data()->setMemo(memo);
-        }
-    }
-    endResetModel();
-}
-
-void TransactionListModel::replaceTransaction(const QString &tx_id, const QTransactionPtr &value)
-{
-    if(value){
-        bool isExist = false;
-        for (int i = 0; i < d_.count(); i++) {
-            if(d_.at(i) && d_.at(i).data()->txid() == tx_id){
-                beginResetModel();
-                d_.replace(i, value);
-                endResetModel();
-                isExist = true;
-                break;
-            }
-        }
-
-        if(false == isExist){
-            DBG_INFO << "New transaction" << value.data()->txid();
-            if(!contains(value.data()->txid())){
-                beginResetModel();
-                d_.append(value);
-                endResetModel();
-                emit countChanged();
-            }
-        }
-    }
-    requestSort(TransactionListModel::TransactionRoles::transaction_blocktime_role, Qt::DescendingOrder);
-}
-
 void TransactionListModel::removeTransaction(const QString &tx_id)
 {
-    foreach (QTransactionPtr it, d_) {
+    foreach (QTransactionPtr it, m_data) {
         if(it.data() && it.data()->txid() == tx_id){
             beginResetModel();
-            d_.removeAll(it);
+            m_data.removeAll(it);
             endResetModel();
             emit countChanged();
             break;
@@ -776,8 +716,8 @@ void TransactionListModel::removeTransaction(const QString &tx_id)
 
 bool TransactionListModel::contains(const QString &tx_id)
 {
-    foreach (QTransactionPtr i , d_ ){
-        if(tx_id == i.data()->txid()){
+    foreach (QTransactionPtr i , m_data ){
+        if(0 == QString::compare(tx_id, i.data()->txid(), Qt::CaseInsensitive)){
             return true;
         }
     }
@@ -787,27 +727,27 @@ bool TransactionListModel::contains(const QString &tx_id)
 void TransactionListModel::requestSort(int role, int order)
 {
     beginResetModel();
-    if(d_.count() > 1){
+    if(m_data.count() > 1){
         switch (role) {
         case transaction_txid_role:
             break;
         case transaction_memo_role:
         {
             if(Qt::DescendingOrder == order){
-                qSort(d_.begin(), d_.end(), sortTXsByMemoDescending);
+                qSort(m_data.begin(), m_data.end(), sortTXsByMemoDescending);
             }
             else{
-                qSort(d_.begin(), d_.end(), sortTXsByMemoAscending);
+                qSort(m_data.begin(), m_data.end(), sortTXsByMemoAscending);
             }
         }
             break;
         case transaction_status_role:
         {
             if(Qt::DescendingOrder == order){
-                qSort(d_.begin(), d_.end(), sortTXsByStatusDescending);
+                qSort(m_data.begin(), m_data.end(), sortTXsByStatusDescending);
             }
             else{
-                qSort(d_.begin(), d_.end(), sortTXsByStatusAscending);
+                qSort(m_data.begin(), m_data.end(), sortTXsByStatusAscending);
             }
         }
             break;
@@ -815,18 +755,18 @@ void TransactionListModel::requestSort(int role, int order)
         case transaction_total_role:
         {
             if(Qt::DescendingOrder == order){
-                qSort(d_.begin(), d_.end(), sortTXsByAmountDescending);
+                qSort(m_data.begin(), m_data.end(), sortTXsByAmountDescending);
             }
             else{
-                qSort(d_.begin(), d_.end(), sortTXsByAmountAscending);
+                qSort(m_data.begin(), m_data.end(), sortTXsByAmountAscending);
             }
         }
             break;
         case transaction_blocktime_role:
         {
-            qSort(d_.begin(), d_.end(), sortTXsByBlocktimeAscending);
+            qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeAscending);
             if(Qt::DescendingOrder == order){
-                qSort(d_.begin(), d_.end(), sortTXsByBlocktimeDescendingSkipZero);
+                qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeDescendingSkipZero);
             }
             linkingReplacedTransactions();
         }
@@ -840,29 +780,21 @@ void TransactionListModel::requestSort(int role, int order)
 
 void TransactionListModel::notifyUnitChanged()
 {
-    beginResetModel();
-    foreach (QTransactionPtr it, d_) {
-        if(it.data()){
-            emit it.data()->feeChanged();
-            emit it.data()->totalChanged();
-            emit it.data()->subtotalChanged();
-            if(it.data()->destinationList()){
-                it.data()->destinationList()->notifyUnitChanged();
-            }
-            if(it.data()->change()){
-                it.data()->change()->amountChanged();
-            }
+    const QVector<int>& roles = {};
+    for (int i = 0; i < m_data.count(); i++) {
+        if(m_data.at(i).data()){
+            const auto idx = index(i);
+            emit dataChanged(idx, idx, roles);
         }
     }
-    endResetModel();
 }
 
 void TransactionListModel::linkingReplacedTransactions()
 {
     QMap<QString, QString> replaces;
-    for (int i = 0; i < d_.count(); i++) {
-        if(d_.at(i) && (int)nunchuk::TransactionStatus::REPLACED == d_.at(i).data()->status()){
-            replaces[d_.at(i).data()->txid()] = d_.at(i).data()->replacedTxid();
+    for (int i = 0; i < m_data.count(); i++) {
+        if(m_data.at(i) && (int)nunchuk::TransactionStatus::REPLACED == m_data.at(i).data()->status()){
+            replaces[m_data.at(i).data()->txid()] = m_data.at(i).data()->replacedTxid();
         }
     }
 
@@ -871,19 +803,19 @@ void TransactionListModel::linkingReplacedTransactions()
     for (int j = 0; j < replaces.keys().count(); j++) {
         from_index = -1;
         to_index = -1;
-        for (int k = 0; k < d_.count(); k++) {
-            if(d_.at(k)){
-                if(d_.at(k).data()->txid() == replaces.keys()[j]){ // old tx replaced
+        for (int k = 0; k < m_data.count(); k++) {
+            if(m_data.at(k)){
+                if(m_data.at(k).data()->txid() == replaces.keys()[j]){ // old tx replaced
                     from_index = k;
                 }
-                if(d_.at(k).data()->txid() == replaces[replaces.keys()[j]]){ // Find new tx
+                if(m_data.at(k).data()->txid() == replaces[replaces.keys()[j]]){ // Find new tx
                     to_index = k;
                 }
             }
         }
 
         if((-1 != from_index) && (-1 != to_index) && (to_index != from_index)){
-            d_.move(from_index, to_index);
+            m_data.move(from_index, to_index);
         }
     }
 }
@@ -891,14 +823,14 @@ void TransactionListModel::linkingReplacedTransactions()
 void TransactionListModel::cleardata()
 {
     beginResetModel();
-    d_.clear();
+    m_data.clear();
     endResetModel();
     emit countChanged();
 }
 
 int TransactionListModel::count() const
 {
-    return d_.size();
+    return m_data.size();
 }
 
 bool sortTXsByBlocktimeAscending(const QTransactionPtr &v1, const QTransactionPtr &v2)

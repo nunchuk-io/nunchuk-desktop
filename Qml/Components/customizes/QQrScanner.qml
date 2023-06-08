@@ -22,6 +22,8 @@ import QtMultimedia 5.12
 import QtGraphicalEffects 1.12
 import QZXing 3.3
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Item {
     id: qrscannerRoot

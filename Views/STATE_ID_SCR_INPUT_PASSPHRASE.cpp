@@ -106,7 +106,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
                     QMap<QString, QVariant> data;
                     data["state_id"] = state_id;
                     data["masterSignerId"] = master_signer_id;
-                    QTimer::singleShot(100,[=](){
+                    timeoutHandler(100,[=](){
                         AppModel::instance()->startTopXPUBsMasterSigner(QVariant::fromValue(data));
                     });
                 }

@@ -125,8 +125,15 @@ AppSetting *AppSetting::instance()
     return &mInstance;
 }
 
+void AppSetting::refresh()
+{
+    emit unitChanged();
+    emit currencyChanged();
+}
+
 void AppSetting::setGroupSetting(QString group) {
     NunchukSettings::setGroupSetting(group);
+    refresh();
 }
 
 void AppSetting::resetSetting()
@@ -156,6 +163,7 @@ void AppSetting::resetSetting()
     this->setCoreRPCPassword("");
     this->setSignetStream(GLOBAL_SIGNET_EXPLORER);
     this->setEnableMultiDeviceSync(false);
+    this->setCurrency("USD");
 }
 
 void AppSetting::updateUnit()
@@ -167,13 +175,11 @@ void AppSetting::updateUnit()
         if(AppModel::instance()->walletInfo()->transactionHistory()){
             AppModel::instance()->walletInfo()->transactionHistory()->notifyUnitChanged();
         }
-        if(AppModel::instance()->walletInfo()->transactionHistoryShort()){
-            AppModel::instance()->walletInfo()->transactionHistoryShort()->notifyUnitChanged();
-        }
     }
     if(AppModel::instance()->utxoList()){
         AppModel::instance()->utxoList()->notifyUnitChanged();
     }
+    emit currencyChanged();
 }
 
 int AppSetting::unit()
@@ -795,22 +801,42 @@ void AppSetting::setEnableMultiDeviceSync(bool enableMultiDeviceSync)
     }
 }
 
+QString AppSetting::currencySymbol()
+{
+    if(0 == QString::compare(currency(), "USD", Qt::CaseInsensitive)){
+        return "$";
+    }
+    else{
+        return "";
+    }
+}
+
 QString AppSetting::currency()
 {
     if(NunchukSettings::contains("currency")){
-        m_currency = NunchukSettings::value("currency").toString();
+        return NunchukSettings::value("currency").toString();
     }
     else{
-        NunchukSettings::setValue("currency", m_currency);
+        return "USD";
     }
-    return m_currency;
 }
 
 void AppSetting::setCurrency(QString currency)
 {
-    if (m_currency != currency){
-        m_currency = currency;
-        NunchukSettings::setValue("currency", m_currency);
-        emit currencyChanged();
+    NunchukSettings::setValue("currency", currency);
+    emit currencyChanged();
+}
+
+bool AppSetting::enableCoSigning()
+{
+    return m_enableCoSigning;
+}
+
+void AppSetting::setEnableCoSigning(bool enableCoSigning)
+{
+    if(m_enableCoSigning != enableCoSigning){
+        m_enableCoSigning = enableCoSigning;
+        emit enableCoSigningChanged();
     }
 }
+

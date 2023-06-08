@@ -29,12 +29,22 @@
 class QUserWallets : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QVariantList securityQuestions READ securityQuestions CONSTANT)
+    Q_PROPERTY(QVariantList securityQuestions READ securityQuestions NOTIFY securityQuestionChanged)
     Q_PROPERTY(QVariantList lockdownPeriods READ lockdownPeriods CONSTANT)
     Q_PROPERTY(QString untilTime READ untilTime WRITE setUntilTime NOTIFY untilTimeChanged)
     Q_PROPERTY(QVariantList tapsigners READ tapsigners NOTIFY tapsignersChanged)
     Q_PROPERTY(QMasterSigner* signer READ signer CONSTANT)
 public:
+    struct inheritance_t
+    {
+        QString m_destinationAddress = {};
+        QString magic = {};
+        QString note = {};
+        QString masterSignerId = {};
+        nunchuk::Wallet wallet = {};
+        nunchuk::Transaction tx = {};
+        double balance = {0.0};
+    };
     QUserWallets();
     ~QUserWallets();
     static QUserWallets *instance();
@@ -46,6 +56,7 @@ public:
     bool requestVerifyPassword(const QString& password, const int action);
     bool requestLockDownVerifyPassword(const QString &password);
     bool requestRecoverKeyVerifyPassword(const QString &password);
+    bool requestServerKeyVerifyPassword(const QString &password);
 
     QTransactionPtr getDummyTx(const QString &wallet_id, const QString &period_id);
     void signDummyTx(const QString& xfp);
@@ -77,6 +88,24 @@ public:
 
     QMasterSigner *signer() const;
 
+    Q_INVOKABLE int inheritanceCheck(const QString& magic = "", const QString& environment = "PRODUCTION");
+    bool inheritanceGetPlan(const QString &magic_inpputed, const QString& wallet_id);
+    int inheritanceDownloadBackup(const QString& magic, const QString& backup_password);
+    bool inheritanceClaimRequest(const nunchuk::Wallet wallet, const nunchuk::Transaction txSigned, const QString& magic);
+    int inheritanceClaimStatus(const QJsonObject& data, const QString& autho);
+    bool inheritanceCreateTx(const nunchuk::SingleSigner& signer, const QJsonObject& data, const QString& autho);
+
+    void setInheritanceAddress(const QString& to_wallet_id);
+    void setInheritanceAddressNewTransaction(const QString& address);
+    void inheritanceCreateDraftTransaction(double fee_rate = 1000.0);
+    void inheritanceSignTransaction();
+
+    bool serverKeyGetCurrentPolicies();
+    QJsonObject serverKeyBody();
+    bool serverKeyUpdatePolicies();
+    bool serverKeyUpdatePoliciesSucceed();
+    inheritance_t inheritance() const;
+
 signals:
     void verifyPasswordTokenAlert(const QString& errormsg);
     void lockdownPeriodsAlert(const QString& errormsg);
@@ -84,10 +113,17 @@ signals:
     void answerErrorAlert(const QString& errormsg);
     void backupPasswordErrorAlert(const QString& errormsg);
     void tapsignersChanged();
+    void notPaidAlert();
+    void isExpiredAlert();
+    void hasNotBeenActivatedYetAlert();
+    void serverKeyVerifyPasswordAlert();
+    void securityQuestionChanged();
+    void serverKeyDummyTransactionAlert();
+    void securityQuestionClosed();
 private:
     QString m_passwordToken;
     QString m_secQuesToken;
-    lockDownReqiredInfo required_question {};
+    ReqiredSignaturesInfo required_question {};
     QString m_period_id {};
     QList<SecurityQuestion> m_quesAnswers;
     QString m_wallet_id {};
@@ -100,6 +136,14 @@ private:
     QVariantList m_tapsigners;
     QMasterSignerPtr m_signer {NULL};
     QByteArray m_base64bin;
+    inheritance_t mInheritance = {};
+    struct co_signing_t
+    {
+        QString key_id_or_xfp  = {};
+        QString wallet_id = {};
+        nunchuk::SingleSigner m_server_key = {};
+    };
+    co_signing_t mCoSigning = {};
 };
 
 #endif // QUSERWALLETS_H

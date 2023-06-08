@@ -55,7 +55,6 @@ public:
     bool constains(const QString& xfp);
     SignerAssigned getSignerByIndex(const int index);
     QList<SignerAssigned> fullList() const;
-    nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
     enum ConversationRoles {
         role_name,
         role_xfp,
@@ -70,7 +69,6 @@ public:
     };
 private:
     QList<SignerAssigned> m_data;
-    std::vector<nunchuk::PrimaryKey> primaryKeys;
 signals:
     void countChanged();
 };

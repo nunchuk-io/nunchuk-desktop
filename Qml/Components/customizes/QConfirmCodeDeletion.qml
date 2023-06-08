@@ -22,6 +22,8 @@ import QtGraphicalEffects 1.12
 import QtQuick.Controls 2.5
 import QRCodeItem 1.0
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Popup {
@@ -169,7 +171,6 @@ Popup {
                     label.text: leftBtnLabel
                     label.font.pixelSize: 20
                     type: eTypeB
-                    radius: 12
                     onButtonClicked: { cancelRequest(); deletingModelRoot.close() }
                 }
                 QTextButton {
@@ -181,7 +182,6 @@ Popup {
                     width: label.paintedWidth + 36
                     height: 48
                     label.text: rightBtnLabel
-                    radius: 12
                     label.font.pixelSize: 20
                     type: eTypeE
                     onButtonClicked: { deleteRequest();}

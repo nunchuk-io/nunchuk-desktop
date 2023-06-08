@@ -22,6 +22,8 @@ import QtQuick.Controls 2.0
 import QtGraphicalEffects 1.0
 import Qt.labs.platform 1.1
 import "../../Components/origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Item {
     property bool isAssisted: false

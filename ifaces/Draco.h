@@ -117,10 +117,12 @@ public:
     // ASSISTED_WALLETS
     QJsonObject getAssistedWallets();
     bool assistedWalletCreateTx(const QString &wallet_id, const QString &psbt, const QString &memo);
+    bool assistedWalletUpdateTx(const QString &wallet_id, const QString &txid, const QString &memo);
     QJsonObject assistedWalletSignTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt, const QString &memo);
     bool assistedWalletCancelTx(const QString &wallet_id, const QString &transaction_id);
     QJsonObject assistedWalletGetTx(const QString &wallet_id, const QString &transaction_id);
     QJsonObject assistedWalletGetListTx(const QString &wallet_id);
+    QJsonObject assistedWalletDeleteListTx(const QString &wallet_id, const int offset, const int limit);
     void assistedSyncTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt);
 
     bool verifyPasswordToken(const QString &password, const int action, QString &errormsg_or_token);
@@ -137,7 +139,7 @@ public:
 
     bool lockdownRequiredSignatures(const QString &period_id,
                                     const QString &wallet_id,
-                                    lockDownReqiredInfo& output,
+                                    ReqiredSignaturesInfo& output,
                                     QString& errormsg);
     bool lockdownByAnswerSecQues(const QString& passwordToken,
                                  const QString& secQuesToken,
@@ -160,6 +162,55 @@ public:
 
     bool getCurrencies(QJsonObject& output, QString& errormsg);
     void btcRates();
+
+    bool inheritanceDownloadBackup(const QString& magic,
+                                   int& response_code,
+                                   QJsonObject &output,
+                                   QString& errormsg);
+
+    bool inheritanceClaimRequest(const QString& magic,
+                                 const QString& psbt,
+                                 QJsonObject& output,
+                                 QString& errormsg);
+
+    bool inheritanceClaimStatus(const QJsonObject& data,
+                                const QString& autho,
+                                QJsonObject& output,
+                                QString& errormsg);
+
+    bool inheritanceCreateTx(const QJsonObject& data,
+                             const QString& autho,
+                             QJsonObject& output,
+                             QString& errormsg);
+
+    bool inheritanceCheck(const QString& magic,
+                          const QString& environment,
+                          QJsonObject& output,
+                          QString& errormsg);
+
+    bool inheritanceGetPlan(const QString &wallet_id,
+                            QJsonObject& output,
+                            QString& errormsg);
+
+    bool inheritanceFakeUpdate();
+
+    bool serverKeysGet(const QString & id_or_xfp,
+                       QJsonObject& output,
+                       QString& errormsg);
+
+    bool serverKeysUpdate(const QString& passwordToken,
+                          const QString& secQuesToken,
+                          const QString & id_or_xfp,
+                          const QStringList &signatures,
+                          const QJsonObject data,
+                          QJsonObject& output,
+                          QString& errormsg);
+
+    bool serverKeysRequiredSignatures(const QString &id_or_xfp,
+                                      const QJsonObject data,
+                                      ReqiredSignaturesInfo& output,
+                                      QString& errormsg);
+
 private:
     Draco();
     ~Draco();
@@ -167,6 +218,7 @@ private:
     QJsonObject postSync(const QString &cmd, QMap<QString, QString> params, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject putSync(const QString &cmd,  QMap<QString, QString> params, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     static Draco* m_instance;
     QString m_uid;

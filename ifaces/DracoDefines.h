@@ -31,6 +31,7 @@
 
 #define DRAGON_SUBSCRIPTIONS_URL "https://api.nunchuk.io/v1.1/subscriptions"
 #define DRAGON_USER_WALLETS_URL  "https://api.nunchuk.io/v1.1/user-wallets"
+#define DRAGON_USER_WALLETS_TESTNET_URL  "https://api-testnet.nunchuk.io/v1.1/user-wallets"
 
 struct DracoUser {
     QString id = "";
@@ -61,7 +62,7 @@ struct SecurityQuestion {
     bool is_changed = false;
 };
 
-struct lockDownReqiredInfo {
+struct ReqiredSignaturesInfo {
     int     type = 0;
     int     required_signatures = 0;
     int     required_answers = 0;
@@ -113,10 +114,12 @@ enum CMD_IDX {
     // ASSISTED_WALLETS
     ASSISTED_WALLET_GET,
     ASSISTED_WALLET_CREATE_TX,
+    ASSISTED_WALLET_UPDATE_TX,
     ASSISTED_WALLET_SIGN_TX,
     ASSISTED_WALLET_CANCEL_TX,
     ASSISTED_WALLET_GET_TX,
     ASSISTED_WALLET_GET_LIST_TX,
+    ASSISTED_WALLET_DELETE_LIST_TX,
 
     // SEC_QUES
     SEC_QUES_GET,
@@ -137,6 +140,18 @@ enum CMD_IDX {
 
     //USER_KEYS
     USER_KEYS_DOWNLOAD_BACKUP,
+    INHERITANCE_DOWNLOAD_BACKUP,
+    INHERITANCE_CLAIM_REQUEST,
+    INHERITANCE_CLAIM_STATUS,
+    INHERITANCE_CREATE_TX,
+    INHERITANCE_CHECK,
+    INHERITANCE_GET_PLAN,
+    INHERITANCE_FAKE_UPDATE,
+
+    //SERVER_KEYS
+    SERVER_KEYS_GET,
+    SERVER_KEYS_UPDATE,
+    SERVER_KEYS_REQUIRED_SIGNATURES,
 
     TX_SYNC,
     GET_CURRENCIES,
@@ -152,7 +167,7 @@ enum class TARGET_ACTION {
     UPDATE_SERVER_KEY,
 };
 
-enum class LOCKDOWN_REQUIRED_TYPE_INT {
+enum class REQUIRED_SIGNATURE_TYPE_INT {
     NONE,           // ERROR
     SIGN_MESSAGE,   // NOT SUPPORT FOR NOW
     SIGN_DUMMY_TX,
@@ -168,12 +183,12 @@ const QMap<int, QString> target_actions_command {
     { (int)TARGET_ACTION::UPDATE_SERVER_KEY         , "UPDATE_SERVER_KEY"       },
 };
 
-const QMap<QString, int> lockdown_required_type {
-    { "NONE"                                ,(int)LOCKDOWN_REQUIRED_TYPE_INT::NONE                                },
-    { "SIGN_MESSAGE"                        ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SIGN_MESSAGE                        },
-    { "SIGN_DUMMY_TX"                       ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SIGN_DUMMY_TX                       },
-    { "SECURITY_QUESTION"                   ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SECURITY_QUESTION                   },
-    { "SECURITY_QUESTION_AND_SIGN_DUMMY_TX" ,(int)LOCKDOWN_REQUIRED_TYPE_INT::SECURITY_QUESTION_AND_SIGN_DUMMY_TX },
+const QMap<QString, int> required_signatures_type {
+    { "NONE"                                ,(int)REQUIRED_SIGNATURE_TYPE_INT::NONE                                },
+    { "SIGN_MESSAGE"                        ,(int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_MESSAGE                        },
+    { "SIGN_DUMMY_TX"                       ,(int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX                       },
+    { "SECURITY_QUESTION"                   ,(int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION                   },
+    { "SECURITY_QUESTION_AND_SIGN_DUMMY_TX" ,(int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION_AND_SIGN_DUMMY_TX },
 };
 
 const QMap<int, QString> commands {
@@ -222,7 +237,9 @@ const QMap<int, QString> commands {
     // ASSISTED_WALLETS
     { CMD_IDX::ASSISTED_WALLET_GET          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets")  },
     { CMD_IDX::ASSISTED_WALLET_CREATE_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { CMD_IDX::ASSISTED_WALLET_UPDATE_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}")  },
     { CMD_IDX::ASSISTED_WALLET_GET_LIST_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { CMD_IDX::ASSISTED_WALLET_DELETE_LIST_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
     { CMD_IDX::ASSISTED_WALLET_SIGN_TX      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sign") },
     { CMD_IDX::ASSISTED_WALLET_CANCEL_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
     { CMD_IDX::ASSISTED_WALLET_GET_TX       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
@@ -246,6 +263,18 @@ const QMap<int, QString> commands {
 
     //USER_KEYS
     { CMD_IDX::USER_KEYS_DOWNLOAD_BACKUP    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("user-keys/{key_id_or_xfp}/download-backup") },
+    { CMD_IDX::INHERITANCE_DOWNLOAD_BACKUP  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/download-backup") },
+    { CMD_IDX::INHERITANCE_CLAIM_REQUEST    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/claim") },
+    { CMD_IDX::INHERITANCE_CLAIM_STATUS     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/status") },
+    { CMD_IDX::INHERITANCE_CREATE_TX        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/create-transaction") },
+    { CMD_IDX::INHERITANCE_CHECK            , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/check") },
+    { CMD_IDX::INHERITANCE_GET_PLAN         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance") },
+    { CMD_IDX::INHERITANCE_FAKE_UPDATE      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/fake-update") },
+
+    //SERVER_KEYS /v1.1/user-wallets/server-keys/{key_id_or_xfp}
+    { CMD_IDX::SERVER_KEYS_GET              , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("server-keys/{key_id_or_xfp}") },
+    { CMD_IDX::SERVER_KEYS_UPDATE           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("server-keys/{key_id_or_xfp}") },
+    { CMD_IDX::SERVER_KEYS_REQUIRED_SIGNATURES, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("server-keys/{key_id_or_xfp}/calculate-required-signatures") },
 
     { CMD_IDX::TX_SYNC                      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sync") },
     { CMD_IDX::GET_CURRENCIES               , QString("%1/%2").arg(DRAGON_FOREX_URL).arg("currencies") },
@@ -268,6 +297,9 @@ public:
         UNAUTHORIZED = 401,
         NOT_FOUND    = 404,
         INTERNAL_SERVER_ERROR = 500,
+        INHERITANCE_801 = 801,
+        INHERITANCE_802 = 802,
+        INHERITANCE_803 = 803,
         LOGIN_NEW_DEVICE = 841,
         RESPONSE_OK  = 0,
     };

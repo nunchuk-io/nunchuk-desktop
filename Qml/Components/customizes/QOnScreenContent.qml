@@ -23,15 +23,21 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
-import "../../Components/customizes"
-import "../../Components/origins"
+import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Item {
     id: root
     property alias label: screenname
     property alias closebutton: closeButton
     property alias extraHeader: extraHeaderInfo.sourceComponent
+    property alias content: contentInfo.sourceComponent
+    property alias bottomLeft: botLeft.sourceComponent
+    property alias bottomRight: botRight.sourceComponent
+    readonly property Item contentItem: contentInfo.item
     property bool enableHeader: true
+    property int offset: 36
     signal closeClicked()
     Rectangle {
         id: mask
@@ -56,38 +62,64 @@ Item {
         color: "#80000000"
         source: mask
     }
-    QText {
-        id: screenname
-        visible: enableHeader
-        anchors {
-            left: parent.left
-            leftMargin: 36
-            top: parent.top
-            topMargin: 36
+    Item {
+        anchors.fill: parent
+        anchors.margins: offset
+        Column {
+            spacing: 24
+            Item {
+                width: root.width - offset*2 + 12
+                height: 40
+                Row {
+                    anchors.fill: parent
+                    spacing: 8
+                    QHeadLine {
+                        id: screenname
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: enableHeader
+                        text: "Screen name"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Loader {
+                        id: extraHeaderInfo
+                        height: extraHeaderInfo.sourceComponent ? extraHeaderInfo.item.height : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                Row {
+                    anchors.fill: parent
+                    spacing: 12
+                    layoutDirection: Qt.RightToLeft
+                    QCloseButton {
+                        id: closeButton
+                        visible: enableHeader
+                        anchors {
+                            verticalCenter: parent.verticalCenter
+                            verticalCenterOffset: -12
+                        }
+                        enabled: visible
+                        onClicked: { closeClicked()}
+                    }
+                }
+            }
+            Loader {
+                id: contentInfo
+                width: root.width - offset*2
+                height: root.height - offset*2 - 40 - 48 - 48
+            }
+            Item {
+                width: root.width - offset*2
+                height: 48
+                Loader{
+                    id: botLeft
+                    anchors.left: parent.left
+                }
+                Loader{
+                    id: botRight
+                    anchors.right: parent.right
+                }
+            }
         }
-        text: "Screen name"
-        color: "#031F2B"
-        font.family: "Montserrat"
-        font.weight: Font.Bold
-        font.pixelSize: 24
-    }
-    Loader {
-        id: extraHeaderInfo
-        anchors {
-            verticalCenter: screenname.verticalCenter
-            left: screenname.right
-            leftMargin: 8
-        }
-    }
-    QCloseButton {
-        id: closeButton
-        visible: enableHeader
-        enabled: visible
-        anchors {
-            verticalCenter: screenname.verticalCenter
-            right: parent.right
-            rightMargin: 36
-        }
-        onClicked: { closeClicked()}
     }
 }

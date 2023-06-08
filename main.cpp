@@ -26,6 +26,7 @@
 #include "Models/AppModel.h"
 #include "Models/AppSetting.h"
 #include "Models/ProfileSetting.h"
+#include "Models/ServiceSetting.h"
 #include "Models/QWarningMessage.h"
 #include "ifaces/QRCodeItem.h"
 #include "bridgeifaces.h"
@@ -87,8 +88,8 @@ inline void calculateScaleFactor()
         int appWidth = QAPP_WIDTH_EXPECTED + (QAPP_GAP_HEIGHT + rect.x()) * primaryScr->devicePixelRatio();
         int appHeight = QAPP_HEIGHT_EXPECTED + (QAPP_GAP_HEIGHT + rect.y()) * primaryScr->devicePixelRatio();
 #else
-        int appWidth = QAPP_WIDTH_EXPECTED + QAPP_GAP_HEIGHT;
-        int appHeight = QAPP_HEIGHT_EXPECTED + QAPP_GAP_HEIGHT;
+        int appWidth = screenWidth = QAPP_WIDTH_EXPECTED;
+        int appHeight = screenHeight = QAPP_HEIGHT_EXPECTED;
 #endif
         // assumes that the default desktop resolution is 1080 (scale of 1)
         double scalePref = 1.0;
@@ -119,7 +120,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.18");
+    app.setApplicationVersion("1.9.19");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -135,6 +136,7 @@ int main(int argc, char* argv[])
     qmlRegisterType<E>("HMIEVENTS", 1, 0, "EVT");
     qmlRegisterType<QRCodeItem>("QRCodeItem", 1, 0, "QRCodeItem");
     qmlRegisterType<ENUNCHUCK>("NUNCHUCKTYPE", 1, 0, "NUNCHUCKTYPE");
+    qmlRegisterType<ServiceSetting>("NUNCHUCKTYPE", 1, 0, "ServiceType");
     qmlRegisterType<EWARNING>("EWARNING", 1, 0, "EWARNING");
     qmlRegisterType<POPUP>("EWARNING", 1, 0, "Popup_t");
     qmlRegisterType<DRACO_CODE>("DRACO_CODE", 1, 0, "DRACO_CODE");
@@ -162,6 +164,7 @@ int main(int argc, char* argv[])
     QQuickViewer::instance()->registerContextProperty("qapplicationVersion", app.applicationVersion());
     QQuickViewer::instance()->registerContextProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
     QQuickViewer::instance()->registerContextProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
+    QQuickViewer::instance()->registerContextProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
     QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),

@@ -396,12 +396,38 @@ QString qUtils::currencyLocale(qint64 amountSats)
     double exRates = AppModel::instance()->exchangeRates();
     double balanceCurrency = btRates*exRates*amountSats;
     QLocale locale(QLocale::English);
-    QString output = locale.toString(balanceCurrency, 'f', 8);
+    QString output = locale.toString(balanceCurrency, 'f', 2);
+#if 0
     while (output.endsWith('0') && output.contains('.')) {
         output = output.chopped(1);
     }
+#endif
     if (output.endsWith('.')) {
         output = output.chopped(1);
     }
     return output;
+}
+
+bool qUtils::verifyCheckSum(const QByteArray &data, const QByteArray &expectedCheckSum)
+{
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    hash.addData(data);
+    QByteArray actualCheckSum = hash.result();
+    return (actualCheckSum == expectedCheckSum);
+}
+
+int qUtils::Precision(double input)
+{
+    const int maxDigits = 15;
+    double remaining = input;
+    int lastDigit = 0;
+    for (int i = 1; i <= maxDigits; i++) {
+        remaining = (remaining * 10);
+        int round = qRound(remaining) % 10;
+        if (round != 0) {
+            if (round < 0) break;
+            lastDigit = i;
+        }
+    }
+    return lastDigit;
 }

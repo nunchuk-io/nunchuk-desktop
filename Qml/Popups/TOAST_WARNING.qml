@@ -24,6 +24,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import "../Components/customizes"
+import "../Components/customizes/Texts"
 import "../Components/origins"
 
 QScreen {

@@ -158,7 +158,7 @@ void EVT_HOME_ONLINE_CANCEL_TRANSACTION_HANDLER(QVariant msg) {
                 if(room){
                     room->startGetPendingTxs();
                 }
-                AppModel::instance()->startGetTransactionHistory(tx->transaction()->walletId());
+                AppModel::instance()->requestSyncWalletDb(tx->transaction()->walletId());
             }
         }
         else{

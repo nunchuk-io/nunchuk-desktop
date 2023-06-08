@@ -26,13 +26,13 @@ QMasterSigner::QMasterSigner(): isPrimaryKey_(false), isDraft(true)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QMasterSigner::QMasterSigner(const nunchuk::MasterSigner &signer) : masterSigner_(signer), isPrimaryKey_(false)
+QMasterSigner::QMasterSigner(const nunchuk::MasterSigner &signer): masterSigner_(signer)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-}
-
-QMasterSigner::QMasterSigner(const nunchuk::PrimaryKey &key) : primaryKey_(key), isPrimaryKey_(true)
-{
+    nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(QString::fromStdString(signer.get_device().get_master_fingerprint()));
+    if(key.get_master_fingerprint() != ""){
+        isPrimaryKey_ = true;
+        primaryKey_ = key;
+    }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -279,8 +279,14 @@ void QMasterSigner::setIsPrimaryKey(bool isPrimaryKey)
         return;
 
     isPrimaryKey_ = isPrimaryKey;
-    setIsPrimaryKey(true);
     emit isPrimaryKeyChanged();
+}
+
+void QMasterSigner::setSignerTags(std::vector<nunchuk::SignerTag> tags)
+{
+    if(!isDraft){
+        masterSigner_.set_tags(tags);
+    }
 }
 
 nunchuk::PrimaryKey QMasterSigner::originPrimaryKey() const
@@ -299,7 +305,6 @@ void QMasterSigner::setOriginMasterSigner(const nunchuk::MasterSigner &signer)
 }
 
 MasterSignerListModel::MasterSignerListModel() {
-    primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),(nunchuk::Chain)AppSetting::instance()->primaryServer());
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -605,16 +610,6 @@ int MasterSignerListModel::signerSelectedCount() const
         if(it.data()->checked()) { ret++;}
     }
     return ret;
-}
-
-nunchuk::PrimaryKey MasterSignerListModel::containPrimaryKey(const QString &fingerprint)
-{
-    for(nunchuk::PrimaryKey key: primaryKeys){
-        if(key.get_master_fingerprint() == fingerprint.toStdString()){
-            return key;
-        }
-    }
-    return nunchuk::PrimaryKey();
 }
 
 void MasterSignerListModel::reloadOriginMasterSignerById(const QString &id)

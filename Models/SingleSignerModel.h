@@ -48,8 +48,6 @@ class QSingleSigner : public QObject {
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
-    QSingleSigner(const nunchuk::PrimaryKey&   primaryKey);
-    QSingleSigner(const nunchuk::SingleSigner& singleKey, const nunchuk::PrimaryKey& primaryKey);
 
     ~QSingleSigner();
 
@@ -245,7 +243,6 @@ public slots:
     int signerSelectedCount() const;
 private:
     QList<QSingleSignerPtr> d_;
-    std::vector<nunchuk::PrimaryKey> primaryKeys;
 };
 typedef QSharedPointer<SingleSignerListModel> QSingleSignerListModelPtr;
 

@@ -74,6 +74,7 @@ class AppModel final : public Controller
     Q_PROPERTY(QMasterSigner*    primaryKey         READ originPrimaryKey       NOTIFY primaryKeyChanged)
     Q_PROPERTY(QString    newKeySignMessage         READ newKeySignMessage       NOTIFY newKeySignMessageChanged)
     Q_PROPERTY(QString    newKeySignMessageSHA256   READ newKeySignMessageSHA256 NOTIFY newKeySignMessageChanged)
+    Q_PROPERTY(int addSignerWizard READ addSignerWizard WRITE setAddSignerWizard NOTIFY addSignerWizardChanged)
 
 public:
     static AppModel *instance();
@@ -81,8 +82,7 @@ public:
     AppModel(AppModel const &other) = delete;
     void operator=(const AppModel &other) = delete;
     void requestInitialData();
-    void requestGetSigners();
-    void requestGetWallets();
+    void requestSyncWalletDb(const QString& wallet_id);
     void requestCreateUserWallets();
     void requestSyncSharedWallets();
     void requestClearData();
@@ -222,10 +222,10 @@ public:
                                const QString &explain = "",
                                POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
     Q_INVOKABLE void setToast(int code,
-                  const QString &what,
-                  EWARNING::WarningType type,
-                  const QString &explain = "",
-                  POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
+                              const QString &what,
+                              EWARNING::WarningType type,
+                              const QString &explain = "",
+                              POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
     double exchangeRates() const;
     void setExchangeRates(double exchangeRates);
     double btcRates() const;
@@ -247,6 +247,13 @@ public:
     QString newKeySignMessageSHA256() const;
     void setNewKeySignMessage(const QString &value);
     QStringList getUserWallets() const;
+
+    const std::vector<nunchuk::PrimaryKey> &primaryKeys();
+    nunchuk::PrimaryKey findPrimaryKey(const QString& fingerprint);
+    void clearPrimaryKeyList();
+
+    void setAddSignerWizard(int index);
+    int addSignerWizard() const;
 
 private:
     AppModel();
@@ -293,6 +300,9 @@ private:
     QMasterSignerPtr    m_primaryKey;
     QString             newKeySignMessage_;
     QStringList         mUserWallets;
+    std::vector<nunchuk::PrimaryKey> m_primaryKeys;
+    int m_addSignerWizard {0};
+
 signals:
     void signalShowToast();
     void walletListChanged();
@@ -333,6 +343,8 @@ signals:
     void primaryKeyChanged();
     void newKeySignMessageChanged();
     void btcRatesChanged();
+    void addSignerWizardChanged();
+
 public slots:
     void timerHealthCheckTimeHandle();
     void timerFeeRatesHandle();

@@ -27,6 +27,9 @@ import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import "../../Components/customizes"
 import "../../Components/origins"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
+
 QScreen {
     id: rootinputpin
     QNumPad {

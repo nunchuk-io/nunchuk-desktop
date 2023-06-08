@@ -52,18 +52,28 @@ void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg) {
 
 void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
     Wallet *wallet = msg.value<Wallet*>();
-    if(wallet != nullptr){
-        if(bridge::nunchukDeleteWallet(wallet->id())){
-            AppModel::instance()->removeWallet(wallet->id());
+    if(wallet){
+        QString wallet_id = wallet->id();
+        bool is_shared_wallet = wallet->isSharedWallet();
+        QWarningMessage msgwarning;
+        bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+        if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type() ){
+            AppModel::instance()->removeWallet(wallet_id);
             QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
             AppModel::instance()->setWalletListCurrentIndex(0);
-        }
-        if(wallet->isSharedWallet()){
-            QString roomId = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet->id());
-            int index = CLIENT_INSTANCE->rooms()->getIndex(roomId);
-            if(index >= 0){
-                ClientController::instance()->leaveRoom(index);
+            if(is_shared_wallet){
+                QString roomId = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet_id);
+                int index = CLIENT_INSTANCE->rooms()->getIndex(roomId);
+                if(index >= 0){
+                    ClientController::instance()->leaveRoom(index);
+                }
             }
+        }
+        else{
+            AppModel::instance()->showToast(msgwarning.code(),
+                                            msgwarning.what(),
+                                            (EWARNING::WarningType)msgwarning.type(),
+                                            STR_CPP_112);
         }
     }
 }
@@ -219,11 +229,7 @@ void EVT_WALLET_INFO_IMPORT_PSBT_HANDLER(QVariant msg) {
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
-                if(AppModel::instance()->walletInfo()){
-                    AppModel::instance()->startGetTransactionHistory(wallet_id);
-                    AppModel::instance()->startGetUsedAddresses(wallet_id);
-                    AppModel::instance()->startGetUnusedAddresses(wallet_id);
-                }
+                AppModel::instance()->requestSyncWalletDb(wallet_id);
                 QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
                 AppModel::instance()->showToast(0,
                                                 STR_CPP_091,

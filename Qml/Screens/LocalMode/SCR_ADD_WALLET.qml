@@ -28,6 +28,8 @@ import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -161,7 +163,7 @@ QScreen {
                 height: 24
                 Image {
                     id:icostandard
-                    source: standardWallet.focus ? "qrc:/Images/Images/RadioEnabled.png" : "qrc:/Images/Images/RadioDeselected.png"
+                    source: standardWallet.focus ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
                 }
                 QText {
                     text: STR.STR_QML_028
@@ -195,7 +197,7 @@ QScreen {
                         height: 24
                         Image {
                             id:icoescrow
-                            source: escrowWallet.focus ? "qrc:/Images/Images/RadioEnabled.png" : "qrc:/Images/Images/RadioDeselected.png"
+                            source: escrowWallet.focus ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
                         }
                         QText {
                             id: textEscrow
@@ -299,8 +301,8 @@ QScreen {
                             width: 24
                             height: 24
                             id:icowalletType
-                            source: (addressTypeSelection.typeSeleted === addressTypeSelection.typeValue[index]) ? "qrc:/Images/Images/RadioEnabled.png" :
-                                                                                                                   "qrc:/Images/Images/RadioDeselected.png"
+                            source: (addressTypeSelection.typeSeleted === addressTypeSelection.typeValue[index]) ? "qrc:/Images/Images/radio-selected-dark.svg" :
+                                                                                                                   "qrc:/Images/Images/radio-dark.svg"
                         }
                         QText {
                             text: addressTypeSelection.typeText[index]

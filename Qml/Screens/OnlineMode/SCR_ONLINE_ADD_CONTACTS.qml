@@ -26,6 +26,8 @@ import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: roots
@@ -336,7 +338,6 @@ QScreen {
                     label.text: STR.STR_QML_432
                     label.font.pixelSize: 12
                     type: eTypeB
-                    radius: 44
                     onButtonClicked: {
                         failEmails.close()
                         QMLHandle.sendEvent(EVT.EVT_ONLINE_ADD_CONTACTS_BACK)
@@ -348,7 +349,6 @@ QScreen {
                     label.text: STR.STR_QML_433
                     label.font.pixelSize: 12
                     type: eTypeA
-                    radius: 44
                     onButtonClicked: {
                         Draco.inviteFriends(failEmails.failed_list)
                         failEmails.close()

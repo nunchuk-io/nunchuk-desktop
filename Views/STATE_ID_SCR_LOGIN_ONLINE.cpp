@@ -27,9 +27,11 @@
 #include "Draco.h"
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
+#include "ProfileSetting.h"
 
 void SCR_LOGIN_ONLINE_Entry(QVariant msg) {
     bridge::nunchukSetCurrentMode(LOCAL_MODE);
+    ProfileSetting::instance()->createCurrencies();
 }
 
 void SCR_LOGIN_ONLINE_Exit(QVariant msg) {

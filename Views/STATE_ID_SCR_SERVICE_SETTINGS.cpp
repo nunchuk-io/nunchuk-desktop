@@ -24,13 +24,37 @@
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
 #include "Chats/ClientController.h"
-
+#include "ServiceSetting.h"
+#include "Chats/QUserWallets.h"
+#include "QQuickViewer.h"
+using CIStatus = ServiceSetting::CIStatus;
 void SCR_SERVICE_SETTINGS_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::SERVICE_TAB);
+    ServiceSetting::instance()->setClaimInheritanceStatus((int)CIStatus::CI_NONE);
+    QStringList mnemonics = qUtils::GetBIP39WordList();
+    AppModel::instance()->setSuggestMnemonics(mnemonics);
 }
 
 void SCR_SERVICE_SETTINGS_Exit(QVariant msg) {
 
+}
+
+void EVT_CLAIM_INHERITANCE_CHECK_REQUEST_HANDLER(QVariant msg)
+{
+#if 0
+    Draco::instance()->inheritanceFakeUpdate();//FIXME need to remove
+#else
+    DBG_INFO << msg.toMap();
+    QMap<QString,QVariant> maps = msg.toMap();
+    QString magic = maps["magic"].toString();
+    QString backupPassword = maps["backupPassword"].toString();
+    int status = QUserWallets::instance()->inheritanceCheck();
+    if (status == (int)CIStatus::CI_NONE) {
+        QUserWallets::instance()->inheritanceDownloadBackup(magic, backupPassword);
+    } else {
+        ServiceSetting::instance()->setClaimInheritanceStatus(status);
+    }
+#endif
 }
 
 void EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER(QVariant msg) {
@@ -41,4 +65,19 @@ void EVT_SERVICE_SUPPORT_REQUEST_HANDLER(QVariant msg) {
     CLIENT_INSTANCE->createSupportRoom();
 }
 
+void EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST_HANDLER(QVariant msg)
+{
+    ServiceSetting::instance()->setClaimInheritanceFlow(msg.toInt());
+}
 
+void EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST_HANDLER(QVariant msg)
+{
+    QUserWallets::instance()->serverKeyUpdatePolicies();
+}
+
+void EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED_HANDLER(QVariant msg)
+{
+    if (QUserWallets::instance()->secQuesAnswer()) {
+        QUserWallets::instance()->serverKeyUpdatePoliciesSucceed();
+    }
+}

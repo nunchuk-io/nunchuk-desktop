@@ -26,7 +26,9 @@ import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
-import "../../../Components/customizes"
+import "../../customizes"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../Components/origins"
 import "../../../../localization/STR_QML.js" as STR
 

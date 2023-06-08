@@ -31,6 +31,8 @@ import EWARNING 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -197,6 +199,8 @@ QScreen {
                                         height: 24
                                         anchors.verticalCenter: parent.verticalCenter
                                         source: itemsSetting.setting_map[index].icon
+                                        sourceSize.width: 100
+                                        sourceSize.height: 100
                                     }
                                     QText {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -1754,7 +1758,6 @@ QScreen {
                     label.text: STR.STR_QML_193
                     label.font.pixelSize: 10
                     type: eTypeB
-                    radius: 12
                     onButtonClicked: {
                         modelConfirmUpdateSetting.close()
                         if(modelConfirmUpdateSetting.requestTo === AppModel.tabIndex){
@@ -1779,7 +1782,6 @@ QScreen {
                     width: 100
                     height: 32
                     label.text: STR.STR_QML_194
-                    radius: 12
                     label.font.pixelSize: 10
                     type: eTypeA
                     onButtonClicked: {
@@ -1875,7 +1877,6 @@ QScreen {
                 anchors.bottomMargin: 50
                 label.font.pixelSize: 10
                 type: eTypeB
-                radius: 12
                 onButtonClicked: {
                     modelRestartApp.close()
                     QMLHandle.sendEvent(EVT.EVT_APP_SETTING_REQUEST_RESTART)

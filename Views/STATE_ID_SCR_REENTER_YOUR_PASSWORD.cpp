@@ -50,6 +50,15 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             }
         }
         break;
+    case E::STATE_ID_SCR_SERVICE_SETTINGS:
+        if (QUserWallets::instance()->requestServerKeyVerifyPassword(password)) {
+            emit QUserWallets::instance()->serverKeyVerifyPasswordAlert();
+            QUserWallets::instance()->serverKeyGetCurrentPolicies();
+            QTimer::singleShot(100,[=](){
+                QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION);
+            });
+        }
+        break;
     default:
         break;
     }

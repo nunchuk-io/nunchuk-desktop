@@ -49,7 +49,6 @@ class QMasterSigner : public QObject {
 public:
     QMasterSigner();
     QMasterSigner(const nunchuk::MasterSigner &signer);
-    QMasterSigner(const nunchuk::PrimaryKey &key);
     ~QMasterSigner();
 
     QString id() const;
@@ -99,6 +98,8 @@ public:
 
     bool isPrimaryKey() const;
     void setIsPrimaryKey(bool isPrimaryKey);
+
+    void setSignerTags(std::vector<nunchuk::SignerTag> tags);
 
     nunchuk::PrimaryKey originPrimaryKey() const;
 
@@ -178,7 +179,6 @@ public:
     void requestSort(int role, int order);
     QList<QMasterSignerPtr> fullList() const;
     void cleardata();
-    nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
     void reloadOriginMasterSignerById(const QString &id);
 
     enum MasterSignerRoles {
@@ -201,7 +201,6 @@ public slots:
     int signerSelectedCount() const;
 private:
     QList<QMasterSignerPtr> d_;
-    std::vector<nunchuk::PrimaryKey> primaryKeys;
 };
 typedef QSharedPointer<MasterSignerListModel> QMasterSignerListModelPtr;
 

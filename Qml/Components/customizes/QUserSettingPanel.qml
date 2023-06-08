@@ -22,9 +22,11 @@ import QtQuick.Controls 2.0
 import QtGraphicalEffects 1.0
 import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
-import "../../Components/origins"
-import "../../Components/customizes"
-import "../../Components/customizes/Chats"
+import "../origins"
+import "../customizes"
+import "../customizes/Chats"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Column {

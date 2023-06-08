@@ -25,8 +25,10 @@ import EWARNING 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
-import "../../../Components/customizes"
-import "../../../Components/origins"
+import "../../customizes"
+import "../../origins"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -47,6 +49,8 @@ Rectangle {
     property string card_id: ""
     signal signRequest()
     signal scanRequest()
+    signal exportRequest()
+    signal importRequest()
 
     Column {
         id: columnItem
@@ -63,8 +67,8 @@ Rectangle {
                 color: "#F5F5F5"
                 anchors.verticalCenter: parent.verticalCenter
                 QImage {
-                    width: 30
-                    height: 30
+                    width: 24
+                    height: 24
                     anchors.centerIn: parent
                     source: GlobalData.iconTypes(devicetype,signerType)
                 }
@@ -134,13 +138,14 @@ Rectangle {
                     else{
                         if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES || !isLocaluser) return null;
                         else{
-                            if(signerType === NUNCHUCKTYPE.AIRGAP
-                              || signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE
-                              || signerType === NUNCHUCKTYPE.NFC) return helpComp;
-                            else if(signerType === NUNCHUCKTYPE.SERVER) return null;
+                            if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){ return helpComp; }
+                            else if(signerType === NUNCHUCKTYPE.AIRGAP
+                                    || signerType === NUNCHUCKTYPE.NFC
+                                    || signerType === NUNCHUCKTYPE.UNKNOWN ) { return keysignOption; }
+                            else if(signerType === NUNCHUCKTYPE.SERVER) { return null; }
                             else {
-                                if(signerReadyToSign) return requiredSignature
-                                else requiredScan
+                                if(signerReadyToSign){ return requiredSignature}
+                                else {requiredScan}
                             }
                         }
                     }
@@ -176,7 +181,7 @@ Rectangle {
                 tipWidth: 270
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                source: "qrc:/Images/Images/OnlineMode/help_outline-24px.png"
+                source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
                 toolTip: {
                     switch(signerType){
                     case NUNCHUCKTYPE.AIRGAP: return STR.STR_QML_507
@@ -229,6 +234,50 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 onButtonClicked: { scanRequest() }
+            }
+        }
+    }
+    Component {
+        id: keysignOption
+        Item {
+            QTextButton {
+                width: 57
+                height: 36
+                label.text: STR.STR_QML_509
+                label.font.pixelSize: 12
+                label.font.family: "Lato"
+                type: eTypeE
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                onButtonClicked: {
+                    signOptionMenu.x = 20
+                    signOptionMenu.y = 20 - signOptionMenu.height
+                    signOptionMenu.open()
+                }
+            }
+            QContextMenu {
+                id: signOptionMenu
+                menuWidth: 250
+                labels: [
+                    STR.STR_QML_294,
+                    STR.STR_QML_252,
+                ]
+                icons: [
+                    "qrc:/Images/Images/ExportFile.svg",
+                    "qrc:/Images/Images/importFile.svg",
+                ]
+                onItemClicked: {
+                    switch(index){
+                    case 0: // Export transaction
+                        exportRequest()
+                        break;
+                    case 1: // Import signature
+                        importRequest()
+                        break;
+                    default:
+                        break;
+                    }
+                }
             }
         }
     }

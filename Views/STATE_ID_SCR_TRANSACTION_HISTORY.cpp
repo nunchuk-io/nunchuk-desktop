@@ -23,6 +23,8 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
+#include "Draco.h"
+#include "ifaces/Chats/matrixbrigde.h"
 
 void SCR_TRANSACTION_HISTORY_Entry(QVariant msg) {
 
@@ -37,10 +39,30 @@ void EVT_TRANSACTION_HISTORY_BACK_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_TRANSACTION_INFO_ITEM_SELECTED_HANDLER(QVariant msg) {
-    if(msg.toString() != "" && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
-        QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(msg.toString());
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    QString txid = msg.toString();
+    if(txid != "" && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
+        QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(txid);
+        if(it){
+            QString wallet_id = it.data()->walletId();
+            if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn() && CLIENT_INSTANCE->rooms()){
+                QString room_id = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet_id);
+                if(room_id != ""){
+                    QWarningMessage msgwarning;
+                    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msgwarning);
+                    foreach (nunchuk::RoomTransaction tx, results) {
+                        if(0 == QString::compare(QString::fromStdString(tx.get_tx_id()), txid, Qt::CaseInsensitive)){
+                            it->setInitEventId(QString::fromStdString(tx.get_init_event_id()));
+                        }
+                    }
+                }
+            }
+            QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id, txid);
+            it->setServerKeyMessage(data);
+        }
         AppModel::instance()->setTransactionInfo(it);
     }
+    qApp->restoreOverrideCursor();
 }
 
 void EVT_TRANSACTION_HISTORY_SORT_REQUEST_HANDLER(QVariant msg) {

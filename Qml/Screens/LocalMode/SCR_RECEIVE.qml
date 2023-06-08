@@ -26,6 +26,8 @@ import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -227,7 +229,6 @@ QScreen {
         QButtonMedium {
             width: 207
             height: 32
-            radius: 20
             type: eOUTLINE_NORMAL
             label: STR.STR_QML_202
             anchors {
@@ -251,7 +252,7 @@ QScreen {
                 top: parent.top
                 topMargin: 121
             }
-            QButtonIcon {
+            QIconTextButton {
                 width: 200
                 height: 24
                 label: STR.STR_QML_248
@@ -335,7 +336,7 @@ QScreen {
                     topMargin: 75
                     horizontalCenter: parent.horizontalCenter
                 }
-                QButtonIcon {
+                QIconTextButton {
                     width: 150
                     height: 30
                     label: STR.STR_QML_205
@@ -348,7 +349,7 @@ QScreen {
                         QMLHandle.sendEvent(EVT.EVT_RECEIVE_COPY_ADDRESS, qrCode.textInput)
                     }
                 }
-                QButtonIcon {
+                QIconTextButton {
                     width: 150
                     height: 30
                     label: STR.STR_QML_006

@@ -22,6 +22,8 @@ import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.1
 import QtGraphicalEffects 1.12
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Rectangle {
     id: rootAvatar

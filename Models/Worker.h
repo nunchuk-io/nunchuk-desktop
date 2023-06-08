@@ -128,6 +128,7 @@ public slots:
 
     void slotStartReloadRemoteSigners();
 
+    void slotStartSyncWalletDb(const QString &wallet_id);
 signals:
     void finishCreateMasterSigner(const QMasterSignerPtr ret,
                                   QString what,
@@ -229,6 +230,8 @@ signals:
     void finishReloadRemoteSigners(std::vector<nunchuk::SingleSigner> remoteSigners);
 
     void finishReloadWallets(std::vector<nunchuk::Wallet> wallets);
+
+    void finishSyncWalletDb(const QString &wallet_id);
 };
 
 class Controller : public QObject
@@ -334,6 +337,8 @@ public slots:
     void slotFinishReloadRemoteSigners(std::vector<nunchuk::SingleSigner> remoteSigners);
 
     void slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets);
+
+    void slotFinishSyncWalletDb(const QString &wallet_id);
 signals:
     void startCreateMasterSigner(const QString id,
                                  const int deviceIndex);
@@ -411,6 +416,7 @@ signals:
 
     void startMultiDeviceSync(const bool state);
 
+    void startSyncWalletDb(const QString &wallet_id);
     // Qml
     void finishedScanDevices();
     void finishedSigningTransaction();

@@ -20,41 +20,36 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
-import "../../Components/customizes"
+import "../customizes"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QOnScreenContent {
     signal nextClicked()
     signal prevClicked()
-    QButtonTextLink {
-        width: 181
-        height: 48
-        label: STR.STR_QML_059
-        anchors {
-            left: parent.left
-            leftMargin: 36
-            bottom: parent.bottom
-            bottomMargin: 36
-        }
-        onButtonClicked: {
-            prevClicked()
+    bottomLeft: Row {
+        spacing: 8
+        QButtonTextLink {
+            width: 181
+            height: 48
+            label: STR.STR_QML_059
+            onButtonClicked: {
+                prevClicked()
+            }
         }
     }
-
-    QTextButton {
-        width: 120
-        height: 48
-        label.text: STR.STR_QML_265
-        label.font.pixelSize: 16
-        type: eTypeE
-        anchors {
-            right: parent.right
-            rightMargin: 36
-            bottom: parent.bottom
-            bottomMargin: 36
-        }
-        onButtonClicked: {
-            nextClicked()
+    bottomRight: Row {
+        spacing: 12
+        QTextButton {
+            width: 120
+            height: 48
+            label.text: STR.STR_QML_265
+            label.font.pixelSize: 16
+            type: eTypeE
+            onButtonClicked: {
+                nextClicked()
+            }
         }
     }
 }

@@ -30,6 +30,8 @@ import NUNCHUCKTYPE 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: homeonlineroot
@@ -409,18 +411,12 @@ QScreen {
                                                     "#CF4018"
                                                 ]
                                                 onItemClicked: {
-                                                    switch(index){
-                                                    case 0:
-                                                    default:{
-                                                        if(ClientController.rooms.hasContact(model.id)){
-                                                            deleteContactInfo.open()
-                                                        }
-                                                        else{
-                                                            confirmDeleteContact.idContact = model.id
-                                                            confirmDeleteContact.open()
-                                                        }
+                                                    if(ClientController.rooms.hasContact(model.id)){
+                                                        deleteContactInfo.open()
                                                     }
-                                                        break;
+                                                    else{
+                                                        confirmDeleteContact.idContact = model.id
+                                                        confirmDeleteContact.open()
                                                     }
                                                 }
                                             }
@@ -588,11 +584,11 @@ QScreen {
                     icon:"qrc:/Images/Images/OnlineMode/addContact.png"
                     enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
                     onAddButtonClicked: {
-                        preventTimer.start()
+                        preventTimer.restart()
                         QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
                     }
                     onSupportButtonClicked: {
-                        preventTimer.start()
+                        preventTimer.restart()
                         QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ)
                     }
                     Timer {
@@ -600,6 +596,7 @@ QScreen {
                         interval: 5000
                         repeat: false
                     }
+                    Component.onCompleted: {if(!ClientController.readySupport) {preventTimer.restart()}}
                 }
             }
             Component {
@@ -933,128 +930,6 @@ QScreen {
             }
         }
     }
-    Popup {
-        id: syncProgressBox
-        width: parent.width
-        height: parent.height
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape
-        background: Item{}
-        Loader {
-            id: boxmask
-            anchors.centerIn: parent
-            sourceComponent: first4sSync
-        }
-        DropShadow {
-            anchors.fill: boxmask
-            horizontalOffset: 3
-            verticalOffset: 5
-            spread: 0
-            radius: 8
-            samples: 30
-            color: "#aa000000"
-            source: boxmask
-        }
-        Timer {
-            id: timer4s
-            interval: 4000
-            repeat: false
-            running: false
-            onTriggered: {
-                boxmask.sourceComponent = after4sSync
-            }
-        }
-        onOpened: {
-            boxmask.sourceComponent = first4sSync
-            timer4s.restart()
-        }
-        onClosed: {
-            boxmask.sourceComponent = null
-            timer4s.stop()
-        }
-    }
-    Component {
-        id: first4sSync
-        Rectangle {
-            width: 300
-            height: 128
-            radius: 24
-            color: "#FFFFFF"
-            anchors.centerIn: parent
-            layer.enabled: true
-            layer.effect: OpacityMask {
-                maskSource: Rectangle {
-                    width: 300
-                    height: 128
-                    radius: 24
-                }
-            }
-            Column {
-                spacing: 12
-                anchors.centerIn: parent
-                QBusyIndicator {
-                    width: 70
-                    height: 70
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                QText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                    text: STR.STR_QML_387
-                }
-            }
-        }
-    }
-    Component {
-        id: after4sSync
-        Rectangle {
-            width: 300
-            height: 252
-            radius: 24
-            color: "#FFFFFF"
-            anchors.centerIn: parent
-            layer.enabled: true
-            layer.effect: OpacityMask {
-                maskSource: Rectangle {
-                    width: 300
-                    height: 252
-                    radius: 24
-                }
-            }
-            Column {
-                spacing: 12
-                anchors.centerIn: parent
-                QText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    font.weight: Font.DemiBold
-                    text: STR.STR_QML_388
-                }
-                QText {
-                    width: 228
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                    text: STR.STR_QML_389
-                    horizontalAlignment: Text.AlignHCenter
-                }
-                ProgressBar {
-                    width: 228
-                    height: 8
-                    from: 0
-                    to: 100
-                    value: AppSetting.syncPercent
-                }
-            }
-        }
-    }
     QConfirmYesNoPopup {
         id: confirmCancelWallet
         onConfirmNo: close()
@@ -1097,21 +972,4 @@ QScreen {
         }
     }
     /*=========================================Delete contact end=========================================*/
-
-    Connections {
-        target: AppModel
-        onOpenPromtNunchukSync: {
-            syncProgressBox.open()
-            syncPopupTimeOut.restart()
-        }
-        onClosePromtNunchukSync: {
-            syncProgressBox.close()
-            syncPopupTimeOut.stop()
-        }
-    }
-    Timer {
-        id: syncPopupTimeOut
-        interval: 10000
-        onTriggered: syncProgressBox.close()
-    }
 }

@@ -36,23 +36,11 @@ QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey):
     isPrimaryKey_(false),
     isDraft(false)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-}
-
-QSingleSigner::QSingleSigner(const nunchuk::PrimaryKey& primaryKey):
-    primaryKey_(primaryKey),
-    isPrimaryKey_(true),
-    isDraft(false)
-{
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-}
-
-QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey, const nunchuk::PrimaryKey& primaryKey):
-    primaryKey_(primaryKey),
-    singleSigner_(singleKey),
-    isPrimaryKey_(true),
-    isDraft(false)
-{
+    nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(QString::fromStdString(singleKey.get_master_fingerprint()));
+    if(key.get_master_fingerprint() != ""){
+        isPrimaryKey_ = true;
+        primaryKey_ = key;
+    }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -407,7 +395,6 @@ QString QSingleSigner::timeGapCalculation(QDateTime in)
 
 
 SingleSignerListModel::SingleSignerListModel(){
-    primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),(nunchuk::Chain)AppSetting::instance()->primaryServer());
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -525,7 +512,7 @@ void SingleSignerListModel::addSingleSigner(const QSingleSignerPtr &d)
 {
     beginResetModel();
     if(d && !containsSigner(d.data()->masterFingerPrint(), d.data()->derivationPath())){
-        nunchuk::PrimaryKey key = containPrimaryKey(d->masterFingerPrint());
+        nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(d->masterFingerPrint());
         if(key.get_master_fingerprint() != ""){
             d->setOriginPrimaryKey(key);
         }
@@ -809,16 +796,6 @@ void SingleSignerListModel::resetSignerReadyToSign()
         }
     }
     endResetModel();
-}
-
-nunchuk::PrimaryKey SingleSignerListModel::containPrimaryKey(const QString &fingerprint)
-{
-    for(nunchuk::PrimaryKey key: primaryKeys){
-        if(key.get_master_fingerprint() == fingerprint.toStdString()){
-            return key;
-        }
-    }
-    return nunchuk::PrimaryKey();
 }
 
 void SingleSignerListModel::requestSort(int role, int order)

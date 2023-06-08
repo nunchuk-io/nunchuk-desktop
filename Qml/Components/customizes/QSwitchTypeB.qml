@@ -30,8 +30,9 @@ Rectangle {
     property var leftIcons : ["qrc:/Images/Images/OnlineMode/switch_indicator_off.png","qrc:/Images/Images/OnlineMode/switch_on.png"]
     property var rightIcons: ["qrc:/Images/Images/OnlineMode/switch_off.png","qrc:/Images/Images/OnlineMode/switch_indicator_on.png"]
 
-    color: switchOn ? backgroundColors[1] : backgroundColors[0]
-    border.color: switchOn ? borderColors[1] : borderColors[0]
+    color: !enabled ? "#757575" : (switchOn ? backgroundColors[1] : backgroundColors[0])
+    border.color: !enabled ? "#757575" : (switchOn ? borderColors[1] : borderColors[0])
+
     border.width: 2
 
     Item {

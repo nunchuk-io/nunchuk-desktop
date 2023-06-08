@@ -35,7 +35,7 @@ void SCR_SIGN_IN_MANUALLY_Exit(QVariant msg) {
 }
 
 void EVT_ADD_PRIMARY_KEY_ACCOUNT_SUCCEED_HANDLER(QVariant msg) {
-    QTimer::singleShot(1000,[](){
+    timeoutHandler(1000,[](){
         QMap<QString, QVariant> makeInstanceData;
         makeInstanceData["state_id"] = E::STATE_ID_SCR_SIGN_IN_MANUALLY;
         bool ret = AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
@@ -44,7 +44,7 @@ void EVT_ADD_PRIMARY_KEY_ACCOUNT_SUCCEED_HANDLER(QVariant msg) {
             AppModel::instance()->setPrimaryKey(username);
             QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
             if(pKey){
-                QTimer::singleShot(3000,[pKey](){
+                timeoutHandler(3000,[pKey](){
                     AppModel::instance()->showToast(0,
                                                     STR_CPP_108.arg(pKey->name()),
                                                     EWARNING::WarningType::SUCCESS_MSG,
@@ -61,8 +61,8 @@ void EVT_ADD_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
     QMap<QString,QVariant> maps = msg.toMap();
     QString username = maps["username"].toString();
     QString signature = maps["signature"].toString();
-    std::vector<nunchuk::PrimaryKey> primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),
-                                                                          (nunchuk::Chain)AppSetting::instance()->primaryServer());
+    AppModel::instance()->clearPrimaryKeyList();
+    std::vector<nunchuk::PrimaryKey> primaryKeys = AppModel::instance()->primaryKeys();
     nunchuk::PrimaryKey pkey;
     for(nunchuk::PrimaryKey key: primaryKeys){
         if(key.get_account() == username.toStdString()){

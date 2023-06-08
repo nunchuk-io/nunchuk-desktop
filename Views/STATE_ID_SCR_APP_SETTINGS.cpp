@@ -25,9 +25,11 @@
 #include "localization/STR_CPP.h"
 #include <QProcess>
 #include "Draco.h"
+#include "ProfileSetting.h"
 
 void SCR_APP_SETTING_Entry(QVariant msg) {
-
+    AppModel::instance()->setTabIndex(-1);
+    ProfileSetting::instance()->createCurrencies();
 }
 
 void SCR_APP_SETTING_Exit(QVariant msg) {

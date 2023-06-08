@@ -28,6 +28,8 @@ import QRCodeItem 1.0
 import DataPool 1.0
 import "../../origins"
 import "../../customizes"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Popup {

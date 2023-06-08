@@ -25,6 +25,8 @@ import NUNCHUCKTYPE 1.0
 import "../origins"
 import "../customizes"
 import "../customizes/Chats"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -39,9 +41,7 @@ Rectangle {
     property var icons: {
         var ls = [];
         ls.push({id:NUNCHUCKTYPE.WALLET_TAB,icon:"qrc:/Images/Images/wallet-light.svg"})
-        if (ClientController.user.isPremiumUser) {
-            ls.push({id:NUNCHUCKTYPE.SERVICE_TAB,icon:"qrc:/Images/Images/services-dark.svg"})
-        }
+        ls.push({id:NUNCHUCKTYPE.SERVICE_TAB,icon:"qrc:/Images/Images/services-light.svg"})
         ls.push({id:NUNCHUCKTYPE.CHAT_TAB,icon:"qrc:/Images/Images/message-light.svg"})
         return ls
     }

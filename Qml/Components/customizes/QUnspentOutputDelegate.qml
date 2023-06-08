@@ -21,6 +21,8 @@ import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 
 Rectangle {
     property string unspentoutput_address: ""

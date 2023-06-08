@@ -25,8 +25,10 @@ import EWARNING 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
-import "../../../Components/customizes"
-import "../../../Components/origins"
+import "../../customizes"
+import "../../origins"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {

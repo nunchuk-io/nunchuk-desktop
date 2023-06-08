@@ -30,6 +30,8 @@ import NUNCHUCKTYPE 1.0
 import "../../origins"
 import "../../customizes"
 import "../../customizes/Chats"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {

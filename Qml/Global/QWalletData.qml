@@ -44,7 +44,10 @@ QtObject {
     readonly property bool   isEscrow: roomWalletReady ? roomWallet.walletEscrow : false
     readonly property string amount: (roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalance : "0" ) + unitValue
     readonly property string amountBTC: (roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalanceBTC : "0" )
-    readonly property string amountCurrency: qsTr("$%1 %2").arg((roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalanceCurrency : "0" )).arg(AppSetting.currency)
+    readonly property string amountCurrency: qsTr("%1%2 %3")
+                                            .arg(AppSetting.currencySymbol)
+                                            .arg((roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalanceCurrency : "0" ))
+                                            .arg(AppSetting.currency)
 
     function getValidFilename( name ){ return name.replace(/(\W+)/gi, '').trim()}
 }

@@ -88,7 +88,7 @@ void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED_HANDLER(QVariant msg){
     AppModel::instance()->makeMatrixInstanceForAccount();
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
-        QTimer::singleShot(3000,[pKey](){
+        timeoutHandler(3000,[pKey](){
             AppModel::instance()->showToast(0,
                                            STR_CPP_108.arg(pKey->name()),
                                            EWARNING::WarningType::SUCCESS_MSG,

@@ -26,6 +26,8 @@ import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -50,13 +52,6 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_TRANSACTION_HISTORY)
         }
         Rectangle {
-            id: maskofcontent
-            width: 720
-            height: 497
-            radius: 4
-            visible: false
-        }
-        Rectangle {
             id: contenthistory
             width: 720
             height: 497
@@ -65,7 +60,14 @@ QScreen {
             anchors.top: parent.top
             anchors.topMargin: 92
             anchors.horizontalCenter: parent.horizontalCenter
-            opacity: 0
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 720
+                    height: 497
+                    radius: 4
+                }
+            }
             Row {
                 id: tabparent
                 anchors.top: parent.top
@@ -164,6 +166,40 @@ QScreen {
                     }
                 }
             }
+
+            QListView {
+                id: transaction_lst
+                width: 720
+                height: (pagecontrol.currentPage !== pagecontrol.totalPage) ? 400 : (transaction_lst.count % 10 == 0 ? 400 : ((transaction_lst.count % 10) * 40))
+                model: AppModel.walletInfo.transactionHistory
+                anchors {
+                    top: parent.top
+                    topMargin: 32
+                }
+                clip: true
+                interactive: false
+                delegate: QTransactionDelegate {
+                    width: transaction_lst.width
+                    height: 40
+                    addressWidth: width*0.15
+                    statusWidth: width*0.25
+                    timeWidth: width*0.15
+                    memoWidth: width*0.20
+                    amountWidth: width*0.25
+                    transactionisReceiveTx:transaction_isReceiveTx
+                    transactiontxid:transaction_txid
+                    transactiondestinationList: transaction_destinationDisp_role
+                    transactionstatus: transaction_status
+                    transactionMemo:   transaction_memo
+                    transactionAmount:   transaction_isReceiveTx ? transaction_subtotal : transaction_total
+                    transactiontotalCurrency: transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency
+                    confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
+                    transactionDate: transaction_blocktime
+                    onButtonClicked: {
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_INFO_ITEM_SELECTED, transaction_txid)
+                    }
+                }
+            }
             QText {
                 id: pageinfo
                 property int currentPage: 1
@@ -194,45 +230,6 @@ QScreen {
                     pageinfo.currentPage = pageNumber
                     var nextindex = (pageNumber-1)*10
                     transaction_lst.positionViewAtIndex(nextindex, ListView.Beginning)
-                }
-            }
-        }
-        OpacityMask {
-            anchors.fill: contenthistory
-            source: contenthistory
-            maskSource: maskofcontent
-            cached: true
-            QListView {
-                id: transaction_lst
-                width: 720
-                height: (pagecontrol.currentPage === pagecontrol.totalPage) ? (transaction_lst.count%10)*40 : 400
-                model: AppModel.walletInfo.transactionHistory
-                anchors {
-                    top: parent.top
-                    topMargin: 32
-                }
-                clip: true
-                interactive: false
-                delegate: QTransactionDelegate {
-                    width: 720
-                    height: 40
-                    addressWidth: transaction_lst.width*0.15
-                    statusWidth: transaction_lst.width*0.25
-                    timeWidth: transaction_lst.width*0.15
-                    memoWidth: transaction_lst.width*0.20
-                    amountWidth: transaction_lst.width*0.25
-                    transactionisReceiveTx:transaction_isReceiveTx
-                    transactiontxid:transaction_txid
-                    transactiondestinationList:transaction_destinationList
-                    transactionstatus: transaction_status
-                    transactionMemo:   transaction_memo
-                    transactionAmount:   transaction_isReceiveTx ? transaction_subtotal : transaction_total
-                    transactiontotalCurrency: transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency
-                    confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
-                    transactionDate: transaction_blocktime
-                    onButtonClicked: {
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_INFO_ITEM_SELECTED, transaction_txid)
-                    }
                 }
             }
         }

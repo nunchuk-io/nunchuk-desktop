@@ -28,6 +28,9 @@ import QRCodeItem 1.0
 import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -109,7 +112,6 @@ QScreen {
                 Flickable {
                     anchors.fill: parent
                     flickableDirection: Flickable.VerticalFlick
-                    clip: true
                     interactive: contentHeight > height
                     contentHeight: contentDisp.height
                     ScrollBar.vertical: ScrollBar { active: true }
@@ -123,7 +125,7 @@ QScreen {
                             height: 32
                             color: "#F5F5F5"
                             QText {
-                                text: STR.STR_QML_213
+                                text: qsTr("%1 (%2)").arg(STR.STR_QML_213).arg(lstDestination.count)
                                 font.family: "Lato"
                                 font.weight: Font.Bold
                                 font.pixelSize: 12
@@ -149,6 +151,7 @@ QScreen {
                         }
                         // Destination infomation
                         Repeater {
+                            id: lstDestination
                             model: AppModel.transactionInfo.destinationList
                             width: parent.width
                             Row {
@@ -189,7 +192,10 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 %2").arg(model.destination_amount_currency).arg(AppSetting.currency)
+                                        text: qsTr("%1%2 %3")
+                                        .arg(AppSetting.currencySymbol)
+                                        .arg(model.destination_amount_currency)
+                                        .arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -197,20 +203,27 @@ QScreen {
                         }
                         Rectangle { width: parent.width; height: 1; color: "#F5F5F5"}
                         Row {
-                            visible: changeinfo.visible
                             width: parent.width - 24
                             anchors.horizontalCenter: parent.horizontalCenter
                             spacing: 12
-                            QText {
+                            z:1
+                            Item {
                                 width: 192
-                                lineHeightMode: Text.FixedHeight
-                                lineHeight: 20
-                                wrapMode: Text.WrapAnywhere
-                                font.pixelSize: 16
-                                font.weight: Font.Bold
-                                color: "#031F2B"
-                                font.family: "Lato"
-                                text: STR.STR_QML_215
+                                height: 24
+                                z: 1
+                                Row {
+                                    spacing: 6
+                                    QLato {
+                                        width: 97
+                                        font.weight: Font.Bold
+                                        text: STR.STR_QML_215
+                                    }
+                                    QTooltip {
+                                        tipWidth: 200
+                                        toolTip: STR.STR_QML_807
+                                        source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
+                                    }
+                                }
                             }
                             Column {
                                 width: 122
@@ -235,13 +248,15 @@ QScreen {
                                     font.pixelSize: 12
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: qsTr("$%1 %2").arg(AppModel.transactionInfo.feeCurrency).arg(AppSetting.currency)
+                                    text: qsTr("%1%2 %3")
+                                    .arg(AppSetting.currencySymbol)
+                                    .arg(AppModel.transactionInfo.feeCurrency)
+                                    .arg(AppSetting.currency)
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }
                         }
                         Row {
-                            visible: changeinfo.visible
                             width: parent.width - 24
                             anchors.horizontalCenter: parent.horizontalCenter
                             spacing: 12
@@ -279,7 +294,10 @@ QScreen {
                                     font.pixelSize: 12
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: qsTr("$%1 %2").arg(AppModel.transactionInfo.totalCurrency).arg(AppSetting.currency)
+                                    text: qsTr("%1%2 %3")
+                                    .arg(AppSetting.currencySymbol)
+                                    .arg(AppModel.transactionInfo.totalCurrency)
+                                    .arg(AppSetting.currency)
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }
@@ -354,7 +372,10 @@ QScreen {
                                     font.pixelSize: 12
                                     color: "#031F2B"
                                     font.family: "Lato"
-                                    text: qsTr("$%1 %2").arg(AppModel.transactionInfo.change.amountCurrency).arg(AppSetting.currency)
+                                    text: qsTr("%1%2 %3")
+                                    .arg(AppSetting.currencySymbol)
+                                    .arg(AppModel.transactionInfo.change.amountCurrency)
+                                    .arg(AppSetting.currency)
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }
@@ -501,7 +522,6 @@ QScreen {
                         Flickable {
                             anchors.fill: parent
                             flickableDirection: Flickable.VerticalFlick
-                            clip: true
                             interactive: contentHeight > height
                             contentHeight: utxoContentDisp.height
                             ScrollBar.vertical: ScrollBar { active: true }
@@ -672,6 +692,7 @@ QScreen {
                             id: subtract
                             width: parent.width
                             height: 28
+                            z: manualfee.z + 1
                             property bool selected: ((QMLHandle.onsRequester() === EVT.STATE_ID_SCR_CONSOLIDATE_OUTPUT) || AppModel.walletInfo.walletEscrow) ?
                                                         true : AppModel.transactionInfo.subtractFromFeeAmount
                             enabled: (QMLHandle.onsRequester() !== EVT.STATE_ID_SCR_TRANSACTION_INFO) &&
@@ -679,9 +700,8 @@ QScreen {
                                      (!AppModel.walletInfo.walletEscrow)
 
                             QText {
-                                font.family: "Lato"
-                                font.pixelSize: 16
-                                color: "#031F2B"
+                                z:1
+                                id: textsubtractfee
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: STR.STR_QML_226
@@ -690,6 +710,7 @@ QScreen {
                                     anchors.left: parent.right
                                     anchors.leftMargin: 8
                                     toolTip: STR.STR_QML_227
+                                    source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
                                 }
                             }
                             QImage {
@@ -717,18 +738,13 @@ QScreen {
                             height: 28
                             property bool selected: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_TRANSACTION_INFO) ? true : false
                             QText {
+                                id: textmanualfee
                                 font.family: "Lato"
                                 font.pixelSize: 16
                                 color: "#031F2B"
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: STR.STR_QML_228
-                                QTooltip {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.right
-                                    anchors.leftMargin: 8
-                                    toolTip: STR.STR_QML_229
-                                }
                             }
                             QImage {
                                 id: manualfeeico
@@ -758,10 +774,10 @@ QScreen {
                                 }
                             }
                         }
-                        Item {
+                        Column {
                             visible: manualfee.selected
                             width: parent.width
-                            height: feeinput.validInput ? 56 : 66
+                            spacing: 4
                             QTextInputBox {
                                 id: feeinput
                                 width: 280
@@ -803,71 +819,80 @@ QScreen {
                                     font.family: "Lato"
                                 }
                             }
+                            Item {width: parent.width; height: 12; visible: !feeinput.validInput}
+                            QText {
+                                id: cpfptext
+                                color: "#595959"
+                                height: 28
+                                visible: false //FIXME
+                                text: "Child fee rate: ? sat/vB"
+                                font.pixelSize: 16
+                                font.family: "Lato"
+                            }
                         }
-                        Item {
+                        Column {
                             visible: manualfee.selected
-                            width: parent.width
-                            height: 32
+                            spacing: 4
+                            QText {
+                                color: "#031F2B"
+                                text: "Processing speed"
+                                font.pixelSize: 16
+                                font.family: "Lato"
+                                height: 16
+                            }
                             Row {
-                                anchors.fill: parent
-                                spacing: 13
+                                spacing: 12
                                 Column {
-                                    width: 108
-                                    height: parent.height
                                     QText {
-                                        width: parent.width
-                                        height: parent.height/2
+                                        width: 100
+                                        height: 16
                                         text: STR.STR_QML_232
                                         color: "#839096"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "Lato"
                                     }
                                     QText {
-                                        width: parent.width
-                                        height: parent.height/2
+                                        width: 100
+                                        height: 16
                                         text: AppModel.fastestFee + " sat/vB"
                                         color: "#323E4A"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "Lato"
                                     }
                                 }
                                 Column {
-                                    width: 108
-                                    height: parent.height
                                     QText {
-                                        width: parent.width
-                                        height: parent.height/2
+                                        width: 100
+                                        height: 16
                                         text: STR.STR_QML_233
                                         color: "#839096"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "Lato"
                                     }
                                     QText {
-                                        width: parent.width
-                                        height: parent.height/2
+                                        width: 100
+                                        height: 16
                                         text: AppModel.halfHourFee + " sat/vB"
                                         color: "#323E4A"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "Lato"
                                     }
                                 }
                                 Column {
-                                    width: 108
-                                    height: parent.height
                                     QText {
-                                        width: parent.width
-                                        height: parent.height/2
+                                        width: 100
+                                        height: 16
                                         text: STR.STR_QML_234
                                         color: "#839096"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "Lato"
                                     }
                                     QText {
-                                        width: parent.width
-                                        height: parent.height/2
+                                        width: 100
+                                        height: 16
                                         text: AppModel.hourFee + " sat/vB"
                                         color: "#323E4A"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "Lato"
                                     }
                                 }
@@ -911,10 +936,17 @@ QScreen {
                 bottomMargin: 36
             }
             enabled:{
-                if(manualfee.selected){ return ((feeinput.textOutput !== "") && (feeinput.validInput)) }
+                if(manualfee.selected){ return (feeinput.textOutput !== "") }
                 else{ return true }
             }
-            onButtonClicked: { requestCreateTransaction() }
+            onButtonClicked: {
+                if(feeinput.validInput){
+                    requestCreateTransaction()
+                }
+                else{
+                    confirmLowFee.open()
+                }
+            }
         }
     }
     Popup {
@@ -974,6 +1006,15 @@ QScreen {
             samples: 30
             color: "#aa000000"
             source: boxmask
+        }
+    }
+    QConfirmYesNoPopup {
+        id: confirmLowFee
+        contentText: STR.STR_QML_809
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            requestCreateTransaction()
         }
     }
     Timer {

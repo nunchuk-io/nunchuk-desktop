@@ -31,15 +31,13 @@ void SCR_LOCKDOWN_SUCCESS_Exit(QVariant msg) {
 }
 
 void EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER(QVariant msg) {
-    QTimer::singleShot(0,[=]{
+    timeoutHandler(0,[=]{
         ClientController::instance()->requestSignout();
     });
-    QTimer::singleShot(500,[=]{
-        AppModel::instance()->showToast(0,
-                                        STR_CPP_114,
-                                        EWARNING::WarningType::SUCCESS_MSG,
-                                        STR_CPP_114);
-    });
+    AppModel::instance()->showToast(0,
+                                    STR_CPP_114,
+                                    EWARNING::WarningType::SUCCESS_MSG,
+                                    STR_CPP_114);
 }
 
 

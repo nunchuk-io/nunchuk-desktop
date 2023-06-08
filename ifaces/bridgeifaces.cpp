@@ -25,6 +25,7 @@
 #include <QJsonDocument>
 #include "utils/enumconverter.hpp"
 #include "Draco.h"
+#include "ProfileSetting.h"
 
 void bridge::nunchukMakeInstance(const QString& passphrase,
                                  QWarningMessage& msg)
@@ -33,7 +34,6 @@ void bridge::nunchukMakeInstance(const QString& passphrase,
     bool encrypted = (passphrase == "") ? false : true;
     AppSetting::instance()->setGroupSetting("");
     AppSetting::instance()->setEnableDBEncryption(encrypted);
-
     nunchuk::AppSettings setting;
 
     // Chain setting
@@ -118,7 +118,6 @@ void bridge::nunchukMakeInstanceForAccount(const QString &account,
     AppSetting::instance()->setGroupSetting(account);
     AppSetting::instance()->setEnableDBEncryption(encrypted);
     qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
-
     nunchuk::AppSettings setting;
     // Chain setting
     setting.set_chain((nunchuk::Chain)AppSetting::instance()->primaryServer());
@@ -198,6 +197,10 @@ void bridge::nunchukMakeInstanceForAccount(const QString &account,
 QTransactionPtr bridge::convertTransaction(nunchuk::Transaction in, const QString &wallet_id)
 {
     QTransactionPtr ret = QTransactionPtr(new Transaction());
+    ret.data()->setNunchukTransaction(in);
+    ret.data()->setWalletId(wallet_id);
+    return ret;
+#if 0  //FIXME IMPROVE PERFORMANCE
     if(AppModel::instance()->walletList()){
         QWalletPtr targetWallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
         if(targetWallet){
@@ -221,10 +224,7 @@ QTransactionPtr bridge::convertTransaction(nunchuk::Transaction in, const QStrin
     nunchuk::TransactionStatus txstate = in.get_status();
     ret.data()->setStatus((int)txstate);
     int index_change = in.get_change_index();
-    if(index_change == -1 || index_change >= (int)in.get_outputs().size()){
-        ret.data()->setHasChange(false);
-    }
-    else{
+    if(index_change >= 0 && index_change < (int)in.get_outputs().size()) {
         ret.data()->setHasChange(true);
         std::pair<std::string, int> change_ret = in.get_outputs().at(index_change);
         QDestinationPtr change = QDestinationPtr(new Destination());
@@ -232,6 +232,10 @@ QTransactionPtr bridge::convertTransaction(nunchuk::Transaction in, const QStrin
         change.data()->setAmount(change_ret.second);
         ret.data()->setChange(change);
     }
+    else{
+        ret.data()->setHasChange(false);
+    }
+
     for (std::pair<std::string, nunchuk::Amount> item : in.get_inputs()) {
         if(AppModel::instance()->utxoList()){
             AppModel::instance()->utxoList()->updateSelected(QString::fromStdString(item.first), item.second);
@@ -241,7 +245,7 @@ QTransactionPtr bridge::convertTransaction(nunchuk::Transaction in, const QStrin
     ret.data()->setFee(fee);
 
     qint64 feeRate = in.get_fee_rate();
-    ret.data()->setFeeRate(feeRate);
+    ret.data()->setFeeRate(max(feeRate,(qint64)0));
     std::map<std::string, bool> signers = in.get_signers();
     int numsigned = 0;
     if(ret.data()->singleSignersAssigned()){
@@ -298,6 +302,7 @@ QTransactionPtr bridge::convertTransaction(nunchuk::Transaction in, const QStrin
         ret.data()->setBlocktime(in.get_blocktime());
     }
     return ret;
+#endif
 }
 
 
@@ -534,6 +539,7 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                     QString out_signature = "";
                     QString out_path = "";
                     AppModel::instance()->setAddSignerStep(1);
+#if 0 //SKIP HEALTHCHECK //Redundant
                     ENUNCHUCK::HealthStatus healthResult = (ENUNCHUCK::HealthStatus)nunchukHealthCheckMasterSigner(selectedDv.data()->masterFingerPrint(),
                                                                                                                    in_message,
                                                                                                                    out_signature,
@@ -541,6 +547,7 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                                                                                                                    msg);
                     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
                         if(ENUNCHUCK::HealthStatus::SUCCESS == healthResult){
+#endif
                             nunchuk::Device dv(selectedDv.data()->type().toStdString(),
                                                selectedDv.data()->path().toStdString(),
                                                selectedDv.data()->model().toStdString(),
@@ -552,12 +559,16 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                             if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
                                 QMasterSignerPtr signer =  QMasterSignerPtr(new QMasterSigner(masterSigner));
                                 signer.data()->setMessage(in_message);
+#if 0 //SKIP HEALTHCHECK //Redundant
                                 signer.data()->setHealth((int)healthResult);
+#endif
                                 signer.data()->setPath(out_path);
                                 return signer;
                             }
+#if 0 //SKIP HEALTHCHECK //Redundant
                         }
                     }
+#endif
                 }
             }
         }
@@ -1166,10 +1177,18 @@ void bridge::nunchukUpdateMasterSigner(const QMasterSignerPtr &signer )
     }
 }
 
-bool bridge::nunchukDeleteWallet(const QString &wallet_id)
+bool bridge::nunchukDeleteWallet(const QString &wallet_id, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->DeleteWallet(wallet_id.toStdString(), msg);
+}
+
+void bridge::nunchukDeleteAllWallet()
 {
     QWarningMessage msg;
-    return nunchukiface::instance()->DeleteWallet(wallet_id.toStdString(), msg);
+    std::vector<nunchuk::Wallet> wallets = bridge::nunchukGetOriginWallets(msg);
+    for (nunchuk::Wallet it : wallets) {
+        nunchukiface::instance()->DeleteWallet(it.get_id(), msg);
+    }
 }
 
 void bridge::nunchukUpdateWalletName(const QString &wallet_id, const QString &name)
@@ -1334,12 +1353,6 @@ void bridge::nunchukDevicesChanged(const QString &fingerprint, const bool connec
 void bridge::nunchukTransactionChanged(const QString &tx_id, const int status, const QString &wallet_id)
 {
     AppModel::instance()->startTransactionChanged(tx_id, status, wallet_id);
-    AppModel::instance()->startGetTransactionHistory(wallet_id);
-    AppModel::instance()->startGetUsedAddresses(wallet_id);
-    AppModel::instance()->startGetUnusedAddresses(wallet_id);
-    if(AppModel::instance()->walletInfo() && (0 != QString::compare(wallet_id, AppModel::instance()->walletInfo()->id(), Qt::CaseInsensitive))){
-        AppModel::instance()->startGetTransactionHistory(AppModel::instance()->walletInfo()->id());
-    }
 }
 
 void bridge::nunchukBlockChanged(const int height, const QString &hex_header)

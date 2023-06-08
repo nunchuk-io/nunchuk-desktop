@@ -28,8 +28,17 @@
 #include "ViewsEnums.h"
 #include "localization/STR_CPP.h"
 #include <QSysInfo>
+#include "ServiceSetting.h"
 
 #define REST_API_TIME_OUT 5000
+
+inline QString commandByNetwork(const QString& cmd){
+    QString command = cmd;
+    if ((int)AppSetting::Chain::TESTNET == AppSetting::instance()->primaryServer() && command.contains(DRAGON_USER_WALLETS_URL)) {
+        command.replace(DRAGON_USER_WALLETS_URL, DRAGON_USER_WALLETS_TESTNET_URL);
+    }
+    return command;
+}
 
 Draco* Draco::m_instance = NULL;
 Draco::Draco() :
@@ -65,6 +74,19 @@ void Draco::refreshContacts()
     CLIENT_INSTANCE->syncContactsSent(getContactsSent());
     CLIENT_INSTANCE->syncContactsReceived(getContactsReceived());
     CLIENT_INSTANCE->syncDevices(getDevices());
+}
+
+bool Draco::getCurrencies(QJsonObject &output, QString &errormsg)
+{
+    int reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = getSync(commands[CMD_IDX::GET_CURRENCIES], QJsonObject(), reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        output = jsonObj;
+        return true;
+    }
+    errormsg = reply_msg;
+    return false;
 }
 
 void Draco::btcRates()
@@ -105,6 +127,7 @@ void Draco::exchangeRates(const QString &currency)
         QJsonObject jsonObj = json.object();
         double rates_double  = jsonObj[currency].toDouble();
         AppModel::instance()->setExchangeRates(rates_double);
+        AppSetting::instance()->updateUnit();
     }
     reply.release()->deleteLater();
 }
@@ -112,7 +135,18 @@ void Draco::exchangeRates(const QString &currency)
 void Draco::feeRates()
 {
     std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    QUrl url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/recommended");
+    QUrl url;
+    switch (AppSetting::instance()->primaryServer()) {
+    case (int)AppSetting::Chain::TESTNET:
+        url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/testnet/recommended");
+        break;
+    case (int)AppSetting::Chain::SIGNET:
+        url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/signet/recommended");
+        break;
+    default:
+        url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/recommended");
+        break;
+    }
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
@@ -229,7 +263,7 @@ QJsonObject Draco::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     QJsonObject ret;
     qApp->setOverrideCursor(Qt::WaitCursor);
     std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    QNetworkRequest requester_(QUrl::fromUserInput(cmd));
+    QNetworkRequest requester_(QUrl::fromUserInput(commandByNetwork(cmd)));
     QString headerData = QString("Bearer %1").arg(this->dracoToken());
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -256,12 +290,10 @@ QJsonObject Draco::postSync(const QString &cmd, QJsonObject data, int& reply_cod
         if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
             reply_msg = STR_CPP_111;
         }
-        QTimer::singleShot(1000, [reply_code]() {
-            AppModel::instance()->showToast(reply_code,
-                                            STR_CPP_111,
-                                            EWARNING::WarningType::EXCEPTION_MSG,
-                                            STR_CPP_112);
-        });
+        AppModel::instance()->showToast(reply_code,
+                                        STR_CPP_111,
+                                        EWARNING::WarningType::EXCEPTION_MSG,
+                                        STR_CPP_112);
     }
     reply.release()->deleteLater();
     qApp->restoreOverrideCursor();
@@ -273,7 +305,7 @@ QJsonObject Draco::postSync(const QString &cmd, QMap<QString, QString> params, Q
     QJsonObject ret;
     qApp->setOverrideCursor(Qt::WaitCursor);
     std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    QNetworkRequest requester_(QUrl::fromUserInput(cmd));
+    QNetworkRequest requester_(QUrl::fromUserInput(commandByNetwork(cmd)));
     QString headerData = QString("Bearer %1").arg(this->dracoToken());
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -282,7 +314,6 @@ QJsonObject Draco::postSync(const QString &cmd, QMap<QString, QString> params, Q
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-
     // Add addional params
     for(QString param : params.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(params.value(param).toStdString()));
@@ -305,12 +336,10 @@ QJsonObject Draco::postSync(const QString &cmd, QMap<QString, QString> params, Q
         if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
             reply_msg = STR_CPP_111;
         }
-        QTimer::singleShot(1000, [reply_code]() {
-            AppModel::instance()->showToast(reply_code,
-                                            STR_CPP_111,
-                                            EWARNING::WarningType::EXCEPTION_MSG,
-                                            STR_CPP_112);
-        });
+        AppModel::instance()->showToast(reply_code,
+                                        STR_CPP_111,
+                                        EWARNING::WarningType::EXCEPTION_MSG,
+                                        STR_CPP_112);
     }
     reply.release()->deleteLater();
     qApp->restoreOverrideCursor();
@@ -321,7 +350,7 @@ QJsonObject Draco::getSync(const QString &cmd, QJsonObject data, int &reply_code
 {
     QJsonObject ret;
     std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    QUrl url = QUrl::fromUserInput(cmd);
+    QUrl url = QUrl::fromUserInput(commandByNetwork(cmd));
     if(!data.isEmpty()){
         QUrlQuery params;
         foreach(const QString& key, data.keys()) {
@@ -357,12 +386,10 @@ QJsonObject Draco::getSync(const QString &cmd, QJsonObject data, int &reply_code
         if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
             reply_msg = STR_CPP_111;
         }
-        QTimer::singleShot(1000, [reply_code]() {
-            AppModel::instance()->showToast(reply_code,
-                                            STR_CPP_111,
-                                            EWARNING::WarningType::EXCEPTION_MSG,
-                                            STR_CPP_112);
-        });
+        AppModel::instance()->showToast(reply_code,
+                                        STR_CPP_111,
+                                        EWARNING::WarningType::EXCEPTION_MSG,
+                                        STR_CPP_112);
     }
     reply.release()->deleteLater();
     return ret;
@@ -373,7 +400,7 @@ QJsonObject Draco::putSync(const QString &cmd, QJsonObject data, int &reply_code
     QJsonObject ret;
     qApp->setOverrideCursor(Qt::WaitCursor);
     std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    QNetworkRequest requester_(QUrl::fromUserInput(cmd));
+    QNetworkRequest requester_(QUrl::fromUserInput(commandByNetwork(cmd)));
     QString headerData = QString("Bearer %1").arg(this->dracoToken());
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -400,12 +427,57 @@ QJsonObject Draco::putSync(const QString &cmd, QJsonObject data, int &reply_code
         if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
             reply_msg = STR_CPP_111;
         }
-        QTimer::singleShot(1000, [reply_code]() {
-            AppModel::instance()->showToast(reply_code,
-                                            STR_CPP_111,
-                                            EWARNING::WarningType::EXCEPTION_MSG,
-                                            STR_CPP_112);
-        });
+        AppModel::instance()->showToast(reply_code,
+                                        STR_CPP_111,
+                                        EWARNING::WarningType::EXCEPTION_MSG,
+                                        STR_CPP_112);
+    }
+    reply.release()->deleteLater();
+    qApp->restoreOverrideCursor();
+    return ret;
+}
+
+QJsonObject Draco::putSync(const QString &cmd, QMap<QString, QString> params, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+    QJsonObject ret;
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
+    QUrl url = QUrl::fromUserInput(commandByNetwork(cmd));
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(this->dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    // Add addional params
+    for(QString param : params.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(params.value(param).toStdString()));
+    }
+    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+        QByteArray response_data = reply->readAll();
+        QJsonDocument json = QJsonDocument::fromJson(response_data);
+        ret = json.object();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+            reply_msg = STR_CPP_111;
+        }
+        AppModel::instance()->showToast(reply_code,
+                                        STR_CPP_111,
+                                        EWARNING::WarningType::EXCEPTION_MSG,
+                                        STR_CPP_112);
     }
     reply.release()->deleteLater();
     qApp->restoreOverrideCursor();
@@ -417,7 +489,7 @@ QJsonObject Draco::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     QJsonObject ret;
     qApp->setOverrideCursor(Qt::WaitCursor);
     std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    QNetworkRequest requester_(QUrl::fromUserInput(cmd));
+    QNetworkRequest requester_(QUrl::fromUserInput(commandByNetwork(cmd)));
     QString headerData = QString("Bearer %1").arg(this->dracoToken());
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -444,12 +516,10 @@ QJsonObject Draco::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
         if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
             reply_msg = STR_CPP_111;
         }
-        QTimer::singleShot(1000, [reply_code]() {
-            AppModel::instance()->showToast(reply_code,
-                                            STR_CPP_111,
-                                            EWARNING::WarningType::EXCEPTION_MSG,
-                                            STR_CPP_112);
-        });
+        AppModel::instance()->showToast(reply_code,
+                                        STR_CPP_111,
+                                        EWARNING::WarningType::EXCEPTION_MSG,
+                                        STR_CPP_112);
     }
     reply.release()->deleteLater();
     qApp->restoreOverrideCursor();
@@ -629,7 +699,10 @@ void Draco::singin(const QString& email, const QString& password)
             this->setEmailRequested(email);
         }
         else{
-            DBG_INFO << response_msg;
+            AppModel::instance()->showToast(response_code,
+                                            response_msg,
+                                            EWARNING::WarningType::EXCEPTION_MSG,
+                                            STR_CPP_112);
         }
         emit singinResult(reply_code, response_code, response_msg);
     }
@@ -734,6 +807,7 @@ void Draco::getMe()
             user.username    = userObj["username"].toString();
             user.login_type  = userObj["login_type"].toString();
             AppModel::instance()->startCheckAuthorize();
+            CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
         }
         else if(response_code == DRACO_CODE::UNAUTHORIZED){
             CLIENT_INSTANCE->requestSignout();
@@ -1334,7 +1408,12 @@ bool Draco::pkey_signin(const QString &address, const QString &username, const Q
                 this->setDeviceId(detailsObj["deviceId"].toString());
                 this->setLoginHalfToken(detailsObj["halfToken"].toString());
             }
-            else{}
+            else{
+                AppModel::instance()->showToast(response_code,
+                                                response_msg,
+                                                EWARNING::WarningType::EXCEPTION_MSG,
+                                                STR_CPP_112);
+            }
         }
         emit signalpkey_signin(reply_code, response_code, response_msg);
     }
@@ -1484,12 +1563,14 @@ void Draco::getCurrentUserSubscription()
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
-        QString response_msg = errorObj["message"].toString();
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject dataObj = jsonObj["data"].toObject();
             CLIENT_INSTANCE->setSubCur(dataObj);
+            ServiceSetting::instance()->setIsSubscriber(true);
+            return;
         }
     }
+    ServiceSetting::instance()->setIsSubscriber(false);
 }
 
 QJsonObject Draco::getAssistedWallets()
@@ -1524,6 +1605,25 @@ bool Draco::assistedWalletCreateTx(const QString &wallet_id, const QString &psbt
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Draco::assistedWalletUpdateTx(const QString &wallet_id, const QString &txid, const QString &memo)
+{
+    QJsonObject data;
+    data["note"] = memo;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_UPDATE_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id).replace("{transaction_id}",txid);
+    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
         if(response_code == DRACO_CODE::RESPONSE_OK){
             return true;
         }
@@ -1600,13 +1700,36 @@ QJsonObject Draco::assistedWalletGetListTx(const QString &wallet_id)
     data["types"] = "STANDARD,SCHEDULED,CLAIMING,ROLLOVER";
     int     reply_code = -1;
     QString reply_msg  = "";
-    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_CREATE_TX];
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_GET_LIST_TX];
     cmd.replace("{wallet_id_or_local_id}",wallet_id);
     QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject data = jsonObj.value("data").toObject();
+            return data;
+        }
+    }
+    return QJsonObject();
+}
+
+QJsonObject Draco::assistedWalletDeleteListTx(const QString &wallet_id, const int offset, const int limit)
+{
+    QJsonObject data;
+    data["offset"] = QString("%1").arg(offset);
+    data["limit"] = QString("%1").arg(limit);
+    data["statuses"] = "CANCELED";
+    data["types"] = "STANDARD,SCHEDULED,CLAIMING,ROLLOVER";
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[CMD_IDX::ASSISTED_WALLET_DELETE_LIST_TX];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id);
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject data = jsonObj.value("data").toObject();
             return data;
@@ -1776,7 +1899,7 @@ bool Draco::lockdownPeriods(QJsonArray& output, QString& errormsg)
 
 bool Draco::lockdownRequiredSignatures(const QString &period_id,
                                        const QString &wallet_id,
-                                       lockDownReqiredInfo& output,
+                                       ReqiredSignaturesInfo& output,
                                        QString& errormsg)
 {
     QJsonObject data;
@@ -1793,11 +1916,9 @@ bool Draco::lockdownRequiredSignatures(const QString &period_id,
         if(response_code == DRACO_CODE::RESPONSE_OK){
             QJsonObject dataObj = jsonObj["data"].toObject();
             QJsonObject resultObj = dataObj["result"].toObject();
-            lockDownReqiredInfo ret;
-            ret.type = lockdown_required_type[resultObj["type"].toString()];
-            ret.required_signatures = resultObj["required_signatures"].toInt();
-            ret.required_answers = resultObj["required_answers"].toInt();
-            output = ret;
+            output.type = required_signatures_type[resultObj["type"].toString()];
+            output.required_signatures = resultObj["required_signatures"].toInt();
+            output.required_answers = resultObj["required_answers"].toInt();
             return true;
         }
         else{
@@ -1937,15 +2058,264 @@ bool Draco::userKeysDownloadBackup(const QString &verify_token,
     return false;
 }
 
-bool Draco::getCurrencies(QJsonObject &output, QString &errormsg)
+bool Draco::inheritanceDownloadBackup(const QString &magic, int &response_code, QJsonObject &output, QString &errormsg)
 {
-    int reply_code = -1;
+    QJsonObject data;
+    data["magic"] = magic;
+    QString cmd = commands[CMD_IDX::INHERITANCE_DOWNLOAD_BACKUP];
+    int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = getSync(commands[CMD_IDX::GET_CURRENCIES], QJsonObject(), reply_code, reply_msg);
+    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
-        output = jsonObj;
-        return true;
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
     }
     errormsg = reply_msg;
     return false;
 }
+
+bool Draco::inheritanceClaimRequest(const QString& magic, const QString& psbt, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    data["magic"] = magic;
+    data["psbt"] = psbt;
+    QString cmd = commands[CMD_IDX::INHERITANCE_CLAIM_REQUEST];
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject dataObj = jsonObj["data"].toObject();
+            output = dataObj["transaction"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::inheritanceClaimStatus(const QJsonObject& data, const QString& autho, QJsonObject &output, QString &errormsg)
+{
+    QMap<QString, QString> params;
+    params[QString("AuthorizationX-1")] = autho;
+    QString cmd = commands[CMD_IDX::INHERITANCE_CLAIM_STATUS];
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(cmd, params, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::inheritanceCreateTx(const QJsonObject& data, const QString& autho, QJsonObject &output, QString &errormsg)
+{
+    QMap<QString, QString> params;
+    params[QString("AuthorizationX-1")] = autho;
+    QString cmd = commands[CMD_IDX::INHERITANCE_CREATE_TX];
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(cmd, params, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::inheritanceCheck(const QString& magic, const QString& environment, QJsonObject& output, QString& errormsg)
+{
+    QJsonObject data;
+    data["magic"] = magic;
+    data["environment"] = environment;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(commands[CMD_IDX::INHERITANCE_CHECK], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        } else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+        }
+    }
+    return false;
+}
+
+bool Draco::inheritanceGetPlan(const QString& wallet_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    data["wallet"] = wallet_id;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = getSync(commands[CMD_IDX::INHERITANCE_GET_PLAN], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::inheritanceFakeUpdate()
+{
+    QJsonObject data;
+    data["activation_time_milis"] = 0;
+    data["buffer_period_id"] = "5MINUTES";
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = putSync(commands[CMD_IDX::INHERITANCE_FAKE_UPDATE], data, reply_code, reply_msg);
+    qInfo() << jsonObj;
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            DBG_INFO << "OK";
+            return true;
+        }
+    }
+    DBG_INFO << reply_msg;
+    return false;
+}
+
+bool Draco::serverKeysGet(const QString &id_or_xfp, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[CMD_IDX::SERVER_KEYS_GET];
+    cmd.replace("{key_id_or_xfp}", id_or_xfp);
+
+    QJsonObject jsonObj = getSync(cmd, QJsonObject(), reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject data = jsonObj["data"].toObject();
+            output = data["key"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::serverKeysUpdate(const QString& passwordToken, const QString& secQuesToken, const QString &id_or_xfp, const QStringList &signatures, const QJsonObject data, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QMap<QString, QString> params;
+    for (int i = 0; i < signatures.count(); i++) {
+        params[QString("AuthorizationX-%1").arg(i+1)] = signatures.at(i);
+    }
+    params["Verify-token"] = passwordToken;
+    params["Security-Question-token"] = secQuesToken;
+
+    QString cmd = commands[CMD_IDX::SERVER_KEYS_UPDATE];
+    cmd.replace("{key_id_or_xfp}", id_or_xfp);
+
+    QJsonObject jsonObj = putSync(cmd, params, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::serverKeysRequiredSignatures(const QString &id_or_xfp,
+                                         const QJsonObject data,
+                                         ReqiredSignaturesInfo &output,
+                                         QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[CMD_IDX::SERVER_KEYS_REQUIRED_SIGNATURES];
+    cmd.replace("{key_id_or_xfp}", id_or_xfp);
+
+    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject dataObj = jsonObj["data"].toObject();
+            QJsonObject resultObj = dataObj["result"].toObject();
+            output.type = required_signatures_type[resultObj["type"].toString()];
+            output.required_signatures = resultObj["required_signatures"].toInt();
+            output.required_answers = resultObj["required_answers"].toInt();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+

@@ -38,8 +38,8 @@ QVariant getPrimaryKey(const nunchuk::PrimaryKey &pkey){
 }
 
 void SCR_PRIMARY_KEY_ACCOUNT_Entry(QVariant msg) {
-    std::vector<nunchuk::PrimaryKey> primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(),
-                                                                          (nunchuk::Chain)AppSetting::instance()->primaryServer());
+    AppModel::instance()->clearPrimaryKeyList();
+    std::vector<nunchuk::PrimaryKey> primaryKeys = AppModel::instance()->primaryKeys();
     QVariantList primaryKeyList;
     for(nunchuk::PrimaryKey key: primaryKeys){
         primaryKeyList.append(getPrimaryKey(key));

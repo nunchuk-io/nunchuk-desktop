@@ -21,7 +21,9 @@ import QtQuick 2.4
 import QtQuick.Controls 2.0
 import HMIEVENTS 1.0
 import "../Components/customizes"
+import "../Components/customizes/Texts"
 import "../Components/origins"
+
 QScreen {
     MouseArea {anchors.fill: parent}
     Column {

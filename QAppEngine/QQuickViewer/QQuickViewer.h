@@ -30,6 +30,12 @@
 
 #include "QAppEngine.h"
 
+template<typename Function>
+void timeoutHandler(int timeoutInterval, Function&& f)
+{
+    QTimer::singleShot(timeoutInterval, std::forward<Function>(f));
+}
+
 class QQuickViewer : public QObject
 {
     Q_OBJECT

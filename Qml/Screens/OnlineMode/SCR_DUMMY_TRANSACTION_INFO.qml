@@ -29,6 +29,8 @@ import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -179,7 +181,10 @@ QScreen {
                                             font.pixelSize: 12
                                             color: "#031F2B"
                                             font.family: "Lato"
-                                            text: qsTr("$%1 %2").arg(model.destination_amount_currency).arg(AppSetting.currency)
+                                            text: qsTr("%1%2 %3")
+                                            .arg(AppSetting.currencySymbol)
+                                            .arg(model.destination_amount_currency)
+                                            .arg(AppSetting.currency)
                                             horizontalAlignment: Text.AlignRight
                                         }
                                     }
@@ -191,16 +196,24 @@ QScreen {
                                 width: parent.width - 24
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 spacing: 12
-                                QText {
+                                z: 1
+                                Item {
                                     width: 192
-                                    lineHeightMode: Text.FixedHeight
-                                    lineHeight: 20
-                                    wrapMode: Text.WrapAnywhere
-                                    font.pixelSize: 16
-                                    font.weight: Font.Bold
-                                    color: "#031F2B"
-                                    font.family: "Lato"
-                                    text: STR.STR_QML_215
+                                    height: 24
+                                    z: 1
+                                    Row {
+                                        spacing: 6
+                                        QLato {
+                                            width: 97
+                                            font.weight: Font.Bold
+                                            text: STR.STR_QML_215
+                                        }
+                                        QTooltip {
+                                            tipWidth: 200
+                                            toolTip: STR.STR_QML_807
+                                            source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
+                                        }
+                                    }
                                 }
                                 Column {
                                     width: 122
@@ -225,7 +238,10 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 %2").arg(AppModel.transactionInfo.feeCurrency).arg(AppSetting.currency)
+                                        text: qsTr("%1%2 %3")
+                                        .arg(AppSetting.currencySymbol)
+                                        .arg(AppModel.transactionInfo.feeCurrency)
+                                        .arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -269,7 +285,10 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 %2").arg(AppModel.transactionInfo.totalCurrency).arg(AppSetting.currency)
+                                        text: qsTr("%1%2 %3")
+                                        .arg(AppSetting.currencySymbol)
+                                        .arg(AppModel.transactionInfo.totalCurrency)
+                                        .arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -344,7 +363,10 @@ QScreen {
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         font.family: "Lato"
-                                        text: qsTr("$%1 %2").arg(AppModel.transactionInfo.change.amountCurrency).arg(AppSetting.currency)
+                                        text: qsTr("%1%2 %3")
+                                        .arg(AppSetting.currencySymbol)
+                                        .arg(AppModel.transactionInfo.change.amountCurrency)
+                                        .arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
@@ -628,7 +650,10 @@ QScreen {
                                     QText {
                                         width: parent.width*1/3 - 20
                                         height: 16
-                                        text: qsTr("$%1 %2").arg(model.destination_amount_currency).arg(AppSetting.currency)
+                                        text: qsTr("%1%2 %3")
+                                        .arg(AppSetting.currencySymbol)
+                                        .arg(model.destination_amount_currency)
+                                        .arg(AppSetting.currency)
                                         horizontalAlignment: Text.AlignRight
                                         font.pixelSize: 12
                                         color: "#031F2B"

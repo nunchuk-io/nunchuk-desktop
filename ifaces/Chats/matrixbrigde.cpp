@@ -316,7 +316,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                         wl.data()->setInitEventId(ret.data()->get_init_event_id());
                         wl.data()->setName(ret.data()->walletName());
                         AppModel::instance()->walletList()->addWallet(wl);
-                        AppModel::instance()->startGetTransactionHistory(wallet_id);
+                        AppModel::instance()->requestSyncWalletDb(wallet_id);
                         ret.data()->setWalletInfo(wl);
                     }
                 }

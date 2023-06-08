@@ -27,9 +27,11 @@
 #include <QClipboard>
 #include "localization/STR_CPP.h"
 #include "ifaces/Chats/matrixbrigde.h"
+#include "ProfileSetting.h"
 
 void SCR_HOME_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::WALLET_TAB);
+    ProfileSetting::instance()->createCurrencies();
 }
 
 void SCR_HOME_Exit(QVariant msg) {
@@ -92,33 +94,30 @@ void EVT_HOME_WALLET_COPY_ADDRESS_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
-    if(msg.toString() != "" && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
-        QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(msg.toString());
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    QString txid = msg.toString();
+    if(txid != "" && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
+        QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(txid);
         if(it){
+            QString wallet_id = it.data()->walletId();
             if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn() && CLIENT_INSTANCE->rooms()){
-                QString room_id = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(AppModel::instance()->walletInfo()->id());
+                QString room_id = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet_id);
                 if(room_id != ""){
-                    QWarningMessage tmsg;
-                    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), tmsg);
+                    QWarningMessage msgwarning;
+                    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msgwarning);
                     foreach (nunchuk::RoomTransaction tx, results) {
-                        if(0 == QString::compare(QString::fromStdString(tx.get_tx_id()), msg.toString(), Qt::CaseInsensitive)){
+                        if(0 == QString::compare(QString::fromStdString(tx.get_tx_id()), txid, Qt::CaseInsensitive)){
                             it->setInitEventId(QString::fromStdString(tx.get_init_event_id()));
                         }
                     }
                 }
             }
-
-            QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-            if(mastersigners){
-                for (QMasterSignerPtr master : mastersigners->fullList()) {
-                    it.data()->singleSignersAssigned()->updateSignerIsLocalAndReadyToSign(master);
-                }
-            }
-            QJsonObject data = Draco::instance()->assistedWalletGetTx(AppModel::instance()->walletInfo()->id(),it->txid());
+            QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id, txid);
             it->setServerKeyMessage(data);
         }
         AppModel::instance()->setTransactionInfo(it);
     }
+    qApp->restoreOverrideCursor();
 }
 
 void EVT_HOME_SETTING_REQUEST_HANDLER(QVariant msg) {
@@ -146,11 +145,7 @@ void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
-                if(AppModel::instance()->walletInfo()){
-                    AppModel::instance()->startGetTransactionHistory(wallet_id);
-                    AppModel::instance()->startGetUsedAddresses(wallet_id);
-                    AppModel::instance()->startGetUnusedAddresses(wallet_id);
-                }
+                AppModel::instance()->requestSyncWalletDb(wallet_id);
                 AppModel::instance()->showToast(0,
                                                 STR_CPP_091,
                                                 EWARNING::WarningType::SUCCESS_MSG,
@@ -191,4 +186,13 @@ void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
     }
 }
 
+void EVT_ASK_LEDGER_REQ_HANDLER(QVariant msg) {
+
+}
+
+
+
+void EVT_ASK_TREZOR_REQ_HANDLER(QVariant msg) {
+
+}
 

@@ -232,7 +232,9 @@ QWalletPtr nunchukGetWallet(const QString &wallet_id);
 
 bool nunchukHasWallet(const QString &wallet_id);
 
-bool nunchukDeleteWallet(const QString& wallet_id);
+bool nunchukDeleteWallet(const QString& wallet_id, QWarningMessage &msg);
+
+void nunchukDeleteAllWallet();
 
 void nunchukUpdateWalletName(const QString& wallet_id, const QString &name);
 

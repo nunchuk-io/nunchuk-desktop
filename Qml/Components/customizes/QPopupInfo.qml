@@ -27,7 +27,8 @@ import EWARNING 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
 import "../origins"
-import "../customizes"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Popup {
@@ -44,74 +45,59 @@ Popup {
     closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
     background: Item{}
     Rectangle {
-        width: popupWidth
-        height: popupHeight
-        radius: 8
-        color: coverColor
+        id: bgcontentlimit
+        width: 300
+        height: Math.max(254,_colum.implicitHeight + 24*2)
         anchors.centerIn: parent
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: popupWidth
-                height: popupHeight
-                radius: 24
-            }
-        }
-        Rectangle {
-            id: bgcontentlimit
-            width: 300
-            height: Math.max(254,_colum.implicitHeight + 24*2)
+        color: "#FFFFFF"
+        radius: 24
+        Column {
+            id:_colum
+            spacing: 12
             anchors.centerIn: parent
-            color: "#FFFFFF"
-            radius: 24
-            Column {
-                id:_colum
-                spacing: 12
-                anchors.centerIn: parent
-                QText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                    text: title
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 20
-                }
-                QText {
-                    width: 252
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: contentText
-                }
-                QTextButton {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: 252
-                    height: 36
-                    label.text: btnLabel
-                    label.font.pixelSize: 12
-                    type: eTypeE
-                    onButtonClicked: {
-                        _infoPopup.close()
-                        gotItClicked()
-                    }
+            QText {
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.family: "Lato"
+                font.pixelSize: 16
+                font.weight: Font.Bold
+                text: title
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 20
+            }
+            QText {
+                width: 252
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.family: "Lato"
+                font.pixelSize: 16
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 28
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: contentText
+            }
+            QTextButton {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 252
+                height: 36
+                label.text: btnLabel
+                label.font.pixelSize: 12
+                type: eTypeE
+                onButtonClicked: {
+                    _infoPopup.close()
+                    gotItClicked()
                 }
             }
         }
-        DropShadow {
-            anchors.fill: bgcontentlimit
-            horizontalOffset: 3
-            verticalOffset: 5
-            spread: 0
-            radius: 8
-            samples: 30
-            color: "#aa000000"
-            source: bgcontentlimit
-        }
+    }
+    DropShadow {
+        anchors.fill: bgcontentlimit
+        horizontalOffset: 3
+        verticalOffset: 5
+        spread: 0
+        radius: 8
+        samples: 30
+        color: "#aa000000"
+        source: bgcontentlimit
     }
 }

@@ -88,10 +88,13 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY( QString signetStream            READ signetStream               WRITE setSignetStream               NOTIFY signetStreamChanged)
     Q_PROPERTY( bool enableSignetStream         READ enableSignetStream         WRITE setEnableSignetStream         NOTIFY enableSignetStreamChanged)
 
-    Q_PROPERTY(bool enableDebugMode READ enableDebug WRITE setEnableDebug       NOTIFY enableDebugChanged)
-    Q_PROPERTY(bool isStarted       READ isStarted                              NOTIFY isStartedChanged)
+    Q_PROPERTY(bool enableDebugMode             READ enableDebug                WRITE setEnableDebug                NOTIFY enableDebugChanged)
+    Q_PROPERTY(bool isStarted                   READ isStarted                                                      NOTIFY isStartedChanged)
     Q_PROPERTY(bool enableMultiDeviceSync       READ enableMultiDeviceSync      WRITE setEnableMultiDeviceSync      NOTIFY enableMultiDeviceSyncChanged)
-    Q_PROPERTY(QString currency READ currency WRITE setCurrency NOTIFY currencyChanged)
+    Q_PROPERTY(QString currency                 READ currency                   WRITE setCurrency                   NOTIFY currencyChanged)
+    Q_PROPERTY(bool enableCoSigning             READ enableCoSigning            WRITE setEnableCoSigning            NOTIFY enableCoSigningChanged)
+    Q_PROPERTY(QString currencySymbol           READ currencySymbol                                                 NOTIFY currencyChanged)
+
 public:
     enum class Chain : int {
         MAIN,
@@ -116,12 +119,16 @@ public:
     AppSetting(AppSetting const &other) = delete;
     void operator=(const AppSetting &other) = delete;
 
+    void refresh();
+
     void setGroupSetting(QString group);
     void resetSetting();
 //    QSettings getSetting();
 
     int unit();
     void setUnit(int unit);
+    // Settings
+    void updateUnit();
 
     QString mainnetServer();
     void setMainnetServer(const QString &mainnetServer);
@@ -215,8 +222,12 @@ public:
     bool enableMultiDeviceSync();
     void setEnableMultiDeviceSync(bool enableMultiDeviceSync);
 
+    QString currencySymbol();
     QString currency();
     void setCurrency(QString currency);
+
+    bool enableCoSigning();
+    void setEnableCoSigning(bool enableCoSigning);
 
 private:
     AppSetting();
@@ -253,13 +264,10 @@ private:
     bool enableSignetStream_;
     QString signetStream_;
 
-    // Settings
-    void updateUnit();
-
     bool enableDebugMode_;
     bool enableMultiDeviceSync_;
     bool isStarted_;
-    QString m_currency = {"USD"};
+    bool m_enableCoSigning;
 
 signals:
     void unitChanged();
@@ -298,6 +306,7 @@ signals:
     void isStartedChanged(bool isStarted);
     void enableMultiDeviceSyncChanged();
     void currencyChanged();
+    void enableCoSigningChanged();
 };
 
 #endif // APPSETTING_H

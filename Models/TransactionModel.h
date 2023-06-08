@@ -26,14 +26,17 @@
 #include "SingleSignerModel.h"
 #include "QOutlog.h"
 #include <nunchuk.h>
+#include <QTimer>
+
+class Wallet;
 
 class Destination : public QObject {
     Q_OBJECT
 
-    Q_PROPERTY(QString address  READ address        NOTIFY addressChanged)
-    Q_PROPERTY(QString amount   READ amountDisplay  NOTIFY amountChanged)
-    Q_PROPERTY(QString amountBTC   READ amountBTC   NOTIFY amountChanged)
-    Q_PROPERTY(QString amountCurrency   READ amountCurrency   NOTIFY amountChanged)
+    Q_PROPERTY(QString address          READ address        NOTIFY addressChanged)
+    Q_PROPERTY(QString amount           READ amountDisplay  NOTIFY amountChanged)
+    Q_PROPERTY(QString amountBTC        READ amountBTC      NOTIFY amountChanged)
+    Q_PROPERTY(QString amountCurrency   READ amountCurrency NOTIFY amountChanged)
 public:
     Destination();
     Destination(const QString &address, const qint64 amount);
@@ -78,92 +81,103 @@ public:
         destination_amount_currency_role
     };
     QString reciever();
+    void clearAll();
 private:
-    QList<QDestinationPtr> d_;
+    QList<QDestinationPtr> m_data;
 };
 typedef OurSharedPointer<DestinationListModel> QDestinationListModelPtr;
 
 class Transaction : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString txid READ txid NOTIFY txidChanged)
-    Q_PROPERTY(int height READ height NOTIFY heightChanged)
-    Q_PROPERTY(QString memo READ memo NOTIFY memoChanged)
-    Q_PROPERTY(int status READ status NOTIFY statusChanged)
-    Q_PROPERTY(QString fee READ feeDisplay NOTIFY feeChanged)
-    Q_PROPERTY(QString feeBTC READ feeBTC NOTIFY feeChanged)
-    Q_PROPERTY(QString feeCurrency READ feeCurrency NOTIFY feeChanged)
-    Q_PROPERTY(QString feeRate READ feeRate NOTIFY feeRateChanged)
-    Q_PROPERTY(int m READ m NOTIFY mChanged)
-    Q_PROPERTY(bool hasChange READ hasChange NOTIFY hasChangeChanged)
-    Q_PROPERTY(DestinationListModel* destinationList READ destinationList NOTIFY destinationListChanged)
-    Q_PROPERTY(Destination* change READ change NOTIFY changeChanged)
-    Q_PROPERTY(SingleSignerListModel* singleSignersAssigned READ singleSignersAssigned NOTIFY singleSignerAssignedChanged)
-    Q_PROPERTY(QString subtotal     READ subtotalDisplay NOTIFY subtotalChanged)
-    Q_PROPERTY(QString subtotalCurrency  READ subtotalCurrency     NOTIFY subtotalChanged)
-    Q_PROPERTY(QString total    READ totalDisplay   NOTIFY totalChanged)
-    Q_PROPERTY(QString totalCurrency READ totalCurrency       NOTIFY totalChanged)
-    Q_PROPERTY(int numberSigned READ numberSigned NOTIFY numberSignedChanged)
-    Q_PROPERTY(QString blocktime READ blocktimeDisplay NOTIFY blocktimeChanged)
-    Q_PROPERTY(bool isReceiveTx READ isReceiveTx NOTIFY isReceiveTxChanged)
-    Q_PROPERTY(bool subtractFromFeeAmount READ subtractFromFeeAmount NOTIFY subtractFromFeeAmountChanged)
-    Q_PROPERTY(QString replacedTxid READ replacedTxid NOTIFY replacedTxidChanged)
-    Q_PROPERTY(QString roomId READ roomId NOTIFY roomIdChanged)
-    Q_PROPERTY(QString initEventId READ initEventId NOTIFY initEventIdChanged)
-    Q_PROPERTY(bool createByMe READ createByMe NOTIFY createByMeChanged)
-    Q_PROPERTY(QString psbt READ psbt NOTIFY psbtChanged)
-    Q_PROPERTY(QString serverKeyMessage READ serverKeyMessage NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(QString                      txid                    READ txid                   CONSTANT)
+    Q_PROPERTY(QString                      memo                    READ memo                   NOTIFY memoChanged)
+    Q_PROPERTY(int                          height                  READ height                 NOTIFY heightChanged)
+    Q_PROPERTY(int                          status                  READ status                 NOTIFY statusChanged)
+    Q_PROPERTY(int                          m                       READ m                      NOTIFY mChanged)
+    Q_PROPERTY(bool                         hasChange               READ hasChange              NOTIFY hasChangeChanged)
+    Q_PROPERTY(QString                      fee                     READ feeDisplay             NOTIFY feeChanged)
+    Q_PROPERTY(QString                      feeBTC                  READ feeBTC                 NOTIFY feeChanged)
+    Q_PROPERTY(QString                      feeCurrency             READ feeCurrency            NOTIFY feeChanged)
+    Q_PROPERTY(QString                      feeRate                 READ feeRate                NOTIFY feeRateChanged)
+    Q_PROPERTY(Destination*                 change                  READ change                 NOTIFY changeChanged)
+    Q_PROPERTY(DestinationListModel*        destinationList         READ destinationList        NOTIFY destinationListChanged)
+    Q_PROPERTY(SingleSignerListModel*       singleSignersAssigned   READ singleSignersAssigned  NOTIFY singleSignerAssignedChanged)
+    Q_PROPERTY(QString                      subtotal                READ subtotalDisplay        NOTIFY subtotalChanged)
+    Q_PROPERTY(QString                      subtotalCurrency        READ subtotalCurrency       NOTIFY subtotalChanged)
+    Q_PROPERTY(QString                      total                   READ totalDisplay           NOTIFY totalChanged)
+    Q_PROPERTY(QString                      totalCurrency           READ totalCurrency          NOTIFY totalChanged)
+    Q_PROPERTY(int                          numberSigned            READ numberSigned           NOTIFY numberSignedChanged)
+    Q_PROPERTY(QString                      blocktime               READ blocktimeDisplay       NOTIFY blocktimeChanged)
+    Q_PROPERTY(bool                         isReceiveTx             READ isReceiveTx            NOTIFY isReceiveTxChanged)
+    Q_PROPERTY(bool                         subtractFromFeeAmount   READ subtractFromFeeAmount  NOTIFY subtractFromFeeAmountChanged)
+    Q_PROPERTY(QString                      replacedTxid            READ replacedTxid           NOTIFY replacedTxidChanged)
+    Q_PROPERTY(QString                      roomId                  READ roomId                 NOTIFY roomIdChanged)
+    Q_PROPERTY(QString                      initEventId             READ initEventId            NOTIFY initEventIdChanged)
+    Q_PROPERTY(bool                         createByMe              READ createByMe             NOTIFY createByMeChanged)
+    Q_PROPERTY(QString                      psbt                    READ psbt                   NOTIFY psbtChanged)
+    Q_PROPERTY(QString                      serverKeyMessage        READ serverKeyMessage       NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(QString                      destination             READ destination            NOTIFY destinationListChanged)
 public:
     Transaction();
     ~Transaction();
+
+    bool isReceiveTx() const;
+    void setIsReceiveTx(bool receive);
+
     QString txid() const;
-    void setTxid(const QString &txid);
+
     QString memo() const;
     void setMemo(const QString &memo);
+
     int status() const;
     void setStatus(int status);
+
+    int m() const; // number of signatures required
+
+    int height() const;
+    void setHeight(const int value);
+
     QString feeDisplay() const;
     QString feeBTC() const;
     QString feeCurrency() const;
-    qint64 feeSats() const;
-    void setFee(const qint64 fee);
-    int m() const; // number of signatures required
-    void setM(int m);
-    bool hasChange() const;
-    void setHasChange(bool hasChange);
-    Destination* change() const;
-    QDestinationPtr changePtr() const;
-    void setChange(const QDestinationPtr &change);
-    DestinationListModel* destinationList() const;
-    QDestinationListModelPtr destinationListPtr() const;
-    void setDestinationList(const QDestinationListModelPtr &destinationList);
-    SingleSignerListModel* singleSignersAssigned() const;
-    QSingleSignerListModelPtr singleSignersAssignedPtr() const;
-    void setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned);
-    QString subtotalDisplay() const;
-    QString subtotalBTC() const;
-    QString subtotalCurrency() const;
-    qint64 subtotalSats() const;
-    void setSubtotal(const qint64 subtotal);
-    QString totalDisplay() const;
-    QString totalBTC() const;
-    QString totalCurrency() const;
-    qint64 totalSats() const;
-    void setTotal(const qint64 total);
-    int numberSigned() const;
-    void setNumberSigned(int numberSigned);
-    QString blocktimeDisplay() const;
-    time_t blocktime() const;
-    void setBlocktime(const time_t blocktime);
-    int height() const;
-    void setHeight(int height);
-    bool isReceiveTx() const;
-    void setIsReceiveTx(bool isReceiveTx);
+    qint64  feeSats() const;
+    void    setFee(const qint64 fee);
+
     bool subtractFromFeeAmount() const;
-    void setSubtractFromFeeAmount(bool subtractFromFeeAmount);
+
     QString feeRate() const;
-    void setFeeRate(qint64 feeRate);
+
+    QString psbt() const;
+
+    QString subtotalCurrency() const;
+    QString subtotalDisplay() const;
+    qint64  subtotalSats() const;
+    QString subtotalBTC() const;
+
+    QString totalCurrency() const;
+    QString totalDisplay() const;
+    qint64  totalSats() const;
+    QString totalBTC() const;
+
+    DestinationListModel* destinationList();
+
+    bool hasChange() const;
+
+    Destination* change();
+
+    QString blocktimeDisplay() const;
+    time_t  blocktime() const;
+
+    QString walletId() const;
+    void setWalletId(const QString &walletId);
+
+    SingleSignerListModel* singleSignersAssigned();
+    void setSingleSignersAssigned(const QSingleSignerListModelPtr &singleSignersAssigned);
+
+    int numberSigned();
+
     QString replacedTxid() const;
-    void setReplacedTxid(const QString &replacedTxid);
+
     nunchuk::Transaction nunchukTransaction() const;
     void setNunchukTransaction(const nunchuk::Transaction &tx);
     QString roomId() const;
@@ -172,39 +186,22 @@ public:
     void setInitEventId(const QString &initEventId);
     bool createByMe() const;
     void setCreateByMe(bool createByMe);
-    QString walletId() const;
-    void setWalletId(const QString &walletId);
-    QString psbt() const;
-    void setPsbt(const QString &psbt);
     QString serverKeyMessage() const;
     void setServerKeyMessage(const QJsonObject &data);
+
+    QString destination();
 private:
-    QString txid_;
-    QString memo_;
-    int status_;
-    qint64 fee_;
-    int m_; // number of signatures required
-    bool hasChange_;
-    QDestinationListModelPtr destinationList_;
-    QDestinationPtr change_;
-    QSingleSignerListModelPtr singleSignersAssigned_;
-    qint64 subtotal_;
-    qint64 total_;
-    int numberSigned_;
-    time_t blocktime_;
-    int height_;
-    bool isReceiveTx_;
-    bool subtractFromFeeAmount_;
-    qint64 feeRate_;
-    QString replacedTxid_;
-    //ONLINE
-    nunchuk::Transaction transaction_;
-    QString walletId_;
-    QString roomId_;
-    QString initEventId_;
-    bool createByMe_;
-    QString psbt_;
-    QString serverKeyMessage_;
+    QDestinationListModelPtr    m_destinations;
+    QSingleSignerListModelPtr   m_signers;
+    QDestinationPtr             m_change;
+
+    nunchuk::Transaction        m_transaction;
+    QString                     m_walletId;
+    QString                     m_roomId;
+    QString                     m_initEventId;
+    bool                        m_createByMe;
+    QString                     m_serverKeyMessage;
+
 signals:
     void txidChanged();
     void memoChanged();
@@ -238,6 +235,8 @@ class TransactionListModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
+//    Q_PROPERTY(TransactionListModel* txsShort READ txsShort NOTIFY txsShortChanged)
+
 public:
     TransactionListModel();
     ~TransactionListModel();
@@ -247,17 +246,15 @@ public:
     QHash<int,QByteArray> roleNames() const;
     QTransactionPtr getTransactionByIndex(const int index);
     QTransactionPtr getTransactionByTxid(const QString& txid);
-    TransactionListModel *getTransactionShortList(const int cnt = 30);
     void requestSort(int role, int order);
     void addTransaction(const QTransactionPtr &d);
-    void updateTransactionStatus(const QString &tx_id, const int status);
     void updateTransactionMemo(const QString &tx_id, const QString &memo);
-    void replaceTransaction(const QString &tx_id, const QTransactionPtr &value);
+    void updateTransaction(const QString &tx_id, const QTransactionPtr &tx);
     void removeTransaction(const QString &tx_id);
     void notifyUnitChanged();
     void linkingReplacedTransactions();
     void cleardata();
-    int count() const;
+    int  count() const;
 
     enum TransactionRoles {
         transaction_txid_role,
@@ -267,6 +264,7 @@ public:
         transaction_m_role,
         transaction_hasChange_role,
         transaction_destinationList_role,
+        transaction_destinationDisp_role,
         transaction_change_role,
         transaction_singleSignersAssigned_role,
         transaction_subtotal_role,
@@ -279,11 +277,13 @@ public:
         transaction_totalCurrency_role,
         transaction_subtotalCurrency_role,
     };
+
 signals:
     void countChanged();
+
 private:
     bool contains(const QString &tx_id);
-    QList<QTransactionPtr> d_;
+    QList<QTransactionPtr> m_data;
 };
 typedef OurSharedPointer<TransactionListModel> QTransactionListModelPtr;
 

@@ -27,6 +27,8 @@ import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -276,10 +278,12 @@ QScreen {
                                     color: "#F5F5F5"
                                     anchors.verticalCenter: parent.verticalCenter
                                     QImage {
-                                        width: 30
-                                        height: 30
+                                        width: 24
+                                        height: 24
                                         anchors.centerIn: parent
                                         source: GlobalData.icons("software",NUNCHUCKTYPE.SOFTWARE)
+                                        sourceSize.width: 100
+                                        sourceSize.height: 100
                                     }
                                 }
                                 Item{

@@ -41,7 +41,7 @@ void SCR_LOGIN_WITH_SOFTWARE_KEY_Exit(QVariant msg) {
 }
 
 void EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
-    QTimer::singleShot(0,[msg](){
+    timeoutHandler(0,[msg](){
         QVariantMap maps = msg.toMap();
         QString passphrase = maps["passphrase"].toString();
         QVariantMap primary_key = maps["primary_key"].toMap();
@@ -70,7 +70,7 @@ void EVT_LOGIN_WITH_SOFTWARE_KEY_SUCCEED_HANDLER(QVariant msg) {
     AppModel::instance()->makeMatrixInstanceForAccount();
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
-        QTimer::singleShot(500,[pKey](){
+        timeoutHandler(500,[pKey](){
             AppModel::instance()->showToast(0,
                                            STR_CPP_108.arg(pKey->name()),
                                            EWARNING::WarningType::SUCCESS_MSG,

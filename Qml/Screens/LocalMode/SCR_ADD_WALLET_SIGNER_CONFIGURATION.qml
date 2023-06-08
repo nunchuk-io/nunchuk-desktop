@@ -26,6 +26,8 @@ import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -319,7 +321,7 @@ QScreen {
                 }
             }
 
-            QButtonIcon {
+            QIconTextButton {
                 id: assignTowallet
                 width: 161
                 height: 32
@@ -356,7 +358,6 @@ QScreen {
                 id: addNewWallet
                 width: 160
                 height: 32
-                radius: 12
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top

@@ -26,6 +26,8 @@ import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -228,7 +230,6 @@ QScreen {
         QButtonMedium {
             width: 207
             height: 32
-            radius: 20
             type: eOUTLINE_NORMAL
             label: STR.STR_QML_202
             anchors {
@@ -306,7 +307,7 @@ QScreen {
                     color: "#323E4A"
                 }
             }
-            QButtonIcon {
+            QIconTextButton {
                 width: 150
                 height: 24
                 label: STR.STR_QML_205

@@ -27,6 +27,7 @@
 #include "Draco.h"
 #include "Chats/ClientController.h"
 #include "ProfileSetting.h"
+#include "ServiceSetting.h"
 
 void ROOT_Entry(QVariant msg) {
     Q_UNUSED(msg);
@@ -104,7 +105,7 @@ void EVT_ROOT_PROMT_PASSPHRASE_HANDLER(QVariant msg) {
 void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
     if(CLIENT_INSTANCE->isNunchukLoggedIn()){
         QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
-        QTimer::singleShot(1000, []() {
+        timeoutHandler(1000, []() {
             emit CLIENT_INSTANCE->contactsChanged();
         });
     }
@@ -112,7 +113,8 @@ void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
         if (CLIENT_INSTANCE->checkStayLoggedIn()) {
             Draco::instance()->getMe();
             if(Draco::instance()->Uid() == CLIENT_INSTANCE->getMe().email){
-                QQuickViewer::instance()->sendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
+                bridge::nunchukSetCurrentMode(ONLINE_MODE);
+                QQuickViewer::instance()->notifySendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
             }
             else{
                 QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
@@ -122,9 +124,8 @@ void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
             QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
         }
     }
-    QTimer::singleShot(0,[=]{
+    timeoutHandler(1000, []() {
         AppModel::instance()->timerFeeRatesHandle();
-        ProfileSetting::instance()->createCurrencies();
     });
 }
 
@@ -221,8 +222,8 @@ void EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_NUNCHUK_LOGIN_SUCCEEDED_HANDLER(QVariant msg) {
-    DBG_INFO;
-    QTimer::singleShot(1000,[](){
+    AppModel::instance()->requestClearData();
+    timeoutHandler(1500, [](){
         QMap<QString, QVariant> makeInstanceData;
         makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME_ONLINE;
         AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");

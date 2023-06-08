@@ -247,6 +247,11 @@ public:
                                          const nunchuk::Device& device,
                                          QWarningMessage& msg);
 
+    nunchuk::Transaction SignTransaction(const nunchuk::Wallet& wallet,
+                                         const nunchuk::Transaction& tx,
+                                         const nunchuk::Device& device,
+                                         QWarningMessage& msg);
+
     nunchuk::Transaction BroadcastTransaction(const std::string& wallet_id,
                                               const std::string& tx_id,
                                               QWarningMessage& msg);
@@ -451,6 +456,9 @@ public:
     std::string SignHealthCheckMessage(const nunchuk::SingleSigner& signer,
                                        const std::string& message,
                                        QWarningMessage& msg);
+
+    nunchuk::SingleSigner GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id,
+                                                                  QWarningMessage& msg);
 
 private:
     nunchukiface();

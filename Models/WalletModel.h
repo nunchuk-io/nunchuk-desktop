@@ -30,32 +30,31 @@
 class Wallet : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString walletId READ id WRITE setId   NOTIFY idChanged)
-    Q_PROPERTY(int walletM      READ m  WRITE setM    NOTIFY mChanged)
-    Q_PROPERTY(int walletN      READ n  WRITE setN    NOTIFY nChanged)
-    Q_PROPERTY(int walletNShared        READ nShared  WRITE setNShared  NOTIFY nSharedChanged)
-    Q_PROPERTY(QString walletName           READ name           WRITE setName               NOTIFY nameChanged)
-    Q_PROPERTY(QString walletAddressType    READ addressType    WRITE setAddressType        NOTIFY addressTypeChanged)
-    Q_PROPERTY(QString walletBalance        READ balanceDisplay                             NOTIFY balanceChanged)
-    Q_PROPERTY(QString walletBalanceBTC     READ balanceBTC                                 NOTIFY balanceChanged)
-    Q_PROPERTY(QString walletBalanceCurrency     READ balanceCurrency                                 NOTIFY balanceChanged)
-    Q_PROPERTY(QString walletCreateDate     READ createDate                                 NOTIFY createDateChanged)
-    Q_PROPERTY(bool walletEscrow            READ escrow            WRITE setEscrow          NOTIFY escrowChanged)
-    Q_PROPERTY(SingleSignerListModel*   walletSingleSignerAssigned READ singleSignersAssigned   NOTIFY singleSignersAssignedChanged)
-    Q_PROPERTY(TransactionListModel*    transactionHistory         READ transactionHistory      NOTIFY transactionHistoryChanged)
-    Q_PROPERTY(TransactionListModel*    transactionHistoryShort    READ transactionHistoryShort NOTIFY transactionHistoryChanged)
-    Q_PROPERTY(QString walletAddress    READ address               WRITE setAddress             NOTIFY addressChanged)
-    Q_PROPERTY(QStringList walletusedAddressList    READ usedAddressList    NOTIFY usedAddressChanged)
-    Q_PROPERTY(QStringList walletunUsedAddressList  READ unUsedAddressList  NOTIFY unUsedAddressChanged)
-    Q_PROPERTY(QStringList walletusedChangedAddressList    READ usedChangeAddressList       NOTIFY usedChangeAddressChanged)
-    Q_PROPERTY(QStringList walletunUsedChangedAddressList  READ unUsedChangeddAddressList   NOTIFY unUsedChangeAddressChanged)
-    Q_PROPERTY(bool capableCreate           READ capableCreate                              NOTIFY capableCreateChanged)
-    Q_PROPERTY(QString walletDescription    READ description    WRITE setDescription    NOTIFY descriptionChanged)
-    Q_PROPERTY(QString walletDescriptior    READ descriptior                            NOTIFY descriptiorChanged)
-    Q_PROPERTY(int creationMode             READ getCreationMode     NOTIFY creationModeChanged)
-    Q_PROPERTY(int containsHWSigner         READ getContainsHWSigner NOTIFY containsHWSignerChanged)
-    Q_PROPERTY(bool isSharedWallet          READ isSharedWallet      NOTIFY isSharedWalletChanged)
-    Q_PROPERTY(bool isAssistedWallet        READ isAssistedWallet    NOTIFY isAssistedWalletChanged)
+    Q_PROPERTY(QString  walletId                                    READ id                     WRITE setId             NOTIFY idChanged)
+    Q_PROPERTY(int      walletM                                     READ m                      WRITE setM              NOTIFY mChanged)
+    Q_PROPERTY(int      walletN                                     READ n                      WRITE setN              NOTIFY nChanged)
+    Q_PROPERTY(int      walletNShared                               READ nShared                WRITE setNShared        NOTIFY nSharedChanged)
+    Q_PROPERTY(QString  walletName                                  READ name                   WRITE setName           NOTIFY nameChanged)
+    Q_PROPERTY(QString  walletAddressType                           READ addressType            WRITE setAddressType    NOTIFY addressTypeChanged)
+    Q_PROPERTY(QString  walletBalance                               READ balanceDisplay                                 NOTIFY balanceChanged)
+    Q_PROPERTY(QString  walletBalanceBTC                            READ balanceBTC                                     NOTIFY balanceChanged)
+    Q_PROPERTY(QString  walletBalanceCurrency                       READ balanceCurrency                                NOTIFY balanceChanged)
+    Q_PROPERTY(QString  walletCreateDate                            READ createDate                                     NOTIFY createDateChanged)
+    Q_PROPERTY(bool     walletEscrow                                READ escrow                 WRITE setEscrow         NOTIFY escrowChanged)
+    Q_PROPERTY(SingleSignerListModel* walletSingleSignerAssigned    READ singleSignersAssigned                          NOTIFY singleSignersAssignedChanged)
+    Q_PROPERTY(TransactionListModel*  transactionHistory            READ transactionHistory                             NOTIFY transactionHistoryChanged)
+    Q_PROPERTY(QString      walletAddress                           READ address                WRITE setAddress        NOTIFY addressChanged)
+    Q_PROPERTY(QStringList  walletusedAddressList                   READ usedAddressList                                NOTIFY usedAddressChanged)
+    Q_PROPERTY(QStringList  walletunUsedAddressList                 READ unUsedAddressList                              NOTIFY unUsedAddressChanged)
+    Q_PROPERTY(QStringList  walletusedChangedAddressList            READ usedChangeAddressList                          NOTIFY usedChangeAddressChanged)
+    Q_PROPERTY(QStringList  walletunUsedChangedAddressList          READ unUsedChangeddAddressList                      NOTIFY unUsedChangeAddressChanged)
+    Q_PROPERTY(bool         capableCreate                           READ capableCreate                                  NOTIFY capableCreateChanged)
+    Q_PROPERTY(QString      walletDescription                       READ description            WRITE setDescription    NOTIFY descriptionChanged)
+    Q_PROPERTY(QString      walletDescriptior                       READ descriptior                                    NOTIFY descriptiorChanged)
+    Q_PROPERTY(int          creationMode                            READ getCreationMode                                NOTIFY creationModeChanged)
+    Q_PROPERTY(int          containsHWSigner                        READ getContainsHWSigner                            NOTIFY containsHWSignerChanged)
+    Q_PROPERTY(bool         isSharedWallet                          READ isSharedWallet                                 NOTIFY isSharedWalletChanged)
+    Q_PROPERTY(bool         isAssistedWallet                        READ isAssistedWallet                               NOTIFY isAssistedWalletChanged)
 public:
     Wallet();
     Wallet(const QString &pr_id,
@@ -121,12 +120,8 @@ public:
     QTransactionPtr getTransactionByTxid(const QString& txid) const;
 
     TransactionListModel *transactionHistory() const;
-    QTransactionListModelPtr transactionHistoryPtr() const;
     void setTransactionHistory(const QTransactionListModelPtr &d);
-
-    TransactionListModel *transactionHistoryShort() const;
-    QTransactionListModelPtr transactionHistoryShortPtr() const;
-    void setTransactionHistoryShort(const QTransactionListModelPtr &d);
+    void updateTransaction(const QString txid, const QTransactionPtr& tx);
 
     int getCreationMode() const;
     void setCreationMode(int creationMode);
@@ -141,32 +136,31 @@ public:
     void setInitEventId(const QString &initEventId);    
     bool isAssistedWallet() const;
 private:
-    QString id_;
-    int m_;
-    int n_;
-    int nShared_;
-    QString name_;
-    QString addressType_;
-    qint64 balance_;
-    QDateTime createDate_;
-    bool escrow_;
-    QSingleSignerListModelPtr singleSignersAssigned_;
-    QTransactionListModelPtr  transactionHistory_;
-    QTransactionListModelPtr  transactionHistoryShort_;
+    QString m_id;
+    int m_m;
+    int n_n;
+    int m_nShared;
+    QString m_name;
+    QString m_addressType;
+    qint64 m_balance;
+    QDateTime m_createDate;
+    bool m_escrow;
+    QSingleSignerListModelPtr m_signers;
+    QTransactionListModelPtr  m_transactionHistory;
     // Additional member
-    QString address_;
-    QStringList usedAddressList_;
-    QStringList unUsedAddressList_;
-    QStringList usedChangeAddressList_;
-    QStringList unUsedChangedAddressList_;
+    QString m_address;
+    QStringList m_usedAddressList;
+    QStringList m_unUsedAddressList;
+    QStringList m_usedChangeAddressList;
+    QStringList m_unUsedChangedAddressList;
     // capable to create wallet
-    bool capableCreate_;
-    QString description_;
-    QString descriptior_;
-    int creationMode_;
-    bool isSharedWallet_;
-    QString roomId_;
-    QString initEventId_;
+    bool m_capableCreate;
+    QString m_description;
+    QString m_descriptior;
+    int m_creationMode;
+    bool m_isSharedWallet;
+    QString m_roomId;
+    QString m_initEventId;
 signals:
     void idChanged();
     void mChanged();
@@ -186,7 +180,6 @@ signals:
     void descriptionChanged();
     void descriptiorChanged();
     void transactionHistoryChanged();
-    void transactionHistoryShortChanged();
     void creationModeChanged();
     void containsHWSignerChanged();
     void nSharedChanged();

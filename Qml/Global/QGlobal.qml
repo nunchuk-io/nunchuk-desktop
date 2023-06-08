@@ -40,12 +40,15 @@ QtObject {
         ["#FFFFFF", "#031F2B","#EAEAEA", "#031F2B"],
         ["#FFFFFF", "#031F2B","#EAEAEA", "#1A333D"],
 
-        ["transparent", "transparent", "transparent", "transparent"], // eSEVEN
-        ["transparent", "transparent", "transparent", "transparent"], // eEIGHT
-        ["transparent", "transparent", "transparent", "transparent"], // eNINE
-        ["transparent", "transparent", "transparent", "transparent"], // eTEN
-        ["transparent", "transparent", "transparent", "transparent"], // eELEVEN
-        ["transparent", "transparent", "transparent", "transparent"], //eTWELVE
+        ["#F6D65D", "#9CAEB8", "#96833B", "#B8A048"],
+        ["transparent", "transparent", "#031F2B", "#1A333D"],
+
+        ["#C9DEF1", "#9CAEB8", "#031F2B", "#C9DEF1"],
+        ["transparent", "transparent", "#031F2B" ,"transparent"],
+        ["transparent", "transparent", "#F1FAFE", "transparent"],
+        ["#D0E2FF", "#FFFFFF", "transparent", "#D0E2FF"],
+        ["#031F2B", "#1A333D","#031F2B", "#031F2B"],
+
         ["transparent", "transparent", "transparent", "transparent"], // eTHIRTEEN
         ["transparent", "transparent", "transparent", "transparent"], // eFOURTEEN
         ["transparent", "transparent", "transparent", "transparent"]  // eFIFTEEN
@@ -59,12 +62,15 @@ QtObject {
         ["#FFFFFF", "#031F2B", "#EAEAEA", "#595959"],
         ["#FFFFFF", "#FFFFFF", "#EAEAEA", "#FFFFFF"],
 
-        ["transparent", "transparent", "transparent", "transparent"],   // eSEVEN
-        ["transparent", "transparent", "transparent", "transparent"],   // eEIGHT
-        ["transparent", "transparent", "transparent", "transparent"],   // eNINE
-        ["transparent", "transparent", "transparent", "transparent"],   // eTEN
-        ["transparent", "transparent", "transparent", "transparent"],   // eELEVEN
-        ["transparent", "transparent", "transparent", "transparent"],   // eTWELVE
+        ["transparent", "transparent", "transparent", "#F6D65D"],
+        ["#031F2B", "#9CAEB8", "#031F2B", "#031F2B"],
+
+        ["transparent", "transparent", "transparent","transparent"],
+        ["#031F2B", "#9CAEB8", "#031F2B", "#031F2B"],
+        ["#F1FAFE", "#839096", "transparent", "#F1FAFE"],
+        ["transparent", "transparent", "transparent", "transparent"],
+        ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"],
+
         ["transparent", "transparent", "transparent", "transparent"],   // eTHIRTEEN
         ["transparent", "transparent", "transparent", "transparent"],   // eFOURTEEN
         ["transparent", "transparent", "transparent", "transparent"]    // eFIFTEEN
@@ -78,12 +84,15 @@ QtObject {
         ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
         ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
 
-        ["transparent", "transparent", "transparent", "transparent"],// eSEVEN
-        ["transparent", "transparent", "transparent", "transparent"],// eEIGHT
-        ["transparent", "transparent", "transparent", "transparent"],// eNINE
-        ["transparent", "transparent", "transparent", "transparent"],// eTEN
-        ["transparent", "transparent", "transparent", "transparent"],// eELEVEN
-        ["transparent", "transparent", "transparent", "transparent"],// eTWELVE
+        ["#031F2B", "#C9DEF1", "#031F2B", "#031F2B"],
+        ["#031F2B", "#9CAEB8", "#F1FAFE", "#F1FAFE"],
+
+        ["#031F2B", "#C9DEF1", "#C9DEF1", "#031F2B"],
+        ["#031F2B", "#9CAEB8", "#F1FAFE", "#031F2B"],
+        ["#F1FAFE", "#839096", "#031F2B", "#F1FAFE"],
+        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
+        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
+
         ["transparent", "transparent", "transparent", "transparent"],// eTHIRTEEN
         ["transparent", "transparent", "transparent", "transparent"],// eFOURTEEN
         ["transparent", "transparent", "transparent", "transparent"],// eFIFTEEN

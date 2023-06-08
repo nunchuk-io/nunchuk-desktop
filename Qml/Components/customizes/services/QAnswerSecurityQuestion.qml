@@ -25,8 +25,10 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
-import "../../../Components/origins"
-import "../../../Components/customizes"
+import "../../origins"
+import "../../customizes"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
@@ -35,6 +37,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_716
+    signal clearText
 
     Column {
         anchors{
@@ -99,6 +102,13 @@ QOnScreenContentTypeA {
                         answer.showError = true
                     }
                 }
+                Connections {
+                    target: _content
+                    onClearText: {
+                        answer.textInputted = ""
+                    }
+                }
+
             }
         }
     }

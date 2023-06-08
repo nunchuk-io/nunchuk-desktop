@@ -30,6 +30,8 @@ import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     QOnScreenContent {
@@ -463,6 +465,7 @@ QScreen {
             }
             QContextMenu {
                 id: othersContextMenu
+                menuWidth: 280
                 labels: {
                     var ls = [];
                     ls.push(STR.STR_QML_312)
@@ -473,6 +476,7 @@ QScreen {
                     ls.push(STR.STR_QML_532)
                     if(ClientController.user.isPremiumUser){
                         ls.push(STR.STR_QML_686)
+//                        ls.push(STR.STR_QML_825)
                     }
                     return ls
                 }
@@ -486,10 +490,11 @@ QScreen {
                     ls.push("qrc:/Images/Images/import_031F2B.png")
                     if(ClientController.user.isPremiumUser){
                         ls.push("qrc:/Images/Images/cached_24px.png")
+                        ls.push("qrc:/Images/Images/settings-dark.svg")
                     }
                     return ls
                 }
-                enables: [true, true, true , true, true]
+                enables: [true, true, true , true, true, true]
                 functions: {
                     var ls = [];
                     ls.push(function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST); })
@@ -500,6 +505,7 @@ QScreen {
                     ls.push(function(){ openfileDialog.open(); })
                     if(ClientController.user.isPremiumUser){
                         ls.push(function(){ forceRefresh.open(); })
+                        ls.push(function(){ gaplimit.open(); })
                     }
                     return ls
                 }
@@ -753,6 +759,101 @@ QScreen {
         warningType:EWARNING.SUCCESS_MSG
         warningExplain:STR.STR_QML_690
     }
+
+    Popup {
+        id: gaplimit
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        background: Item{}
+        signal confirmSave()
+        signal confirmCancel()
+        Rectangle {
+            id: boxmask
+            width: 300
+            height: 250
+            radius: 24
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: boxmask.width
+                    height: boxmask.height
+                    radius: boxmask.radius
+                }
+            }
+            Column {
+                spacing: 12
+                anchors.fill: parent
+                anchors.margins: 24
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.Bold
+                    text: "Gap limit"
+                }
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    text: "Max: 100"
+                }
+                Item { height: 1; width: parent.width }
+                Item {
+                    width: 252
+                    height: 78
+                    QTextInputBoxTypeB {
+                        id: inputGapLimit
+                        label: ""
+                        boxWidth: 252
+                        boxHeight: 48
+                        isValid: textInputted != ""
+                        errorText: "Dummy"
+                        showError: true
+                    }
+                }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 12
+                    QTextButton {
+                        width: 120
+                        height: 36
+                        label.text: "Cancel"
+                        label.font.pixelSize: 12
+                        type: eTypeB
+                        onButtonClicked: {
+                            gaplimit.close()
+                        }
+                    }
+                    QTextButton {
+                        width: 120
+                        height: 36
+                        label.text: "Save"
+                        label.font.pixelSize: 12
+                        type: eTypeE
+                        onButtonClicked: {
+
+                        }
+                    }
+                }
+            }
+        }
+        DropShadow {
+            anchors.fill: boxmask
+            horizontalOffset: 3
+            verticalOffset: 5
+            spread: 0
+            radius: 8
+            samples: 30
+            color: "#aa000000"
+            source: boxmask
+        }
+    }
+
     /*==========================================================*/
     Connections {
         target: AppModel

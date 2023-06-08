@@ -26,6 +26,8 @@ import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import "../../origins"
 import "../../customizes"
+import "../../customizes/Texts"
+import "../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
@@ -48,8 +50,8 @@ Item {
         color: "#F5F5F5"
         anchors.verticalCenter: parent.verticalCenter
         QImage {
-            width: 30
-            height: 30
+            width: 24
+            height: 24
             anchors.centerIn: parent
             source: GlobalData.iconTypes(devicetype,signerType)
         }
@@ -128,7 +130,6 @@ Item {
         label.font.pixelSize: 10
         type: eTypeD
         visible: needXpub
-        border.width: 1
         enabled: visible
         anchors {
             right: parent.right

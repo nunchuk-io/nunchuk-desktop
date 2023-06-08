@@ -26,6 +26,7 @@ import QRCodeItem 1.0
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import "../origins"
+import "../customizes/Texts"
 import "../../../localization/STR_QML.js" as STR
 
 Item {

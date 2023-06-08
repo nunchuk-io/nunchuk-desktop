@@ -107,11 +107,7 @@ void EVT_TRANSACTION_IMPORT_REQUEST_HANDLER(QVariant msg) {
         QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         if(trans){
             AppModel::instance()->setTransactionInfo(trans);
-            if(AppModel::instance()->walletInfo()){
-                AppModel::instance()->startGetTransactionHistory(wallet_id);
-                AppModel::instance()->startGetUsedAddresses(wallet_id);
-                AppModel::instance()->startGetUnusedAddresses(wallet_id);
-            }
+            AppModel::instance()->requestSyncWalletDb(wallet_id);
         }
     }
 }
@@ -135,9 +131,7 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
                         QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                     room->startGetPendingTxs();
-                    AppModel::instance()->startGetTransactionHistory(wallet_id);
-                    AppModel::instance()->startGetUsedAddresses(wallet_id);
-                    AppModel::instance()->startGetUnusedAddresses(wallet_id);
+                    AppModel::instance()->requestSyncWalletDb(wallet_id);
                     AppModel::instance()->showToast(0,
                                                     STR_CPP_085,
                                                     EWARNING::WarningType::SUCCESS_MSG,
@@ -186,9 +180,7 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
             if(wallet_result && AppModel::instance()->walletList()){
                 AppModel::instance()->walletList()->updateBalance(wallet_id, wallet_result.data()->balanceSats());
             }
-            AppModel::instance()->startGetTransactionHistory(wallet_id);
-            AppModel::instance()->startGetUsedAddresses(wallet_id);
-            AppModel::instance()->startGetUnusedAddresses(wallet_id);
+            AppModel::instance()->requestSyncWalletDb(wallet_id);
         }
     }
 }
@@ -211,9 +203,8 @@ void EVT_TRANSACTION_SET_MEMO_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->walletInfo()->transactionHistory()->updateTransactionMemo(tx_id,
                                                                                             memo);
         }
-        if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistoryShort()){
-            AppModel::instance()->walletInfo()->transactionHistoryShort()->updateTransactionMemo(tx_id,
-                                                                                                 memo);
+        if (AppModel::instance()->walletInfo()->isAssistedWallet()) {
+            Draco::instance()->assistedWalletUpdateTx(wallet_id,tx_id,memo);
         }
         if(CLIENT_INSTANCE){
             CLIENT_INSTANCE->updateTransactionMemo(wallet_id,
@@ -245,9 +236,7 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
             if(wallet && wallet->isAssistedWallet()){
                 Draco::instance()->assistedWalletCancelTx(wallet_id,txid);
             }
-            AppModel::instance()->startGetTransactionHistory(wallet_id);
-            AppModel::instance()->startGetUsedAddresses(wallet_id);
-            AppModel::instance()->startGetUnusedAddresses(wallet_id);
+            AppModel::instance()->requestSyncWalletDb(wallet_id);
             if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
                 QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
             }
@@ -342,7 +331,7 @@ void EVT_TRANSACTION_CANCEL_REQUEST_HANDLER(QVariant msg) {
                                             STR_CPP_077,
                                             warningmsg);
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-                AppModel::instance()->startGetTransactionHistory(AppModel::instance()->transactionInfo()->walletId());
+                AppModel::instance()->requestSyncWalletDb(AppModel::instance()->transactionInfo()->walletId());
                 room->startGetPendingTxs();
                 if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
                     QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);

@@ -25,6 +25,8 @@ import QRCodeItem 1.0
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -45,12 +47,14 @@ Rectangle {
     }
     QImage {
         id: indicator
-        width: 30
-        height: 30
+        width: 24
+        height: 24
         source: GlobalData.icons(devicetype,signerType)
         anchors.left: parent.left
-        anchors.leftMargin: 24
+        anchors.leftMargin: 13
         anchors.verticalCenter: parent.verticalCenter
+        sourceSize.width: 100
+        sourceSize.height: 100
     }
     Column {
         id: text

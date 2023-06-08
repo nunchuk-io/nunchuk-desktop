@@ -3,12 +3,9 @@
         <file>main.qml</file>
         <file>Qml/Popups/ONS_Waiting.qml</file>
         <file>Qml/Components/customizes/QBoxShadow.qml</file>
-        <file>Qml/Components/customizes/QTextButton.qml</file>
         <file>Qml/Components/customizes/QConnection.qml</file>
         <file>Qml/Components/customizes/QScreen.qml</file>
-        <file>Qml/Components/customizes/QButtonLargeTail.qml</file>
         <file>Qml/Components/customizes/QWalletManagerDelegate.qml</file>
-        <file>Qml/Components/origins/QText.qml</file>
         <file>Qml/Components/origins/QImage.qml</file>
         <file>Qml/Components/origins/QListView.qml</file>
         <file>Qml/Components/origins/QTabView.qml</file>
@@ -17,33 +14,23 @@
         <file>Qml/Components/customizes/QMasterSignerDelegate.qml</file>
         <file>Qml/Components/customizes/QAssignedSignerDelegate.qml</file>
         <file>Qml/Components/customizes/QTransactionDelegate.qml</file>
-        <file>Qml/Components/customizes/QTextInputBox.qml</file>
         <file>Qml/Components/origins/QTextEdit.qml</file>
         <file>Qml/Components/origins/QTextField.qml</file>
-        <file>Qml/Components/customizes/QButtonMedium.qml</file>
         <file>Qml/Components/customizes/QSwitch.qml</file>
         <file>Qml/Components/customizes/QAddStep.qml</file>
         <file>Qml/Components/customizes/QBusyIndicator.qml</file>
-        <file>Qml/Components/customizes/QButtonIcon.qml</file>
         <file>Qml/Components/customizes/QTableElement.qml</file>
         <file>Qml/Components/customizes/QPageControl.qml</file>
         <file>Qml/Components/customizes/QNotification.qml</file>
-        <file>Qml/Components/customizes/QButtonTextLink.qml</file>
-        <file>Qml/Components/customizes/QRadioButtonTypeA.qml</file>
-        <file>Qml/Components/customizes/QRadioButtonTypeB.qml</file>
         <file>Qml/Components/customizes/QHomeInitialStep1.qml</file>
         <file>Qml/Components/customizes/QHomeInitialStep2.qml</file>
         <file>Qml/Components/customizes/QUnspentOutputDelegate.qml</file>
         <file>Qml/Components/customizes/QProgressbar.qml</file>
-        <file>Qml/Components/customizes/QCloseButton.qml</file>
         <file>Qml/Components/customizes/QTooltip.qml</file>
         <file>Qml/Components/origins/QMouseArea.qml</file>
-        <file>Qml/Components/customizes/QRefreshButton.qml</file>
         <file>Qml/Components/customizes/QQrScanner.qml</file>
-        <file>Qml/Components/customizes/QQrButton.qml</file>
         <file>Qml/Components/customizes/QQrExportResult.qml</file>
         <file>Qml/Components/customizes/QNumPad.qml</file>
-        <file>Qml/Components/customizes/QTextInputBoxTypeB.qml</file>
         <file>Qml/Components/customizes/QSeedSelectionItem.qml</file>
         <file>Qml/Components/customizes/QPassphraseInput.qml</file>
         <file>Qml/Screens/LocalMode/SCR_ADD_HARDWARE_SIGNER.qml</file>
@@ -86,7 +73,6 @@
         <file>Qml/Components/customizes/Chats/QRoomsPage.qml</file>
         <file>Qml/Components/customizes/QAvatar.qml</file>
         <file>Qml/Components/customizes/Chats/QRoomDelegate.qml</file>
-        <file>Qml/Components/customizes/QTextInputBoxTypeC.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_CONTACT_PENDING_REQUEST.qml</file>
         <file>Qml/Components/customizes/Chats/QContactSentDelegate.qml</file>
         <file>Qml/Components/customizes/Chats/QConversationDelegate.qml</file>
@@ -95,7 +81,6 @@
         <file>Qml/Screens/OnlineMode/SCR_CONFIGURE_SHARED_WALLET.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_ASSIGN_SIGNER_TO_SHARED_WALLET.qml</file>
         <file>Qml/Components/customizes/QSwitchTypeB.qml</file>
-        <file>Qml/Components/customizes/QRadioButtonTypeC.qml</file>
         <file>Qml/Components/customizes/QVolumeTypeA.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SHARED_WL_DEVICE_REGISTRATION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SHARED_WALLET_CONFIGURE.qml</file>
@@ -103,7 +88,6 @@
         <file>Qml/Screens/OnlineMode/SCR_STARTING_CREATE_SIGNER.qml</file>
         <file>Qml/Components/customizes/QOnScreenContent.qml</file>
         <file>Qml/Components/customizes/Chats/QAssignSignerDelegate.qml</file>
-        <file>Qml/Components/customizes/QTextInputBoxTypeA.qml</file>
         <file>Qml/Components/customizes/Chats/QWalletSignerDelegate.qml</file>
         <file>Qml/Components/customizes/Chats/QContextMenu.qml</file>
         <file>Qml/Components/customizes/Chats/QConversationInfo.qml</file>
@@ -124,10 +108,8 @@
         <file>Qml/Components/customizes/QLoggedInDevicesBox.qml</file>
         <file>Qml/Components/customizes/QLoggedInDeviceDetail.qml</file>
         <file>Qml/Components/customizes/QPopupInfo.qml</file>
-        <file>Qml/Components/customizes/QIconButton.qml</file>
         <file>Qml/Components/customizes/Chats/QContentCreateWL.qml</file>
         <file>Qml/Components/customizes/QAreaWalletDetail.qml</file>
-        <file>Qml/Components/customizes/QTextInputBoxTypeD.qml</file>
         <file>Qml/Components/customizes/QPopupBusyLoading.qml</file>
         <file>Qml/Components/customizes/QPopupToast.qml</file>
         <file>Qml/Components/customizes/QPopupGuestMode.qml</file>
@@ -150,7 +132,6 @@
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN.qml</file>
         <file>Qml/Components/customizes/QPopupInfoVertical.qml</file>
         <file>Qml/Components/customizes/QConfirmDeletingTypeB.qml</file>
-        <file>Qml/Components/customizes/QBaseButton.qml</file>
         <file>Qml/Components/customizes/Chats/QAttachment.qml</file>
         <file>Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml</file>
         <file>Qml/Components/customizes/QReEnterYourPassword.qml</file>
@@ -167,8 +148,83 @@
         <file>Qml/Screens/OnlineMode/SCR_SELECT_YOUR_LOCKDOWN_PERIOD.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_TAPSIGNER_RECOVERED_SUCCESS.qml</file>
+        <file>Qml/Components/customizes/Texts/QLato.qml</file>
+        <file>Qml/Components/customizes/Texts/QMontserrat.qml</file>
+        <file>Qml/Components/customizes/Texts/QHeadLine.qml</file>
+        <file>Qml/Components/customizes/Buttons/QBaseButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QIconTextButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QButtonLargeTail.qml</file>
+        <file>Qml/Components/customizes/Buttons/QButtonMedium.qml</file>
+        <file>Qml/Components/customizes/Buttons/QButtonTextLink.qml</file>
+        <file>Qml/Components/customizes/Buttons/QCloseButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QIconButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QQrButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeA.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeB.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeC.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRefreshButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QTextButton.qml</file>
+        <file>Qml/Components/customizes/Texts/QText.qml</file>
+        <file>Qml/Components/customizes/Buttons/QIconState.qml</file>
+        <file>Qml/Components/customizes/Buttons/QLatoState.qml</file>
+        <file>Qml/Components/customizes/Buttons/QIconRotate.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextInputBox.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextInputBoxTypeA.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextInputBoxTypeB.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextInputBoxTypeC.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextInputBoxTypeD.qml</file>
+        <file>Qml/Components/customizes/Buttons/QBackgroundState.qml</file>
+        <file>Qml/Components/customizes/Texts/QBadge.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ASSIGN_SIGNER_TO_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_BACKUP_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CHANGE_PASSWORD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CONFIGURE_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CONTACT_PENDING_REQUEST.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CREATE_ACCOUNT.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_CREATE_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_DUMMY_TRANSACTION_INFO.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ENTER_BACKUP_PASSWORD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_HOME_ONLINE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_INHERITANCE_CONFIRM_TRANSACTION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_INHERITANCE_TRANSACTION_DETAILS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_INHERITANCE_WITHDRAW_BALANCE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_ANSER_SECURITY_QUESTION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_SUCCESS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOGIN_ONLINE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_LOGIN_WITH_SOFTWARE_KEY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ONLINE_ADD_CONTACTS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_ACCOUNT.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_CONFIGURATION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_RECOVER_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REENTER_YOUR_PASSWORD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REPLACE_PRIMARY_KEY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REVIEW_SHARED_WALLET.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SELECT_YOUR_LOCKDOWN_PERIOD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SHARED_WALLET_CONFIGURE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SHARED_WL_DEVICE_REGISTRATION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_MANUALLY.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_STARTING_CREATE_SIGNER.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_TAPSIGNER_RECOVERED_SUCCESS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_UPDATE_PROFILE.qml</file>
+        <file>Qml/Components/customizes/QSendTransaction.qml</file>
+        <file>Qml/Components/customizes/QReceivedTransaction.qml</file>
+        <file>Qml/Components/customizes/QCreateTransaction.qml</file>
+        <file>Qml/Components/customizes/QPopupEmpty.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_LEDGER.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_LEDGER_ASK.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR_ASK.qml</file>
+        <file>Qml/Components/customizes/QAddAssistedWalletSigner.qml</file>
+        <file>Qml/Components/customizes/QProgressbarTypeA.qml</file>
     </qresource>
     <qresource prefix="/Images">
+        <file>Images/services-light.svg</file>
         <file>Images/Close.png</file>
         <file>Images/check_circle_outline_24px.png</file>
         <file>Images/edit.png</file>
@@ -179,8 +235,6 @@
         <file>Images/download.png</file>
         <file>Images/import.png</file>
         <file>Images/StepComplete.png</file>
-        <file>Images/RadioDeselected.png</file>
-        <file>Images/RadioEnabled.png</file>
         <file>Images/expand_less_24px.png</file>
         <file>Images/expand_more_24px.png</file>
         <file>Images/SignerChecked.png</file>
@@ -295,7 +349,6 @@
         <file>Images/OnlineMode/monetization_on-24px.png</file>
         <file>Images/OnlineMode/monetization_on-24px_FFFFFF.png</file>
         <file>Images/OnlineMode/PendingTransaction.png</file>
-        <file>Images/OnlineMode/help_outline-24px.png</file>
         <file>Images/OnlineMode/keys.png</file>
         <file>Images/OnlineMode/Cover.png</file>
         <file>Images/OnlineMode/history-24px.png</file>
@@ -374,18 +427,31 @@
         <file>Images/OnlineMode/remove-button.png</file>
         <file>Images/services-dark.svg</file>
         <file>Images/subscription-light.svg</file>
-        <file>Images/emergency-dark.svg</file>
         <file>Images/emergency-lockdown-illustrations.svg</file>
-        <file>Images/3.Active.svg</file>
         <file>Images/check-dark.svg</file>
         <file>Images/expand-more-dark.svg</file>
-        <file>Images/inheritance-dark.svg</file>
         <file>Images/local-currency-dark.svg</file>
         <file>Images/contact-support-dark.svg</file>
         <file>Images/contact-support-light.svg</file>
         <file>Images/local-currency-light.svg</file>
         <file>Images/chat-empty-state.svg</file>
         <file>Images/OnlineMode/attach_file.svg</file>
+        <file>Images/claim-inheritance-illustration.svg</file>
+        <file>Images/assisted-wallet.svg</file>
+        <file>Images/emergency-light.svg</file>
+        <file>Images/emergency-lockdown-dark.svg</file>
+        <file>Images/inheritance-light.svg</file>
+        <file>Images/key-recovery-dark.svg</file>
+        <file>Images/mulitsig-dark.svg</file>
+        <file>Images/signing-policy-dark.svg</file>
+        <file>Images/inheritance-dark.svg</file>
+        <file>Images/buffer-period-illustration.svg</file>
+        <file>Images/copy-light.svg</file>
+        <file>Images/radio-dark.svg</file>
+        <file>Images/member-discount-dark.svg</file>
+        <file>Images/OnlineMode/help_outline_24px.svg</file>
+        <file>Images/ExportFile.svg</file>
+        <file>Images/ledger-illustration.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

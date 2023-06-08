@@ -110,7 +110,7 @@ void ClientController::setConnection(Connection *c)
             }
             connection()->syncLoop();
         });
-        QTimer::singleShot(1000, [this]() {
+        timeoutHandler(1000, [this]() {
             refreshContacts();
         });
         AppSetting::instance()->setIsStarted(true,true);
@@ -414,13 +414,13 @@ void ClientController::setUserAvatar(const QString &url)
         if(url != ""){
             QString file_path = qUtils::QGetFilePath(url);
             if(connection()->user()->setAvatar(file_path)){
-                QTimer::singleShot(1000,[=]{
+                timeoutHandler(1000,[=]{
                     connection()->user()->load();
                 });
             }
         }else{
             connection()->user()->removeAvatar();
-            QTimer::singleShot(1000,[=]{
+            timeoutHandler(1000,[=]{
                 Draco::instance()->setUserProfile(m_me.name,"");
             });
         }

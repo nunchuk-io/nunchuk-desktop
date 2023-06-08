@@ -111,6 +111,10 @@ QString CreateRequestToken(const QString& signature,
                            QWarningMessage& msg);
 
 QString currencyLocale(qint64 amountSats);
+
+bool verifyCheckSum(const QByteArray& data, const QByteArray& expectedCheckSum);
+
+int Precision(double input);
 }
 
 #endif // QUTILS_H

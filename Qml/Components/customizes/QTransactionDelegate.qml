@@ -21,11 +21,13 @@ import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
     property bool transactionisReceiveTx: true
-    property var transactiondestinationList: ""
+    property string transactiondestinationList: ""
     property var transactiontxid: ""
     property int transactionstatus: 0
     property string transactionMemo: ""
@@ -67,15 +69,7 @@ Rectangle {
                 }
                 QText {
                     width: addressWidth
-                    text: {
-                        if(transactiondestinationList){
-                            var address = transactiondestinationList.reciever
-                            var textL = address.substring(0,6)
-                            var textR = address.substring(address.length - 4,address.length)
-                            return textL + "..." + textR
-                        }
-                        return ""
-                    }
+                    text: transactiondestinationList
                     font.family: "Lato"
                     font.pixelSize: 16
                     color: "#031F2B"

@@ -28,6 +28,8 @@ import NUNCHUCKTYPE 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -125,7 +127,7 @@ QScreen {
                                         leftMargin: 16
                                         verticalCenter: parent.verticalCenter
                                     }
-                                    source: index == devicelist.currentIndex ? "qrc:/Images/Images/RadioEnabled.png" : "qrc:/Images/Images/RadioDeselected.png"
+                                    source: index == devicelist.currentIndex ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
                                 }
                                 Column {
                                     width: 290

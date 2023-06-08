@@ -27,6 +27,8 @@ import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
+import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -329,7 +331,6 @@ QScreen {
                 QButtonMedium {
                     width: 185
                     height: 40
-                    radius: 20
                     type: eOUTLINE_NORMAL
                     label: STR.STR_QML_263
                     visible: checkboxMultiDes.checked

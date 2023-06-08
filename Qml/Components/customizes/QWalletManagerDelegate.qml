@@ -21,6 +21,8 @@ import QtQuick 2.4
 import QtGraphicalEffects 1.0
 import DataPool 1.0
 import "../origins"
+import "../customizes/Texts"
+import "../customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -86,7 +88,10 @@ Rectangle {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: qsTr("$%1 %2").arg(walletCurrency).arg(AppSetting.currency)
+                        text: qsTr("%1%2 %3")
+                        .arg(AppSetting.currencySymbol)
+                        .arg(walletCurrency)
+                        .arg(AppSetting.currency)
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.pixelSize: 12

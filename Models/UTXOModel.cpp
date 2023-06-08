@@ -293,13 +293,13 @@ void UTXOListModel::requestSort(int role, int order)
 
 void UTXOListModel::notifyUnitChanged()
 {
-    beginResetModel();
-    foreach (QUTXOPtr it, d_) {
-        if(it.data()){
-            emit it.data()->amountChanged();
+    const QVector<int>& roles = {};
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i).data()){
+            const auto idx = index(i);
+            emit dataChanged(idx, idx, roles);
         }
     }
-    endResetModel();
 }
 
 QString UTXOListModel::amountDisplay()
