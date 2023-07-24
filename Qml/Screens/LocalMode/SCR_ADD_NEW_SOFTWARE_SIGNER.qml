@@ -49,7 +49,7 @@ QScreen {
                 left: parent.left
                 leftMargin: 36
                 top: parent.top
-                topMargin: 65
+                topMargin: 65 + 24
             }
             verticalAlignment: Text.AlignVCenter
             color: "#031F2B"
@@ -65,7 +65,7 @@ QScreen {
             height: 500
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: 150
+            anchors.topMargin: 150 + 24
             columns: 6
             spacing: 12
             Repeater {

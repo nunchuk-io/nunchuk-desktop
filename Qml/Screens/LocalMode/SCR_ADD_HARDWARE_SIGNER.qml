@@ -326,8 +326,10 @@ QScreen {
                             onTagFound: {
                                 var jsonstring = "";
                                 jsonstring = AppModel.parseQRSigners(qrscaner.tags)
-                                signerinforInput.jsonProcess(jsonstring)
-                                qrscaner.close()
+                                if(jsonstring !== ""){
+                                    signerinforInput.jsonProcess(jsonstring)
+                                    qrscaner.close()
+                                }
                             }
                         }
                         function jsonProcess(jsonstring){

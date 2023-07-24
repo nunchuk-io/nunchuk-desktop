@@ -36,17 +36,13 @@ QScreen {
     readonly property int _REFRESH_DEVICE: 1
     readonly property int _LOADING: 2
     readonly property int _SUCCESSFULLY: 3
-    function closeScreen() {
-        QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_LEDGER)
-    }
-
     QOnScreenContentTypeA {
         visible: AppModel.addSignerWizard === _INFORMATION
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_811
-        onCloseClicked: closeScreen()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         content: Item {
             Row {
                 spacing: 36
@@ -134,19 +130,20 @@ QScreen {
 
         }
 
-        onPrevClicked: closeScreen()
+        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         onNextClicked: {
             AppModel.addSignerWizard = _REFRESH_DEVICE
         }
     }
-
+    readonly property string _LEDGER: "Ledger"
+    readonly property string _LEDGER_TYPE: "ledger"
     QOnScreenContentTypeA {
         visible: AppModel.addSignerWizard === _REFRESH_DEVICE
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_811
-        onCloseClicked: closeScreen()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         content: Item {
             Item {
                 width: 529
@@ -226,11 +223,12 @@ QScreen {
                         spacing: 8
                         currentIndex: -1
                         clip: true
-                        interactive : devicelist.count > 3
+                        interactive: devicelist.count > 3
                         ScrollBar.vertical: ScrollBar { active: true }
                         delegate: Item {
                             width: 342
                             height: 44
+                            visible: device_type === _LEDGER_TYPE
                             Rectangle {
                                 id: rect
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -260,7 +258,7 @@ QScreen {
                                         font.pixelSize: 14
                                         color: "#031F2B"
                                         font.weight: Font.DemiBold
-                                        text: device_type
+                                        text: _LEDGER
                                     }
                                     QText {
                                         width: parent.width
@@ -285,7 +283,7 @@ QScreen {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     devicelist.currentIndex = index
-                                    signerName = device_type
+                                    signerName = _LEDGER
                                 }
                             }
                         }
@@ -309,7 +307,6 @@ QScreen {
         }
         onNextClicked: {
             contentItem.addDevice()
-            AppModel.addSignerWizard = _LOADING
         }
     }
 
@@ -319,7 +316,7 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         enableHeader: false
-        onCloseClicked: closeScreen()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         content: Item {
             Column {
                 width: 400
@@ -339,14 +336,6 @@ QScreen {
                 }
             }
         }
-        Connections {
-            target: AppModel
-            onAddSignerPercentageChanged:{
-                if (AppModel.addSignerPercentage === 100) {
-                    AppModel.addSignerWizard = _SUCCESSFULLY
-                }
-            }
-        }
     }
 
     QOnScreenContent {
@@ -355,7 +344,7 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: ""
-        onCloseClicked: closeScreen()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         content: Item {
             Item {
                 anchors.centerIn: parent
@@ -405,9 +394,23 @@ QScreen {
                 label.text: STR.STR_QML_777
                 label.font.pixelSize: 16
                 type: eTypeE
-                onButtonClicked: closeScreen()
+                onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
             }
         }
     }
 
+    QPopupInfo{
+        id:_info1
+        contentText: STR.STR_QML_840_LEDGER
+        onGotItClicked: {
+            close()
+        }
+    }
+
+    Connections {
+        target: UserWallet
+        onAddHardwareAlert:{
+            _info1.open()
+        }
+    }
 }

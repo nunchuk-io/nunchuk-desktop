@@ -19,7 +19,9 @@
  **************************************************************************/
 #include "UTXOModel.h"
 #include "AppSetting.h"
+#include "AppModel.h"
 #include "qUtils.h"
+#include <algorithm>
 #include <QQmlEngine>
 
 UTXO::UTXO (const QString &txid,
@@ -27,14 +29,16 @@ UTXO::UTXO (const QString &txid,
             const QString &address,
             const qint64 amount,
             const int height,
-            const QString &memo):
+            const QString &memo,
+            const int status):
     txid_(txid),
     vout_(vout),
     address_(address),
     amount_(amount),
     height_(height),
     memo_(memo),
-    selected_(false)
+    selected_(false),
+    status_(status)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -45,7 +49,11 @@ UTXO::UTXO() : txid_(""),
     amount_(0),
     height_(-1),
     memo_(""),
-    selected_(false){}
+    selected_(false),
+    status_(0)
+{
+
+}
 
 UTXO::~UTXO() { }
 
@@ -162,6 +170,19 @@ void UTXO::setMemo(const QString &memo)
     }
 }
 
+int UTXO::status() const
+{
+    return status_;
+}
+
+void UTXO::setStatus(int status)
+{
+    if(status_ != status){
+        status_ = status;
+        emit statusChanged();
+    }
+}
+
 UTXOListModel::UTXOListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -189,6 +210,14 @@ QVariant UTXOListModel::data(const QModelIndex &index, int role) const{
         return d_[index.row()]->selected();
     case utxo_memo_role:
         return d_[index.row()]->memo();
+    case utxo_confirmed_role:
+    {
+        qint64 conf = 0;
+        if((int)nunchuk::CoinStatus::CONFIRMED == d_[index.row()]->status()){
+            conf = std::max(0, (AppModel::instance()->chainTip() - d_[index.row()]->height())+1);
+        }
+        return conf;
+    }
     default:
         return QVariant();
     }
@@ -211,14 +240,21 @@ QHash<int, QByteArray> UTXOListModel::roleNames() const {
     roles[utxo_amount_role] = "utxo_amount";
     roles[utxo_height_role] = "utxo_height";
     roles[utxo_selected_role] = "utxo_selected";
+    roles[utxo_confirmed_role] = "utxo_confirmed";
     roles[utxo_memo_role] = "utxo_memo";
     return roles;
 }
 
-void UTXOListModel::addUTXO(const QString &txid, const int vout, const QString &address, const qint64 amount, const int height,  const QString &memo)
+void UTXOListModel::addUTXO(const QString &txid,
+                            const int vout,
+                            const QString &address,
+                            const qint64 amount,
+                            const int height,
+                            const QString &memo,
+                            const int status )
 {
     beginResetModel();
-    d_.append(QUTXOPtr(new UTXO(txid, vout, address, amount, height, memo)));
+    d_.append(QUTXOPtr(new UTXO(txid, vout, address, amount, height, memo, status)));
     endResetModel();
 }
 

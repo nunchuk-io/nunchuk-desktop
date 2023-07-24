@@ -75,7 +75,7 @@ class AppModel final : public Controller
     Q_PROPERTY(QString    newKeySignMessage         READ newKeySignMessage       NOTIFY newKeySignMessageChanged)
     Q_PROPERTY(QString    newKeySignMessageSHA256   READ newKeySignMessageSHA256 NOTIFY newKeySignMessageChanged)
     Q_PROPERTY(int addSignerWizard READ addSignerWizard WRITE setAddSignerWizard NOTIFY addSignerWizardChanged)
-
+    DECLARE_PROPERTY(bool, IsPremiumUser, {}, {})
 public:
     static AppModel *instance();
     AppModel(AppModel &other) = delete;
@@ -85,6 +85,7 @@ public:
     void requestSyncWalletDb(const QString& wallet_id);
     void requestCreateUserWallets();
     void requestSyncSharedWallets();
+    void requestAssistedWalletsSetuped();
     void requestClearData();
 
     WalletListModel *walletList() const;
@@ -147,7 +148,7 @@ public:
     void setDestinationList(const QDestinationListModelPtr &destinationList);
 
     int walletListCurrentIndex() const;
-    void setWalletListCurrentIndex(int walletListCurrentIndex);
+    void setWalletListCurrentIndex(int index);
 
     int chainTip() const;
     void setChainTip(int chainTip);
@@ -342,6 +343,7 @@ signals:
     void newKeySignMessageChanged();
     void btcRatesChanged();
     void addSignerWizardChanged();
+    void forwardToast(int code, const QString &what, EWARNING::WarningType type, const QString &explain, POPUP::PopupType popup);
 
 public slots:
     void timerHealthCheckTimeHandle();
@@ -360,6 +362,7 @@ public slots:
     bool    updateSettingRestartRequired();
     QString getFilePath(const QString in);
     bool    enableDatabaseEncryption(const QString in);
+    void    recieveToast(int code, const QString &what, EWARNING::WarningType type, const QString &explain, POPUP::PopupType popup);
 };
 
 #endif // APPMODEL_H

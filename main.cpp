@@ -154,8 +154,9 @@ int main(int argc, char* argv[])
 #else
     QQuickViewer::instance()->registerContextProperty("SIGNET_SERVER", "");
 #endif
-    QQuickViewer::instance()->registerContextProperty("BLOCKSTREAM_TESTNET", BLOCKSTREAM_TESTNET);
-    QQuickViewer::instance()->registerContextProperty("BLOCKSTREAM_MAINNET", BLOCKSTREAM_MAINNET);
+    QQuickViewer::instance()->registerContextProperty("EXPLORER_TESTNET", EXPLORER_TESTNET);
+    QQuickViewer::instance()->registerContextProperty("EXPLORER_MAINNET", EXPLORER_MAINNET);
+    QQuickViewer::instance()->registerContextProperty("EXPLORER_SIGNNET", EXPLORER_SIGNNET);
     QQuickViewer::instance()->registerContextProperty("MAX_UNUSED_ADDR", MAX_UNUSED_ADDR);
     QQuickViewer::instance()->registerContextProperty("AppModel", QVariant::fromValue(AppModel::instance()));
     QQuickViewer::instance()->registerContextProperty("AppSetting", QVariant::fromValue(AppSetting::instance()));
@@ -184,14 +185,16 @@ int main(int argc, char* argv[])
         }
     , Qt::QueuedConnection);
     QObject::connect(QQuickViewer::instance()->getQuickWindow(), &QQuickView::windowStateChanged, [=](int windowState) {
-        static int state = -1;
-        if (state != windowState) {
-            state = windowState;
-            if (windowState == Qt::WindowNoState) {
-                Draco::instance()->checkForUpdate();
+        QtConcurrent::run([windowState]() {
+            static int state = -1;
+            if (state != windowState) {
+                state = windowState;
+                if (windowState == Qt::WindowNoState) {
+                    Draco::instance()->checkForUpdate();
+                }
             }
-        }
         });
+    });
     QQuickViewer::instance()->show();
     return app.exec();
 }

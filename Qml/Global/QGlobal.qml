@@ -123,7 +123,7 @@ QtObject {
         case "trezor":    img = "qrc:/Images/Images/Device_Icons/Trezor.svg"; break
         case "coldcard":  img = "qrc:/Images/Images/Device_Icons/ColdCard.svg"; break
         case "bitbox02":  img = "qrc:/Images/Images/Device_Icons/bitbox.png"; break
-        case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger.png"; break
+        case "ledger":    img = "qrc:/Images/Images/Device_Icons/Ledger.svg"; break
         case "software":  img = "qrc:/Images/Images/Device_Icons/software_drak.svg"; break
         case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
         default: switch(intType){
@@ -146,6 +146,7 @@ QtObject {
         case NUNCHUCKTYPE.NFC: n = "NFC"; break
         case NUNCHUCKTYPE.COLDCARD_NFC: n = "COLDCARD-NFC"; break
         case NUNCHUCKTYPE.SERVER: n = "PLATFORM"; break
+        case NUNCHUCKTYPE.UNKNOWN: n = "UNKNOWN"; break
         default: n = ""
         }
         return n
@@ -161,8 +162,22 @@ QtObject {
         case NUNCHUCKTYPE.NFC: name = STR.STR_QML_678; break
         case NUNCHUCKTYPE.COLDCARD_NFC: name = "COLDCARD-NFC"; break
         case NUNCHUCKTYPE.SERVER: name = "Platform"; break
+        case NUNCHUCKTYPE.UNKNOWN: name = "UNKNOWN"; break
         default: name = ""
         }
         return name
+    }
+
+    property int countRandom : 0
+    property var generatedValues: [0, 1, 2]
+    function swapPositions() {
+        let temp = generatedValues[countRandom % 3];
+        generatedValues[countRandom % 3] = generatedValues[(countRandom + 1) % 3];
+        generatedValues[(countRandom + 1) % 3] = temp;
+        countRandom++;
+        if (countRandom > 5) {
+            countRandom = 0;
+        }
+        return generatedValues;
     }
 }

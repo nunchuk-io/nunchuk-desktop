@@ -113,6 +113,7 @@ public:
 
     // USER_SUBSCRIPTION
     void getCurrentUserSubscription();
+    bool getTestNetUserSubscription();
 
     // ASSISTED_WALLETS
     QJsonObject getAssistedWallets();
@@ -124,6 +125,12 @@ public:
     QJsonObject assistedWalletGetListTx(const QString &wallet_id);
     QJsonObject assistedWalletDeleteListTx(const QString &wallet_id, const int offset, const int limit);
     void assistedSyncTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt);
+    QJsonObject assistedWalletGetListKey();
+    bool assistedWalletAddKey(const QString &request_id, const QJsonObject& data);
+    bool assistedWalletRemoveId(const QString &request_id);
+    QJsonObject assistedGetWalletConfig();
+    bool assistedWalletUpdateName(const QString &wallet_id, const QString &name, const QString &description, const QStringList& signerNames);
+    bool assistedKeyUpdateName(const QString &fingerPrint, const QString &name);
 
     bool verifyPasswordToken(const QString &password, const int action, QString &errormsg_or_token);
     QString randomNonce();
@@ -192,7 +199,18 @@ public:
                             QJsonObject& output,
                             QString& errormsg);
 
+    bool inheritancePlanUpdate(const QString& passwordToken,
+                               const QString& secQuesToken,
+                               const QStringList &signatures,
+                               const QJsonObject data,
+                               QJsonObject& output,
+                               QString& errormsg);
+
     bool inheritanceFakeUpdate();
+
+    bool inheritancePlanRequiredSignatures(const QJsonObject& data, ReqiredSignaturesInfo& output, QString& errormsg);
+
+    bool inheritancePlanBufferPeriod(QJsonArray& output, QString& errormsg);
 
     bool serverKeysGet(const QString & id_or_xfp,
                        QJsonObject& output,
@@ -215,7 +233,7 @@ private:
     Draco();
     ~Draco();
     QJsonObject postSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
-    QJsonObject postSync(const QString &cmd, QMap<QString, QString> params, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject putSync(const QString &cmd,  QMap<QString, QString> params, QJsonObject data, int &reply_code, QString &reply_msg);

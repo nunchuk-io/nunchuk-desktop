@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
+import NUNCHUCKTYPE 1.0
+import HMIEVENTS 1.0
 import QtQuick 2.4
 import "../origins"
 
@@ -42,5 +44,20 @@ Item {
     MouseArea {
         anchors.fill: parent
         onClicked: {root.focus = true}
+    }
+    function closeTo(tab) {
+        switch(tab) {
+        case NUNCHUCKTYPE.WALLET_TAB:
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST)
+            break;
+        case NUNCHUCKTYPE.SERVICE_TAB:
+            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST)
+            break;
+        case NUNCHUCKTYPE.CHAT_TAB:
+            QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST)
+            break;
+        case NUNCHUCKTYPE.SETTING_TAB:
+            break;
+        }
     }
 }

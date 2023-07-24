@@ -81,3 +81,36 @@ void EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED_HANDLER(QVariant msg)
         QUserWallets::instance()->serverKeyUpdatePoliciesSucceed();
     }
 }
+
+void EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST_HANLDER(QVariant msg) {
+    ServiceSetting::instance()->setInheritancePlan(msg.toInt());
+}
+
+void EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
+    QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(msg.toString());
+    if (!wallet.isNull() && QUserWallets::instance()->inheritanceGetPlan(wallet->id())) {
+        QMap<QString, QVariant> data;
+        data["state_id"] = E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN;
+        data["walletName"] = wallet->name();
+        ServiceSetting::instance()->setInheritanceWalletId(wallet->id());
+        QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+    }
+}
+
+void EVT_INHERITANCE_PLAN_FINALIZE_REQUEST_HANDLER(QVariant msg) {
+    int option = msg.toInt();
+    if (option == 2) {
+        emit QUserWallets::instance()->inheritanceDiscardChangeAlert();
+    } else if(option == 1) {
+        QUserWallets::instance()->inheritancePlanFinalizeChanges();
+    } else if(option == 3) {
+        if (QUserWallets::instance()->secQuesAnswer()) {
+            QUserWallets::instance()->inheritancePlanUpdate();
+        }
+    }
+}
+

@@ -35,8 +35,15 @@ class UTXO  : public QObject{
     Q_PROPERTY(QString  scriptPublickey  READ scriptPublickey  NOTIFY scriptPublickeyChanged)
     Q_PROPERTY(int      height  READ height         NOTIFY heightChanged)
     Q_PROPERTY(QString  memo    READ memo           NOTIFY memoChanged)
+    Q_PROPERTY(QString  status  READ status         NOTIFY statusChanged)
 public:
-    UTXO(const QString &txid, const int vout, const QString &address, const qint64 amount, const int height, const QString &memo);
+    UTXO(const QString &txid,
+         const int vout,
+         const QString &address,
+         const qint64 amount,
+         const int height,
+         const QString &memo,
+         const int status);
     UTXO();
     ~UTXO();
 
@@ -65,6 +72,9 @@ public:
     QString memo() const;
     void setMemo(const QString &memo);
 
+    int status() const;
+    void setStatus(int status);
+
 private:
     QString txid_;
     int vout_;
@@ -73,6 +83,7 @@ private:
     int height_;
     QString memo_;
     bool selected_;
+    int  status_;
 signals:
     void txidChanged();
     void voutChanged();
@@ -82,6 +93,7 @@ signals:
     void selectedChanged();
     void scriptPublickeyChanged();
     void memoChanged();
+    void statusChanged();
 };
 typedef QSharedPointer<UTXO> QUTXOPtr;
 
@@ -101,7 +113,8 @@ public:
                  const QString& address,
                  const qint64 amount,
                  const int height,
-                 const QString &memo);
+                 const QString &memo,
+                 const int status);
     QUTXOPtr getUTXOByIndex(const int index);
     void updateSelected(const QString &txid, const int vout);
     qint64 getAmount(const QString &txid, const int vout);
@@ -115,6 +128,7 @@ public:
         utxo_amount_role,
         utxo_height_role,
         utxo_selected_role,
+        utxo_confirmed_role,
         utxo_memo_role
     };
 

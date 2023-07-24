@@ -51,7 +51,7 @@ public:
     bool connected() const;
     bool needsPassPhraseSent() const;
     bool needsPinSent() const;
-    bool usableToAdd();
+    bool usableToAdd() const;
     QString masterSignerId() const;
     QString cardId() const;
     void setCardId(const QString &card_id);
@@ -110,7 +110,7 @@ public:
         device_usableToAdd_role,
         device_master_signer_id_role,
     };
-    bool containsFingerPrint(const QString& xfp);
+    bool containsFingerPrint(const QString& xfp) const;
 
     // For verify addr
     QStringList getXFPList();

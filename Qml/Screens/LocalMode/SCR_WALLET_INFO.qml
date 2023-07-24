@@ -374,7 +374,6 @@ QScreen {
                     STR.STR_QML_327,
                     STR.STR_QML_328,
                     STR.STR_QML_329,
-                    STR.STR_QML_330,
                     STR.STR_QML_674
                 ]
                 icons: [
@@ -383,7 +382,6 @@ QScreen {
                     "qrc:/Images/Images/backup.png",
                     "qrc:/Images/Images/backup.png",
                     "qrc:/Images/Images/fileDownload.png",
-                    "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/fileDownload.png"
                 ]
@@ -428,11 +426,7 @@ QScreen {
                         qrcodeExportResult.open()
                         QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, "keystone")
                         break;
-                    case 6: //"Export as QR Passport"
-                        qrcodeExportResult.open()
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, "passport")
-                        break;
-                    case 7: //"Export wallet to Bitbox"
+                    case 6: //"Export wallet to Bitbox"
                         var addrs = AppModel.walletInfo.walletunUsedAddressList;
                         if(addrs.length > 0){
                             displayAddressBusybox.addrToVerify = addrs[0]
@@ -476,7 +470,7 @@ QScreen {
                     ls.push(STR.STR_QML_532)
                     if(ClientController.user.isPremiumUser){
                         ls.push(STR.STR_QML_686)
-//                        ls.push(STR.STR_QML_825)
+                        ls.push(STR.STR_QML_825)
                     }
                     return ls
                 }
@@ -748,6 +742,8 @@ QScreen {
             onTriggered: {
                 stop()
                 forceRefreshBusybox.close()
+                _warning.warningType = EWARNING.SUCCESS_MSG
+                _warning.warningExplain = STR.STR_QML_690
                 _warning.open()
             }
         }
@@ -756,8 +752,6 @@ QScreen {
         id:_warning
         x:contenCenter.x + 36
         y:contenCenter.y + 520
-        warningType:EWARNING.SUCCESS_MSG
-        warningExplain:STR.STR_QML_690
     }
 
     Popup {
@@ -811,9 +805,14 @@ QScreen {
                         label: ""
                         boxWidth: 252
                         boxHeight: 48
-                        isValid: textInputted != ""
-                        errorText: "Dummy"
-                        showError: true
+                        validator: IntValidator {bottom: 0;}
+                        textInputted: AppModel.walletInfo.gapLimit
+                        onTextInputtedChanged: {
+                            if(!inputGapLimit.isValid){
+                                inputGapLimit.isValid = true
+                            }
+                            inputGapLimit.showError = false;
+                        }
                     }
                 }
                 Row {
@@ -822,8 +821,8 @@ QScreen {
                     QTextButton {
                         width: 120
                         height: 36
-                        label.text: "Cancel"
-                        label.font.pixelSize: 12
+                        label.text: STR.STR_QML_035
+                        label.font.pixelSize: 16
                         type: eTypeB
                         onButtonClicked: {
                             gaplimit.close()
@@ -832,11 +831,21 @@ QScreen {
                     QTextButton {
                         width: 120
                         height: 36
-                        label.text: "Save"
-                        label.font.pixelSize: 12
+                        label.text: STR.STR_QML_835
+                        label.font.pixelSize: 16
                         type: eTypeE
                         onButtonClicked: {
-
+                            if (parseInt(inputGapLimit.textInputted) > 100) {
+                                inputGapLimit.errorText = STR.STR_QML_834
+                                inputGapLimit.isValid = false
+                                inputGapLimit.showError = true;
+                            } else {
+                                gaplimit.close()
+                                _warning.warningType = EWARNING.SUCCESS_MSG
+                                _warning.warningExplain = STR.STR_QML_833
+                                _warning.open()
+                                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_GAP_LIMIT_REQUEST,inputGapLimit.textInputted)
+                            }
                         }
                     }
                 }

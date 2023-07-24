@@ -57,6 +57,7 @@ class ClientController final : public QObject
     Q_PROPERTY(QVariant user                     READ user              NOTIFY userChanged)
     Q_PROPERTY(bool attachmentEnable             READ attachmentEnable  NOTIFY attachmentEnableChanged)
     Q_PROPERTY(bool readySupport                 READ readySupport      NOTIFY readySupportChanged)
+
 private:
     ClientController();
     ~ClientController();

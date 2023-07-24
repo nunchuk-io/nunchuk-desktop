@@ -40,6 +40,12 @@ QMasterSigner::~QMasterSigner(){
 
 }
 
+void QMasterSigner::convert(const nunchuk::MasterSigner &src)
+{
+    isDraft = false;
+    masterSigner_ = src;
+}
+
 QString QMasterSigner::id() const{
     if(isDraft){
         return id_;

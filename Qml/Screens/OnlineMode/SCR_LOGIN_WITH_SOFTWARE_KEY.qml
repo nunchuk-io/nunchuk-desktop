@@ -79,6 +79,14 @@ QScreen {
                         }
                         primary_key_name.showError = false;
                     }
+                    onEnterKeyRequest: {
+                        commonError.visible = false
+                        commonError.text = ""
+                        var signIn = {"primary_key":primary_key,
+                            "passphrase":_passphrase.textInputted
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST, signIn)
+                    }
                 }
                 QText {
                     id: commonError
@@ -107,6 +115,8 @@ QScreen {
                             source: Draco.stayLoggedIn ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
                             MouseArea {
                                 anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: {Draco.stayLoggedIn = !Draco.stayLoggedIn}
                             }
                         }
@@ -118,6 +128,12 @@ QScreen {
                             font.family: "Lato"
                             font.pixelSize: 16
                             font.weight: Font.Normal
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {Draco.stayLoggedIn = !Draco.stayLoggedIn}
+                            }
                         }
                     }
                 }

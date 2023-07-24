@@ -72,7 +72,7 @@ void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
             if(walletImported && importmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
                 AppModel::instance()->walletList()->addWallet(walletImported);
                 AppModel::instance()->resetSignersChecked();
-                AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_Name_Role, Qt::AscendingOrder);
+                AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
                 int index = AppModel::instance()->walletList()->getWalletIndexById(walletImported.data()->id());
                 if(-1 != index){
                     AppModel::instance()->setWalletListCurrentIndex(index);

@@ -218,7 +218,8 @@ QScreen {
             QListView {
                 id: utxo_lst
                 width: 720
-                height: (pagecontrol.currentPage === pagecontrol.totalPage) ? (utxo_lst.count % utxo_lst.rowsOnPage)*utxo_lst.rowHeight : utxo_lst.pageHeight
+                height: (pagecontrol.currentPage !== pagecontrol.totalPage) ? utxo_lst.pageHeight :
+                                                                              utxo_lst.count % utxo_lst.rowsOnPage == 0 ? utxo_lst.pageHeight :((utxo_lst.count % utxo_lst.rowsOnPage) * utxo_lst.rowHeight)
                 model: AppModel.utxoList
                 anchors {
                     top: parent.top
@@ -238,7 +239,7 @@ QScreen {
                     amountWidth: amounttab.width
                     unspentoutput_address: utxo_address
                     unspentoutput_memo: utxo_memo
-                    unspentoutput_confirmation: Math.max(0, (AppModel.chainTip - utxo_height)+1)
+                    unspentoutput_confirmation: utxo_confirmed//Math.max(0, (AppModel.chainTip - utxo_height)+1)
                     unspentoutput_amount: utxo_amount
                     utxoSelected: utxo_selected
                     onButtonClicked: {QMLHandle.sendEvent(EVT.EVT_UTXOS_ITEM_SELECTED, index) }

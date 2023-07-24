@@ -36,6 +36,7 @@ Item {
     property alias bottomLeft: botLeft.sourceComponent
     property alias bottomRight: botRight.sourceComponent
     readonly property Item contentItem: contentInfo.item
+    readonly property Item rightItem: botRight.item
     property bool enableHeader: true
     property int offset: 36
     signal closeClicked()

@@ -789,6 +789,8 @@ QScreen {
                     source: Draco.stayLoggedIn ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
                     MouseArea {
                         anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onClicked: {Draco.stayLoggedIn = !Draco.stayLoggedIn}
                     }
                 }
@@ -800,6 +802,12 @@ QScreen {
                     font.family: "Lato"
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {Draco.stayLoggedIn = !Draco.stayLoggedIn}
+                    }
                 }
             }
             QText {

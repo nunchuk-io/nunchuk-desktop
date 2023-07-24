@@ -21,6 +21,7 @@
 #include "QQuickViewer.h"
 #include "Draco.h"
 #include "Chats/QUserWallets.h"
+#include "ServiceSetting.h"
 
 static QVariant passWordObject = QVariant();
 void SCR_REENTER_YOUR_PASSWORD_Entry(QVariant msg) {
@@ -76,6 +77,13 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             }
         }
         break;
+    case E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN: {
+        QString walletName = passWordObject.toMap().value("walletName").toString();
+        if (QUserWallets::instance()->requestInheritancePlanVerifyPassword(password)) {
+            ServiceSetting::instance()->setInheritanceWalletName(walletName);
+            QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
+        }
+    }break;
     default:
         break;
     }

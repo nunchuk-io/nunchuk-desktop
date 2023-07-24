@@ -58,16 +58,7 @@ class Wallet : public QObject
     Q_PROPERTY(int gapLimit                 			      READ gapLimit            NOTIFY gapLimitChanged)
 public:
     Wallet();
-    Wallet(const QString &pr_id,
-           const int pr_m,
-           const int pr_n,
-           const QString &pr_name,
-           const QString &pr_addrType,
-           const qint64 pr_balance,
-           const QDateTime &pr_createDate,
-           const bool pr_escrow,
-           const QSingleSignerListModelPtr &pr_signers,
-           const QString &pr_description);
+    Wallet(const nunchuk::Wallet &w);
     ~Wallet();
     enum class CreationMode : int {
         CREATE_NEW_WALLET,
@@ -76,6 +67,9 @@ public:
         CREATE_BY_IMPORT_CONFIGURATION,
         CREATE_BY_IMPORT_QRCODE
     };
+
+    void convert(const Wallet *w);
+    void convert(const nunchuk::Wallet &w);
 
     QString id() const;
     int m() const;
@@ -138,35 +132,40 @@ public:
     bool isAssistedWallet() const;
     int gapLimit() const;
     void setGapLimit(int gap_limit);
+    nunchuk::Wallet wallet() const;
+
+    //Assisted
+    void syncAissistedTxs();
+    void syncAissistedCancelledTxs();
 private:
-    QString m_id;
-    int m_m;
-    int n_n;
-    int m_nShared;
-    QString m_name;
-    QString m_addressType;
-    qint64 m_balance;
-    QDateTime m_createDate;
-    bool m_escrow;
+    QString m_id {};
+    int m_m {};
+    int n_n {};
+    int m_nShared {};
+    QString m_name {};
+    QString m_addressType {};
+    qint64 m_balance {};
+    QDateTime m_createDate {};
+    bool m_escrow {};
     QSingleSignerListModelPtr m_signers;
     QTransactionListModelPtr  m_transactionHistory;
     // Additional member
     QString m_address;
-    QStringList m_usedAddressList;
-    QStringList m_unUsedAddressList;
-    QStringList m_usedChangeAddressList;
-    QStringList m_unUsedChangedAddressList;
+    QStringList m_usedAddressList {};
+    QStringList m_unUsedAddressList {};
+    QStringList m_usedChangeAddressList {};
+    QStringList m_unUsedChangedAddressList {};
     // capable to create wallet
 
-    bool m_capableCreate;
-    QString m_description;
-    QString m_descriptior;
-    int m_creationMode;
-    bool m_isSharedWallet;
-    QString m_roomId;
-    QString m_initEventId;
+    bool m_capableCreate {true};
+    QString m_description {};
+    QString m_descriptior {};
+    int m_creationMode {};
+    bool m_isSharedWallet {};
+    QString m_roomId {};
+    QString m_initEventId {};
     int m_gapLimit {0};
-
+    nunchuk::Wallet m_wallet {false};
 signals:
     void idChanged();
     void mChanged();
@@ -195,7 +194,7 @@ signals:
     void isAssistedWalletChanged();
     void gapLimitChanged();
 };
-typedef QSharedPointer<Wallet> QWalletPtr;
+typedef OurSharedPointer<Wallet> QWalletPtr;
 
 bool sortWalletByNameAscending(const QWalletPtr &v1, const QWalletPtr &v2);
 bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2);
@@ -210,16 +209,6 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     QHash<int,QByteArray> roleNames() const;
-    void addWallet(const QString& pr_id,
-                   const int pr_m,
-                   const int pr_n,
-                   const QString& pr_name,
-                   const QString& pr_addrType,
-                   const qint64 pr_balance,
-                   const QDateTime& pr_createDate,
-                   const bool pr_escrow,
-                   QSingleSignerListModelPtr pr_signers,
-                   const QString &pr_description);
     void addWallet(const QWalletPtr &wallet);
     void replaceWallet(const QWalletPtr &wallet);
     void addSharedWallet(const QWalletPtr &wallet);
@@ -265,6 +254,6 @@ public:
 private:
     QList<QWalletPtr> d_;
 };
-typedef QSharedPointer<WalletListModel> QWalletListModelPtr;
+typedef OurSharedPointer<WalletListModel> QWalletListModelPtr;
 
 #endif // WALLETLISTMODEL_H

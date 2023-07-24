@@ -101,6 +101,13 @@ static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR_ASK                      
 static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER                           = {E::STATE_ID_SCR_ADD_LEDGER                          , SCR_ADD_LEDGER_Entry                          , SCR_ADD_LEDGER_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_LEDGER                           };
 static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR                           = {E::STATE_ID_SCR_ADD_TREZOR                          , SCR_ADD_TREZOR_Entry                          , SCR_ADD_TREZOR_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR                           };
 static const APPLICATION_STATE STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE         = {E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE        , SCR_SELECT_WALLET_CO_SIGN_POLICE_Entry        , SCR_SELECT_WALLET_CO_SIGN_POLICE_Exit        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SELECT_WALLET_CO_SIGN_POLICE         };
+static const APPLICATION_STATE STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN           = {E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN          , SCR_EDIT_YOUR_INHERITANCE_PLAN_Entry          , SCR_EDIT_YOUR_INHERITANCE_PLAN_Exit          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_EDIT_YOUR_INHERITANCE_PLAN           };
+static const APPLICATION_STATE STATE_ID_SCR_SHARE_YOUR_SECRETS                   = {E::STATE_ID_SCR_SHARE_YOUR_SECRETS                  , SCR_SHARE_YOUR_SECRETS_Entry                  , SCR_SHARE_YOUR_SECRETS_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SHARE_YOUR_SECRETS                   };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_COLDCARD_ASK                     = {E::STATE_ID_SCR_ADD_COLDCARD_ASK                    , SCR_ADD_COLDCARD_ASK_Entry                    , SCR_ADD_COLDCARD_ASK_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_COLDCARD_ASK                     };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_COLDCARD                         = {E::STATE_ID_SCR_ADD_COLDCARD                        , SCR_ADD_COLDCARD_Entry                        , SCR_ADD_COLDCARD_Exit                        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_COLDCARD                         };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER_EXIST                     = {E::STATE_ID_SCR_ADD_LEDGER_EXIST                    , SCR_ADD_LEDGER_EXIST_Entry                    , SCR_ADD_LEDGER_EXIST_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_LEDGER_EXIST                     };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR_EXIST                     = {E::STATE_ID_SCR_ADD_TREZOR_EXIST                    , SCR_ADD_TREZOR_EXIST_Entry                    , SCR_ADD_TREZOR_EXIST_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR_EXIST                     };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_COLDCARD_EXIST                   = {E::STATE_ID_SCR_ADD_COLDCARD_EXIST                  , SCR_ADD_COLDCARD_EXIST_Entry                  , SCR_ADD_COLDCARD_EXIST_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_COLDCARD_EXIST                   };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const STATE_TRIGGER STATE_ID_ROOT_trigger[25] = 
@@ -130,6 +137,32 @@ static const STATE_TRIGGER STATE_ID_ROOT_trigger[25] =
 	{E::EVT_GOTO_SERVICE_SETTING_TAB         , EVT_GOTO_SERVICE_SETTING_TAB_HANDLER         , &STATE_ID_SCR_SERVICE_SETTINGS        },
 	{E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST_HANDLER, &STATE_ID_SCR_SERVICE_SETTINGS        },
 	{E::EVT_NUNCHUK_LOGIN_SUCCEEDED          , EVT_NUNCHUK_LOGIN_SUCCEEDED_HANDLER          , &STATE_ID_SCR_HOME                    },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_ADD_COLDCARD_trigger[2] = 
+{
+	{E::EVT_SCAN_COLDCARD_DEVICE_REQUEST, EVT_SCAN_COLDCARD_DEVICE_REQUEST_HANDLER, NULL  },
+	{E::EVT_ADD_COLDCARD_DEVICE_REQUEST , EVT_ADD_COLDCARD_DEVICE_REQUEST_HANDLER , NULL  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_ADD_COLDCARD_ASK_trigger[1] = 
+{
+	{E::EVT_ADD_COLDCARD_REQUEST, EVT_ADD_COLDCARD_REQUEST_HANDLER, &STATE_ID_SCR_ADD_COLDCARD },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_ADD_COLDCARD_EXIST_trigger[2] = 
+{
+	{E::EVT_ADD_EXIST_COLDCARD_REQUEST, EVT_ADD_EXIST_COLDCARD_REQUEST_HANDLER, NULL                       },
+	{E::EVT_ADD_NEW_COLDCARD_REQUEST  , EVT_ADD_NEW_COLDCARD_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_COLDCARD },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,6 +210,15 @@ static const STATE_TRIGGER STATE_ID_SCR_ADD_LEDGER_trigger[2] =
 static const STATE_TRIGGER STATE_ID_SCR_ADD_LEDGER_ASK_trigger[1] = 
 {
 	{E::EVT_ADD_LEDGER_REQUEST, EVT_ADD_LEDGER_REQUEST_HANDLER, &STATE_ID_SCR_ADD_LEDGER },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_ADD_LEDGER_EXIST_trigger[2] = 
+{
+	{E::EVT_ADD_EXIST_LEDGER_REQUEST, EVT_ADD_EXIST_LEDGER_REQUEST_HANDLER, NULL                     },
+	{E::EVT_ADD_NEW_LEDGER_REQUEST  , EVT_ADD_NEW_LEDGER_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_LEDGER },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,6 +297,15 @@ static const STATE_TRIGGER STATE_ID_SCR_ADD_TREZOR_trigger[2] =
 static const STATE_TRIGGER STATE_ID_SCR_ADD_TREZOR_ASK_trigger[1] = 
 {
 	{E::EVT_ADD_TREZOR_REQUEST, EVT_ADD_TREZOR_REQUEST_HANDLER, &STATE_ID_SCR_ADD_TREZOR },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_ADD_TREZOR_EXIST_trigger[2] = 
+{
+	{E::EVT_ADD_EXIST_TREZOR_REQUEST, EVT_ADD_EXIST_TREZOR_REQUEST_HANDLER, NULL                     },
+	{E::EVT_ADD_NEW_TREZOR_REQUEST  , EVT_ADD_NEW_TREZOR_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_TREZOR },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,6 +480,18 @@ static const STATE_TRIGGER STATE_ID_SCR_DUMMY_TRANSACTION_INFO_trigger[7] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const STATE_TRIGGER STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_trigger[5] = 
+{
+	{E::EVT_UPDATE_ACTIVATION_DATE_REQUEST    , EVT_UPDATE_ACTIVATION_DATE_REQUEST_HANDLER    , NULL  },
+	{E::EVT_UPDATE_MESSAGE_REQUEST            , EVT_UPDATE_MESSAGE_REQUEST_HANDLER            , NULL  },
+	{E::EVT_UPDATE_BUFFER_PERIOD_REQUEST      , EVT_UPDATE_BUFFER_PERIOD_REQUEST_HANDLER      , NULL  },
+	{E::EVT_UPDATE_NOTIFICATION_PREFERENCE_REQ, EVT_UPDATE_NOTIFICATION_PREFERENCE_REQ_HANDLER, NULL  },
+	{E::EVT_NOT_UPDATE_ANY_NOTI_REQ           , EVT_NOT_UPDATE_ANY_NOTI_REQ_HANDLER           , NULL  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const STATE_TRIGGER STATE_ID_SCR_ENTER_BACKUP_PASSWORD_trigger[3] = 
 {
 	{E::EVT_INPUT_BACKUP_PASSWORD_REQUEST      , EVT_INPUT_BACKUP_PASSWORD_REQUEST_HANDLER      , NULL                                               },
@@ -439,7 +502,7 @@ static const STATE_TRIGGER STATE_ID_SCR_ENTER_BACKUP_PASSWORD_trigger[3] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[18] = 
+static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[22] = 
 {
 	{E::EVT_HOME_WALLET_SELECTED                 , EVT_HOME_WALLET_SELECTED_HANDLER                 , NULL                              },
 	{E::EVT_HOME_WALLET_COPY_ADDRESS             , EVT_HOME_WALLET_COPY_ADDRESS_HANDLER             , NULL                              },
@@ -459,6 +522,10 @@ static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[18] =
 	{E::EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER, &STATE_ID_SCR_MASTER_SIGNER_INFO  },
 	{E::EVT_ASK_LEDGER_REQ                       , EVT_ASK_LEDGER_REQ_HANDLER                       , &STATE_ID_SCR_ADD_LEDGER_ASK      },
 	{E::EVT_ASK_TREZOR_REQ                       , EVT_ASK_TREZOR_REQ_HANDLER                       , &STATE_ID_SCR_ADD_TREZOR_ASK      },
+	{E::EVT_EXIST_LEDGER_REQ                     , EVT_EXIST_LEDGER_REQ_HANDLER                     , &STATE_ID_SCR_ADD_LEDGER_EXIST    },
+	{E::EVT_EXIST_TREZOR_REQ                     , EVT_EXIST_TREZOR_REQ_HANDLER                     , &STATE_ID_SCR_ADD_TREZOR_EXIST    },
+	{E::EVT_EXIST_COLDCARD_REQ                   , EVT_EXIST_COLDCARD_REQ_HANDLER                   , &STATE_ID_SCR_ADD_COLDCARD_EXIST  },
+	{E::EVT_ASK_COLDCARD_REQ                     , EVT_ASK_COLDCARD_REQ_HANDLER                     , &STATE_ID_SCR_ADD_COLDCARD_ASK    },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -770,14 +837,18 @@ static const STATE_TRIGGER STATE_ID_SCR_SEND_trigger[5] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_SERVICE_SETTINGS_trigger[6] = 
+static const STATE_TRIGGER STATE_ID_SCR_SERVICE_SETTINGS_trigger[10] = 
 {
 	{E::EVT_CLAIM_INHERITANCE_CHECK_REQUEST     , EVT_CLAIM_INHERITANCE_CHECK_REQUEST_HANDLER     , NULL                                       },
 	{E::EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST, EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST_HANDLER, NULL                                       },
 	{E::EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED, EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED_HANDLER, NULL                                       },
+	{E::EVT_SERVICE_SELECT_WALLET_REQUEST       , EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER       , NULL                                       },
+	{E::EVT_INHERITANCE_PLAN_FINALIZE_REQUEST   , EVT_INHERITANCE_PLAN_FINALIZE_REQUEST_HANDLER   , NULL                                       },
 	{E::EVT_REENTER_YOUR_PASSWORD_REQUEST       , EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER       , &STATE_ID_SCR_REENTER_YOUR_PASSWORD        },
 	{E::EVT_SERVICE_SUPPORT_REQUEST             , EVT_SERVICE_SUPPORT_REQUEST_HANDLER             , &STATE_ID_SCR_HOME_ONLINE                  },
 	{E::EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST, EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST_HANDLER, &STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE },
+	{E::EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST  , EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST_HANLDER  , &STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN   },
+	{E::EVT_SHARE_YOUR_SECRET_REQUEST           , EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER           , &STATE_ID_SCR_SHARE_YOUR_SECRETS           },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -806,6 +877,14 @@ static const STATE_TRIGGER STATE_ID_SCR_SHARED_WL_DEVICE_REGISTRATION_trigger[4]
 	{E::EVT_SHARED_WALLET_EXPORT_QRCODE      , EVT_SHARED_WALLET_EXPORT_QRCODE_HANDLER      , NULL                               },
 	{E::EVT_SHARED_WALLET_SKIP_REGISTRATION  , EVT_SHARED_WALLET_SKIP_REGISTRATION_HANDLER  , NULL                               },
 	{E::EVT_SHARED_WL_DEVICE_REGISTRAION_BACK, EVT_SHARED_WL_DEVICE_REGISTRAION_BACK_HANDLER, &STATE_ID_SCR_BACKUP_SHARED_WALLET },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_SHARE_YOUR_SECRETS_trigger[1] = 
+{
+	{E::EVT_UPDATE_YOUR_SECRET_REQUEST, EVT_UPDATE_YOUR_SECRET_REQUEST_HANDLER, NULL  },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -991,7 +1070,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[73] = 
+static const STATE_SYSTEM STATE_ALL[80] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1066,6 +1145,13 @@ static const STATE_SYSTEM STATE_ALL[73] =
 	{E::STATE_ID_SCR_ADD_LEDGER                          , STATE_ID_SCR_ADD_LEDGER_trigger                          , ALEN(STATE_ID_SCR_ADD_LEDGER_trigger)                          , &STATE_ID_SCR_ADD_LEDGER                           },
 	{E::STATE_ID_SCR_ADD_TREZOR                          , STATE_ID_SCR_ADD_TREZOR_trigger                          , ALEN(STATE_ID_SCR_ADD_TREZOR_trigger)                          , &STATE_ID_SCR_ADD_TREZOR                           },
 	{E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE        , STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger        , ALEN(STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger)        , &STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE         },
+	{E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN          , STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_trigger          , ALEN(STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_trigger)          , &STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN           },
+	{E::STATE_ID_SCR_SHARE_YOUR_SECRETS                  , STATE_ID_SCR_SHARE_YOUR_SECRETS_trigger                  , ALEN(STATE_ID_SCR_SHARE_YOUR_SECRETS_trigger)                  , &STATE_ID_SCR_SHARE_YOUR_SECRETS                   },
+	{E::STATE_ID_SCR_ADD_COLDCARD_ASK                    , STATE_ID_SCR_ADD_COLDCARD_ASK_trigger                    , ALEN(STATE_ID_SCR_ADD_COLDCARD_ASK_trigger)                    , &STATE_ID_SCR_ADD_COLDCARD_ASK                     },
+	{E::STATE_ID_SCR_ADD_COLDCARD                        , STATE_ID_SCR_ADD_COLDCARD_trigger                        , ALEN(STATE_ID_SCR_ADD_COLDCARD_trigger)                        , &STATE_ID_SCR_ADD_COLDCARD                         },
+	{E::STATE_ID_SCR_ADD_LEDGER_EXIST                    , STATE_ID_SCR_ADD_LEDGER_EXIST_trigger                    , ALEN(STATE_ID_SCR_ADD_LEDGER_EXIST_trigger)                    , &STATE_ID_SCR_ADD_LEDGER_EXIST                     },
+	{E::STATE_ID_SCR_ADD_TREZOR_EXIST                    , STATE_ID_SCR_ADD_TREZOR_EXIST_trigger                    , ALEN(STATE_ID_SCR_ADD_TREZOR_EXIST_trigger)                    , &STATE_ID_SCR_ADD_TREZOR_EXIST                     },
+	{E::STATE_ID_SCR_ADD_COLDCARD_EXIST                  , STATE_ID_SCR_ADD_COLDCARD_EXIST_trigger                  , ALEN(STATE_ID_SCR_ADD_COLDCARD_EXIST_trigger)                  , &STATE_ID_SCR_ADD_COLDCARD_EXIST                   },
 
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -41,7 +41,7 @@ void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg) {
         AppModel::instance()->walletList()->updateName(AppModel::instance()->walletInfo()->id(), msg.toString());
         if(AppModel::instance()->walletList()){
             QString wallet_id = AppModel::instance()->walletInfo()->id();
-            AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_Name_Role, Qt::AscendingOrder);
+            AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
             int index = AppModel::instance()->walletList()->getWalletIndexById(wallet_id);
             if(-1 != index){
                 AppModel::instance()->setWalletListCurrentIndex(index);
@@ -222,10 +222,11 @@ void EVT_WALLET_INFO_EXPORT_QRCODE_HANDLER(QVariant msg) {
 
 void EVT_WALLET_INFO_IMPORT_PSBT_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    if (file_path != "" && AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+    QWalletPtr w = AppModel::instance()->walletInfoPtr();
+    if (file_path != "" && w){
+        QString wallet_id = w->id();
         QWarningMessage msgwarning;
-        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
+        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, w->isAssistedWallet(), msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
@@ -258,6 +259,7 @@ void EVT_WALLET_INFO_GAP_LIMIT_REQUEST_HANDLER(QVariant msg)
     if (AppModel::instance()->walletInfo()){
         QString wallet_id = AppModel::instance()->walletInfo()->id();
         uint gap_limit = msg.toUInt();
-        bridge::nunchukUpdateWalletGapLimit(wallet_id,gap_limit);
+        bridge::nunchukUpdateWalletGapLimit(wallet_id, gap_limit);
+        AppModel::instance()->walletInfo()->setGapLimit(gap_limit);
     }
 }

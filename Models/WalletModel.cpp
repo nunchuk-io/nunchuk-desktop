@@ -23,68 +23,51 @@
 #include "AppModel.h"
 #include <QQmlEngine>
 #include "bridgeifaces.h"
+#include "Draco.h"
 
 Wallet::Wallet() :
-    m_id(""),
-    m_m(0),
-    n_n(0),
-    m_nShared(0),
-    m_name(""),
     m_addressType(QString::number((int)ENUNCHUCK::AddressType::NATIVE_SEGWIT)), // Default is NATIVE_SEGWIT
-    m_balance(0),
     m_createDate(QDateTime::currentDateTime()),
-    m_escrow(false),
     m_signers(QSingleSignerListModelPtr(new SingleSignerListModel())),
     m_transactionHistory(QTransactionListModelPtr(new TransactionListModel())),
-    m_capableCreate(true),
-    m_description(""),
-    m_descriptior(""),
-    m_creationMode((int)CreationMode::CREATE_NEW_WALLET),
-    m_isSharedWallet(false),
-    m_roomId(""),
-    m_initEventId("")
+    m_creationMode((int)CreationMode::CREATE_NEW_WALLET)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Wallet::Wallet(const QString &pr_id,
-               const int pr_m,
-               const int pr_n,
-               const QString &pr_name,
-               const QString &pr_addrType,
-               const qint64 pr_balance,
-               const QDateTime &pr_createDate,
-               const bool pr_escrow,
-               const QSingleSignerListModelPtr& pr_signers,
-               const QString &pr_description) :
-    m_id(pr_id),
-    m_m(pr_m),
-    n_n(pr_n),
-    m_nShared(0),
-    m_name(pr_name),
-    m_addressType(pr_addrType),
-    m_balance(pr_balance),
-    m_createDate(pr_createDate),
-    m_escrow(pr_escrow),
-    m_signers(pr_signers),
-    m_transactionHistory(QTransactionListModelPtr(new TransactionListModel())),
-    m_address("There is no unused address"),
-    m_capableCreate(true),
-    m_description(pr_description),
-    m_descriptior(""),
-    m_creationMode((int)CreationMode::CREATE_NEW_WALLET),
-    m_isSharedWallet(false),
-    m_roomId(""),
-    m_initEventId("")
+Wallet::Wallet(const nunchuk::Wallet &w) : m_wallet(w)
 {
-    m_unUsedAddressList.clear();
-    m_usedAddressList.clear();
-    m_usedChangeAddressList.clear();
-    m_unUsedChangedAddressList.clear();
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 Wallet::~Wallet(){
 
+}
+
+void Wallet::convert(const Wallet *w)
+{
+    if (w) {
+        m_wallet = w->wallet();
+    }
+}
+
+void Wallet::convert(const nunchuk::Wallet &w)
+{
+    setId(QString::fromStdString(w.get_id()));
+    setM(w.get_m());
+    setN(w.get_n());
+    setName(QString::fromStdString(w.get_name()));
+    setAddressType(QString::number((int)w.get_address_type()));
+    setBalance(w.get_unconfirmed_balance());
+    setCreateDate(QDateTime::fromTime_t(w.get_create_date()));
+    setEscrow(w.is_escrow());
+    setGapLimit(w.get_gap_limit());
+    setDescription(QString::fromStdString(w.get_description()));
+    m_signers->cleardata();
+    for (nunchuk::SingleSigner signer : w.get_signers()) {
+        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
+        m_signers->addSingleSigner(ret);
+    }
 }
 
 QString Wallet::id() const {return m_id;}
@@ -432,6 +415,74 @@ void Wallet::setGapLimit(int gap_limit)
     }
 }
 
+nunchuk::Wallet Wallet::wallet() const
+{
+    return m_wallet;
+}
+
+void Wallet::syncAissistedTxs()
+{
+    if(isAssistedWallet()){
+        QString wallet_id = id();
+        QJsonObject data = Draco::instance()->assistedWalletGetListTx(wallet_id);
+        QJsonArray transactions = data.value("transactions").toArray();
+        for(QJsonValue js_value : transactions){
+            QJsonObject transaction = js_value.toObject();
+            QString status = transaction.value("status").toString();
+            QString psbt = transaction.value("psbt").toString();
+            QString note = transaction.value("note").toString();
+            QString memo = (note != "")? note : "--";
+            QString type = transaction.value("type").toString();
+            QString transaction_id = transaction.value("transaction_id").toString();
+            if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
+                QWarningMessage _msg;
+                QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
+                if(tran && (int)EWARNING::WarningType::NONE_MSG == _msg.type()){
+                    if(transactionHistory()){
+                        QTransactionPtr tx = transactionHistory()->getTransactionByTxid(transaction_id);
+                        if(tx && 0 != QString::compare(memo, tx.data()->memo(), Qt::CaseInsensitive)){
+                            bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
+                        }
+                    }
+                    long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
+                    // honey badger feature: schedule broadcast
+                    long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
+                    if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
+                        bridge::nunchukUpdateTransactionSchedule(wallet_id, transaction_id, broadcast_time_milis/1000,_msg);
+                    }
+                }
+            }
+        }
+        //Remove cancelled txs
+        syncAissistedCancelledTxs();
+    }
+}
+
+void Wallet::syncAissistedCancelledTxs()
+{
+    if(isAssistedWallet()){
+        int offset = 0;
+        const int limit = 10;
+        QString wallet_id = id();
+        while (true) {
+            QJsonObject data = Draco::instance()->assistedWalletDeleteListTx(wallet_id, offset, limit);
+            QJsonArray transactions = data.value("transactions").toArray();
+            for (QJsonValue js_value : transactions) {
+                QJsonObject transaction = js_value.toObject();
+                QString wallet_local_id = transaction.value("wallet_local_id").toString();
+                QString transaction_id = transaction.value("transaction_id").toString();
+                if(transactionHistory() && transactionHistory()->contains(transaction_id)){
+                    bridge::nunchukDeleteTransaction(wallet_local_id, transaction_id);
+                }
+            }
+            if (transactions.size() == 0 || transactions.size() < limit) {
+                return; // exit while loop
+            }
+            offset += transactions.size();
+        }
+    }
+}
+
 WalletListModel::WalletListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -515,24 +566,6 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     return roles;
 }
 
-void WalletListModel::addWallet(const QString &pr_id,
-                                const int pr_m,
-                                const int pr_n,
-                                const QString &pr_name,
-                                const QString &pr_addrType,
-                                const qint64 pr_balance,
-                                const QDateTime &pr_createDate,
-                                const bool pr_escrow,
-                                QSingleSignerListModelPtr pr_signers,
-                                const QString &pr_description)
-{
-    beginResetModel();
-    if(!containsId(pr_id)){
-        d_.append(QWalletPtr(new Wallet(pr_id, pr_m, pr_n, pr_name, pr_addrType, pr_balance, pr_createDate, pr_escrow, pr_signers, pr_description)));
-    }
-    endResetModel();
-}
-
 void WalletListModel::addWallet(const QWalletPtr &wallet)
 {
     if(wallet && !containsId(wallet.data()->id())){
@@ -571,6 +604,7 @@ void WalletListModel::addSharedWallet(const QWalletPtr &wallet)
 
 void WalletListModel::updateBalance(const QString &walletId, const qint64 balance)
 {
+    DBG_INFO << walletId << balance;
     for (int i = 0; i < d_.count(); i++) {
         if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
             d_.at(i)->setBalance(balance);
@@ -746,7 +780,7 @@ void WalletListModel::requestSort(int role, int order)
     beginResetModel();
     if(d_.count() > 1){
         switch (role) {
-        case wallet_Name_Role:
+        case wallet_createDate_Role:
         {
             if(Qt::DescendingOrder == order){
                 qSort(d_.begin(), d_.end(), sortWalletByNameDescending);
@@ -812,10 +846,10 @@ void WalletListModel::cleardata()
 
 bool sortWalletByNameAscending(const QWalletPtr &v1, const QWalletPtr &v2)
 {
-    return (QString::compare((v1.data()->name()), (v2.data()->name())) < 0);
+    return v1.data()->createDateDateTime() < v2.data()->createDateDateTime();
 }
 
 bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2)
 {
-    return (QString::compare((v1.data()->name()), (v2.data()->name())) > 0);
+    return v1.data()->createDateDateTime() > v2.data()->createDateDateTime();
 }

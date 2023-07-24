@@ -92,18 +92,18 @@ Popup {
                 QTextButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: Math.max(lwidths[0],label.paintedWidth + 20*2)
-                    height: 36
+                    height: 48
                     label.text: labels[0]
-                    label.font.pixelSize: 12
+                    label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {confirmYes()}
                 }
                 QTextButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: Math.max(lwidths[1],label.paintedWidth + 10*2)
-                    height: 36
+                    height: 48
                     label.text: labels[1]
-                    label.font.pixelSize: 12
+                    label.font.pixelSize: 16
                     type: eTypeB
                     onButtonClicked: {confirmNo()}
                 }

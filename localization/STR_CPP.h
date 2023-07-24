@@ -121,4 +121,6 @@ const static QString STR_CPP_115 = QString("Invalid password. Unable to restore 
 const static QString STR_CPP_116 = QString("The Magic Phrase you entered does not match the one that you requested.");
 const static QString STR_CPP_117 = QString("Policies have been updated");
 const static QString STR_CPP_118 = QString("Could not claim inheritance");
+const static QString STR_CPP_119 = QString("The inheritance plan has been updated");
+const static QString STR_CPP_120 = QString("Invalid activation time");
 #endif // STR_CPP_H

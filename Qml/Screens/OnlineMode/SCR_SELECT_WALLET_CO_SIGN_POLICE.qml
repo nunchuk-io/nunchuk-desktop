@@ -61,10 +61,10 @@ QScreen {
                         labelTop: model.wallet_name
                         labelCenter: qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(STR.STR_QML_069)
                         labelBottom: model.wallet_Balance + RoomWalletData.unitValue
-                        walletIcon: model.wallet_isSharedWallet ? "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png" :
+                        icon: model.wallet_isSharedWallet ? "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png" :
                                                                  model.wallet_isAssistedWallet ? "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png" :
                                                                                               model.wallet_Escrow ?  "qrc:/Images/Images/OnlineMode/Escrow Wallet.png" : ""
-                        walletType: model.wallet_isSharedWallet ? STR.STR_QML_438 :
+                        type: model.wallet_isSharedWallet ? STR.STR_QML_438 :
                                                                  model.wallet_isAssistedWallet ? STR.STR_QML_679 : ""
                         selected: currentSelect === index
                         onButtonClicked: {

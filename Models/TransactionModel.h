@@ -116,7 +116,9 @@ class Transaction : public QObject {
     Q_PROPERTY(bool                         createByMe              READ createByMe             NOTIFY createByMeChanged)
     Q_PROPERTY(QString                      psbt                    READ psbt                   NOTIFY psbtChanged)
     Q_PROPERTY(QString                      serverKeyMessage        READ serverKeyMessage       NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(QString                      packageFeeRate          READ packageFeeRate         NOTIFY packageFeeRateChanged)
     Q_PROPERTY(QString                      destination             READ destination            NOTIFY destinationListChanged)
+    Q_PROPERTY(bool                         isCpfp                  READ isCpfp                 CONSTANT)
 public:
     Transaction();
     ~Transaction();
@@ -178,7 +180,7 @@ public:
 
     nunchuk::Transaction nunchukTransaction() const;
     void setNunchukTransaction(const nunchuk::Transaction &tx);
-    QString roomId() const;
+    QString roomId();
     void setRoomId(const QString &roomId);
     QString initEventId() const;
     void setInitEventId(const QString &initEventId);
@@ -186,8 +188,12 @@ public:
     void setCreateByMe(bool createByMe);
     QString serverKeyMessage() const;
     void setServerKeyMessage(const QJsonObject &data);
+    QString packageFeeRate() ;
+    void setPackageFeeRate(int satvKB);
 
     QString destination();
+    bool isCpfp();
+    time_t scheduleTime();
 private:
     QDestinationListModelPtr    m_destinations;
     QSingleSignerListModelPtr   m_signers;
@@ -199,6 +205,7 @@ private:
     QString                     m_initEventId;
     bool                        m_createByMe;
     QString                     m_serverKeyMessage;
+    int                         m_packageFeeRate {0};
 
 signals:
     void txidChanged();
@@ -226,6 +233,7 @@ signals:
     void walletIdChanged();
     void psbtChanged();
     void serverKeyMessageChanged();
+    void packageFeeRateChanged();
 };
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 
@@ -253,6 +261,7 @@ public:
     void linkingReplacedTransactions();
     void cleardata();
     int  count() const;
+    bool contains(const QString &tx_id);
 
     enum TransactionRoles {
         transaction_txid_role,
@@ -280,7 +289,6 @@ signals:
     void countChanged();
 
 private:
-    bool contains(const QString &tx_id);
     QList<QTransactionPtr> m_data;
 };
 typedef OurSharedPointer<TransactionListModel> QTransactionListModelPtr;

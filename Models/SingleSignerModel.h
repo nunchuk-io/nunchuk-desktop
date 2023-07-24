@@ -51,6 +51,8 @@ public:
 
     ~QSingleSigner();
 
+    void convert(const nunchuk::SingleSigner& src);
+
     nunchuk::SingleSigner originSingleSigner() const;
     void setOriginSingleSigner(const nunchuk::SingleSigner signer);
 
@@ -69,7 +71,7 @@ public:
     QString derivationPath();
     void setDerivationPath(const QString& d);
 
-    QString masterFingerPrint();
+    QString masterFingerPrint() const;
     void setMasterFingerPrint(const QString& d);
 
     QString masterSignerId();
@@ -84,7 +86,7 @@ public:
     bool signerSigned() const;
     void setSignerSigned(const bool d);
 
-    bool needTopUpXpub() const;
+    bool needTopUpXpub();
     void setNeedTopUpXpub(bool needTopUpXpub);
 
     QString message() const;
@@ -100,7 +102,7 @@ public:
     bool checked() const;
     void setChecked(const bool checked);
 
-    bool readyToSign();
+    bool readyToSign() const;
 
     bool isColdCard();
 
@@ -114,6 +116,7 @@ public:
 
     QString cardId();
     void setCardId(const QString &card_id);
+    nunchuk::SingleSigner singleSigner() const;
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -230,6 +233,7 @@ public:
     };
     void requestSort(int role, int order);
     QList<QSingleSignerPtr> fullList() const;
+    std::vector<nunchuk::SingleSigner> signers() const;
     QSharedPointer<SingleSignerListModel> clone() const;
     void cleardata();
 public slots:

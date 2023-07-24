@@ -124,7 +124,7 @@ bool nunchukiface::SetPassphrase(const std::string &passphrase, QWarningMessage&
 nunchuk::Wallet nunchukiface::CreateWallet(const std::string &name,
                                            int m,
                                            int n,
-                                           std::vector<nunchuk::SingleSigner> &signers,
+                                           const std::vector<nunchuk::SingleSigner> &signers,
                                            nunchuk::AddressType address_type,
                                            bool is_escrow,
                                            const std::string &desc,
@@ -167,7 +167,7 @@ nunchuk::Wallet nunchukiface::CreateWallet(const nunchuk::Wallet &wallet, bool a
 std::string nunchukiface::DraftWallet(const std::string &name,
                                       int m,
                                       int n,
-                                      std::vector<nunchuk::SingleSigner> &signers,
+                                      const std::vector<nunchuk::SingleSigner> &signers,
                                       nunchuk::AddressType address_type,
                                       bool is_escrow,
                                       const std::string &desc,
@@ -383,6 +383,22 @@ nunchuk::SingleSigner nunchukiface::GetSignerFromMasterSigner(const std::string 
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetSignerFromMasterSigner(mastersigner_id, wallet_type, address_type, index);
+        }
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::SingleSigner nunchukiface::GetSignerFromMasterSigner(const std::string &mastersigner_id,
+                                                              const std::string &derivation_path,
+                                                              QWarningMessage& msg)
+{
+    nunchuk::SingleSigner ret("","","","","",0,"");
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSignerFromMasterSigner(mastersigner_id, derivation_path);
         }
     }
     catch (std::exception &e) {
@@ -2126,13 +2142,31 @@ std::string nunchukiface::SignHealthCheckMessage(const nunchuk::SingleSigner &si
     return ret;
 }
 
-nunchuk::SingleSigner nunchukiface::GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id,
-                                                              QWarningMessage& msg)
+nunchuk::SingleSigner nunchukiface::GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id, const nunchuk::WalletType &wallet_type, const nunchuk::AddressType &address_type, QWarningMessage &msg)
 {
     nunchuk::SingleSigner ret("","","","","",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->GetDefaultSignerFromMasterSigner(mastersigner_id, nunchuk::WalletType::MULTI_SIG, nunchuk::AddressType::ANY);
+            ret = nunchuk_instance_[nunchukMode()]->GetDefaultSignerFromMasterSigner(mastersigner_id, wallet_type, address_type);
+        }
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::SingleSigner nunchukiface::GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id, QWarningMessage& msg)
+{
+    return GetDefaultSignerFromMasterSigner(mastersigner_id, nunchuk::WalletType::MULTI_SIG, nunchuk::AddressType::ANY, msg);
+}
+
+bool nunchukiface::IsCPFP(const std::string &wallet_id, const nunchuk::Transaction &tx, nunchuk::Amount &package_fee_rate, QWarningMessage& msg)
+{
+    bool ret {false};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->IsCPFP(wallet_id, tx, package_fee_rate);
         }
     }
     catch (std::exception &e) {

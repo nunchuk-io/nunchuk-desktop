@@ -75,6 +75,11 @@ bool QUserWallets::requestServerKeyVerifyPassword(const QString &password)
     return requestVerifyPassword(password,(int)TARGET_ACTION::UPDATE_SERVER_KEY);
 }
 
+bool QUserWallets::requestInheritancePlanVerifyPassword(const QString &password)
+{
+    return requestVerifyPassword(password,(int)TARGET_ACTION::UPDATE_INHERITANCE_PLAN);
+}
+
 QTransactionPtr QUserWallets::getDummyTx(const QString& wallet_id, const QString& period_id)
 {
     QWarningMessage msgWallet;
@@ -219,7 +224,7 @@ bool QUserWallets::secQuesAnswer()
     }
 }
 
-QVariantList QUserWallets::lockdownPeriods()
+QVariantList QUserWallets::periods()
 {
     return m_periods;
 }
@@ -274,11 +279,11 @@ bool QUserWallets::lockdownByAnswerSecQues()
     QString errormsg;
     QString until_time;
     bool ret = Draco::instance()->lockdownByAnswerSecQues(m_passwordToken,
-                                                      m_secQuesToken,
-                                                      m_period_id,
-                                                      m_wallet_id,
-                                                      until_time,
-                                                      errormsg);
+                                                          m_secQuesToken,
+                                                          m_period_id,
+                                                          m_wallet_id,
+                                                          until_time,
+                                                          errormsg);
     if (!ret) {
         //show toast
         AppModel::instance()->showToast(0,
@@ -297,11 +302,11 @@ bool QUserWallets::lockdownBySignDummyTx()
     QString errormsg;
     QString until_time;
     bool ret = Draco::instance()->lockdownBySignDummyTx(signatures,
-                                                    m_passwordToken,
-                                                    m_period_id,
-                                                    m_wallet_id,
-                                                    until_time,
-                                                    errormsg);
+                                                        m_passwordToken,
+                                                        m_period_id,
+                                                        m_wallet_id,
+                                                        until_time,
+                                                        errormsg);
     if (!ret) {
         //show toast
         AppModel::instance()->showToast(0,
@@ -442,35 +447,59 @@ int QUserWallets::inheritanceCheck(const QString& magic, const QString& environm
     }
 }
 
-bool QUserWallets::inheritanceGetPlan(const QString& magic_inpputed, const QString &wallet_id)
+bool QUserWallets::inheritanceGetPlan(const QString &wallet_id)
 {
-    // Assisted wallet being used to sign test message or dummy transaction
-    QJsonObject result;
+    QStringList ids {};
+    if (m_periods.size() == 0) {
+        inheritancePlanCreatePeriods();
+    }
+    for (QVariant var : m_periods) {
+        QMap<QString, QVariant> map = var.toMap();
+        ids.append(map.value("id").toString());
+    }
+    QJsonObject response;
     QString errormsg;
-    bool ret = Draco::instance()->inheritanceGetPlan(wallet_id, result, errormsg);
+    bool ret = Draco::instance()->inheritanceGetPlan(wallet_id, response, errormsg);
     if(ret){
         //HANDLE RESULT
-        QJsonObject inheritance = result["inheritance"].toObject();
-        QString magic   = inheritance["magic"].toString();
-        if(0 == QString::compare(magic, magic_inpputed, Qt::CaseInsensitive)){
-            // HANDLE RESULT
-            return true;
+        QJsonObject inheritance = response["inheritance"].toObject();
+        qInfo() << "inheritanceGetPlan" << inheritance;
+        long int activation_time_milis = static_cast<long int>(inheritance.value("activation_time_milis").toDouble()/1000);
+        if (activation_time_milis > 0) {
+            ServiceSetting::instance()->setInheritanceActivationDate(QDateTime::fromTime_t(activation_time_milis).date().toString("MM/dd/yyyy"));
+        } else {
+            ServiceSetting::instance()->setInheritanceActivationDate("");
         }
-        else{
-            AppModel::instance()->showToast(0,
-                                            STR_CPP_116,
-                                            EWARNING::WarningType::ERROR_MSG,
-                                            STR_CPP_116);
-            return false;
+        ServiceSetting::instance()->setInheritanceNote(inheritance.value("note").toString());
+        QJsonArray emails = inheritance.value("notification_emails").toArray();
+        QStringList emailList;
+        for (QJsonValue js : emails) {
+            emailList.append(js.toString());
         }
+        QString email = emailList.join(",");
+        ServiceSetting::instance()->setInheritanceEmail(email);
+        ServiceSetting::instance()->setInheritanceMagic(inheritance.value("magic").toString());
+        QJsonObject buffer_period = inheritance["buffer_period"].toObject();
+        if (!buffer_period.isEmpty()) {
+            QString id = buffer_period.value("id").toString();
+            if (ids.contains(id)) {
+                ServiceSetting::instance()->setInheritancePeriod(buffer_period.value("display_name").toString());
+                ServiceSetting::instance()->setInheritancePeriodId(id);
+            }
+        } else {
+            ServiceSetting::instance()->setInheritancePeriod("");
+            ServiceSetting::instance()->setInheritancePeriodId("");
+        }
+        ServiceSetting::instance()->inheritanceDataChanged();
+        ServiceSetting::instance()->setViewInheritanceIsEdit(false);
     }
     else {
         AppModel::instance()->showToast(0,
                                         errormsg,
                                         EWARNING::WarningType::ERROR_MSG,
                                         STR_CPP_112);
-        return false;
     }
+    return ret;
 }
 
 int QUserWallets::inheritanceDownloadBackup(const QString &magic, const QString &backup_password)
@@ -491,6 +520,7 @@ int QUserWallets::inheritanceDownloadBackup(const QString &magic, const QString 
         std::vector<unsigned char> base64vec(base64bin.begin(), base64bin.end());
         QString backupkey = backup_password; //Inputted from user
         QString keyname = result["key_name"].toString();
+        mInheritance.derivation_path = result["derivation_path"].toString();
         QWarningMessage msg;
         QMasterSignerPtr masterSigner = bridge::ImportTapsignerMasterSigner(base64vec, backupkey, keyname, false, msg);
         if (masterSigner && NONE_MSG == msg.type()) {
@@ -513,7 +543,7 @@ int QUserWallets::inheritanceDownloadBackup(const QString &magic, const QString 
             QJsonDocument doc(data);
             QString user_data(doc.toJson());
             //[SIGN_MESSAGE] flow
-            nunchuk::SingleSigner signer = nunchukiface::instance()->GetDefaultSignerFromMasterSigner(masterSigner->id().toStdString(),msg);
+            nunchuk::SingleSigner signer = nunchukiface::instance()->GetSignerFromMasterSigner(masterSigner->id().toStdString(), mInheritance.derivation_path.toStdString(), msg);
             if (NONE_MSG == msg.type()) {
                 QString messages_to_sign = qUtils::GetHealthCheckMessage(user_data,msg); // user_data in json string
                 if (NONE_MSG == msg.type()) {
@@ -581,7 +611,7 @@ bool QUserWallets::inheritanceClaimRequest(const nunchuk::Wallet wallet, const n
         QString status = transaction.value("status").toString();
         QString psbt = transaction.value("psbt").toString();
         if (status == "PENDING_CONFIRMATION" ||
-            status == "CONFIRMED"){
+                status == "CONFIRMED"){
             QWarningMessage _msg;
             bridge::nunchukImportPsbt(QString::fromStdString(mInheritance.wallet.get_id()), psbt, _msg);
             QString id = transaction.value("id").toString();
@@ -669,7 +699,7 @@ bool QUserWallets::inheritanceCreateTx(const nunchuk::SingleSigner& signer, cons
         AppModel::instance()->setTransactionInfo(trans);
         QList<uint> states = QQuickViewer::instance()->getCurrentStates();
         if(!states.isEmpty() && states.last() == E::STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE){
-             DBG_INFO << "Entry here ";
+            DBG_INFO << "Entry here ";
             QQuickViewer::instance()->sendEvent(E::EVT_INHERITANCE_CONFIRM_TRANSACTION_REQUEST);
         }
     }
@@ -720,7 +750,7 @@ void QUserWallets::inheritanceCreateDraftTransaction(double fee_rate)
     QString user_data(doc.toJson());
     QWarningMessage msg;
     //[SIGN_MESSAGE] flow
-    nunchuk::SingleSigner signer = nunchukiface::instance()->GetDefaultSignerFromMasterSigner(mInheritance.masterSignerId.toStdString(),msg);
+    nunchuk::SingleSigner signer = nunchukiface::instance()->GetSignerFromMasterSigner(mInheritance.masterSignerId.toStdString(), mInheritance.derivation_path.toStdString(), msg);
     if (NONE_MSG == msg.type()) {
         QString messages_to_sign = qUtils::GetHealthCheckMessage(user_data,msg); // user_data in json string
         if (NONE_MSG == msg.type()) {
@@ -760,6 +790,108 @@ void QUserWallets::inheritanceSignTransaction()
                                         (EWARNING::WarningType)msg.type(),
                                         STR_CPP_059);
     }
+}
+
+QJsonObject QUserWallets::inheritancePlanBody()
+{
+    QJsonObject body;
+    body["wallet"] = ServiceSetting::instance()->getInheritanceWalletId();
+    body["note"] = ServiceSetting::instance()->getInheritanceNote();
+    body["buffer_period_id"] = ServiceSetting::instance()->getInheritancePeriodId();
+    QString email = ServiceSetting::instance()->getInheritanceEmail();
+    QStringList emails = email.split(",");
+    QJsonArray arrays;
+    for (QString e : emails) {
+        if (e != "None") {
+            arrays.append(e);
+        }
+    }
+    body["notification_emails"] = arrays;
+    body["notify_today"] = ServiceSetting::instance()->getInheritanceIsNotify();
+    long int t = qUtils::GetTimeSecond(ServiceSetting::instance()->getInheritanceActivationDate());
+    body["activation_time_milis"] = (double)t*1000;
+    return body;
+}
+
+void QUserWallets::inheritancePlanFinalizeChanges()
+{
+    long int activeTime = qUtils::GetTimeSecond(ServiceSetting::instance()->getInheritanceActivationDate());
+    long int currentTime = qUtils::GetCurrentTimeSecond();
+    if (activeTime < currentTime) {
+        AppModel::instance()->showToast(0,
+                                        STR_CPP_120,
+                                        EWARNING::WarningType::ERROR_MSG,
+                                        STR_CPP_120);
+        return;
+    }
+    QJsonObject body_data = inheritancePlanBody();
+    QString errormsg = "";
+    bool ret = Draco::instance()->inheritancePlanRequiredSignatures(body_data, required_question, errormsg);
+    DBG_INFO << errormsg << body_data;
+    if (ret) {
+        if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
+            QUserWallets::instance()->createSecurityQuestions();
+        } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
+            //Show popup support in moble
+            emit inheritanceDummyTransactionAlert();
+        } else {
+        }
+    } else {
+        emit inheritanceInvalidActivationDateAlert();
+    }
+    return;
+}
+
+void QUserWallets::inheritancePlanUpdate()
+{
+    QJsonObject data;
+    data["nonce"] = Draco::instance()->randomNonce();
+    data["body"]  = inheritancePlanBody();
+    QStringList authorizations;
+    QJsonObject output;
+    QString errormsg = "";
+    DBG_INFO << m_passwordToken << m_secQuesToken << data;
+    bool ret = Draco::instance()->inheritancePlanUpdate(m_passwordToken, m_secQuesToken, authorizations, data, output, errormsg);
+    DBG_INFO << errormsg << output;
+    if (ret) {
+        emit securityQuestionClosed();
+        AppModel::instance()->showToast(0,
+                                        errormsg,
+                                        EWARNING::WarningType::SUCCESS_MSG,
+                                        STR_CPP_119);
+    } else {
+        AppModel::instance()->showToast(0,
+                                        errormsg,
+                                        EWARNING::WarningType::ERROR_MSG,
+                                        STR_CPP_112);
+    }
+}
+
+bool QUserWallets::inheritancePlanCreatePeriods()
+{
+    m_periods.clear();
+    QJsonArray periods;
+    QString errormsg;
+    bool ret = Draco::instance()->inheritancePlanBufferPeriod(periods, errormsg);
+    if (!ret) {
+        return false;
+    } else {
+        for (auto v : periods) {
+            QJsonObject it = v.toObject();
+            DBG_INFO << it.toVariantMap();
+            m_periods.append(it.toVariantMap());
+        }
+        QJsonObject notNeed;
+        notNeed["id"] = "";
+        notNeed["display_name"] = "I don’t need a buffer period";
+        notNeed["is_recommended"] = false;
+        m_periods.append(notNeed.toVariantMap());
+        if (m_periods.size() == 0) {
+            errormsg = "There no period";
+            return false;
+        }
+    }
+    return true;
 }
 
 bool QUserWallets::serverKeyGetCurrentPolicies(const QString& wallet_id)
@@ -895,3 +1027,134 @@ QUserWallets::inheritance_t QUserWallets::inheritance() const
     return mInheritance;
 }
 
+void QUserWallets::newRequestToAddKey()
+{
+    QtConcurrent::run([this]() {
+        QJsonObject data = Draco::instance()->assistedWalletGetListKey();
+        m_requests = data.value("requests").toArray();
+        setLedgerNeed(exist("LEDGER"));
+        setTrezorNeed(exist("TREZOR"));
+        setColdCardNeed(exist("COLDCARD"));
+    });
+}
+
+void QUserWallets::addKeyRequested()
+{
+    QMasterSignerPtr signer = AppModel::instance()->masterSignerInfoPtr();
+    QString request_id = "";
+    QString key = "";
+    int key_index = -1;
+    QJsonObject data;
+    DBG_INFO << !signer.isNull();
+    QWarningMessage warningmsg;
+    if (!signer.isNull()) {
+        QJsonArray tags;
+        if (mLedgerNeed && signer->deviceType() == "ledger") {
+            key = "LEDGER";
+        }
+        if (mTrezorNeed && signer->deviceType() == "trezor") {
+            key = "TREZOR";
+        }
+        if (mColdCardNeed && signer->deviceType() == "coldcard") {
+            key = "COLDCARD";
+        }
+        DBG_INFO << signer->deviceType() << key;
+        if (!key.isEmpty()) {
+            tags.append(key);
+            request_id = getRequestId(key);
+            key_index = getKeyIndex(key);
+        }
+        QSingleSignerPtr ptr = bridge::nunchukGetDefaultSignerFromMasterSigner(signer->id(),
+                                                                               ENUNCHUCK::WalletType::MULTI_SIG,
+                                                                               ENUNCHUCK::AddressType::NATIVE_SEGWIT ,
+                                                                               warningmsg);
+        if (!request_id.isEmpty() && !ptr.isNull()) {
+            data["name"] = signer->name();
+            data["xfp"] = signer->fingerPrint();
+            data["derivation_path"] = ptr->derivationPath();
+            data["xpub"] = ptr->xpub();
+            data["pubkey"] = ptr->publickey();
+            data["type"] = qUtils::GetSignerTypeString(ptr->singleSigner().get_type());
+            data["tags"] = tags;
+            data["tapsigner"] = {};
+            if (key_index >= 0) {
+                data["key_index"] = key_index;
+            } else {
+                data["key_index"] = {};
+            }
+            bool ret = Draco::instance()->assistedWalletAddKey(request_id, data);
+            qInfo() << request_id << data << ret;
+            if (ret) {
+                AppModel::instance()->setAddSignerWizard(3);
+                emit addHardwareSuccessAlert();
+                return;
+            }
+        } else {
+            QString errormsg = "request id empty or get default error";
+            AppModel::instance()->showToast(0,
+                                            errormsg,
+                                            EWARNING::WarningType::ERROR_MSG,
+                                            errormsg);
+        }
+    }
+    AppModel::instance()->setAddSignerWizard(0);
+    emit addHardwareAlert();
+}
+
+QJsonObject QUserWallets::getRequest(const QString &key) const
+{
+    if (m_requests.size() > 0) {
+        for (QJsonValue request : m_requests) {
+            QJsonObject requestObj = request.toObject();
+            QString status = requestObj.value("status").toString();
+            QJsonArray tags = requestObj.value("tags").toArray();
+            if (tags.contains(key) && status == "PENDING") {
+                return requestObj;
+            }
+        }
+    }
+    return {};
+}
+
+QString QUserWallets::getRequestId(const QString &key) const
+{
+    QJsonObject request = getRequest(key);
+    if (request.empty()) {
+        return {};
+    } else {
+        return request.value("id").toString();
+    }
+}
+
+int QUserWallets::getKeyIndex(const QString &key) const
+{
+    QJsonObject request = getRequest(key);
+    if (request.empty()) {
+        return -1;
+    } else {
+        return request.value("key_index").toInt(-1);
+    }
+}
+
+bool QUserWallets::exist(const QString &key) const
+{
+    return !getRequest(key).empty();
+}
+
+void QUserWallets::cancelRequest(const QString& key)
+{
+    QString request_id = getRequestId(key);
+    if (!request_id.isEmpty()) {
+        DBG_INFO << key;
+        Draco::instance()->assistedWalletRemoveId(request_id);
+        newRequestToAddKey();
+    }
+}
+
+void QUserWallets::additionalGetWalletConfig()
+{
+    QJsonObject config = Draco::instance()->assistedGetWalletConfig();
+    DBG_INFO << config;
+    int remaining_wallet_count = config.value("remaining_wallet_count").toInt();
+    ServiceSetting::instance()->setRemainingAssistedWalletCount(remaining_wallet_count);
+}

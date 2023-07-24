@@ -27,8 +27,8 @@ Row {
     property string labelTop: ""
     property string labelCenter: ""
     property string labelBottom: ""
-    property string walletType: ""
-    property string walletIcon: ""
+    property string type: ""
+    property string icon: ""
     signal buttonClicked()
     spacing: 12
     Column {
@@ -52,10 +52,10 @@ Row {
                     color: "#EAEAEA"
                 }
                 QBadge {
-                    text: walletType
-                    icon: walletIcon
+                    text: type
+                    icon: icon
                     color: "#EAEAEA"
-                    visible: walletIcon != ""
+                    visible: icon !== ""
                 }
             }
         }

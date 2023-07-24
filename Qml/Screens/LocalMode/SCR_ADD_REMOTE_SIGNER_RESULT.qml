@@ -62,42 +62,18 @@ QScreen {
                 }
             }
         }
-
-        Row{
-            anchors {
-                left: _content.label.right
-                leftMargin: 12
-                verticalCenter: _content.label.verticalCenter
-            }
-            Rectangle{
-                width: 89
-                height: 24
-                radius: 20
-                color: "#FDD95C"
+        extraHeader: Row {
+            spacing: 8
+            QBadge {
+                text: STR.STR_QML_641
                 visible: isPrimaryKey
-                QText {
-                    text: STR.STR_QML_641
-                    font.family: "Lato"
-                    font.weight: Font.Medium
-                    font.pixelSize: 12
-                    anchors.centerIn: parent
-                    color: "#031F2B"
-                }
+                color: "#FDD95C"
+                anchors.verticalCenter: parent.verticalCenter
             }
-            Rectangle{
-                width: signerTypeText.implicitWidth+10
-                height: 24
-                radius: 20
+            QBadge {
+                text: GlobalData.signerNames(signerType)
                 color: "#EAEAEA"
-                QText {
-                    id: signerTypeText
-                    text: GlobalData.signerNames(signerType)
-                    font.family: "Lato"
-                    font.weight: Font.Medium
-                    font.pixelSize: 12
-                    anchors.centerIn: parent
-                    color: "#031F2B"
-                }
+                anchors.verticalCenter: parent.verticalCenter
             }
         }
 

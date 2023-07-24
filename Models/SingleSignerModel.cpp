@@ -24,9 +24,9 @@
 #include <QQmlEngine>
 #include "utils/enumconverter.hpp"
 
-QSingleSigner::QSingleSigner() :
-    isPrimaryKey_(false),
-    isDraft(true)
+QSingleSigner::QSingleSigner()
+    : isPrimaryKey_(false)
+    , isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -45,6 +45,12 @@ QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey):
 }
 
 QSingleSigner::~QSingleSigner() {}
+
+void QSingleSigner::convert(const nunchuk::SingleSigner &src)
+{
+    isDraft = false;
+    singleSigner_ = src;
+}
 
 nunchuk::SingleSigner QSingleSigner::originSingleSigner() const
 {
@@ -124,7 +130,7 @@ void QSingleSigner::setDerivationPath(const QString &d) {
     }
 }
 
-QString QSingleSigner::masterFingerPrint() {
+QString QSingleSigner::masterFingerPrint() const {
     if(isDraft){
         return  master_fingerprint_;
     }
@@ -182,9 +188,14 @@ void QSingleSigner::setSignerSigned(const bool d)
     }
 }
 
-bool QSingleSigner::needTopUpXpub() const
+bool QSingleSigner::needTopUpXpub()
 {
-    return needTopUpXpub_;
+    if((int)ENUNCHUCK::SignerType::HARDWARE == signerType() || (int)ENUNCHUCK::SignerType::SOFTWARE == signerType()){
+        return needTopUpXpub_;
+    }
+    else{
+        return false;
+    }
 }
 
 void QSingleSigner::setNeedTopUpXpub(bool needTopUpXpub)
@@ -247,7 +258,7 @@ void QSingleSigner::setChecked(const bool checked)
     }
 }
 
-bool QSingleSigner::readyToSign()
+bool QSingleSigner::readyToSign() const
 {
     bool signAble = false;
     if((int)ENUNCHUCK::SignerType::HARDWARE == signerType() || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType()){
@@ -339,6 +350,11 @@ QString QSingleSigner::cardId()
 void QSingleSigner::setCardId(const QString &card_id)
 {
     cardId_ = card_id;
+}
+
+nunchuk::SingleSigner QSingleSigner::singleSigner() const
+{
+    return singleSigner_;
 }
 
 QString QSingleSigner::timeGapCalculationShort(QDateTime in)
@@ -794,6 +810,15 @@ void SingleSignerListModel::requestSort(int role, int order)
 QList<QSingleSignerPtr > SingleSignerListModel::fullList() const
 {
     return d_;
+}
+
+std::vector<nunchuk::SingleSigner> SingleSignerListModel::signers() const
+{
+    std::vector<nunchuk::SingleSigner> signerList;
+    for (QSingleSignerPtr p : d_) {
+        signerList.push_back(p->originSingleSigner());
+    }
+    return signerList;
 }
 
 QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const

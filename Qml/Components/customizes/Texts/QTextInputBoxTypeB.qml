@@ -27,20 +27,21 @@ Column {
     property string optional: ""
     property alias  errorText: textErrorItem.text
     property alias  errorTextColor: textErrorItem.color
-    property alias  textInputted: input.text
-    property alias validator: input.validator
-    property alias acceptableInput : input.acceptableInput
+    property alias  textInputted: _input.text
+    property alias validator: _input.validator
+    property alias acceptableInput : _input.acceptableInput
     property var   textweight: Font.Bold
-    property alias echoMode: input.echoMode
-    property alias maxLength: input.maximumLength
-    property alias length: input.length
+    property alias echoMode: _input.echoMode
+    property alias maxLength: _input.maximumLength
+    property alias length: _input.length
     property bool enableLengthLimit: false
     property int boxWidth: 338
     property int boxHeight: 48
     property bool isValid: true
     property bool showError: false
     signal typingFinished(var currentText)
-    property alias textBoxFocus: input.focus
+    property alias textBoxFocus: _input.focus
+    property alias input: _input
     property bool isPassword: false
     spacing: 4
 
@@ -103,7 +104,7 @@ Column {
             }
         }
         QTextField {
-            id: input
+            id: _input
             anchors.fill: parent
             background: _background
             color: "#031F2B"
@@ -129,7 +130,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 12
-            visible: (input.text !== "") && isPassword
+            visible: (_input.text !== "") && isPassword
             MouseArea {
                 anchors.fill: parent
                 onClicked: showpass.visiblity =! showpass.visiblity

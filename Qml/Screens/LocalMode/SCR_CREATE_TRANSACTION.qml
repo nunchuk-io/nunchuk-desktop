@@ -463,7 +463,7 @@ QScreen {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QText {
-                                    text: STR.STR_QML_220.arg(AppModel.transactionInfo.m)
+                                    text: STR.str_QML_220(AppModel.transactionInfo.m)
                                     font.pixelSize: 12
                                     font.family: "Lato"
                                     color: indicatorStatus.color
@@ -638,7 +638,7 @@ QScreen {
                                                 font.pixelSize: 14
                                                 color: "#031F2B"
                                                 horizontalAlignment: Text.AlignRight
-                                                text: Math.max(0, (AppModel.chainTip - utxo_height)+1)
+                                                text: utxo_confirmed//Math.max(0, (AppModel.chainTip - utxo_height)+1)
                                             }
                                         }
                                         Item {
@@ -665,14 +665,27 @@ QScreen {
                     Item {
                         width: parent.width
                         height: 36
-                        QText {
-                            text: STR.STR_QML_225
-                            color: "#031F2B"
-                            font.weight: Font.Bold
-                            font.pixelSize: 16
-                            font.family: "Lato"
+                        Column {
+                            spacing: 4
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
+                            QText {
+                                text: STR.STR_QML_225
+                                color: "#031F2B"
+                                font.weight: Font.Bold
+                                font.pixelSize: 16
+                                font.family: "Lato"
+                            }
+                            QText {
+                                text: STR.STR_QML_895
+                                width: 250
+                                wrapMode: Text.WordWrap
+                                color: "#595959"
+                                font.pixelSize: 12
+                                font.family: "Lato"
+                                verticalAlignment: Text.AlignVCenter
+                                visible: manualfeesetting.switchOn && AppModel.transactionInfo.isCpfp
+                            }
                         }
                         QSwitchTypeB {
                             id: manualfeesetting
@@ -820,14 +833,12 @@ QScreen {
                                 }
                             }
                             Item {width: parent.width; height: 12; visible: !feeinput.validInput}
-                            QText {
+                            QLato {
                                 id: cpfptext
                                 color: "#595959"
                                 height: 28
-                                visible: false //FIXME
-                                text: "Child fee rate: ? sat/vB"
-                                font.pixelSize: 16
-                                font.family: "Lato"
+                                text: STR.STR_QML_836.arg(AppModel.transactionInfo.packageFeeRate)
+                                visible: AppModel.transactionInfo.isCpfp
                             }
                         }
                         Column {

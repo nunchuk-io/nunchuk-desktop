@@ -51,6 +51,8 @@ public:
     QMasterSigner(const nunchuk::MasterSigner &signer);
     ~QMasterSigner();
 
+    void convert(const nunchuk::MasterSigner& src);
+
     QString id() const;
     void setId(const QString& d);
 

@@ -22,6 +22,7 @@
 #include "AppModel.h"
 #include "QOutlog.h"
 #include <QCryptographicHash>
+#include <QJsonDocument>
 
 qint64 qUtils::QAmountFromValue(const QString &value, const bool allow_negative) {
     qint64 ret = -1;
@@ -430,4 +431,44 @@ int qUtils::Precision(double input)
         }
     }
     return qMax(lastDigit,2);
+}
+
+QJsonObject qUtils::GetJsonObject(QString text)
+{
+    QJsonObject obj;
+    QJsonDocument doc = QJsonDocument::fromJson(text.toUtf8());
+
+    // check validity of the document
+    if(!doc.isNull())
+    {
+        if(doc.isObject())
+        {
+            obj = doc.object();
+        }
+        else
+        {
+            qDebug() << "Document is not an object";
+        }
+    }
+    else
+    {
+        qDebug() << "Invalid JSON...\n";
+    }
+    return obj;
+}
+
+uint qUtils::GetTimeSecond(QString time_str)
+{
+    QStringList list = time_str.split("/");
+    QString month = list.at(0);
+    QString day = list.at(1);
+    QString year = list.at(2);
+    QDate date(year.toInt(), month.toInt(), day.toInt());
+    QDateTime time(date);
+    return time.toTime_t();
+}
+
+uint qUtils::GetCurrentTimeSecond()
+{
+    return QDateTime::currentDateTime().toTime_t();
 }

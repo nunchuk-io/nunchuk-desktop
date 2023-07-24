@@ -198,7 +198,7 @@ QScreen {
                                 visible: master_signer_type !== NUNCHUCKTYPE.HARDWARE
                                 QText {
                                     id: signerTypeText
-                                    text: GlobalData.signerNames(master_signer_type)
+                                    text: GlobalData.signers(master_signer_type)
                                     font.family: "Lato"
                                     font.weight: Font.Bold
                                     font.pixelSize: 10
@@ -289,7 +289,7 @@ QScreen {
                                 color: "#C9DEF1"
                                 radius: 4
                                 QText {
-                                    text: GlobalData.signerNames(single_signer_type)
+                                    text: GlobalData.signers(single_signer_type)
                                     font.family: "Lato"
                                     font.weight: Font.Bold
                                     font.pixelSize: 10
@@ -535,7 +535,7 @@ QScreen {
                                 radius: 4
                                 visible: model.single_signer_type !== NUNCHUCKTYPE.HARDWARE
                                 QText {
-                                    text: GlobalData.signerNames(model.single_signer_type)
+                                    text: GlobalData.signers(model.single_signer_type)
                                     font.family: "Lato"
                                     font.weight: Font.Bold
                                     font.pixelSize: 10

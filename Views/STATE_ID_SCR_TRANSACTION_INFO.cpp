@@ -111,10 +111,11 @@ void EVT_TRANSACTION_EXPORT_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_TRANSACTION_IMPORT_REQUEST_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    if (file_path != "" && AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+    QWalletPtr w = AppModel::instance()->walletInfoPtr();
+    if (file_path != "" && w){
+        QString wallet_id = w->id();
         QWarningMessage msgwarning;
-        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
+        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, w->isAssistedWallet(), msgwarning);
         if(trans){
             AppModel::instance()->setTransactionInfo(trans);
             AppModel::instance()->requestSyncWalletDb(wallet_id);

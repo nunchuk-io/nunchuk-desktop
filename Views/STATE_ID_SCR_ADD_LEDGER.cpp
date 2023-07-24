@@ -45,18 +45,19 @@ void EVT_SCAN_LEDGER_DEVICE_REQUEST_HANDLER(QVariant msg)
 
 void EVT_ADD_LEDGER_DEVICE_REQUEST_HANDLER(QVariant msg)
 {
+    DBG_INFO << msg;
     QString signerNameInputted = msg.toMap().value("signerNameInputted").toString();
     int deviceIndexSelected    = msg.toMap().value("deviceIndexSelected").toInt();
-    if(AppModel::instance()->deviceList()){
-        QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected) ;
-        if(selectedDv){
-            if(selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()){
+    if (AppModel::instance()->deviceList()) {
+        QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected);
+        if (selectedDv) {
+            if (selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()) {
                 AppModel::instance()->showToast(0,
                                                 0,
                                                 EWARNING::WarningType::WARNING_MSG,
                                                 STR_CPP_095);
-            }
-            else{
+            } else {
+                AppModel::instance()->setAddSignerWizard(2);//_LOADING: 2
                 AppModel::instance()->startCreateMasterSigner(signerNameInputted, deviceIndexSelected);
             }
         }

@@ -36,7 +36,7 @@ Row {
         id: icon
         width: 24
         height: 24
-        source: selected ? "qrc:/Images/Images/RadioEnabled.png" : "qrc:/Images/Images/RadioDeselected.png"
+        source: selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
         anchors.verticalCenter: parent.verticalCenter
         MouseArea {
             id: mouse

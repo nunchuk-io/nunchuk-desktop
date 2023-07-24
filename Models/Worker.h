@@ -122,6 +122,8 @@ public slots:
 
     void slotStartMultiDeviceSync(const bool state);
 
+    void slotStartReloadUserDb();
+
     void slotStartReloadWallets();
 
     void slotStartReloadMasterSigners();
@@ -407,6 +409,8 @@ signals:
     void startRemoveAllWallets();
 
     void startRemoveAllSigners();
+
+    void startReloadUserDb();
 
     void startReloadWallets();
 

@@ -216,17 +216,19 @@ private:
     QRoomTransaction       *m_pinTransaction;
     nunchuk::Wallet         m_walletImport;
     bool                    m_IsEncrypted;
+    QTimer                  m_timeSyncDb;
 private:
     bool validatePendingEvent(const QString& txnId);
     bool extractNunchukEvent(const RoomEvent& evt, Conversation &cons) ;
     void eventToConversation(const RoomEvent& evt, Conversation &result, Qt::TextFormat format = Qt::RichText);
     void receiveMessage(int fromIndex, int toIndex);
-    Conversation createConversation(const RoomEvent& evt) ;
-    void nunchukConsumeEvent(const RoomEvent& evt) ;
-    void nunchukConsumeSyncEvent(const RoomEvent& evt) ;
+    Conversation createConversation(const RoomEvent& evt);
+    void nunchukConsumeEvent(const RoomEvent& evt);
+    void nunchukConsumeSyncEvent(const RoomEvent& evt);
+    void nunchukNoticeEvent(const RoomEvent& evt);
     bool joinWalletWithMasterSigner(const QString& id, bool &needXpub);
     bool joinWalletWithSingleSigner(const QString& xfp);
-    bool joinWalletUseSignerFromWalletImport(const QString& id,const QString& xfp);
+    bool joinWalletUseSignerFromWalletImport(const QString& signer_id,const QString& xfp);
 
 public slots:
     void highlightCountChanged();
@@ -247,6 +249,8 @@ public slots:
     void slotFinishCancelWallet(QString what, int type, int code);
     void slotFinishedGetPendingTxs(QRoomTransactionModelPtr txs);
     void slotUpdateInitEventId(const Conversation cons);
+    void slotFinishConsumeEvent();
+    void slotSyncWalletDb();
 signals:
     void userCountChanged();
     void userNamesChanged();
@@ -275,6 +279,7 @@ signals:
     void signalFinishedGetPendingTxs(QRoomTransactionModelPtr txs);
     void pinTransactionChanged();
     void roomNeedTobeLeaved(const QString& id);
+    void finishConsumeEvent();
 };
 Q_DECLARE_METATYPE(Conversation)
 Q_DECLARE_METATYPE(nunchuk::RoomTransaction)

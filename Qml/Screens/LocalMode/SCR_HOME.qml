@@ -373,7 +373,7 @@ QScreen {
                                     anchors.margins: 5
                                     horizontalAlignment: Text.AlignHCenter
                                     wrapMode: Text.WrapAnywhere
-                                    font.weight: Font.Medium
+                                    font.weight: Font.Normal
                                     font.pixelSize: 16
                                     color: "#031F2B";
                                     text: qrCode.textInput
@@ -523,7 +523,7 @@ QScreen {
                             memoWidth: transaction_lst.width*0.20
                             amountWidth: transaction_lst.width*0.25
                             onButtonClicked: {
-                                QMLHandle.sendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transaction_txid)
+                                QMLHandle.signalNotifySendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transactiontxid)
                             }
                         }
                     }
@@ -755,7 +755,7 @@ QScreen {
                                 Flickable {
                                     id: flickerSignerList
                                     anchors.fill: parent
-                                    property bool signerReady: (mastersignerlist.count > 0) || (remoteSignerlist.count > 0)
+                                    property bool signerReady: (mastersignerlist.count > 0) || (remoteSignerlist.count > 0) || UserWallet.qLedgerNeed || UserWallet.qTrezorNeed || UserWallet.qColdCardNeed
                                     visible: signerReady
                                     clip: true
                                     flickableDirection: Flickable.VerticalFlick
@@ -766,27 +766,40 @@ QScreen {
                                     Column {
                                         id: contentDisplay
                                         QAddAssistedWalletSigner{
-                                            visible: false
+                                            visible: UserWallet.qLedgerNeed && ClientController.isNunchukLoggedIn
                                             addTitle: STR.STR_QML_810
                                             addText: STR.STR_QML_811
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             onCancel: {
-
+                                                UserWallet.qLedgerNeed = false;
                                             }
                                             onAdd: {
                                                 QMLHandle.sendEvent(EVT.EVT_ASK_LEDGER_REQ)
                                             }
                                         }
                                         QAddAssistedWalletSigner{
-                                            visible: false
+                                            visible: UserWallet.qTrezorNeed && ClientController.isNunchukLoggedIn
                                             addTitle: STR.STR_QML_813
                                             addText: STR.STR_QML_814
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             onCancel: {
-
+                                                UserWallet.qTrezorNeed = false;
                                             }
                                             onAdd: {
                                                 QMLHandle.sendEvent(EVT.EVT_ASK_TREZOR_REQ)
+                                            }
+                                        }
+                                        QAddAssistedWalletSigner{
+                                            visible: UserWallet.qColdCardNeed && ClientController.isNunchukLoggedIn
+                                            addTitle: STR.STR_QML_903
+                                            addText: STR.STR_QML_904
+                                            height: 152
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            onCancel: {
+                                                UserWallet.qColdCardNeed = false;
+                                            }
+                                            onAdd: {
+                                                QMLHandle.sendEvent(EVT.EVT_ASK_COLDCARD_REQ)
                                             }
                                         }
 

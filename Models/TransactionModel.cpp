@@ -295,6 +295,10 @@ QString Transaction::psbt() const
     return QString::fromStdString(m_transaction.get_psbt());
 }
 
+time_t Transaction::scheduleTime(){
+    return m_transaction.get_schedule_time();
+}
+
 bool Transaction::hasChange() const {
     int index_change = m_transaction.get_change_index();
     if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
@@ -474,8 +478,15 @@ void Transaction::setNunchukTransaction(const nunchuk::Transaction &tx)
     m_transaction = tx;
 }
 
-QString Transaction::roomId() const
+QString Transaction::roomId()
 {
+    if(AppModel::instance()->walletList()){
+        QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId());
+        if(wallet){
+            m_roomId = wallet.data()->roomId();
+        }
+    }
+    DBG_INFO << m_roomId;
     return m_roomId;
 }
 
@@ -533,6 +544,20 @@ void Transaction::setServerKeyMessage(const QJsonObject &data)
     }
 }
 
+QString Transaction::packageFeeRate()
+{
+    return QString::number((double)m_packageFeeRate/1000, 'f', 2);
+}
+
+void Transaction::setPackageFeeRate(int satvKB)
+{
+    if (m_packageFeeRate == satvKB)
+        return;
+
+    m_packageFeeRate = satvKB;
+    emit packageFeeRateChanged();
+}
+
 QString Transaction::destination()
 {
     QString ret = "";
@@ -549,6 +574,19 @@ QString Transaction::destination()
         }
         ret = addrs.size() > 0 ? QString::fromStdString(addrs.at(0).first) : "";
     }
+    return ret;
+}
+
+bool Transaction::isCpfp()
+{
+    bool ret = false;
+    QWarningMessage msg;
+    nunchuk::Amount packageFeeRate{0};
+    if (nunchukiface::instance()->IsCPFP(walletId().toStdString(), nunchukTransaction(), packageFeeRate, msg)) {
+        ret = true;
+    }
+    setPackageFeeRate(packageFeeRate);
+    DBG_INFO << ret << packageFeeRate;
     return ret;
 }
 
@@ -717,6 +755,7 @@ bool TransactionListModel::contains(const QString &tx_id)
 
 void TransactionListModel::requestSort(int role, int order)
 {
+    DBG_INFO << role << order;
     beginResetModel();
     if(m_data.count() > 1){
         switch (role) {
@@ -755,9 +794,11 @@ void TransactionListModel::requestSort(int role, int order)
             break;
         case transaction_blocktime_role:
         {
-            qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeAscending);
             if(Qt::DescendingOrder == order){
-                qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeDescendingSkipZero);
+                qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeDescending);
+            }
+            else{
+                qSort(m_data.begin(), m_data.end(), sortTXsByBlocktimeAscending);
             }
             linkingReplacedTransactions();
         }
@@ -826,17 +867,35 @@ int TransactionListModel::count() const
 
 bool sortTXsByBlocktimeAscending(const QTransactionPtr &v1, const QTransactionPtr &v2)
 {
-    return v1.data()->blocktime() < v2.data()->blocktime();
+    if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() <= 0){
+        if(v1.data()->status() == v2.data()->status()){
+            return (v1.data()->totalSats() > v2.data()->totalSats());
+        }
+        else if(v1.data()->status() < v2.data()->status()){
+            return (true);
+        }
+        else{
+            return v1.data()->blocktime() < v2.data()->blocktime();
+        }
+    }
+    else if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() > 0){ return true;}
+    else if(v1.data()->blocktime() > 0 && v2.data()->blocktime() <= 0){ return false;}
+    else {return v1.data()->blocktime() < v2.data()->blocktime();}
 }
 
 bool sortTXsByBlocktimeDescending(const QTransactionPtr &v1, const QTransactionPtr &v2)
 {
-    return v1.data()->blocktime() > v2.data()->blocktime();
-}
-
-bool sortTXsByBlocktimeDescendingSkipZero(const QTransactionPtr &v1, const QTransactionPtr &v2)
-{
-    if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() <= 0){ return v1.data()->blocktime() < v2.data()->blocktime();}
+    if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() <= 0){
+        if(v1.data()->status() == v2.data()->status()){
+            return (v1.data()->totalSats() > v2.data()->totalSats());
+        }
+        else if(v1.data()->status() < v2.data()->status()){
+            return (true);
+        }
+        else{
+            return v1.data()->blocktime() < v2.data()->blocktime();
+        }
+    }
     else if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() > 0){ return true;}
     else if(v1.data()->blocktime() > 0 && v2.data()->blocktime() <= 0){ return false;}
     else {return v1.data()->blocktime() > v2.data()->blocktime();}

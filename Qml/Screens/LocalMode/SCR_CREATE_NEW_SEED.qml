@@ -25,6 +25,7 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
@@ -34,7 +35,6 @@ import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: rootAddsignerToWallet
     property string textMnemonic: AppModel.mnemonic
-    property var numsIndexSelection: [0, 1, 2]
     QOnScreenContent {
         width: popupWidth
         height: popupHeight
@@ -142,8 +142,8 @@ QScreen {
             var r = Math.floor(Math.random() * (numWords - 1)) + 1;
             if(arr.indexOf(r) === -1) arr.push(r);
         }
-        numsIndexSelection = numsIndexSelection.sort(() => Math.random() - 0.5)
-        numsIndexSelection = numsIndexSelection.sort(() => Math.random() - 0.5)
+        var numsIndexSelection = GlobalData.swapPositions()
+        console.log(numsIndexSelection)
         // #1
         random1.indexArray = [arr[0], arr[1], arr[2]];
         random1.indexNeeded = random1.indexArray[numsIndexSelection[0]];
@@ -159,5 +159,16 @@ QScreen {
         random3.indexNeeded = random3.indexArray[numsIndexSelection[2]];
         random3.phraseNeeded = mnemomics[random3.indexNeeded];
         random3.phraseArray = [mnemomics[random3.indexArray[0]], mnemomics[random3.indexArray[1]], mnemomics[random3.indexArray[2]]];
+    }
+
+    function getTimeBasedNumbers() {
+        const currentTime = new Date().getTime();
+
+        const randomValues = [ (currentTime % 3),
+                               ((currentTime + 1) % 3),
+                               ((currentTime + 2) % 3)];
+
+        console.log(randomValues)
+        return randomValues;
     }
 }

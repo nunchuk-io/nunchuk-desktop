@@ -115,6 +115,11 @@ QString currencyLocale(qint64 amountSats);
 bool verifyCheckSum(const QByteArray& data, const QByteArray& expectedCheckSum);
 
 int Precision(double input);
+
+QJsonObject GetJsonObject(QString text);
+
+uint GetTimeSecond(QString time_str);
+uint GetCurrentTimeSecond();
 }
 
 #endif // QUTILS_H

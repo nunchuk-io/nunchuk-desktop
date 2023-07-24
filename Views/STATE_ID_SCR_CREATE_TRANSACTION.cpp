@@ -87,7 +87,8 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                             it.data()->address(),
                                             it.data()->amountSats(),
                                             it.data()->height(),
-                                            it.data()->memo());
+                                            it.data()->memo(),
+                                            it.data()->status());
                         }
                     }
                 }
@@ -208,7 +209,8 @@ void EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX_HANDLER(QVariant msg) {
                                     it.data()->address(),
                                     it.data()->amountSats(),
                                     it.data()->height(),
-                                    it.data()->memo());
+                                    it.data()->memo(),
+                                    it.data()->status());
                 }
             }
         }

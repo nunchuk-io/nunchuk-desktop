@@ -41,9 +41,7 @@ QScreen {
         anchors.centerIn: parent
         enableHeader:false
         offset: 24
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_TREZOR_ASK)
-        }
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         QLato {
             anchors{
                 top: parent.top
@@ -81,9 +79,7 @@ QScreen {
                 label.text: STR.STR_QML_432
                 label.font.pixelSize: 16
                 type: eTypeF
-                onButtonClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_TREZOR_ASK)
-                }
+                onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
             }
         }
         bottomRight: Row {
@@ -95,7 +91,11 @@ QScreen {
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_ADD_TREZOR_REQUEST)
+                    if (ServiceSetting.existKeyType("trezor")) {
+                        QMLHandle.sendEvent(EVT.EVT_EXIST_TREZOR_REQ)
+                    } else {
+                        QMLHandle.sendEvent(EVT.EVT_ADD_TREZOR_REQUEST)
+                    }
                 }
             }
         }

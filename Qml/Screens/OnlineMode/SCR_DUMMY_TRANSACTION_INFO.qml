@@ -461,7 +461,7 @@ QScreen {
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     QText {
-                                        text: STR.STR_QML_220.arg(Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)))
+                                        text: STR.str_QML_220(Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)))
                                         font.pixelSize: 12
                                         font.family: "Lato"
                                         color: indicatorStatus.color
@@ -501,7 +501,7 @@ QScreen {
                                 color: "#595959"
                                 font.family: "Lato"
                                 font.pixelSize: 12
-                                text: STR.STR_QML_220.arg(Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)))
+                                text: STR.str_QML_220(Math.max(0, (AppModel.transactionInfo.m - AppModel.transactionInfo.numberSigned)))
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -991,10 +991,10 @@ QScreen {
         var activeLink = ""
         switch(AppSetting.primaryServer){
         case NUNCHUCKTYPE.MAIN:
-            activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_MAINNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.TESTNET:
-            activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_TESTNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.SIGNET:
             activeLink = AppSetting.signetStream + AppModel.transactionInfo.txid

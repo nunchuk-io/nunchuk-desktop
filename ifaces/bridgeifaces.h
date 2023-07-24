@@ -62,6 +62,7 @@ public:
         WALLET_TAB,
         SERVICE_TAB,
         CHAT_TAB,
+        SETTING_TAB,
     };
 
     enum class AddressType {
@@ -238,7 +239,7 @@ bool nunchukDeleteWallet(const QString& wallet_id, QWarningMessage &msg);
 
 void nunchukDeleteAllWallet();
 
-void nunchukUpdateWalletName(const QString& wallet_id, const QString &name);
+void nunchukUpdateWalletName(const QString& wallet_id, const QString &name, bool sync = true);
 
 void nunchukUpdateWalletDescription(const QString &wallet_id, const QString &description);
 
@@ -286,15 +287,20 @@ QSingleSignerPtr nunchukGetUnusedSignerFromMasterSigner(const QString& mastersig
                                                         const ENUNCHUCK::AddressType& address_type,
                                                         QWarningMessage &msg);
 
+QSingleSignerPtr nunchukGetDefaultSignerFromMasterSigner(const QString& mastersigner_id,
+                                                        const ENUNCHUCK::WalletType& wallet_type,
+                                                        const ENUNCHUCK::AddressType& address_type,
+                                                        QWarningMessage &msg);
+
 bool nunchukDeleteMasterSigner(const QString& mastersigner_id);
 
 bool nunchukDeletePrimaryKey();
 
 bool nunchukDeleteRemoteSigner(const QString& master_fingerprint, const QString& derivation_path);
 
-void nunchukUpdateMasterSigner(const QMasterSignerPtr &signer);
+void nunchukUpdateMasterSigner(const QMasterSignerPtr &signer, bool sync = true);
 
-void nunchukUpdateRemoteSigner(const QSingleSignerPtr &signer);
+void nunchukUpdateRemoteSigner(const QSingleSignerPtr &signer, bool sync = true);
 
 bool nunchukHasSinger(const nunchuk::SingleSigner& signer);
 
@@ -317,15 +323,6 @@ nunchuk::SingleSigner nunchukCreateOriginSigner(const QString& name,
                                                 const QString& derivation_path,
                                                 const QString& master_fingerprint,
                                                 QWarningMessage &msg);
-
-QWalletPtr nunchukCreateWallet(const QString& name,
-                               int m,
-                               int n,
-                               SingleSignerListModel* signers,
-                               ENUNCHUCK::AddressType address_type,
-                               bool is_escrow,
-                               const QString &desc,
-                               QWarningMessage &msg);
 
 QWalletPtr nunchukCreateWallet(const nunchuk::Wallet& wallet,
                                bool allow_used_signer,
@@ -396,6 +393,7 @@ bool nunchukExportTransaction(const QString& wallet_id,
 
 QTransactionPtr nunchukImportTransaction(const QString& wallet_id,
                                          const QString& file_path,
+                                         bool isAssisted,
                                          QWarningMessage &msg);
 
 QTransactionPtr nunchukUpdateTransaction(const QString& wallet_id,

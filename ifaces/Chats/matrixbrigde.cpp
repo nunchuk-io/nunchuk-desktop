@@ -70,16 +70,8 @@ QNunchukMatrixEvent matrixbrigde::JoinWallet(const QString &room_id,
                                              QWarningMessage &msg)
 {
     if(signer){
-        nunchuk::SingleSigner singlesinger(signer.data()->name().toStdString(),
-                                           signer.data()->xpub().toStdString(),
-                                           signer.data()->publickey().toStdString(),
-                                           signer.data()->derivationPath().toStdString(),
-                                           signer.data()->masterFingerPrint().toStdString(),
-                                           signer.data()->lastHealthCheckDateTime().toTime_t(),
-                                           signer.data()->masterSignerId().toStdString());
-        singlesinger.set_type(nunchuk::SignerType(signer.data()->signerType()));
         nunchuk::NunchukMatrixEvent e = matrixifaces::instance()->JoinWallet(room_id.toStdString(),
-                                                                             singlesinger,
+                                                                             signer->originSingleSigner(),
                                                                              msg);
         return QNunchukMatrixEvent(e);
     }
@@ -328,9 +320,6 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                 for (SignerAssigned signer : ret.data()->walletSigners()->fullList()) {
                     AppModel::instance()->walletList()->updateSignerOfRoomWallet(wallet_id, signer);
                 }
-                if(AppModel::instance()->walletList()->rowCount() == 1){
-                    AppModel::instance()->setWalletListCurrentIndex(0);
-                }
             }
         }
         return ret;
@@ -352,8 +341,7 @@ QRoomTransactionModelPtr matrixbrigde::GetPendingTransactions(const QString &roo
 {
     QWarningMessage msg;
     QRoomTransactionModelPtr ret = QRoomTransactionModelPtr(new QRoomTransactionModel()) ;
-    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(),
-                                                                                                     msg);
+    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         foreach (nunchuk::RoomTransaction room_tx, results) {
             QWarningMessage txWarning;

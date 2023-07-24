@@ -27,6 +27,8 @@
 #include <QTimer>
 #include "Chats/matrixbrigde.h"
 #include "utils/enumconverter.hpp"
+#include "Chats/QUserWallets.h"
+#include "ServiceSetting.h"
 
 AppModel::AppModel(): inititalized_{false},
     walletList_(QWalletListModelPtr(new WalletListModel())),
@@ -54,16 +56,21 @@ AppModel::AppModel(): inititalized_{false},
     newKeySignMessage_("")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(&timerRefreshHealthCheck_, SIGNAL(timeout()), this, SLOT(timerHealthCheckTimeHandle()));
-    timerRefreshHealthCheck_.start(60000); // Every 1'
-    connect(&timerFeeRates_, SIGNAL(timeout()), this, SLOT(timerFeeRatesHandle()));
-    timerFeeRates_.start(300000); // Every 5'
-    connect(&timerCheckAuthorized_, SIGNAL(timeout()), this, SLOT(timerCheckAuthorizedHandle()));
+    connect(&timerRefreshHealthCheck_, &QTimer::timeout, this, &AppModel::timerHealthCheckTimeHandle, Qt::QueuedConnection);
+    connect(&timerFeeRates_, &QTimer::timeout, this, &AppModel::timerFeeRatesHandle, Qt::QueuedConnection);
+    connect(&timerCheckAuthorized_, &QTimer::timeout, this, &AppModel::timerCheckAuthorizedHandle, Qt::QueuedConnection);
+    connect(this, &AppModel::forwardToast, this, &AppModel::recieveToast, Qt::QueuedConnection);
+
+    timerRefreshHealthCheck_.start(60000);  // Every 1'
+    timerFeeRates_.start(300000);           // Every 5'
     qrExported_.clear();
     suggestMnemonics_.clear();
 
-    connect(qApp, &QCoreApplication::aboutToQuit, this, [] {
-        DBG_INFO << "APPLICATION ABOUT TO QUIT";
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
+        DBG_INFO << "APPLICATION ABOUT TO QUIT" << QThreadPool::globalInstance()->activeThreadCount();
+        QThreadPool::globalInstance()->clear();
+        QThreadPool::globalInstance()->waitForDone();
+        this->disconnect();
         bridge::stopNunchuk();
     });
 }
@@ -212,9 +219,11 @@ bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassp
     if((int)EWARNING::WarningType::NONE_MSG == nunchukMsg.type()){
         ret = true;
         QString device_id = QString("%1%2").arg(Draco::instance()->deviceId()).arg(Draco::instance()->chatId());
+#if 0 //FIXME Performance
         Draco::instance()->getMe();
-        Draco::instance()->getCurrentUserSubscription();
+#endif
         AppModel::instance()->timerFeeRatesHandle();
+        QUserWallets::instance()->newRequestToAddKey();
         timeoutHandler(1000,[account, device_id](){
             CLIENT_INSTANCE->requestLogin();
             CLIENT_INSTANCE->saveStayLoggedInData();
@@ -462,9 +471,9 @@ void AppModel::setSoftwareSignerDeviceList(const QDeviceListModelPtr &value)
 
 QString AppModel::hourFeeCurrency() const
 {
-    double exRates = exchangeRates()/100000000;
     double fee = (double)hourFee_/1000;
-    double feeCurrency = exRates*fee*140;
+    double btcRate = btcRates()/100000000;
+    double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
 }
@@ -486,9 +495,9 @@ void AppModel::setHourFee(qint64 fee)
 
 QString AppModel::minFeeCurrency() const
 {
-    double exRates = exchangeRates()/100000000;
+    double btcRate = btcRates()/100000000;
     double fee = (double)minFee_/1000;
-    double feeCurrency = exRates*fee*140;
+    double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
 }
@@ -520,9 +529,9 @@ void AppModel::resetSignersChecked()
 
 QString AppModel::halfHourFeeCurrency() const
 {
-    double exRates = exchangeRates()/100000000;
+    double btcRate = btcRates()/100000000;
     double fee = (double)halfHourFee_/1000;
-    double feeCurrency = exRates*fee*140;
+    double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
 }
@@ -544,9 +553,9 @@ void AppModel::setHalfHourFee(qint64 fee)
 
 QString AppModel::fastestFeeCurrency() const
 {
-    double exRates = exchangeRates()/100000000;
+    double btcRate = btcRates()/100000000;
     double fee = (double)fastestFee_/1000;
-    double feeCurrency = exRates*fee*140;
+    double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
 }
@@ -646,23 +655,14 @@ int AppModel::walletListCurrentIndex() const
     return walletListCurrentIndex_;
 }
 
-void AppModel::setWalletListCurrentIndex(int walletListCurrentIndex)
+void AppModel::setWalletListCurrentIndex(int index)
 {
-    DBG_INFO << walletListCurrentIndex;
-    if(walletListCurrentIndex == -1){
-        walletListCurrentIndex_ = 0;
+    if(walletListCurrentIndex_ != index){
+        walletListCurrentIndex_ = index;
     }
-    else{
-        walletListCurrentIndex_ = walletListCurrentIndex;
-    }
-    setWalletInfoByIndex(walletListCurrentIndex_);
-    if(walletInfo()){
-        QString wallet_id = walletInfo()->id();
-        QtConcurrent::run([wallet_id]() {
-            bridge::nunchukSetSelectedWallet(wallet_id);
-        });
-    }
+    DBG_INFO << "FIXME" << index;
     emit walletListCurrentIndexChanged();
+    setWalletInfoByIndex(walletListCurrentIndex_);
 }
 
 AppModel *AppModel::instance() {
@@ -674,12 +674,9 @@ void AppModel::requestInitialData()
 {
     if(ONLINE_MODE == bridge::nunchukCurrentMode()){
         requestCreateUserWallets();
+    } else {
+        startReloadUserDb();
     }
-    QtConcurrent::run([this]() {
-        startReloadWallets();
-        startReloadMasterSigners();
-        startReloadRemoteSigners();
-    });
 }
 
 void AppModel::requestSyncWalletDb(const QString &wallet_id)
@@ -691,141 +688,98 @@ void AppModel::requestSyncWalletDb(const QString &wallet_id)
 
 void AppModel::requestCreateUserWallets()
 {
-    if(CLIENT_INSTANCE->getSubCur().isEmpty()) return;
-    QJsonObject data = Draco::instance()->getAssistedWallets();
-    if(!data.isEmpty()){
-        QJsonArray wallets = data["wallets"].toArray();
-        mUserWallets.clear();
-        for(QJsonValue jv_wallet : wallets){
-            QJsonObject js_wallet = jv_wallet.toObject();
-            QString wallet_id = js_wallet["local_id"].toString();
-            QString status = js_wallet["status"].toString();
-            if (status == "ACTIVE") {
-                mUserWallets.append(wallet_id);
-            }
-            if(status == "ACTIVE" && !bridge::nunchukHasWallet(wallet_id)){
-                QJsonArray signers = js_wallet["signers"].toArray();
-                for(QJsonValue jv_signer : signers){
-                    QJsonObject js_signer = jv_signer.toObject();
-                    QJsonObject tapsigner = js_signer["tapsigner"].toObject();
-                    QString name = js_signer["name"].toString();
-                    QString xfp = js_signer["xfp"].toString();
-                    if(!tapsigner.isEmpty()){
-                        QString card_id = tapsigner["card_id"].toString();
-                        QString version = tapsigner["version"].toString();
-                        int birth_height = tapsigner["birth_height"].toInt();
-                        bool is_testnet = tapsigner["is_testnet"].toBool();
-                        bridge::AddTapsigner(card_id,xfp,name,version,birth_height,is_testnet);
-                    }
-                    else {
-                        QString xpub = js_signer["xpub"].toString();
-                        QString pubkey = js_signer["pubkey"].toString();
-                        QString derivation_path = js_signer["derivation_path"].toString();
-                        QString type = js_signer["type"].toString();
-                        nunchuk::SingleSigner signer(name.toStdString(), xpub.toStdString(), pubkey.toStdString(), derivation_path.toStdString(), xfp.toStdString(), std::time(0));
-                        if(!bridge::nunchukHasSinger(signer)){
-                            bridge::nunchukCreateSigner(name, xpub, pubkey, derivation_path, xfp, type);
-                        }
-                    }
-                }
-                QWarningMessage msg;
-                QString bsms = js_wallet["bsms"].toString();
-                nunchuk::Wallet w = qUtils::ParseWalletDescriptor(bsms,msg);
-                QString name = js_wallet["name"].toString();
-                QString description = js_wallet["description"].toString();
-                w.set_name(name.toStdString());
-                w.set_description(description.toStdString());
-                bridge::nunchukCreateWallet(w, true,msg);
-            } else if (status == "DELETED" && bridge::nunchukHasWallet(wallet_id)){
-                QWarningMessage msgwarning;
-                /*bool ret = */bridge::nunchukDeleteWallet(wallet_id, msgwarning);
-            }
-            QWarningMessage msg;
-            nunchuk::Wallet w = nunchukiface::instance()->GetWallet(wallet_id.toStdString(), msg);
-            std::vector<nunchuk::SingleSigner> local_signers = w.get_signers();
-            QJsonArray signers = js_wallet["signers"].toArray();
-            for(QJsonValue jv_signer : signers){
-                QJsonObject js_signer = jv_signer.toObject();
-                QString xfp = js_signer["xfp"].toString();
-                QJsonArray wtags = js_signer["tags"].toArray();
-                std::vector<nunchuk::SingleSigner>::iterator local_signer = std::find_if(local_signers.begin(), local_signers.end(), [&](const nunchuk::SingleSigner &local){
-                    return local.get_master_fingerprint() == xfp.toStdString();
-                });
-                if(wtags.size() != 0){
-                    QWarningMessage msgIn;
-                    if (local_signer != local_signers.end() && local_signer->has_master_signer()) {
-                        nunchuk::MasterSigner m = nunchukiface::instance()->GetMasterSigner(local_signer->get_master_signer_id(),msgIn);
-                        std::vector<nunchuk::SignerTag> tags; // get tags from api signer.tags
-                        for (QJsonValue tag : wtags) {
-                            QString js_tag = tag.toString();
-                            tags.push_back(SignerTagFromStr(js_tag.toStdString()));
-                        }
-                        // Do update
-                        m.set_tags(tags);
-                        nunchukiface::instance()->UpdateMasterSigner(m,msgIn);
-                    } else {
-                        // update for single signer
-                        // skip for now
-                    }
-                }
-            }
-
-            if (!wallet_id.isEmpty()) {
-                auto syncTransaction = [&]() {
-                    QJsonObject data = Draco::instance()->assistedWalletGetListTx(wallet_id);
-                    QJsonArray transactions = data.value("transactions").toArray();
-                    for(QJsonValue js_value : transactions){
-                        QJsonObject transaction = js_value.toObject();
-                        QString status_ = transaction.value("status").toString();
-                        QString psbt = transaction.value("psbt").toString();
-                        QString note = transaction.value("note").toString();
-                        QString type = transaction.value("type").toString();
-                        if (status_ == "READY_TO_BROADCAST" || status_ == "PENDING_SIGNATURES" ) {
-                            QWarningMessage _msg;
-                            QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
-                            if(tran && (int)EWARNING::WarningType::NONE_MSG == _msg.type()){
-                                bridge::nunchukUpdateTransactionMemo(wallet_id,
-                                                                     tran->txid(),
-                                                                     note);
-                                long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toInt());
-                                // honey badger feature: schedule broadcast
-                                long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
-
-                                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
-                                    bridge::nunchukUpdateTransactionSchedule(wallet_id, tran->txid(), broadcast_time_milis/1000,msg);
+    if(CLIENT_INSTANCE->getSubCur().isEmpty()) {
+        startReloadUserDb();
+        return;
+    }
+    QtConcurrent::run([this]() {
+        QJsonObject data = Draco::instance()->getAssistedWallets();
+        if(!data.isEmpty()){
+            QJsonArray wallets = data["wallets"].toArray();
+            mUserWallets.clear();
+            for(QJsonValue jv_wallet : wallets){
+                QJsonObject js_wallet = jv_wallet.toObject();
+                QString wallet_id = js_wallet["local_id"].toString();
+                QString status = js_wallet["status"].toString();
+                if (status == "ACTIVE") {
+                    mUserWallets.append(wallet_id);
+                    if(!bridge::nunchukHasWallet(wallet_id)){
+                        QJsonArray signers = js_wallet["signers"].toArray();
+                        for(QJsonValue jv_signer : signers){
+                            QJsonObject js_signer = jv_signer.toObject();
+                            QJsonObject tapsigner = js_signer["tapsigner"].toObject();
+                            QString name = js_signer["name"].toString();
+                            QString xfp = js_signer["xfp"].toString();
+                            if(!tapsigner.isEmpty()){
+                                QString card_id = tapsigner["card_id"].toString();
+                                QString version = tapsigner["version"].toString();
+                                int birth_height = tapsigner["birth_height"].toInt();
+                                bool is_testnet = tapsigner["is_testnet"].toBool();
+                                bridge::AddTapsigner(card_id,xfp,name,version,birth_height,is_testnet);
+                            }
+                            else {
+                                QString xpub = js_signer["xpub"].toString();
+                                QString pubkey = js_signer["pubkey"].toString();
+                                QString derivation_path = js_signer["derivation_path"].toString();
+                                QString type = js_signer["type"].toString();
+                                nunchuk::SingleSigner signer(name.toStdString(), xpub.toStdString(), pubkey.toStdString(), derivation_path.toStdString(), xfp.toStdString(), std::time(0));
+                                if(!bridge::nunchukHasSinger(signer)){
+                                    bridge::nunchukCreateSigner(name, xpub, pubkey, derivation_path, xfp, type);
                                 }
                             }
                         }
+                        QWarningMessage msg;
+                        QString bsms = js_wallet["bsms"].toString();
+                        nunchuk::Wallet w = qUtils::ParseWalletDescriptor(bsms,msg);
+                        QString name = js_wallet["name"].toString();
+                        QString description = js_wallet["description"].toString();
+                        w.set_name(name.toStdString());
+                        w.set_description(description.toStdString());
+                        bridge::nunchukCreateWallet(w, true,msg);
                     }
-                };
-                auto lockDown = [&]() {
-                    int offset = 0;
-                    const int limit = 10;
-                    while (true) {
-                        QJsonObject data = Draco::instance()->assistedWalletDeleteListTx(wallet_id, offset, limit);
-                        QJsonArray transactions = data.value("transactions").toArray();
-                        for (QJsonValue js_value : transactions) {
-                            QJsonObject transaction = js_value.toObject();
-                            QString wallet_local_id = transaction.value("wallet_local_id").toString();
-                            QString transaction_id = transaction.value("transaction_id").toString();
-                            if (!bridge::nunchukDeleteTransaction(wallet_local_id, transaction_id)) {
-                                DBG_INFO << "not remove ";
-                                return; // exit while loop
+                    QWarningMessage msg;
+                    nunchuk::Wallet w = nunchukiface::instance()->GetWallet(wallet_id.toStdString(), msg);
+                    std::vector<nunchuk::SingleSigner> local_signers = w.get_signers();
+                    nunchukiface::instance()->UpdateWallet(w, msg);
+                    for (nunchuk::SingleSigner s : local_signers)
+                    {
+                        nunchukiface::instance()->UpdateRemoteSigner(s, msg);
+                    }
+                    QJsonArray signers = js_wallet["signers"].toArray();
+                    for(QJsonValue jv_signer : signers){
+                        QJsonObject js_signer = jv_signer.toObject();
+                        QString xfp = js_signer["xfp"].toString();
+                        QJsonArray wtags = js_signer["tags"].toArray();
+                        std::vector<nunchuk::SingleSigner>::iterator local_signer = std::find_if(local_signers.begin(), local_signers.end(), [&](const nunchuk::SingleSigner &local){
+                            return local.get_master_fingerprint() == xfp.toStdString();
+                        });
+                        if(wtags.size() != 0){
+                            QWarningMessage msgIn;
+                            if (local_signer != local_signers.end() && local_signer->has_master_signer()) {
+                                nunchuk::MasterSigner m = nunchukiface::instance()->GetMasterSigner(local_signer->get_master_signer_id(),msgIn);
+                                std::vector<nunchuk::SignerTag> tags; // get tags from api signer.tags
+                                for (QJsonValue tag : wtags) {
+                                    QString js_tag = tag.toString();
+                                    tags.push_back(SignerTagFromStr(js_tag.toStdString()));
+                                }
+                                // Do update
+                                m.set_tags(tags);
+                                nunchukiface::instance()->UpdateMasterSigner(m,msgIn);
                             }
                         }
-                        if (transactions.size() == 0 || transactions.size() < limit) {
-                            return; // exit while loop
-                        }
-                        offset += transactions.size();
                     }
-                };
-                //=====================
-                syncTransaction();
-                lockDown();
+                }
+                else if (status == "DELETED" && bridge::nunchukHasWallet(wallet_id)){
+                    QWarningMessage msgwarning;
+                    bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+                }
+                else{}
             }
+            requestAssistedWalletsSetuped();
+            emit walletListChanged();
         }
-    }
-    DBG_INFO << mUserWallets;
+        startReloadUserDb();
+    });
 }
 
 void AppModel::requestSyncSharedWallets()
@@ -865,6 +819,25 @@ void AppModel::requestSyncSharedWallets()
     }
 }
 
+void AppModel::requestAssistedWalletsSetuped()
+{
+    QStringList setuped {};
+    for (QString id : mUserWallets) {
+        QJsonObject response;
+        QString errormsg;
+        bool ret = Draco::instance()->inheritanceGetPlan(id, response, errormsg);
+        if (ret) {
+            QJsonObject inheritance = response.value("inheritance").toObject();
+            QString status = inheritance.value("status").toString();
+            if (status == "ACTIVE") {
+                setuped.append(id);
+            }
+        }
+    }
+    ServiceSetting::instance()->setAssistedSetuped(setuped);
+    DBG_INFO << mUserWallets << setuped;
+}
+
 void AppModel::requestClearData()
 {
     if(walletList()){
@@ -876,6 +849,7 @@ void AppModel::requestClearData()
     if(remoteSignerList()){
         remoteSignerList()->cleardata();
     }
+    setWalletListCurrentIndex(-1);
     AppSetting::instance()->setSyncPercent(0);
 }
 
@@ -900,7 +874,7 @@ QDeviceListModelPtr AppModel::deviceListPtr() const
 void AppModel::setWalletList(const QWalletListModelPtr &d){
     walletList_ = d;
     if(walletList_){
-        walletList_.data()->requestSort(WalletListModel::WalletRoles::wallet_Name_Role, Qt::AscendingOrder);
+        walletList_.data()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
     }
     emit walletListChanged();
 }
@@ -1073,9 +1047,14 @@ void AppModel::setWalletInfo(const QWalletPtr &d)
     if(d && 0 != QString::compare(d.data()->id(), walletInfo_->id(), Qt::CaseInsensitive)){
         walletInfo_ = d;
         if(walletInfo_){
-            timeoutHandler(2000, [this]() {
-                requestSyncWalletDb(walletInfo_->id());
-            });
+            DBG_INFO << "FIXME" << walletInfo_.data()->name();
+            QString wallet_id = walletInfo_.data()->id();
+            if(wallet_id != ""){
+                requestSyncWalletDb(wallet_id);
+                QtConcurrent::run([wallet_id]() {
+                    bridge::nunchukSetSelectedWallet(wallet_id);
+                });
+            }
         }
         emit walletInfoChanged();
     }
@@ -1083,12 +1062,17 @@ void AppModel::setWalletInfo(const QWalletPtr &d)
 
 void AppModel::setWalletInfoByIndex(const int index)
 {
-    if(walletList_){
-        QWalletPtr newWallet = walletList_.data()->getWalletByIndex(index);
-        if(!newWallet){
-            newWallet = QWalletPtr(new Wallet());
+    if(index == -1){
+        setWalletInfo(QWalletPtr(new Wallet()));
+    }
+    else{
+        if(walletList_){
+            QWalletPtr newWallet = walletList_.data()->getWalletByIndex(index);
+            if(!newWallet){
+                newWallet = QWalletPtr(new Wallet());
+            }
+            setWalletInfo(newWallet);
         }
-        setWalletInfo(newWallet);
     }
 }
 
@@ -1189,7 +1173,7 @@ void AppModel::timerFeeRatesHandle()
 void AppModel::timerCheckAuthorizedHandle()
 {
     Draco::instance()->getMe();
-    Draco::instance()->getCurrentUserSubscription();
+    QUserWallets::instance()->newRequestToAddKey();
 }
 
 QString AppModel::parseKeystoneSigner(QString qr)
@@ -1210,7 +1194,7 @@ bool AppModel::parseKeystoneWallet(const QString name, const QString desc, const
         walletImported.data()->setCreationMode((int)Wallet::CreationMode::CREATE_BY_IMPORT_QRCODE);
         walletList()->addWallet(walletImported);
         resetSignersChecked();
-        walletList()->requestSort(WalletListModel::WalletRoles::wallet_Name_Role, Qt::AscendingOrder);
+        walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
         int index = walletList()->getWalletIndexById(walletImported.data()->id());
         if(-1 != index){
             setWalletListCurrentIndex(index);
@@ -1410,14 +1394,7 @@ void AppModel::setBtcRates(double btcRates)
 }
 
 void AppModel::showToast(int code, const QString &what, EWARNING::WarningType type, const QString& explain, POPUP::PopupType popup){
-    timeoutHandler(500, [this, code, what, type, explain, popup]() {
-        if(!warningMessage()){
-            setWarningMessage(QWarningMessagePtr(new QWarningMessage()));
-        }
-        warningMessage()->setWarningMessage(code, what, type, explain);
-        warningMessage()->setPopupType((int)popup);
-        QQuickViewer::instance()->sendEvent(E::EVT_SHOW_TOAST_MESSAGE);
-    });
+    emit forwardToast(code, what, type, explain, popup);
 }
 
 void AppModel::setToast(int code, const QString &what, EWARNING::WarningType type, const QString &explain, POPUP::PopupType popup)
@@ -1428,4 +1405,16 @@ void AppModel::setToast(int code, const QString &what, EWARNING::WarningType typ
     warningMessage()->setWarningMessage(code, what, type, explain);
     warningMessage()->setPopupType((int)popup);
     emit signalShowToast();
+}
+
+void AppModel::recieveToast(int code, const QString &what, EWARNING::WarningType type, const QString &explain, POPUP::PopupType popup)
+{
+    timeoutHandler(500, [this, code, what, type, explain, popup]() {
+        if(!warningMessage()){
+            setWarningMessage(QWarningMessagePtr(new QWarningMessage()));
+        }
+        warningMessage()->setWarningMessage(code, what, type, explain);
+        warningMessage()->setPopupType((int)popup);
+        QQuickViewer::instance()->sendEvent(E::EVT_SHOW_TOAST_MESSAGE);
+    });
 }

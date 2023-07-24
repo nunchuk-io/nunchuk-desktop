@@ -34,7 +34,7 @@ import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: _period
     property int questionSelected: 0
-    property var qSelected : UserWallet.lockdownPeriods[questionSelected]
+    property var qSelected : UserWallet.periods[questionSelected]
     QOnScreenContentTypeB {
         width: popupWidth
         height: popupHeight
@@ -66,7 +66,7 @@ QScreen {
                 height: childrenRect.height
                 spacing: 8
                 clip: true
-                model: UserWallet.lockdownPeriods
+                model: UserWallet.periods
                 interactive: false
                 delegate: Item {
                     id: questionsdlg

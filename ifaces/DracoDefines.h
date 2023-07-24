@@ -110,6 +110,7 @@ enum CMD_IDX {
 
     // USER_SUBSCRIPTION
     USER_SUBCRIPTIONS_CURRENT,
+    USER_SUBCRIPTIONS_TESTNET,
 
     // ASSISTED_WALLETS
     ASSISTED_WALLET_GET,
@@ -120,6 +121,12 @@ enum CMD_IDX {
     ASSISTED_WALLET_GET_TX,
     ASSISTED_WALLET_GET_LIST_TX,
     ASSISTED_WALLET_DELETE_LIST_TX,
+    ASSISTED_WALLET_ADD_KEY,
+    ASSISTED_WALLET_GET_LIST_KEY,
+    ASSISTED_WALLET_REMOVE_ID,
+    ASSISTED_WALLET_GET_CONFIG,
+    ASSISTED_WALLET_UPDATE_NAME,
+    ASSISTED_KEY_UPDATE_NAME,
 
     // SEC_QUES
     SEC_QUES_GET,
@@ -134,6 +141,7 @@ enum CMD_IDX {
     LOCKDOWN_REQUIRED_SIGNATURES,
     LOCKDOWN_GET_PERIOD,
 
+
     //GET_RANDOM_NONCE
     GET_RANDOM_NONCE,
     VERIFY_PASSWORD_TOKEN,
@@ -147,6 +155,9 @@ enum CMD_IDX {
     INHERITANCE_CHECK,
     INHERITANCE_GET_PLAN,
     INHERITANCE_FAKE_UPDATE,
+    INHERITANCE_PLAN_REQUIRED_SIGNATURES,
+    INHERITANCE_PLAN_UPDATE,
+    INHERITANCE_PLAN_BUFFER_PERIODS,
 
     //SERVER_KEYS
     SERVER_KEYS_GET,
@@ -233,6 +244,7 @@ const QMap<int, QString> commands {
 
     // USER_SUBSCRIPTION
     { CMD_IDX::USER_SUBCRIPTIONS_CURRENT    , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("current")  },
+    { CMD_IDX::USER_SUBCRIPTIONS_TESTNET    , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("testnet")  },
 
     // ASSISTED_WALLETS
     { CMD_IDX::ASSISTED_WALLET_GET          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets")  },
@@ -243,6 +255,12 @@ const QMap<int, QString> commands {
     { CMD_IDX::ASSISTED_WALLET_SIGN_TX      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sign") },
     { CMD_IDX::ASSISTED_WALLET_CANCEL_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
     { CMD_IDX::ASSISTED_WALLET_GET_TX       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
+    { CMD_IDX::ASSISTED_WALLET_ADD_KEY      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/add-key") },
+    { CMD_IDX::ASSISTED_WALLET_GET_LIST_KEY , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/request-add-key") },
+    { CMD_IDX::ASSISTED_WALLET_REMOVE_ID    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/request-add-key/{request_id}") },
+    { CMD_IDX::ASSISTED_WALLET_GET_CONFIG   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("configs") },
+    { CMD_IDX::ASSISTED_KEY_UPDATE_NAME     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallet-keys/{xfp}") },
+    { CMD_IDX::ASSISTED_WALLET_UPDATE_NAME  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}") },
 
     // SEC_QUES
     { CMD_IDX::SEC_QUES_GET                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("security-questions") },
@@ -270,6 +288,9 @@ const QMap<int, QString> commands {
     { CMD_IDX::INHERITANCE_CHECK            , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/check") },
     { CMD_IDX::INHERITANCE_GET_PLAN         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance") },
     { CMD_IDX::INHERITANCE_FAKE_UPDATE      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/fake-update") },
+    { CMD_IDX::INHERITANCE_PLAN_REQUIRED_SIGNATURES      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/calculate-required-signatures") },
+    { CMD_IDX::INHERITANCE_PLAN_UPDATE      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance") },
+    { CMD_IDX::INHERITANCE_PLAN_BUFFER_PERIODS , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/buffer-period") },
 
     //SERVER_KEYS /v1.1/user-wallets/server-keys/{key_id_or_xfp}
     { CMD_IDX::SERVER_KEYS_GET              , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("server-keys/{key_id_or_xfp}") },

@@ -204,9 +204,9 @@ QScreen {
             model: AppModel.newWalletInfo.walletSingleSignerAssigned
             delegate: Item {
                 id: signerAssigneddlg
-                property int          signerType: model.single_signer_type
-                property bool isRemoteSigner: model.single_signer_type === NUNCHUCKTYPE.AIRGAP || model.single_signer_type === NUNCHUCKTYPE.FOREIGN_SOFTWARE
-                property bool isNeedGetXpubs:  model.single_signer_need_Topup_Xpub
+                property int      signerType: model.single_signer_type
+                property bool isRemoteSigner: (model.single_signer_type !== NUNCHUCKTYPE.HARDWARE) && (model.single_signer_type !== NUNCHUCKTYPE.SOFTWARE)
+                property bool isNeedGetXpubs: model.single_signer_need_Topup_Xpub
                 width: 343
                 height: signerAssigneddlg.isRemoteSigner ? 73 : 53
                 Rectangle {
@@ -286,7 +286,7 @@ QScreen {
 
                         Rectangle {
                             id:_type
-                            width: 70
+                            width: 100
                             height: 21
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
@@ -294,7 +294,7 @@ QScreen {
                             radius: 4
                             visible: !signerAssigneddlg.isNeedGetXpubs
                             QText {
-                                text: GlobalData.signerNames(signerAssigneddlg.signerType)
+                                text: GlobalData.signers(signerAssigneddlg.signerType)
                                 font.family: "Lato"
                                 font.weight: Font.Bold
                                 font.pixelSize: 10

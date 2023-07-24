@@ -33,7 +33,7 @@ QQuickViewer::QQuickViewer() : m_viewer(new QQuickView()), m_scrMng(NULL), m_pop
         m_PopupTriger.clear();
     }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(this, &QQuickViewer::signalNotifySendEvent, this, &QQuickViewer::sendEvent);
+    connect(this, &QQuickViewer::signalNotifySendEvent, this, &QQuickViewer::sendEvent, Qt::QueuedConnection);
 }
 
 QQuickViewer::~QQuickViewer()

@@ -37,6 +37,7 @@
 #include <QMutexLocker>
 #include <QThread>
 #include <QJsonObject>
+#include <QJsonDocument>
 #include <QDateTime>
 
 enum class LOG_LEVEL : int
@@ -194,7 +195,11 @@ public:
 
     inline QOutlog &operator<<(std::nullptr_t) { mStream << "(nullptr)" << ' ';; return *this; }
     inline QOutlog &operator<<(const void * t) { mStream << t << ' '; return *this; }
-    inline QOutlog &operator<<(const QJsonObject & t) { return operator<<(t.toVariantMap()); }
+    inline QOutlog &operator<<(const QJsonObject & t) {
+        QJsonDocument doc(t);
+        QString strJson(doc.toJson(QJsonDocument::Compact));
+        return operator<<(strJson);
+    }
     inline QOutlog &operator<<(QUrl t) { mStream << t.toString() << ' '; return *this; }
 
     template <class T>
@@ -254,7 +259,9 @@ public:
 
     ~FuncTime()
     {
+#ifndef RELEASE_MODE
         DBG_INFO << QString("%1 takes %2 ms").arg(mFunc).arg(mTime.elapsed());
+#endif
     }
 private:
     QString mFunc;

@@ -78,8 +78,8 @@ QScreen {
                 readonly property int transaction_status_role : 2
                 readonly property int transaction_subtotal_role : 9
                 readonly property int transaction_total_role : 10
-                readonly property int transaction_blocktime_role : 12
-                readonly property int transaction_height_role : 13
+                readonly property int transaction_blocktime_role : 13
+                readonly property int transaction_height_role : 14
                 QTableElement {
                     width: transaction_lst.width*0.15
                     height: 32

@@ -67,7 +67,8 @@ void EVT_CONSOLIDATE_MAKE_TRANSACTION_HANDLER(QVariant msg) {
                                 it.data()->address(),
                                 it.data()->amountSats(),
                                 it.data()->height(),
-                                it.data()->memo());
+                                it.data()->memo(),
+                                it.data()->status());
             }
         }
     }

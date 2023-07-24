@@ -99,7 +99,7 @@ Item {
                         id: lstDestination
                         model: transactionInfo.destinationList
                         width: parent.width
-                        height: count > 10 ? 400 : 40*count
+                        height: count > 10 ? 400 : 60*count
                         delegate: destDelegate
                         clip: true
                         cacheBuffer: 600
@@ -435,7 +435,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
-                                text: STR.STR_QML_220.arg(Math.max(0, (transactionInfo.m - transactionInfo.numberSigned)))
+                                text: STR.str_QML_220(Math.max(0, (transactionInfo.m - transactionInfo.numberSigned)))
                                 font.pixelSize: 12
                                 font.family: "Lato"
                                 color: indicatorStatus.color
@@ -478,7 +478,7 @@ Item {
                         color: "#595959"
                         font.family: "Lato"
                         font.pixelSize: 12
-                        text: STR.STR_QML_220.arg(Math.max(0, (transactionInfo.m - transactionInfo.numberSigned)))
+                        text: STR.str_QML_220(Math.max(0, (transactionInfo.m - transactionInfo.numberSigned)))
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }

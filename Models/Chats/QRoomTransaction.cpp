@@ -292,8 +292,18 @@ QSharedPointer<QRoomTransactionModel> QRoomTransactionModel::clone() const
 {
     QRoomTransactionModelPtr clone = QRoomTransactionModelPtr(new QRoomTransactionModel());
     for (QRoomTransactionPtr tx : m_data) {
-        QRoomTransactionPtr ret = QRoomTransactionPtr(new QRoomTransaction(tx.data()->roomTransaction()));
-        clone.data()->addTransaction(ret);
+        if(tx){
+            QRoomTransactionPtr ret = QRoomTransactionPtr(new QRoomTransaction(tx.data()->roomTransaction()));
+            QTransactionPtr nunchukTx = tx.data()->transactionPtr();
+            if(nunchukTx){
+                QTransactionPtr rawtx = QTransactionPtr(new Transaction());
+                rawtx.data()->setNunchukTransaction(nunchukTx.data()->nunchukTransaction());
+                rawtx.data()->setInitEventId(nunchukTx.data()->initEventId());
+                rawtx.data()->setRoomId(nunchukTx.data()->roomId());
+                ret.data()->setTransaction(rawtx);
+            }
+            clone.data()->addTransaction(ret);
+        }
     }
     return clone;
 }

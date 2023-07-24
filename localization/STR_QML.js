@@ -70,7 +70,7 @@ var STR_QML_041 = qsTr("Import DB")
 var STR_QML_042 = qsTr("NEXT: Key Setup")
 
 //SCR_ADD_WALLET_SIGNER_CONFIGURATION.qml
-var STR_QML_043 = qsTr("Choose from Existing Keys")
+var STR_QML_043 = qsTr("Choose from existing keys")
 var STR_QML_044 = qsTr("Hardware")
 var STR_QML_045 = qsTr("Air-gapped")
 var STR_QML_046 = qsTr("Software")
@@ -131,7 +131,7 @@ var STR_QML_096 = qsTr("To unlock the device, you might need to enter a <b>PIN</
 var STR_QML_097 = qsTr("Continue")
 var STR_QML_098 = qsTr("The private key is stored and encrypted locally on this device. Please keep your device safe to prevent your key from being compromised.")
 var STR_QML_099 = qsTr("Recover key with seed")
-var STR_QML_100 = qsTr("Create new Key")
+var STR_QML_100 = qsTr("Create new key")
 
 //SCR_ADD_HARDWARE_SIGNER.qml
 var STR_QML_101 = qsTr("Add a hardware key")
@@ -141,15 +141,13 @@ var STR_QML_104 = qsTr("Added")
 var STR_QML_105 = qsTr("Refresh devices")
 var STR_QML_106 = qsTr("Add key")
 var STR_QML_107 = qsTr("Add an air-gapped key")
-var STR_QML_108 = qsTr("Add air-gapped Key manually by entering your key spec.")
+var STR_QML_108 = qsTr("Add an air-gapped key manually by entering your key spec.")
 var STR_QML_109 = qsTr("XPUB")
 var STR_QML_110 = qsTr("The data inputted is not valid")
 var STR_QML_111 = qsTr("BIP32 Path")
 var STR_QML_112 = qsTr("Master Key Fingerprint")
 var STR_QML_113 = qsTr("Via QR Code")
 var STR_QML_114 = qsTr("Export via QR")
-var STR_QML_115 = qsTr("Export to Keystone/SeedSigner")
-var STR_QML_116 = qsTr("Export to passport")
 var STR_QML_117 = qsTr("Nunchuk is connecting to your device.")
 var STR_QML_118 = qsTr("Key Health Check")
 var STR_QML_119 = qsTr("Test signing message. Please wait and confirm the action on your key device.")
@@ -265,9 +263,15 @@ var STR_QML_214 = qsTr("Amount")
 var STR_QML_215 = qsTr("Estimated fee")
 var STR_QML_216 = qsTr("Total amount")
 var STR_QML_217 = qsTr("Change address")
-var STR_QML_218 = qsTr("Private note")
+var STR_QML_218 = qsTr("Transaction note")
 var STR_QML_219 = qsTr("Signatures")
-var STR_QML_220 = qsTr("Pending %1 signatures")
+var STR_QML_220_S = qsTr("Pending 1 signature")
+var STR_QML_220_M = qsTr("Pending %1 signatures")
+
+function str_QML_220(m) {
+    return m === 1 ? STR_QML_220_S : STR_QML_220_M.arg(m)
+}
+
 var STR_QML_221 = qsTr("Manual coin selection")
 var STR_QML_222 = qsTr("Output address")
 var STR_QML_223 = qsTr("CONF.")
@@ -321,7 +325,7 @@ var STR_QML_260 = qsTr("To address")
 var STR_QML_261 = qsTr("Amount")
 var STR_QML_262 = qsTr("Send all")
 var STR_QML_263 = qsTr("Add recipient")
-var STR_QML_264 = qsTr("Private note")
+var STR_QML_264 = qsTr("Transaction note")
 var STR_QML_265 = qsTr("Continue")
 
 //SCR_SOFTWARE_SIGNER_CONFIGURATION.qml
@@ -355,7 +359,7 @@ var STR_QML_287 = qsTr("Confirmations")
 var STR_QML_288 = qsTr("Replaced by Fee")
 var STR_QML_289 = qsTr("Member keys")
 var STR_QML_290 = qsTr("Receive address")
-var STR_QML_291 = qsTr("View on Blockstream Explorer")
+var STR_QML_291 = qsTr("View on blockchain explorer")
 var STR_QML_292 = qsTr("Remove transaction")
 var STR_QML_293 = qsTr("Replace-by-Fee")
 var STR_QML_294 = qsTr("Export transaction")
@@ -401,8 +405,7 @@ var STR_QML_325 = qsTr("Export Wallet Database")
 var STR_QML_326 = qsTr("Export Transaction History (CSV)")
 var STR_QML_327 = qsTr("Export UTXOs (CSV)")
 var STR_QML_328 = qsTr("Export wallet to Coldcard")
-var STR_QML_329 = qsTr("Export to Keystone/SeedSigner as QR code")
-var STR_QML_330 = qsTr("Export to Passport/SeedSigner as QR code")
+var STR_QML_329 = qsTr("Export as QR code")
 var STR_QML_331 = qsTr("More options")
 var STR_QML_332 = qsTr("Delete wallet")
 var STR_QML_333 = qsTr("*Export data do not include seeds or private keys.")
@@ -727,7 +730,7 @@ var STR_QML_612 = qsTr("Offline")
 var STR_QML_613 = qsTr("Syncing")
 
 var STR_QML_614 = qsTr("Please add a key before adding a wallet")
-var STR_QML_615 = qsTr("hardware, software and air-gapped keys are supported.")
+var STR_QML_615 = qsTr("Hardware, software and air-gapped keys are supported.")
 
 var STR_QML_616 = qsTr("Looks like you have added a signer")
 var STR_QML_617 = qsTr("Do you want to add a Bitcoin wallet?")
@@ -996,3 +999,130 @@ var STR_QML_837 = qsTr("Select an assisted wallet")
 var STR_QML_838 = qsTr("Which wallet do you want to select?")
 
 var STR_QML_839 = qsTr("This feature is only available with an assisted wallet. Please create one first.")
+var STR_QML_840 = qsTr("No Trezor devices have been detected. Please try again.")
+var STR_QML_840_LEDGER = qsTr("No Ledger devices have been detected. Please try again.")
+
+var STR_QML_841 = qsTr("You have <b>%1</b> remaining assisted wallets. You can get additional wallets through our website. Sign in and navigate to the Plan and Invoices page.")
+var STR_QML_842 = qsTr("You have <b>%1</b> remaining assisted wallet. You can get additional wallet through our website. Sign in and navigate to the Plan and Invoices page.")
+//=================
+var STR_QML_843 = qsTr("Review your plan")
+var STR_QML_844 = qsTr("Cancel inheritance plan")
+var STR_QML_845 = qsTr("Wallet subject to inheritance:")
+var STR_QML_846 = qsTr("View claiming instructions")
+var STR_QML_847 = qsTr("Share your secrets")
+var STR_QML_848 = qsTr("Activation Date")
+var STR_QML_849 = qsTr("Edit")
+var STR_QML_850 = qsTr("Note to Beneficiary or Trustee")
+var STR_QML_851 = qsTr("Buffer period")
+var STR_QML_852 = qsTr("Nofication preferences")
+var STR_QML_853 = qsTr("Continue to finalize changes")
+//===================
+var STR_QML_854 = qsTr("Set up an Activation Date")
+var STR_QML_855 = qsTr("<b>Only on or after this date</b>, a Beneficiary or Trustee can claim the inheritance. \n
+You can change the Activation Date later via the Services tab.")
+var STR_QML_856 = qsTr("Even with the correct Magic Phrase and Backup Password, one cannot claim the inheritance before this date.")
+var STR_QML_857 = qsTr("Update activation date")
+var STR_QML_858 = qsTr("Would you like to leave a message?")
+var STR_QML_859 = qsTr("After the Beneficiary or Trustee claims the inheritance, they will be able to \n \
+see this message.")
+var STR_QML_860 = qsTr("Note")
+var STR_QML_861 = qsTr("Update message")
+var STR_QML_862 = qsTr("Set up buffer period")
+var STR_QML_863 = qsTr("A buffer period is extra time that you can add after the claimant has provided \n \
+the secrets and before the inheritance can be claimed. The buffer period \n \
+helps you prevent unauthorized claims. \n \
+\n \
+An email notification will be sent when the buffer period begins.")
+
+var STR_QML_864 = qsTr("Update buffer period")
+var STR_QML_865 = qsTr("Notification preferences")
+var STR_QML_866 = qsTr("On the Activation Date, would you like us to notify the Beneficiary or Trustee of the inheritance plan? If so, please provide an email address.")
+var STR_QML_867 = qsTr("Beneficiary’s or Trustee’s email address")
+var STR_QML_868 = qsTr("Also notify them today")
+var STR_QML_869 = qsTr("You are still personally responsible for sharing the Magic Phrase and Backup Password with the Beneficiary or Trustee. The notification email won’t include these information.")
+var STR_QML_870 = qsTr("Update notification preferences")
+var STR_QML_871 = qsTr("I don’t want any notifications")
+
+var STR_QML_872 = qsTr("Are you sure want to discard the changes?")
+var STR_QML_873 = qsTr("Moving the Activation Date earlier requires signing a dummy transaction. Please do so via the mobile app.")
+var STR_QML_874 = qsTr("Canceling the inheritance requires signing a dummy transaction. Please do so via the mobile app.")
+var STR_QML_875 = qsTr("View inheritance plan")
+
+var STR_QML_876 = qsTr("30-day buffer")
+var STR_QML_877 = qsTr("7-day buffer")
+var STR_QML_878 = qsTr("I don’t need a buffer period")
+var STR_QML_879 = qsTr("Recommended")
+
+var STR_QML_880 = qsTr("The Magic Phrase and Backup Password must be shared with the party or \n \
+parties eligible for the inheritance. Please select your option:")
+
+var STR_QML_881 = qsTr("Direct inheritance")
+var STR_QML_882 = qsTr("The Beneficiary has full control over the inheritance. Upon the \n \
+Activation Date, they can claim the inheritance for themselves.")
+
+var STR_QML_883 = qsTr("Indirect inheritance")
+var STR_QML_884 = qsTr("A Trustee has full control over the inheritance. Upon the Activation \n \
+Date, the Trustee can help the Beneficiary claim the inheritance on their behalf.")
+
+var STR_QML_885 = qsTr("Joint control")
+var STR_QML_886 = qsTr("The Beneficiary and the Trustee have joint control over the \n \
+inheritance. Upon the Activation Date, the Beneficiary and Trustee \n \
+will need to combine their secrets in order to claim the \n \
+inheritance.")
+
+var STR_QML_887 = qsTr("Please share these two secrets with the \n \
+Beneficiary:")
+var STR_QML_888 = qsTr("The plan’s Magic Phrase.")
+var STR_QML_889 = qsTr("The Backup Password for the encrypted \n \
+backup, which can be found on the back of \n \
+the TAPSIGNER designated for inheritance. \n \
+(It might be listed under “Backup key”).")
+var STR_QML_890 = qsTr("You are solely responsible for sharing \n \
+the Magic Phrase and Backup \n \
+Password with the Beneficiary. Failure to \n \
+share will result in the inheritance \n \
+being unclaimable.")
+var STR_QML_891 = qsTr("Please share these two secrets with the Trustee:")
+var STR_QML_892 = qsTr("<b></b>Please share one secret with the Beneficiary and \n \
+the other secret with the Trustee. <b>Neither party \n \
+should have both secrets.</b>")
+var STR_QML_893 = qsTr("You are solely responsible for sharing the Magic Phrase and Backup \n \
+Password with the Trustee. Failure to \n \
+share will result in the inheritance \n \
+being unclaimable.")
+var STR_QML_894 = qsTr("You are solely responsible for sharing \n \
+the Magic Phrase and Backup \n \
+Password with the Beneficiary and the \n \
+Trustee. Failure to share will result in \n \
+the inheritance being unclaimable.")
+
+var STR_QML_895 = qsTr("This transaction includes unconfirmed coins.")
+var STR_QML_896 = qsTr("Moving the Activation Date earlier requires signing a dummy transaction. Please do so via the mobile app.")
+var STR_QML_897 = qsTr("Canceling the inheritance requires signing a dummy transaction. Please do so via the mobile app.")
+var STR_QML_898 = qsTr("Wired")
+var STR_QML_899 = qsTr("Add existing key")
+var STR_QML_900 = qsTr("Take me to add a new key")
+var STR_QML_901 = qsTr("Do you want to add an existing key?")
+var STR_QML_902 = qsTr("We noticed that you already have a Ledger in your key manager")
+
+var STR_QML_903 = qsTr("Add COLDCARD to your assisted wallet")
+var STR_QML_904 = qsTr("Add COLDCARD")
+var STR_QML_905 = qsTr("It looks like you want to add COLDCARD as a hardware key to an assisted wallet. Would you like to do it now?")
+var STR_QML_906 = qsTr("No COLDCARD devices have been detected. Please try again.")
+
+var STR_QML_907 = qsTr("Initialize COLDCARD")
+var STR_QML_908 = qsTr("Refer to <a href='https://coldcard.com/docs/quick'>this starter guide</a>.")
+var STR_QML_909 = qsTr("Unlock COLDCARD")
+var STR_QML_910 = qsTr("You might need to enter a PIN and/or a PASSPHRASE directly on COLDCARD.")
+var STR_QML_911 = qsTr("Please ensure that the COLDCARD device is connected to this computer, and click on Refresh")
+var STR_QML_912 = qsTr("Adding COLDCARD...")
+var STR_QML_913 = qsTr("COLDCARD added successfully")
+var STR_QML_914 = qsTr("No COLDCARD devices have been detected. Please try again.")
+var STR_QML_915 = qsTr("We noticed that you already have a Trezor in your key manager")
+var STR_QML_916 = qsTr("We noticed that you already have a COLDCARD in your key manager")
+var STR_QML_917 = qsTr("(The Backup Password is printed on the back of the \n
+inheritance key)")
+var STR_QML_918 = qsTr("There no assisted wallet")
+var STR_QML_919 = qsTr("Are you sure want to discard the changes?")
+var STR_QML_920 = qsTr("Would you like to leave a message?")
+var STR_QML_921 = qsTr("No buffer")

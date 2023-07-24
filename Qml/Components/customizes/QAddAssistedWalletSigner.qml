@@ -15,38 +15,50 @@ Rectangle {
     Item {
         anchors.fill: parent
         anchors.margins: 16
-        Column {
-            spacing: 16
-            QLato {
-                width: 257
-                height: 28
-                text: addTitle
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
+        QLato {
+            anchors {
+                top: parent.top
+                topMargin: 0
             }
-            Row {
-                spacing: 16
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_245
-                    label.font.pixelSize: 16
-                    type: eTypeM
-                    onButtonClicked: {
-                        cancel()
-                    }
+            width: 257
+            height: paintedHeight
+            text: addTitle
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
+            lineHeight: 28
+            lineHeightMode: Text.FixedHeight
+        }
+        Item {
+            anchors {
+                bottom: parent.bottom
+                bottomMargin: 0
+            }
+            width: 257
+            height: 48
+            QTextButton {
+                width: label.paintedWidth + 12*2
+                height: 48
+                anchors.left: parent.left
+                label.text: STR.STR_QML_245
+                label.font.pixelSize: 16
+                type: eTypeM
+                onButtonClicked: {
+                    cancel()
                 }
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: addText
-                    label.font.pixelSize: 16
-                    type: eTypeN
-                    onButtonClicked: {
-                        add()
-                    }
+            }
+            QTextButton {
+                width: label.paintedWidth + 12*2
+                height: 48
+                anchors.right: parent.right
+                label.text: addText
+                label.font.pixelSize: 16
+                type: eTypeN
+                onButtonClicked: {
+                    add()
                 }
             }
         }
+
     }
 }

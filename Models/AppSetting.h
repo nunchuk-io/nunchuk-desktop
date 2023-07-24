@@ -32,8 +32,9 @@
 #define TOR_PORT        9050
 #define CORERPC_MAINNET_PORT        8332
 #define CORERPC_TESTNET_PORT        18332
-#define BLOCKSTREAM_TESTNET "https://blockstream.info/testnet/tx/"
-#define BLOCKSTREAM_MAINNET "https://blockstream.info/tx/"
+#define EXPLORER_MAINNET "https://mempool.space/tx/"
+#define EXPLORER_TESTNET "https://mempool.space/testnet/tx/"
+#define EXPLORER_SIGNNET "https://mempool.space/signet/tx/"
 #define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
 
 

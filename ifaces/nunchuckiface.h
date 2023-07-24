@@ -57,7 +57,7 @@ public:
     nunchuk::Wallet CreateWallet(const std::string& name,
                                  int m,
                                  int n,
-                                 std::vector<nunchuk::SingleSigner>& signers,
+                                 const std::vector<nunchuk::SingleSigner>& signers,
                                  nunchuk::AddressType address_type,
                                  bool is_escrow,
                                  const std::string& desc,
@@ -70,7 +70,7 @@ public:
     std::string DraftWallet(const std::string& name,
                             int m,
                             int n,
-                            std::vector<nunchuk::SingleSigner>& signers,
+                            const std::vector<nunchuk::SingleSigner>& signers,
                             nunchuk::AddressType address_type,
                             bool is_escrow,
                             const std::string& desc,
@@ -111,6 +111,10 @@ public:
                                                     const nunchuk::WalletType& wallet_type,
                                                     const nunchuk::AddressType& address_type,
                                                     int index,
+                                                    QWarningMessage& msg);
+
+    nunchuk::SingleSigner GetSignerFromMasterSigner(const std::string &mastersigner_id,
+                                                    const std::string &derivation_path,
                                                     QWarningMessage& msg);
 
     nunchuk::SingleSigner CreateSigner(const std::string& name,
@@ -458,8 +462,17 @@ public:
                                        QWarningMessage& msg);
 
     nunchuk::SingleSigner GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id,
+                                                           const nunchuk::WalletType& wallet_type,
+                                                           const nunchuk::AddressType& address_type,
+                                                           QWarningMessage& msg);
+
+    nunchuk::SingleSigner GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id,
                                                                   QWarningMessage& msg);
 
+    bool IsCPFP(const std::string& wallet_id,
+                const nunchuk::Transaction& tx,
+                nunchuk::Amount& package_fee_rate,
+                QWarningMessage& msg);
 private:
     nunchukiface();
     ~nunchukiface();

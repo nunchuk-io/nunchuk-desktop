@@ -38,6 +38,7 @@
 #include <QSqlDatabase>
 #include <database.h>
 #include <QTextDocument>
+#include "Chats/QUserWallets.h"
 
 using Quotient::NetworkAccessManager;
 using Quotient::Settings;
@@ -359,6 +360,7 @@ void ClientController::requestSignout()
     if(contacts()){
         contacts()->removeAll();
     }
+    QUserWallets::instance()->newRequestToAddKey();
     qApp->restoreOverrideCursor();
 }
 
@@ -487,7 +489,7 @@ QVariant ClientController::user() const
     if(plan.isEmpty() == false){
         QString slug = plan["slug"].toString();
         maps["plan_slug"]  = slug;
-        maps["isPremiumUser"] = slug == "iron_hand" || slug == "honey_badger" ;
+        maps["isPremiumUser"] = slug == "iron_hand" || slug == "honey_badger" || slug == "honey_badger_testnet";
     }else{
         maps["plan_slug"]  = "";
         maps["isPremiumUser"] = false;
@@ -590,10 +592,12 @@ void ClientController::setSubCur(const QJsonObject &sub)
     QJsonObject plan = m_subCur["plan"].toObject();
     if (plan.isEmpty() == false) {
         QString slug = plan["slug"].toString();
-        bool isPremiumUser = slug == "iron_hand" || slug == "honey_badger" ;
+        bool isPremiumUser = slug == "iron_hand" || slug == "honey_badger" || slug == "honey_badger_testnet";
         setAttachmentEnable(isPremiumUser);
+        AppModel::instance()->setIsPremiumUser(isPremiumUser);
     } else {
         setAttachmentEnable(false);
+        AppModel::instance()->setIsPremiumUser(false);
     }
 }
 

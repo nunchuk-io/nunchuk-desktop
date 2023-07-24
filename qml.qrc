@@ -223,6 +223,28 @@
         <file>Qml/Components/customizes/QAddAssistedWalletSigner.qml</file>
         <file>Qml/Components/customizes/QProgressbarTypeA.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SELECT_WALLET_CO_SIGN_POLICE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_EDIT_YOUR_INHERITANCE_PLAN.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SHARE_YOUR_SECRETS.qml</file>
+        <file>Qml/Components/customizes/services/QViewInheritancePlaning.qml</file>
+        <file>Qml/Components/customizes/services/QSelectAnAssistedWallet.qml</file>
+        <file>Qml/Components/customizes/Buttons/QLinearGradient.qml</file>
+        <file>Qml/Components/customizes/Buttons/QAssistedWalletDelegate.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextLink.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextInputBoxTypeE.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeA.qml</file>
+        <file>Qml/Components/origins/QTextArea.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeB.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeE.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeC.qml</file>
+        <file>Qml/Components/customizes/Buttons/QCheckBoxButton.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeF.qml</file>
+        <file>Qml/Components/customizes/services/QInheritanceDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_COLDCARD.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_COLDCARD_ASK.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_COLDCARD_EXIST.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_LEDGER_EXIST.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR_EXIST.qml</file>
+        <file>Qml/Components/customizes/QAddAnExistingKey.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -453,6 +475,18 @@
         <file>Images/OnlineMode/help_outline_24px.svg</file>
         <file>Images/ExportFile.svg</file>
         <file>Images/ledger-illustration.svg</file>
+        <file>Images/more-horizontal-dark.svg</file>
+        <file>Images/close-24px.svg</file>
+        <file>Images/calendar-dark.svg</file>
+        <file>Images/change-password-dark.svg</file>
+        <file>Images/star-dark.svg</file>
+        <file>Images/wallet-brand-icon.svg</file>
+        <file>Images/calendar-dark.png</file>
+        <file>Images/star-dark.png</file>
+        <file>Images/inheritance_backup_password.svg</file>
+        <file>Images/trezor-illustration.svg</file>
+        <file>Images/Device_Icons/Ledger.svg</file>
+        <file>Images/coldcard-illustration.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

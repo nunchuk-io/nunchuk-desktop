@@ -141,10 +141,11 @@ void EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    if (file_path != "" && AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+    QWalletPtr w = AppModel::instance()->walletInfoPtr();
+    if (file_path != "" && w){
+        QString wallet_id = w->id();
         QWarningMessage msgwarning;
-        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
+        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, w->isAssistedWallet(), msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
@@ -190,12 +191,20 @@ void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ASK_LEDGER_REQ_HANDLER(QVariant msg) {
-
 }
-
-
 
 void EVT_ASK_TREZOR_REQ_HANDLER(QVariant msg) {
-
 }
 
+void EVT_ASK_COLDCARD_REQ_HANDLER(QVariant msg)
+{
+}
+
+void EVT_EXIST_LEDGER_REQ_HANDLER(QVariant msg) {
+}
+
+void EVT_EXIST_TREZOR_REQ_HANDLER(QVariant msg) {
+}
+
+void EVT_EXIST_COLDCARD_REQ_HANDLER(QVariant msg) {
+}

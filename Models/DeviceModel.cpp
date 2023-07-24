@@ -74,15 +74,17 @@ bool QDevice::needsPinSent() const {
     return m_device.needs_pin_sent();
 }
 
-bool QDevice::usableToAdd()
+bool QDevice::usableToAdd() const
 {
     bool used = false;
     if(AppModel::instance()->masterSignerList()){
         used = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
     }
+#if 0 //Able to upgrade to master signer
     if(!used && AppModel::instance()->remoteSignerList()){
         used = AppModel::instance()->remoteSignerList()->containsFingerPrint(masterFingerPrint());
     }
+#endif
     return !used;
 }
 
@@ -276,7 +278,7 @@ QDevicePtr DeviceListModel::getDeviceNeedPinSent(){
     return QDevicePtr(NULL);
 }
 
-bool DeviceListModel::containsFingerPrint(const QString &xfp)
+bool DeviceListModel::containsFingerPrint(const QString &xfp) const
 {
     foreach (QDevicePtr it, d_) {
         if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){

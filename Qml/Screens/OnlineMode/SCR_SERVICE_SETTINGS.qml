@@ -151,21 +151,30 @@ QScreen {
                                 readonly property int _EMERGENCY_LOCKDOWN: 1
                                 readonly property int _KEY_RECOVERY: 2
                                 readonly property int _INHERITANCE_PLANING: 3
-                                readonly property int _CLAIM_AN_INHERITANCE: 4
-                                readonly property int _YOUR_SUBSCRIPTION: 5
-                                readonly property int _PLATFORM_KEY_CO_SIGNING_POLICIES: 6
-                                readonly property int _GET_ADDITIONAL_WALLETS: 7
-                                readonly property int _ORDER_NEW_HARDWARE: 8
-                                readonly property int _MANAGE_SUBSCRIPTION: 9
                                 function isHoneyBadger(){
                                     return ClientController.user.plan_slug === "honey_badger"
                                 }
-
+                                readonly property int _VIEW_INHERITANCE_PLANING: 4
+                                readonly property int _CLAIM_AN_INHERITANCE: 5
+                                readonly property int _YOUR_SUBSCRIPTION: 6
+                                readonly property int _PLATFORM_KEY_CO_SIGNING_POLICIES: 7
+                                readonly property int _GET_ADDITIONAL_WALLETS: 8
+                                readonly property int _ORDER_NEW_HARDWARE: 9
+                                readonly property int _MANAGE_SUBSCRIPTION: 10
                                 readonly property var setting_map: [
                                     {screen:_EMERGENCY,             visible: true, enable:false,  title:STR.STR_QML_702, icon: "qrc:/Images/Images/emergency-light.svg"   ,action: function(){} },
                                     {screen:_EMERGENCY_LOCKDOWN,    visible: true, enable:true,  title:STR.STR_QML_697, icon: ""   ,action: function(){} },
                                     {screen:_KEY_RECOVERY,          visible: true, enable:true,  title:STR.STR_QML_698, icon: ""   ,action: function(){} },
                                     {screen:_INHERITANCE_PLANING,   visible: isHoneyBadger(), enable:false,  title:STR.STR_QML_736, icon: "qrc:/Images/Images/inheritance-light.svg"   ,action: function(){} },
+                                    {screen:_VIEW_INHERITANCE_PLANING,  visible: isHoneyBadger() && ServiceSetting.qAssistedSetuped.length > 0, enable:true,  title:STR.STR_QML_875, icon: ""   ,action: function(){
+                                        ServiceSetting.qInheritanceWalletName = ""
+                                        if (ServiceSetting.qAssistedSetuped.length > 1) {
+                                            GlobalData.serviceIndex = _VIEW_INHERITANCE_PLANING
+                                        } else if (ServiceSetting.qAssistedSetuped.length === 1) {
+                                            QMLHandle.sendEvent(EVT.EVT_SERVICE_SELECT_WALLET_REQUEST, ServiceSetting.qAssistedSetuped[0])
+                                            GlobalData.serviceIndex = _VIEW_INHERITANCE_PLANING
+                                        }
+                                    } },
                                     {screen:_CLAIM_AN_INHERITANCE,  visible: isHoneyBadger(), enable:true,  title:STR.STR_QML_737, icon: ""   ,action: function(){
                                         GlobalData.serviceIndex = _CLAIM_AN_INHERITANCE
                                         ServiceSetting.claimInheritanceStatus = ServiceType.CI_NONE
@@ -176,7 +185,14 @@ QScreen {
                                             var screenObj = { "state_id" : EVT.STATE_ID_SCR_SERVICE_SETTINGS }
                                             QMLHandle.sendEvent(EVT.EVT_REENTER_YOUR_PASSWORD_REQUEST,screenObj)
                                     } },
-                                    {screen:_GET_ADDITIONAL_WALLETS,visible: false, enable:false, title:STR.STR_QML_707, icon: ""   ,action: function(){} },
+                                    {screen:_GET_ADDITIONAL_WALLETS,visible: true, enable:true,  title:STR.STR_QML_707, icon: ""   ,action: function(){
+                                        UserWallet.additionalGetWalletConfig()
+                                        _InfoVer.link = "https://nunchuk.io/claim";
+                                        var remainCount = ServiceSetting.qRemainingAssistedWalletCount;
+                                        _InfoVer.contentText = (remainCount > 1 ? STR.STR_QML_841 : STR.STR_QML_842).arg(remainCount);
+                                        _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
+                                        _InfoVer.open();
+                                    } },
                                     {screen:_ORDER_NEW_HARDWARE,    visible: true, enable:true,  title:STR.STR_QML_700, icon: ""   ,action: function(){_InfoVer.link = "https://nunchuk.io/hardware-replacement";_InfoVer.contentText = STR.STR_QML_735;_InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];_InfoVer.open();} },
                                     {screen:_MANAGE_SUBSCRIPTION,   visible: true, enable:true,  title:STR.STR_QML_682, icon: ""   ,action: function(){_InfoVer.link = "https://nunchuk.io/my-plan";_InfoVer.contentText = STR.STR_QML_684;_InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];_InfoVer.open();}}
                                 ]
@@ -585,6 +601,57 @@ QScreen {
                                     var screenObj = { "state_id" : EVT.STATE_ID_SCR_KEY_RECOVERY }
                                     QMLHandle.sendEvent(EVT.EVT_REENTER_YOUR_PASSWORD_REQUEST,screenObj)
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+            Item {
+                anchors.fill: parent
+                visible: GlobalData.serviceIndex === itemsSetting._VIEW_INHERITANCE_PLANING
+                enabled: visible
+                QViewInheritancePlaning {
+                    anchors.fill: parent
+                    visible: ServiceSetting.qInheritanceWalletName !== ""
+                }
+                QSelectAnAssistedWallet {
+                    visible: ServiceSetting.qAssistedSetuped.length > 1 && ServiceSetting.qInheritanceWalletName === ""
+                }
+                Connections {
+                    target: UserWallet
+                    onSecurityQuestionChanged: {
+                        if (GlobalData.serviceIndex === itemsSetting._VIEW_INHERITANCE_PLANING) {
+                            _Security.action = function() {
+                                QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, 3)
+                            }
+                            _Security.open();
+                        }
+                    }
+                    onSecurityQuestionClosed: {
+                        if (GlobalData.serviceIndex === itemsSetting._VIEW_INHERITANCE_PLANING) {
+                            _Security.close()
+                        }
+                    }
+                    onInheritanceDummyTransactionAlert: {
+                        if (GlobalData.serviceIndex === itemsSetting._VIEW_INHERITANCE_PLANING) {
+                            _info1.contentText = STR.STR_QML_897
+                            _info1.open();
+                        }
+                    }
+                    onInheritanceInvalidActivationDateAlert: {
+                        if (GlobalData.serviceIndex === itemsSetting._VIEW_INHERITANCE_PLANING) {
+                            _info1.contentText = STR.STR_QML_896
+                            _info1.open();
+                        }
+                    }
+                    onInheritanceDiscardChangeAlert: {
+                        if (GlobalData.serviceIndex === itemsSetting._VIEW_INHERITANCE_PLANING) {
+                            _confirm.title = STR.STR_QML_024
+                            _confirm.contentText = STR.STR_QML_919
+                            _confirm.open();
+                            _confirm.fClose = function() {
+                                ServiceSetting.qInheritanceWalletName = ""
+                                GlobalData.serviceIndex = itemsSetting._CLAIM_AN_INHERITANCE
                             }
                         }
                     }
@@ -1088,6 +1155,9 @@ QScreen {
                     }
                     onSecurityQuestionChanged: {
                         if (GlobalData.serviceIndex === itemsSetting._PLATFORM_KEY_CO_SIGNING_POLICIES) {
+                            _Security.action = function() {
+                                QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED)
+                            }
                             _Security.open();
                         }
                     }
@@ -1498,8 +1568,19 @@ QScreen {
             close()
         }
     }
+    QConfirmYesNoPopup{
+        id:_confirm
+        property var fClose
+        contentText: STR.STR_QML_919
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            fClose()
+        }
+    }
     QPopupEmpty {
         id: _Security
+        property var action
         content: QAnswerSecurityQuestion {
             id:_popup
             width: 600
@@ -1527,7 +1608,7 @@ QScreen {
             }
 
             onNextClicked: {
-                QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED)
+                _Security.action()
                 _popup.clearText()
             }
         }

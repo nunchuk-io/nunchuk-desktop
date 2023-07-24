@@ -22,12 +22,17 @@ import QtQuick.Controls 2.1
 
 TextField {
     id: textEdit
+    property var borderColor: "#DEDEDE"
+    property var backgroundColor: "#FFFFFF"
     color: "#031F2B"
+    font.family: "Lato"
+    font.pixelSize: 16
+    font.weight: Font.Medium
     background: Rectangle {
         anchors.fill: parent
         radius: 8
-        border.color: "#DEDEDE"
-        color: "#FFFFFF"
+        border.color: borderColor
+        color: backgroundColor
     }
     activeFocusOnTab : true
     activeFocusOnPress: true
@@ -35,6 +40,7 @@ TextField {
     cursorVisible: !readOnly && textEdit.activeFocus
     selectByMouse: true
     renderType: Text.QtRendering
+    wrapMode: Text.WrapAnywhere
     signal typingFinished(var currentText)
     onTextChanged: if(initialized === true) inputIdentify.restart()
 

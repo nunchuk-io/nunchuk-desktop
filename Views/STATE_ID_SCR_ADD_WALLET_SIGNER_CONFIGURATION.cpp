@@ -45,6 +45,7 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
                 signer.data()->setDevicetype(ret.data()->device()->type());
                 signer.data()->setCardId(ret.data()->device()->cardId());
                 signer.data()->setMasterFingerPrint(ret.data()->fingerPrint());
+                signer.data()->setDerivationPath(ret.data()->device()->path());
                 if(signer){
                     AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
                 }
@@ -113,35 +114,36 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
     DBG_INFO << msg;
     if(AppModel::instance()->newWalletInfo() && AppModel::instance()->newWalletInfo()->singleSignersAssigned()){
         int numberSignerRequired = AppModel::instance()->newWalletInfo()->n();
-        DBG_INFO << "numberSignerRequired " << numberSignerRequired;
         bool escrow = AppModel::instance()->newWalletInfo()->escrow();
         ENUNCHUCK::WalletType walletType =  escrow ? ENUNCHUCK::WalletType::ESCROW :
                                                      numberSignerRequired > 1 ? ENUNCHUCK::WalletType::MULTI_SIG
                                                                               : ENUNCHUCK::WalletType::SINGLE_SIG;
         ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt();
-        DBG_INFO << "addressType " << (int)addressType;
         for (int i = 0; i < AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount(); i++) {
             QSingleSignerPtr it = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->getSingleSignerByIndex(i);
-            DBG_INFO << "signerType " << it.data()->signerType() << it.data()->isPrimaryKey();
-            if(it && !((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType())){
-                if(!(it.data()->needTopUpXpub())){
-                    // Request cached xpub
-                    QWarningMessage warningmsg;
-                    QSingleSignerPtr signer = bridge::nunchukGetUnusedSignerFromMasterSigner(it.data()->masterSignerId(),
-                                                                                             walletType,
-                                                                                             addressType,
-                                                                                             warningmsg);
-                    if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
-                        signer.data()->setIsPrimaryKey(it.data()->isPrimaryKey());
-                        AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(i, signer);
-                        AppModel::instance()->showToast(0,
-                                                        STR_CPP_067,
-                                                        EWARNING::WarningType::SUCCESS_MSG,
-                                                        STR_CPP_067);
-                    }
-                    else{
-                        it.data()->setNeedTopUpXpub(true);
-                    }
+            if((it && (int)ENUNCHUCK::SignerType::SOFTWARE == it.data()->signerType())
+                    || (int)ENUNCHUCK::SignerType::HARDWARE == it.data()->signerType()
+                    || (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()){
+                QSingleSignerPtr signer{nullptr};
+                QWarningMessage warningmsg;
+                if (AppModel::instance()->getIsPremiumUser() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
+                    signer = bridge::nunchukGetDefaultSignerFromMasterSigner(it.data()->masterSignerId(),
+                                                                             walletType,
+                                                                             addressType,
+                                                                             warningmsg);
+                }
+                else {
+                    signer = bridge::nunchukGetUnusedSignerFromMasterSigner(it.data()->masterSignerId(),
+                                                                            walletType,
+                                                                            addressType,
+                                                                            warningmsg);
+                }
+                if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
+                    signer.data()->setIsPrimaryKey(it.data()->isPrimaryKey());
+                    AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(i, signer);
+                }
+                else{
+                    it.data()->setNeedTopUpXpub(true);
                 }
             }
         }

@@ -283,15 +283,13 @@ QScreen {
                     menuWidth: 320
                     labels: [
                         STR.STR_QML_300,
-                        STR.STR_QML_115,
-                        STR.STR_QML_116,
+                        STR.STR_QML_114,
                         STR.STR_QML_301,
                         STR.STR_QML_302,
                         STR.STR_QML_303
                     ]
                     icons: [
                         "qrc:/Images/Images/ExportFile.svg",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
                         "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
                         "qrc:/Images/Images/importFile.svg",
                         "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
@@ -308,16 +306,13 @@ QScreen {
                         case 1: // Export via QR Keystone
                             requestExportQRKeyStone()
                             break;
-                        case 2: "Export via QR Passport"
-                            requestExportQRPassport()
-                            break;
-                        case 3: // Import via file [.psbt]
+                        case 2: // Import via file [.psbt]
                             openfileDialog.open()
                             break;
-                        case 4: // Import via QR Keystone
+                        case 3: // Import via QR Keystone
                             requestImportQRKeyStone()
                             break;
-                        case 5: // Import via QR Passport
+                        case 4: // Import via QR Passport
                             requestImportQRPassport()
                             break;
                         default:
@@ -363,13 +358,11 @@ QScreen {
                     menuWidth: 320
                     labels: [
                         STR.STR_QML_300,
-                        STR.STR_QML_115,
-                        STR.STR_QML_116,
+                        STR.STR_QML_114,
                     ]
                     icons: [
                         "qrc:/Images/Images/ExportFile.svg",
                         "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
                     ]
                     onItemClicked: {
                         switch(index){
@@ -381,9 +374,6 @@ QScreen {
                             break;
                         case 1: // Export via QR Keystone
                             requestExportQRKeyStone()
-                            break;
-                        case 2: // Export via QR Passport
-                            requestExportQRPassport()
                             break;
                         default:
                             break;
@@ -449,12 +439,10 @@ QScreen {
                     menuWidth: 320
                     labels: [
                         STR.STR_QML_300,
-                        STR.STR_QML_115,
-                        STR.STR_QML_116,
+                        STR.STR_QML_114,
                     ]
                     icons: [
                         "qrc:/Images/Images/ExportFile.svg",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
                         "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
                     ]
                     onItemClicked: {
@@ -467,9 +455,6 @@ QScreen {
                             break;
                         case 1: // Export via QR Keystone
                             requestExportQRKeyStone()
-                            break;
-                        case 1: // Export via QR Passport
-                            requestExportQRPassport()
                             break;
                         default:
                             break;
@@ -532,13 +517,11 @@ QScreen {
                     menuWidth: 320
                     labels: [
                         STR.STR_QML_300,
-                        STR.STR_QML_115,
-                        STR.STR_QML_116,
+                        STR.STR_QML_114,
                         STR.STR_QML_691,
                     ]
                     icons: [
                         "qrc:/Images/Images/ExportFile.svg",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
                         "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
                         "qrc:/Images/Images/copy-dark.svg"
                     ]
@@ -553,10 +536,7 @@ QScreen {
                         case 1: // Export via QR Keystone
                             requestExportQRKeyStone()
                             break;
-                        case 2: // Export via QR Passport
-                            requestExportQRPassport()
-                            break;
-                        case 3: // Copy transaction ID
+                        case 2: // Copy transaction ID
                             requestCopyTransactionID()
                             break;
                         default:
@@ -813,10 +793,10 @@ QScreen {
         var activeLink = ""
         switch(AppSetting.primaryServer){
         case NUNCHUCKTYPE.MAIN:
-            activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_MAINNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.TESTNET:
-            activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_TESTNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.SIGNET:
             activeLink = AppSetting.signetStream + AppModel.transactionInfo.txid

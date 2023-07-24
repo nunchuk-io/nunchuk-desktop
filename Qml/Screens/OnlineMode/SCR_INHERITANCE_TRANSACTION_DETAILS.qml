@@ -88,10 +88,10 @@ QScreen {
         var activeLink = ""
         switch(AppSetting.primaryServer){
         case NUNCHUCKTYPE.MAIN:
-            activeLink = BLOCKSTREAM_MAINNET + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_MAINNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.TESTNET:
-            activeLink = BLOCKSTREAM_TESTNET + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_TESTNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.SIGNET:
             activeLink = AppSetting.signetStream + AppModel.transactionInfo.txid

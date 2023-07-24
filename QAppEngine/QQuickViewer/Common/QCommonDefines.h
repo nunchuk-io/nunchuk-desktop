@@ -36,5 +36,22 @@
 #define JS_POPUPS_TRANSITION_FUNCTION   "load_Popup"
 #define JS_TOASTS_TRANSITION_FUNCTION   "load_Toast"
 
+#define DECLARE_PROPERTY(TYPE, NAME, WRITE_NAME, READ_NAME)                                          \
+private:                                                                                             \
+    Q_PROPERTY(TYPE q##NAME READ get##NAME WRITE set##NAME    NOTIFY NAME##Changed)                  \
+    TYPE m##NAME {};                                                                                \
+Q_SIGNALS: void NAME##Changed();                                                                     \
+public:                                                                                              \
+    TYPE get##NAME() {                                                                         \
+        READ_NAME                                                                                    \
+        return m##NAME;                                                                             \
+    }                                                                                                \
+    void set##NAME(TYPE val) {                                                                       \
+        if (m##NAME == val)                                                                         \
+            return;                                                                                  \
+        m##NAME = val;                                                                              \
+        emit NAME##Changed();                                                                        \
+        WRITE_NAME                                                                                   \
+    }                                                                                                \
 
 #endif // COMMONDEFINES_H

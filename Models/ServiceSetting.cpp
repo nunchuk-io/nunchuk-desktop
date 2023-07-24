@@ -128,3 +128,26 @@ QVariantList ServiceSetting::keyCoSigningIntervals()
     }
     return m_keyCoSigningIntervals;
 }
+
+int ServiceSetting::assistedSize() const
+{
+    return AppModel::instance()->getUserWallets().size();
+}
+
+bool ServiceSetting::existKeyType(const QString &type)
+{
+    for (QMasterSignerPtr ptr : AppModel::instance()->masterSignerList()->fullList()) {
+        if (ptr && ptr->deviceType() == type) return true;
+    }
+    return false;
+}
+
+void ServiceSetting::inheritanceDataChanged()
+{
+    QJsonObject body = QUserWallets::instance()->inheritancePlanBody();
+    if (mInheritancePlanBody != body)
+    {
+        mInheritancePlanBody = body;
+        setViewInheritanceIsEdit(true);
+    }
+}
