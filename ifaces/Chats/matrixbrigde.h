@@ -118,6 +118,10 @@ nunchuk::RoomTransaction GetOriginRoomTransaction(const QString &room_id,
                                                   const QString& init_event_id,
                                                   QWarningMessage& msg);
 
+nunchuk::RoomTransaction GetOriginPendingTransaction(const QString &room_id,
+                                                     const QString& tx_id,
+                                                     QWarningMessage& msg);
+
 QString GetTransactionId(const QString &room_id,
                          const QString& event_id,
                          QWarningMessage& msg);

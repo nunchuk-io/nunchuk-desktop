@@ -27,6 +27,7 @@ import NUNCHUCKTYPE 1.0
 import "../origins"
 import "../customizes/Texts"
 import "../customizes/Buttons"
+import "../customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -37,6 +38,8 @@ Rectangle {
     property string devicetype: ""
     property int    signerType : 0
     property bool   isPrimaryKey: false
+    property string signerTag: ""
+    property int    accountIndex: 0
     color: mastersignerMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
     Rectangle {
         width: parent.width
@@ -45,16 +48,15 @@ Rectangle {
         opacity: 0.1
         anchors.bottom: parent.bottom
     }
-    QImage {
+    QSignerLightIcon {
         id: indicator
-        width: 24
-        height: 24
-        source: GlobalData.icons(devicetype,signerType)
+        iconSize: 24
+        device_type: devicetype
+        type: signerType
+        tag: signerTag
         anchors.left: parent.left
         anchors.leftMargin: 13
         anchors.verticalCenter: parent.verticalCenter
-        sourceSize.width: 100
-        sourceSize.height: 100
     }
     Column {
         id: text
@@ -87,43 +89,78 @@ Rectangle {
             font.capitalization: Font.AllUppercase
         }
     }
-    Rectangle {
-        width: 70
-        height: 21
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.right: _Type.left
-        anchors.rightMargin: 4
-        color: "#FDD95C"
-        visible: isPrimaryKey
-        radius: 4
-        QText {
-            text: STR.STR_QML_641
-            font.family: "Lato"
-            font.weight: Font.Bold
-            font.pixelSize: 10
-            anchors.centerIn: parent
-            color: "#031F2B"
-        }
-    }
-    Rectangle {
-        id:_Type
-        width: 85
-        height: 21
+
+    Column {
+        width: parent.width
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.rightMargin: 10
-        color: "#C9DEF1"
-        visible: signerType !== NUNCHUCKTYPE.HARDWARE
-        radius: 4
-        QText {
-            text: GlobalData.signers(signerType)
-            font.family: "Lato"
-            font.weight: Font.Bold
-            font.pixelSize: 10
-            anchors.centerIn: parent
-            color: "#031F2B"
+        spacing: 4
+        Row {
+            spacing: 4
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            height: 16
+            Rectangle {
+                width: primaryText.width + 16
+                height: parent.height
+                anchors.verticalCenter: parent.verticalCenter
+                color: "#FDD95C"
+                visible: isPrimaryKey
+                radius: 20
+                QText {
+                    id: primaryText
+                    text: STR.STR_QML_641
+                    font.family: "Lato"
+                    font.weight: Font.Bold
+                    font.pixelSize: 10
+                    anchors.centerIn: parent
+                    color: "#031F2B"
+                }
+            }
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                width: accText.width + 16
+                color: "#EAEAEA"
+                radius: 20
+                visible: accountIndex > 0
+                QText {
+                    id: accText
+                    text: qsTr("Acct %1").arg(accountIndex)
+                    font.family: "Lato"
+                    font.weight: Font.Bold
+                    font.pixelSize: 10
+                    anchors.centerIn: parent
+                    color: "#031F2B"
+                }
+            }
+        }
+        Item {
+            width: 85
+            height: 16
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            Rectangle {
+                anchors.right: parent.right
+                height: parent.height
+                width: typeText.width + 16
+                color: "#EAEAEA"
+                visible: signerType !== NUNCHUCKTYPE.SERVER
+                radius: 20
+                QText {
+                    id: typeText
+                    text: GlobalData.signers(signerType)
+                    font.family: "Lato"
+                    font.weight: Font.Bold
+                    font.pixelSize: 10
+                    anchors.centerIn: parent
+                    color: "#031F2B"
+                }
+            }
         }
     }
+
     signal buttonClicked()
     MouseArea {
         id: mastersignerMouse

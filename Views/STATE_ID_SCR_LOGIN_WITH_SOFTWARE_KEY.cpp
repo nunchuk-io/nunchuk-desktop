@@ -23,7 +23,7 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
 #include "STATE_ID_SCR_LOGIN_ONLINE.h"
@@ -56,7 +56,7 @@ void EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
             QWarningMessage warnMsg;
             bridge::nunchukSendSignerPassphrase( masterId, passphrase, warnMsg);
             if(warnMsg.type() == (int)EWARNING::WarningType::NONE_MSG){
-                QString signature = bridge::SignLoginMessage(masterId,message);
+                QString signature = bridge::SignLoginMessage(masterId, message);
                 Draco::instance()->pkey_signin(address,account,signature);
             }
             else{
@@ -67,18 +67,17 @@ void EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_LOGIN_WITH_SOFTWARE_KEY_SUCCEED_HANDLER(QVariant msg) {
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     AppModel::instance()->makeMatrixInstanceForAccount();
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
         timeoutHandler(500,[pKey](){
-            AppModel::instance()->showToast(0,
-                                           STR_CPP_108.arg(pKey->name()),
-                                           EWARNING::WarningType::SUCCESS_MSG,
-                                           STR_CPP_108.arg(pKey->name()));
+            AppModel::instance()->showToast(0, STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
             QWarningMessage msg;
             bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
         });
     }
+    qApp->restoreOverrideCursor();
 }
 
 void EVT_LOGIN_WITH_SOFTWARE_KEY_BACK_HANDLER(QVariant msg) {

@@ -34,6 +34,7 @@ Rectangle {
     property string transactionAmount: "0"
     property string transactiontotalCurrency: "0"
     property string transactionDate: "--/--/---- ##:## ##"
+    property bool transactionIsRbf: false
     property int confirmation: 1
 
     property int timeWidth: 123
@@ -47,7 +48,7 @@ Rectangle {
     Rectangle {
         width: parent.width
         height: 1
-        color: "#C9DEF1"
+        color: "#EAEAEA"
         anchors.bottom: parent.bottom
     }
 
@@ -83,38 +84,39 @@ Rectangle {
             id: idstate
             width: statusWidth
             height: parent.height
-            Rectangle {
-                id: indicator
-                width: 4
-                height: 24
+            Column {
                 anchors.left: idstate.left
                 anchors.leftMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
-                radius: 1
-                color: {
-                    if(transactionstatus === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#E02247" }
-                    else if(transactionstatus === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FF7A00" }
-                    else if(transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED){ return "#031F2B" }
-                    else if(transactionstatus === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "#FF7A00" }
-                    else if(transactionstatus === NUNCHUCKTYPE.CONFIRMED){ return "#35ABEE" }
-                    else { return "#031F2B" }
+                spacing: 4
+                Rectangle {
+                    id: indicator
+                    width: 120
+                    height: 24
+                    radius: 20
+                    color: GlobalData.transactionColor(transactionstatus)
+                    QText {
+                        font.pixelSize: 10
+                        font.bold: true
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        anchors.centerIn: parent
+                        text: GlobalData.transactionStatus(transactionstatus, confirmation)
+                    }
                 }
-            }
-
-            QText {
-                font.pixelSize: 12
-                font.family: "Lato"
-                color: "#323E4A"
-                anchors.left: indicator.right
-                anchors.leftMargin: 8
-                anchors.verticalCenter: indicator.verticalCenter
-                text: {
-                    if(transactionstatus === NUNCHUCKTYPE.PENDING_SIGNATURES){ return STR.STR_QML_283 }
-                    else if(transactionstatus === NUNCHUCKTYPE.READY_TO_BROADCAST){ return STR.STR_QML_284 }
-                    else if(transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED){ return STR.STR_QML_285 }
-                    else if(transactionstatus === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return STR.STR_QML_286 }
-                    else if(transactionstatus === NUNCHUCKTYPE.CONFIRMED){ return (qsTr("%1 %2").arg(confirmation).arg(STR.STR_QML_287)) }
-                    else { return STR.STR_QML_456 }
+                Rectangle {
+                    border.width: 1
+                    border.color: "#DEDEDE"
+                    width: 37
+                    height: 16
+                    radius: 20
+                    visible: transactionIsRbf
+                    QLato {
+                        text: "RBF"
+                        font.weight: Font.Normal
+                        font.pixelSize: 12
+                        anchors.centerIn: parent
+                    }
                 }
             }
 
@@ -148,21 +150,26 @@ Rectangle {
         Item {
             width: memoWidth
             height: parent.height
-            QText {
-                id: memo
-                anchors {
-                    fill: parent
-                    leftMargin: 16
-                    rightMargin: 16
-                    topMargin: 9
-                    bottomMargin: 9
+            Column{
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
+                QText {
+                    font.family: "Lato"
+                    font.pixelSize: 14
+                    color:  "#595959"
+                    text: "Memo"
+                    verticalAlignment: Text.AlignVCenter
                 }
-                font.family: "Lato"
-                font.pixelSize: 14
-                color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED)  ? "#9CAEB8" : "#031F2B"
-                text: transactionMemo
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
+                QText {
+                    id: memo
+                    width: memoWidth
+                    font.family: "Lato"
+                    font.pixelSize: 14
+                    color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED)  ? "#9CAEB8" : "#031F2B"
+                    text: transactionMemo
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
             }
         }
 

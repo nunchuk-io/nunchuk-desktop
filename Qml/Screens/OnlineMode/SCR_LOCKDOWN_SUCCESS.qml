@@ -32,79 +32,59 @@ import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    id: _question
     QOnScreenContent {
-        id: _content
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         label.text: ""
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_LOCKDOWN_SUCCESS)
-        }
-        Item {
-            width: 500
-            height: 252
-            anchors {
-                top:parent.top
-                topMargin: 144
-                horizontalCenter: parent.horizontalCenter
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        Column {
+            anchors.fill: parent
+            anchors.margins: 36
+            spacing: 24
+            Rectangle {
+                width: 96;height: 96;
+                radius: 48
+                color: "#A7F0BA"
+                QImage {
+                    anchors.centerIn: parent
+                    width: 60; height: 60;
+                    source: "qrc:/Images/Images/check-dark.svg"
+                }
             }
-            Column {
+            QLato {
                 width: parent.width
-                spacing: 24
-                Rectangle {
-                    width: 96;height: 96;
-                    radius: 48
-                    color: "#A7F0BA"
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QImage {
-                        anchors.centerIn: parent
-                        width: 60; height: 60;
-                        source: "qrc:/Images/Images/check-dark.svg"
-                    }
+                height: 40
+                text: {
+                    var user = ClientController.user
+                    return user.isByzantineUser ? STR.STR_QML_1029.arg(ServiceSetting.walletInfo.walletName) : STR.STR_QML_720
                 }
-                QText {
-                    width: parent.width
-                    height: 80
-                    text: STR.STR_QML_720
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 40
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                QText {
-                    width: parent.width
-                    height: 28
-                    text: STR.STR_QML_721.arg(UserWallet.untilTime)
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
+                font.pixelSize: 32
+                font.weight: Font.DemiBold
+                verticalAlignment: Text.AlignVCenter
+            }
+            QLato {
+                width: parent.width
+                height: 28
+                text: STR.STR_QML_721.arg(ServiceSetting.servicesTag.untilTime) //STR_QML_1029
+                verticalAlignment: Text.AlignVCenter
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 28
+                wrapMode: Text.WordWrap
             }
         }
-
-        QTextButton {
-            width: 120
-            height: 48
-            label.text: STR.STR_QML_341
-            label.font.pixelSize: 16
-            type: eTypeE
-            anchors {
-                right: parent.right
-                rightMargin: 36
-                bottom: parent.bottom
-                bottomMargin: 36
-            }
-            onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST)
+        bottomRight: Row {
+            spacing: 12
+            QTextButton {
+                width: 73
+                height: 48
+                label.text: STR.STR_QML_341
+                label.font.pixelSize: 16
+                type: eTypeE
+                onButtonClicked: {
+                    GlobalData.listFocusing = 1
+                    QMLHandle.sendEvent(EVT.EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST)
+                }
             }
         }
     }

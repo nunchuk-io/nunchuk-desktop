@@ -30,6 +30,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -66,7 +67,7 @@ QScreen {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QBadge {
-                text: GlobalData.signerNames(signerType)
+                text: GlobalData.signers(signerType)
                 color: "#EAEAEA"
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -121,7 +122,7 @@ QScreen {
         Flickable {
             id: specinfo
             width: 328
-            height: Math.min(250, contentHeight)
+            height: Math.min(300, contentHeight)
             flickableDirection: Flickable.VerticalFlick
             clip: true
             interactive: specinfo.height < specinfo.contentHeight
@@ -140,7 +141,7 @@ QScreen {
                 Item {
                     id: xpubdisplay
                     width: 328
-                    height: 40 + (xpubValue.lineCount-1)*24
+                    height: 40 + xpubValue.height
                     Row {
                         width: 328
                         height: parent.height
@@ -155,11 +156,11 @@ QScreen {
                             anchors.verticalCenter: parent.verticalCenter
                             text: walletEscrow ? STR.STR_QML_148 : STR.STR_QML_149
                         }
-                        QText {
+                        QTextEdit {
                             id: xpubValue
                             width: 133
-                            height: lineCount*24
                             clip: true
+                            readOnly: true
                             color: "#031F2B"
                             font.family: "Lato"
                             font.pixelSize: 16
@@ -267,7 +268,7 @@ QScreen {
         QListView {
             id: usedInWallets
             width: 328
-            height: 200
+            height: 160
             anchors.top: specinfo.bottom
             anchors.topMargin: 42
             anchors.left: parent.left
@@ -277,10 +278,9 @@ QScreen {
             delegate: Item {
                 width: 344
                 height: 40
-                QImage {
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/wallet_031F2B.png"
-                    width: 24
-                    height: 24
                     anchors {
                         verticalCenter: parent.verticalCenter
                         left: parent.left
@@ -323,10 +323,9 @@ QScreen {
             font.weight: Font.DemiBold
             font.pixelSize: 14
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: healthIndicator
-            width: 24
-            height: 24
             source: 0 === remoteSignerHealthStatus ? "qrc:/Images/Images/check_circle_outline_24px.png" :
                                                      "qrc:/Images/Images/error_outline_24px.png"
             anchors {
@@ -465,10 +464,16 @@ QScreen {
                 topMargin: 16
             }
             onButtonClicked: {
-                if(AppModel.walletsUsingSigner.length > 0){
+                var ret = AppModel.walletList.removeOrNot(remoteSignerfingerprint, remoteSignerbip32)
+                if(ret.used_in_assisted_wallet){
                     _info1.open()
                 }
+                else if (ret.used_in_free_wallet) {
+                    _confirm.contentText = STR.STR_QML_243_used
+                    _confirm.open()
+                }
                 else {
+                    _confirm.contentText = STR.STR_QML_243
                     _confirm.open()
                 }
             }
@@ -493,9 +498,6 @@ QScreen {
     QPopupInfo{
         id:_info1
         contentText: STR.STR_QML_554
-        onGotItClicked: {
-            close()
-        }
     }
     QConfirmYesNoPopup{
         id:_confirm
@@ -571,11 +573,17 @@ QScreen {
     }
     Connections {
         target: AppModel
-        onStartHealthCheckRemoteSigner: { }
         onFinishedHealthCheckRemoteSigner: {
             heathCheckBusyBox.close()
             remoteSignerHealthStatus = AppModel.singleSignerInfo.signerHealth
             healthStatustext.visible = true
+        }
+    }
+    QContextMenu {
+        id: optionMenu
+        menuWidth: 120
+        onItemClicked: {
+            functions[index]()
         }
     }
 }

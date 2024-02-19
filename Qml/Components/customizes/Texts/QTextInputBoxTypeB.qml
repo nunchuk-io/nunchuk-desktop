@@ -39,10 +39,12 @@ Column {
     property int boxHeight: 48
     property bool isValid: true
     property bool showError: false
+    property bool showWarning: false
     signal typingFinished(var currentText)
     property alias textBoxFocus: _input.focus
     property alias input: _input
     property bool isPassword: false
+    property int titleFontSize: 16
     spacing: 4
 
     signal downKeyRequest()
@@ -57,7 +59,7 @@ Column {
             id:txt1
             width: paintedWidth
             font.family: "Lato"
-            font.pixelSize: 16
+            font.pixelSize: titleFontSize
             font.weight: textweight
             color: "#031F2B"
             text: label
@@ -121,10 +123,9 @@ Column {
                 if (keyEvent.key === Qt.Key_Tab) { keyEvent.accepted = false; tabKeyRequest() }
             }
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: showpass
-            width: 24
-            height: 24
             property bool visiblity: false
             source: showpass.visiblity ? "qrc:/Images/Images/visibility.png":"qrc:/Images/Images/visibility-off.png"
             anchors.verticalCenter: parent.verticalCenter
@@ -156,7 +157,7 @@ Column {
             id: textErrorItem
             width: myRectangle.width+2
             font.family: "Lato"
-            font.pixelSize: 16
+            font.pixelSize: 12
             color: "#CF4018"
             anchors {
                 left: alert.right
@@ -165,5 +166,27 @@ Column {
             }
         }
         visible: !isValid && showError
+    }
+    Item {
+        width: myRectangle.width+2
+        height: 28
+        Row {
+            spacing: 4
+            QImage {
+                width: 20
+                height: 20
+                source: "qrc:/Images/Images/info-60px.png"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QText {
+                width: myRectangle.width+2
+                font.family: "Lato"
+                font.pixelSize: 12
+                color: "#595959"
+                text: textipboxType.length + "/" + textipboxType.maxLength
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+        visible: showWarning && textipboxType.length === textipboxType.maxLength
     }
 }

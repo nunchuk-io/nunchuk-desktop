@@ -58,10 +58,7 @@ void EVT_SHARED_WALLET_EXPORT_QRCODE_HANDLER(QVariant msg) {
         AppModel::instance()->setQrExported(qrtags);
     }
     else{
-        AppModel::instance()->showToast(msgwarning.code(),
-                                        msgwarning.what(),
-                                        (EWARNING::WarningType)msgwarning.type(),
-                                        STR_CPP_084);
+        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
     }
 }
 

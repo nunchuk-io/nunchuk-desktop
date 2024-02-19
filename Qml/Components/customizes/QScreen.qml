@@ -58,6 +58,9 @@ Item {
             break;
         case NUNCHUCKTYPE.SETTING_TAB:
             break;
+        case NUNCHUCKTYPE.CURRENT_TAB:
+            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
+            break;
         }
     }
 }

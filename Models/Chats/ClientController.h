@@ -46,17 +46,17 @@ namespace Quotient {
 class ClientController final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QContactModel*   contacts         READ contacts          NOTIFY contactsChanged)
-    Q_PROPERTY(QContactModel*   contactsSent     READ contactsSent      NOTIFY contactsSentChanged)
-    Q_PROPERTY(QContactModel*   contactsReceived READ contactsReceived  NOTIFY contactsReceivedChanged)
-    Q_PROPERTY(QLoggedInDeviceModel*  devicesLogged READ devicesLogged  NOTIFY devicesLoggedChanged)
-    Q_PROPERTY(QNunchukRoomListModel*   rooms    READ rooms             NOTIFY roomsChanged)
-    Q_PROPERTY(bool isNunchukLoggedIn            READ isNunchukLoggedIn NOTIFY isNunchukLoggedInChanged)
-    Q_PROPERTY(bool isMatrixLoggedIn             READ isMatrixLoggedIn  NOTIFY isMatrixLoggedInChanged)
-    Q_PROPERTY(bool isNewDevice                  READ isNewDevice       WRITE setIsNewDevice NOTIFY enableEncryptionChanged)
-    Q_PROPERTY(QVariant user                     READ user              NOTIFY userChanged)
-    Q_PROPERTY(bool attachmentEnable             READ attachmentEnable  NOTIFY attachmentEnableChanged)
-    Q_PROPERTY(bool readySupport                 READ readySupport      NOTIFY readySupportChanged)
+    Q_PROPERTY(QContactModel*   contacts            READ contacts                                   NOTIFY contactsChanged)
+    Q_PROPERTY(QContactModel*   contactsSent        READ contactsSent                               NOTIFY contactsSentChanged)
+    Q_PROPERTY(QContactModel*   contactsReceived    READ contactsReceived                           NOTIFY contactsReceivedChanged)
+    Q_PROPERTY(QLoggedInDeviceModel*  devicesLogged READ devicesLogged                              NOTIFY devicesLoggedChanged)
+    Q_PROPERTY(QNunchukRoomListModel*   rooms       READ rooms                                      NOTIFY roomsChanged)
+    Q_PROPERTY(bool isNunchukLoggedIn               READ isNunchukLoggedIn                          NOTIFY isNunchukLoggedInChanged)
+    Q_PROPERTY(bool isMatrixLoggedIn                READ isMatrixLoggedIn                           NOTIFY isMatrixLoggedInChanged)
+    Q_PROPERTY(bool isNewDevice                     READ isNewDevice        WRITE setIsNewDevice    NOTIFY enableEncryptionChanged)
+    Q_PROPERTY(QVariant user                        READ user                                       NOTIFY userChanged)
+    Q_PROPERTY(bool attachmentEnable                READ attachmentEnable                           NOTIFY attachmentEnableChanged)
+    Q_PROPERTY(bool readySupport                    READ readySupport                               NOTIFY readySupportChanged)
 
 private:
     ClientController();
@@ -112,9 +112,18 @@ public:
     QByteArray readDataFromKeyChain(const QString &key);
     bool saveDataToKeyChain(const QString &key, const QByteArray &data);
     bool deleteDataFromKeyChain(const QString &key);
+    bool readAllDataFromKeyChain();
 
-    QJsonObject getSubCur();
-    void setSubCur(const QJsonObject &sub);
+    bool isSubscribed() const;
+    bool isByzantineStandard() const;
+    bool isByzantinePremier() const;
+    bool isByzantinePro() const;
+    bool isByzantine() const;
+    bool isHoneyBadger() const;
+    bool isIronHand() const;
+    QString slug() const;
+    QJsonObject subscription() const;
+    void setSubscription(const QJsonObject &sub);
 
     bool attachmentEnable() const;
     void setAttachmentEnable(bool AttachmentEnable);
@@ -137,6 +146,9 @@ signals:
     void guestModeChanged();
     void attachmentEnableChanged();
     void readySupportChanged();
+    void subscriptionChanged();
+    void byzantineRoomCreated(QString room_id, bool existed);
+    void byzantineRoomDeleted(QString room_id, QString group_id);
 
 public slots:
     void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
@@ -157,26 +169,21 @@ public slots:
     void leaveCurrentRoom();
     void leaveRoom(const int index);
     void joinRoom(QString roomAliasOrId);
-    void createRoomChat(const QStringList& invitees, const QStringList &name, QVariant firstMessage = QVariant());
+    void createRoomChat(const QStringList invitees_id, const QStringList sinvitees_name, QVariant firstMessage);
+    void createRoomDirectChat(const QString invitee_id, const QString invitee_name, QVariant firstMessage);
+    void createRoomByzantineChat(const QStringList invitees_id, const QStringList invitees_name, const QString group_id, QVariant firstMessage);
+    void renameRoomByzantineChat(const QString room_id, const QString group_id, const QString newname);
     void createSupportRoom();
     void sendMessage(const QString& msg);
     QString getPlainText(const QString &msg);
     void copyMessage(const QString &msg);
 
-    void UploadFile(const QString& file_name,
-                    const QString& mine_type,
-                    const QString& json_info,
-                    const char* data,
-                    int data_length);
-
-    void DownloadFile(const QString& file_name,
-                      const QString& mine_type,
-                      const QString& json_info,
-                      const QString& mxc_uri);
+    void UploadFile(const QString& file_name, const QString& mine_type, const QString& json_info, const char* data, int data_length);
+    void DownloadFile(const QString& file_name, const QString& mine_type, const QString& json_info, const QString& mxc_uri);
     bool checkStayLoggedIn();
 
 private:
-    Quotient::Connection*   m_connection;
+    OurSharedPointer<Quotient::Connection>   m_connection;
     bool                    m_isNunchukLoggedIn;
     QLogginManagerPtr       m_loginHandler;
     QContactModelPtr        m_contacts;
@@ -187,9 +194,10 @@ private:
     QNunchukImageProvider  *m_imageprovider;
     DracoUser               m_me;
     bool                    m_isNewDevice;
-    QJsonObject             m_subCur;
+    QJsonObject             m_subscription;
     bool                    m_AttachmentEnable;
     bool                    m_ReadySupport;
+    QMap<QString, QByteArray> m_keychainData;
 };
 
 #define CLIENT_INSTANCE     ClientController::instance()

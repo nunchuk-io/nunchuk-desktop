@@ -26,9 +26,17 @@
 #include "localization/STR_CPP.h"
 #include "Chats/matrixbrigde.h"
 #include "Chats/ClientController.h"
+#include "Servers/Draco.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
 void SCR_WALLET_INFO_Entry(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
+    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->isSharedWallet() && AppModel::instance()->walletInfo()->singleSignersAssigned()){
+        if(AppModel::instance()->walletInfo()->singleSignersAssigned()->needSyncNunchukEmail()){
+            AppModel::instance()->walletInfo()->syncCollabKeyname();
+        }
+    }
 }
 
 void SCR_WALLET_INFO_Exit(QVariant msg) {
@@ -36,17 +44,10 @@ void SCR_WALLET_INFO_Exit(QVariant msg) {
 }
 
 void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg) {
-    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletList()){
-        bridge::nunchukUpdateWalletName(AppModel::instance()->walletInfo()->id(), msg.toString());
-        AppModel::instance()->walletList()->updateName(AppModel::instance()->walletInfo()->id(), msg.toString());
-        if(AppModel::instance()->walletList()){
-            QString wallet_id = AppModel::instance()->walletInfo()->id();
-            AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
-            int index = AppModel::instance()->walletList()->getWalletIndexById(wallet_id);
-            if(-1 != index){
-                AppModel::instance()->setWalletListCurrentIndex(index);
-            }
-        }
+    QString name        = msg.toMap().value("name").toString();
+    QString description = msg.toMap().value("description").toString();
+    if (auto w = AppModel::instance()->walletInfo()) {
+        bridge::nunchukUpdateWallet(w->id(), name, description);
     }
 }
 
@@ -54,26 +55,49 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
     Wallet *wallet = msg.value<Wallet*>();
     if(wallet){
         QString wallet_id = wallet->id();
-        bool is_shared_wallet = wallet->isSharedWallet();
-        QWarningMessage msgwarning;
-        bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
-        if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type() ){
-            AppModel::instance()->removeWallet(wallet_id);
-            QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
-            AppModel::instance()->setWalletListCurrentIndex(0);
-            if(is_shared_wallet){
-                QString roomId = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet_id);
-                int index = CLIENT_INSTANCE->rooms()->getIndex(roomId);
-                if(index >= 0){
-                    ClientController::instance()->leaveRoom(index);
+        if (wallet->isDeleting()) {
+            if (ServiceSetting::instance()->servicesTagPtr()->secQuesAnswer()) {
+                if (wallet->DeleteAssistedWallet()) {
+                    QWarningMessage msgwarning;
+                    bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+                    if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
+                        AppModel::instance()->removeWallet(wallet_id);
+                        QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
+                        AppModel::instance()->setWalletListCurrentIndex(0);
+                    }
+                    else {
+                        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+                    }
                 }
             }
         }
-        else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_112);
+        else {
+            if (wallet->isAssistedWallet()) {
+                QMap<QString, QVariant> data;
+                data["state_id"] = E::STATE_ID_SCR_WALLET_INFO;
+                data["wallet_id"] = wallet->id();
+                QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+            }
+            else {
+                bool is_shared_wallet = wallet->isSharedWallet();
+                QWarningMessage msgwarning;
+                bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+                if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
+                    AppModel::instance()->removeWallet(wallet_id);
+                    QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
+                    AppModel::instance()->setWalletListCurrentIndex(0);
+                    if(is_shared_wallet){
+                        QString roomId = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet_id);
+                        int index = CLIENT_INSTANCE->rooms()->getIndex(roomId);
+                        if(index >= 0){
+                            ClientController::instance()->leaveRoom(index);
+                        }
+                    }
+                }
+                else {
+                    AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+                }
+            }
         }
     }
 }
@@ -138,9 +162,7 @@ void EVT_WALLET_INFO_EXPORT_CSV_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_EXPORT_DESCRIPTOR_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(),
-                                               file_path,
-                                               nunchuk::ExportFormat::BSMS);
+        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), file_path, nunchuk::ExportFormat::BSMS);
         DBG_INFO << file_path << ret;
     }
 }
@@ -148,9 +170,7 @@ void EVT_WALLET_INFO_EXPORT_DESCRIPTOR_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_EXPORT_COLDCARD_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(),
-                                                file_path,
-                                                nunchuk::ExportFormat::COLDCARD);
+        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), file_path, nunchuk::ExportFormat::COLDCARD);
         DBG_INFO << file_path << ret;
     }
 }
@@ -185,8 +205,11 @@ void EVT_WALLET_INFO_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_WALLET_INFO_EDIT_DESCRIPTION_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo() && AppModel::instance()->walletList()){
-        bridge::nunchukUpdateWalletDescription(AppModel::instance()->walletInfo()->id(), msg.toString());
-        AppModel::instance()->walletList()->updateDescription(AppModel::instance()->walletInfo()->id(), msg.toString());
+        QString name        = msg.toMap().value("name").toString();
+        QString description = msg.toMap().value("description").toString();
+
+        bridge::nunchukUpdateWallet(AppModel::instance()->walletInfo()->id(), name, description);
+        AppModel::instance()->walletList()->updateDescription(AppModel::instance()->walletInfo()->id(), description);
     }
 }
 
@@ -194,55 +217,35 @@ void EVT_WALLET_INFO_EXPORT_QRCODE_HANDLER(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
     if(AppModel::instance()->walletInfo()){
         QString qrtype = msg.toString();
-        QStringList qrtags;
-        qrtags.clear();
         QWarningMessage msgwarning;
-        if(0 == QString::compare(qrtype, "keystone", Qt::CaseInsensitive)){
-            qrtags = bridge::nunchukExportKeystoneWallet(AppModel::instance()->walletInfo()->id(),
-                                                         msgwarning);
-        }
-        else if(0 == QString::compare(qrtype, "passport", Qt::CaseInsensitive)){
-            qrtags = bridge::nunchukExportPassportWallet(AppModel::instance()->walletInfo()->id(),
-                                                         msgwarning);
-        }
-        else{ // Others support in TBD
-            return;
-        }
-        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
+        QStringList qrtags = bridge::nunchukExportKeystoneWallet(AppModel::instance()->walletInfo()->id(), msgwarning);
+        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
             AppModel::instance()->setQrExported(qrtags);
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_084);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
         }
     }
 }
 
 void EVT_WALLET_INFO_IMPORT_PSBT_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    QWalletPtr w = AppModel::instance()->walletInfoPtr();
-    if (file_path != "" && w){
-        QString wallet_id = w->id();
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+    if (file_path != "" && wallet){
+        QString wallet_id = wallet->id();
         QWarningMessage msgwarning;
-        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, w->isAssistedWallet(), msgwarning);
+        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
+                wallet.data()->CreateAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
                 AppModel::instance()->requestSyncWalletDb(wallet_id);
                 QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
-                AppModel::instance()->showToast(0,
-                                                STR_CPP_091,
-                                                EWARNING::WarningType::SUCCESS_MSG,
-                                                STR_CPP_091);
+                AppModel::instance()->showToast(0, STR_CPP_091, EWARNING::WarningType::SUCCESS_MSG);
             }
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_092);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
         }
     }
 }

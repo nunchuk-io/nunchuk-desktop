@@ -29,6 +29,8 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Transactions"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -42,20 +44,20 @@ QScreen {
             color: "#E8DAFF"
             text: STR.STR_QML_286
         }
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS)
-        }
-        content: QSendTransaction {
-            isShowSigner: false
-            transactionInfo: AppModel.transactionInfo
-            onAddrToVerify: {
-                displayAddressBusybox.addrToVerify = addr
-                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_VERIFY_ADDRESS, addr)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+        content: Item {
+            QSendAddressArea {
+                transactionInfo: AppModel.transactionInfo
+                onAddrToVerify: {
+                    displayAddressBusybox.addrToVerify = addr
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_VERIFY_ADDRESS, addr)
+                }
+                onNewMemoNotify: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo)
+                }
             }
-            onNewMemoNotify: {
-                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo)
-            }
         }
+
         onPrevClicked: {
             QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_BACK)
         }
@@ -75,9 +77,6 @@ QScreen {
         id:_congra
         title: STR.STR_QML_788
         contentText: STR.STR_QML_789
-        onGotItClicked: {
-            close()
-        }
     }
 
     Component.onCompleted: {

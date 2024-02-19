@@ -23,7 +23,6 @@ import "../../origins"
 
 TextField {
     id: editbox
-    property int minHeight: 54
     property var borderColor: "#FFFFFF"
     property var backgroundColor: "#DEDEDE"
     property int borderRadius: 8
@@ -42,13 +41,13 @@ TextField {
     leftPadding: 0
     rightPadding: activeFocus ? 0 : 40
     activeFocusOnPress: false
-    QImage {
-        width: 24
-        height: 24
-        anchors.right: parent.right
-        anchors.rightMargin: 12
-        anchors.top: parent.top
-        anchors.topMargin: 12
+    QIcon {
+        iconSize: 24
+        anchors {
+            verticalCenter: parent.verticalCenter
+            right: parent.right
+            rightMargin: 12
+        }
         source: "qrc:/Images/Images/edit.png"
         visible: !editbox.activeFocus
         MouseArea {
@@ -63,10 +62,12 @@ TextField {
     }
     onActiveFocusChanged: { typingFinished(editbox.text) }
     Keys.onReturnPressed: {
-        focus = false
-        typingFinished(editbox.text)
+        typingFinish()
     }
     Keys.onEnterPressed:  {
+        typingFinish()
+    }
+    function typingFinish() {
         focus = false
         typingFinished(editbox.text)
     }

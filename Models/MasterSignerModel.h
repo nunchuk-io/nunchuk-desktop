@@ -108,6 +108,9 @@ public:
     nunchuk::MasterSigner originMasterSigner() const;
     void setOriginMasterSigner(const nunchuk::MasterSigner &signer);
 
+    QString tag() const;
+    QStringList tags() const;
+
 private:
     QString id_ = "";
     QString name_ = "";
@@ -178,6 +181,7 @@ public:
     void resetMasterSignerNeedXpub();
     QStringList getColdCardId() const;
     bool isColdCard(const QString& xfp);
+    bool isPrimaryKey(const QString& xfp);
     void requestSort(int role, int order);
     QList<QMasterSignerPtr> fullList() const;
     void cleardata();
@@ -195,7 +199,8 @@ public:
         master_signer_need_passphrase_Role,
         master_signer_need_pin_Role,
         master_signer_need_xpub_Role,
-        master_signer_primary_key_Role
+        master_signer_primary_key_Role,
+        master_signer_tag_Role
     };
 
 public slots:

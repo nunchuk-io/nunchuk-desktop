@@ -23,7 +23,7 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "localization/STR_CPP.h"
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
@@ -70,10 +70,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
             if(pKey){
                 timeoutHandler(3000,[pKey](){
-                    AppModel::instance()->showToast(0,
-                                                    STR_CPP_108.arg(pKey->name()),
-                                                    EWARNING::WarningType::SUCCESS_MSG,
-                                                    STR_CPP_108.arg(pKey->name()));
+                    AppModel::instance()->showToast(0, STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
                     QWarningMessage msg;
                     bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
                 });

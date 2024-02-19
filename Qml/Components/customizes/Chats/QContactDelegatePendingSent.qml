@@ -49,7 +49,6 @@ Column {
                 width: 36
                 height: 36
                 username: contactname
-                activeStatus: false
                 displayStatus: false
                 anchors.verticalCenter: parent.verticalCenter
             }

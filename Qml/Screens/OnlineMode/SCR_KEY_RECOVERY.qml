@@ -29,19 +29,19 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: _period
+    property var keyRecovery: ServiceSetting.servicesTag.keyRecovery
     property int questionSelected: 0
     QOnScreenContentTypeA {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_698
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_KEY_RECOVERY)
-        }
+        onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
         Column {
             anchors {
                 top: parent.top
@@ -67,10 +67,9 @@ QScreen {
                     height: _description.content_map[index].height
                     Row {
                         spacing: 8
-                        QImage {
+                        QIcon {
+                            iconSize: 24
                             id:_numicon
-                            width: 24
-                            height: 24
                             source: _description.content_map[index].icon
                             visible: source != ""
                         }
@@ -129,13 +128,10 @@ QScreen {
             }
         }
 
-        onPrevClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_KEY_RECOVERY)
-        }
+        onPrevClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
 
         onNextClicked: {
-            UserWallet.createTapsigners()
-            if (UserWallet.tapsigners.length > 0) {
+            if (keyRecovery.tapsigners.length > 0) {
                 signers.currentIndex = 0
                 _chose.open()
             } else {
@@ -190,7 +186,7 @@ QScreen {
                         horizontalCenter: parent.horizontalCenter
                     }
                     textRole: "displayName"
-                    model: UserWallet.tapsigners
+                    model: keyRecovery.tapsigners
                 }
 
                 onPrevClicked: {
@@ -198,7 +194,7 @@ QScreen {
                 }
 
                 onNextClicked: {
-                    var item = UserWallet.tapsigners[signers.currentIndex]
+                    var item = keyRecovery.tapsigners[signers.currentIndex]
                     QMLHandle.sendEvent(EVT.EVT_INPUT_TAPSIGNER_SELECT_REQUEST,item)
                 }
             }
@@ -207,8 +203,17 @@ QScreen {
     QPopupInfo{
         id:_info1
         contentText: STR.STR_QML_744
-        onGotItClicked: {
-            close()
+    }
+    Connections {
+        target: keyRecovery
+        onKeyRecoveryPendingApproval: {
+            errorConfirm.open()
         }
+    }
+    QPopupInfo{
+        id: errorConfirm
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1056
+        btnLabel: STR.STR_QML_341
     }
 }

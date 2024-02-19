@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "QLoggedInDeviceModel.h"
 #include "QOutlog.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 
 QLoggedInDeviceModel::QLoggedInDeviceModel(): m_currentIndex(0)
 {

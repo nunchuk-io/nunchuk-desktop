@@ -20,7 +20,11 @@
 
 
 #include "STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE.h"
-#include "Chats/QUserWallets.h"
+#include "Models/AppModel.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QServerKey.h"
+#include <QtConcurrent>
 
 void SCR_SELECT_WALLET_CO_SIGN_POLICE_Entry(QVariant msg) {
 
@@ -32,7 +36,13 @@ void SCR_SELECT_WALLET_CO_SIGN_POLICE_Exit(QVariant msg) {
 
 void EVT_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
     QString wallet_id = msg.toString();
-    QUserWallets::instance()->serverKeyGetCurrentPolicies(wallet_id);
+    QWalletPtr w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id);
+    ServiceSetting::instance()->setWalletInfo(w);
+    if (w && w->serverKeyPtr()) {
+        QtConcurrent::run([w](){
+            w->serverKeyPtr()->serverKeyGetCurrentPolicies();
+        });
+    }
     QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE);
 }
 

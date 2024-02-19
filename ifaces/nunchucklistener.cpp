@@ -30,7 +30,6 @@ void balance_listener(std::string id, nunchuk::Amount balance)
 
 void balances_listener(string id, nunchuk::Amount balance, nunchuk::Amount unconfirmed_balance)
 {
-    DBG_INFO;
     bridge::nunchukBalanceChanged(QString::fromStdString(id), static_cast<qint64>(unconfirmed_balance));
 }
 
@@ -41,7 +40,6 @@ void devices_listener(std::string fingerprint, bool connected)
 
 void transaction_listener(std::string tx_id, nunchuk::TransactionStatus status, std::string wallet_id)
 {
-    DBG_INFO;
     bridge::nunchukTransactionChanged(QString::fromStdString(tx_id), (int)status, QString::fromStdString(wallet_id));
 }
 

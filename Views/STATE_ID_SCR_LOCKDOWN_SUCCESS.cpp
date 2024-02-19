@@ -21,6 +21,10 @@
 #include "Chats/ClientController.h"
 #include "AppModel.h"
 #include "localization/STR_CPP.h"
+#include "Chats/ClientController.h"
+#include "Premiums/QGroupWallets.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
 void SCR_LOCKDOWN_SUCCESS_Entry(QVariant msg) {
 
@@ -31,13 +35,23 @@ void SCR_LOCKDOWN_SUCCESS_Exit(QVariant msg) {
 }
 
 void EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER(QVariant msg) {
-    timeoutHandler(0,[=]{
-        ClientController::instance()->requestSignout();
-    });
-    AppModel::instance()->showToast(0,
-                                    STR_CPP_114,
-                                    EWARNING::WarningType::SUCCESS_MSG,
-                                    STR_CPP_114);
+    if (auto w = ServiceSetting::instance()->walletInfoPtr()) {
+        if (auto dash = w->dashboard()) {
+            dash->GetMemberInfo();
+            AppModel::instance()->requestSyncWalletDb(dash->wallet_id());
+            QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_LOCKDOWN_SUCCESS);
+            ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
+        }
+        else {
+            timeoutHandler(0,[=]{
+                ClientController::instance()->requestSignout();
+            });
+            AppModel::instance()->showToast(0, STR_CPP_114, EWARNING::WarningType::SUCCESS_MSG);
+        }
+    }
 }
 
-
+void EVT_CLOSE_LOCKDOWN_SUCCESS_HANDLER(QVariant msg)
+{
+//    QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+}

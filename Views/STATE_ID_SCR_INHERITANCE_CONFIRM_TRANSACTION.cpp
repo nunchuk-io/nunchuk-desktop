@@ -23,7 +23,8 @@
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
-#include "Chats/QUserWallets.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
 void SCR_INHERITANCE_CONFIRM_TRANSACTION_Entry(QVariant msg) {
 
@@ -34,7 +35,7 @@ void SCR_INHERITANCE_CONFIRM_TRANSACTION_Exit(QVariant msg) {
 }
 
 void EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST_HANDLER(QVariant msg) {
-    QUserWallets::instance()->inheritanceSignTransaction();
+    DBG_INFO;
 }
 
 void EVT_INHERITANCE_CONFIRM_TRANSACTION_BACK_HANDLER(QVariant msg) {
@@ -43,11 +44,26 @@ void EVT_INHERITANCE_CONFIRM_TRANSACTION_BACK_HANDLER(QVariant msg) {
 
 void EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ_HANDLER(QVariant msg)
 {
-    bool subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
-    int feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    bool manualFee = msg.toMap().value("manualFee").toBool();
-    bool manualOutput = msg.toMap().value("manualOutput").toBool();
-    if(!manualFee) feeRate = 1000;//default value
-    DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
-    QUserWallets::instance()->inheritanceCreateDraftTransaction(feeRate);
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    QVariant fee_input = maps["fee"];
+    auto draft_tx_fee = [](QVariant msg) ->bool{
+        bool subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
+        int feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+        bool manualFee = msg.toMap().value("manualFee").toBool();
+        bool manualOutput = msg.toMap().value("manualOutput").toBool();
+        if(!manualFee) feeRate = 1000;//default value
+        DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
+        return ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction(feeRate);
+    };
+    if (type == "update-fee") {
+        draft_tx_fee(fee_input);
+    }
+    else if (type == "create-transaction") {
+        if (draft_tx_fee(fee_input)) {
+            if (ServiceSetting::instance()->servicesTagPtr()->inheritanceSignTransaction()) {
+                QQuickViewer::instance()->signalNotifySendEvent(E::EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST);
+            }
+        }
+    }
 }

@@ -30,15 +30,13 @@
 #include <settings.h>
 #include <logging.h>
 #include <user.h>
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "ViewsEnums.h"
 #include "Chats/matrixbrigde.h"
 #include "jobs/downloadfilejob.h"
-#include "localization/STR_CPP.h"
 #include <QSqlDatabase>
 #include <database.h>
 #include <QTextDocument>
-#include "Chats/QUserWallets.h"
 
 using Quotient::NetworkAccessManager;
 using Quotient::Settings;
@@ -85,39 +83,33 @@ QString ClientController::accessToken() const
 
 Connection *ClientController::connection() const
 {
-    return m_connection;
+    return m_connection.data();
 }
 
 void ClientController::setConnection(Connection *c)
 {
-    if(m_connection){
-        delete m_connection;
-        m_connection = NULL;
-    }
-    m_connection = c;
-    connect(m_connection, &Connection::stateChanged, this, &ClientController::isMatrixLoggedInChanged);
+    m_connection = OurSharedPointer<Quotient::Connection>(c);
+    connect(m_connection.data(), &Connection::stateChanged, this, &ClientController::isMatrixLoggedInChanged);
     if(m_imageprovider){
-        m_imageprovider->setConnection(m_connection);
+        m_imageprovider->setConnection(m_connection.data());
     }
     emit connectionChanged();
-    connectSingleShot(m_connection, &Connection::connected, this, [this]{
+    connectSingleShot(m_connection.data(), &Connection::connected, this, [this]{
         connection()->loadState();
         connection()->sync();
         connect(m_connection->user(), &User::defaultAvatarChanged, this, &ClientController::onUserAvatarChanged );
         connect(m_connection->user(), &User::defaultNameChanged, this, &ClientController::onUserDisplaynameChanged );
-        connectSingleShot(m_connection, &Connection::syncDone, this, [this] {
+        connectSingleShot(m_connection.data(), &Connection::syncDone, this, [this] {
             if(rooms()){
                 rooms()->downloadRooms();
             }
             connection()->syncLoop();
         });
-        timeoutHandler(1000, [this]() {
-            refreshContacts();
-        });
+        refreshContacts();
         AppSetting::instance()->setIsStarted(true,true);
         emit userChanged();
     }, Qt::QueuedConnection);
-    connectSingleShot(m_connection, &Connection::loggedOut, this, []{
+    connectSingleShot(m_connection.data(), &Connection::loggedOut, this, []{
         DBG_INFO << "MATRIX HAS BEEN LOGGEDOUT";
     }, Qt::QueuedConnection);
 }
@@ -351,7 +343,7 @@ void ClientController::requestSignout()
     setIsNunchukLoggedIn(false);
     setAttachmentEnable(false);
     deleteStayLoggedInData();
-    setSubCur(QJsonObject());
+    setSubscription(QJsonObject());
     AppSetting::instance()->setGroupSetting("");
     AppModel::instance()->requestClearData();
     if(rooms()){
@@ -360,7 +352,6 @@ void ClientController::requestSignout()
     if(contacts()){
         contacts()->removeAll();
     }
-    QUserWallets::instance()->newRequestToAddKey();
     qApp->restoreOverrideCursor();
 }
 
@@ -398,7 +389,11 @@ QNunchukRoomListModel *ClientController::rooms() const
 void ClientController::setRooms(const QNunchukRoomListModelPtr &rs)
 {
     m_rooms = rs;
-    connect(m_rooms.data(), &QNunchukRoomListModel::noticeService, this, &ClientController::refreshContacts);
+    if(m_rooms){
+        connect(m_rooms.data(), &QNunchukRoomListModel::noticeService,          this, &ClientController::refreshContacts);
+        connect(m_rooms.data(), &QNunchukRoomListModel::byzantineRoomCreated,   this, &ClientController::byzantineRoomCreated);
+        connect(m_rooms.data(), &QNunchukRoomListModel::byzantineRoomDeleted,   this, &ClientController::byzantineRoomDeleted);
+    }
     emit roomsChanged();
 }
 
@@ -436,12 +431,33 @@ void ClientController::setUserDisplayname(const QString &name)
     }
 }
 
-void ClientController::createRoomChat(const QStringList &invitees, const QStringList &name, QVariant firstMessage)
+void ClientController::createRoomChat(const QStringList invitees_id, const QStringList invitees_name, QVariant firstMessage)
 {
     if(rooms()){
-        QString roomname = name.join(",");
-        QString roomtopic = QString("Private conversation of %1").arg(roomname);
-        rooms()->createRoomChat(invitees, roomname, roomname, firstMessage);
+        QString roomname = invitees_name.join(",");
+        rooms()->createRoomChat(invitees_id, roomname, firstMessage);
+    }
+}
+
+void ClientController::createRoomDirectChat(const QString invitee_id, const QString invitee_name, QVariant firstMessage)
+{
+    if(rooms()){
+        rooms()->createRoomDirectChat(invitee_id, invitee_name, firstMessage);
+    }
+}
+
+void ClientController::createRoomByzantineChat(const QStringList invitees_id, const QStringList invitees_name, const QString group_id, QVariant firstMessage)
+{
+    if(rooms()){
+        QString roomname = invitees_name.join(",");
+        rooms()->createRoomByzantineChat(invitees_id, roomname, group_id, firstMessage);
+    }
+}
+
+void ClientController::renameRoomByzantineChat(const QString room_id, const QString group_id, const QString newname)
+{
+    if(rooms()){
+        rooms()->renameRoomByzantineChat(room_id, group_id, newname);
     }
 }
 
@@ -485,14 +501,24 @@ QVariant ClientController::user() const
     maps["username"]    = m_me.username;
     maps["login_type"]  = m_me.login_type;
     maps["isPrimaryKey"] = m_me.login_type.localeAwareCompare("PRIMARY_KEY") == 0;
-    QJsonObject plan = CLIENT_INSTANCE->getSubCur()["plan"].toObject();
+    QJsonObject plan = CLIENT_INSTANCE->subscription()["plan"].toObject();
     if(plan.isEmpty() == false){
-        QString slug = plan["slug"].toString();
-        maps["plan_slug"]  = slug;
-        maps["isPremiumUser"] = slug == "iron_hand" || slug == "honey_badger" || slug == "honey_badger_testnet";
-    }else{
-        maps["plan_slug"]  = "";
-        maps["isPremiumUser"] = false;
+        maps["isSubscribedUser"] = isSubscribed();
+        maps["isByzantineUser"]  = isByzantine();
+        maps["isByzantineUserPro"] = isByzantinePro();
+        maps["isByzantineUserStandard"] = isByzantineStandard();
+        maps["isByzantineUserPremier"]  = isByzantinePremier();
+        maps["isHoneyBadgerUser"]   = isHoneyBadger();
+        maps["isIronHandUser"]      = isIronHand();
+    }
+    else{
+        maps["isSubscribedUser"] = false;
+        maps["isByzantineUser"]  = false;
+        maps["isByzantineUserPro"] = false;
+        maps["isByzantineUserStandard"] = false;
+        maps["isByzantineUserPremier"]  = false;
+        maps["isHoneyBadgerUser"]  = false;
+        maps["isIronHandUser"]     = false;
     }
     if(AppModel::instance()->getPrimaryKey()){
         maps["master_fingerprint"] = AppModel::instance()->getPrimaryKey()->fingerPrint();
@@ -549,9 +575,6 @@ bool ClientController::checkStayLoggedIn()
     Draco::instance()->setUid(QString(uIdBytes));
     Draco::instance()->setChatId(QString(chatIdBytes));
     Draco::instance()->setDracoToken(QString(stayLoggedInBytes));
-
-
-    DBG_INFO << QString(uIdBytes) << QString(chatIdBytes);
     return true;
 }
 
@@ -581,24 +604,77 @@ void ClientController::setAttachmentEnable(bool AttachmentEnable)
     }
 }
 
-QJsonObject ClientController::getSubCur()
+bool ClientController::isSubscribed() const
 {
-    return m_subCur;
+    return isByzantine() || isHoneyBadger() || isIronHand();
 }
 
-void ClientController::setSubCur(const QJsonObject &sub)
+bool ClientController::isByzantine() const
 {
-    m_subCur = sub;
-    QJsonObject plan = m_subCur["plan"].toObject();
+    return isByzantineStandard() || isByzantinePro() || isByzantinePremier();
+}
+
+bool ClientController::isByzantineStandard() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "byzantine_testnet")
+               || qUtils::strCompare(type, "byzantine");
+    return ret;
+}
+
+bool ClientController::isByzantinePro() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "byzantine_pro_testnet")
+               || qUtils::strCompare(type, "byzantine_pro");
+    return ret;
+}
+
+bool ClientController::isByzantinePremier() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "byzantine_premier_testnet")
+               || qUtils::strCompare(type, "byzantine_premier");
+    return ret;
+}
+
+bool ClientController::isHoneyBadger() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "honey_badger_testnet")
+               || qUtils::strCompare(type, "honey_badger");
+    return ret;
+}
+
+bool ClientController::isIronHand() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "iron_hand_testnet")
+               || qUtils::strCompare(type, "iron_hand");
+    return ret;
+}
+
+QString ClientController::slug() const
+{
+    return subscription()["plan"].toObject()["slug"].toString();
+}
+
+QJsonObject ClientController::subscription() const
+{
+    return m_subscription;
+}
+
+void ClientController::setSubscription(const QJsonObject &sub)
+{
+    m_subscription = sub;
+    DBG_INFO << sub;
+    QJsonObject plan = m_subscription["plan"].toObject();
     if (plan.isEmpty() == false) {
-        QString slug = plan["slug"].toString();
-        bool isPremiumUser = slug == "iron_hand" || slug == "honey_badger" || slug == "honey_badger_testnet";
-        setAttachmentEnable(isPremiumUser);
-        AppModel::instance()->setIsPremiumUser(isPremiumUser);
+        setAttachmentEnable(isSubscribed());
     } else {
         setAttachmentEnable(false);
-        AppModel::instance()->setIsPremiumUser(false);
     }
+    emit subscriptionChanged();
 }
 
 void ClientController::saveStayLoggedInData()
@@ -620,7 +696,7 @@ void ClientController::deleteStayLoggedInData()
 
 QByteArray ClientController::readDataFromKeyChain(const QString& key)
 {
-    QKeychain::ReadPasswordJob job(qAppName());
+    QKeychain::ReadPasswordJob job("NunchukClient");
     job.setAutoDelete(false);
     job.setKey(key);
     QEventLoop loop;
@@ -638,7 +714,7 @@ QByteArray ClientController::readDataFromKeyChain(const QString& key)
 
 bool ClientController::saveDataToKeyChain(const QString& key, const QByteArray& data)
 {
-    QKeychain::WritePasswordJob job(qAppName());
+    QKeychain::WritePasswordJob job("NunchukClient");
     job.setAutoDelete(false);
     job.setKey(key);
     job.setBinaryData(data);
@@ -655,7 +731,7 @@ bool ClientController::saveDataToKeyChain(const QString& key, const QByteArray& 
 
 bool ClientController::deleteDataFromKeyChain(const QString &key)
 {
-    QKeychain::DeletePasswordJob job(qAppName());
+    QKeychain::DeletePasswordJob job("NunchukClient");
     job.setAutoDelete(true);
     job.setKey(key);
     QEventLoop loop;
@@ -666,6 +742,19 @@ bool ClientController::deleteDataFromKeyChain(const QString &key)
         DBG_INFO << "Could not delete data from the keychain: " << qPrintable(job.errorString());
         return false;
     }
+    return true;
+}
+
+bool ClientController::readAllDataFromKeyChain()
+{
+    QKeychain::ReadPasswordJob job("NunchukClient");
+    job.setAutoDelete(false);
+    QEventLoop loop;
+    QKeychain::DeletePasswordJob::connect(&job, &QKeychain::Job::finished, &loop, &QEventLoop::quit);
+    job.start();
+    loop.exec();
+    DBG_INFO  << job.key();
+
     return true;
 }
 

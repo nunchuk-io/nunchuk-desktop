@@ -30,6 +30,7 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: roots
@@ -45,10 +46,9 @@ QScreen {
         onCloseClicked: {
             QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_RECOVER_SHARED_WALLET)
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: compressButton
-            width: 24
-            height: 24
             anchors {
                 right: parent.right
                 rightMargin: 84
@@ -105,9 +105,8 @@ QScreen {
                 width: parent.width
                 height: 24
                 spacing: 12
-                QImage{
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/1.Active.svg"
                 }
                 QText{
@@ -126,9 +125,8 @@ QScreen {
                 width: parent.width
                 height: 24
                 spacing: 12
-                QImage{
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/2.Active.svg"
                 }
                 QText{
@@ -213,10 +211,9 @@ QScreen {
             onCloseClicked: {
                 QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_RECOVER_SHARED_WALLET)
             }
-            QImage {
+            QIcon {
+                iconSize: 24
                 id: _compressButton
-                width: 24
-                height: 24
                 anchors {
                     right: parent.right
                     rightMargin: 84
@@ -297,7 +294,7 @@ QScreen {
     QQrImportScanner {
         id: qrscaner
         onTagFound: {
-            if(AppModel.parseKeystoneCollabWallet(qrscaner.tags)){
+            if(AppModel.parseQRCollabWallet(qrscaner.tags)){
                 qrscaner.close()
                 QMLHandle.sendEvent(EVT.EVT_IMPORT_QR_SHARED_WALLET, qrscaner.tags)
             }

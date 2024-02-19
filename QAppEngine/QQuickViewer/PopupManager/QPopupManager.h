@@ -44,6 +44,7 @@ public:
     bool showPopup(POPUP_DATA p);
     bool closePopup(POPUP_DATA p);
     bool closeAll();
+    bool showToastMessage(QVariant msg);
 private:
     QQuickItem              *m_rootObject;
     QQmlContext             *m_context;

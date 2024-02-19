@@ -30,21 +30,67 @@ import "../../Components/customizes"
 import "../../Components/customizes/services"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    id: _question
-    QAnswerSecurityQuestion {
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION)
+    property var reqiredSignature: ServiceSetting.servicesTag.reqiredSignatures
+    Loader {
+        anchors.centerIn: parent
+        sourceComponent: {
+            if (reqiredSignature.type === "SECURITY_QUESTION") {
+                return security_question
+            }
+            else if (reqiredSignature.type === "CONFIRMATION_CODE") {
+                return confirm_code
+            } else if (reqiredSignature.step === "RECOVER") {
+                return enter_backup_password
+            }
+            return null
         }
+    }
+    Component {
+        id: security_question
+        QAnswerSecurityQuestion {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
 
-        onPrevClicked: {
-            QMLHandle.sendEvent(EVT.EVT_ANSER_SECURITY_QUESTION_BACK)
+            onPrevClicked: {
+                QMLHandle.sendEvent(EVT.EVT_ANSER_SECURITY_QUESTION_BACK)
+            }
+
+            onNextClicked: {
+                QMLHandle.sendEvent(EVT.EVT_INPUT_KEY_RECOVERY_ANSER_REQUEST)
+            }
         }
+    }
+    Component {
+        id: confirm_code
+        QAnswerSQConfirmCode {
+            id: _confirm_code
+            label.text: STR.STR_QML_1051
+            description_top: STR.STR_QML_1028_top
+            onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
 
-        onNextClicked: {
-            QMLHandle.sendEvent(EVT.EVT_INPUT_KEY_RECOVERY_ANSER_REQUEST)
+            onPrevClicked: {
+                QMLHandle.sendEvent(EVT.EVT_ANSER_SECURITY_QUESTION_BACK)
+            }
+
+            onNextClicked: {
+                _confirm_code.loading()
+                QMLHandle.sendEvent(EVT.EVT_INPUT_KEY_RECOVERY_ANSER_REQUEST, _confirm_code.code())
+            }
+        }
+    }
+    Component {
+        id: enter_backup_password
+        QEnterBackupPassword {
+            onPrevClicked: {
+                QMLHandle.sendEvent(EVT.EVT_ANSER_SECURITY_QUESTION_BACK)
+            }
+
+            onNextClicked: {
+                QMLHandle.sendEvent(EVT.EVT_INPUT_KEY_RECOVERY_ANSER_REQUEST, backup_password.textInputted)
+            }
         }
     }
 }

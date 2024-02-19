@@ -278,14 +278,25 @@ QDevicePtr DeviceListModel::getDeviceNeedPinSent(){
     return QDevicePtr(NULL);
 }
 
-bool DeviceListModel::containsFingerPrint(const QString &xfp) const
+bool DeviceListModel::removeDevice(const QString xfp)
 {
+    beginResetModel();
     foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(it.data() && it.data()->masterFingerPrint() == xfp){
+            d_.removeAll(it);
+            endResetModel();
             return true;
         }
     }
+    endResetModel();
     return false;
+}
+
+void DeviceListModel::clearList()
+{
+    beginResetModel();
+    d_.clear();
+    endResetModel();
 }
 
 bool DeviceListModel::contains(const QString &fingerprint)

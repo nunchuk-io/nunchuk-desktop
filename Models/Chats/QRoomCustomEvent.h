@@ -48,6 +48,7 @@ using namespace Quotient;
 #define NUNCHUK_ROOM_SUPPORTTESTNET "io.nunchuk.support.testnet"
 #define NUNCHUK_ROOM_ENCRYPTED      "m.room.encrypted"
 #define NUNCHUK_ROOM_ENCRYPTION     "m.room.encryption"
+#define NUNCHUK_ROOM_BYZANTINE      "io.nunchuk.premium"
 
 #define NUNCHUK_EVENT_SYNC          "io.nunchuk.sync"
 #define NUNCHUK_EVENT_WALLET        "io.nunchuk.wallet"

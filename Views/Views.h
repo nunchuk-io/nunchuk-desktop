@@ -96,21 +96,22 @@ static const APPLICATION_STATE STATE_ID_SCR_DUMMY_TRANSACTION_INFO              
 static const APPLICATION_STATE STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION      = {E::STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION     , SCR_INHERITANCE_CONFIRM_TRANSACTION_Entry     , SCR_INHERITANCE_CONFIRM_TRANSACTION_Exit     , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_INHERITANCE_CONFIRM_TRANSACTION      };
 static const APPLICATION_STATE STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS      = {E::STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS     , SCR_INHERITANCE_TRANSACTION_DETAILS_Entry     , SCR_INHERITANCE_TRANSACTION_DETAILS_Exit     , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_INHERITANCE_TRANSACTION_DETAILS      };
 static const APPLICATION_STATE STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE         = {E::STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE        , SCR_INHERITANCE_WITHDRAW_BALANCE_Entry        , SCR_INHERITANCE_WITHDRAW_BALANCE_Exit        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_INHERITANCE_WITHDRAW_BALANCE         };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER_ASK                       = {E::STATE_ID_SCR_ADD_LEDGER_ASK                      , SCR_ADD_LEDGER_ASK_Entry                      , SCR_ADD_LEDGER_ASK_Exit                      , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_LEDGER_ASK                       };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR_ASK                       = {E::STATE_ID_SCR_ADD_TREZOR_ASK                      , SCR_ADD_TREZOR_ASK_Entry                      , SCR_ADD_TREZOR_ASK_Exit                      , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR_ASK                       };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER                           = {E::STATE_ID_SCR_ADD_LEDGER                          , SCR_ADD_LEDGER_Entry                          , SCR_ADD_LEDGER_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_LEDGER                           };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR                           = {E::STATE_ID_SCR_ADD_TREZOR                          , SCR_ADD_TREZOR_Entry                          , SCR_ADD_TREZOR_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR                           };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_HARDWARE_ASK                     = {E::STATE_ID_SCR_ADD_HARDWARE_ASK                    , SCR_ADD_HARDWARE_ASK_Entry                    , SCR_ADD_HARDWARE_ASK_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_HARDWARE_ASK                     };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_HARDWARE                         = {E::STATE_ID_SCR_ADD_HARDWARE                        , SCR_ADD_HARDWARE_Entry                        , SCR_ADD_HARDWARE_Exit                        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_HARDWARE                         };
 static const APPLICATION_STATE STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE         = {E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE        , SCR_SELECT_WALLET_CO_SIGN_POLICE_Entry        , SCR_SELECT_WALLET_CO_SIGN_POLICE_Exit        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SELECT_WALLET_CO_SIGN_POLICE         };
 static const APPLICATION_STATE STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN           = {E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN          , SCR_EDIT_YOUR_INHERITANCE_PLAN_Entry          , SCR_EDIT_YOUR_INHERITANCE_PLAN_Exit          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_EDIT_YOUR_INHERITANCE_PLAN           };
 static const APPLICATION_STATE STATE_ID_SCR_SHARE_YOUR_SECRETS                   = {E::STATE_ID_SCR_SHARE_YOUR_SECRETS                  , SCR_SHARE_YOUR_SECRETS_Entry                  , SCR_SHARE_YOUR_SECRETS_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SHARE_YOUR_SECRETS                   };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_COLDCARD_ASK                     = {E::STATE_ID_SCR_ADD_COLDCARD_ASK                    , SCR_ADD_COLDCARD_ASK_Entry                    , SCR_ADD_COLDCARD_ASK_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_COLDCARD_ASK                     };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_COLDCARD                         = {E::STATE_ID_SCR_ADD_COLDCARD                        , SCR_ADD_COLDCARD_Entry                        , SCR_ADD_COLDCARD_Exit                        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_COLDCARD                         };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_LEDGER_EXIST                     = {E::STATE_ID_SCR_ADD_LEDGER_EXIST                    , SCR_ADD_LEDGER_EXIST_Entry                    , SCR_ADD_LEDGER_EXIST_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_LEDGER_EXIST                     };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_TREZOR_EXIST                     = {E::STATE_ID_SCR_ADD_TREZOR_EXIST                    , SCR_ADD_TREZOR_EXIST_Entry                    , SCR_ADD_TREZOR_EXIST_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_TREZOR_EXIST                     };
-static const APPLICATION_STATE STATE_ID_SCR_ADD_COLDCARD_EXIST                   = {E::STATE_ID_SCR_ADD_COLDCARD_EXIST                  , SCR_ADD_COLDCARD_EXIST_Entry                  , SCR_ADD_COLDCARD_EXIST_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_COLDCARD_EXIST                   };
+static const APPLICATION_STATE STATE_ID_SCR_ADD_HARDWARE_EXIST                   = {E::STATE_ID_SCR_ADD_HARDWARE_EXIST                  , SCR_ADD_HARDWARE_EXIST_Entry                  , SCR_ADD_HARDWARE_EXIST_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ADD_HARDWARE_EXIST                   };
+static const APPLICATION_STATE STATE_ID_SCR_DASHBOARD_ALERT_INFO                 = {E::STATE_ID_SCR_DASHBOARD_ALERT_INFO                , SCR_DASHBOARD_ALERT_INFO_Entry                , SCR_DASHBOARD_ALERT_INFO_Exit                , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_DASHBOARD_ALERT_INFO                 };
+static const APPLICATION_STATE STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS              = {E::STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS             , SCR_KEY_HEALTH_CHECK_STATUS_Entry             , SCR_KEY_HEALTH_CHECK_STATUS_Exit             , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_KEY_HEALTH_CHECK_STATUS              };
+static const APPLICATION_STATE STATE_ID_SCR_HEALTH_CHECK_STARTING                = {E::STATE_ID_SCR_HEALTH_CHECK_STARTING               , SCR_HEALTH_CHECK_STARTING_Entry               , SCR_HEALTH_CHECK_STARTING_Exit               , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_HEALTH_CHECK_STARTING                };
+static const APPLICATION_STATE STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS              = {E::STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS             , SCR_DASHBOARD_ALERT_SUCCESS_Entry             , SCR_DASHBOARD_ALERT_SUCCESS_Exit             , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_DASHBOARD_ALERT_SUCCESS              };
+static const APPLICATION_STATE STATE_ID_SCR_SETUP_SECURITY_QUESTION              = {E::STATE_ID_SCR_SETUP_SECURITY_QUESTION             , SCR_SETUP_SECURITY_QUESTION_Entry             , SCR_SETUP_SECURITY_QUESTION_Exit             , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_SECURITY_QUESTION              };
+static const APPLICATION_STATE STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION       = {E::STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION      , SCR_SETUP_ANSWER_SECURITY_QUESTION_Entry      , SCR_SETUP_ANSWER_SECURITY_QUESTION_Exit      , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_ANSWER_SECURITY_QUESTION       };
+static const APPLICATION_STATE STATE_ID_SCR_RECURRING_PAYMENTS                   = {E::STATE_ID_SCR_RECURRING_PAYMENTS                  , SCR_RECURRING_PAYMENTS_Entry                  , SCR_RECURRING_PAYMENTS_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_RECURRING_PAYMENTS                   };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_ROOT_trigger[25] = 
+static const STATE_TRIGGER STATE_ID_ROOT_trigger[30] = 
 {
 	{E::EVT_STARTING_APPLICATION_LOCALMODE   , EVT_STARTING_APPLICATION_LOCALMODE_HANDLER   , NULL                                  },
 	{E::EVT_STARTING_APPLICATION_ONLINEMODE  , EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER  , NULL                                  },
@@ -137,32 +138,37 @@ static const STATE_TRIGGER STATE_ID_ROOT_trigger[25] =
 	{E::EVT_GOTO_SERVICE_SETTING_TAB         , EVT_GOTO_SERVICE_SETTING_TAB_HANDLER         , &STATE_ID_SCR_SERVICE_SETTINGS        },
 	{E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST_HANDLER, &STATE_ID_SCR_SERVICE_SETTINGS        },
 	{E::EVT_NUNCHUK_LOGIN_SUCCEEDED          , EVT_NUNCHUK_LOGIN_SUCCEEDED_HANDLER          , &STATE_ID_SCR_HOME                    },
+	{E::EVT_HEALTH_CHECK_STARTING_REQUEST    , EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER    , &STATE_ID_SCR_HEALTH_CHECK_STARTING   },
+	{E::EVT_DUMMY_TRANSACTION_INFO_REQUEST   , EVT_DUMMY_TRANSACTION_INFO_REQUEST_HANDLER   , &STATE_ID_SCR_DUMMY_TRANSACTION_INFO  },
+	{E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST  , EVT_DASHBOARD_ALERT_SUCCESS_REQUEST_HANDLER  , &STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS },
+	{E::EVT_SHARE_YOUR_SECRET_REQUEST        , EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER        , &STATE_ID_SCR_SHARE_YOUR_SECRETS      },
+	{E::EVT_REENTER_YOUR_PASSWORD_REQUEST    , EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER    , &STATE_ID_SCR_REENTER_YOUR_PASSWORD   },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_ADD_COLDCARD_trigger[2] = 
+static const STATE_TRIGGER STATE_ID_SCR_ADD_HARDWARE_trigger[2] = 
 {
-	{E::EVT_SCAN_COLDCARD_DEVICE_REQUEST, EVT_SCAN_COLDCARD_DEVICE_REQUEST_HANDLER, NULL  },
-	{E::EVT_ADD_COLDCARD_DEVICE_REQUEST , EVT_ADD_COLDCARD_DEVICE_REQUEST_HANDLER , NULL  },
+	{E::EVT_SCAN_HARDWARE_DEVICE_REQUEST, EVT_SCAN_HARDWARE_DEVICE_REQUEST_HANDLER, NULL  },
+	{E::EVT_ADD_HARDWARE_DEVICE_REQUEST , EVT_ADD_HARDWARE_DEVICE_REQUEST_HANDLER , NULL  },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_ADD_COLDCARD_ASK_trigger[1] = 
+static const STATE_TRIGGER STATE_ID_SCR_ADD_HARDWARE_ASK_trigger[1] = 
 {
-	{E::EVT_ADD_COLDCARD_REQUEST, EVT_ADD_COLDCARD_REQUEST_HANDLER, &STATE_ID_SCR_ADD_COLDCARD },
+	{E::EVT_ADD_HARDWARE_REQUEST, EVT_ADD_HARDWARE_REQUEST_HANDLER, &STATE_ID_SCR_ADD_HARDWARE },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_ADD_COLDCARD_EXIST_trigger[2] = 
+static const STATE_TRIGGER STATE_ID_SCR_ADD_HARDWARE_EXIST_trigger[2] = 
 {
-	{E::EVT_ADD_EXIST_COLDCARD_REQUEST, EVT_ADD_EXIST_COLDCARD_REQUEST_HANDLER, NULL                       },
-	{E::EVT_ADD_NEW_COLDCARD_REQUEST  , EVT_ADD_NEW_COLDCARD_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_COLDCARD },
+	{E::EVT_ADD_EXIST_HARDWARE_REQUEST, EVT_ADD_EXIST_HARDWARE_REQUEST_HANDLER, NULL                       },
+	{E::EVT_ADD_NEW_HARDWARE_REQUEST  , EVT_ADD_NEW_HARDWARE_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_HARDWARE },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,32 +199,6 @@ static const STATE_TRIGGER STATE_ID_SCR_ADD_HARDWARE_SIGNER_TO_WALLET_trigger[8]
 	{E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER_RESULT , EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER_RESULT_HANDLER , &STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT },
 	{E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_RESULT , EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_RESULT_HANDLER , &STATE_ID_SCR_ADD_MASTER_SIGNER_RESULT },
 	{E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_BACK                 , EVT_ADD_HARDWARE_SIGNER_TO_WALLET_BACK_HANDLER                 , &STATE_ID_SCR_ADD_NEW_SIGNER_TO_WALLET },
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const STATE_TRIGGER STATE_ID_SCR_ADD_LEDGER_trigger[2] = 
-{
-	{E::EVT_SCAN_LEDGER_DEVICE_REQUEST, EVT_SCAN_LEDGER_DEVICE_REQUEST_HANDLER, NULL  },
-	{E::EVT_ADD_LEDGER_DEVICE_REQUEST , EVT_ADD_LEDGER_DEVICE_REQUEST_HANDLER , NULL  },
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const STATE_TRIGGER STATE_ID_SCR_ADD_LEDGER_ASK_trigger[1] = 
-{
-	{E::EVT_ADD_LEDGER_REQUEST, EVT_ADD_LEDGER_REQUEST_HANDLER, &STATE_ID_SCR_ADD_LEDGER },
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const STATE_TRIGGER STATE_ID_SCR_ADD_LEDGER_EXIST_trigger[2] = 
-{
-	{E::EVT_ADD_EXIST_LEDGER_REQUEST, EVT_ADD_EXIST_LEDGER_REQUEST_HANDLER, NULL                     },
-	{E::EVT_ADD_NEW_LEDGER_REQUEST  , EVT_ADD_NEW_LEDGER_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_LEDGER },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,32 +260,6 @@ static const STATE_TRIGGER STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT_trigger[7] =
 	{E::EVT_REMOTE_SIGNER_RESULT_GET_XPUBS                          , EVT_REMOTE_SIGNER_RESULT_GET_XPUBS_HANDLER                          , NULL                                          },
 	{E::EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST                     , EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST_HANDLER                     , NULL                                          },
 	{E::EVT_REMOTE_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_SIGNER_CONFIG, EVT_REMOTE_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_SIGNER_CONFIG_HANDLER, &STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION },
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const STATE_TRIGGER STATE_ID_SCR_ADD_TREZOR_trigger[2] = 
-{
-	{E::EVT_SCAN_TREZOR_DEVICE_REQUEST, EVT_SCAN_TREZOR_DEVICE_REQUEST_HANDLER, NULL  },
-	{E::EVT_ADD_TREZOR_DEVICE_REQUEST , EVT_ADD_TREZOR_DEVICE_REQUEST_HANDLER , NULL  },
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const STATE_TRIGGER STATE_ID_SCR_ADD_TREZOR_ASK_trigger[1] = 
-{
-	{E::EVT_ADD_TREZOR_REQUEST, EVT_ADD_TREZOR_REQUEST_HANDLER, &STATE_ID_SCR_ADD_TREZOR },
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const STATE_TRIGGER STATE_ID_SCR_ADD_TREZOR_EXIST_trigger[2] = 
-{
-	{E::EVT_ADD_EXIST_TREZOR_REQUEST, EVT_ADD_EXIST_TREZOR_REQUEST_HANDLER, NULL                     },
-	{E::EVT_ADD_NEW_TREZOR_REQUEST  , EVT_ADD_NEW_TREZOR_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_TREZOR },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -466,15 +420,29 @@ static const STATE_TRIGGER STATE_ID_SCR_CREATE_TRANSACTION_trigger[7] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_DUMMY_TRANSACTION_INFO_trigger[7] = 
+static const STATE_TRIGGER STATE_ID_SCR_DASHBOARD_ALERT_INFO_trigger[3] = 
 {
-	{E::EVT_DUMMY_TRANSACTION_SIGN_REQUEST              , EVT_DUMMY_TRANSACTION_SIGN_REQUEST_HANDLER              , NULL                                      },
-	{E::EVT_DUMMY_TRANSACTION_SIGN_CONFIRM_REQUEST      , EVT_DUMMY_TRANSACTION_SIGN_CONFIRM_REQUEST_HANDLER      , NULL                                      },
-	{E::EVT_DUMMY_TRANSACTION_VERIFY_ADDRESS            , EVT_DUMMY_TRANSACTION_VERIFY_ADDRESS_HANDLER            , NULL                                      },
-	{E::EVT_DUMMY_TRANSACTION_SET_MEMO_REQUEST          , EVT_DUMMY_TRANSACTION_SET_MEMO_REQUEST_HANDLER          , NULL                                      },
-	{E::EVT_DUMMY_TRANSACTION_SCAN_DEVICE_REQUEST       , EVT_DUMMY_TRANSACTION_SCAN_DEVICE_REQUEST_HANDLER       , NULL                                      },
-	{E::EVT_DUMMY_TRANSACTION_INFO_BACK                 , EVT_DUMMY_TRANSACTION_INFO_BACK_HANDLER                 , &STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD },
-	{E::EVT_DUMMY_TRANSACTION_LOCKDOWN_SUCCEEDED_REQUEST, EVT_DUMMY_TRANSACTION_LOCKDOWN_SUCCEEDED_REQUEST_HANDLER, &STATE_ID_SCR_LOCKDOWN_SUCCESS            },
+	{E::EVT_DASHBOARD_ALERT_INFO_ENTER, EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER, NULL                             },
+	{E::EVT_ADD_HARDWARE_KEY_EXIST_REQ, EVT_ADD_HARDWARE_KEY_EXIST_REQ_HANDLER, &STATE_ID_SCR_ADD_HARDWARE_EXIST },
+	{E::EVT_ADD_HARDWARE_KEY_REQUEST  , EVT_ADD_HARDWARE_KEY_REQUEST_HANDLER  , &STATE_ID_SCR_ADD_HARDWARE       },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_trigger[2] = 
+{
+	{E::EVT_DASHBOARD_ALERT_SUCCESS_ENTER_REQUEST, EVT_DASHBOARD_ALERT_SUCCESS_ENTER_REQUEST_HANDLER, NULL           },
+	{E::EVT_DASHBOARD_ALERT_SUCCESS_CLOSE        , EVT_DASHBOARD_ALERT_SUCCESS_CLOSE_HANDLER        , &STATE_ID_ROOT },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_DUMMY_TRANSACTION_INFO_trigger[2] = 
+{
+	{E::EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER, NULL           },
+	{E::EVT_DUMMY_TRANSACTION_INFO_BACK           , EVT_DUMMY_TRANSACTION_INFO_BACK_HANDLER           , &STATE_ID_ROOT },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -502,30 +470,38 @@ static const STATE_TRIGGER STATE_ID_SCR_ENTER_BACKUP_PASSWORD_trigger[3] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[22] = 
+static const STATE_TRIGGER STATE_ID_SCR_HEALTH_CHECK_STARTING_trigger[2] = 
 {
-	{E::EVT_HOME_WALLET_SELECTED                 , EVT_HOME_WALLET_SELECTED_HANDLER                 , NULL                              },
-	{E::EVT_HOME_WALLET_COPY_ADDRESS             , EVT_HOME_WALLET_COPY_ADDRESS_HANDLER             , NULL                              },
-	{E::EVT_HOME_SETTING_REQUEST                 , EVT_HOME_SETTING_REQUEST_HANDLER                 , NULL                              },
-	{E::EVT_HOME_DISPLAY_ADDRESS                 , EVT_HOME_DISPLAY_ADDRESS_HANDLER                 , NULL                              },
-	{E::EVT_HOME_IMPORT_PSBT                     , EVT_HOME_IMPORT_PSBT_HANDLER                     , NULL                              },
-	{E::EVT_HOME_EXPORT_BSMS                     , EVT_HOME_EXPORT_BSMS_HANDLER                     , NULL                              },
-	{E::EVT_HOME_ADD_WALLET_REQUEST              , EVT_HOME_ADD_WALLET_REQUEST_HANDLER              , &STATE_ID_SCR_ADD_WALLET          },
-	{E::EVT_HOME_MASTER_SIGNER_INFO_REQUEST      , EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER      , &STATE_ID_SCR_MASTER_SIGNER_INFO  },
-	{E::EVT_HOME_SEND_REQUEST                    , EVT_HOME_SEND_REQUEST_HANDLER                    , &STATE_ID_SCR_SEND                },
-	{E::EVT_HOME_RECEIVE_REQUEST                 , EVT_HOME_RECEIVE_REQUEST_HANDLER                 , &STATE_ID_SCR_RECEIVE             },
-	{E::EVT_HOME_TRANSACTION_HISTORY_REQUEST     , EVT_HOME_TRANSACTION_HISTORY_REQUEST_HANDLER     , &STATE_ID_SCR_TRANSACTION_HISTORY },
-	{E::EVT_HOME_WALLET_INFO_REQUEST             , EVT_HOME_WALLET_INFO_REQUEST_HANDLER             , &STATE_ID_SCR_WALLET_INFO         },
-	{E::EVT_HOME_TRANSACTION_INFO_REQUEST        , EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER        , &STATE_ID_SCR_TRANSACTION_INFO    },
-	{E::EVT_HOME_REMOTE_SIGNER_INFO_REQUEST      , EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER      , &STATE_ID_SCR_REMOTE_SIGNER_INFO  },
-	{E::EVT_HOME_ADD_NEW_SIGNER_REQUEST          , EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER          , &STATE_ID_SCR_ADD_NEW_SIGNER      },
-	{E::EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER, &STATE_ID_SCR_MASTER_SIGNER_INFO  },
-	{E::EVT_ASK_LEDGER_REQ                       , EVT_ASK_LEDGER_REQ_HANDLER                       , &STATE_ID_SCR_ADD_LEDGER_ASK      },
-	{E::EVT_ASK_TREZOR_REQ                       , EVT_ASK_TREZOR_REQ_HANDLER                       , &STATE_ID_SCR_ADD_TREZOR_ASK      },
-	{E::EVT_EXIST_LEDGER_REQ                     , EVT_EXIST_LEDGER_REQ_HANDLER                     , &STATE_ID_SCR_ADD_LEDGER_EXIST    },
-	{E::EVT_EXIST_TREZOR_REQ                     , EVT_EXIST_TREZOR_REQ_HANDLER                     , &STATE_ID_SCR_ADD_TREZOR_EXIST    },
-	{E::EVT_EXIST_COLDCARD_REQ                   , EVT_EXIST_COLDCARD_REQ_HANDLER                   , &STATE_ID_SCR_ADD_COLDCARD_EXIST  },
-	{E::EVT_ASK_COLDCARD_REQ                     , EVT_ASK_COLDCARD_REQ_HANDLER                     , &STATE_ID_SCR_ADD_COLDCARD_ASK    },
+	{E::EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST, EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST_HANDLER, NULL           },
+	{E::EVT_HEALTH_CHECK_STARTING_CLOSE      , EVT_HEALTH_CHECK_STARTING_CLOSE_HANDLER      , &STATE_ID_ROOT },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[21] = 
+{
+	{E::EVT_HOME_WALLET_SELECTED                 , EVT_HOME_WALLET_SELECTED_HANDLER                 , NULL                                  },
+	{E::EVT_HOME_WALLET_COPY_ADDRESS             , EVT_HOME_WALLET_COPY_ADDRESS_HANDLER             , NULL                                  },
+	{E::EVT_HOME_SETTING_REQUEST                 , EVT_HOME_SETTING_REQUEST_HANDLER                 , NULL                                  },
+	{E::EVT_HOME_DISPLAY_ADDRESS                 , EVT_HOME_DISPLAY_ADDRESS_HANDLER                 , NULL                                  },
+	{E::EVT_HOME_IMPORT_PSBT                     , EVT_HOME_IMPORT_PSBT_HANDLER                     , NULL                                  },
+	{E::EVT_HOME_EXPORT_BSMS                     , EVT_HOME_EXPORT_BSMS_HANDLER                     , NULL                                  },
+	{E::EVT_HOME_ADD_WALLET_REQUEST              , EVT_HOME_ADD_WALLET_REQUEST_HANDLER              , &STATE_ID_SCR_ADD_WALLET              },
+	{E::EVT_HOME_MASTER_SIGNER_INFO_REQUEST      , EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER      , &STATE_ID_SCR_MASTER_SIGNER_INFO      },
+	{E::EVT_HOME_SEND_REQUEST                    , EVT_HOME_SEND_REQUEST_HANDLER                    , &STATE_ID_SCR_SEND                    },
+	{E::EVT_HOME_RECEIVE_REQUEST                 , EVT_HOME_RECEIVE_REQUEST_HANDLER                 , &STATE_ID_SCR_RECEIVE                 },
+	{E::EVT_HOME_TRANSACTION_HISTORY_REQUEST     , EVT_HOME_TRANSACTION_HISTORY_REQUEST_HANDLER     , &STATE_ID_SCR_TRANSACTION_HISTORY     },
+	{E::EVT_HOME_WALLET_INFO_REQUEST             , EVT_HOME_WALLET_INFO_REQUEST_HANDLER             , &STATE_ID_SCR_WALLET_INFO             },
+	{E::EVT_HOME_TRANSACTION_INFO_REQUEST        , EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER        , &STATE_ID_SCR_TRANSACTION_INFO        },
+	{E::EVT_HOME_REMOTE_SIGNER_INFO_REQUEST      , EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER      , &STATE_ID_SCR_REMOTE_SIGNER_INFO      },
+	{E::EVT_HOME_ADD_NEW_SIGNER_REQUEST          , EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER          , &STATE_ID_SCR_ADD_NEW_SIGNER          },
+	{E::EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER, &STATE_ID_SCR_MASTER_SIGNER_INFO      },
+	{E::EVT_ASK_HARDWARE_REQ                     , EVT_ASK_HARDWARE_REQ_HANDLER                     , &STATE_ID_SCR_ADD_HARDWARE_ASK        },
+	{E::EVT_EXIST_HARDWARE_REQ                   , EVT_EXIST_HARDWARE_REQ_HANDLER                   , &STATE_ID_SCR_ADD_HARDWARE_EXIST      },
+	{E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST     , EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER     , &STATE_ID_SCR_DASHBOARD_ALERT_INFO    },
+	{E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST      , EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER      , &STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS },
+	{E::EVT_RECURRING_PAYMENTS_REQUEST           , EVT_RECURRING_PAYMENTS_REQUEST_HANDLER           , &STATE_ID_SCR_RECURRING_PAYMENTS      },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -603,6 +579,14 @@ static const STATE_TRIGGER STATE_ID_SCR_INPUT_PIN_trigger[2] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const STATE_TRIGGER STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_trigger[1] = 
+{
+	{E::EVT_KEY_HEALTH_CHECK_STATUS_ENTER, EVT_KEY_HEALTH_CHECK_STATUS_ENTER_HANDLER, NULL  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const STATE_TRIGGER STATE_ID_SCR_KEY_RECOVERY_trigger[2] = 
 {
 	{E::EVT_INPUT_TAPSIGNER_SELECT_REQUEST , EVT_INPUT_TAPSIGNER_SELECT_REQUEST_HANDLER , NULL                                               },
@@ -622,19 +606,19 @@ static const STATE_TRIGGER STATE_ID_SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION_tri
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_LOCKDOWN_ANSER_SECURITY_QUESTION_trigger[3] = 
+static const STATE_TRIGGER STATE_ID_SCR_LOCKDOWN_ANSER_SECURITY_QUESTION_trigger[2] = 
 {
 	{E::EVT_INPUT_LOCKDOWN_ANSER_REQUEST         , EVT_INPUT_LOCKDOWN_ANSER_REQUEST_HANDLER         , NULL                                      },
 	{E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_BACK, EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_BACK_HANDLER, &STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD },
-	{E::SCR_LOCKDOWN_SUCCESS_REQUEST             , SCR_LOCKDOWN_SUCCESS_REQUEST_HANDLER             , &STATE_ID_SCR_LOCKDOWN_SUCCESS            },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_LOCKDOWN_SUCCESS_trigger[1] = 
+static const STATE_TRIGGER STATE_ID_SCR_LOCKDOWN_SUCCESS_trigger[2] = 
 {
-	{E::EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST, EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER, NULL  },
+	{E::EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST, EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER, NULL           },
+	{E::EVT_CLOSE_LOCKDOWN_SUCCESS        , EVT_CLOSE_LOCKDOWN_SUCCESS_HANDLER        , &STATE_ID_ROOT },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -763,13 +747,18 @@ static const STATE_TRIGGER STATE_ID_SCR_RECOVER_SOFTWARE_SIGNER_trigger[5] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_REENTER_YOUR_PASSWORD_trigger[5] = 
+static const STATE_TRIGGER STATE_ID_SCR_RECURRING_PAYMENTS_trigger[1] = 
 {
-	{E::EVT_INPUT_PASSWORD_REQUEST             , EVT_INPUT_PASSWORD_REQUEST_HANDLER             , NULL                                       },
-	{E::EVT_REENTER_YOUR_PASSWORD_BACK         , EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER         , &STATE_ID_SCR_SERVICE_SETTINGS             },
-	{E::EVT_KEY_RECOVERY_REQUEST               , EVT_KEY_RECOVERY_REQUEST_HANDLER               , &STATE_ID_SCR_KEY_RECOVERY                 },
-	{E::EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST, EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER, &STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD  },
-	{E::EVT_WALLET_CO_SIGN_POLICE_REQUEST      , EVT_WALLET_CO_SIGN_POLICE_REQUEST_HANDLER      , &STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE },
+	{E::EVT_RECURRING_PAYMENTS_ENTER, EVT_RECURRING_PAYMENTS_ENTER_HANDLER, NULL  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_REENTER_YOUR_PASSWORD_trigger[2] = 
+{
+	{E::EVT_INPUT_PASSWORD_REQUEST    , EVT_INPUT_PASSWORD_REQUEST_HANDLER    , NULL           },
+	{E::EVT_REENTER_YOUR_PASSWORD_BACK, EVT_REENTER_YOUR_PASSWORD_BACK_HANDLER, &STATE_ID_ROOT },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -815,11 +804,10 @@ static const STATE_TRIGGER STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger[1] 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD_trigger[3] = 
+static const STATE_TRIGGER STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD_trigger[2] = 
 {
 	{E::EVT_INPUT_DAYS_VALUE_REQUEST                , EVT_INPUT_DAYS_VALUE_REQUEST_HANDLER                , NULL                                           },
 	{E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST, EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST_HANDLER, &STATE_ID_SCR_LOCKDOWN_ANSER_SECURITY_QUESTION },
-	{E::EVT_DUMMY_TRANSACTION_INFO_REQUEST          , EVT_DUMMY_TRANSACTION_INFO_REQUEST_HANDLER          , &STATE_ID_SCR_DUMMY_TRANSACTION_INFO           },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -837,18 +825,39 @@ static const STATE_TRIGGER STATE_ID_SCR_SEND_trigger[5] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_SERVICE_SETTINGS_trigger[10] = 
+static const STATE_TRIGGER STATE_ID_SCR_SERVICE_SETTINGS_trigger[13] = 
 {
 	{E::EVT_CLAIM_INHERITANCE_CHECK_REQUEST     , EVT_CLAIM_INHERITANCE_CHECK_REQUEST_HANDLER     , NULL                                       },
 	{E::EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST, EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST_HANDLER, NULL                                       },
 	{E::EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED, EVT_CO_SIGNING_SERVER_KEY_UPDATE_SUCCEED_HANDLER, NULL                                       },
 	{E::EVT_SERVICE_SELECT_WALLET_REQUEST       , EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER       , NULL                                       },
 	{E::EVT_INHERITANCE_PLAN_FINALIZE_REQUEST   , EVT_INHERITANCE_PLAN_FINALIZE_REQUEST_HANDLER   , NULL                                       },
-	{E::EVT_REENTER_YOUR_PASSWORD_REQUEST       , EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER       , &STATE_ID_SCR_REENTER_YOUR_PASSWORD        },
 	{E::EVT_SERVICE_SUPPORT_REQUEST             , EVT_SERVICE_SUPPORT_REQUEST_HANDLER             , &STATE_ID_SCR_HOME_ONLINE                  },
 	{E::EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST, EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST_HANDLER, &STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE },
 	{E::EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST  , EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST_HANLDER  , &STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN   },
-	{E::EVT_SHARE_YOUR_SECRET_REQUEST           , EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER           , &STATE_ID_SCR_SHARE_YOUR_SECRETS           },
+	{E::EVT_KEY_RECOVERY_REQUEST                , EVT_KEY_RECOVERY_REQUEST_HANDLER                , &STATE_ID_SCR_KEY_RECOVERY                 },
+	{E::EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST , EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST_HANDLER , &STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD  },
+	{E::EVT_WALLET_CO_SIGN_POLICE_REQUEST       , EVT_WALLET_CO_SIGN_POLICE_REQUEST_HANDLER       , &STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE },
+	{E::EVT_LOCKDOWN_SUCCESS_REQUEST            , EVT_LOCKDOWN_SUCCESS_REQUEST_HANDLER            , &STATE_ID_SCR_LOCKDOWN_SUCCESS             },
+	{E::EVT_SETUP_SECURITY_QUESTION_REQUEST     , EVT_SETUP_SECURITY_QUESTION_REQUEST_HANDLER     , &STATE_ID_SCR_SETUP_SECURITY_QUESTION      },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger[2] = 
+{
+	{E::EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ , EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ_HANDLER , NULL                                  },
+	{E::EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK, EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK_HANDLER, &STATE_ID_SCR_SETUP_SECURITY_QUESTION },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_SETUP_SECURITY_QUESTION_trigger[2] = 
+{
+	{E::EVT_INPUT_SECURITY_QUESTION_REQUEST   , EVT_INPUT_SECURITY_QUESTION_REQUEST_HANDLER   , NULL                                         },
+	{E::EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ, EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ_HANDLER, &STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1070,7 +1079,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[80] = 
+static const STATE_SYSTEM STATE_ALL[81] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1140,18 +1149,19 @@ static const STATE_SYSTEM STATE_ALL[80] =
 	{E::STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION     , STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION_trigger     , ALEN(STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION_trigger)     , &STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION      },
 	{E::STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS     , STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_trigger     , ALEN(STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_trigger)     , &STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS      },
 	{E::STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE        , STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_trigger        , ALEN(STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_trigger)        , &STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE         },
-	{E::STATE_ID_SCR_ADD_LEDGER_ASK                      , STATE_ID_SCR_ADD_LEDGER_ASK_trigger                      , ALEN(STATE_ID_SCR_ADD_LEDGER_ASK_trigger)                      , &STATE_ID_SCR_ADD_LEDGER_ASK                       },
-	{E::STATE_ID_SCR_ADD_TREZOR_ASK                      , STATE_ID_SCR_ADD_TREZOR_ASK_trigger                      , ALEN(STATE_ID_SCR_ADD_TREZOR_ASK_trigger)                      , &STATE_ID_SCR_ADD_TREZOR_ASK                       },
-	{E::STATE_ID_SCR_ADD_LEDGER                          , STATE_ID_SCR_ADD_LEDGER_trigger                          , ALEN(STATE_ID_SCR_ADD_LEDGER_trigger)                          , &STATE_ID_SCR_ADD_LEDGER                           },
-	{E::STATE_ID_SCR_ADD_TREZOR                          , STATE_ID_SCR_ADD_TREZOR_trigger                          , ALEN(STATE_ID_SCR_ADD_TREZOR_trigger)                          , &STATE_ID_SCR_ADD_TREZOR                           },
+	{E::STATE_ID_SCR_ADD_HARDWARE_ASK                    , STATE_ID_SCR_ADD_HARDWARE_ASK_trigger                    , ALEN(STATE_ID_SCR_ADD_HARDWARE_ASK_trigger)                    , &STATE_ID_SCR_ADD_HARDWARE_ASK                     },
+	{E::STATE_ID_SCR_ADD_HARDWARE                        , STATE_ID_SCR_ADD_HARDWARE_trigger                        , ALEN(STATE_ID_SCR_ADD_HARDWARE_trigger)                        , &STATE_ID_SCR_ADD_HARDWARE                         },
 	{E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE        , STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger        , ALEN(STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger)        , &STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE         },
 	{E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN          , STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_trigger          , ALEN(STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_trigger)          , &STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN           },
 	{E::STATE_ID_SCR_SHARE_YOUR_SECRETS                  , STATE_ID_SCR_SHARE_YOUR_SECRETS_trigger                  , ALEN(STATE_ID_SCR_SHARE_YOUR_SECRETS_trigger)                  , &STATE_ID_SCR_SHARE_YOUR_SECRETS                   },
-	{E::STATE_ID_SCR_ADD_COLDCARD_ASK                    , STATE_ID_SCR_ADD_COLDCARD_ASK_trigger                    , ALEN(STATE_ID_SCR_ADD_COLDCARD_ASK_trigger)                    , &STATE_ID_SCR_ADD_COLDCARD_ASK                     },
-	{E::STATE_ID_SCR_ADD_COLDCARD                        , STATE_ID_SCR_ADD_COLDCARD_trigger                        , ALEN(STATE_ID_SCR_ADD_COLDCARD_trigger)                        , &STATE_ID_SCR_ADD_COLDCARD                         },
-	{E::STATE_ID_SCR_ADD_LEDGER_EXIST                    , STATE_ID_SCR_ADD_LEDGER_EXIST_trigger                    , ALEN(STATE_ID_SCR_ADD_LEDGER_EXIST_trigger)                    , &STATE_ID_SCR_ADD_LEDGER_EXIST                     },
-	{E::STATE_ID_SCR_ADD_TREZOR_EXIST                    , STATE_ID_SCR_ADD_TREZOR_EXIST_trigger                    , ALEN(STATE_ID_SCR_ADD_TREZOR_EXIST_trigger)                    , &STATE_ID_SCR_ADD_TREZOR_EXIST                     },
-	{E::STATE_ID_SCR_ADD_COLDCARD_EXIST                  , STATE_ID_SCR_ADD_COLDCARD_EXIST_trigger                  , ALEN(STATE_ID_SCR_ADD_COLDCARD_EXIST_trigger)                  , &STATE_ID_SCR_ADD_COLDCARD_EXIST                   },
+	{E::STATE_ID_SCR_ADD_HARDWARE_EXIST                  , STATE_ID_SCR_ADD_HARDWARE_EXIST_trigger                  , ALEN(STATE_ID_SCR_ADD_HARDWARE_EXIST_trigger)                  , &STATE_ID_SCR_ADD_HARDWARE_EXIST                   },
+	{E::STATE_ID_SCR_DASHBOARD_ALERT_INFO                , STATE_ID_SCR_DASHBOARD_ALERT_INFO_trigger                , ALEN(STATE_ID_SCR_DASHBOARD_ALERT_INFO_trigger)                , &STATE_ID_SCR_DASHBOARD_ALERT_INFO                 },
+	{E::STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS             , STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_trigger             , ALEN(STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_trigger)             , &STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS              },
+	{E::STATE_ID_SCR_HEALTH_CHECK_STARTING               , STATE_ID_SCR_HEALTH_CHECK_STARTING_trigger               , ALEN(STATE_ID_SCR_HEALTH_CHECK_STARTING_trigger)               , &STATE_ID_SCR_HEALTH_CHECK_STARTING                },
+	{E::STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS             , STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_trigger             , ALEN(STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_trigger)             , &STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS              },
+	{E::STATE_ID_SCR_SETUP_SECURITY_QUESTION             , STATE_ID_SCR_SETUP_SECURITY_QUESTION_trigger             , ALEN(STATE_ID_SCR_SETUP_SECURITY_QUESTION_trigger)             , &STATE_ID_SCR_SETUP_SECURITY_QUESTION              },
+	{E::STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION      , STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger      , ALEN(STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger)      , &STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION       },
+	{E::STATE_ID_SCR_RECURRING_PAYMENTS                  , STATE_ID_SCR_RECURRING_PAYMENTS_trigger                  , ALEN(STATE_ID_SCR_RECURRING_PAYMENTS_trigger)                  , &STATE_ID_SCR_RECURRING_PAYMENTS                   },
 
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

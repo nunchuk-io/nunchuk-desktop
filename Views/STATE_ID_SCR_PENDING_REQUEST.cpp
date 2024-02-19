@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_PENDING_REQUEST.h"
 #include "QQuickViewer.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 
 void SCR_PENDING_REQUEST_Entry(QVariant msg) {

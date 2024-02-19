@@ -29,6 +29,7 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -262,45 +263,13 @@ QScreen {
                             elide: Text.ElideRight
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        Rectangle {
-                            width: _txt.paintedWidth + 8*2
-                            height: 21
-                            color: "#FDD95C"
-                            visible: model.single_signer_primary_key
-                            radius: 4
-                            anchors{
-                                verticalCenter: parent.verticalCenter
-                                right: _type.left
-                                rightMargin: 4
-                            }
-                            QText {
-                                id:_txt
-                                text: STR.STR_QML_641
-                                font.family: "Lato"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                color: "#031F2B"
-                            }
-                        }
-
-                        Rectangle {
-                            id:_type
-                            width: 100
-                            height: 21
+                        QRowSingleSignerType {
+                            visible: !signerAssigneddlg.isNeedGetXpubs
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
-                            color: "#C9DEF1"
-                            radius: 4
-                            visible: !signerAssigneddlg.isNeedGetXpubs
-                            QText {
-                                text: GlobalData.signers(signerAssigneddlg.signerType)
-                                font.family: "Lato"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                color: "#031F2B"
-                            }
+                            isPrimaryKey: model.single_signer_primary_key
+                            signerType: model.single_signer_type
+                            accountIndex: model.single_signer_account_index
                         }
                     }
                     QText {

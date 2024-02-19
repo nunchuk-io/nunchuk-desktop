@@ -1,13 +1,10 @@
 import QtQuick 2.0
 import "../../origins"
 
-QImage {
+QIcon {
     id: _icon
-    property int iconSize: 24
     property var icons : ["", "", "", ""]
     readonly property string path: icons[0].startsWith("qrc:") ? "" : "qrc:/Images/Images/"
-    width: iconSize
-    height: iconSize
     state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
     states: [
         State {

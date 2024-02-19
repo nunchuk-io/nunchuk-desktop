@@ -42,13 +42,24 @@ TextArea {
     renderType: Text.QtRendering
     wrapMode: Text.WrapAnywhere
     signal typingFinished(var currentText)
-    onTextChanged: if(initialized === true) inputIdentify.restart()
+    property int maximumLength: -1;
+    property string lastValidText: "";
+    onTextChanged: {
+        if (text.length > maximumLength  && maximumLength> -1) {
+            var currentPosition = cursorPosition - 1;
+            text = lastValidText;
+            cursorPosition = currentPosition;
+        } else {
+            lastValidText = text;
+        }
+        if(initialized === true) inputIdentify.restart()
+    }
 
     property bool initialized: false
     Timer {
         id: inputIdentify
         interval: 250
-        onTriggered: { if(textEdit.text !== "") typingFinished(textEdit.text) }
+        onTriggered: { if(lastValidText !== "") typingFinished(lastValidText) }
     }
     Component.onCompleted: initialized = true
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.1 )
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
+#set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 project(nunchuk-qt VERSION 0.1.0)
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,6 +10,8 @@ set( CMAKE_AUTOUIC ON )
 set( CXX_STANDARD "-std=c++20")
 if (WIN32)
     set(CXX_STANDARD "/std:c++20")
+elseif (NOT APPLE)
+    set( CMAKE_CXX_FLAGS "-march=native -O3")
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -51,6 +53,7 @@ endif()
 
 set(QAppEngine_SRCS
     QAppEngine/QOutlog/QOutlog.cpp
+    QAppEngine/QOutlog/QPingThread.cpp
     QAppEngine/QQuickViewer/QQuickViewer.cpp
     QAppEngine/QQuickViewer/PopupManager/QPopupManager.cpp
     QAppEngine/QQuickViewer/ScreenManager/QScreenManager.cpp
@@ -59,6 +62,7 @@ set(QAppEngine_SRCS
 
 set(QAppEngine_MOCS
     QAppEngine/QOutlog/QOutlog.h
+    QAppEngine/QOutlog/QPingThread.h
     QAppEngine/QQuickViewer/QQuickViewer.h
     QAppEngine/QQuickViewer/PopupManager/QPopupManager.h
     QAppEngine/QQuickViewer/ScreenManager/QScreenQueue.h
@@ -136,18 +140,19 @@ set(Views_SRCS
     Views/STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION.cpp
     Views/STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS.cpp
     Views/STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE.cpp
-    Views/STATE_ID_SCR_ADD_LEDGER.cpp
-    Views/STATE_ID_SCR_ADD_LEDGER_ASK.cpp
-    Views/STATE_ID_SCR_ADD_TREZOR.cpp
-    Views/STATE_ID_SCR_ADD_TREZOR_ASK.cpp
     Views/STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE.cpp
     Views/STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN.cpp
     Views/STATE_ID_SCR_SHARE_YOUR_SECRETS.cpp
-    Views/STATE_ID_SCR_ADD_COLDCARD.cpp
-    Views/STATE_ID_SCR_ADD_COLDCARD_ASK.cpp
-    Views/STATE_ID_SCR_ADD_COLDCARD_EXIST.cpp
-    Views/STATE_ID_SCR_ADD_LEDGER_EXIST.cpp
-    Views/STATE_ID_SCR_ADD_TREZOR_EXIST.cpp
+    Views/STATE_ID_SCR_ADD_HARDWARE.cpp
+    Views/STATE_ID_SCR_ADD_HARDWARE_ASK.cpp
+    Views/STATE_ID_SCR_ADD_HARDWARE_EXIST.cpp
+    Views/STATE_ID_SCR_DASHBOARD_ALERT_INFO.cpp
+    Views/STATE_ID_SCR_HEALTH_CHECK_STARTING.cpp
+    Views/STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS.cpp
+    Views/STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS.cpp
+    Views/STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION.cpp
+    Views/STATE_ID_SCR_SETUP_SECURITY_QUESTION.cpp
+    Views/STATE_ID_SCR_RECURRING_PAYMENTS.cpp
     )
 
 set(Views_MOCS
@@ -177,10 +182,12 @@ set(${PROJECT_NAME}_SRCS
     ifaces/nunchuckiface.cpp
     ifaces/nunchucklistener.cpp
     ifaces/qUtils.cpp
-    ifaces/Draco.cpp
     ifaces/Chats/matrixifaces.cpp
     ifaces/Chats/matrixbrigde.cpp
     ifaces/Chats/matrixlistener.cpp
+    ifaces/Servers/Draco.cpp
+    ifaces/Servers/QRest.cpp
+    ifaces/Servers/Byzantine.cpp
     main.cpp
     Models/Chats/QConversationModel.cpp
     Models/Chats/QContactModel.cpp
@@ -195,7 +202,23 @@ set(${PROJECT_NAME}_SRCS
     Models/Chats/QWalletSignersModel.cpp
     Models/Chats/QNunchukImageProvider.cpp
     Models/Chats/QLoggedInDeviceModel.cpp
-    Models/Chats/QUserWallets.cpp
+    RegisterTypes/DashRectangle.cpp
+    Models/Premiums/QUserWallets.cpp
+    Models/Premiums/QGroupWallets.cpp
+    Models/Premiums/QAssistedDraftWallets.cpp
+    Models/Premiums/QWalletServicesTag.cpp
+    Models/Premiums/QSwitchAPI.cpp
+    Models/Premiums/QWalletManagement.cpp
+    Models/Premiums/QGroupDashboard.cpp
+    Models/Premiums/QGroupWalletHealthCheck.cpp
+    Models/Premiums/QGroupWalletDummyTx.cpp
+    Models/Premiums/QServerKey.cpp
+    Models/Premiums/QInheritancePlan.cpp
+    Models/Premiums/QKeyRecovery.cpp
+    Models/Premiums/QWalletDummyTx.cpp
+    Models/Premiums/QUserWalletDummyTx.cpp
+    Models/Premiums/QBasePremium.cpp
+    Models/Premiums/QRecurringPayment.cpp
     )
 
 set(${PROJECT_NAME}_RSCS
@@ -217,6 +240,7 @@ set(${PROJECT_NAME}_INC_PATH
     Views
     ifaces
     Models
+    RegisterTypes
     contrib/libnunchuk/src
     )
 include_directories(${${PROJECT_NAME}_INC_PATH})
@@ -232,7 +256,8 @@ set(${PROJECT_NAME}_MOCS
     Models/Worker.h
     ifaces/QRCodeItem.h
     ifaces/bridgeifaces.h
-    ifaces/DracoDefines.h
+    RegisterTypes/DashRectangle.h
+    ifaces/Servers/DracoDefines.h
     localization/STR_CPP.h
     )
 QT5_WRAP_CPP(MOCS ${${PROJECT_NAME}_MOCS})
@@ -243,7 +268,10 @@ if(QRCODE_SCANNER)
     SET(QZXING_USE_QML ON)
     add_definitions( -DQZXING_QML )
     add_definitions( -DQZXING_MULTIMEDIA )
+    add_definitions( -DENABLE_ENCODER_GENERIC )
     add_definitions( -DENABLE_DECODER_QR_CODE )
+    add_definitions( -DENABLE_ENCODER_QR_CODE )
+    add_definitions( -DNO_ICONV )
     add_subdirectory(contrib/qzxing/src qzxing)
 endif(QRCODE_SCANNER)
 
@@ -286,13 +314,7 @@ target_link_libraries("${PROJECT_NAME}" Quotient Qt5::Sql )
 target_include_directories("${PROJECT_NAME}" PUBLIC "${PROJECT_SOURCE_DIR}/contrib/quotient/lib" )
 
 if(QRCODE_SCANNER)
-    if(APPLE)
-        target_link_libraries (${PROJECT_NAME} qzxing Iconv::Iconv)
-    else()
-        target_link_libraries (${PROJECT_NAME} qzxing)
-    endif()
-
-    target_link_libraries (${PROJECT_NAME} Qt5::Multimedia )
+    target_link_libraries (${PROJECT_NAME} Qt5::Multimedia qzxing)
 endif(QRCODE_SCANNER)
 
 find_package(Qt5Keychain QUIET)

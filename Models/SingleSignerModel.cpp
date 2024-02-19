@@ -74,7 +74,12 @@ void QSingleSigner::setOriginPrimaryKey(const nunchuk::PrimaryKey key)
 }
 
 QString QSingleSigner::name() {
-    return QString::fromStdString(singleSigner_.get_name());
+    if(email() != ""){
+        return email();
+    }
+    else{
+        return QString::fromStdString(singleSigner_.get_name());
+    }
 }
 
 void QSingleSigner::setName(const QString &d) {
@@ -262,8 +267,8 @@ bool QSingleSigner::readyToSign() const
 {
     bool signAble = false;
     if((int)ENUNCHUCK::SignerType::HARDWARE == signerType() || (int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType()){
-        if(AppModel::instance()->deviceList()){
-            return AppModel::instance()->deviceList()->containsFingerPrint(masterFingerPrint());
+        if(auto devices = AppModel::instance()->deviceListPtr()) {
+            return devices->contains(masterFingerPrint());
         }
         else{
             return false;
@@ -291,20 +296,35 @@ void QSingleSigner::setSignerType(int signer_type)
 
 bool QSingleSigner::isColdCard()
 {
-    if(AppModel::instance()->masterSignerList()){
-        return AppModel::instance()->masterSignerList()->isColdCard(masterFingerPrint());
+    DBG_INFO << tag();
+    bool ret = false;
+    if((int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType()){
+        ret = true;
     }
-    return false;
+    else if((int)ENUNCHUCK::SignerType::HARDWARE == signerType()){
+        if(tag().contains("COLDCARD")){
+            ret = true;
+        }
+        else{
+            if(AppModel::instance()->masterSignerList()){
+                ret = AppModel::instance()->masterSignerList()->isColdCard(masterFingerPrint());
+            }
+        }
+    }
+    else{ }
+    return ret;
 }
 
 bool QSingleSigner::isLocalSigner()
 {
     bool isLocal = false;
-    if(AppModel::instance()->masterSignerList()){
-        isLocal = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
-    }
-    if(!isLocal && AppModel::instance()->remoteSignerList()){
-        isLocal = AppModel::instance()->remoteSignerList()->containsFingerPrint(masterFingerPrint());
+    if(signerType() != (int)ENUNCHUCK::SignerType::SERVER){
+        if(AppModel::instance()->masterSignerList()){
+            isLocal = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
+        }
+        if(!isLocal && AppModel::instance()->remoteSignerList()){
+            isLocal = AppModel::instance()->remoteSignerList()->containsFingerPrint(masterFingerPrint());
+        }
     }
     return isLocal;
 }
@@ -337,11 +357,9 @@ void QSingleSigner::setDevicetype(QString devicetype)
 QString QSingleSigner::cardId()
 {
     if((int)ENUNCHUCK::SignerType::NFC == signerType()){
-        if(AppModel::instance()->masterSignerList()){
-            QMasterSignerPtr signer = AppModel::instance()->masterSignerList()->getMasterSignerByXfp(masterFingerPrint());
-            if(signer){
-                cardId_ = signer->device() ? signer->device()->cardId() : "";
-            }
+        if (cardId_.isEmpty()) {
+            nunchuk::TapsignerStatus tapsigner = bridge::GetTapsignerStatusFromMasterSigner(masterFingerPrint());
+            cardId_ = QString::fromStdString(tapsigner.get_card_ident());
         }
     }
     return cardId_;
@@ -355,6 +373,52 @@ void QSingleSigner::setCardId(const QString &card_id)
 nunchuk::SingleSigner QSingleSigner::singleSigner() const
 {
     return singleSigner_;
+}
+
+QString QSingleSigner::email() const
+{
+    return m_email;
+}
+
+void QSingleSigner::setEmail(const QString &email)
+{
+    if(m_email != email){
+        m_email = email;
+        emit nameChanged();
+    }
+}
+
+QString QSingleSigner::tag() const
+{
+    if (singleSigner_.get_tags().size() > 0) {
+        nunchuk::SignerTag tag = singleSigner_.get_tags().front();
+        return QString::fromStdString(SignerTagToStr(tag));
+    }
+    return "";
+}
+
+QStringList QSingleSigner::tags() const
+{
+    QStringList list;
+    for (auto tag : singleSigner_.get_tags()) {
+        list.append(QString::fromStdString(SignerTagToStr(tag)));
+    }
+    return list;
+}
+
+bool QSingleSigner::hasSignBtn() const
+{
+    return m_hasSignBtn;
+}
+
+void QSingleSigner::setHasSignBtn(bool hasSignBtn)
+{
+    m_hasSignBtn = hasSignBtn;
+}
+
+int QSingleSigner::accountIndex()
+{
+    return qUtils::GetIndexFromPath(derivationPath());
 }
 
 QString QSingleSigner::timeGapCalculationShort(QDateTime in)
@@ -483,6 +547,12 @@ QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
         return d_[index.row()]->devicetype();
     case single_signer_device_cardid_Role:
         return d_[index.row()]->cardId();
+    case single_signer_tag_Role:
+        return d_[index.row()]->tag();
+    case single_signer_has_sign_btn_Role:
+        return d_[index.row()]->hasSignBtn();
+    case single_signer_account_index_Role:
+        return d_[index.row()]->accountIndex();
     default:
         return QVariant();
     }
@@ -528,6 +598,9 @@ QHash<int, QByteArray> SingleSignerListModel::roleNames() const
     roles[single_signer_primary_key_Role]         = "single_signer_primary_key";
     roles[single_signer_devicetype_Role]          = "single_signer_devicetype";
     roles[single_signer_device_cardid_Role]       = "single_signer_device_cardid";
+    roles[single_signer_tag_Role]                 = "single_signer_tag";
+    roles[single_signer_has_sign_btn_Role]        = "single_signer_has_sign_btn";
+    roles[single_signer_account_index_Role]       = "single_signer_account_index";
     return roles;
 }
 
@@ -566,11 +639,12 @@ void SingleSignerListModel::initSignatures()
 }
 
 
-void SingleSignerListModel::updateSignatures(const QString &masterfingerprint, const bool value)
+void SingleSignerListModel::updateSignatures(const QString &masterfingerprint, const bool value, const QString& signature)
 {
     for (int var = 0; var < d_.count(); var++) {
         if(0 == QString::compare(masterfingerprint, d_.at(var).data()->masterFingerPrint(), Qt::CaseInsensitive)){
             d_[var]->setSignerSigned(value);
+            d_[var]->setSignature(signature);
         }
     }
 }
@@ -679,6 +753,16 @@ bool SingleSignerListModel::containsSigner(const QString &xfp, const QString &pa
     return false;
 }
 
+bool SingleSignerListModel::containsColdcard()
+{
+    foreach (QSingleSignerPtr i , d_ ){
+        if(i.data()->isColdCard()){
+            return true;
+        }
+    }
+    return false;
+}
+
 bool SingleSignerListModel::containsFingerPrint(const QString &masterFingerPrint)
 {
     foreach (QSingleSignerPtr i , d_ ){
@@ -704,13 +788,12 @@ bool SingleSignerListModel::checkUsableToSign(const QString &masterFingerPrint)
     return false;
 }
 
-void SingleSignerListModel::updateSignerHealthStatus(const QString &masterSignerId, const int status, const time_t time)
+void SingleSignerListModel::updateSignerHealthStatus(const QString &xfp, const int status, const time_t time)
 {
     beginResetModel();
     foreach (QSingleSignerPtr i , d_ ){
-        if(i.data() && masterSignerId == i.data()->masterSignerId()){
+        if(i.data() && qUtils::strCompare(xfp, i.data()->masterFingerPrint())){
             i.data()->setHealth(status);
-//            i.data()->setlastHealthCheck(QDateTime::fromTime_t(time));
         }
     }
     endResetModel();
@@ -780,29 +863,36 @@ void SingleSignerListModel::updateHealthCheckTime()
     endResetModel();
 }
 
-void SingleSignerListModel::requestSort(int role, int order)
+void SingleSignerListModel::syncNunchukEmail(QList<DracoUser> users)
+{
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i) && !d_.at(i).data()->isLocalSigner()){
+            foreach (DracoUser user, users) {
+                if(0 == QString::compare(d_.at(i).data()->name(), user.chat_id, Qt::CaseInsensitive)){
+                    d_.at(i).data()->setEmail(user.email);
+                    emit dataChanged(index(i), index(i) );
+                }
+            }
+        }
+    }
+}
+
+bool SingleSignerListModel::needSyncNunchukEmail()
+{
+    bool ret = false;
+    for (QSingleSignerPtr p : d_) {
+        if(!p.data()->isLocalSigner() && p.data()->email() == ""){
+            return true;
+        }
+    }
+    return ret;
+}
+
+void SingleSignerListModel::requestSort()
 {
     beginResetModel();
     if(d_.count() > 1){
-        switch (role) {
-        case single_signer_name_Role:
-        {
-            if(Qt::DescendingOrder == order){
-                qSort(d_.begin(), d_.end(), sortSingleSignerByNameDescending);
-            }
-            else{
-                qSort(d_.begin(), d_.end(), sortSingleSignerByNameAscending);
-            }
-        }
-            break;
-        case single_signer_is_local_Role:
-        {
-            qSort(d_.begin(), d_.end(), sortSingleSignerByLocalAscending);
-        }
-            break;
-        default:
-            break;
-        }
+        qSort(d_.begin(), d_.end(), sortSingleSignerByNameAscending);
     }
     endResetModel();
 }
@@ -826,7 +916,10 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
     QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
     for (QSingleSignerPtr signer : d_) {
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
-        clone.data()->addSingleSigner(ret);
+        if(ret){
+            ret.data()->setEmail(signer.data()->email());
+            clone.data()->addSingleSigner(ret);
+        }
     }
     return clone;
 }
@@ -836,6 +929,17 @@ void SingleSignerListModel::cleardata()
     beginResetModel();
     d_.clear();
     endResetModel();
+}
+
+QStringList SingleSignerListModel::getKeyNames()
+{
+    QStringList ret;
+    foreach (QSingleSignerPtr it, d_) {
+        if(it) {
+            ret << it.data()->name();
+        }
+    }
+    return ret;
 }
 
 int SingleSignerListModel::signerCount() const
@@ -854,15 +958,13 @@ int SingleSignerListModel::signerSelectedCount() const
 
 bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
 {
-    return (QString::compare((v1.data()->name()), (v2.data()->name())) < 0);
-}
-
-bool sortSingleSignerByNameDescending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
-{
-    return (QString::compare((v1.data()->name()), (v2.data()->name())) > 0);
-}
-
-bool sortSingleSignerByLocalAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
-{
-    return (v1.data()->isLocalSigner() > v2.data()->isLocalSigner());
+    if (!v1->isLocalSigner() || v1->signerType() == (int)ENUNCHUCK::SignerType::SERVER) {
+        return false;
+    }
+    else if (!v2->isLocalSigner() || v2->signerType() == (int)ENUNCHUCK::SignerType::SERVER) {
+        return true;
+    }
+    else {
+        return (QString::compare((v1.data()->name()), (v2.data()->name())) < 0);
+    }
 }

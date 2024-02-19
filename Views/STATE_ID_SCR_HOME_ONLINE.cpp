@@ -23,7 +23,7 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 #include "Chats/QNunchukRoomModel.h"
 #include "Chats/matrixbrigde.h"
@@ -162,10 +162,7 @@ void EVT_HOME_ONLINE_CANCEL_TRANSACTION_HANDLER(QVariant msg) {
             }
         }
         else{
-            AppModel::instance()->showToast(warningmsg.code(),
-                                            warningmsg.what(),
-                                            (EWARNING::WarningType)warningmsg.type(),
-                                            STR_CPP_078);
+            AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
         }
     }
 }

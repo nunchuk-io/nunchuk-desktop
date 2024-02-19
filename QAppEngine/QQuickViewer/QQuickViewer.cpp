@@ -33,7 +33,8 @@ QQuickViewer::QQuickViewer() : m_viewer(new QQuickView()), m_scrMng(NULL), m_pop
         m_PopupTriger.clear();
     }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(this, &QQuickViewer::signalNotifySendEvent, this, &QQuickViewer::sendEvent, Qt::QueuedConnection);
+    connect(this, &QQuickViewer::signalNotifySendEvent,     this, &QQuickViewer::sendEvent,              Qt::QueuedConnection);
+    connect(this, &QQuickViewer::signalNotifyToastMessage,  this, &QQuickViewer::slotNotifyToastMessage, Qt::QueuedConnection);
 }
 
 QQuickViewer::~QQuickViewer()
@@ -53,6 +54,7 @@ void QQuickViewer::initialized()
     QObject::connect(m_viewer, SIGNAL(visibleChanged(bool)), this, SIGNAL(visibleChanged(bool)));
     QObject::connect(m_viewer, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
     QObject::connect(m_viewer, SIGNAL(widthChanged(int)), this, SLOT(onWidthChanged(int)));
+    QObject::connect(m_viewer, SIGNAL(heightChanged(int)), this, SLOT(onHeightChanged(int)));
     m_ctxProperties.clear();
     m_qmlObj.clear();
     QQuickViewer::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
@@ -170,16 +172,35 @@ void QQuickViewer::notifySendEvent(uint eventID, QVariant msg)
     emit signalNotifySendEvent(eventID, msg);
 }
 
+void QQuickViewer::sendToastMessage(QVariant msg)
+{
+    emit signalNotifyToastMessage(msg);
+}
+
 void QQuickViewer::onWidthChanged(int w)
 {
     if(w > m_currentSize.width()){
         DBG_INFO << "FULL SIZE REQUEST" << w;
         this->updateContextProperty("QAPP_DEVICE_WIDTH", m_viewer->geometry().width());
-        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
+//        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
     }
     else{
         DBG_INFO << "ORIGIN SIZE REQUEST" << w;
         this->updateContextProperty("QAPP_DEVICE_WIDTH", m_currentSize.width());
+//        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
+    }
+}
+
+void QQuickViewer::onHeightChanged(int h)
+{
+    if(h > m_currentSize.height()){
+        DBG_INFO << "FULL SIZE REQUEST" << h;
+//        this->updateContextProperty("QAPP_DEVICE_WIDTH", m_viewer->geometry().width());
+        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
+    }
+    else{
+        DBG_INFO << "ORIGIN SIZE REQUEST" << h;
+//        this->updateContextProperty("QAPP_DEVICE_WIDTH", m_currentSize.width());
         this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
     }
 }
@@ -464,6 +485,14 @@ bool QQuickViewer::closePopup(uint id, QVariant msg)
     return ret;
 }
 
+bool QQuickViewer::showToastMessage(QVariant msg)
+{
+    if(m_popMng){
+        return m_popMng->showToastMessage(msg);
+    }
+    return false;
+}
+
 void QQuickViewer::setOnsRequester(const uint id)
 {
     m_popRequester = id;
@@ -479,4 +508,8 @@ void QQuickViewer::collectGarbage()
 void QQuickViewer::onVisibleChanged(bool state)
 {
     Q_UNUSED(state);
+}
+
+void QQuickViewer::slotNotifyToastMessage(QVariant msg) {
+    showToastMessage(msg);
 }

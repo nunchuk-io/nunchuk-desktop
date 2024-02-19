@@ -33,7 +33,6 @@ Rectangle {
     width: 504
     height: 36
     radius: 36
-    property bool isActived: false
     property string contactname: "name"
     property string contactemail: "email"
 
@@ -48,7 +47,6 @@ Rectangle {
             width: 36
             height: 36
             username: contactname
-            activeStatus: isActived
             displayStatus: false
         }
         QText{

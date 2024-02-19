@@ -25,8 +25,12 @@
 #include <QQuickPaintedItem>
 #include <QRect>
 #include <QBrush>
-#include <QSharedPointer>
+#include <QPainter>
+
+#if 0 // nayuki
 #include "QRGenerator.h"
+#include <QSharedPointer>
+#endif
 
 class QRCodeItem : public QQuickPaintedItem
 {
@@ -38,12 +42,12 @@ public:
     ~QRCodeItem();
     QString textInput() const;
     int borderWitdh() const;
-    QString save(QString name, QString path);
 protected:
     void paint(QPainter *painter);
-
 private:
+#if 0 // nayuki
     static QSharedPointer<QRGenerator> m_QRgen;
+#endif
 
     QString m_textInput;
     int m_borderWitdh;

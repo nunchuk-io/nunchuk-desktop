@@ -43,10 +43,9 @@ Rectangle {
         }
     }
 
-    QImage {
+    QIcon {
         id: iconsource
-        width: 24
-        height: 24
+        iconSize: 24
         anchors.centerIn: parent
         scale: mouse.pressed && !isCurrentItem ? 0.9 : 1
         transformOrigin: Item.Center

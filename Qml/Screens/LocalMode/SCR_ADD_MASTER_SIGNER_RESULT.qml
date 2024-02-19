@@ -30,6 +30,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -71,7 +72,7 @@ QScreen {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QBadge {
-                text: GlobalData.signerNames(signerType)
+                text: GlobalData.signers(signerType)
                 color: "#EAEAEA"
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -151,10 +152,9 @@ QScreen {
                 delegate: Item {
                     width: 344
                     height: 40
-                    QImage {
+                    QIcon {
+                        iconSize: 24
                         source: "qrc:/Images/Images/wallet_031F2B.png"
-                        width: 24
-                        height: 24
                         anchors {
                             verticalCenter: parent.verticalCenter
                             left: parent.left
@@ -199,10 +199,9 @@ QScreen {
             font.weight: Font.DemiBold
             font.pixelSize: 14
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: healthIndicator
-            width: 24
-            height: 24
             source: 0 === masterSignerHealth ? "qrc:/Images/Images/check_circle_outline_24px.png" :
                                                "qrc:/Images/Images/error_outline_24px.png"
             anchors {
@@ -347,13 +346,19 @@ QScreen {
                 type: eTypeB
 
                 onButtonClicked: {
-                    if(AppModel.walletsUsingSigner.length > 0){
-                        _info1.open()
-                    }
-                    else if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){
+                    var ret = AppModel.walletList.removeOrNot(masterSignerSpec)
+                    if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){
                         _info2.open()
                     }
+                    else if(ret.used_in_assisted_wallet) {
+                        _info1.open()
+                    }
+                    else if (ret.used_in_free_wallet) {
+                        _confirm.contentText = STR.STR_QML_243_used
+                        _confirm.open()
+                    }
                     else {
+                        _confirm.contentText = STR.STR_QML_243
                         _confirm.open()
                     }
                 }
@@ -416,17 +421,11 @@ QScreen {
         QPopupInfo{
             id:_info1
             contentText: STR.STR_QML_554
-            onGotItClicked: {
-                close()
-            }
         }
 
         QPopupInfo{
             id:_info2
             contentText: STR.STR_QML_555
-            onGotItClicked: {
-                close()
-            }
         }
 
         QConfirmYesNoPopup{
@@ -554,19 +553,5 @@ QScreen {
             masterSignerHealth = AppModel.masterSignerInfo.masterSignerHealth
             healthStatustext.visible = true
         }
-        onSignalShowToast:{
-            _warning.open()
-        }
-    }
-
-    QPopupToast{
-        id:_warning
-        x:_content.x + 36
-        y:_content.y + 520
-        warningType:AppModel.warningMessage.type
-        warningCode: AppModel.warningMessage.code
-        warningWhat: AppModel.warningMessage.what
-        warningContent: AppModel.warningMessage.contentDisplay
-        warningExplain: AppModel.warningMessage.explaination
     }
 }

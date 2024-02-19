@@ -35,10 +35,9 @@ Item {
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
     }
-    QImage {
+    QIcon {
         id: _check
-        width: 24
-        height: 24
+        iconSize: 24
         anchors.verticalCenter: text.verticalCenter
         anchors.right: parent.right
         source: checked ? "qrc:/Images/Images/checkbox-checked-dark.svg" : "qrc:/Images/Images/checkbox-dark.svg"

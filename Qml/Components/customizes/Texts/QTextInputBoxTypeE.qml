@@ -2,11 +2,13 @@ import QtQuick 2.0
 import "../../origins"
 import "../../../../localization/STR_QML.js" as STR
 Item {
+    id: _item
     property string icon: ""
     property alias label: _label
     property alias edit: _edit
     property alias input: _input
     property string textColor: "#FFFFFF"
+    property var echoMode: TextInput.Normal
     signal textEditClicked()
     height: 84
     Column {
@@ -57,6 +59,7 @@ Item {
             height: 48
             leftPadding: 12
             wrapMode: Text.WordWrap
+            echoMode: _item.echoMode
         }
     }
 }

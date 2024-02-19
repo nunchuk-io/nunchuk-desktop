@@ -24,7 +24,7 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "STATE_ID_SCR_LOGIN_ONLINE.h"
 
 void SCR_SIGN_IN_MANUALLY_Entry(QVariant msg) {
@@ -45,10 +45,7 @@ void EVT_ADD_PRIMARY_KEY_ACCOUNT_SUCCEED_HANDLER(QVariant msg) {
             QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
             if(pKey){
                 timeoutHandler(3000,[pKey](){
-                    AppModel::instance()->showToast(0,
-                                                    STR_CPP_108.arg(pKey->name()),
-                                                    EWARNING::WarningType::SUCCESS_MSG,
-                                                    STR_CPP_108.arg(pKey->name()));
+                    AppModel::instance()->showToast(0, STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
                     QWarningMessage msg;
                     bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
                 });
@@ -82,20 +79,10 @@ void EVT_PRIMARY_KEY_CHECK_USERNAME_REQUEST_HANDLER(QVariant msg) {
         if(obj){
             obj->setProperty("whereIn",1);
             QString nonce = Draco::instance()->pkey_manual_nonce("",username,"");
-            if(nonce.isEmpty()){
-                AppModel::instance()->setToast(-1,
-                                                STR_CPP_107,
-                                                EWARNING::WarningType::ERROR_MSG,
-                                                "");
-            }else{
-                obj->setProperty("challengemessage",nonce);
+            if(!nonce.isEmpty()){
+                obj->setProperty("challengemessage", nonce);
             }
         }
-    }else{
-        AppModel::instance()->setToast(-1,
-                                        STR_CPP_104,
-                                        EWARNING::WarningType::ERROR_MSG,
-                                        "");
     }
 }
 
@@ -104,13 +91,8 @@ void EVT_CHALLENGE_MESSAGE_REFRESH_REQUEST_HANDLER(QVariant msg) {
     QObject *obj = QQuickViewer::instance()->getQmlObj().first();
     if(obj){
         QString nonce = Draco::instance()->pkey_manual_nonce("",username,"");
-        if(nonce.isEmpty()){
-            AppModel::instance()->setToast(-1,
-                                            STR_CPP_107,
-                                            EWARNING::WarningType::ERROR_MSG,
-                                            "");
-        }else{
-            obj->setProperty("challengemessage",nonce);
+        if(!nonce.isEmpty()){
+            obj->setProperty("challengemessage", nonce);
         }
     }
 }

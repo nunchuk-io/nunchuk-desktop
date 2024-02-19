@@ -26,6 +26,7 @@
 #include "QOutlog.h"
 #include "qUtils.h"
 #include "Chats/QWalletSignersModel.h"
+#include "Servers/DracoDefines.h"
 
 class QSingleSigner : public QObject {
     Q_OBJECT
@@ -35,7 +36,7 @@ class QSingleSigner : public QObject {
     Q_PROPERTY(QString signerDerivationPath     READ derivationPath     WRITE setDerivationPath     NOTIFY derivationPathChanged)
     Q_PROPERTY(QString signerMasterFingerPrint  READ masterFingerPrint  WRITE setMasterFingerPrint  NOTIFY masterFingerPrintChanged)
     Q_PROPERTY(QString signerMasterSignerId     READ masterSignerId                                 NOTIFY masterSignerIdChanged)
-    Q_PROPERTY(QString signerLastHealthCheck    READ lastHealthCheck                                NOTIFY lastHealthCheckChanged)
+    Q_PROPERTY(QString signerLastHealthCheck    READ lastHealthCheck                                NOTIFY healthChanged)
     Q_PROPERTY(bool    signerSigned             READ signerSigned                                   NOTIFY signerSignedChanged)
     Q_PROPERTY(bool    signerNeedTopUpXpub      READ needTopUpXpub                                  NOTIFY needTopUpXpubChanged)
     Q_PROPERTY(QString signerMessage            READ message            WRITE setMessage            NOTIFY messageChanged)
@@ -45,6 +46,9 @@ class QSingleSigner : public QObject {
     Q_PROPERTY(int     signerType               READ signerType                                     NOTIFY signerTypeChanged)
     Q_PROPERTY(QString devicetype               READ devicetype                                     NOTIFY devicetypeChanged)
     Q_PROPERTY(int     isPrimaryKey             READ isPrimaryKey                                   NOTIFY isPrimaryKeyChanged)
+    Q_PROPERTY(QString tag                      READ tag                                            CONSTANT)
+    Q_PROPERTY(bool hasSignBtn                  READ hasSignBtn                                     CONSTANT)
+    Q_PROPERTY(int  accountIndex                READ accountIndex                                   CONSTANT)
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
@@ -117,6 +121,16 @@ public:
     QString cardId();
     void setCardId(const QString &card_id);
     nunchuk::SingleSigner singleSigner() const;
+    QString email() const;
+    void setEmail(const QString &email);
+
+    QString tag() const;
+    QStringList tags() const;
+
+    bool hasSignBtn() const;
+    void setHasSignBtn(bool hasSignBtn);
+
+    int accountIndex();
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -132,11 +146,12 @@ private:
     bool checked_ = false;
     QString m_devicetype = "";
     QString cardId_ = "";
-
+    QString m_email = "";
     nunchuk::PrimaryKey     primaryKey_;
     nunchuk::SingleSigner   singleSigner_;
     bool isPrimaryKey_;
     bool isDraft = true;
+    bool m_hasSignBtn {true};
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -164,12 +179,11 @@ signals:
     void isLocalSignerChanged();
     void devicetypeChanged();
     void isPrimaryKeyChanged();
+    void emailChanged();
 };
 typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;
 
 bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
-bool sortSingleSignerByNameDescending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
-bool sortSingleSignerByLocalAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
 
 class QMasterSigner;
 typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;
@@ -180,35 +194,6 @@ class SingleSignerListModel  : public QAbstractListModel
 public:
     SingleSignerListModel();
     ~SingleSignerListModel();
-    int rowCount(const QModelIndex& parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role);
-    QHash<int,QByteArray> roleNames() const;
-    void replaceSingleSigner(int index, const QSingleSignerPtr &value);
-    void addSingleSigner(const QSingleSignerPtr &d);
-    void updateSignatures(const QString& masterfingerprint, const bool value);
-    bool needTopUpXpubs() const;
-    void initSignatures();
-    QSingleSignerPtr getSingleSignerByIndex(const int index);
-    bool containsMasterSignerId(const QString& masterSignerId);
-    bool removeSingleSignerByIndex(const int index);
-    QString getMasterSignerIdByIndex(const int index);
-    QString getMasterSignerXfpByIndex(const int index);
-    QSingleSignerPtr getSingleSignerByFingerPrint(const QString &fp);
-    int getnumberSigned();
-    bool containsHardwareKey();
-    bool containsFingerPrint(const QString& masterFingerPrint);
-    bool containsSigner(const QString &xfp, const QString &path);
-    bool checkUsableToSign(const QString& masterFingerPrint);
-    void updateSignerHealthStatus(const QString &masterSignerId, const int status, const time_t time);
-    void notifyMasterSignerDeleted(const QString &masterSignerId);
-    void updateSignerOfRoomWallet(const SignerAssigned &signer);
-    void resetUserChecked();
-    void setUserCheckedByFingerprint(const bool state, const QString fp);
-    void setUserChecked(const bool state, const int index);
-    void updateHealthCheckTime();
-    nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
-
     enum SingleSignerRoles {
         single_signer_name_Role,
         single_signer_xpub_Role,
@@ -229,13 +214,48 @@ public:
         single_signer_is_local_Role,
         single_signer_primary_key_Role,
         single_signer_devicetype_Role,
-        single_signer_device_cardid_Role
+        single_signer_device_cardid_Role,
+        single_signer_tag_Role,
+        single_signer_has_sign_btn_Role,
+        single_signer_account_index_Role
     };
-    void requestSort(int role, int order);
+    int rowCount(const QModelIndex& parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
+    QHash<int,QByteArray> roleNames() const;
+    void replaceSingleSigner(int index, const QSingleSignerPtr &value);
+    void addSingleSigner(const QSingleSignerPtr &d);
+    void updateSignatures(const QString& masterfingerprint, const bool value, const QString& signature);
+    bool needTopUpXpubs() const;
+    void initSignatures();
+    QSingleSignerPtr getSingleSignerByIndex(const int index);
+    bool containsMasterSignerId(const QString& masterSignerId);
+    bool removeSingleSignerByIndex(const int index);
+    QString getMasterSignerIdByIndex(const int index);
+    QString getMasterSignerXfpByIndex(const int index);
+    QSingleSignerPtr getSingleSignerByFingerPrint(const QString &fp);
+    int getnumberSigned();
+    bool containsHardwareKey();
+    bool containsFingerPrint(const QString& masterFingerPrint);
+    bool containsSigner(const QString &xfp, const QString &path);
+    bool containsColdcard();
+    bool checkUsableToSign(const QString& masterFingerPrint);
+    void updateSignerHealthStatus(const QString &xfp, const int status, const time_t time);
+    void notifyMasterSignerDeleted(const QString &masterSignerId);
+    void updateSignerOfRoomWallet(const SignerAssigned &signer);
+    void resetUserChecked();
+    void setUserCheckedByFingerprint(const bool state, const QString fp);
+    void setUserChecked(const bool state, const int index);
+    void updateHealthCheckTime();
+    nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
+    void syncNunchukEmail(QList<DracoUser> users);
+    bool needSyncNunchukEmail();
+    void requestSort();
     QList<QSingleSignerPtr> fullList() const;
     std::vector<nunchuk::SingleSigner> signers() const;
     QSharedPointer<SingleSignerListModel> clone() const;
     void cleardata();
+    QStringList getKeyNames();
 public slots:
     int signerCount() const;
     int signerSelectedCount() const;

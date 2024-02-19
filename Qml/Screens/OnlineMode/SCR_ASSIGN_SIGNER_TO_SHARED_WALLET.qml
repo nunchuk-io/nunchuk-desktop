@@ -30,6 +30,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: roots
@@ -44,10 +45,9 @@ QScreen {
         onCloseClicked: {
             QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET)
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: compressButton
-            width: 24
-            height: 24
             anchors {
                 right: parent.right
                 rightMargin: 84
@@ -161,6 +161,8 @@ QScreen {
                             signerType: NUNCHUCKTYPE.AIRGAP
                             checkedState: model.single_signer_checked
                             devicetype: model.single_signer_devicetype
+                            accountIndex: model.single_signer_account_index
+                            isPrimaryKey: model.single_signer_primary_key
                             onItemChecked: {
                                 if(model.single_signer_checked){
                                     model.single_signer_checked = false
@@ -219,17 +221,16 @@ QScreen {
         displayGetXpub.open()
         getXPUPTimer.restart()
     }
-    QPopupInfoVertical {
+    QPopupInfoTwoButtons {
         id: _warning
         property var model
         title: STR.STR_QML_661
         contentText: STR.STR_QML_669
         labels: [STR.STR_QML_670,STR.STR_QML_035]
-        onConfirmNo: close()
-        onConfirmYes: {
-            close()
-            model.master_signer_checked = true
-        }
+        funcs: [
+            function() { model.master_signer_checked = true; },
+            function() {}
+        ]
     }
     Timer {
         id: getXPUPTimer

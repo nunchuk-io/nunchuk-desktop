@@ -18,7 +18,6 @@
  *                                                                        *
  **************************************************************************/
 #include "QWarningMessage.h"
-#include "QOutlog.h"
 #include <QQmlEngine>
 
 QWarningMessage::QWarningMessage() : code_(0), what_(""), type_((int)EWARNING::WarningType::NONE_MSG), explaination_("")
@@ -31,11 +30,14 @@ QWarningMessage::~QWarningMessage()
 
 QString QWarningMessage::contentDisplay()
 {
-    if((int)EWARNING::WarningType::EXCEPTION_MSG == type_){
-        return QString("%1 : [%2] %3").arg(explaination_).arg(code_).arg(what_);
-    }
-    else{
-        return QString("%1").arg(what_);
+    switch(type()){
+    case (int)EWARNING::WarningType::ERROR_MSG:
+    case (int)EWARNING::WarningType::EXCEPTION_MSG:
+        return QString("%1: [%2] %3").arg(explaination()).arg(code()).arg(what());
+        break;
+    default:
+        return QString("%1").arg(what());
+        break;
     }
 }
 
@@ -108,12 +110,23 @@ void QWarningMessage::setCode(int code)
     }
 }
 
-void QWarningMessage::setWarningMessage(int code, const QString &what, EWARNING::WarningType type, const QString& explain)
+void QWarningMessage::setWarningMessage(int code, const QString &what, EWARNING::WarningType type)
 {
-    setExplaination(explain);
     setCode(code);
     setWhat(what);
     setType((int)type);
+    switch(type){
+    case EWARNING::WarningType::ERROR_MSG:
+    case EWARNING::WarningType::EXCEPTION_MSG:
+        setExplaination("Error");
+        break;
+    case EWARNING::WarningType::WARNING_MSG:
+        setExplaination("Warning");
+        break;
+    default:
+        setExplaination("");
+        break;
+    }
     emit contentDisplayChanged();
 }
 
@@ -121,7 +134,7 @@ void QWarningMessage::resetWarningMessage()
 {
     setExplaination("");
     setCode(0);
-    setWhat("NO ERROR");
+    setWhat("");
     setType((int)EWARNING::WarningType::NONE_MSG);
     emit contentDisplayChanged();
 }

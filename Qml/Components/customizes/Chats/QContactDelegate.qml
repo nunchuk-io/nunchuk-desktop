@@ -32,7 +32,6 @@ Rectangle {
     width: 321
     height: 56
     property bool isCurrentItem: false
-    property bool isActived: false
     property string contactname: "name"
     property string contactAvt: ""
     color: isCurrentItem ? Qt.rgba(255, 255, 255, 0.3) : "transparent"
@@ -58,7 +57,6 @@ Rectangle {
                 id: avatar
                 width: 36
                 height: 36
-                activeStatus: false
                 userCount: 1
                 avatarUrl: contactAvt
                 username: contactname

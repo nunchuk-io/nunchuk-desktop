@@ -31,19 +31,19 @@
 class QRoomWallet : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString  walletId                READ  get_wallet_id     CONSTANT)
-    Q_PROPERTY(QString  walletInitId            READ  get_init_event_id CONSTANT)
-    Q_PROPERTY(bool     walletReady             READ  walletReady       NOTIFY walletReadyChanged)
-    Q_PROPERTY(int      walletM                 READ walletM            WRITE setWalletm        NOTIFY walletMChanged)
-    Q_PROPERTY(int      walletN                 READ walletN            WRITE setWalletn        NOTIFY walletNChanged)
-    Q_PROPERTY(int      walletSignersCount      READ  walletSignersCount   NOTIFY walletSignersCountChanged)
-    Q_PROPERTY(QString  walletName              READ walletName         WRITE setWalletname         NOTIFY walletNameChanged)
-    Q_PROPERTY(QString  walletDescription       READ walletDescription  WRITE setWalletDescription  NOTIFY walletDescriptionChanged)
-    Q_PROPERTY(QString  walletAddressType       READ walletAddressType  WRITE setWalletaddressType  NOTIFY walletAddressTypeChanged)
-    Q_PROPERTY(bool     walletEscrow            READ walletEscrow       WRITE setWalletescrow       NOTIFY walletEscrowChanged)
-    Q_PROPERTY(QWalletSignersModel*             walletSigners           READ walletSigners          NOTIFY walletSignersChanged)
-    Q_PROPERTY(bool     isCreator               READ isCreator          NOTIFY isCreatorChanged)
-    Q_PROPERTY(Wallet*  info                    READ walletInfo         NOTIFY walletInfoChanged)
+    Q_PROPERTY(QString  walletId                    READ    get_wallet_id                                       CONSTANT)
+    Q_PROPERTY(QString  walletInitId                READ    get_init_event_id                                   CONSTANT)
+    Q_PROPERTY(bool     walletReady                 READ    walletReady                                         NOTIFY walletReadyChanged)
+    Q_PROPERTY(int      walletM                     READ    walletM                 WRITE setWalletm            NOTIFY walletMChanged)
+    Q_PROPERTY(int      walletN                     READ    walletN                 WRITE setWalletn            NOTIFY walletNChanged)
+    Q_PROPERTY(int      walletSignersCount          READ    walletSignersCount                                  NOTIFY walletSignersCountChanged)
+    Q_PROPERTY(QString  walletName                  READ    walletName              WRITE setWalletname         NOTIFY walletNameChanged)
+    Q_PROPERTY(QString  walletDescription           READ    walletDescription       WRITE setWalletDescription  NOTIFY walletDescriptionChanged)
+    Q_PROPERTY(QString  walletAddressType           READ    walletAddressType       WRITE setWalletaddressType  NOTIFY walletAddressTypeChanged)
+    Q_PROPERTY(bool     walletEscrow                READ    walletEscrow            WRITE setWalletescrow       NOTIFY walletEscrowChanged)
+    Q_PROPERTY(QWalletSignersModel* walletSigners   READ    walletSigners                                       NOTIFY walletSignersChanged)
+    Q_PROPERTY(bool     isCreator                   READ    isCreator                                           NOTIFY isCreatorChanged)
+    Q_PROPERTY(Wallet*  info                        READ    walletInfo                                          NOTIFY walletInfoChanged)
 
 public:
     QRoomWallet();

@@ -28,6 +28,7 @@ import "../../origins"
 import "../../customizes"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
+import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
@@ -38,10 +39,11 @@ Item {
     property alias  signerXFP: id_xfp.text
     property string devicetype: ""
     property int    signerType : 0
-    readonly property var iconChecked: ["qrc:/Images/Images/Checked_n.png", "qrc:/Images/Images/Checked_d.png"]
-    readonly property var iconUnChecked: ["qrc:/Images/Images/UnChecked_n.png", "qrc:/Images/Images/UnChecked_d.png"]
+    property int    accountIndex: 0
     property bool   isPrimaryKey: false
-    property bool checkedState: false
+    property bool   checkedState: false
+    readonly property var iconUnChecked: ["qrc:/Images/Images/UnChecked_n.png"  , "qrc:/Images/Images/UnChecked_d.png"  ]
+    readonly property var iconChecked:   ["qrc:/Images/Images/Checked_n.png"    , "qrc:/Images/Images/Checked_d.png"    ]
     Rectangle {
         id:_icon
         width: 48
@@ -49,11 +51,12 @@ Item {
         radius: width
         color: "#F5F5F5"
         anchors.verticalCenter: parent.verticalCenter
-        QImage {
-            width: 24
-            height: 24
+
+        QSignerDarkIcon {
+            iconSize: 24
             anchors.centerIn: parent
-            source: GlobalData.iconTypes(devicetype,signerType)
+            device_type: devicetype
+            type: signerType
         }
     }
     Column {
@@ -84,41 +87,10 @@ Item {
                 font.capitalization: Font.AllUppercase
             }
         }
-        Row {
-            height: 16
-            spacing: 8
-            Rectangle {
-                width: _txt.paintedWidth + 8*2
-                height: 16
-                color: "#FDD95C"
-                visible: isPrimaryKey
-                radius: 4
-                QText {
-                    id:_txt
-                    text: STR.STR_QML_641
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 10
-                    anchors.centerIn: parent
-                    color: "#031F2B"
-                }
-            }
-            Rectangle {
-                width: typesigner.width + 10
-                height: parent.height
-                color: "#EAEAEA"
-                visible: signerType !== NUNCHUCKTYPE.HARDWARE
-                radius: 20
-                QText {
-                    id: typesigner
-                    font.family: "Lato"
-                    color: "#031F2B"
-                    font.pixelSize: 10
-                    anchors.centerIn: parent
-                    font.weight: Font.Bold
-                    text: GlobalData.signers(signerType)
-                }
-            }
+        QRowSingleSignerType {
+            isPrimaryKey: signermanagerdlg.isPrimaryKey
+            signerType:   signermanagerdlg.signerType
+            accountIndex: signermanagerdlg.accountIndex
         }
     }
 
@@ -142,9 +114,8 @@ Item {
     }
 
     signal itemChecked()
-    QImage {
-        width: 24
-        height: 24
+    QIcon {
+        iconSize: 24
         anchors.verticalCenter: parent.verticalCenter
         source: checkedState ? iconChecked[0] : iconUnChecked[0]
         anchors.right: parent.right

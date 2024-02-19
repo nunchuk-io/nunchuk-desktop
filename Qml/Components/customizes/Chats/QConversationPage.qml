@@ -131,7 +131,6 @@ Row {
                                             QAvatar {
                                                 width: 36
                                                 height: 36
-                                                activeStatus: false
                                                 avatarUrl: ""
                                                 username: userlistItem.requestlist[index]
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -143,9 +142,8 @@ Row {
                                                 height: 24
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
-                                            QImage {
-                                                width: 24
-                                                height: 24
+                                            QIcon {
+                                                iconSize: 24
                                                 source: "qrc:/Images/Images/OnlineMode/close_24px.png"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 MouseArea {
@@ -233,7 +231,6 @@ Row {
                                             QAvatar {
                                                 width: 36
                                                 height: 36
-                                                activeStatus: false
                                                 avatarUrl: ""
                                                 username: model.name
                                                 displayStatus: false
@@ -254,9 +251,8 @@ Row {
                                                 text: "(" + model.email + ")"
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
-                                            QImage {
-                                                width: 24
-                                                height: 24
+                                            QIcon {
+                                                iconSize: 24
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 visible: model.selected
                                                 source: "qrc:/Images/Images/OnlineMode/check_circle_24px copy.png"
@@ -301,7 +297,12 @@ Row {
                         }
                         Component.onCompleted: { suggestItems.friends = ClientController.contactsByStringList() }
                         function processCreateRoom(firstMessage){
-                            ClientController.createRoomChat(userlistItem.requestlistChatId, userlistItem.requestlist, firstMessage)
+                            if(userlistItem.requestlistChatId.length == 1){
+                                ClientController.createRoomDirectChat(userlistItem.requestlistChatId[0], userlistItem.requestlist[0], firstMessage)
+                            }
+                            else{
+                                ClientController.createRoomChat(userlistItem.requestlistChatId, userlistItem.requestlist, firstMessage)
+                            }
                             createRoomDone()
                         }
                     }
@@ -362,10 +363,9 @@ Row {
                             width: ico.width
                             height: ico.height
                             anchors.verticalCenter: parent.verticalCenter
-                            QImage {
+                            QIcon {
+                                iconSize: 24
                                 id: ico
-                                width: 24
-                                height: 24
                                 scale: chatinfoMouse.containsMouse ? 1.1 : 1
                                 transformOrigin: Item.Center
                                 source: "qrc:/Images/Images/tooltip.png"
@@ -531,9 +531,8 @@ Row {
                             leftMargin: 12
                         }
                     }
-                    QImage {
-                        width: 24
-                        height: 24
+                    QIcon {
+                        iconSize: 24
                         anchors{
                             verticalCenter: parent.verticalCenter
                             right: parent.right
@@ -622,7 +621,7 @@ Row {
                         anchors.fill: parent
                         onDropped: {
                             attachedFile.fileLocalPath = ""
-                            if(drop.urls.length > 1){ AppModel.showToast(-696, STR.STR_QML_696, EWARNING.EXCEPTION_MSG, "Error"); }
+                            if(drop.urls.length > 1){ AppModel.showToast(-696, STR.STR_QML_696, EWARNING.EXCEPTION_MSG); }
                             else{
                                 var fileDropped = drop.urls[0]
                                 attachedFile.validateFileExtension(fileDropped)
@@ -718,9 +717,8 @@ Row {
                         visible: (attachmentSupported && RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM))
                         enabled: visible
                         anchors.verticalCenter: parent.verticalCenter
-                        QImage {
-                            width: 24
-                            height: 24
+                        QIcon {
+                            iconSize: 24
                             scale: selectFileBtn.pressed ? 1: selectFileBtn.containsMouse ? 1.1 : 1
                             transformOrigin: Item.Center
                             source: "qrc:/Images/Images/OnlineMode/attach_file.svg"
@@ -763,9 +761,9 @@ Row {
                         }
                     }
                     Loader {
-                        sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : btnCreateSharedWallet
+                        sourceComponent: RoomWalletData.isIgnoredCollabWallet ? null : (RoomWalletData.roomWalletCreated ? btnCreateTransaction : btnCreateSharedWallet)
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM)
+                        visible: RoomWalletData.isIgnoredCollabWallet ? false : (RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM))
                     }
                 }
             }
@@ -810,10 +808,9 @@ Row {
             cursorShape: Qt.PointingHandCursor
             width: icoSwl.width
             height: icoSwl.height
-            QImage {
+            QIcon {
+                iconSize: 24
                 id: icoSwl
-                width: 24
-                height: 24
                 scale: createSharedBottom.pressed ? 1: createSharedBottom.containsMouse ? 1.1 : 1
                 transformOrigin: Item.Center
                 source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
@@ -837,10 +834,9 @@ Row {
             cursorShape: Qt.PointingHandCursor
             width: icoSwl.width
             height: icoSwl.height
-            QImage {
+            QIcon {
+                iconSize: 24
                 id: icoSwl
-                width: 24
-                height: 24
                 scale: createTXBottom.pressed ? 1: createTXBottom.containsMouse ? 1.1 : 1
                 transformOrigin: Item.Center
                 source: "qrc:/Images/Images/OnlineMode/monetization_on-24px.png"

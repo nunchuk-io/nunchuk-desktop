@@ -1,42 +1,23 @@
 #include "ServiceSetting.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "nunchuckiface.h"
 #include "ProfileSetting.h"
-#include "Chats/QUserWallets.h"
+#include "Premiums/QUserWallets.h"
+#include "Premiums/QGroupWallets.h"
+#include "Chats/ClientController.h"
+#include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QGroupWalletDummyTx.h"
 
-ServiceSetting::ServiceSetting(QObject *parent) : QObject(parent)
+ServiceSetting::ServiceSetting(QObject *parent)
+    : QObject(parent)
+    , walletInfo_(QWalletPtr(new Wallet()))
 {
-    QMap<QString,QVariant> maps = m_keyCoSigning.toMap();
-    maps["auto_broadcast_transaction"] = true;
-    maps["hours"] = 0;
-    maps["minutes"] = 0;
-    maps["interval"] = "DAILY";
-    maps["currency"] = "USD";
-    maps["limit"] = 0;
-    m_keyCoSigning = QVariant::fromValue(maps);
+
 }
 
 ServiceSetting *ServiceSetting::instance() {
     static ServiceSetting mInstance;
     return &mInstance;
-}
-
-bool ServiceSetting::isSubscriber() const
-{
-    if (ClientController::instance()->isNunchukLoggedIn()) {
-        return m_isSubscriber;
-    } else {
-        return false;
-    }
-}
-
-void ServiceSetting::setIsSubscriber(bool isSubscriber)
-{
-    if (m_isSubscriber == isSubscriber)
-        return;
-
-    m_isSubscriber = isSubscriber;
-    emit isSubscriberChanged();
 }
 
 int ServiceSetting::claimInheritanceFlow() const
@@ -53,101 +34,72 @@ void ServiceSetting::setClaimInheritanceFlow(int flow)
     emit claimInheritanceFlowChanged();
 }
 
-int ServiceSetting::claimInheritanceStatus() const
+bool ServiceSetting::existHardware(const QString &tag)
 {
-    return m_claimInheritanceStatus;
-}
-
-void ServiceSetting::setClaimInheritanceStatus(int status)
-{
-    if (m_claimInheritanceStatus == status)
-        return;
-
-    m_claimInheritanceStatus = status;
-    emit claimInheritanceStatusChanged();
-}
-
-QString ServiceSetting::claimInheritancePeriod() const
-{
-    return m_claimInheritancePeriod;
-}
-
-void ServiceSetting::setClaimInheritancePeriod(QString period)
-{
-    if (m_claimInheritancePeriod == period)
-        return;
-
-    m_claimInheritancePeriod = period;
-    emit claimInheritancePeriodChanged();
-}
-
-QVariant ServiceSetting::inheritance() const
-{
-    static const int64_t COIN = 100000000;
-    QMap<QString,QVariant> maps;
-    double balance = QUserWallets::instance()->inheritance().balance;//BTC
-    int balanceSats = balance * COIN;
-    QLocale locale(QLocale::English);
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
-        maps["balance"] = locale.toString(balanceSats);//sats
-    }
-    else{
-        maps["balance"] = locale.toString(balance, 'f', qUtils::Precision(balance));
-    }
-    maps["balanceSats"] = balanceSats;
-    maps["balanceCurrency"] = qUtils::currencyLocale(balanceSats);
-    maps["note"] = QUserWallets::instance()->inheritance().note;
-    return QVariant::fromValue(maps);
-}
-
-QVariant ServiceSetting::keyCoSigning() const
-{
-    return m_keyCoSigning;
-}
-
-void ServiceSetting::setKeyCoSigning(QVariant keyCoSigning)
-{
-    QMap<QString,QVariant> maps = keyCoSigning.toMap();
-    QMap<QString,QVariant> result = m_keyCoSigning.toMap();
-    for (auto key: maps.keys()) {
-        result.insert(key, maps[key]);
-    }
-    qInfo() << result;
-    m_keyCoSigning = QVariant::fromValue(result);
-    emit keyCoSigningChanged();
-}
-
-QVariantList ServiceSetting::keyCoSigningIntervals()
-{
-    if (m_keyCoSigningIntervals.isEmpty()) {
-        for (auto key : { "DAILY", "WEEKLY", "MONTHLY", "YEARLY" }) {
-            QMap<QString,QVariant> maps;
-            maps["displayName"] = key;
-            m_keyCoSigningIntervals.append(QVariant::fromValue(maps));
+    if (QAssistedDraftWallets::IsByzantine()) {
+        QGroupWallets::instance()->MixMasterSignerAndSingleSigner(tag);
+        if (QGroupWallets::instance()->signerExistList().size() > 0) {
+            return true;
         }
-    }
-    return m_keyCoSigningIntervals;
-}
-
-int ServiceSetting::assistedSize() const
-{
-    return AppModel::instance()->getUserWallets().size();
-}
-
-bool ServiceSetting::existKeyType(const QString &type)
-{
-    for (QMasterSignerPtr ptr : AppModel::instance()->masterSignerList()->fullList()) {
-        if (ptr && ptr->deviceType() == type) return true;
+    } else {
+        QUserWallets::instance()->MixMasterSignerAndSingleSigner(tag);
+        if (QUserWallets::instance()->signerExistList().size() > 0) {
+            return true;
+        }
     }
     return false;
 }
 
-void ServiceSetting::inheritanceDataChanged()
+int ServiceSetting::optionIndex() const
 {
-    QJsonObject body = QUserWallets::instance()->inheritancePlanBody();
-    if (mInheritancePlanBody != body)
-    {
-        mInheritancePlanBody = body;
-        setViewInheritanceIsEdit(true);
+    return m_optionIndex;
+}
+
+void ServiceSetting::setOptionIndex(int index)
+{
+    if (m_optionIndex == index)
+        return;
+
+    m_optionIndex = index;
+    emit optionIndexChanged();
+}
+
+QVariant ServiceSetting::servicesTag() const
+{
+    return QVariant::fromValue(servicesTagPtr().data());
+}
+
+QWalletServicesTagPtr ServiceSetting::servicesTagPtr() const
+{
+    return QBasePremium::mode() == USER_WALLET ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
+}
+
+Wallet *ServiceSetting::walletInfo() const
+{
+    return walletInfo_.data();
+}
+
+QWalletPtr ServiceSetting::walletInfoPtr() const
+{
+    return walletInfo_;
+}
+
+void ServiceSetting::setWalletInfo(const QWalletPtr &d)
+{
+    if(d){
+        walletInfo_ = bridge::convertWallet(d->wallet());
+        if (walletInfo_) {
+            QGroupWallets::instance()->setDashboardInfo(walletInfo_);
+            if (auto dummy = walletInfo_->groupDummyTxPtr()) {
+                dummy->setCurrentXfp("");
+            }
+        }
+        emit walletInfoChanged();
     }
+}
+
+void ServiceSetting::clearWalletInfo()
+{
+    walletInfo_.clear();
+    emit walletInfoChanged();
 }

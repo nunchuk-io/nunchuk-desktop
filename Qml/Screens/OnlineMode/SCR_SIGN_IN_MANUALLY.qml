@@ -29,6 +29,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -38,35 +39,18 @@ QScreen {
     property var whereIn: _USERNAME
     property var username: ""
     property var challengemessage:""
-    Connections {
-        target: AppModel
-        onSignalShowToast:{
-            _warning.open()
-        }
-    }
     Connections{
         target: Draco
         onSignalpkey_signin:{
             loadercontent.item.signalpkey_signin(https_code, error_code, error_msg)
         }
     }
-
     Loader {
         id: loadercontent
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: _SCREENS[whereIn]
-        QPopupToast{
-            id:_warning
-            x:36
-            y:520
-            warningType:AppModel.warningMessage.type
-            warningCode: AppModel.warningMessage.code
-            warningWhat: AppModel.warningMessage.what
-            warningContent: AppModel.warningMessage.contentDisplay
-            warningExplain: AppModel.warningMessage.explaination
-        }
     }
 
     Component{
@@ -126,16 +110,9 @@ QScreen {
                 if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED)
                 }
-                else{
-                    AppModel.setToast(-1,
-                                   error_msg,
-                                   EWARNING.ERROR_MSG,
-                                   "");
-                }
             }
         }
     }
-
     Component{
         id:enterSignature
         QOnScreenContent {
@@ -168,10 +145,7 @@ QScreen {
                         mode:eREADONLY_MODE
                         textInputted: challengemessage
                         onCopyCompleted: {
-                            AppModel.setToast(0,
-                                              STR.STR_QML_668,
-                                              EWARNING.SUCCESS_MSG,
-                                              STR.STR_QML_668);
+                            AppModel.showToast(0, STR.STR_QML_668, EWARNING.SUCCESS_MSG);
                         }
                     }
                     Item{
@@ -192,9 +166,8 @@ QScreen {
                                 verticalAlignment: Text.AlignVCenter
                                 text: STR.STR_QML_652
                             }
-                            QImage{
-                                height: 24
-                                width: 24
+                            QIcon {
+                                iconSize: 24
                                 source: "qrc:/Images/Images/cached_24px.png"
                                 RotationAnimator on rotation {
                                     from: 0;
@@ -272,15 +245,8 @@ QScreen {
                 if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     QMLHandle.sendEvent(EVT.EVT_ADD_PRIMARY_KEY_ACCOUNT_SUCCEED)
                 }
-                else{
-                    AppModel.setToast(-1,
-                                   error_msg,
-                                   EWARNING.ERROR_MSG,
-                                   "");
-                }
             }
         }
     }
-
 }
 

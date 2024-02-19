@@ -96,9 +96,8 @@ Rectangle {
             }
         }
 
-        Image {
-            width: 24
-            height: 24
+        QIcon {
+            iconSize: 24
             anchors.verticalCenter: parent.verticalCenter
             source: "qrc:/Images/Images/close_toast_24px.png"
             MouseArea {

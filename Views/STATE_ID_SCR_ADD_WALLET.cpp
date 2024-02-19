@@ -40,12 +40,9 @@ void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
     QWalletPtr walletImported = NULL;
     QWarningMessage importmsg;
 
-    if ((int)POPUP::WalletImportType::IMPORT_WALLET_QRCODE_KEYSTONE == importType) {
+    if ((int)POPUP::WalletImportType::IMPORT_WALLET_QRCODE == importType) {
         QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
-        AppModel::instance()->showToast(0,
-                                        STR_CPP_067,
-                                        EWARNING::WarningType::SUCCESS_MSG,
-                                        STR_CPP_067);
+        AppModel::instance()->showToast(0, STR_CPP_067, EWARNING::WarningType::SUCCESS_MSG);
     }
     else {
         QString fileSelected = msg.toMap().value("filePath").toString();
@@ -78,16 +75,10 @@ void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
                     AppModel::instance()->setWalletListCurrentIndex(index);
                 }
                 QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
-                AppModel::instance()->showToast(0,
-                                                STR_CPP_067,
-                                                EWARNING::WarningType::SUCCESS_MSG,
-                                                STR_CPP_067);
+                AppModel::instance()->showToast(0, STR_CPP_067, EWARNING::WarningType::SUCCESS_MSG);
             }
             else{
-                AppModel::instance()->showToast(importmsg.code(),
-                                                importmsg.what(),
-                                                (EWARNING::WarningType)importmsg.type(),
-                                                STR_CPP_068);
+                AppModel::instance()->showToast(importmsg.code(), importmsg.what(), (EWARNING::WarningType)importmsg.type());
             }
         }
     }

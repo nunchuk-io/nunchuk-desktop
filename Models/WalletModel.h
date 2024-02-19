@@ -26,21 +26,24 @@
 #include "TransactionModel.h"
 #include "SingleSignerModel.h"
 #include "QOutlog.h"
+#include "TypeDefine.h"
+#include <QJsonArray>
 
 class Wallet : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString  walletId                                    READ id                     WRITE setId             NOTIFY idChanged)
-    Q_PROPERTY(int      walletM                                     READ m                      WRITE setM              NOTIFY mChanged)
-    Q_PROPERTY(int      walletN                                     READ n                      WRITE setN              NOTIFY nChanged)
-    Q_PROPERTY(int      walletNShared                               READ nShared                WRITE setNShared        NOTIFY nSharedChanged)
-    Q_PROPERTY(QString  walletName                                  READ name                   WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(QString  walletAddressType                           READ addressType            WRITE setAddressType    NOTIFY addressTypeChanged)
-    Q_PROPERTY(QString  walletBalance                               READ balanceDisplay                                 NOTIFY balanceChanged)
-    Q_PROPERTY(QString  walletBalanceBTC                            READ balanceBTC                                     NOTIFY balanceChanged)
-    Q_PROPERTY(QString  walletBalanceCurrency                       READ balanceCurrency                                NOTIFY balanceChanged)
-    Q_PROPERTY(QString  walletCreateDate                            READ createDate                                     NOTIFY createDateChanged)
-    Q_PROPERTY(bool     walletEscrow                                READ escrow                 WRITE setEscrow         NOTIFY escrowChanged)
+    Q_PROPERTY(QString      walletId                                READ id                     WRITE setId             NOTIFY idChanged)
+    Q_PROPERTY(int          walletM                                 READ m                      WRITE setM              NOTIFY mChanged)
+    Q_PROPERTY(int          walletN                                 READ n                      WRITE setN              NOTIFY nChanged)
+    Q_PROPERTY(int          walletNShared                           READ nShared                WRITE setNShared        NOTIFY nSharedChanged)
+    Q_PROPERTY(QString      walletName                              READ name                   WRITE setName           NOTIFY nameChanged)
+    Q_PROPERTY(QString      walletOriginName                        READ walletOriginName                               NOTIFY nameChanged)
+    Q_PROPERTY(QString      walletAddressType                       READ addressType            WRITE setAddressType    NOTIFY addressTypeChanged)
+    Q_PROPERTY(QString      walletBalance                           READ balanceDisplay                                 NOTIFY balanceChanged)
+    Q_PROPERTY(QString      walletBalanceBTC                        READ balanceBTC                                     NOTIFY balanceChanged)
+    Q_PROPERTY(QString      walletBalanceCurrency                   READ balanceCurrency                                NOTIFY balanceChanged)
+    Q_PROPERTY(QString      walletCreateDate                        READ createDate                                     NOTIFY createDateChanged)
+    Q_PROPERTY(bool         walletEscrow                            READ escrow                 WRITE setEscrow         NOTIFY escrowChanged)
     Q_PROPERTY(SingleSignerListModel* walletSingleSignerAssigned    READ singleSignersAssigned                          NOTIFY singleSignersAssignedChanged)
     Q_PROPERTY(TransactionListModel*  transactionHistory            READ transactionHistory                             NOTIFY transactionHistoryChanged)
     Q_PROPERTY(QString      walletAddress                           READ address                WRITE setAddress        NOTIFY addressChanged)
@@ -55,7 +58,24 @@ class Wallet : public QObject
     Q_PROPERTY(int          containsHWSigner                        READ getContainsHWSigner                            NOTIFY containsHWSignerChanged)
     Q_PROPERTY(bool         isSharedWallet                          READ isSharedWallet                                 NOTIFY isSharedWalletChanged)
     Q_PROPERTY(bool         isAssistedWallet                        READ isAssistedWallet                               NOTIFY isAssistedWalletChanged)
-    Q_PROPERTY(int gapLimit                 			      READ gapLimit            NOTIFY gapLimitChanged)
+    Q_PROPERTY(int          gapLimit                 			    READ gapLimit                                       NOTIFY gapLimitChanged)
+    Q_PROPERTY(QString      groupId                 			    READ groupId                                        NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     dashboardInfo                 			READ dashboardInfo                                  NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     serverKeyInfo                 			READ serverKeyInfo                                  NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     inheritancePlanInfo                 	READ inheritancePlanInfo                            NOTIFY groupInfoChanged)
+    Q_PROPERTY(int          flow                                    READ flow                                           NOTIFY flowChanged)
+    Q_PROPERTY(QVariant     dummyTx                                 READ dummyTx                                        CONSTANT)
+    Q_PROPERTY(QVariant     recurringPayment                        READ recurringPayment                               CONSTANT)
+    Q_PROPERTY(bool         containsColdcard                        READ containsColdcard                               CONSTANT)
+    Q_PROPERTY(bool         isDeleting                              READ isDeleting             WRITE setIsDeleting     NOTIFY isDeletingChanged)
+    Q_PROPERTY(bool         isPro                                   READ isPro                                          CONSTANT)
+    Q_PROPERTY(QString      myRole                                  READ myRole                                         NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString      unUseAddress                            READ unUseAddress                                   CONSTANT)
+    Q_PROPERTY(QVariantList aliasMembers                            READ aliasMembers                                   NOTIFY aliasMembersChanged)
+    Q_PROPERTY(QString      aliasName                               READ aliasName                                      NOTIFY aliasNameChanged)
+    Q_PROPERTY(bool         isByzantineWallet                       READ isByzantineWallet                              CONSTANT)
+    Q_PROPERTY(QVariantList ownerMembers                            READ ownerMembers                                   CONSTANT)
+    Q_PROPERTY(QVariant     ownerPrimary                            READ ownerPrimary                                   CONSTANT)
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -67,14 +87,15 @@ public:
         CREATE_BY_IMPORT_CONFIGURATION,
         CREATE_BY_IMPORT_QRCODE
     };
-
+    void init();
     void convert(const Wallet *w);
     void convert(const nunchuk::Wallet &w);
 
     QString id() const;
     int m() const;
-    int n() ;
-    QString name() const;
+    int n();
+    QString name();
+    QString walletOriginName() const;
     QString addressType() const;
     qint64 balanceSats() const;
     QString balanceBTC() const;
@@ -92,8 +113,7 @@ public:
     void setBalance(const qint64 d);
     void setCreateDate(const QDateTime &d);
     void setSigners(const QSingleSignerListModelPtr &d);
-    SingleSignerListModel* singleSignersAssigned() const;
-    QSingleSignerListModelPtr singleSignersAssignedPtr() const;
+    SingleSignerListModel* singleSignersAssigned();
     QString address() const;
     void setAddress(const QString& d);
     QStringList usedAddressList() const;
@@ -116,7 +136,11 @@ public:
 
     TransactionListModel *transactionHistory() const;
     void setTransactionHistory(const QTransactionListModelPtr &d);
-    void updateTransaction(const QString txid, const QTransactionPtr& tx);
+
+    QString unUseAddress() const;
+
+    bool isDeleting() const;
+    void setIsDeleting(const bool);
 
     int getCreationMode() const;
     void setCreationMode(int creationMode);
@@ -130,13 +154,90 @@ public:
     QString initEventId() const;
     void setInitEventId(const QString &initEventId);    
     bool isAssistedWallet() const;
+    bool isUserWallet() const;
+    bool isGroupWallet() const;
+    bool containsColdcard();
     int gapLimit() const;
     void setGapLimit(int gap_limit);
     nunchuk::Wallet wallet() const;
 
+    //Collab wallet
+    void syncCollabKeyname();
+    QVariant dashboardInfo() const;
+    QString groupId() const;
+    QString slug() const;
+    QString myRole() const;
+    QGroupDashboardPtr dashboard() const;
+
     //Assisted
-    void syncAissistedTxs();
-    void syncAissistedCancelledTxs();
+    bool isByzantineWallet();
+    void GetAssistedTxs();
+    void GetAssistedCancelledTxs();
+    QTransactionPtr SyncAssistedTxs(const nunchuk::Transaction &tx);
+    void UpdateAssistedTxs(const QString &txid, const QString &memo);
+    void CancelAssistedTxs(const QString &txid);
+    void CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo);
+    void SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo);
+    bool RbfAsisstedTxs(const QString &tx_id, const QString &psbt);
+    void UpdateWallet(const QString &name, const QString &description);
+    QJsonObject GetServerKeyInfo(const QString &txid);
+    bool DeleteAssistedWallet();
+    bool DeleteWalletRequiredSignatures();
+
+    QVariantList aliasMembers() const;
+    QString aliasName() const;
+    QVariantList ownerMembers() const;
+    QVariant ownerPrimary() const;
+
+    bool GetWalletAlias();
+    Q_INVOKABLE bool updateWalletAlias(const QString &nameWallet);
+    Q_INVOKABLE bool deleteWalletAlias();
+    Q_INVOKABLE bool updateWalletPrimaryOwner(const QString &membership_id);
+
+    QVariant dummyTx() const;
+
+    bool isPro();
+    bool hasGroup();
+
+    int flow() const;
+    void setFlow(int flow);
+
+    QVariant serverKeyInfo() const;
+    QServerKeyPtr serverKeyPtr() const;
+
+    QVariant inheritancePlanInfo() const;
+    QInheritancePlanPtr inheritancePlanPtr() const;
+
+    QVariant recurringPayment() const;
+    QRecurringPaymentPtr recurringPaymentPtr() const;
+
+    QGroupWalletDummyTxPtr groupDummyTxPtr() const;
+    QUserWalletDummyTxPtr userDummyTxPtr() const;
+
+    QGroupWalletHealthCheckPtr healthPtr() const;
+private:
+    QWalletDummyTxPtr dummyTxPtr() const;
+protected:
+    //User wallet
+    void GetUserTxs();
+    void GetUserCancelledTxs();
+    QTransactionPtr SyncUserTxs(const nunchuk::Transaction &tx);
+    void UpdateUserTxs(const QString &txid, const QString &memo);
+    void CancelUserTxs(const QString &txid);
+    void CreateUserTxs(const QString &txid, const QString &psbt, const QString &memo);
+    void SignUserTxs(const QString &tx_id, const QString &psbt, const QString &memo);
+    void UpdateUserWallet(const QString &name, const QString &description);
+
+    //Group wallet
+    void GetGroupTxs();
+    void GetGroupCancelledTxs();
+    QTransactionPtr SyncGroupTxs(const nunchuk::Transaction &tx);
+    void UpdateGroupTxs(const QString &txid, const QString &memo);
+    void CancelGroupTxs(const QString &txid);
+    void CreateGroupTxs(const QString &txid, const QString &psbt, const QString &memo);
+    void SignGroupTxs(const QString &tx_id, const QString &psbt, const QString &memo);
+    void UpdateGroupWallet(const QString &name, const QString &description);
+
 private:
     QString m_id {};
     int m_m {};
@@ -149,12 +250,14 @@ private:
     bool m_escrow {};
     QSingleSignerListModelPtr m_signers;
     QTransactionListModelPtr  m_transactionHistory;
+    bool m_isDeleting {false};
     // Additional member
     QString m_address;
     QStringList m_usedAddressList {};
     QStringList m_unUsedAddressList {};
     QStringList m_usedChangeAddressList {};
     QStringList m_unUsedChangedAddressList {};
+    QJsonArray m_aliasMembers {};
     // capable to create wallet
 
     bool m_capableCreate {true};
@@ -166,6 +269,8 @@ private:
     QString m_initEventId {};
     int m_gapLimit {0};
     nunchuk::Wallet m_wallet {false};
+    QList<DracoUser> m_roomMembers;
+    static int m_flow;
 signals:
     void idChanged();
     void mChanged();
@@ -193,6 +298,15 @@ signals:
     void initEventIdChanged();
     void isAssistedWalletChanged();
     void gapLimitChanged();
+    void signalSyncCollabKeyname(QList<DracoUser> users);
+    void groupInfoChanged();
+    void flowChanged();
+    void isDeletingChanged();
+    void aliasMembersChanged();
+    void aliasNameChanged();
+public slots:
+    void slotSyncCollabKeyname(QList<DracoUser> users);
+    bool isValidAddress(const QString& address);
 };
 typedef OurSharedPointer<Wallet> QWalletPtr;
 
@@ -202,6 +316,8 @@ bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2);
 class WalletListModel : public QAbstractListModel
 {
     Q_OBJECT
+    Q_PROPERTY(bool isContainsPremier   READ isContainsPremier  NOTIFY checkContainsGroup)
+    Q_PROPERTY(bool isContainsGroup     READ existGroupWallet   NOTIFY checkContainsGroup)
 public:
     WalletListModel();
     ~WalletListModel();
@@ -213,8 +329,8 @@ public:
     void replaceWallet(const QWalletPtr &wallet);
     void addSharedWallet(const QWalletPtr &wallet);
     void updateBalance(const QString &walletId, const qint64 balance);
-    void updateAddress(const QString &walletId, const QStringList &used, const QStringList &unused);
     void updateName(const QString &walletId, const QString &value);
+    void dataUpdated(const QString &walletId);
     void updateDescription(const QString &walletId, const QString &value);
     QStringList walletListByMasterSigner(const QString& masterSignerId);
     QStringList walletListByFingerPrint(const QString& masterFingerPrint);
@@ -223,7 +339,7 @@ public:
     bool removeWallet(const QWalletPtr it);
     void removeWallet(const QString& walletId);
     void notifyUnitChanged();
-    void updateSignerHealthStatus(const QString& masterSignerId, const int status, const time_t time);
+    void updateSignerHealthStatus(const QString& xfp, const int status, const time_t time);
     void notifyMasterSignerDeleted(const QString& masterSignerId);
     int getWalletIndexById(const QString& walletId);
     void updateHealthCheckTime();
@@ -247,12 +363,27 @@ public:
         wallet_usedAddressList_Role,
         wallet_unUsedAddressList_Role,
         wallet_isSharedWallet_Role,
-        wallet_isAssistedWallet_Role
+        wallet_isAssistedWallet_Role,
+        wallet_groupid_Role,
+        wallet_dashboard_Role,
+        wallet_myRole_Role,
+        wallet_hasOwner_Role,
+        wallet_primaryOwner_Role,
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();
+    bool existProWallet();
+    bool existGroupWallet();
+    bool isContainsPremier();
+    void checkContainsGroup();
+public slots:
+    QVariant removeOrNot(const QString& masterFingerPrint, const QString& derivation_path = "");
+    bool hasAssistedWallet() const;
 private:
     QList<QWalletPtr> d_;
+
+signals:
+    void containsGroupChanged();
 };
 typedef OurSharedPointer<WalletListModel> QWalletListModelPtr;
 

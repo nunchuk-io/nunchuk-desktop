@@ -42,7 +42,7 @@ QOutlog &QOutlog::begin(LOG_LEVEL level)
 #ifdef USE_3RD_DEBUG
     // To request write log to the 3rd party of debuger (such as dlt)
 #else
-    mStream << "[#" << QThread::currentThreadId() << ']';
+    mStream << "[#" << QThread::currentThread()->currentThreadId() << ']';
 #endif
     return *this;
 }

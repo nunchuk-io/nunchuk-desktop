@@ -1,7 +1,9 @@
 
 #include "STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD.h"
 #include "QQuickViewer.h"
-#include "Chats/QUserWallets.h"
+#include "AppModel.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
 void SCR_SELECT_YOUR_LOCKDOWN_PERIOD_Entry(QVariant msg) {
 
@@ -15,13 +17,16 @@ void EVT_INPUT_DAYS_VALUE_REQUEST_HANDLER(QVariant msg) {
     //Do anything in here
     DBG_INFO << msg.toMap();
     QString period_id = msg.toMap()["id"].toString();
-    if (QUserWallets::instance()->lockdownRequired(period_id)) {
-        int type = QUserWallets::instance()->lockdownType();
+    if (ServiceSetting::instance()->servicesTagPtr()->lockdownRequired(period_id)) {
+        int type = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo().type;
         if ((int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX == type) {
-            QUserWallets::instance()->createDummyTx();
-            QQuickViewer::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
+
         } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION == type) {
-            if (QUserWallets::instance()->createSecurityQuestions()) {
+            if (ServiceSetting::instance()->servicesTagPtr()->CreateSecurityQuestionsAnswered()) {
+                QQuickViewer::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
+            }
+        } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE == type) {
+            if (ServiceSetting::instance()->servicesTagPtr()->RequestConfirmationCodeEmergencyLockdown()) {
                 QQuickViewer::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
             }
         }
@@ -31,9 +36,4 @@ void EVT_INPUT_DAYS_VALUE_REQUEST_HANDLER(QVariant msg) {
 void EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST_HANDLER(QVariant msg) {
 
 }
-
-void EVT_DUMMY_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
-
-}
-
 

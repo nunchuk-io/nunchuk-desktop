@@ -20,6 +20,7 @@
 import QtQuick 2.4
 import "../../origins"
 import "../../customizes/Texts"
+import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: radioRoot
@@ -27,6 +28,7 @@ Rectangle {
     property string labelTop: ""
     property string labelBottom: ""
     property int labelMaxWidth: 467
+    property bool isRecommend: false
     signal buttonClicked()
     border.width: 2
     border.color: selected ? "#000000" : "#DEDEDE"
@@ -36,10 +38,9 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: 18
         spacing: 12
-        QImage {
+        QIcon {
             id: icon
-            width: 24
-            height: 24
+            iconSize: 24
             source: selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
             anchors.verticalCenter: _top.verticalCenter
             MouseArea {
@@ -53,13 +54,24 @@ Rectangle {
         Column {
             id: info
             spacing: 4
-            QLato {
-                id: _top
-                text: labelTop
-                font.weight: Font.DemiBold
-                width: Math.min(labelMaxWidth, implicitWidth)
-                wrapMode: Text.WordWrap
+            Row {
+                spacing: 4
+                QLato {
+                    id: _top
+                    text: labelTop
+                    font.weight: Font.DemiBold
+                    width: Math.min(labelMaxWidth, implicitWidth)
+                    wrapMode: Text.WordWrap
+                }
+                QBadge {
+                    visible: isRecommend
+                    text: STR.STR_QML_879
+                    color: "#EAEAEA"
+                    font.pixelSize: 10
+                }
             }
+
+
             QLato {
                 text: labelBottom
                 width: Math.min(labelMaxWidth, implicitWidth)

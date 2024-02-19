@@ -178,15 +178,13 @@ QString QRoomWallet::get_json_content() const
 void QRoomWallet::updateSignerInfo(const QJsonObject &json)
 {
     SignerAssigned signer;
-    signer.name = json["name"].toString();
     signer.xfp = json["xfp"].toString();
     signer.xpub = json["xpub"].toString();
     signer.bip32path = json["bip32path"].toString();
     signer.joid_id = json["joid_id"].toString();
     signer.is_localuser = json["is_localuser"].toBool();
     signer.type = json["signer_type"].toInt();
-    signer.username = json["username"].toString();
-    signer.avatar = json["avatar"].toString();
+    signer.name = json["name"].toString();
     // Check mine
     if(signer.is_localuser && signer.xfp != ""){
         if((int)ENUNCHUCK::SignerType::SOFTWARE == signer.type || (int)ENUNCHUCK::SignerType::HARDWARE == signer.type){
@@ -214,7 +212,6 @@ void QRoomWallet::updateSignerInfo(const QJsonObject &json)
 void QRoomWallet::updateWalletInfo(const QJsonObject &json)
 {
     QJsonObject body = json["body"].toObject();
-    QString msgtype = json["msgtype"].toString();
     setWalletm(body["m"].toInt());
     setWalletn(body["n"].toInt());
     setWalletname(body["name"].toString());

@@ -66,10 +66,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
                                                                       is_software);
                     }
                     else{
-                        AppModel::instance()->showToast(msgwarning.code(),
-                                                        msgwarning.what(),
-                                                        (EWARNING::WarningType)msgwarning.type(),
-                                                        STR_CPP_079);
+                        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
                     }
                 }
                 QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
@@ -117,10 +114,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
                 }
             }
             else{
-                AppModel::instance()->showToast(msgwarning.code(),
-                                                msgwarning.what(),
-                                                (EWARNING::WarningType)msgwarning.type(),
-                                                STR_CPP_079);
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
             }
             QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         }
@@ -160,10 +154,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
             QQuickViewer::instance()->sendEvent(E::EVT_REPLACE_PRIMARY_KEY_REQUEST,true);
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_079);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
         QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         break;
@@ -177,10 +168,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
             QQuickViewer::instance()->sendEvent(E::EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST);
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_079);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
         QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         break;

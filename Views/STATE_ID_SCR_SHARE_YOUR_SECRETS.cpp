@@ -20,6 +20,9 @@
 
 
 #include "STATE_ID_SCR_SHARE_YOUR_SECRETS.h"
+#include "ServiceSetting.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QGroupDashboard.h"
 
 void SCR_SHARE_YOUR_SECRETS_Entry(QVariant msg) {
 
@@ -30,6 +33,14 @@ void SCR_SHARE_YOUR_SECRETS_Exit(QVariant msg) {
 }
 
 void EVT_UPDATE_YOUR_SECRET_REQUEST_HANDLER(QVariant msg) {
-
+    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (dashboard->flow() == (int)AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS) {
+            QtConcurrent::run([dashboard](){
+                dashboard->DismissAlert();
+                dashboard->GetAlertsInfo();
+            });
+        }
+    }
 }
 

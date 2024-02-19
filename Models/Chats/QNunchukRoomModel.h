@@ -43,7 +43,7 @@
 #include "WalletModel.h"
 #include "Chats/QRoomWallet.h"
 #include "bridgeifaces.h"
-#include "DracoDefines.h"
+#include "Servers/DracoDefines.h"
 #include "QRoomTransaction.h"
 
 #define PAGINATION_NUMBER 100
@@ -81,25 +81,27 @@ public:
 class QNunchukRoom: public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString              roomid         READ id                                  CONSTANT)
-    Q_PROPERTY(int                  userCount      READ userCount                           NOTIFY userCountChanged)
-    Q_PROPERTY(QStringList          userNames      READ userNames                           NOTIFY userNamesChanged)
-    Q_PROPERTY(QString              roomName       READ roomName        WRITE  setRoomName  NOTIFY roomNameChanged)
-    Q_PROPERTY(QConversationModel*  conversation   READ conversation                        NOTIFY conversationChanged)
-    Q_PROPERTY(QString              lastTimestamp  READ lasttimestamp                       NOTIFY lasttimestampChanged)
-    Q_PROPERTY(QString              lastMessage    READ lastMessage                         NOTIFY lastMessageChanged)
-    Q_PROPERTY(QNunchukRoomUsers*   users          READ users                               NOTIFY usersChanged)
-    Q_PROPERTY(QString              typingNames    READ typingNames                         NOTIFY typingNamesChanged)
-    Q_PROPERTY(bool                 allHisLoaded   READ allHisLoaded                        NOTIFY allHisLoadedChanged)
-    Q_PROPERTY(QRoomWallet*         roomWallet     READ roomWallet                          NOTIFY roomWalletChanged)
-    Q_PROPERTY(QRoomTransactionModel* pendingTxs   READ pendingTxs                          NOTIFY pendingTxsChanged)
-    Q_PROPERTY(QRoomTransactionModel* txs          READ txs                                 NOTIFY txsChanged)
-    Q_PROPERTY(int                  unreadCount    READ unreadCount                         NOTIFY unreadCountChanged)
-    Q_PROPERTY(QRoomTransaction*    pinTransaction READ pinTransaction                      NOTIFY pinTransactionChanged)
-    Q_PROPERTY(QString              roomAvatar     READ roomAvatar                          NOTIFY usersChanged)
-    Q_PROPERTY(int                  roomType       READ roomType                            CONSTANT)
-    Q_PROPERTY(QStringList          talkersName    READ talkersName                         NOTIFY usersChanged)
-    Q_PROPERTY(QStringList          talkersAvatar  READ talkersAvatar                       NOTIFY usersChanged)
+    Q_PROPERTY(QString              roomid                  READ id                                             CONSTANT)
+    Q_PROPERTY(int                  userCount               READ userCount                                      NOTIFY userCountChanged)
+    Q_PROPERTY(QStringList          userNames               READ userNames                                      NOTIFY userNamesChanged)
+    Q_PROPERTY(QString              roomName                READ roomName                   WRITE  setRoomName  NOTIFY roomNameChanged)
+    Q_PROPERTY(QConversationModel*  conversation            READ conversation                                   NOTIFY conversationChanged)
+    Q_PROPERTY(QString              lastTimestamp           READ lasttimestamp                                  NOTIFY lasttimestampChanged)
+    Q_PROPERTY(QString              lastMessage             READ lastMessage                                    NOTIFY lastMessageChanged)
+    Q_PROPERTY(QNunchukRoomUsers*   users                   READ users                                          NOTIFY usersChanged)
+    Q_PROPERTY(QString              typingNames             READ typingNames                                    NOTIFY typingNamesChanged)
+    Q_PROPERTY(bool                 allHisLoaded            READ allHisLoaded                                   NOTIFY allHisLoadedChanged)
+    Q_PROPERTY(QRoomWallet*         roomWallet              READ roomWallet                                     NOTIFY roomWalletChanged)
+    Q_PROPERTY(QRoomTransactionModel* pendingTxs            READ pendingTxs                                     NOTIFY pendingTxsChanged)
+    Q_PROPERTY(QRoomTransactionModel* txs                   READ txs                                            NOTIFY txsChanged)
+    Q_PROPERTY(int                  unreadCount             READ unreadCount                                    NOTIFY unreadCountChanged)
+    Q_PROPERTY(QRoomTransaction*    pinTransaction          READ pinTransaction                                 NOTIFY pinTransactionChanged)
+    Q_PROPERTY(QString              roomAvatar              READ roomAvatar                                     NOTIFY usersChanged)
+    Q_PROPERTY(int                  roomType                READ roomType                                       CONSTANT)
+    Q_PROPERTY(QStringList          talkersName             READ talkersName                                    NOTIFY usersChanged)
+    Q_PROPERTY(QStringList          talkersAvatar           READ talkersAvatar                                  NOTIFY usersChanged)
+    Q_PROPERTY(bool                 isIgnoredCollabWallet   READ isIgnoredCollabWallet                          CONSTANT)
+
 public:
     QNunchukRoom(Room* r);
     ~QNunchukRoom();
@@ -111,10 +113,13 @@ public:
         {"NATIVE_SEGWIT", nunchuk::AddressType::NATIVE_SEGWIT},
         {"TAPROOT"      , nunchuk::AddressType::TAPROOT}
     };
+    bool isIgnoredCollabWallet() const;
+    bool isNunchukByzantineRoom() const;
     bool isServerNoticeRoom() const;
     bool isNunchukSyncRoom() const;
     bool isSupportRoom() const;
     bool isDirectChat() const;
+    QString byzantineRoomGroupId();
     QString localUserName() const;
     QString id() const;
     QStringList aliases() const;
@@ -174,12 +179,7 @@ public:
     void connectRoomSignals();
     void connectRoomServiceSignals();
     bool checkIsLocalUser(const QString userID);
-    QList<DracoUser> getNunchukMembers() const;
     DracoUser getNunchukMemberUser(const QString &input);
-    QString getNunchukMemberChatId(const QString &input);
-    QString getNunchukMemberName(const QString &input);
-    QString getNunchukMemberEmail(const QString& input) ;
-    QString getNunchukMemberAvatar(const QString& input) ;
     void setNunchukMembers(const QList<DracoUser> &nunchukMembers);
 
     QRoomTransactionModel *pendingTxs() const;
@@ -216,7 +216,6 @@ private:
     QRoomTransaction       *m_pinTransaction;
     nunchuk::Wallet         m_walletImport;
     bool                    m_IsEncrypted;
-    QTimer                  m_timeSyncDb;
 private:
     bool validatePendingEvent(const QString& txnId);
     bool extractNunchukEvent(const RoomEvent& evt, Conversation &cons) ;
@@ -249,8 +248,6 @@ public slots:
     void slotFinishCancelWallet(QString what, int type, int code);
     void slotFinishedGetPendingTxs(QRoomTransactionModelPtr txs);
     void slotUpdateInitEventId(const Conversation cons);
-    void slotFinishConsumeEvent();
-    void slotSyncWalletDb();
 signals:
     void userCountChanged();
     void userNamesChanged();
@@ -279,7 +276,6 @@ signals:
     void signalFinishedGetPendingTxs(QRoomTransactionModelPtr txs);
     void pinTransactionChanged();
     void roomNeedTobeLeaved(const QString& id);
-    void finishConsumeEvent();
 };
 Q_DECLARE_METATYPE(Conversation)
 Q_DECLARE_METATYPE(nunchuk::RoomTransaction)
@@ -333,7 +329,8 @@ public:
         room_is_encrypted
     };
 
-    bool containsRoom(const QString& id);
+    bool containsRoomId(const QString& id);
+    bool containsRoomName(const QString& name, int &index, QString &room_id);
     void doAddRoom(QNunchukRoomPtr r);
     void removeRoomByIndex(const int index);
     void removeRoomById(const QString& id);
@@ -344,13 +341,16 @@ public:
     void leaveCurrentRoom();
     void leaveRoom(const int index);
     void joinRoom(QString roomAliasOrId);
-    void createRoomChat(const QStringList invitees_id, const QString &topic, const QString &name, QVariant firstMessage = QVariant());
+    void createRoomChat(const QStringList invitees_id, const QString &room_name, QVariant firstMessage = QVariant());
+    void createRoomDirectChat(const QString invitee_id, const QString &invitee_name, QVariant firstMessage = QVariant());
+    void createRoomByzantineChat(const QStringList invitees_id, const QString &room_name, const QString &group_id, QVariant firstMessage = QVariant());
     void createSupportRoom();
     bool allHisLoaded();
 
     // Room wallets
     QList<QRoomWalletPtr> getRoomWallets() const;
     void setRoomWallets(const QList<QRoomWalletPtr> &roomWallets);
+    void renameRoomByzantineChat(const QString room_id, const QString group_id, const QString newname);
 
 private:
     Quotient::Connection*   m_connection;
@@ -375,6 +375,9 @@ signals:
     void noticeService();
     void finishedDownloadRoom();
     void countChanged();
+    void byzantineRoomCreated(QString room_id, bool existed);
+    void byzantineRoomDeleted(QString room_id, QString group_id);
+    void byzantineRoomRenamed(QString room_id, QString group_id);
 public slots:
     bool hasContact(const QString &id);
     void newRoom(Quotient::Room* room);

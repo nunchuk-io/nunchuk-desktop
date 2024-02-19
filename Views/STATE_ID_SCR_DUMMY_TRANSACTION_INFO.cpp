@@ -19,7 +19,12 @@
 **************************************************************************/
 
 #include "STATE_ID_SCR_DUMMY_TRANSACTION_INFO.h"
-#include "Chats/QUserWallets.h"
+#include "bridgeifaces.h"
+#include "AppModel.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
+#include "Premiums/QGroupWalletDummyTx.h"
+#include "Premiums/QUserWalletDummyTx.h"
 
 void SCR_DUMMY_TRANSACTION_INFO_Entry(QVariant msg) {
 
@@ -33,43 +38,102 @@ void EVT_DUMMY_TRANSACTION_INFO_BACK_HANDLER(QVariant msg) {
 
 }
 
-
-void EVT_DUMMY_TRANSACTION_LOCKDOWN_SUCCEEDED_REQUEST_HANDLER(QVariant msg) {
-
-}
-
-void EVT_DUMMY_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
-    QString xfp = msg.toString();
-    QUserWallets::instance()->signDummyTx(xfp);
-}
-
-void EVT_DUMMY_TRANSACTION_SIGN_CONFIRM_REQUEST_HANDLER(QVariant msg) {
-    if (QUserWallets::instance()->checkDummyTx()) {
-        if (QUserWallets::instance()->lockdownBySignDummyTx()) {
-            QQuickViewer::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_LOCKDOWN_SUCCEEDED_REQUEST);
+void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
+{
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    if (auto w = AppModel::instance()->walletInfoPtr()) {
+        DBG_INFO << type;
+        if (type == "address-to-verify") {
+            QString address = maps["address"].toString();
+            AppModel::instance()->startDisplayAddress(w->id(), address);
+        } else if (type == "memo-notify") {
+            //Not use for dummy tx
+        } else if (type == "scan-device") {
+            AppModel::instance()->startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
+        } else if (type == "dummy-tx-sign") {
+            QtConcurrent::run([maps, w]() {
+                QString xfp = maps["xfp"].toString();
+                if (QBasePremium::mode() == USER_WALLET) {
+                    if (auto dummy = w->userDummyTxPtr()) {
+                        dummy->requestSignTx(xfp);
+                    }
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->requestSignTx(xfp);
+                    }
+                }
+            });
+        } else if (type == "dummy-tx-import-qr") {
+            QStringList tags = maps["tags"].toStringList();
+            if (!tags.isEmpty()) {
+                if (QBasePremium::mode() == USER_WALLET) {
+                    if (auto dummy = w->userDummyTxPtr()) {
+                        dummy->requestSignTxViaQR(tags);
+                    }
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->requestSignTxViaQR(tags);
+                    }
+                }
+            }
+        } else if (type == "dummy-tx-import") {
+            QString file = maps["file"].toString();
+            QString file_path = qUtils::QGetFilePath(file);
+            if(file_path != ""){
+                if (QBasePremium::mode() == USER_WALLET) {
+                    if (auto dummy = w->userDummyTxPtr()) {
+                        dummy->requestSignTxViaFile(file_path);
+                    }
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->requestSignTxViaFile(file_path);
+                    }
+                }
+            }
+        } else if (type == "dummy-tx-export") {
+            QString file = maps["file"].toString();
+            QString file_path = qUtils::QGetFilePath(file);
+            if(file_path != ""){
+                if (QBasePremium::mode() == USER_WALLET) {
+                    if (auto dummy = w->userDummyTxPtr()) {
+                        dummy->ExportPsbtViaFile(file_path);
+                    }
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->ExportPsbtViaFile(file_path);
+                    }
+                }
+            }
+        } else if (type == "register-wallet") {
+            QGroupWallets::instance()->dashboardInfoPtr()->setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP);
+            if (QGroupWallets::instance()->dashboardInfoPtr()->register_wallet()) {
+                QQuickViewer::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+            }
+        } else if (type == "dummy-tx-export-qr") {
+            AppModel::instance()->setQrExported(QStringList());
+            QWarningMessage msgwarning;
+            QStringList qrtags {};
+            if (QBasePremium::mode() == USER_WALLET) {
+                if (auto dummy = w->userDummyTxPtr()) {
+                    qrtags = dummy->ExportPsbtViaQR(msgwarning);
+                }
+            }
+            else {
+                if (auto dummy = w->groupDummyTxPtr()) {
+                    qrtags = dummy->ExportPsbtViaQR(msgwarning);
+                }
+            }
+            if(!qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+            }
         }
     }
-}
-
-void EVT_DUMMY_TRANSACTION_VERIFY_ADDRESS_HANDLER(QVariant msg)
-{
-    AppModel::instance()->startDisplayAddress(QString::fromStdString(QUserWallets::instance()->getWallet().get_id()),
-                                              msg.toString());
-}
-
-void EVT_DUMMY_TRANSACTION_SET_MEMO_REQUEST_HANDLER(QVariant msg)
-{
-    QString memo = msg.toString();
-    if(AppModel::instance()->transactionInfo() && memo != ""){
-        QString tx_id = AppModel::instance()->transactionInfo()->txid();
-        QString wallet_id = AppModel::instance()->transactionInfo()->walletId();
-        bridge::nunchukUpdateTransactionMemo(wallet_id,
-                                             tx_id,
-                                             memo);
-    }
-}
-
-void EVT_DUMMY_TRANSACTION_SCAN_DEVICE_REQUEST_HANDLER(QVariant msg)
-{
-    AppModel::instance()->startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
 }

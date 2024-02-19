@@ -29,6 +29,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -67,7 +68,7 @@ QScreen {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QBadge {
-                text: GlobalData.signerNames(signerType)
+                text: GlobalData.signers(signerType)
                 color: "#EAEAEA"
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -107,15 +108,41 @@ QScreen {
                 textOutput: masterSignerSpec
                 textOutputCapitalization: Font.AllUppercase
             }
-            QTextInputBox {
-                id: xpubs
-                visible: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO)
+            Column {
                 width: 343
-                heightMin: 54
-                mode: eREADONLY_MODE
-                color: "Transparent"
-                placeholder.text: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO) ? STR.STR_QML_149 : ""
-                textOutput: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO) ? AppModel.singleSignerInfo.signerXpub : ""
+                visible: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO)
+                spacing: 4
+                anchors {
+                    left: parent.left
+                    leftMargin: 16
+                }
+                QText {
+                    text: "XPUB"
+                    font.family: "Lato"
+                    font.weight: Font.Bold
+                    color: "#031F2B"
+                    font.pixelSize: 10
+                }
+                QTextEdit {
+                    id: xpubValue
+                    width: parent.width
+                    clip: true
+                    readOnly: true
+                    color: "#031F2B"
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    wrapMode: Text.WrapAnywhere
+                    text: (QMLHandle.onsRequester() === EVT.STATE_ID_SCR_WALLET_INFO) ? AppModel.singleSignerInfo.signerXpub : ""
+                }
+                Rectangle {
+                    width: 341
+                    height: 2
+                    color: "#C9DEF1"
+                    anchors {
+                        left: parent.left
+                        leftMargin: -16
+                    }
+                }
             }
             QTextInputBox {
                 id: derpath
@@ -167,10 +194,9 @@ QScreen {
                 delegate: Item {
                     width: 344
                     height: 40
-                    QImage {
+                    QIcon {
+                        iconSize: 24
                         source: "qrc:/Images/Images/wallet_031F2B.png"
-                        width: 24
-                        height: 24
                         anchors {
                             verticalCenter: parent.verticalCenter
                             left: parent.left
@@ -215,10 +241,9 @@ QScreen {
             font.weight: Font.DemiBold
             font.pixelSize: 14
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: healthIndicator
-            width: 24
-            height: 24
             source: 0 === masterSignerHealth ? "qrc:/Images/Images/check_circle_outline_24px.png" :
                                                "qrc:/Images/Images/error_outline_24px.png"
             anchors {
@@ -365,13 +390,19 @@ QScreen {
                 label.font.pixelSize: 16
                 type: eTypeB
                 onButtonClicked: {
-                    if(AppModel.walletsUsingSigner.length > 0){
-                        _info1.open()
-                    }
-                    else if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){
+                    var ret = AppModel.walletList.removeOrNot(masterSignerSpec)
+                    if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){
                         _info2.open()
                     }
+                    else if(ret.used_in_assisted_wallet) {
+                        _info1.open()
+                    }
+                    else if (ret.used_in_free_wallet) {
+                        _confirm.contentText = STR.STR_QML_243_used
+                        _confirm.open()
+                    }
                     else {
+                        _confirm.contentText = STR.STR_QML_243
                         _confirm.open()
                     }
                 }
@@ -428,16 +459,10 @@ QScreen {
         QPopupInfo{
             id:_info1
             contentText: STR.STR_QML_554
-            onGotItClicked: {
-                close()
-            }
         }
         QPopupInfo{
             id:_info2
             contentText: STR.STR_QML_555
-            onGotItClicked: {
-                close()
-            }
         }
 
         QConfirmYesNoPopup{
@@ -570,12 +595,20 @@ QScreen {
                 masterSignerHealth = AppModel.masterSignerInfo.masterSignerHealth
                 busyOverlay.visible = false
                 healthStatustext.visible = true
+                console.log(masterSignerHealth)
             }
             onStartTopXPUBsMasterSigner:{
                 _busyTopUp.open()
             }
             onFinishedTopXPUBsMasterSigner:{
                 _busyTopUp.close()
+            }
+        }
+        QContextMenu {
+            id: optionMenu
+            menuWidth: 120
+            onItemClicked: {
+                functions[index]()
             }
         }
     }

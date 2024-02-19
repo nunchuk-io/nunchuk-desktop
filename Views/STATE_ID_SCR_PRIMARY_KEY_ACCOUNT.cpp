@@ -23,7 +23,7 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
 #include "localization/STR_CPP.h"
@@ -101,11 +101,6 @@ void EVT_SELECT_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
         if(ret){
             QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,msg);
         }
-    }else{
-        AppModel::instance()->setToast(-1,
-                                        STR_CPP_104,
-                                        EWARNING::WarningType::ERROR_MSG,
-                                        "");
     }
 }
 

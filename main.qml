@@ -19,7 +19,12 @@
  **************************************************************************/
 import QtQuick 2.4
 import HMIEVENTS 1.0
+import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
+
+import "./Qml/Popups"
 import "./Qml/Components/customizes"
+import "./Qml/Components/customizes/Popups"
 import "./localization/STR_QML.js" as STR
 
 Item {
@@ -28,6 +33,7 @@ Item {
     antialiasing: true
     smooth: true
     property var screen_layer_base: screen_layer_1
+//    scale: 0.5 // FIXME ~ PLAN USED INSTEAD OF QT_SCALE_FACTOR
     Loader {
         id: screen_layer_1
         anchors.fill: parent
@@ -70,21 +76,44 @@ Item {
     QPopupInfo{
         id:_checkforupdate
         z:100
-        coverColor: Qt.rgba(255, 255, 255, 0)
-        onGotItClicked: {
+    }
+    function funcUpdateAvailable(title,message,doItLaterCTALbl) {
+        _checkforupdate.title = title
+        _checkforupdate.contentText = message
+        _checkforupdate.btnLabel = doItLaterCTALbl
+        _checkforupdate.open()
+    }
+    function funcUpdateRequired(title,message,doItLaterCTALbl) {
+        _checkforupdate.title = title
+        _checkforupdate.contentText = message
+        _checkforupdate.btnLabel = doItLaterCTALbl
+        _checkforupdate.open()
+    }
 
+    QToastMessage {
+        id: toastLoader
+        isScreenBase: onsDataList.count == 0 ? true : false
+        anchors.fill: parent
+        model: ListModel { id: toastes}
+    }
+
+    function loadToastMessage(toastObj) {
+        console.log(toastObj.code, toastObj.type, toastObj.what)
+        for(var i = 0; i < toastLoader.model.count; i++){
+            console.log(toastLoader.model.get(i).code , toastObj.code, toastObj.type)
+            if(toastLoader.model.get(i).code === toastObj.code && (toastObj.type >= EWARNING.ERROR_MSG)) {
+                return false;
+            }
         }
-    }
-    function funcUpdateAvailable(title,message,doItLaterCTALbl){
-        _checkforupdate.title = title
-        _checkforupdate.contentText = message
-        _checkforupdate.btnLabel = doItLaterCTALbl
-        _checkforupdate.open()
-    }
-    function funcUpdateRequired(title,message,doItLaterCTALbl){
-        _checkforupdate.title = title
-        _checkforupdate.contentText = message
-        _checkforupdate.btnLabel = doItLaterCTALbl
-        _checkforupdate.open()
+        var toastItem = {
+            "contentDisplay": toastObj.contentDisplay,
+            "explaination"  : toastObj.explaination,
+            "what"          : toastObj.what,
+            "code"          : toastObj.code,
+            "type"          : toastObj.type,
+            "popupType"     : toastObj.popupType
+        }
+        toastLoader.model.append(toastItem)
+        return true;
     }
 }

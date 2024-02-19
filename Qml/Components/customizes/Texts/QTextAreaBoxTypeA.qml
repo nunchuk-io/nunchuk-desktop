@@ -31,6 +31,7 @@ Column {
     property var   textweight: Font.Bold
     property alias length: _input.length
     property bool enableLengthLimit: false
+    property int maxLength: 80
     property int boxWidth: 338
     property int boxHeight: 48
     property bool isValid: true
@@ -105,6 +106,7 @@ Column {
             color: "#031F2B"
             font.pixelSize: 16
             clip: true
+            maximumLength: enableLengthLimit ? maxLength : -1
             onTypingFinished: textipboxType.typingFinished(currentText)
             Keys.onDownPressed: { downKeyRequest() }
             Keys.onUpPressed: { upKeyRequest() }

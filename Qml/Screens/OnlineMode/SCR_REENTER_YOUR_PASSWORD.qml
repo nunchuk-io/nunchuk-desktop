@@ -48,7 +48,7 @@ QScreen {
         visible: passphraseModel.processing
     }
     Connections {
-        target: UserWallet
+        target: ServiceSetting.servicesTag
         onVerifyPasswordTokenAlert: {
             passphraseModel.processing = false
             passphraseModel.setErrorText(errormsg)

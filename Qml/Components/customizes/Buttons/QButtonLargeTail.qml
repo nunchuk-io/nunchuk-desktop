@@ -30,12 +30,14 @@ QBaseButton {
     type: ePRIMARY
     property string label: "text"
     property alias optionVisible: indicator.optionVisible
+    property alias layoutDirection: idlayout.layoutDirection
     width: 137
     height: 48
     QBackgroundState {
         anchors.fill: parent
     }
     Row {
+        id: idlayout
         anchors.centerIn: parent
         spacing: 4
         QLatoState {

@@ -24,7 +24,7 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 
 void SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY_Entry(QVariant msg){
     AppModel::instance()->setMnemonic("");
@@ -77,10 +77,7 @@ void EVT_IMPORT_PRIMARY_KEY_WITH_SEED_REQUEST_HANDLER(QVariant msg){
     }
     else{
         AppModel::instance()->setMnemonic("-101");
-        AppModel::instance()->setToast(-1,
-                                        STR_CPP_081,
-                                        EWARNING::WarningType::EXCEPTION_MSG,
-                                        STR_CPP_082);
+        AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
     }
 }
 
@@ -89,10 +86,7 @@ void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED_HANDLER(QVariant msg){
     QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
     if(pKey){
         timeoutHandler(3000,[pKey](){
-            AppModel::instance()->showToast(0,
-                                           STR_CPP_108.arg(pKey->name()),
-                                           EWARNING::WarningType::SUCCESS_MSG,
-                                           STR_CPP_108.arg(pKey->name()));
+            AppModel::instance()->showToast(0, STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
             QWarningMessage msg;
             bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
         });

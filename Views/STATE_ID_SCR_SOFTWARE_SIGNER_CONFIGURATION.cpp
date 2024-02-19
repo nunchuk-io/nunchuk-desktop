@@ -23,7 +23,7 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 
 void SCR_SOFTWARE_SIGNER_CONFIGURATION_Entry(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
@@ -39,11 +39,11 @@ bool replaceKey(const QString &mnemonic, const QString &passphrase){
     if(!curKey) return false;
     QString curAddress = QString::fromStdString(curKey->originPrimaryKey().get_address());
     QString curUsername = QString::fromStdString(curKey->originPrimaryKey().get_account());
-    QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
-    QString nonce = Draco::instance()->pkey_manual_nonce(curAddress,curUsername,address,"change_pkey");
-    QString curSignature = bridge::SignLoginMessage(curKey->id(),nonce);
-    QString new_signature = qUtils::SignLoginMessage(mnemonic,passphrase,nonce);
-    return Draco::instance()->pkey_change_pkey(address,curSignature,new_signature);
+    QString address = qUtils::GetPrimaryKeyAddress(mnemonic, passphrase);
+    QString nonce = Draco::instance()->pkey_manual_nonce(curAddress, curUsername, address,"change_pkey");
+    QString curSignature = bridge::SignLoginMessage(curKey->id(), nonce);
+    QString new_signature = qUtils::SignLoginMessage(mnemonic, passphrase, nonce);
+    return Draco::instance()->pkey_change_pkey(address, curSignature, new_signature);
 }
 
 void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {

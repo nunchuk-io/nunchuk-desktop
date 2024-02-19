@@ -34,6 +34,9 @@ QLinearGradient {
     property string walletCurrency  : "0.0000000"
     property string walletM: "0"
     property string walletN: "0"
+    property bool   isLocked: false
+    iEnabled: !isLocked
+
     Column{
         anchors {
             verticalCenter: parent.verticalCenter
@@ -117,6 +120,7 @@ QLinearGradient {
     signal buttonClicked()
     MouseArea {
         id: walletmouse
+        enabled: wldlg.iEnabled
         hoverEnabled: true
         anchors.fill: parent
         onClicked: wldlg.buttonClicked()

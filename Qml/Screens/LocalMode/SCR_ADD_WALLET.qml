@@ -30,6 +30,8 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/QRCodes"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -297,9 +299,8 @@ QScreen {
                         id: walletType
                         anchors.fill: parent
                         spacing: 8
-                        QImage {
-                            width: 24
-                            height: 24
+                        QIcon {
+                            iconSize: 24
                             id:icowalletType
                             source: (addressTypeSelection.typeSeleted === addressTypeSelection.typeValue[index]) ? "qrc:/Images/Images/radio-selected-dark.svg" :
                                                                                                                    "qrc:/Images/Images/radio-dark.svg"
@@ -376,7 +377,7 @@ QScreen {
                         fileDialog.open()
                         break;
                     case 1:
-                        fileDialog.iType = Popup_t.IMPORT_WALLET_QRCODE_KEYSTONE
+                        fileDialog.iType = Popup_t.IMPORT_WALLET_QRCODE
                         qrscaner.open()
                         break;
                     case 2:
@@ -433,7 +434,7 @@ QScreen {
     QQrImportScanner {
         id: qrscaner
         onTagFound: {
-            if(AppModel.parseKeystoneWallet(signerName.textOutput, signerDescription.textOutput, qrscaner.tags)){
+            if(AppModel.parseQRWallet(signerName.textOutput, signerDescription.textOutput, qrscaner.tags)){
                 qrscaner.close()
                 var importData = {  "qrTags"        : qrscaner.tags,
                                     "importType"    : fileDialog.iType,

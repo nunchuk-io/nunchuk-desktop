@@ -29,6 +29,7 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -99,11 +100,10 @@ QScreen {
             font.weight: Font.Bold
             font.pixelSize: 16
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: checkboxMultiDes
             property bool checked: false
-            width: 24
-            height: 24
             anchors {
                 left: parent.left
                 leftMargin: 40
@@ -274,12 +274,11 @@ QScreen {
                                     top: parent.bottom
                                     topMargin: 6
                                 }
-                                QImage {
+                                QIcon {
+                                    iconSize: 24
                                     id: checkboxSendAll
                                     property bool checked: false
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 24
-                                    height: 24
                                     source: checkboxSendAll.checked && visible ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
                                     MouseArea {
                                         anchors.fill: parent

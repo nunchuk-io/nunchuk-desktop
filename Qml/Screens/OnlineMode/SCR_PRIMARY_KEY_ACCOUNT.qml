@@ -29,6 +29,8 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Signers"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -277,13 +279,11 @@ QScreen {
                                     radius: width
                                     color: "#F5F5F5"
                                     anchors.verticalCenter: parent.verticalCenter
-                                    QImage {
-                                        width: 24
-                                        height: 24
+                                    QSignerLightIcon {
+                                        iconSize: 24
                                         anchors.centerIn: parent
-                                        source: GlobalData.icons("software",NUNCHUCKTYPE.SOFTWARE)
-                                        sourceSize.width: 100
-                                        sourceSize.height: 100
+                                        device_type: "software"
+                                        type: NUNCHUCKTYPE.SOFTWARE
                                     }
                                 }
                                 Item{
@@ -323,10 +323,9 @@ QScreen {
                                     }
                                 }
                             }
-                            QImage {
+                            QIcon {
+                                iconSize: 24
                                 id: _arrow
-                                width: 24
-                                height: 24
                                 source: "qrc:/Images/Images/right-arrow-dark.svg"
                                 scale: primaryKeyMouse.containsMouse ? 1.1 : 1.0
                                 anchors{

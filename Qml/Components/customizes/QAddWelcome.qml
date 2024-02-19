@@ -44,9 +44,9 @@ Rectangle {
     property string content: "content"
     property string icon: "icon"
     property int contentHeight: 180
-    property bool isPremiumUser: ClientController.user.isPremiumUser
+    property bool isSubscribedUser: ClientController.user.isSubscribedUser
     Column {
-        visible: !isPremiumUser
+        visible: !isSubscribedUser
         width: 600
         anchors.centerIn: parent
         spacing: 12
@@ -109,7 +109,6 @@ Rectangle {
                             width: 122
                             height: 24
                             label: btnTextLink
-                            labelFont: "Lato"
                             direction: eRIGHT
                             fontPixelSize: 16
                             onButtonClicked: {
@@ -132,7 +131,7 @@ Rectangle {
         }
     }
     Column {
-        visible: isPremiumUser
+        visible: isSubscribedUser
         width: 600
         anchors.centerIn: parent
         spacing: 12

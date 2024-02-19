@@ -33,8 +33,11 @@ void SCR_REMOTE_SIGNER_RESULT_Exit(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_RESULT_HEALTH_CHECK_HANDLER(QVariant msg) {
-    if(AppModel::instance()->singleSignerInfoPtr()){
-        AppModel::instance()->startHealthCheckRemoteSigner();
+    if(AppModel::instance()->singleSignerInfo()){
+        AppModel::instance()->startHealthCheckRemoteSigner(E::STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT,
+                                                           AppModel::instance()->singleSignerInfo()->masterFingerPrint(),
+                                                           AppModel::instance()->singleSignerInfo()->signerType(),
+                                                           AppModel::instance()->singleSignerInfo()->message());
     }
 }
 

@@ -41,8 +41,10 @@ Item {
 
     property int direction: eLEFT
     property string label: ""
-    property string labelFont: "Lato"
     property int fontPixelSize: 16
+
+    property alias btnIcon: ico
+    property alias btnText: text
 
     property bool displayIcon: true
 
@@ -89,21 +91,19 @@ Item {
         spacing: 8
         anchors.centerIn: parent
         layoutDirection: (direction == eRIGHT) ?  Qt.RightToLeft : Qt.LeftToRight
-        QImage {
+        QIcon {
             id: ico
-            width: 24
-            height: 24
+            iconSize: 24
             visible: displayIcon
             mirror: (direction == eRIGHT) && _mirror
             anchors.verticalCenter: parent.verticalCenter
         }
-        QText {
+        QLato {
             id: text
             anchors.verticalCenter: ico.verticalCenter
             text: label
             font.pixelSize: fontPixelSize
             font.weight: Font.DemiBold
-            font.family: labelFont
         }
     }
 

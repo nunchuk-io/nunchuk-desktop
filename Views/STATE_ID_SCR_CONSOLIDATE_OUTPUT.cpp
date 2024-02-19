@@ -27,9 +27,7 @@
 void SCR_CONSOLIDATE_Entry(QVariant msg) {
     AppModel::instance()->setTransactionInfo(NULL);
     if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->escrow()){
-        AppModel::instance()->showToast(0,
-                                        STR_CPP_072,
-                                        EWARNING::WarningType::WARNING_MSG);
+        AppModel::instance()->showToast(0, STR_CPP_072, EWARNING::WarningType::WARNING_MSG);
     }
 }
 
@@ -87,7 +85,13 @@ void EVT_CONSOLIDATE_MAKE_TRANSACTION_HANDLER(QVariant msg) {
 
     DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output: false" << "| manual Fee:" << true << "| free rate:" << -1;
     QWarningMessage msgwarning;
-    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id, outputs, inputs, -1, subtractFromFeeAmout, msgwarning);
+    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                            outputs,
+                                                            inputs,
+                                                            -1,
+                                                            subtractFromFeeAmout,
+                                                            "",
+                                                            msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
         if(trans){
             QString memo = "";
@@ -100,10 +104,7 @@ void EVT_CONSOLIDATE_MAKE_TRANSACTION_HANDLER(QVariant msg) {
         }
     }
     else{
-        AppModel::instance()->showToast(msgwarning.code(),
-                                        msgwarning.what(),
-                                        (EWARNING::WarningType)msgwarning.type(),
-                                        STR_CPP_073);
+        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
     }
 }
 

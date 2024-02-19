@@ -29,12 +29,29 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 Item {
-    property string keyType: ""
+    property string key_name: ""
     property string fingerPrint: ""
+    property int type: -1
     property string notice: ""
+    property string tag: ""
+    property string device_type: ""
+    property string bip32_path: ""
+
+    onVisibleChanged: {
+        if(!visible){
+            fingerPrint = ""
+            notice = ""
+            type = -1
+            tag = ""
+            key_name = ""
+            bip32_path = ""
+        }
+    }
+
     Column {
         spacing: 24
         QLato {
@@ -52,10 +69,9 @@ Item {
             {
                 anchors.fill: parent
                 Repeater {
-                    model: AppModel.masterSignerList
+                    model: draftWallet.signerExistList
                     Item {
                         width: 539 - 12
-                        visible: keyType === model.master_signer_deviceType
                         height: visible ? 92 : 0
                         anchors{
                             left: parent.left
@@ -70,13 +86,12 @@ Item {
                                 radius: width
                                 color: "#F5F5F5"
                                 anchors.verticalCenter: parent.verticalCenter
-                                QImage {
-                                    width: 24
-                                    height: 24
+                                QSignerDarkIcon {
+                                    iconSize: 24
                                     anchors.centerIn: parent
-                                    source: GlobalData.iconTypes(keyType, model.master_signer_type)
-                                    sourceSize.width: 100
-                                    sourceSize.height: 100
+                                    device_type: modelData.signer_deviceType
+                                    type: modelData.signer_type
+                                    tag: modelData.signer_tag
                                 }
                             }
                             Item{
@@ -88,20 +103,22 @@ Item {
                                     QText {
                                         width: 146
                                         height: 20
-                                        text: model.master_signer_name
+                                        text: modelData.signer_name
                                         color: "#031F2B"
                                         font.weight: Font.Normal
                                         font.family: "Lato"
                                         font.pixelSize: 16
                                     }
-                                    QBadge {
-                                        text: STR.STR_QML_898
-                                        color: "#EAEAEA"
+                                    QRowSingleSignerType {
+                                        isPrimaryKey: modelData.signer_is_primary
+                                        signerType: modelData.signer_type
+                                        accountIndex: modelData.signer_account_index
+                                        accountVisible: false
                                     }
                                     QText {
                                         width: 146
                                         height: 20
-                                        text: "XFP: " + model.master_signer_fingerPrint
+                                        text: "XFP: " + modelData.signer_fingerPrint
                                         color: "#595959"
                                         font.weight: Font.Normal
                                         font.capitalization: Font.AllUppercase
@@ -111,11 +128,10 @@ Item {
                                 }
                             }
                         }
-                        QImage {
-                            width: 24
-                            height: 24
-                            source: fingerPrint === model.master_signer_fingerPrint ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-                            scale: primaryKeyMouse.containsMouse ? 1.1 : 1.0
+                        QIcon {
+                            iconSize: 24
+                            source: fingerPrint === modelData.signer_fingerPrint ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                            scale: primaryKeyMouse.pressed ? 0.9 : 1.0
                             anchors{
                                 right: parent.right
                                 rightMargin: 12
@@ -128,7 +144,12 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                             anchors.fill: parent
                             onClicked: {
-                                fingerPrint = model.master_signer_fingerPrint
+                                fingerPrint = modelData.signer_fingerPrint
+                                type = modelData.signer_type
+                                tag = modelData.signer_tag
+                                device_type = modelData.signer_deviceType
+                                key_name = modelData.signer_name
+                                bip32_path = modelData.signer_bip32_path
                             }
                         }
                     }

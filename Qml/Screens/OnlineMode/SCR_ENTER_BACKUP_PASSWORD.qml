@@ -29,111 +29,51 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/services"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    id: _period
-    property int questionSelected: 0
-    QOnScreenContentTypeA {
-        width: popupWidth
-        height: popupHeight
+    property var reqiredSignature: ServiceSetting.servicesTag.reqiredSignatures
+    Loader {
         anchors.centerIn: parent
-        label.text: STR.STR_QML_725
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_ENTER_BACKUP_PASSWORD)
-        }
-        Column {
-            anchors {
-                top: parent.top
-                topMargin: 84
-                left: parent.left
-                leftMargin: 36
+        sourceComponent: {
+            if (reqiredSignature.type === "SECURITY_QUESTION") {
+                return enter_backup_password
             }
-            width: 539
-            spacing: 24
-            QText {
-                width: 539
-                height: 28
-                text: {
-                    var name = UserWallet.signer.masterSignername
-                    var card_id = UserWallet.signer.masterSignerDevice.cardId
-                    var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
-                    return STR.STR_QML_726.arg(name).arg(textR)
-                }
-                color: "#031F2B"
-                font.family: "Lato"
-                font.pixelSize: 16
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 28
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
+            else if (reqiredSignature.type === "CONFIRMATION_CODE") {
+                return key_recovery_request_sent
+            } else if (reqiredSignature.step === "RECOVER") {
+                return _tapsigner_recovered
+            }
+            return null
+        }
+    }
+    Component {
+        id: enter_backup_password
+        QEnterBackupPassword {
+            onPrevClicked: {
+                QMLHandle.sendEvent(EVT.EVT_ENTER_BACKUP_PASSWORD_BACK)
             }
 
-            QTextInputBoxTypeB {
-                id: backupPassword
-                label: STR.STR_QML_727
-                boxWidth: 537
-                boxHeight: 48
-                isValid: true
-                isPassword:true
-                onTextInputtedChanged: {
-                    if(!backupPassword.isValid){
-                        backupPassword.isValid = true
-                        backupPassword.errorText = ""
-                    }
-                    backupPassword.showError = false;
-                }
-            }
-
-        }
-        Connections {
-            target: UserWallet
-            onBackupPasswordErrorAlert: {
-                backupPassword.errorText = errormsg
-                backupPassword.isValid = false
-                backupPassword.showError = true
+            onNextClicked: {
+                QMLHandle.sendEvent(EVT.EVT_INPUT_BACKUP_PASSWORD_REQUEST, backup_password.textInputted)
             }
         }
-        Rectangle {
-            width: 718
-            height: 80
-            radius: 8
-            color: "#EAEAEA"
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                bottom: parent.bottom
-                bottomMargin: 120
-            }
-
-            Row {
-                anchors.fill: parent
-                anchors.margins: 15
-                spacing: 11
-                QImage {
-                    width: 30
-                    height: 30
-                    anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
-                }
-                QText {
-                    width: 650
-                    height: 28
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: STR.STR_QML_740
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
+    }
+    Component {
+        id: key_recovery_request_sent
+        QKeyRecoveryResult {
+            title: STR.STR_QML_1052
+            description: STR.STR_QML_1053
         }
-        onPrevClicked: {
-            QMLHandle.sendEvent(EVT.EVT_ENTER_BACKUP_PASSWORD_BACK)
-        }
-
-        onNextClicked: {
-            QMLHandle.sendEvent(EVT.EVT_INPUT_BACKUP_PASSWORD_REQUEST, backupPassword.textInputted)
+    }
+    Component {
+        id: _tapsigner_recovered
+        QTapsignerRecovered {
+            onSignalGotIt: {
+                AppModel.showToast(0, STR.STR_QML_739, EWARNING.SUCCESS_MSG);
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            }
         }
     }
 }

@@ -47,10 +47,7 @@ void EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_HANDLER(QVariant msg) {
         QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected) ;
         if(selectedDv){
             if(selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()){
-                AppModel::instance()->showToast(0,
-                                                0,
-                                                EWARNING::WarningType::WARNING_MSG,
-                                                STR_CPP_095);
+                AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
             }
             else{
                 AppModel::instance()->startCreateMasterSigner(signerNameInputted, deviceIndexSelected);

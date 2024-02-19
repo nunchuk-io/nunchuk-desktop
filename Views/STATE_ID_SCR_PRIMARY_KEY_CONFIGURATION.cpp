@@ -24,7 +24,7 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "STATE_ID_SCR_LOGIN_ONLINE.h"
 
 void SCR_PRIMARY_KEY_CONFIGURATION_Entry(QVariant msg) {
@@ -53,19 +53,16 @@ void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
     QString mnemonic = maps["mnemonic"].toString();
     QString username = maps["username"].toString();
     QString passphrase = maps["passphrase"].toString();
-    DBG_INFO;
+    DBG_INFO << username;
     bool isAvail = Draco::instance()->pkey_username_availability(username);
     if(!isAvail){
         QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
         QString nonce = Draco::instance()->get_pkey_nonce(address,username);
         QString message = QString("%1%2").arg(username).arg(nonce);
         QString signature = qUtils::SignLoginMessage(mnemonic,passphrase,message);
-        Draco::instance()->pkey_signup(address,username,signature);
-    }else{
-        AppModel::instance()->setToast(-1,
-                                        STR_CPP_105,
-                                        EWARNING::WarningType::ERROR_MSG,
-                                        "");
+        if(Draco::instance()->pkey_signup(address,username,signature)){
+            QQuickViewer::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_FINISHED);
+        }
     }
 }
 
@@ -76,10 +73,7 @@ void EVT_PRIMARY_KEY_CONFIGURATION_BACK_HANDLER(QVariant msg) {
 void EVT_PRIMARY_KEY_CONFIGURATION_FINISHED_HANDLER(QVariant msg) {
     DBG_INFO;
     timeoutHandler(200,[](){
-        AppModel::instance()->showToast(0,
-                                        STR_CPP_106,
-                                        EWARNING::WarningType::SUCCESS_MSG,
-                                        STR_CPP_106);
+        AppModel::instance()->showToast(0, STR_CPP_106, EWARNING::WarningType::SUCCESS_MSG);
         AppModel::instance()->setPrimaryKey(Draco::instance()->Uid());
     });
 }

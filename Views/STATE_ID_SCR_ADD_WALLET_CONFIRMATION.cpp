@@ -25,6 +25,7 @@
 #include "bridgeifaces.h"
 #include <QClipboard>
 #include "localization/STR_CPP.h"
+#include "Chats/ClientController.h"
 
 void SCR_ADD_WALLET_CONFIRMATION_Entry(QVariant msg) {
     if(AppModel::instance()->newWalletInfo()){
@@ -52,28 +53,31 @@ void EVT_ADD_WALLET_TOP_UP_XPUBS_REQUEST_HANDLER(QVariant msg) {
     if(signer_index >= 0 && AppModel::instance()->newWalletInfo() && AppModel::instance()->newWalletInfo()->singleSignersAssigned()){
         QSingleSignerPtr it = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->getSingleSignerByIndex(signer_index);
         if(it){
+            QString master_signer_id = it.data()->masterSignerId();
+            int     signer_type = it.data()->signerType();
             QWarningMessage warningmsg;
-            bridge::nunchukCacheMasterSignerXPub(it.data()->masterSignerId(), warningmsg);
+            bridge::nunchukCacheMasterSignerXPub(master_signer_id, warningmsg);
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-                int numberSignerRequired = AppModel::instance()->newWalletInfo()->n();
-                bool escrow = AppModel::instance()->newWalletInfo()->escrow();
-                ENUNCHUCK::WalletType walletType =  escrow ? ENUNCHUCK::WalletType::ESCROW :
-                                                             numberSignerRequired > 1 ? ENUNCHUCK::WalletType::MULTI_SIG
-                                                                                      : ENUNCHUCK::WalletType::SINGLE_SIG;
-                ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt();
-                warningmsg.resetWarningMessage();
-                QSingleSignerPtr signer{nullptr};
-                if(((int)ENUNCHUCK::SignerType::SOFTWARE == it.data()->signerType())
-                        || (int)ENUNCHUCK::SignerType::HARDWARE == it.data()->signerType()
-                        || (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()){
-                    if (AppModel::instance()->getIsPremiumUser() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
-                        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(it.data()->masterSignerId(),
+                if(((int)ENUNCHUCK::SignerType::SOFTWARE == signer_type)
+                        || (int)ENUNCHUCK::SignerType::HARDWARE == signer_type
+                        || (int)ENUNCHUCK::SignerType::NFC == signer_type)
+                {
+                    int numberSignerRequired = AppModel::instance()->newWalletInfo()->n();
+                    bool escrow = AppModel::instance()->newWalletInfo()->escrow();
+                    ENUNCHUCK::WalletType walletType =  escrow ? ENUNCHUCK::WalletType::ESCROW :
+                                                                 numberSignerRequired > 1 ? ENUNCHUCK::WalletType::MULTI_SIG
+                                                                                          : ENUNCHUCK::WalletType::SINGLE_SIG;
+                    ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt();
+                    warningmsg.resetWarningMessage();
+                    QSingleSignerPtr signer{nullptr};
+                    if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == signer_type) {
+                        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(master_signer_id,
                                                                                  walletType,
                                                                                  addressType,
                                                                                  warningmsg);
                     }
                     else {
-                        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(it.data()->masterSignerId(),
+                        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(master_signer_id,
                                                                                 walletType,
                                                                                 addressType,
                                                                                 warningmsg);
@@ -81,25 +85,16 @@ void EVT_ADD_WALLET_TOP_UP_XPUBS_REQUEST_HANDLER(QVariant msg) {
 
                     if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
                         AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(msg.toInt(), signer);
-                        AppModel::instance()->showToast(0,
-                                                        STR_CPP_097,
-                                                        EWARNING::WarningType::SUCCESS_MSG,
-                                                        STR_CPP_097);
+                        AppModel::instance()->showToast(0, STR_CPP_097, EWARNING::WarningType::SUCCESS_MSG);
                     }
                     else{
                         it.data()->setNeedTopUpXpub(true);
-                        AppModel::instance()->showToast(warningmsg.code(),
-                                                        warningmsg.what(),
-                                                        (EWARNING::WarningType)warningmsg.type(),
-                                                        STR_CPP_069.arg(it.data()->masterFingerPrint().toUpper()));
+                        AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
                     }
                 }
             }
             else{
-                AppModel::instance()->showToast(warningmsg.code(),
-                                                warningmsg.what(),
-                                                (EWARNING::WarningType)warningmsg.type(),
-                                                STR_CPP_070.arg(it.data()->masterFingerPrint().toUpper()));
+                AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
             }
         }
     }

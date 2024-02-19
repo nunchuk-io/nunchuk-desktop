@@ -64,10 +64,9 @@ Rectangle {
             width: unspendWidth
             height: parent.height
 
-            QImage {
+            QIcon {
+                iconSize: 24
                 id: checkboxutxo
-                width: 24
-                height: 24
                 source: utxoSelected ? (!AppModel.walletInfo.walletEscrow ? iconChecked[0] : iconChecked[1]) :
                                         (!AppModel.walletInfo.walletEscrow ? iconUnChecked[0] : iconUnChecked[1])
                 anchors.verticalCenter: parent.verticalCenter

@@ -110,7 +110,7 @@ public:
     nunchuk::SingleSigner GetSignerFromMasterSigner(const std::string& mastersigner_id,
                                                     const nunchuk::WalletType& wallet_type,
                                                     const nunchuk::AddressType& address_type,
-                                                    int index,
+                                                    const int index,
                                                     QWarningMessage& msg);
 
     nunchuk::SingleSigner GetSignerFromMasterSigner(const std::string &mastersigner_id,
@@ -124,11 +124,11 @@ public:
                                        const std::string& master_fingerprint,
                                        const std::string& type,
                                        QWarningMessage& msg);
-
-    int GetCurrentIndexFromMasterSigner( const std::string& mastersigner_id,
-                                         const nunchuk::WalletType& wallet_type,
-                                         const nunchuk::AddressType& address_type,
-                                         QWarningMessage& msg);
+    
+    int GetLastUsedSignerIndex( const std::string& xfp,
+                               const nunchuk::WalletType& wallet_type,
+                               const nunchuk::AddressType& address_type,
+                               QWarningMessage& msg);
 
     nunchuk::SingleSigner GetUnusedSignerFromMasterSigner( const std::string& mastersigner_id,
                                                            const nunchuk::WalletType& wallet_type,
@@ -207,6 +207,7 @@ public:
                                            const std::vector<nunchuk::UnspentOutput> inputs,
                                            nunchuk::Amount fee_rate,
                                            bool subtract_fee_from_amount,
+                                           const std::string& replace_txid,
                                            QWarningMessage& msg);
 
     nunchuk::Transaction DraftTransaction(const std::string& wallet_id,
@@ -214,6 +215,7 @@ public:
                                           const std::vector<nunchuk::UnspentOutput> inputs,
                                           nunchuk::Amount fee_rate,
                                           const bool subtract_fee_from_amount,
+                                          const std::string &replace_txid,
                                           QWarningMessage& msg);
 
     nunchuk::Transaction ReplaceTransaction(const std::string &wallet_id,
@@ -245,6 +247,11 @@ public:
     nunchuk::Transaction ImportPsbt(const std::string& wallet_id,
                                     const std::string& psbt,
                                     QWarningMessage& msg);
+
+    bool ReplaceTransactionId(const std::string& wallet_id,
+                              const std::string& transaction_id,
+                              const std::string& replace_txid,
+                              QWarningMessage& msg);
 
     nunchuk::Transaction SignTransaction(const std::string& wallet_id,
                                          const std::string& tx_id,
@@ -301,6 +308,10 @@ public:
                                       QWarningMessage& msg);
 
     std::string GetSelectedWallet(QWarningMessage& msg);
+
+    std::string GetWalletExportData(const nunchuk::Wallet& wallet,
+                                    nunchuk::ExportFormat format,
+                                    QWarningMessage& msg);
 
     void PromtPinOnDevice(const nunchuk::Device& device, QWarningMessage& msg);
 
@@ -396,6 +407,7 @@ public:
                                                       QWarningMessage& msg);
 
     std::vector<nunchuk::SingleSigner> ParseJSONSigners(const std::string& json_str,
+                                                        nunchuk::SignerType signer_type,
                                                         QWarningMessage& msg);
 
     std::vector<std::string> ExportPassportWallet(const std::string& wallet_id,
@@ -469,10 +481,22 @@ public:
     nunchuk::SingleSigner GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id,
                                                                   QWarningMessage& msg);
 
+    nunchuk::SingleSigner GetSigner(const std::string& xfp,
+                                    const nunchuk::WalletType& wallet_type,
+                                    const nunchuk::AddressType& address_type,
+                                    const int index,
+                                    QWarningMessage& msg);
+
     bool IsCPFP(const std::string& wallet_id,
                 const nunchuk::Transaction& tx,
                 nunchuk::Amount& package_fee_rate,
                 QWarningMessage& msg);
+
+    bool IsMyAddress(const std::string& wallet_id,
+                    const std::string& address,
+                    QWarningMessage& msg);
+
+    std::vector<nunchuk::UnspentOutput> GetUnspentOutputsFromTxInputs(const std::string& wallet_id, const std::vector<nunchuk::TxInput>& inputs, QWarningMessage &msg);
 private:
     nunchukiface();
     ~nunchukiface();

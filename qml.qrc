@@ -1,18 +1,15 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>Qml/Popups/ONS_Waiting.qml</file>
         <file>Qml/Components/customizes/QBoxShadow.qml</file>
         <file>Qml/Components/customizes/QConnection.qml</file>
         <file>Qml/Components/customizes/QScreen.qml</file>
-        <file>Qml/Components/customizes/QWalletManagerDelegate.qml</file>
         <file>Qml/Components/origins/QImage.qml</file>
         <file>Qml/Components/origins/QListView.qml</file>
         <file>Qml/Components/origins/QTabView.qml</file>
         <file>Qml/Components/origins/QTabItem.qml</file>
         <file>Qml/Components/origins/QComboBox.qml</file>
         <file>Qml/Components/customizes/QMasterSignerDelegate.qml</file>
-        <file>Qml/Components/customizes/QAssignedSignerDelegate.qml</file>
         <file>Qml/Components/customizes/QTransactionDelegate.qml</file>
         <file>Qml/Components/origins/QTextEdit.qml</file>
         <file>Qml/Components/origins/QTextField.qml</file>
@@ -28,8 +25,6 @@
         <file>Qml/Components/customizes/QProgressbar.qml</file>
         <file>Qml/Components/customizes/QTooltip.qml</file>
         <file>Qml/Components/origins/QMouseArea.qml</file>
-        <file>Qml/Components/customizes/QQrScanner.qml</file>
-        <file>Qml/Components/customizes/QQrExportResult.qml</file>
         <file>Qml/Components/customizes/QNumPad.qml</file>
         <file>Qml/Components/customizes/QSeedSelectionItem.qml</file>
         <file>Qml/Components/customizes/QPassphraseInput.qml</file>
@@ -78,13 +73,10 @@
         <file>Qml/Components/customizes/Chats/QConversationDelegate.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_REVIEW_SHARED_WALLET.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_CREATE_SHARED_WALLET.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_CONFIGURE_SHARED_WALLET.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ASSIGN_SIGNER_TO_SHARED_WALLET.qml</file>
         <file>Qml/Components/customizes/QSwitchTypeB.qml</file>
         <file>Qml/Components/customizes/QVolumeTypeA.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SHARED_WL_DEVICE_REGISTRATION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SHARED_WALLET_CONFIGURE.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_BACKUP_SHARED_WALLET.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_STARTING_CREATE_SIGNER.qml</file>
         <file>Qml/Components/customizes/QOnScreenContent.qml</file>
         <file>Qml/Components/customizes/Chats/QAssignSignerDelegate.qml</file>
@@ -92,9 +84,7 @@
         <file>Qml/Components/customizes/Chats/QContextMenu.qml</file>
         <file>Qml/Components/customizes/Chats/QConversationInfo.qml</file>
         <file>Qml/Components/customizes/QNotificationToast.qml</file>
-        <file>Qml/Popups/TOAST_WARNING.qml</file>
         <file>Qml/Components/customizes/Chats/QTransactionSignerDelegate.qml</file>
-        <file>Qml/Components/customizes/QQrImportScanner.qml</file>
         <file>Qml/Global/QGlobal.qml</file>
         <file>Qml/Global/QWalletData.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_UPDATE_PROFILE.qml</file>
@@ -107,12 +97,8 @@
         <file>Qml/Components/customizes/QConfirmCodeDeletion.qml</file>
         <file>Qml/Components/customizes/QLoggedInDevicesBox.qml</file>
         <file>Qml/Components/customizes/QLoggedInDeviceDetail.qml</file>
-        <file>Qml/Components/customizes/QPopupInfo.qml</file>
         <file>Qml/Components/customizes/Chats/QContentCreateWL.qml</file>
         <file>Qml/Components/customizes/QAreaWalletDetail.qml</file>
-        <file>Qml/Components/customizes/QPopupBusyLoading.qml</file>
-        <file>Qml/Components/customizes/QPopupToast.qml</file>
-        <file>Qml/Components/customizes/QPopupGuestMode.qml</file>
         <file>Qml/Components/customizes/Chats/QContactInfoPage.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_RECOVER_SHARED_WALLET.qml</file>
         <file>Qml/Components/customizes/QAddWelcome.qml</file>
@@ -122,15 +108,9 @@
         <file>Qml/Components/customizes/QUserSettingPanel.qml</file>
         <file>Qml/Components/customizes/QGuestSettingPanel.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_CREATE_ACCOUNT.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_CHANGE_PASSWORD.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_ACCOUNT.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_MANUALLY.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_LOGIN_WITH_SOFTWARE_KEY.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_REPLACE_PRIMARY_KEY.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_CONFIGURATION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN.qml</file>
-        <file>Qml/Components/customizes/QPopupInfoVertical.qml</file>
         <file>Qml/Components/customizes/QConfirmDeletingTypeB.qml</file>
         <file>Qml/Components/customizes/Chats/QAttachment.qml</file>
         <file>Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml</file>
@@ -143,7 +123,6 @@
         <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_ANSER_SECURITY_QUESTION.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_SUCCESS.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_REENTER_YOUR_PASSWORD.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SELECT_YOUR_LOCKDOWN_PERIOD.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml</file>
@@ -180,52 +159,21 @@
         <file>Qml/Screens/OnlineMode/SCR_BACKUP_SHARED_WALLET.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_CHANGE_PASSWORD.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_CONFIGURE_SHARED_WALLET.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_CONTACT_PENDING_REQUEST.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_CREATE_ACCOUNT.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_CREATE_SHARED_WALLET.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_DUMMY_TRANSACTION_INFO.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ENTER_BACKUP_PASSWORD.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_HOME_ONLINE.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_INHERITANCE_CONFIRM_TRANSACTION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_INHERITANCE_TRANSACTION_DETAILS.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_INHERITANCE_WITHDRAW_BALANCE.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_KEY_RECOVERY_ANSER_SECURITY_QUESTION.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_ANSER_SECURITY_QUESTION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_LOCKDOWN_SUCCESS.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_LOGIN_ONLINE.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_LOGIN_WITH_SOFTWARE_KEY.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ONLINE_ADD_CONTACTS.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_ACCOUNT.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_CONFIGURATION.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_RECOVER_SHARED_WALLET.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_REENTER_YOUR_PASSWORD.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_REPLACE_PRIMARY_KEY.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_REVIEW_SHARED_WALLET.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SELECT_YOUR_LOCKDOWN_PERIOD.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SERVICE_SETTINGS.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SHARED_WALLET_CONFIGURE.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SHARED_WL_DEVICE_REGISTRATION.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_MANUALLY.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_STARTING_CREATE_SIGNER.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_TAPSIGNER_RECOVERED_SUCCESS.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_UPDATE_PROFILE.qml</file>
-        <file>Qml/Components/customizes/QSendTransaction.qml</file>
-        <file>Qml/Components/customizes/QReceivedTransaction.qml</file>
         <file>Qml/Components/customizes/QCreateTransaction.qml</file>
-        <file>Qml/Components/customizes/QPopupEmpty.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_LEDGER.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_LEDGER_ASK.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR_ASK.qml</file>
-        <file>Qml/Components/customizes/QAddAssistedWalletSigner.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_HARDWARE.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_HARDWARE_ASK.qml</file>
         <file>Qml/Components/customizes/QProgressbarTypeA.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SELECT_WALLET_CO_SIGN_POLICE.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_EDIT_YOUR_INHERITANCE_PLAN.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SHARE_YOUR_SECRETS.qml</file>
-        <file>Qml/Components/customizes/services/QViewInheritancePlaning.qml</file>
         <file>Qml/Components/customizes/services/QSelectAnAssistedWallet.qml</file>
         <file>Qml/Components/customizes/Buttons/QLinearGradient.qml</file>
         <file>Qml/Components/customizes/Buttons/QAssistedWalletDelegate.qml</file>
@@ -239,12 +187,223 @@
         <file>Qml/Components/customizes/Buttons/QCheckBoxButton.qml</file>
         <file>Qml/Components/customizes/Buttons/QRadioButtonTypeF.qml</file>
         <file>Qml/Components/customizes/services/QInheritanceDetails.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_COLDCARD.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_COLDCARD_ASK.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_COLDCARD_EXIST.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_LEDGER_EXIST.qml</file>
-        <file>Qml/Screens/OnlineMode/SCR_ADD_TREZOR_EXIST.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_ADD_HARDWARE_EXIST.qml</file>
         <file>Qml/Components/customizes/QAddAnExistingKey.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddBitBox.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddBitBoxAsk.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddBitBoxExist.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddColdcard.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddColdcardAsk.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddColdcardExist.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddLedger.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddLedgerAsk.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddLedgerExist.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddTrezor.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddTrezorAsk.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddTrezorExist.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAdd.qml</file>
+        <file>Qml/Components/customizes/QHomeInitialStep3.qml</file>
+        <file>Qml/Components/customizes/QHomeFreeRate.qml</file>
+        <file>Qml/Components/customizes/QHomeManagerSigners.qml</file>
+        <file>Qml/Components/customizes/QHomeManagerWallets.qml</file>
+        <file>Qml/Components/customizes/QHomePendingWallet.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRefreshButtonA.qml</file>
+        <file>Qml/Components/customizes/QWarningBg.qml</file>
+        <file>Qml/Components/customizes/Wallets/QPendingWallet.qml</file>
+        <file>Qml/Components/customizes/Signers/QAddAssistedWalletSigner.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletManagerDelegate.qml</file>
+        <file>Qml/Components/customizes/Wallets/QDashboardAlert.qml</file>
+        <file>Qml/Components/customizes/Signers/QAddRequestKey.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QSavingAccount.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckProcedure.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QTransactionDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QSavingAccountDelegate.qml</file>
+        <file>Qml/Components/origins/QIcon.qml</file>
+        <file>Qml/Components/origins/QCircleIcon.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerDetailDelegate.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerDarkIcon.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerLightIcon.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerBadgeName.qml</file>
+        <file>Qml/Components/customizes/Texts/QIconText.qml</file>
+        <file>Qml/Components/customizes/Transactions/QMemberKeysArea.qml</file>
+        <file>Qml/Components/customizes/Transactions/QReceivedTransaction.qml</file>
+        <file>Qml/Components/customizes/Transactions/QSendAddressArea.qml</file>
+        <file>Qml/Components/customizes/Transactions/QSendTransaction.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupDisplayAddressBusyBox.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupSigningBusyBox.qml</file>
+        <file>Qml/Components/customizes/Transactions/QBtnExportImport.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckPending.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckRequestSent.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckRequested.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QWalletCreationPending.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QRegisterAirGappedDevice.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QRegisterCOLDCARD.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QRegisterBitbox.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrExportResultA.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrImportScanner.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrScanner.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrExportResult.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QClaimYourKey.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerDetailRadioDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QAddKeyRefreshDevices.qml</file>
+        <file>Qml/Components/origins/QSvgImage.qml</file>
+        <file>Qml/Components/origins/QDashRectangle.qml</file>
+        <file>Qml/Components/origins/QLine.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupBusyLoading.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupEmpty.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupGuestMode.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupInfo.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupToast.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupInfoVertical.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopup.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupInfoTwoButtons.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupInfoThreeButtons.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QAccessingWalletConfiguration.qml</file>
+        <file>Qml/Screens/OnlineMode/ServerKeys/QPlatformKeyPolicyChange.qml</file>
+        <file>Qml/Screens/OnlineMode/ServerKeys/QSignaturesRequired.qml</file>
+        <file>Qml/Screens/OnlineMode/ServerKeys/QSpendingLimit.qml</file>
+        <file>Qml/Screens/OnlineMode/ServerKeys/QBroadcastAndDelay.qml</file>
+        <file>Qml/Components/customizes/Members/QAvatarTextBadge.qml</file>
+        <file>Qml/Components/customizes/Members/QMemberRole.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextBadgeVerical.qml</file>
+        <file>Qml/Screens/OnlineMode/ServerKeys/QSpendingLimitDelegate.qml</file>
+        <file>Qml/Popups/QToastItem.qml</file>
+        <file>Qml/Components/QLeftPannel.qml</file>
+        <file>Qml/Components/QRightPannel.qml</file>
+        <file>Qml/Components/LeftPannel/QServiceLeftPannel.qml</file>
+        <file>Qml/Components/RightPannel/QServiceRightPannel.qml</file>
+        <file>Qml/Components/LeftPannel/QSettingLeftPannel.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingDisplayUnit.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingLocalCurrency.qml</file>
+        <file>Qml/Components/RightPannel/QSettingRightPannel.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingAccountSettings.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingDatabaseEncrytion.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingDeveloperSettings.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingAbout.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingHardwareDriver.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingNetworkSettings.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceNotSubscriberRightPannel.qml</file>
+        <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceSubscriberLeftPannel.qml</file>
+        <file>Qml/Components/LeftPannel/Service/Common/QServiceNotSubscriberLeftPannel.qml</file>
+        <file>Qml/Components/LeftPannel/Service/HoneyBadger/QServiceSubscriberLeftPannel.qml</file>
+        <file>Qml/Components/LeftPannel/Service/IronHand/QServiceSubscriberLeftPannel.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServicePlatformKeyCoSigningPolicies.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceSubscriberRightPannel.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPopupAnswerSecurityQuestion.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServicePlatformKeyCoSigningPolicies.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServiceSubscriberRightPannel.qml</file>
+        <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceObserverIterationLeftPannel.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServiceObserverIterationRightPannel.qml</file>
+        <file>Qml/Components/customizes/services/QAnswerSQConfirmCode.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_DASHBOARD_ALERT_INFO.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_HEALTH_CHECK_STARTING.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_KEY_HEALTH_CHECK_STATUS.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPoliciesSpendingLimit.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPoliciesCoSigningSpendingLimit.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QPoliciesPendingLimitMemberDelegate.qml</file>
+        <file>Qml/Components/RightPannel/Wallet/Dashboard/QMemberDelegate.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QPoliciesApplyTheSameLimitToAllMembers.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServicePlatformKeyCoSigningPoliciesDetails.qml</file>
+        <file>Qml/Components/customizes/Buttons/QSwitchTypeLabel.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPoliciesBroadcastAndDelay.qml</file>
+        <file>Qml/Components/customizes/Buttons/QSwitchTypeTwoLabel.qml</file>
+        <file>Qml/Components/customizes/QHomeLockdownInProgress.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritancePlanDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritancePlanInfo.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritancePlanningRequest.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceNotificationPreferences.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceInheritanceNotificationPreferences.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QEditInheritanceSetupAnActivationDate.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QEditInheritanceLeaveAMessage.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QEditInheritanceSetupBufferPeriod.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QEditInheritanceNotificationPreferences.qml</file>
+        <file>Qml/Components/customizes/Texts/QEmailAndUserInput.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServiceViewInheritancePlaning.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServiceViewInheritancePlaningDetail.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaning.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetail.qml</file>
+        <file>Qml/Popups/QToastMessage.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServicePlatformKeyCoSigningPoliciesDetails.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimAnInheritance.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceBufferPeriodHasStarted.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceMagicPhraseAndBackupPassword.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceYourInheritance.qml</file>
+        <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceEmptyStateLeftPannel.qml</file>
+        <file>Qml/Components/customizes/services/QTapsignerRecovered.qml</file>
+        <file>Qml/Components/customizes/services/QKeyRecoveryResult.qml</file>
+        <file>Qml/Components/customizes/services/QEnterBackupPassword.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QKeyRecoveryRequested.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_DASHBOARD_ALERT_SUCCESS.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritancePlanHasBeenSetup.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceKeyRecovery.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SETUP_SECURITY_QUESTION.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SETUP_ANSWER_SECURITY_QUESTION.qml</file>
+        <file>Qml/Components/customizes/services/QSetupSecurityQuestions.qml</file>
+        <file>Qml/Components/customizes/services/QSetupCreateSecurityQuestionBox.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_RECURRING_PAYMENTS.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentEmptyState.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentEnterName.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentFixedAmount.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentDestinationPayment.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentFrequency.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentImportFirstAddress.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentImportFormat.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentPercentage.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentPercentageCalculated.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentPlatformKeyCoSign.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentPopulatedState.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentReview.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentTransactionNote.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentWhiteListedAddress.qml</file>
+        <file>Qml/Components/customizes/services/QSecurityQuestionDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QImportedFirstAddressOfWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QImportedConfigurationDetails.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrIcon.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QFrequencyRepeat.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QFrequencyDateRange.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupCalendar.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentFeeRate.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QPaymentReviewLeft.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QPaymentReviewRight.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrExportOneAddress.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QAuthorizeRecurringPayment.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QUseWhitelistedEnterAddresses.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QUseWhitelistedBatchImport.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QEnterAddressDelegate.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceEmergencyLockdown.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceEmergencyLockdownDetail.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentViewingDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentViewingSort.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentRequest.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QCancelRecurringPayment.qml</file>
+        <file>Qml/Screens/OnlineMode/RecurringPayments/QRecurringPaymentCancelationPending.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QRequestedKeyRecoveryFor.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceWidthdrawToWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceWidthdrawToAddress.qml</file>
+        <file>Qml/Components/customizes/Signers/QRowSingleSignerType.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddColdcardViaAFile.qml</file>
+        <file>Qml/Components/customizes/Transactions/QBtnOptions.qml</file>
+        <file>Qml/Components/customizes/Transactions/QGroupMembers.qml</file>
+        <file>Qml/Components/customizes/Transactions/QContentReplaceByFee.qml</file>
+        <file>Qml/Components/customizes/Transactions/QOnScreenCancelPendingTransaction.qml</file>
+        <file>Qml/Components/customizes/Transactions/QFeeRate.qml</file>
+        <file>Qml/Components/customizes/Transactions/QCreateTransaction.qml</file>
+        <file>Qml/Components/customizes/Transactions/QOnScreenReplaceByFee.qml</file>
+        <file>Qml/Components/customizes/Transactions/QContentCancelPendingTransaction.qml</file>
+        <file>Qml/Components/customizes/Transactions/QWalletAddress.qml</file>
+        <file>Qml/Components/customizes/Transactions/QContentCustomizeDestination.qml</file>
+        <file>Qml/Components/customizes/Transactions/QNewRecipientAddress.qml</file>
+        <file>Qml/Components/customizes/Transactions/QOnScreenCustomizeDestination.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletConfig.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletKeyDelegate.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupGapLimit.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletAlias.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupForceRefreshBusybox.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletAliasTextInput.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletPrimaryOwner.qml</file>
+        <file>Qml/Components/customizes/Wallets/QMemberPrimaryOwner.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletDelegateBackground.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -441,7 +600,6 @@
         <file>Images/Default.svg</file>
         <file>Images/Device_Icons/air-gapped-key-dark.svg</file>
         <file>Images/Device_Icons/ColdCard.svg</file>
-        <file>Images/Device_Icons/software_drak.svg</file>
         <file>Images/Device_Icons/Trezor.svg</file>
         <file>Images/Device_Icons/unknown-key-dark.svg</file>
         <file>Images/OnlineMode/no-image.jpg</file>
@@ -487,6 +645,39 @@
         <file>Images/trezor-illustration.svg</file>
         <file>Images/Device_Icons/Ledger.svg</file>
         <file>Images/coldcard-illustration.svg</file>
+        <file>Images/message-dark.svg</file>
+        <file>Images/health-check-dark.svg</file>
+        <file>Images/check-circle-dark.svg</file>
+        <file>Images/Device_Icons/key-dark.svg</file>
+        <file>Images/account-member-dark.svg</file>
+        <file>Images/history-24px.svg</file>
+        <file>Images/Device_Icons/software_dark.svg</file>
+        <file>Images/pending-actions-dark.svg</file>
+        <file>Images/BitBox-illustration.svg</file>
+        <file>Images/Air-gapped-key-illustration.svg</file>
+        <file>Images/Device_Icons/bitbox-hardware-dark.svg</file>
+        <file>Images/Device_Icons/coldcard-hardware-dark.svg</file>
+        <file>Images/Device_Icons/jade-hardware-dark.svg</file>
+        <file>Images/Device_Icons/keystone-hardware-dark.svg</file>
+        <file>Images/Device_Icons/ledger-hardware-dark.svg</file>
+        <file>Images/Device_Icons/other-hardware-dark.svg</file>
+        <file>Images/Device_Icons/passport-hardware-dark.svg</file>
+        <file>Images/Device_Icons/seedsigner-hardware-dark.svg</file>
+        <file>Images/Device_Icons/trezor-hardware-dark.svg</file>
+        <file>Images/save-backup-dark.svg</file>
+        <file>Images/COLDCARD-register.svg</file>
+        <file>Images/key_security_tip.svg</file>
+        <file>Images/OnlineMode/inactive_avatar.png</file>
+        <file>Images/lock-dark.svg</file>
+        <file>Images/OnlineMode/wallet-dark.png</file>
+        <file>Images/notifications_active_black.svg</file>
+        <file>Images/pending-transaction-dark.svg</file>
+        <file>Images/QR-dark.svg</file>
+        <file>Images/sort-dark.svg</file>
+        <file>Images/4.Active.svg</file>
+        <file>Images/OnlineMode/scheduling-dark.png</file>
+        <file>Images/OnlineMode/signature-dark.png</file>
+        <file>Images/OnlineMode/visibility-dark.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

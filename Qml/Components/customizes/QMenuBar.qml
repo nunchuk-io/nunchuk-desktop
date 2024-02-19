@@ -109,12 +109,12 @@ Rectangle {
     Rectangle {
         id: avatarRect
         width: 48
-        height: height
-        radius: height
+        height: 48
+        radius: 48
         color: userMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 24
+        anchors.bottomMargin: 12
         QAvatar {
             id: userAvt
             width: 36

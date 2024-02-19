@@ -29,6 +29,7 @@ import "../../customizes"
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
+import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -46,6 +47,7 @@ Rectangle {
     property bool   isSoftwareSigner : false
     property int    signerType: -1
     property bool   isPrimaryKey: false
+    property int    accountIndex: 0
     signal itemClicked()
     Row {
         id: roomDelegateContent
@@ -86,43 +88,13 @@ Rectangle {
                     text: "XFP: " + signerxfp
                     font.capitalization: Font.AllUppercase
                 }
-
-                Rectangle {
-                    width: _txt1.paintedWidth + 8*2
-                    height: 16
-                    color: "#FDD95C"
-                    visible: isPrimaryKey
-                    radius: 4
-                    QText {
-                        id:_txt1
-                        text: STR.STR_QML_641
-                        font.family: "Lato"
-                        font.weight: Font.Bold
-                        font.pixelSize: 10
-                        anchors.centerIn: parent
-                        color: "#031F2B"
-                    }
-                }
-
-                Rectangle {
-                    width: typesigner.width + 10
-                    height: parent.height
-                    color: "#EAEAEA"
-                    visible: isLocaluser && (signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.SOFTWARE)
-                    radius: 20
-                    QText {
-                        id: typesigner
-                        font.family: "Lato"
-                        color: "#031F2B"
-                        font.pixelSize: 10
-                        anchors.centerIn: parent
-                        font.weight: Font.Bold
-                        text: GlobalData.signers(signerType)
-                    }
+                QRowSingleSignerType {
+                    isPrimaryKey: roomRoot.isPrimaryKey
+                    signerType:   roomRoot.signerType
+                    accountIndex: roomRoot.accountIndex
+                    visible: isLocaluser
                 }
             }
-
-
         }
         QText{
             id: assignedText
@@ -135,16 +107,14 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             visible: signerxfp !== "" && !isLocaluser
         }
-        QImage {
-            width: 24
-            height: 24
+        QIcon {
+            iconSize: 24
             source: "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png"
             anchors.verticalCenter: parent.verticalCenter
             visible: signerxfp !== "" && !isLocaluser
         }
-        QImage {
-            width: 24
-            height: 24
+        QIcon {
+            iconSize: 24
             scale: leavemouse.pressed? 1 : leavemouse.containsMouse ? 1.1 : 1
             transformOrigin: Item.Center
             source: "qrc:/Images/Images/Close.png"

@@ -102,10 +102,9 @@ Rectangle {
         }
     }
 
-    QImage {
+    QIcon {
+        iconSize: 24
         id: icoEdit
-        width: 24
-        height: 24
         source: "qrc:/Images/Images/edit.png"
         anchors.right: parent.right
         anchors.rightMargin: 16

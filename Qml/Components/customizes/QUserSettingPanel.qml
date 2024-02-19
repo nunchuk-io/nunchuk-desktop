@@ -102,7 +102,7 @@ Column {
             width: 97
             height: 24 + 8
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: ClientController.user.isPremiumUser
+            visible: ClientController.user.isSubscribedUser
             Rectangle{
                 width: _row.childrenRect.width + 10*2
                 height: 24
@@ -127,7 +127,25 @@ Column {
                         font.family: "Lato"
                         font.pixelSize: 12
                         color: "#031F2B"
-                        text: ClientController.user.plan_slug === "iron_hand" ? STR.STR_QML_680 : STR.STR_QML_681
+                        text: {
+                            var user = ClientController.user
+                            if (user.isIronHandUser) {
+                                return STR.STR_QML_680
+                            }
+                            else if (user.isHoneyBadgerUser) {
+                                return STR.STR_QML_681
+                            }
+                            else if (user.isByzantineUserStandard) {
+                                return STR.STR_QML_1003
+                            }
+                            else if (user.isByzantineUserPro) {
+                                return STR.STR_QML_1003_Pro
+                            }
+                            else if (user.isByzantineUserPremier) {
+                                return STR.STR_QML_1003_Premier
+                            }
+                            return ""
+                        }
                         font.weight: Font.Normal
                         anchors.verticalCenter: parent.verticalCenter
                     }

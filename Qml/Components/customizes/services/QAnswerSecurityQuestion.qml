@@ -38,7 +38,6 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_716
     signal clearText
-
     Column {
         anchors{
             left: parent.left
@@ -61,7 +60,7 @@ QOnScreenContentTypeA {
             height: childrenRect.height + 16
             spacing: 16
             clip: true
-            model: UserWallet.securityQuestions
+            model: ServiceSetting.servicesTag.securityQuestions
             interactive: false
             delegate: Item {
                 id: questionsdlg
@@ -90,12 +89,12 @@ QOnScreenContentTypeA {
                                 answer.errorText = ""
                             }
                             answer.showError = false;
-                            UserWallet.secQuesAnswer(modelData.id, textInputted)
+                            ServiceSetting.servicesTag.secQuesAnswer(modelData.id, textInputted)
                         }
                     }
                 }
                 Connections {
-                    target: UserWallet
+                    target: ServiceSetting.servicesTag
                     onAnswerErrorAlert: {
                         answer.errorText = errormsg
                         answer.isValid = false

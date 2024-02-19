@@ -110,7 +110,8 @@ class Transaction : public QObject {
     Q_PROPERTY(QString                      blocktime               READ blocktimeDisplay       NOTIFY blocktimeChanged)
     Q_PROPERTY(bool                         isReceiveTx             READ isReceiveTx            NOTIFY isReceiveTxChanged)
     Q_PROPERTY(bool                         subtractFromFeeAmount   READ subtractFromFeeAmount  NOTIFY subtractFromFeeAmountChanged)
-    Q_PROPERTY(QString                      replacedTxid            READ replacedTxid           NOTIFY replacedTxidChanged)
+    Q_PROPERTY(QString                      replacedByTxid          READ get_replaced_by_txid   NOTIFY replacedTxidChanged)
+    Q_PROPERTY(QString                      replaceTxid             READ get_replace_txid       NOTIFY replacedTxidChanged)
     Q_PROPERTY(QString                      roomId                  READ roomId                 NOTIFY roomIdChanged)
     Q_PROPERTY(QString                      initEventId             READ initEventId            NOTIFY initEventIdChanged)
     Q_PROPERTY(bool                         createByMe              READ createByMe             NOTIFY createByMeChanged)
@@ -119,6 +120,13 @@ class Transaction : public QObject {
     Q_PROPERTY(QString                      packageFeeRate          READ packageFeeRate         NOTIFY packageFeeRateChanged)
     Q_PROPERTY(QString                      destination             READ destination            NOTIFY destinationListChanged)
     Q_PROPERTY(bool                         isCpfp                  READ isCpfp                 CONSTANT)
+    Q_PROPERTY(bool                         isCosigning             READ isCosigning            NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(int                          scan_percent            READ scan_percent           NOTIFY scan_percentChanged)
+    Q_PROPERTY(bool                         enableRequestSignature  READ enableRequestSignature  CONSTANT)
+    Q_PROPERTY(bool                         enableScheduleBroadcast READ enableScheduleBroadcast CONSTANT)
+    Q_PROPERTY(bool                         enableCancelTransaction READ enableCancelTransaction CONSTANT)
+    Q_PROPERTY(bool                         hasMoreBtn              READ hasMoreBtn             NOTIFY hasMoreBtnChanged)
+
 public:
     Transaction();
     ~Transaction();
@@ -176,7 +184,8 @@ public:
     SingleSignerListModel* singleSignersAssigned();
     int numberSigned();
 
-    QString replacedTxid() const;
+    QString get_replaced_by_txid() const;
+    QString get_replace_txid();
 
     nunchuk::Transaction nunchukTransaction() const;
     void setNunchukTransaction(const nunchuk::Transaction &tx);
@@ -194,6 +203,36 @@ public:
     QString destination();
     bool isCpfp();
     time_t scheduleTime();
+
+    bool isCosigning() const;
+    void setIsCosigning(bool is_cosigning);
+
+    int scan_percent() const;
+
+    void setTxJson(const QJsonObject &txJs);
+    void setSignatures(const QMap<QString, QString>& signatures);
+    QMap<QString, QString> signatures() const;
+
+    bool hasMoreBtn() const;
+    void setHasMoreBtn(bool has);
+
+    virtual QString dummyXfp() const;
+    virtual bool isDummyTx() const;
+
+    bool enableRequestSignature();
+    bool enableScheduleBroadcast();
+    bool enableCancelTransaction();
+public slots:
+    void setScan_percent(int scan_percent);
+    bool parseQRTransaction(const QStringList& qrtags);
+    bool parseQRSuccess(const QStringList& qrtags);
+    void copyTransactionID();
+    void requestSignatures(const QString& membership_id);
+    void scheduleBroadcast();
+    void cancelTransaction();
+protected:
+    bool ImportQRTransaction(const QStringList& qr_data);
+
 private:
     QDestinationListModelPtr    m_destinations;
     QSingleSignerListModelPtr   m_signers;
@@ -206,7 +245,11 @@ private:
     bool                        m_createByMe;
     QString                     m_serverKeyMessage;
     int                         m_packageFeeRate {0};
-
+    bool                        m_is_cosigning {false};
+    int                         m_scan_percent {0};
+    QJsonObject                 m_txJson = {};
+    QMap<QString, QString>      m_signatures = {};
+    bool                        m_hasMoreBtn {true};
 signals:
     void txidChanged();
     void memoChanged();
@@ -234,6 +277,8 @@ signals:
     void psbtChanged();
     void serverKeyMessageChanged();
     void packageFeeRateChanged();
+    void scan_percentChanged();
+    void hasMoreBtnChanged();
 };
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 
@@ -256,6 +301,7 @@ public:
     void addTransaction(const QTransactionPtr &d);
     void updateTransactionMemo(const QString &tx_id, const QString &memo);
     void updateTransaction(const QString &tx_id, const QTransactionPtr &tx);
+    void updateTransaction(const QString &wallet_id, std::vector<nunchuk::Transaction> txs);
     void removeTransaction(const QString &tx_id);
     void notifyUnitChanged();
     void linkingReplacedTransactions();
@@ -283,6 +329,7 @@ public:
         transaction_replacedTx_role,
         transaction_totalCurrency_role,
         transaction_subtotalCurrency_role,
+        transaction_isRbf_role,
     };
 
 signals:

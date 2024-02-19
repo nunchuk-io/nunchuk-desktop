@@ -28,14 +28,22 @@ import "../../customizes/Buttons"
 Menu {
     id: optionMenu
     implicitWidth: menuWidth
-    implicitHeight: labels.length*menuHeight
+    implicitHeight: {
+        var cnt = 0;
+        for(var i=0; i< labels.length; i++){
+            var show = visibles.length > i ? visibles[i] : true
+            if(show){cnt++}
+        }
+        return cnt*menuHeight
+    }
     property int menuWidth: 250
     property int menuHeight: 48
     property var functions:[]
     property var colors:[]
     property var labels: [""]
-    property var icons: ["", "", "", ""]
-    property var enables: [true, true, true, true, true, true, true, true]
+    property var icons: [""]
+    property var enables: [true]
+    property var visibles: [true]
     signal itemClicked(var index)
     background: Rectangle {
         implicitWidth: menuWidth
@@ -55,10 +63,11 @@ Menu {
         model: labels
         MenuItem {
             id: delegateMenu
-            height: menuHeight
-            text: optionMenu.labels[index]
-            icon.source: optionMenu.icons[index]
-            enabled: optionMenu.enables[index]
+            height: visible ? menuHeight : 0
+            text: optionMenu.labels.length > index ? optionMenu.labels[index] : ""
+            icon.source: optionMenu.icons.length > index ? optionMenu.icons[index] : ""
+            enabled: optionMenu.enables.length > index ? optionMenu.enables[index] : true
+            visible: optionMenu.visibles.length > index ? optionMenu.visibles[index] : true
             onTriggered: {
                 var cacheEnable = delegateMenu.enabled
                 delegateMenu.enabled = false
@@ -71,11 +80,8 @@ Menu {
                 radius: 8
                 opacity: delegateMenu.enabled ? 1 : 0.7
                 color: {
-                    if(delegateMenu.enabled){
-                        return delegateMenu.hovered ? "#F5F5F5": "#FFFFFF"
-                    }else{
-                        return "#EAEAEA"
-                    }
+                    if(delegateMenu.enabled){ return delegateMenu.hovered ? "#F5F5F5": "#FFFFFF" }
+                    else{ return "#EAEAEA" }
                 }
             }
             contentItem: Item {
@@ -88,19 +94,14 @@ Menu {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: optionMenu.icons[index]
+                    source: optionMenu.icons.length > index ? optionMenu.icons[index] : ""
                     opacity: delegateMenu.enabled ? 1.0 : 0.7
                 }
                 QText {
-                    text: optionMenu.labels[index]
+                    text: optionMenu.labels.length > index ? optionMenu.labels[index] : ""
                     color: {
-                        if(!delegateMenu.enabled) return "#595959"
-                        if(optionMenu.colors.length == 0){
-                            "#031F2B"
-                        }
-                        else{
-                            optionMenu.colors[index]
-                        }
+                        if(!delegateMenu.enabled){ return "#595959" }
+                        return (optionMenu.colors.length > index ? optionMenu.colors[index] : "#031F2B")
                     }
                     width: paintedWidth
                     anchors.left: _icon.right

@@ -110,9 +110,8 @@ QScreen {
                                     anchors.centerIn: parent
                                     spacing: 6
                                     property bool isemail: emailrepeat.validateEmail(dataInput.requestlist[index])
-                                    QImage {
-                                        width: 24
-                                        height: 24
+                                    QIcon {
+                                        iconSize: 24
                                         source: emailelement.isemail ? "qrc:/Images/Images/OnlineMode/check_circle_outline_24px.png"
                                                                      : "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png";
                                         anchors.verticalCenter: parent.verticalCenter
@@ -123,9 +122,8 @@ QScreen {
                                         height: 24
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
-                                    QImage {
-                                        width: 24
-                                        height: 24
+                                    QIcon {
+                                        iconSize: 24
                                         source: "qrc:/Images/Images/close-dark.svg"
                                         anchors.verticalCenter: parent.verticalCenter
                                         MouseArea {
@@ -247,11 +245,7 @@ QScreen {
                 else{
                     if(result){
                         QMLHandle.sendEvent(EVT.EVT_ONLINE_ADD_CONTACTS_BACK)
-                        AppModel.showToast(0,
-                                           0,
-                                           EWARNING.SUCCESS_MSG,
-                                           STR.STR_QML_550,
-                                           Popup_t.PopupTop);
+                        AppModel.showToast(0, STR.STR_QML_550, EWARNING.SUCCESS_MSG);
                     }
                 }
             }
@@ -353,11 +347,7 @@ QScreen {
                         Draco.inviteFriends(failEmails.failed_list)
                         failEmails.close()
                         QMLHandle.sendEvent(EVT.EVT_ONLINE_ADD_CONTACTS_BACK)
-                        AppModel.showToast(0,
-                                           0,
-                                           EWARNING.SUCCESS_MSG,
-                                           STR.STR_QML_551,
-                                           Popup_t.PopupTop);
+                        AppModel.showToast(0, STR.STR_QML_551, EWARNING.SUCCESS_MSG);
                     }
                 }
             }

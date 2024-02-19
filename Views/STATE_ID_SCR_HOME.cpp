@@ -23,15 +23,23 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include <QClipboard>
 #include "localization/STR_CPP.h"
 #include "ifaces/Chats/matrixbrigde.h"
 #include "ProfileSetting.h"
+#include "Premiums/QGroupDashboard.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QUserWallets.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
+#include "Premiums/QGroupWalletDummyTx.h"
+#include "Premiums/QRecurringPayment.h"
 
 void SCR_HOME_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::WALLET_TAB);
     ProfileSetting::instance()->createCurrencies();
+    QUserWallets::instance()->GetListAllRequestAddKey();
+    QGroupWallets::instance()->GetAllGroups();
 }
 
 void SCR_HOME_Exit(QVariant msg) {
@@ -39,9 +47,48 @@ void SCR_HOME_Exit(QVariant msg) {
 }
 
 void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
-    if(msg.toInt() >= 0){
-        AppModel::instance()->setWalletListCurrentIndex(msg.toInt());
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    QString group_id = maps["group_id"].toString();
+    DBG_INFO << type << "group:" << group_id;
+    if (qUtils::strCompare(type, "selected")) {
+        int index = maps["data"].toInt();
+        if (index >= 0) {
+            AppModel::instance()->setWalletListCurrentIndex(index);
+        }
+        QString myRole = AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->dashboard() ? AppModel::instance()->walletInfo()->dashboard()->myRole() : "";
+        DBG_INFO << myRole;
+        if(qUtils::strCompare(myRole, "KEYHOLDER_LIMITED")){
+            QGroupWallets::instance()->dashboard(group_id);
+        }
+        else {
+            if (QGroupWallets::instance()->dashboardInfoPtr()) {
+                QGroupWallets::instance()->dashboardInfoPtr()->setShowDashBoard(false);
+            }
+            QGroupWallets::instance()->setDashboardInfo(group_id);
+        }
     }
+    else if (qUtils::strCompare(type, "dashboard")) {
+        QGroupWallets::instance()->dashboard(group_id);
+    }
+    else if (qUtils::strCompare(type, "wallet_dashboard")) {
+        int index = maps["data"].toInt();
+        if (index >= 0) {
+            AppModel::instance()->setWalletListCurrentIndex(index);
+        }
+        QGroupWallets::instance()->dashboard(group_id);
+    }
+    else if (qUtils::strCompare(type, "deny")) {
+        QGroupWallets::instance()->deny(group_id);
+    }
+    else if (qUtils::strCompare(type, "accept")) {
+        QGroupWallets::instance()->accept(group_id);
+        AppModel::instance()->requestCreateUserWallets();
+    }
+    else if (qUtils::strCompare(type, "reset")) {
+        QGroupWallets::instance()->reset(group_id);
+    }
+    else{}
 }
 
 void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
@@ -84,7 +131,11 @@ void EVT_HOME_TRANSACTION_HISTORY_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_WALLET_INFO_REQUEST_HANDLER(QVariant msg) {
-
+    if(auto w = AppModel::instance()->walletInfo()){
+        w->setIsDeleting(false);
+        QGroupWallets::instance()->setDashboardInfo(w->groupId());
+        w->GetWalletAlias();
+    }
 }
 
 void EVT_HOME_WALLET_COPY_ADDRESS_HANDLER(QVariant msg) {
@@ -114,9 +165,12 @@ void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
                 }
             }
             if(wallet.data()->isAssistedWallet()){
-                QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id, txid);
-                it->setServerKeyMessage(data);
+                QJsonObject data = wallet.data()->GetServerKeyInfo(txid);
+                if(!data.isEmpty()){
+                    it->setServerKeyMessage(data);
+                }
             }
+            it->setHasMoreBtn(true);
         }
         AppModel::instance()->setTransactionInfo(it);
     }
@@ -141,26 +195,21 @@ void EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    QWalletPtr w = AppModel::instance()->walletInfoPtr();
-    if (file_path != "" && w){
-        QString wallet_id = w->id();
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+    if (file_path != "" && wallet){
+        QString wallet_id = wallet->id();
         QWarningMessage msgwarning;
-        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, w->isAssistedWallet(), msgwarning);
+        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
+                wallet.data()->CreateAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
                 AppModel::instance()->requestSyncWalletDb(wallet_id);
-                AppModel::instance()->showToast(0,
-                                                STR_CPP_091,
-                                                EWARNING::WarningType::SUCCESS_MSG,
-                                                STR_CPP_091);
+                AppModel::instance()->showToast(0, STR_CPP_091, EWARNING::WarningType::SUCCESS_MSG);
             }
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_092);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
     }
 }
@@ -168,10 +217,7 @@ void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
 void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(),
-                                                file_path,
-                                                nunchuk::ExportFormat::BSMS);
-        DBG_INFO << file_path << ret;
+        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), file_path, nunchuk::ExportFormat::BSMS);
     }
 }
 
@@ -190,21 +236,42 @@ void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
     }
 }
 
-void EVT_ASK_LEDGER_REQ_HANDLER(QVariant msg) {
+void EVT_ASK_HARDWARE_REQ_HANDLER(QVariant msg) {
 }
 
-void EVT_ASK_TREZOR_REQ_HANDLER(QVariant msg) {
+void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {
 }
 
-void EVT_ASK_COLDCARD_REQ_HANDLER(QVariant msg)
+void EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER(QVariant msg)
 {
+    DBG_INFO;
 }
 
-void EVT_EXIST_LEDGER_REQ_HANDLER(QVariant msg) {
+void EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER(QVariant msg)
+{
+    QGroupDashboardPtr dash = QGroupWallets::instance()->dashboardInfoPtr();
+    if (dash) {
+        dash->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS);
+        QtConcurrent::run([dash]() {
+            dash->GetWalletInfo();
+            dash->GetHealthCheckInfo();
+        });
+    }
 }
 
-void EVT_EXIST_TREZOR_REQ_HANDLER(QVariant msg) {
-}
-
-void EVT_EXIST_COLDCARD_REQ_HANDLER(QVariant msg) {
+void EVT_RECURRING_PAYMENTS_REQUEST_HANDLER(QVariant msg)
+{
+    bool callFromAlert = msg.toBool();
+    if (callFromAlert) return;
+    if (auto w = AppModel::instance()->walletInfoPtr()) {
+        if (auto payment = w->recurringPaymentPtr()) {
+            payment->clearFlow();
+            payment->setPaymentCurrent(payment->DefaultPayment());
+            if (payment->HasExistingPayments()) {
+                payment->addFlow((int)PaymentEnum::Enum_t::RECURRING_PAYMENTS_POPULATED_SATE);
+            } else {
+                payment->addFlow((int)PaymentEnum::Enum_t::EMPTY_STATE);
+            }
+        }
+    }
 }

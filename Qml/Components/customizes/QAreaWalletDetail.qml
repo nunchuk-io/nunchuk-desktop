@@ -68,17 +68,8 @@ Item {
         horizontalOffset: 3
         verticalOffset: 3
         radius: 8.0
-        samples: 17
+        samples: 32
         color: "#80000000"
         source: realBalanceCard
     }
-//    InnerShadow {
-//        anchors.fill: realBalanceCard
-//        radius: 8.0
-//        samples: 16
-//        horizontalOffset: -3
-//        verticalOffset: 3
-//        color: "#b0000000"
-//        source: realBalanceCard
-//    }
 }

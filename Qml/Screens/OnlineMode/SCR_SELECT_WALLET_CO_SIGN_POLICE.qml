@@ -52,19 +52,23 @@ QScreen {
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                 }
-                Repeater {
+                QListView {
+                    width: 550
+                    height: 464
+                    clip: true
                     model: AppModel.walletList
-                    QRadioButtonTypeD {
-                        width: 443
+                    ScrollBar.vertical: ScrollBar { active: true }
+                    delegate: QRadioButtonTypeD {
+                        width: 539
                         height: model.wallet_isAssistedWallet ? 92 : 0
                         visible: model.wallet_isAssistedWallet
                         labelTop: model.wallet_name
-                        labelCenter: qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(STR.STR_QML_069)
+                        center1.text: qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(STR.STR_QML_069)
                         labelBottom: model.wallet_Balance + RoomWalletData.unitValue
-                        icon: model.wallet_isSharedWallet ? "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png" :
+                        center2.icon: model.wallet_isSharedWallet ? "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png" :
                                                                  model.wallet_isAssistedWallet ? "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png" :
                                                                                               model.wallet_Escrow ?  "qrc:/Images/Images/OnlineMode/Escrow Wallet.png" : ""
-                        type: model.wallet_isSharedWallet ? STR.STR_QML_438 :
+                        center2.text: model.wallet_isSharedWallet ? STR.STR_QML_438 :
                                                                  model.wallet_isAssistedWallet ? STR.STR_QML_679 : ""
                         selected: currentSelect === index
                         onButtonClicked: {

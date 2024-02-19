@@ -27,6 +27,32 @@ ComboBox {
     id: control
     width: 627
     height: 48
+    signal signalActivated
+    property var current_id
+    property var defaultValue
+    function getIndex(id) {
+        var list = control.model
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    function getDisplay() {
+        return control.getIndex(current_id.id) < 0 ? defaultValue : current_id
+    }
+    function getText(data)
+    {
+        return data.displayName
+    }
+    onActivated: {
+        if (currentIndex >=0) {
+            current_id = control.model[control.currentIndex]
+            signalActivated()
+        }
+    }
+
     validator: IntValidator {
         top: 0
         bottom: 8
@@ -39,10 +65,9 @@ ComboBox {
         border.color: "#DEDEDE"
         border.width: 1
     }
-    indicator: Image {
+    indicator: QIcon {
+        iconSize: 24
         id: name
-        width: 24
-        height: 24
         x: control.width - width - control.rightPadding
         y: control.topPadding + (control.availableHeight - height) / 2
         source: "qrc:/Images/Images/expand-more-dark.svg"
@@ -82,18 +107,18 @@ ComboBox {
         }
     }
     delegate: ItemDelegate {
-        text: modelData.displayName
+        text: getText(modelData)
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width
         height: 48
-        QImage {
+        QIcon {
+            iconSize: 24
             anchors {
                 right: parent.right
                 rightMargin: 24
                 verticalCenter: parent.verticalCenter
             }
             visible: control.currentIndex === index
-            width: 24; height: 24;
             source: "qrc:/Images/Images/check-dark.svg"
         }
         font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal

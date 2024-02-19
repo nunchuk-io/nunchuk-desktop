@@ -23,7 +23,8 @@
 
 
 #include <QAbstractListModel>
-#include "DracoDefines.h"
+#include "Servers/DracoDefines.h"
+
 class QLoggedInDeviceModel : public QAbstractListModel
 {
     Q_OBJECT

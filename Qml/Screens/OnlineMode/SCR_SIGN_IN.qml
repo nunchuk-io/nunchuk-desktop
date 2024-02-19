@@ -27,6 +27,7 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -158,10 +159,6 @@ QScreen {
     }
     QPopupInfo{
         id: errorInfo
-        coverColor: Qt.rgba(255, 255, 255, 0)
-        onGotItClicked: {
-            close()
-        }
     }
     Connections {
         target: Draco

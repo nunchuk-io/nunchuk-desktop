@@ -27,16 +27,11 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     property var primary_key: ""
-    Connections {
-        target: AppModel
-        onSignalShowToast:{
-            _warning.open()
-        }
-    }
     QOnScreenContent {
         width: popupWidth
         height: popupHeight
@@ -82,7 +77,8 @@ QScreen {
                     onEnterKeyRequest: {
                         commonError.visible = false
                         commonError.text = ""
-                        var signIn = {"primary_key":primary_key,
+                        var signIn = {
+                            "primary_key":primary_key,
                             "passphrase":_passphrase.textInputted
                         }
                         QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST, signIn)
@@ -148,7 +144,8 @@ QScreen {
                         commonError.visible = false
                         commonError.text = ""
                         processing = true
-                        var signIn = {"primary_key":primary_key,
+                        var signIn = {
+                            "primary_key":primary_key,
                             "passphrase":_passphrase.textInputted
                         }
 
@@ -170,17 +167,6 @@ QScreen {
             onButtonClicked: {
                 QMLHandle.sendEvent(EVT.EVT_LOGIN_WITH_SOFTWARE_KEY_BACK)
             }
-        }
-
-        QPopupToast{
-            id:_warning
-            x:36
-            y:520
-            warningType:AppModel.warningMessage.type
-            warningCode: AppModel.warningMessage.code
-            warningWhat: AppModel.warningMessage.what
-            warningContent: AppModel.warningMessage.contentDisplay
-            warningExplain: AppModel.warningMessage.explaination
         }
     }
     function processingSigninResult(https_code, error_code, error_msg){

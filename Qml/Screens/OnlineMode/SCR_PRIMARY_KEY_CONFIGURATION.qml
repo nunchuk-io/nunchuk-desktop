@@ -30,6 +30,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -37,12 +38,6 @@ QScreen {
     property var primaryKeyPassphrase: ""
     property var primaryKeySignername: ""
 
-    Connections {
-        target: AppModel
-        onSignalShowToast:{
-            _warning.open()
-        }
-    }
     QOnScreenContent {
         id:_contentPrimaryKey
         width: popupWidth
@@ -135,27 +130,6 @@ QScreen {
                 "passphrase": primaryKeyPassphrase
             }
             QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_SIGN_IN_SUCCEED,signUp)
-        }
-        else{
-            AppModel.setToast(-1,
-                           STR.STR_QML_671,
-                           EWARNING.ERROR_MSG,
-                           "");
-        }
-    }
-    QPopupToast{
-        id:_warning
-        x:_contentPrimaryKey.x + 36
-        y:_contentPrimaryKey.y + 520
-        warningType:AppModel.warningMessage.type
-        warningCode: AppModel.warningMessage.code
-        warningWhat: AppModel.warningMessage.what
-        warningContent: AppModel.warningMessage.contentDisplay
-        warningExplain: AppModel.warningMessage.explaination
-        onPopupClosed: {
-            if(AppModel.warningMessage.type === EWARNING.SUCCESS_MSG){
-                QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_CONFIGURATION_FINISHED)
-            }
         }
     }
 }

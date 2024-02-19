@@ -35,10 +35,13 @@
 #include "ifaces/bridgeifaces.h"
 #include "AppModel.h"
 #include "ViewsEnums.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "localization/STR_CPP.h"
 #include <QTextDocumentFragment>
-#include "QUserWallets.h"
+#include "Premiums/QUserWallets.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QInheritancePlan.h"
+#include "Premiums/QWalletServicesTag.h"
 
 QNunchukRoom::QNunchukRoom(Room *r):
     m_room(r),
@@ -60,13 +63,6 @@ QNunchukRoom::QNunchukRoom(Room *r):
     if(m_room){
         QQmlEngine::setObjectOwnership(m_room, QQmlEngine::CppOwnership);
     }
-
-    connect(this, SIGNAL(finishConsumeEvent()), this, SLOT(slotFinishConsumeEvent()));
-#if 0 //FIXME performance
-    connect(&m_timeSyncDb, SIGNAL(timeout()), this, SLOT(slotSyncWalletDb()));
-    m_timeSyncDb.setSingleShot(true);
-    m_timeSyncDb.start(2000);
-#endif
     qmlRegisterType<FileTransferInfo>();
     qRegisterMetaType<FileTransferInfo>();
 }
@@ -74,6 +70,22 @@ QNunchukRoom::QNunchukRoom(Room *r):
 QNunchukRoom::~QNunchukRoom()
 {
 
+}
+
+bool QNunchukRoom::isIgnoredCollabWallet() const
+{
+    bool isByzantineAccount = CLIENT_INSTANCE->isByzantine();
+    bool isContainsGroup = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->existGroupWallet() : false;
+    return (isContainsGroup || isByzantineAccount);
+}
+
+bool QNunchukRoom::isNunchukByzantineRoom() const
+{
+    if(m_room){
+        DBG_INFO << m_room->currentState().contentJson(NUNCHUK_ROOM_BYZANTINE) << m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE);
+        return m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE);
+    }
+    return false;
 }
 
 bool QNunchukRoom::isServerNoticeRoom() const
@@ -95,6 +107,16 @@ bool QNunchukRoom::isSupportRoom() const
 bool QNunchukRoom::isDirectChat() const
 {
     return m_room ? m_room->isDirectChat() : false;
+}
+
+QString QNunchukRoom::byzantineRoomGroupId()
+{
+    if(m_room && m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE)){
+        QJsonObject content = m_room->currentState().contentJson(NUNCHUK_ROOM_BYZANTINE);
+        DBG_INFO << content;
+        return content["group_id"].toString();
+    }
+    return "";
 }
 
 QString QNunchukRoom::localUserName() const
@@ -150,7 +172,7 @@ QStringList QNunchukRoom::talkersName()
         for (int i = 0; i < m_room->users().count(); ++i) {
             if(m_room->users().at(i)){
                 QString user_id = m_room->users().at(i)->id();
-                if(isDirectChat() && 0 == QString::compare(user_id, local_id, Qt::CaseInsensitive)){
+                if(isDirectChat() && qUtils::strCompare(user_id, local_id)){
                     continue;
                 }
                 else{
@@ -171,7 +193,7 @@ QStringList QNunchukRoom::talkersAvatar()
         for (int i = 0; i < m_room->users().count(); ++i) {
             if(m_room->users().at(i)){
                 QString user_id = m_room->users().at(i)->id();
-                if(isDirectChat() && 0 == QString::compare(user_id, local_id, Qt::CaseInsensitive)){
+                if(isDirectChat() && qUtils::strCompare(user_id, local_id)){
                     continue;
                 }
                 else{
@@ -205,6 +227,9 @@ QString QNunchukRoom::roomName()
         }
         else if(isSupportRoom()){
             return "Support";
+        }
+        else if(isNunchukByzantineRoom()){
+            return m_room->name() != "" ? m_room->name() : m_room->displayName();
         }
         else if(isDirectChat()){
             return m_room->name() != "" ? m_room->name() : m_room->displayName() != "" ? m_room->displayName() : userNames().join(", ");
@@ -257,16 +282,16 @@ QString QNunchukRoom::postEvent(const QString& eventType, const QJsonObject& con
 {
     QString txnId = "";
     RoomEvent* evt = NULL;
-    if(0 == QString::compare(eventType, NUNCHUK_EVENT_WALLET, Qt::CaseInsensitive)){
+    if(qUtils::strCompare(eventType, NUNCHUK_EVENT_WALLET)){
         evt = new QNunchukWalletEvent(eventType, content);
     }
-    else if(0 == QString::compare(eventType, NUNCHUK_EVENT_TRANSACTION, Qt::CaseInsensitive)){
+    else if(qUtils::strCompare(eventType, NUNCHUK_EVENT_TRANSACTION)){
         evt = new QNunchukTransactionEvent(eventType, content);
     }
-    else if(0 == QString::compare(eventType, NUNCHUK_EVENT_SYNC, Qt::CaseInsensitive)){
+    else if(qUtils::strCompare(eventType, NUNCHUK_EVENT_SYNC)){
         evt = new QNunchukSyncEvent(eventType, content);
     }
-    else if(0 == QString::compare(eventType, NUNCHUK_EVENT_EXCEPTION, Qt::CaseInsensitive)){
+    else if(qUtils::strCompare(eventType, NUNCHUK_EVENT_EXCEPTION)){
         evt = new QNunchukExceptionEvent(eventType, content);
     }
     else {}
@@ -313,8 +338,7 @@ void QNunchukRoom::slotFinishedDownloadTransaction(nunchuk::RoomTransaction room
         conversation()->updateTransaction(cons, target);
         setPinTransaction(conversation()->pinTransaction());
     }
-    if(AppModel::instance()->transactionInfo() && target.data()->transaction()
-            && (0 == QString::compare(QString::fromStdString(room_tx.get_init_event_id()), target.data()->transaction()->initEventId(), Qt::CaseInsensitive)))
+    if(AppModel::instance()->transactionInfo() && target.data()->transaction() && (qUtils::strCompare(QString::fromStdString(room_tx.get_init_event_id()), target.data()->transaction()->initEventId())))
     {
         AppModel::instance()->setTransactionInfo(target.data()->transactionPtr());
     }
@@ -323,14 +347,14 @@ void QNunchukRoom::slotFinishedDownloadTransaction(nunchuk::RoomTransaction room
 void QNunchukRoom::slotFinishFinalizeWallet(QString what, int type, int code)
 {
     if(type != (int)EWARNING::WarningType::NONE_MSG){
-        AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type,  STR_CPP_003);
+        AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
     }
 }
 
 void QNunchukRoom::slotFinishCancelWallet(QString what, int type, int code)
 {
     if(type != (int)EWARNING::WarningType::NONE_MSG){
-        AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type,  STR_CPP_004);
+        AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
     }
 }
 
@@ -344,17 +368,6 @@ void QNunchukRoom::slotUpdateInitEventId(const Conversation cons)
     if(conversation()){
         conversation()->updateInitEventId(cons);
     }
-}
-
-void QNunchukRoom::slotFinishConsumeEvent()
-{
-    m_timeSyncDb.stop();
-    m_timeSyncDb.start(2000);
-}
-
-void QNunchukRoom::slotSyncWalletDb()
-{
-    AppModel::instance()->startReloadUserDb();
 }
 
 void QNunchukRoom::sendMessage(const QString &message)
@@ -504,7 +517,7 @@ bool QNunchukRoom::joinWalletWithMasterSigner(const QString &id, bool &needXpub)
         QMasterSignerPtr it = AppModel::instance()->masterSignerList()->getMasterSignerById(id);
         QWarningMessage msgWarning;
         QSingleSignerPtr signer {nullptr};
-        if (AppModel::instance()->getIsPremiumUser() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
+        if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
             signer = bridge::nunchukGetDefaultSignerFromMasterSigner(id, walletType, addressType, msgWarning);
         } else {
             signer = bridge::nunchukGetUnusedSignerFromMasterSigner(id, walletType, addressType, msgWarning);
@@ -516,18 +529,12 @@ bool QNunchukRoom::joinWalletWithMasterSigner(const QString &id, bool &needXpub)
                 ret = true;
             }
             else{
-                AppModel::instance()->showToast(msgWarning.code(),
-                                                msgWarning.what(),
-                                                (EWARNING::WarningType)msgWarning.type(),
-                                                STR_CPP_006);
+                AppModel::instance()->showToast(msgWarning.code(), msgWarning.what(), (EWARNING::WarningType)msgWarning.type());
             }
         }
         else{
             needXpub = true;
-            AppModel::instance()->showToast(msgWarning.code(),
-                                            msgWarning.what(),
-                                            (EWARNING::WarningType)msgWarning.type(),
-                                            STR_CPP_007);
+            AppModel::instance()->showToast(msgWarning.code(), msgWarning.what(), (EWARNING::WarningType)msgWarning.type());
         }
     }
     return ret;
@@ -544,10 +551,7 @@ bool QNunchukRoom::joinWalletWithSingleSigner(const QString &xfp)
             ret = true;
         }
         else{
-            AppModel::instance()->showToast(msgWarning.code(),
-                                            msgWarning.what(),
-                                            (EWARNING::WarningType)msgWarning.type(),
-                                            STR_CPP_006);
+            AppModel::instance()->showToast(msgWarning.code(), msgWarning.what(), (EWARNING::WarningType)msgWarning.type());
         }
     }
     return ret;
@@ -572,10 +576,7 @@ bool QNunchukRoom::joinWalletUseSignerFromWalletImport(const QString &signer_id,
             ret = true;
         }
         else{
-            AppModel::instance()->showToast(msgWarning.code(),
-                                            msgWarning.what(),
-                                            (EWARNING::WarningType)msgWarning.type(),
-                                            STR_CPP_006);
+            AppModel::instance()->showToast(msgWarning.code(), msgWarning.what(), (EWARNING::WarningType)msgWarning.type());
         }
     }
     return ret;
@@ -603,17 +604,18 @@ bool QNunchukRoom::isDownloaded() const
 bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString &init_event_id, const QJsonObject &json, Conversation &cons)
 {
     QString msgtype = json["msgtype"].toString();
-    if(0 == QString::compare(matrixType, NUNCHUK_EVENT_WALLET, Qt::CaseInsensitive)){
+    DBG_INFO << "FIXME" << msgtype << json;
+    if(qUtils::strCompare(matrixType, NUNCHUK_EVENT_WALLET)){
         QJsonObject body = json["body"].toObject();
         cons.matrixType = NUNCHUK_EVENT_WALLET;
-        if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_INIT, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(msgtype, NUNCHUK_MSG_WALLET_INIT)){
             cons.init_event_id = init_event_id;
             cons.init_event_json = json;
-            bool isCanceled = !roomWallet() || (0 != QString::compare(cons.init_event_id, roomWallet()->get_init_event_id(), Qt::CaseInsensitive));
+            bool isCanceled = roomWallet() ? !(qUtils::strCompare(cons.init_event_id, roomWallet()->get_init_event_id())) : true;
             cons.messageType = isCanceled  ? (int)ENUNCHUCK::ROOM_EVT::WALLET_PAST : (int)ENUNCHUCK::ROOM_EVT::WALLET_INIT;
             cons.message = QString(QJsonDocument(body).toJson(QJsonDocument::Compact));
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_JOIN, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_WALLET_JOIN)){
             QString xfp = body["key"].toString().split('/')[0].remove('[');
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
@@ -622,7 +624,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_id = init_event_id;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_JOIN;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_LEAVE, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_WALLET_LEAVE)){
             QJsonObject io_nunchuk_relates_to = body["io.nunchuk.relates_to"].toObject();
             QString join_event_id = io_nunchuk_relates_to["join_event_id"].toString();
             QJsonObject init_event = io_nunchuk_relates_to["init_event"].toObject();
@@ -639,7 +641,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_id = init_event_id;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_LEAVE;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_READY, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_WALLET_READY)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
@@ -647,7 +649,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_id = init_event_id;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_READY;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_CREATE, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_WALLET_CREATE)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
@@ -655,7 +657,7 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_id = init_event_id;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_CREATE;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_WALLET_CANCEL, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_WALLET_CANCEL)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             QString wallet_name = init_event["content"].toObject()["body"].toObject()["name"].toString();
             QString init_event_id = init_event["event_id"].toString();
@@ -671,15 +673,15 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             roomWallet()->setIsCreator(isCreator);
         }
     }
-    else if(0 == QString::compare(matrixType, NUNCHUK_EVENT_TRANSACTION, Qt::CaseInsensitive)){
+    else if(qUtils::strCompare(matrixType, NUNCHUK_EVENT_TRANSACTION)){
         QJsonObject body = json["body"].toObject();
         cons.matrixType = NUNCHUK_EVENT_TRANSACTION;
-        if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_INIT, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_INIT)){
             cons.init_event_id = init_event_id;
             cons.message = QString(QJsonDocument(body).toJson(QJsonDocument::Compact));
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_INIT;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_SIGN, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_SIGN)){
             QString xfp = body["master_fingerprint"].toString();
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_016.arg(xfp);
@@ -687,28 +689,28 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_BROADCAST, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_BROADCAST)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_017;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_BROADCAST;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_READY, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_READY)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_018;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_READY;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_CANCEL, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_CANCEL)){
             QJsonObject init_event = body["io.nunchuk.relates_to"].toObject()["init_event"].toObject();
             cons.message = STR_CPP_019;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL;
             cons.init_event_id = init_event["event_id"].toString();
             cons.init_event_json = json;
         }
-        else if(0 == QString::compare(msgtype, NUNCHUK_MSG_TX_RECEIVE, Qt::CaseInsensitive)){
+        else if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_RECEIVE)){
             if(matrixbrigde::HasRoomWallet(id()) == false) return false;
             QWarningMessage roomTxWarning;
             QString tx_id = matrixbrigde::GetTransactionId(id(), init_event_id, roomTxWarning);
@@ -724,10 +726,10 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
         }
         downloadTransactionThread(cons, id());
     }
-    else if(0 == QString::compare(matrixType, NUNCHUK_EVENT_EXCEPTION, Qt::CaseInsensitive)){
+    else if(qUtils::strCompare(matrixType, NUNCHUK_EVENT_EXCEPTION)){
         QJsonObject body = json["body"].toObject();
         cons.matrixType = NUNCHUK_EVENT_EXCEPTION;
-        if(0 == QString::compare(msgtype, NUNCHUK_EVENT_EXCEPTION, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(msgtype, NUNCHUK_EVENT_EXCEPTION)){
             cons.init_event_id = init_event_id;
             cons.init_event_json = json;
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::EXCEPTION;
@@ -798,7 +800,7 @@ void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &r
                     nunchuk::RoomTransaction room_tx = matrixbrigde::GetOriginRoomTransaction(roomid,
                                                                                               cons.init_event_id,
                                                                                               roomTxWarning);
-#if 0 //FIXME
+#if 0 //FIXME ==> HANDLE CANCEL
                     if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::TX_CANCEL){
                         QWarningMessage msggetevt;
                         QNunchukMatrixEvent evt = matrixbrigde::GetEvent(roomid, cons.init_event_id, msggetevt);
@@ -833,10 +835,7 @@ bool QNunchukRoom::leaveWallet(const QString &xfp)
                 ret = true;
             }
             else{
-                AppModel::instance()->showToast(msgWarning.code(),
-                                                msgWarning.what(),
-                                                (EWARNING::WarningType)msgWarning.type(),
-                                                STR_CPP_009);
+                AppModel::instance()->showToast(msgWarning.code(), msgWarning.what(), (EWARNING::WarningType)msgWarning.type());
             }
         }
     }
@@ -853,10 +852,7 @@ bool QNunchukRoom::getXpub(const QString &id)
     }
     else{
         AppModel::instance()->masterSignerList()->updateMasterSignerNeedXpubById(id, true);
-        AppModel::instance()->showToast(warningmsg.code(),
-                                        warningmsg.what(),
-                                        (EWARNING::WarningType)warningmsg.type(),
-                                        STR_CPP_007);
+        AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
         return false;
     }
 }
@@ -1034,6 +1030,7 @@ void QNunchukRoom::markFiveMessagesAsRead()
 
 void QNunchukRoom::downloadHistorical()
 {
+    DBG_INFO << "Room[" << roomName() << "], Tags[" << m_room->tagNames() << "]";
     if(!m_room) return;
     else{
         if(isServerNoticeRoom()){
@@ -1057,7 +1054,7 @@ void QNunchukRoom::downloadHistorical()
                     for (auto e = m_room->messageEvents().begin(); e != m_room->messageEvents().end(); ++e){
                         nunchukConsumeEvent(**e);
                     }
-                    if(!roomWallet()){
+                    if(!isIgnoredCollabWallet() && !roomWallet()) {
                         Conversation init;
                         init.timestamp = -100;
                         init.messageType = (int)ENUNCHUCK::ROOM_EVT::INITIALIZE;
@@ -1072,12 +1069,6 @@ void QNunchukRoom::downloadHistorical()
                     conversation()->requestSortByTimeAscending(false);
                     setLastMessage(conversation()->lastMessage());
                     setLasttimestamp(conversation()->lastTime());
-                    if(conversation()->lastIndex() == 0){
-                        if(allHisLoaded() == false){
-                            getMoreContents(10);
-                        }
-                    }
-
                     if(roomWallet()){
                         AppModel::instance()->requestSyncWalletDb(roomWallet()->get_wallet_id());
                         bool isCreator = conversation()->isWalletCreator(roomWallet()->get_init_event_id());
@@ -1140,12 +1131,7 @@ bool QNunchukRoom::checkIsLocalUser(const QString userID)
     senderUserId.remove("@");
     senderUserId.remove("nunchuk_io_");
     senderUserId.remove(":nunchuk.io");
-    return (0 == QString::compare(senderUserId, localUserId, Qt::CaseInsensitive));
-}
-
-QList<DracoUser> QNunchukRoom::getNunchukMembers() const
-{
-    return m_nunchukMembers;
+    return (qUtils::strCompare(senderUserId, localUserId));
 }
 
 DracoUser QNunchukRoom::getNunchukMemberUser(const QString &input)
@@ -1159,7 +1145,7 @@ DracoUser QNunchukRoom::getNunchukMemberUser(const QString &input)
         my_id.remove("@");
         my_id.remove("nunchuk_io_");
         my_id.remove(":nunchuk.io");
-        if(0 == QString::compare(my_id, id_input, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(my_id, id_input)){
             return user;
         }
     }
@@ -1175,26 +1161,6 @@ DracoUser QNunchukRoom::getNunchukMemberUser(const QString &input)
     tmp.username = input;
     tmp.login_type = input;
     return tmp;
-}
-
-QString QNunchukRoom::getNunchukMemberChatId(const QString &input)
-{
-    return getNunchukMemberUser(input).chat_id;
-}
-
-QString QNunchukRoom::getNunchukMemberName(const QString &input)
-{
-    return getNunchukMemberUser(input).name;
-}
-
-QString QNunchukRoom::getNunchukMemberEmail(const QString &input)
-{
-    return getNunchukMemberUser(input).email;
-}
-
-QString QNunchukRoom::getNunchukMemberAvatar(const QString &input)
-{
-    return getNunchukMemberUser(input).avatar;
 }
 
 void QNunchukRoom::setNunchukMembers(const QList<DracoUser> &nunchukMembers)
@@ -1286,7 +1252,7 @@ void QNunchukRoom::setLastMessage(const Conversation &cons)
     QString lastmsg;
     QString picname = cons.sendByMe ? "You" : cons.sender;
     if(cons.messageType == (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT){
-        if(0 == QString::compare(cons.matrixType, NUNCHUK_ROOM_ENCRYPTED, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(cons.matrixType, NUNCHUK_ROOM_ENCRYPTED)){
             m_IsEncrypted = true;
         }
         else{
@@ -1419,19 +1385,19 @@ void QNunchukRoom::addedMessages(int fromIndex, int toIndex)
         for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
             if(fromIndex <= e->index() &&  toIndex >= e->index()){
                 const RoomEvent* lastEvent = e->get();
+                DBG_INFO << lastEvent;
                 nunchukNoticeEvent(*lastEvent);
             }
         }
     }
     else if(isNunchukSyncRoom()){
-        QtConcurrent::run([=]() {
+        QtConcurrent::run([=, this]() {
             for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
                 if(fromIndex <= e->index() &&  toIndex >= e->index()){
                     const RoomEvent* lastEvent = e->get();
                     nunchukConsumeSyncEvent(*lastEvent);
                 }
             }
-            emit finishConsumeEvent();
         });
     }
     else{
@@ -1750,17 +1716,17 @@ Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
     cons.txnId = evt.transactionId();
     QString matrixType = evt.matrixType();
     cons.matrixType = matrixType;
-    if((0 == QString::compare(matrixType, NUNCHUK_ROOM_MESSAGE, Qt::CaseInsensitive))
-            || (0 == QString::compare(matrixType, NUNCHUK_ROOM_MEMBER, Qt::CaseInsensitive))
-            || (0 == QString::compare(matrixType, NUNCHUK_ROOM_NAME, Qt::CaseInsensitive))
-            || (0 == QString::compare(matrixType, NUNCHUK_ROOM_ENCRYPTED, Qt::CaseInsensitive))
-            || (0 == QString::compare(matrixType, NUNCHUK_ROOM_ENCRYPTION, Qt::CaseInsensitive)))
+    if((qUtils::strCompare(matrixType, NUNCHUK_ROOM_MESSAGE))
+            || (qUtils::strCompare(matrixType, NUNCHUK_ROOM_MEMBER))
+            || (qUtils::strCompare(matrixType, NUNCHUK_ROOM_NAME))
+            || (qUtils::strCompare(matrixType, NUNCHUK_ROOM_ENCRYPTED))
+            || (qUtils::strCompare(matrixType, NUNCHUK_ROOM_ENCRYPTION)))
     {
         eventToConversation(evt, cons, Qt::RichText);
     }
-    else if((0 == QString::compare(matrixType, NUNCHUK_EVENT_WALLET, Qt::CaseInsensitive)) ||
-             (0 == QString::compare(matrixType, NUNCHUK_EVENT_TRANSACTION, Qt::CaseInsensitive)) ||
-             (0 == QString::compare(matrixType, NUNCHUK_EVENT_EXCEPTION, Qt::CaseInsensitive)))
+    else if((qUtils::strCompare(matrixType, NUNCHUK_EVENT_WALLET)) ||
+             (qUtils::strCompare(matrixType, NUNCHUK_EVENT_TRANSACTION)) ||
+             (qUtils::strCompare(matrixType, NUNCHUK_EVENT_EXCEPTION)))
     {
         bool ret = extractNunchukEvent(evt, cons);
         if(!ret){
@@ -1776,8 +1742,7 @@ Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
 void QNunchukRoom::nunchukConsumeEvent(const RoomEvent &evt)
 {
     QString matrixType = evt.matrixType();
-    if((0 == QString::compare(NUNCHUK_EVENT_WALLET, matrixType, Qt::CaseInsensitive))
-            || (0 == QString::compare(NUNCHUK_EVENT_TRANSACTION, matrixType, Qt::CaseInsensitive))){
+    if((qUtils::strCompare(NUNCHUK_EVENT_WALLET, matrixType)) || (qUtils::strCompare(NUNCHUK_EVENT_TRANSACTION, matrixType))){
         QNunchukMatrixEvent e;
         e.set_event_id(evt.id());
         e.set_type(matrixType);
@@ -1793,7 +1758,7 @@ void QNunchukRoom::nunchukConsumeSyncEvent(const RoomEvent &evt)
 {
     if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn() && AppSetting::instance()->enableMultiDeviceSync()){
         QString matrixType = evt.matrixType();
-        if(0 == QString::compare(NUNCHUK_EVENT_SYNC, matrixType, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(NUNCHUK_EVENT_SYNC, matrixType)){
             QNunchukMatrixEvent e;
             e.set_event_id(evt.id());
             e.set_type(matrixType);
@@ -1810,25 +1775,98 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
 {
     if (CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()) {
         QString matrixType = evt.matrixType();
-        DBG_INFO << "FIXME" << evt.contentJson();
-        if(0 == QString::compare(matrixType, NUNCHUK_ROOM_MESSAGE, Qt::CaseInsensitive))
+        if(qUtils::strCompare(matrixType, NUNCHUK_ROOM_MESSAGE))
         {
             QString msgtype = evt.contentJson()["msgtype"].toString();
-            DBG_INFO << "FIXME" << msgtype;
-            if (msgtype.toLower().contains("io.nunchuk.custom.draft_wallet")) {
-                QUserWallets::instance()->newRequestToAddKey();
+            DBG_INFO << msgtype;
+            if (msgtype.contains("io.nunchuk.custom.draft_wallet", Qt::CaseInsensitive))
+            {
+                QGroupWallets::instance()->GetAllGroups();
+                QUserWallets::instance()->GetListAllRequestAddKey();
+                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dashboard->GetAlertsInfo();
+                }
             }
-            else if (msgtype.toLower().contains("io.nunchuk.custom.wallet_created")) {
+            else if (msgtype.contains("io.nunchuk.custom.wallet_created", Qt::CaseInsensitive) ||
+                     msgtype.contains("io.nunchuk.custom.wallet_name_changed", Qt::CaseInsensitive) ||
+                     msgtype.contains("io.nunchuk.custom.key_name_changed", Qt::CaseInsensitive))
+            {
                 AppModel::instance()->requestCreateUserWallets();
             }
-            else if(msgtype.toLower().contains("io.nunchuk.custom.transaction")){
-                QString wallet_id = evt.fullJson()["content"].toObject()["wallet_local_id"].toString();
-                if(AppModel::instance()->walletList()){
-                    QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
-                    if(wallet && wallet.data()->isAssistedWallet()){
+            else if(msgtype.contains("io.nunchuk.custom.transaction", Qt::CaseInsensitive))
+            {
+                QJsonObject content = evt.fullJson()["content"].toObject();
+                QString wallet_id = content["wallet_local_id"].toString();
+                QString tx_id     = content["transaction_id"].toString();
+
+                if (wallet_id != "" && tx_id != "") {                    
+                    QWarningMessage msg;
+                    nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(wallet_id, tx_id, msg);
+                    if(    (int)EWARNING::WarningType::NONE_MSG == msg.type()
+                        && !msgtype.contains("io.nunchuk.custom.transaction_canceled"))
+                    {
+                        if(AppModel::instance()->walletList()){
+                            QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
+                            if(wallet && wallet.data()->isAssistedWallet()){
+                                QTransactionPtr trans = wallet.data()->SyncAssistedTxs(tx);
+                                if (trans) {
+                                    QJsonObject data = wallet.data()->GetServerKeyInfo(trans->txid());
+                                    if(!data.isEmpty()){
+                                        trans->setServerKeyMessage(data);
+                                    }
+                                    wallet.data()->transactionHistory()->updateTransaction(trans->txid(), trans);
+                                    if(AppModel::instance()->transactionInfo()){
+                                        QString current_tx_wallet_id = AppModel::instance()->transactionInfo()->walletId();
+                                        QString current_tx_id        = AppModel::instance()->transactionInfo()->txid();
+                                        if(qUtils::strCompare(wallet_id, current_tx_wallet_id) && qUtils::strCompare(tx_id, current_tx_id)){
+                                            AppModel::instance()->setTransactionInfo(trans);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else {
                         AppModel::instance()->startSyncWalletDb(wallet_id);
                     }
                 }
+                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dashboard->GetAlertsInfo();
+                }
+            }
+            else if (msgtype.contains("io.nunchuk.custom.group", Qt::CaseInsensitive))
+            {
+                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dashboard->GetAlertsInfo();
+                    dashboard->GetHealthCheckInfo();
+                }
+                QGroupWallets::instance()->GetAllGroups();
+
+                if (msgtype.contains("io.nunchuk.custom.group_wallet_created", Qt::CaseInsensitive) ||
+                    msgtype.contains("io.nunchuk.custom.group_wallet_deleted", Qt::CaseInsensitive) ||
+                    msgtype.contains("io.nunchuk.custom.group_wallet_name_changed", Qt::CaseInsensitive)) {
+                    AppModel::instance()->requestCreateUserWallets();
+                }
+            }
+            else if (     msgtype.contains("io.nunchuk.custom.dummy_transaction", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.server_key_change", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.wallet_inheritance", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.health_check", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.recurring_payment", Qt::CaseInsensitive))
+            {
+                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dashboard->GetAlertsInfo();
+                    if (auto plan = dashboard->inheritancePlanPtr()) {
+                        plan->GetInheritancePlan();
+                        ServiceSetting::instance()->servicesTagPtr()->setListSetuped();
+                    }
+                }
+            }
+            else if(msgtype.contains("io.nunchuk.custom.group_wallet_primary_owner_updated", Qt::CaseInsensitive)){
+                // TBD
+            }
+            else if(msgtype.contains("io.nunchuk.custom.group_wallet_alias", Qt::CaseInsensitive)){
+                // TBD
             }
             else{}
         }
@@ -2021,12 +2059,12 @@ QNunchukRoomPtr QNunchukRoomListModel::getRoomByIndex(const int index) const
 QNunchukRoomPtr QNunchukRoomListModel::getRoomById(const QString &id) const
 {
     for(QNunchukRoomPtr r : m_data){
-        if(0 == QString::compare(id, r.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(id, r.data()->id())){
             return r;
         }
     }
     for(QNunchukRoomPtr r : m_servive){
-        if(0 == QString::compare(id, r.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(id, r.data()->id())){
             return r;
         }
     }
@@ -2037,7 +2075,7 @@ int QNunchukRoomListModel::getIndex(const QString &id) const
 {
     for(int i = 0; i < m_data.size(); i++){
         QNunchukRoomPtr r = m_data.at(i);
-        if(0 == QString::compare(id, r.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(id, r.data()->id())){
             return i;
         }
     }
@@ -2195,7 +2233,7 @@ void QNunchukRoomListModel::requestSort()
 QString QNunchukRoomListModel::getRoomIdByWalletId(const QString &wallet_id)
 {
     foreach (QNunchukRoomPtr it, m_data) {
-        if(it && it.data()->roomWallet() && (0 == QString::compare(it.data()->roomWallet()->get_wallet_id(), wallet_id, Qt::CaseInsensitive))){
+        if(it && it.data()->roomWallet() && (qUtils::strCompare(it.data()->roomWallet()->get_wallet_id(), wallet_id))){
             return it.data()->id();
         }
     }
@@ -2205,7 +2243,7 @@ QString QNunchukRoomListModel::getRoomIdByWalletId(const QString &wallet_id)
 void QNunchukRoomListModel::transactionChanged(const QString &wallet_id, const QString &tx_id, const int status, const int height)
 {
     for( QNunchukRoomPtr it: m_data){
-        if(it && it.data()->roomWallet() && (0 == QString::compare(it.data()->roomWallet()->get_wallet_id(), wallet_id, Qt::CaseInsensitive))){
+        if(it && it.data()->roomWallet() && (qUtils::strCompare(it.data()->roomWallet()->get_wallet_id(), wallet_id))){
             it.data()->transactionChanged(tx_id, status, height);
         }
     }
@@ -2214,7 +2252,7 @@ void QNunchukRoomListModel::transactionChanged(const QString &wallet_id, const Q
 void QNunchukRoomListModel::updateTransactionMemo(const QString& wallet_id, const QString &tx_id, const QString &memo)
 {
     for( QNunchukRoomPtr r: m_data){
-        if(r && r.data()->roomWallet() && (0 == QString::compare(wallet_id, r.data()->roomWallet()->get_wallet_id(), Qt::CaseInsensitive))){
+        if(r && r.data()->roomWallet() && (qUtils::strCompare(wallet_id, r.data()->roomWallet()->get_wallet_id()))){
             r.data()->updateTransactionMemo(tx_id, memo);
         }
     }
@@ -2236,12 +2274,10 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
         }
     }
     else{
-        if(!r.data()->id().isEmpty() && !containsRoom(r.data()->id()) ){
-            QList<DracoUser> users = Draco::instance()->getRoomMembers(r.data()->id());
+        if(!r.data()->id().isEmpty() && !containsRoomId(r.data()->id()) ){
             beginInsertRows(QModelIndex(), rowCount(), rowCount());
             m_data.append(r);
             endInsertRows();
-            r.data()->setNunchukMembers(users);
             r.data()->connectRoomSignals();
             connect(r.data(),         &QNunchukRoom::roomNameChanged,       this, [this, r] { refresh(r); });
             connect(r.data(),         &QNunchukRoom::lastMessageChanged,    this, [this, r] { refresh(r); });
@@ -2274,7 +2310,7 @@ void QNunchukRoomListModel::removeRoomById(const QString &id)
 {
     beginResetModel();
     for( QNunchukRoomPtr it: m_data){
-        if(it && (0 == QString::compare(it.data()->id(), id, Qt::CaseInsensitive))){
+        if(it && (qUtils::strCompare(it.data()->id(), id))){
             m_data.removeOne(it);
             break;
         }
@@ -2309,12 +2345,24 @@ void QNunchukRoomListModel::forgetRoom(const int index)
 
 void QNunchukRoomListModel::leaveCurrentRoom()
 {
-    auto* job = currentRoom()->room()->leaveRoom();
-    connect(job, &BaseJob::success, this, [this] {
-        removeRoomByIndex(currentIndex());
-        AppModel::instance()->startReloadUserDb();
-    });
-    emit countChanged();
+    if(currentRoom()){
+        bool hasWallet = currentRoom()->roomWallet() ? true : false;
+        bool isByzantineRoom = currentRoom()->isNunchukByzantineRoom();
+        QString byzantineGroupId = currentRoom()->byzantineRoomGroupId();
+        QString currentRoomId = currentRoom()->id();
+
+        auto* job = currentRoom()->room()->leaveRoom();
+        connect(job, &BaseJob::success, this, [this, currentRoomId, hasWallet, isByzantineRoom, byzantineGroupId] {
+            removeRoomByIndex(currentIndex());
+            if(hasWallet){
+                AppModel::instance()->startReloadUserDb();
+            }
+            if(isByzantineRoom){
+                emit byzantineRoomDeleted(currentRoomId, byzantineGroupId);
+            }
+        });
+        emit countChanged();
+    }
 }
 
 void QNunchukRoomListModel::leaveRoom(const int index)
@@ -2345,13 +2393,13 @@ void QNunchukRoomListModel::joinRoom(QString roomAliasOrId)
     emit countChanged();
 }
 
-void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const QString& topic, const QString& name, QVariant firstMessage)
+void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const QString& room_name, QVariant firstMessage)
 {
     if(connection()){
         Connection::RoomVisibility in_visibility = Connection::UnpublishRoom;
         const QString   in_alias = {};
-        const QString   in_name = name;
-        const QString   in_topic = topic;
+        const QString   in_name = room_name;
+        const QString   in_topic = {};
         QStringList     in_invites = invitees_id;
         const QString   in_presetName = {};
         const QString   in_roomVersion = {};
@@ -2369,9 +2417,7 @@ void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const 
                                                   in_presetName,
                                                   in_roomVersion,
                                                   in_isDirect,
-                                                  in_initialState/*,
-                                                  in_invite3pids,
-                                                  in_creationContent*/);
+                                                  in_initialState);
         connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
             if(!firstMessage.isNull() && firstMessage.toString() != ""){
                 connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
@@ -2379,19 +2425,92 @@ void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const 
         });
         connect(createJob, &BaseJob::failure, this, [createJob] {
             DBG_INFO << "//FIXME Failed to create the room";
-            AppModel::instance()->showToast(createJob->error(),
-                                            "Failed to create the room",
-                                            EWARNING::WarningType::EXCEPTION_MSG,
-                                            createJob->errorString());
+            AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
         });
     }
     emit countChanged();
 }
 
+void QNunchukRoomListModel::createRoomDirectChat(const QString invitee_id, const QString &invitee_name, QVariant firstMessage)
+{
+    DBG_INFO << invitee_id << invitee_name << invitee_name;
+    if(connection()){
+        int index = -1;
+        QString room_id = "";
+        if(containsRoomName(invitee_name, index, room_id)){
+            if(index >= 0){
+                setCurrentIndex(index);
+            }
+        }
+        else{
+            QString topic = "";
+            auto createJob = connection()->createDirectChat(invitee_id, topic, invitee_name);
+            connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
+                if(!firstMessage.isNull() && firstMessage.toString() != ""){
+                    connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
+                }
+            });
+            connect(createJob, &BaseJob::failure, this, [createJob] {
+                AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+            });
+            emit countChanged();
+        }
+    }
+}
+
+void QNunchukRoomListModel::createRoomByzantineChat(const QStringList invitees_id, const QString &room_name, const QString &group_id, QVariant firstMessage)
+{
+    DBG_INFO << invitees_id << room_name;
+    if(connection() && invitees_id.size() > 0){
+        int index = -1;
+        QString room_id = "";
+        if(containsRoomName(room_name, index, room_id)){
+            if(index >= 0){
+                setCurrentIndex(index);
+                emit byzantineRoomCreated(room_id, true);
+            }
+        }
+        else{
+            Connection::RoomVisibility in_visibility = Connection::UnpublishRoom;
+            const QString   in_alias = {};
+            const QString   in_name = room_name;
+            const QString   in_topic = {};
+            QStringList     in_invites = invitees_id;
+            const QString   in_presetName = {};
+            const QString   in_roomVersion = {};
+            bool            in_isDirect = in_invites.count() > 1 ? false : true;
+            CreateRoomJob::StateEvent stateEvt;
+            stateEvt.type = NUNCHUK_ROOM_BYZANTINE;
+            stateEvt.content["group_id"] = group_id;
+            const QVector<CreateRoomJob::StateEvent> in_initialState = {stateEvt};
+
+            auto createJob = connection()->createRoom(in_visibility,
+                                                      in_alias,
+                                                      in_name,
+                                                      in_topic,
+                                                      in_invites,
+                                                      in_presetName,
+                                                      in_roomVersion,
+                                                      in_isDirect,
+                                                      in_initialState);
+            connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
+                if(!firstMessage.isNull() && firstMessage.toString() != ""){
+                    connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
+                }
+                emit byzantineRoomCreated(createJob->roomId(), false);
+            });
+            connect(createJob, &BaseJob::failure, this, [createJob] {
+                DBG_INFO << "//FIXME Failed to create the room";
+                AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
+            });
+            emit countChanged();
+        }
+    }
+}
+
 void QNunchukRoomListModel::createSupportRoom()
 {
-    if((int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer()
-            || (int)ENUNCHUCK::Chain::TESTNET == (int)AppSetting::instance()->primaryServer())
+    if((int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() || (int)ENUNCHUCK::Chain::TESTNET == (int)AppSetting::instance()->primaryServer())
     {
         if(connection()){
             QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
@@ -2409,10 +2528,7 @@ void QNunchukRoomListModel::createSupportRoom()
                 CLIENT_INSTANCE->setReadySupport(true);
             });
             connect(createJob, &BaseJob::failure, this, [createJob] {
-                AppModel::instance()->showToast(createJob->error(),
-                                                createJob->errorString(),
-                                                EWARNING::WarningType::EXCEPTION_MSG,
-                                                "Failed to create support room");
+                AppModel::instance()->showToast(createJob->error(), createJob->errorString(), EWARNING::WarningType::EXCEPTION_MSG);
                 CLIENT_INSTANCE->setReadySupport(true);
             });
         }
@@ -2442,11 +2558,37 @@ void QNunchukRoomListModel::setRoomWallets(const QList<QRoomWalletPtr> &roomWall
     m_roomWallets = roomWallets;
 }
 
-bool QNunchukRoomListModel::containsRoom(const QString &id)
+void QNunchukRoomListModel::renameRoomByzantineChat(const QString room_id, const QString group_id, const QString newname)
+{
+    DBG_INFO << "room_id:" << room_id << "group_id:" << group_id << "newname:" << newname;
+    foreach (QNunchukRoomPtr it, m_data) {
+        if(qUtils::strCompare(it.data()->id(), room_id) || qUtils::strCompare(it.data()->byzantineRoomGroupId(), group_id)){
+            if(!qUtils::strCompare(it.data()->roomName(), newname)){
+                it.data()->setRoomName(newname);
+            }
+        }
+    }
+}
+
+bool QNunchukRoomListModel::containsRoomId(const QString &id)
 {
     foreach (QNunchukRoomPtr it, m_data) {
-        if(0 == QString::compare(it.data()->id(), id, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(it.data()->id(), id)){
             return true;
+        }
+    }
+    return false;
+}
+
+bool QNunchukRoomListModel::containsRoomName(const QString &name, int &index, QString &room_id)
+{
+    for(int i = 0; i < m_data.count(); i++){
+        if(m_data.at(i)){
+            if(qUtils::strCompare(m_data.at(i)->roomName(), name)){
+                index = i;
+                room_id = m_data.at(i)->id();
+                return true;
+            }
         }
     }
     return false;
@@ -2455,7 +2597,7 @@ bool QNunchukRoomListModel::containsRoom(const QString &id)
 bool QNunchukRoomListModel::containsServiceRoom(const QString &id)
 {
     foreach (QNunchukRoomPtr it, m_servive) {
-        if(0 == QString::compare(it.data()->id(), id, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(it.data()->id(), id)){
             return true;
         }
     }

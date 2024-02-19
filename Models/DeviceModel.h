@@ -110,7 +110,9 @@ public:
         device_usableToAdd_role,
         device_master_signer_id_role,
     };
-    bool containsFingerPrint(const QString& xfp) const;
+    bool removeDevice(const QString xfp);
+
+    void clearList();
 
     // For verify addr
     QStringList getXFPList();

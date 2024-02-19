@@ -30,6 +30,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -121,12 +122,13 @@ QScreen {
                                     height: parent.height
                                     color: "#F6D65D"
                                 }
-                                QImage {
+                                QIcon {
                                     anchors {
                                         left: parent.left
                                         leftMargin: 16
                                         verticalCenter: parent.verticalCenter
                                     }
+                                    iconSize: 24
                                     source: index == devicelist.currentIndex ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
                                 }
                                 Column {
@@ -157,31 +159,8 @@ QScreen {
                                     }
                                 }
                             }
-                            Rectangle {
-                                anchors.fill: parent
-                                visible: !device_usable_to_add
-                                color: Qt.rgba(255, 255, 255, 0.5)
-                                Rectangle {
-                                    width: 56
-                                    height: 21
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 9
-                                    color: "#C9DEF1"
-                                    radius: 4
-                                    QText {
-                                        text: STR.STR_QML_104
-                                        font.pixelSize: 10
-                                        font.weight: Font.ExtraBold
-                                        font.family: "Lato"
-                                        color: "#E0E0E0"
-                                        anchors.centerIn: parent
-                                    }
-                                }
-                            }
                             MouseArea {
                                 anchors.fill: parent
-                                enabled: device_usable_to_add
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
@@ -635,17 +614,6 @@ QScreen {
                 font.pixelSize: 24
                 font.weight: Font.DemiBold
                 font.family: "Montserrat"
-                text: STR.STR_QML_120
-            }
-            QText {
-                width: 328
-                height: 42
-                anchors.horizontalCenter: parent.horizontalCenter
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                color: "#F6D65D"
-                font.pixelSize: 16
-                font.family: "Lato"
                 text: STR.STR_QML_120
             }
         }

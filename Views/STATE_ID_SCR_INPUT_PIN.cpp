@@ -45,6 +45,8 @@ void EVT_INPUT_PIN_SEND_PIN_HANDLER(QVariant msg) {
     case E::STATE_ID_SCR_TRANSACTION_INFO:
     case E::STATE_ID_SCR_ADD_MASTER_SIGNER_RESULT:
     case E::STATE_ID_SCR_MASTER_SIGNER_INFO:
+    case E::STATE_ID_SCR_ADD_HARDWARE:
+    case E::STATE_ID_SCR_ADD_HARDWARE_EXIST:
     {
         int device_idx = pinObject.toMap().value("device_idx").toInt();
         if(pinInputted != ""){
@@ -52,10 +54,7 @@ void EVT_INPUT_PIN_SEND_PIN_HANDLER(QVariant msg) {
         }
         else{
             QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
-            AppModel::instance()->showToast(0,
-                                            0,
-                                            EWARNING::WarningType::WARNING_MSG,
-                                            STR_CPP_095);
+            AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG );
         }
         break;
     }

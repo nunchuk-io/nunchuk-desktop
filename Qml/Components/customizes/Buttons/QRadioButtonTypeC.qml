@@ -32,10 +32,9 @@ Row {
     signal buttonClicked()
 
     spacing: 10
-    QImage {
+    QIcon {
         id: icon
-        width: 24
-        height: 24
+        iconSize: 24
         source: selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
         anchors.verticalCenter: parent.verticalCenter
         MouseArea {

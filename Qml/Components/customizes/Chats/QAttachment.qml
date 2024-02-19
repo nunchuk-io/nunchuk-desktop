@@ -79,10 +79,10 @@ QImage {
     function openLocalFile()
     {
         if (Qt.openUrlExternally(progressObject.localPath)) { return; }
-        AppModel.showToast(-693, STR.STR_QML_693, EWARNING.EXCEPTION_MSG, "Error");
+        AppModel.showToast(-693, STR.STR_QML_693, EWARNING.EXCEPTION_MSG);
 
         if (Qt.openUrlExternally(progressInfo.localDir)) { return; }
-        AppModel.showToast(-694, STR.STR_QML_694, EWARNING.EXCEPTION_MSG, "Error");
+        AppModel.showToast(-694, STR.STR_QML_694, EWARNING.EXCEPTION_MSG);
     }
 
     MouseArea {

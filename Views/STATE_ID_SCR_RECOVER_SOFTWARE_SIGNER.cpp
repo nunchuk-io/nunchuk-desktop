@@ -43,10 +43,7 @@ void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
     }
     else{
         AppModel::instance()->setMnemonic("-101");
-        AppModel::instance()->showToast(-1,
-                                        STR_CPP_081,
-                                        EWARNING::WarningType::EXCEPTION_MSG,
-                                        STR_CPP_082);
+        AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
     }
 }
 

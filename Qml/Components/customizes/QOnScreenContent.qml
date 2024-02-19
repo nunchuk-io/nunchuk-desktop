@@ -39,7 +39,12 @@ Item {
     readonly property Item rightItem: botRight.item
     property bool enableHeader: true
     property int offset: 36
+    property bool isShowLine: false
     signal closeClicked()
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {}
+    }
     Rectangle {
         id: mask
         anchors.fill: parent
@@ -67,15 +72,16 @@ Item {
         anchors.fill: parent
         anchors.margins: offset
         Column {
-            spacing: 24
+            spacing: 16
             Item {
                 width: root.width - offset*2 + 12
-                height: 40
+                height: Math.max(40, screenname.paintedHeight)
                 Row {
                     anchors.fill: parent
                     spacing: 8
                     QHeadLine {
                         id: screenname
+                        width: Math.min(656, screenname.paintedWidth)
                         anchors.verticalCenter: parent.verticalCenter
                         visible: enableHeader
                         text: "Screen name"
@@ -107,20 +113,30 @@ Item {
             Loader {
                 id: contentInfo
                 width: root.width - offset*2
-                height: root.height - offset*2 - 40 - 48 - 48
+                height: root.height - offset*2 - 40 - 16 - 18 - 48
             }
-            Item {
-                width: root.width - offset*2
-                height: 48
-                Loader{
-                    id: botLeft
-                    anchors.left: parent.left
-                }
-                Loader{
-                    id: botRight
-                    anchors.right: parent.right
-                }
+        }
+        Item {
+            width: root.width - offset*2
+            height: 48
+            anchors.bottom: parent.bottom
+            Loader{
+                id: botLeft
+                anchors.left: parent.left
             }
+            Loader{
+                id: botRight
+                anchors.right: parent.right
+            }
+        }
+    }
+    QLine {
+        visible: isShowLine
+        width: parent.width
+        anchors {
+            bottom: parent.bottom
+            bottomMargin: 102
+            horizontalCenter: parent.horizontalCenter
         }
     }
 }

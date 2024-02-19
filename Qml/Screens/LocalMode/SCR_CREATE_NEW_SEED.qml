@@ -126,10 +126,7 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED_SUCCEED)
                 }
                 else{
-                    AppModel.showToast(-2,
-                                       STR.STR_QML_207,
-                                       EWARNING.EXCEPTION_MSG,
-                                       STR.STR_QML_208);
+                    AppModel.showToast(-1, STR.STR_QML_207, EWARNING.EXCEPTION_MSG);
                 }
             }
         }

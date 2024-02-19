@@ -58,10 +58,7 @@ void EVT_IMPORT_BSMS_SHARED_WALLET_HANDLER(QVariant msg) {
                     QQuickViewer::instance()->sendEvent(E::EVT_IMPORT_SHARED_WALLET_SUCCEED);
                 }
                 else{
-                    AppModel::instance()->showToast(msgwarning.code(),
-                                                    msgwarning.what(),
-                                                    EWARNING::WarningType::EXCEPTION_MSG,
-                                                    STR_CPP_100);
+                    AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), EWARNING::WarningType::EXCEPTION_MSG);
                 }
             }
         }

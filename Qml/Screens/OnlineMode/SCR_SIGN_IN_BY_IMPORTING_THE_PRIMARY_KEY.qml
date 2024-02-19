@@ -29,6 +29,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -39,36 +40,20 @@ QScreen {
     property var whereIn: _RECOVER_KEY
     property var keyname: ""
     property string passphrase: ""
-    Connections {
-        target: AppModel
-        onSignalShowToast:{
-            _warning.open()
-        }
-    }
     Connections{
         target: Draco
         onSignalpkey_signin:{
             loadercontent.item.signalpkey_signin(https_code, error_code, error_msg)
         }
     }
-
     Loader {
         id: loadercontent
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: _SCREENS[whereIn]
-        QPopupToast{
-            id:_warning
-            x:36
-            y:520
-            warningType:AppModel.warningMessage.type
-            warningCode: AppModel.warningMessage.code
-            warningWhat: AppModel.warningMessage.what
-            warningContent: AppModel.warningMessage.contentDisplay
-            warningExplain: AppModel.warningMessage.explaination
-        }
     }
+
     Component{
         id:recoverKeyWithSeed
         QOnScreenContent {
@@ -406,12 +391,6 @@ QScreen {
             function signalpkey_signin(https_code, error_code, error_msg){
                 if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereIn = _KEY_NAME
-                }
-                else{
-                    AppModel.setToast(-1,
-                                   error_msg,
-                                   EWARNING.ERROR_MSG,
-                                   "");
                 }
             }
         }

@@ -32,6 +32,8 @@
 #include "UTXOModel.h"
 #include "QQuickViewer.h"
 #include "Worker.h"
+#include "Premiums/QWalletManagement.h"
+#include "TypeDefine.h"
 
 class AppModel final : public Controller
 {
@@ -50,32 +52,34 @@ class AppModel final : public Controller
     Q_PROPERTY(UTXOListModel*           utxoList            READ utxoList           NOTIFY utxoListChanged)
     Q_PROPERTY(UTXO*                    utxoInfo            READ utxoInfo           NOTIFY utxoInfoChanged)
     Q_PROPERTY(DestinationListModel*    destinationList     READ destinationList    NOTIFY destinationListChanged)
-    Q_PROPERTY(int walletListCurrentIndex  READ walletListCurrentIndex  	WRITE setWalletListCurrentIndex  NOTIFY walletListCurrentIndexChanged)
+    Q_PROPERTY(int walletListCurrentIndex  READ walletListCurrentIndex  	WRITE setWalletListCurrentIndex         NOTIFY walletListCurrentIndexChanged)
     Q_PROPERTY(int   addSignerStep         READ getAddSignerStep            NOTIFY addSignerStepChanged)
     Q_PROPERTY(int   addSignerPercentage   READ getAddSignerPercentage    	NOTIFY addSignerPercentageChanged)
-    Q_PROPERTY(QString   fastestFee        READ fastestFee          NOTIFY fastestFeeChanged)
-    Q_PROPERTY(QString   fastestFeeCurrency     READ fastestFeeCurrency       NOTIFY fastestFeeChanged)
-    Q_PROPERTY(QString   halfHourFee       READ halfHourFee         NOTIFY halfHourFeeChanged)
-    Q_PROPERTY(QString   halfHourFeeCurrency    READ halfHourFeeCurrency      NOTIFY halfHourFeeChanged)
-    Q_PROPERTY(QString   hourFee           READ hourFee             NOTIFY hourFeeChanged)
-    Q_PROPERTY(QString   hourFeeCurrency        READ hourFeeCurrency          NOTIFY hourFeeChanged)
-    Q_PROPERTY(QString   minFee            READ minFee              NOTIFY minFeeChanged)
-    Q_PROPERTY(QString   minFeeCurrency         READ minFeeCurrency           NOTIFY minFeeChanged)
-    Q_PROPERTY(QString   addressBalance        READ addressBalance            NOTIFY addressBalanceChanged)
-    Q_PROPERTY(QStringList      qrExported          READ qrExported            WRITE setQrExported NOTIFY qrExportedChanged)
-    Q_PROPERTY(QString          mnemonic            READ getMnemonic           WRITE setMnemonic   NOTIFY mnemonicChanged)
-    Q_PROPERTY(DeviceListModel* softwareSignerDeviceList                       READ softwareSignerDeviceList         NOTIFY softwareSignerDeviceListChanged)
-    Q_PROPERTY(QStringList      suggestMnemonics    READ getSuggestMnemonics   NOTIFY suggestMnemonicsChanged)
-    Q_PROPERTY(bool             limitSoftwareSigner READ limitSoftwareSigner   CONSTANT)
-    Q_PROPERTY(int              nunchukMode         READ nunchukMode           NOTIFY nunchukModeChanged)
-    Q_PROPERTY(int              tabIndex            READ tabIndex              WRITE setTabIndex NOTIFY tabIndexChanged)
-    Q_PROPERTY(QWarningMessage* warningMessage      READ warningMessage        NOTIFY warningMessageChanged)
-    Q_PROPERTY(QString          lasttimeCheckEstimatedFee                      READ lasttimeCheckEstimatedFee     NOTIFY lasttimeCheckEstimatedFeeChanged)
+    Q_PROPERTY(QString   fastestFee        READ fastestFee                  NOTIFY fastestFeeChanged)
+    Q_PROPERTY(QString   fastestFeeCurrency     READ fastestFeeCurrency         NOTIFY fastestFeeChanged)
+    Q_PROPERTY(QString   halfHourFee            READ halfHourFee                NOTIFY halfHourFeeChanged)
+    Q_PROPERTY(QString   halfHourFeeCurrency    READ halfHourFeeCurrency        NOTIFY halfHourFeeChanged)
+    Q_PROPERTY(QString   hourFee                READ hourFee                    NOTIFY hourFeeChanged)
+    Q_PROPERTY(QString   hourFeeCurrency        READ hourFeeCurrency            NOTIFY hourFeeChanged)
+    Q_PROPERTY(QString   minFee                 READ minFee                     NOTIFY minFeeChanged)
+    Q_PROPERTY(QString   minFeeCurrency         READ minFeeCurrency             NOTIFY minFeeChanged)
+    Q_PROPERTY(QString   addressBalance         READ addressBalance             NOTIFY addressBalanceChanged)
+    Q_PROPERTY(QStringList      qrExported          READ qrExported             WRITE setQrExported                 NOTIFY qrExportedChanged)
+    Q_PROPERTY(QString          mnemonic            READ getMnemonic            WRITE setMnemonic                   NOTIFY mnemonicChanged)
+    Q_PROPERTY(DeviceListModel* softwareSignerDeviceList                        READ softwareSignerDeviceList       NOTIFY softwareSignerDeviceListChanged)
+    Q_PROPERTY(QStringList      suggestMnemonics    READ getSuggestMnemonics    NOTIFY suggestMnemonicsChanged)
+    Q_PROPERTY(bool             limitSoftwareSigner READ limitSoftwareSigner    CONSTANT)
+    Q_PROPERTY(int              nunchukMode         READ nunchukMode            NOTIFY nunchukModeChanged)
+    Q_PROPERTY(int              tabIndex            READ tabIndex               WRITE setTabIndex                   NOTIFY tabIndexChanged)
+    Q_PROPERTY(QWarningMessage* warningMessage      READ warningMessage         NOTIFY warningMessageChanged)
+    Q_PROPERTY(QVariantList    listMessage          READ listMessage            NOTIFY listMessagesChanged)
+    Q_PROPERTY(QString          lasttimeCheckEstimatedFee                       READ lasttimeCheckEstimatedFee      NOTIFY lasttimeCheckEstimatedFeeChanged)
     Q_PROPERTY(QMasterSigner*    primaryKey         READ originPrimaryKey       NOTIFY primaryKeyChanged)
     Q_PROPERTY(QString    newKeySignMessage         READ newKeySignMessage       NOTIFY newKeySignMessageChanged)
     Q_PROPERTY(QString    newKeySignMessageSHA256   READ newKeySignMessageSHA256 NOTIFY newKeySignMessageChanged)
-    Q_PROPERTY(int addSignerWizard READ addSignerWizard WRITE setAddSignerWizard NOTIFY addSignerWizardChanged)
-    DECLARE_PROPERTY(bool, IsPremiumUser, {}, {})
+    Q_PROPERTY(int addSignerWizard                  READ addSignerWizard        WRITE setAddSignerWizard            NOTIFY addSignerWizardChanged)
+    Q_PROPERTY(QString    txidReplacing             READ getTxidReplacing       NOTIFY txidReplacingChanged)
+
 public:
     static AppModel *instance();
     AppModel(AppModel &other) = delete;
@@ -85,7 +89,6 @@ public:
     void requestSyncWalletDb(const QString& wallet_id);
     void requestCreateUserWallets();
     void requestSyncSharedWallets();
-    void requestAssistedWalletsSetuped();
     void requestClearData();
 
     WalletListModel *walletList() const;
@@ -131,6 +134,7 @@ public:
     // Wallet selection
     Wallet *walletInfo() const;
     QWalletPtr walletInfoPtr() const;
+    void setWalletInfo(WalletId wallet_id);
     void setWalletInfo(const QWalletPtr &d);
     void setWalletInfoByIndex(const int index);
 
@@ -215,16 +219,8 @@ public:
     QWarningMessage* warningMessage() const;
     QWarningMessagePtr warningMessagePtr() const;
     void setWarningMessage(const QWarningMessagePtr &warningMessage);
-    Q_INVOKABLE void showToast(int code,
-                               const QString &what,
-                               EWARNING::WarningType type,
-                               const QString &explain = "",
-                               POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
-    Q_INVOKABLE void setToast(int code,
-                              const QString &what,
-                              EWARNING::WarningType type,
-                              const QString &explain = "",
-                              POPUP::PopupType popup = POPUP::PopupType::PopupCenter);
+    QVariantList listMessage() const;
+    Q_INVOKABLE void showToast(int code, const QString &what, EWARNING::WarningType type);
     double exchangeRates() const;
     void setExchangeRates(double exchangeRates);
     double btcRates() const;
@@ -245,7 +241,6 @@ public:
     QString newKeySignMessage() const;
     QString newKeySignMessageSHA256() const;
     void setNewKeySignMessage(const QString &value);
-    QStringList getUserWallets() const;
 
     const std::vector<nunchuk::PrimaryKey> &primaryKeys();
     nunchuk::PrimaryKey findPrimaryKey(const QString& fingerprint);
@@ -293,12 +288,12 @@ private:
     int                 nunchukMode_;
     int                 m_tabIndex;
     QWarningMessagePtr warningMessage_;
+    QVariantList        listMessage_;
     double              exchangeRates_;
     double              btcRates_;
     QDateTime           lasttime_checkEstimatedFee_;
     QMasterSignerPtr    m_primaryKey;
     QString             newKeySignMessage_;
-    QStringList         mUserWallets;
     std::vector<nunchuk::PrimaryKey> m_primaryKeys;
     int m_addSignerWizard {0};
 
@@ -343,26 +338,23 @@ signals:
     void newKeySignMessageChanged();
     void btcRatesChanged();
     void addSignerWizardChanged();
-    void forwardToast(int code, const QString &what, EWARNING::WarningType type, const QString &explain, POPUP::PopupType popup);
-
+    void forwardToast(int code, const QString &what, EWARNING::WarningType type);
+    void listMessagesChanged();
+    void txidReplacingChanged();
 public slots:
     void timerHealthCheckTimeHandle();
     void timerFeeRatesHandle();
     void timerCheckAuthorizedHandle();
-    QString parseKeystoneSigner(QString qr);
-    bool    parseKeystoneWallet(const QString name,
-                                const QString desc,
-                                const QStringList qrtags);
-    bool    parseKeystoneCollabWallet(const QStringList qrtags);
-    bool    parseKeystoneTransaction(const QStringList qrtags);
-    QString parsePassportSigners(QStringList qrtags);
+
+    bool    parseQRWallet(const QString name, const QString desc, const QStringList qrtags);
+    bool    parseQRCollabWallet(const QStringList qrtags);
     QString parseQRSigners(QStringList qrtags);
     QString parseJSONSigners(QString fileName);
-    bool    parsePassportTransaction(const QStringList qrtags);
+
     bool    updateSettingRestartRequired();
     QString getFilePath(const QString in);
     bool    enableDatabaseEncryption(const QString in);
-    void    recieveToast(int code, const QString &what, EWARNING::WarningType type, const QString &explain, POPUP::PopupType popup);
+    void    recieveToast(int code, const QString &what, EWARNING::WarningType type);
 };
 
 #endif // APPMODEL_H

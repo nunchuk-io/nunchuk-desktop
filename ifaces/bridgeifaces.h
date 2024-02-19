@@ -43,6 +43,7 @@ using namespace std;
 class ENUNCHUCK: public QObject
 {
     Q_OBJECT
+    Q_ENUMS(AddHardware)
     Q_ENUMS(TabSelection)
     Q_ENUMS(AddressType)
     Q_ENUMS(Chain)
@@ -58,11 +59,19 @@ class ENUNCHUCK: public QObject
     Q_ENUMS(IN_FLOW)
     Q_ENUMS(ROOM_EVT)
 public:
+    enum class AddHardware : int {
+        ADD_LEDGER = (int)nunchuk::SignerTag::LEDGER,
+        ADD_TREZOR = (int)nunchuk::SignerTag::TREZOR,
+        ADD_COLDCARD = (int)nunchuk::SignerTag::COLDCARD,
+        ADD_BITBOX = (int)nunchuk::SignerTag::BITBOX,
+    };
+
     enum class TabSelection {
         WALLET_TAB,
         SERVICE_TAB,
         CHAT_TAB,
         SETTING_TAB,
+        CURRENT_TAB,
     };
 
     enum class AddressType {
@@ -233,15 +242,15 @@ QWalletPtr convertWallet(const nunchuk::Wallet &wallet);
 
 QWalletPtr nunchukGetWallet(const QString &wallet_id);
 
+nunchuk::Wallet nunchukGetOriginWallet(const QString &wallet_id, QWarningMessage &msg);
+
 bool nunchukHasWallet(const QString &wallet_id);
 
 bool nunchukDeleteWallet(const QString& wallet_id, QWarningMessage &msg);
 
 void nunchukDeleteAllWallet();
 
-void nunchukUpdateWalletName(const QString& wallet_id, const QString &name, bool sync = true);
-
-void nunchukUpdateWalletDescription(const QString &wallet_id, const QString &description);
+void nunchukUpdateWallet(const QString &wallet_id, const QString &name, const QString &description);
 
 void nunchukUpdateWalletGapLimit(const QString& wallet_id, int gap_limit);
 
@@ -272,15 +281,22 @@ nunchuk::HealthStatus nunchukHealthCheckMasterSigner(const QString &xfp,
 nunchuk::HealthStatus nunchukHealthCheckSingleSigner(const QSingleSignerPtr &signer,
                                                      QWarningMessage &msg);
 
-int nunchukGetCurrentIndexFromMasterSigner(const QString& mastersigner_id,
-                                           const ENUNCHUCK::WalletType& wallet_type,
-                                           const ENUNCHUCK::AddressType& address_type,
-                                           QWarningMessage &msg);
+int nunchukGetLastUsedSignerIndex(const QString& xfp,
+                                  const ENUNCHUCK::WalletType& wallet_type,
+                                  const ENUNCHUCK::AddressType& address_type,
+                                  QWarningMessage &msg);
 
 QSingleSignerPtr nunchukGetSignerFromMasterSigner(const QString& mastersigner_id,
                                                   const ENUNCHUCK::WalletType& wallet_type,
                                                   const ENUNCHUCK::AddressType& address_type,
-                                                  int index);
+                                                  const int index,
+                                                  QWarningMessage &msg);
+
+nunchuk::SingleSigner nunchukGetOriginSingleSigner(const QString& xfp,
+                                                   const ENUNCHUCK::WalletType &wallet_type,
+                                                   const ENUNCHUCK::AddressType &address_type,
+                                                   const int index,
+                                                   QWarningMessage& msg);
 
 QSingleSignerPtr nunchukGetUnusedSignerFromMasterSigner(const QString& mastersigner_id,
                                                         const ENUNCHUCK::WalletType& wallet_type,
@@ -368,14 +384,33 @@ QTransactionPtr nunchukCreateTransaction(const QString& wallet_id,
                                          const QUTXOListModelPtr inputs,
                                          const int fee_rate,
                                          const bool subtract_fee_from_amount,
+                                         const QString &replace_txid,
                                          QWarningMessage &msg);
+
+QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
+                                               nunchuk::Transaction origin_tx,
+                                               QString input_address,
+                                               const QString &memo,
+                                               const int fee_rate,
+                                               const QString &replace_txid,
+                                               QWarningMessage &msg);
 
 QTransactionPtr nunchukDraftTransaction(const QString& wallet_id,
                                         const QMap<QString, qint64> outputs,
                                         const QUTXOListModelPtr inputs,
                                         const int fee_rate,
                                         const bool subtract_fee_from_amount,
+                                        const QString &replace_txid,
                                         QWarningMessage &msg);
+
+nunchuk::Transaction nunchukDraftOriginTransaction(const string &wallet_id,
+                                                   std::vector<nunchuk::TxOutput> tx_outputs,
+                                                   std::vector<nunchuk::TxInput> tx_inputs,
+                                                   nunchuk::Amount fee_rate,
+                                                   const bool subtract_fee_from_amount,
+                                                   const string &replace_txid,
+                                                   QWarningMessage &msg);
+
 
 QTransactionPtr nunchukReplaceTransaction(const QString &wallet_id,
                                           const QString& tx_id,
@@ -393,7 +428,6 @@ bool nunchukExportTransaction(const QString& wallet_id,
 
 QTransactionPtr nunchukImportTransaction(const QString& wallet_id,
                                          const QString& file_path,
-                                         bool isAssisted,
                                          QWarningMessage &msg);
 
 QTransactionPtr nunchukUpdateTransaction(const QString& wallet_id,
@@ -406,6 +440,11 @@ QTransactionPtr nunchukUpdateTransaction(const QString& wallet_id,
 QTransactionPtr nunchukImportPsbt(const QString& wallet_id,
                                         const QString& psbt,
                                         QWarningMessage &msg);
+
+bool nunchukReplaceTransactionId(const QString& wallet_id,
+                                 const QString &transaction_id,
+                                 const QString &replace_txid,
+                                 QWarningMessage &msg);
 
 nunchuk::Transaction nunchukSignTransaction(const QString &wallet_id,
                                                   const QString &tx_id,
@@ -550,6 +589,10 @@ QString nunchukParseQRSigners(const QStringList &qr_data);
 
 QString nunchukParseJSONSigners(const QString &filePathName);
 
+QSingleSignerPtr nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, QWarningMessage &msg);
+
+QSingleSignerPtr nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, ENUNCHUCK::AddressType address_type, QWarningMessage &msg);
+
 QStringList nunchukExportPassportWallet(const QString& wallet_id,
                                         QWarningMessage& msg);
 
@@ -567,9 +610,6 @@ void AddTapsigner(const QString& card_ident, const QString& xfp,
                   const QString& name, const QString& version,
                   int birth_height, bool is_testnet);
 
-void assistedWalletUpdateTx(const QString& wallet_id,
-                            const nunchuk::Transaction &tx);
-
 bool nunchukUpdateTransactionSchedule(const QString& wallet_id,
                                       const QString& tx_id,
                                       time_t ts,
@@ -581,11 +621,44 @@ QString SignHealthCheckMessage(const QSingleSignerPtr& signer,
                                const QString& message,
                                QWarningMessage& msg);
 
+QString SignHealthCheckMessage(const nunchuk::SingleSigner &signer,
+                               const QString& message,
+                               QWarningMessage& msg);
+
 QMasterSignerPtr ImportTapsignerMasterSigner( const std::vector<unsigned char>& data,
                                               const QString& backup_key,
                                               const QString& name,
                                               bool is_primary,
                                               QWarningMessage& msg);
+
+nunchuk::Transaction nunchukImportQRTransaction(const QString& wallet_id,
+                                           const QList<QString>& qr_data,
+                                           QWarningMessage& msg);
+
+QStringList nunchukExportQRTransaction(const QString &wallet_id,
+                                       const QString &tx_id,
+                                       QWarningMessage &msg);
+
+QString nunchukGetWalletExportData(const nunchuk::Wallet& wallet, nunchuk::ExportFormat format);
+
+bool IsMyAddress(const QString& wallet_id, const QString& address, QWarningMessage &msg);
+
+bool IsCPFP(const QString& wallet_id, const nunchuk::Transaction &tx, nunchuk::Amount &package_fee_rate, QWarningMessage& msg);
+
+nunchuk::SingleSigner GetSignerFromMasterSigner(const QString& mastersigner_id,
+                                                const QString& derivation_path,
+                                                QWarningMessage& msg);
+
+nunchuk::Transaction SignTransaction(const nunchuk::Wallet &wallet, const nunchuk::Transaction &tx, const nunchuk::Device &device, QWarningMessage &msg);
+
+bool UpdateRemoteSigner(const nunchuk::SingleSigner &remotesigner, QWarningMessage &msg);
+
+bool UpdateMasterSigner(const nunchuk::MasterSigner &mastersigner, QWarningMessage &msg);
+
+bool UpdateWallet(const nunchuk::Wallet &wallet, QWarningMessage &msg);
+
+nunchuk::TapsignerStatus GetTapsignerStatusFromMasterSigner(const QString& fingerPrint);
+
 }
 
 #endif // BRIDGEINTERFACE_H

@@ -28,28 +28,24 @@ import "../../../localization/STR_QML.js" as STR
 QOnScreenContent {
     signal nextClicked()
     signal prevClicked()
-    bottomLeft: Row {
-        spacing: 8
-        QButtonTextLink {
-            width: 181
-            height: 48
-            label: STR.STR_QML_059
-            onButtonClicked: {
-                prevClicked()
-            }
+    property bool nextEnable: true
+    bottomLeft: QButtonTextLink {
+        width: 97
+        height: 48
+        label: STR.STR_QML_059
+        onButtonClicked: {
+            prevClicked()
         }
     }
-    bottomRight: Row {
-        spacing: 12
-        QTextButton {
-            width: 120
-            height: 48
-            label.text: STR.STR_QML_265
-            label.font.pixelSize: 16
-            type: eTypeE
-            onButtonClicked: {
-                nextClicked()
-            }
+    bottomRight: QTextButton {
+        width: 100
+        height: 48
+        label.text: STR.STR_QML_265
+        label.font.pixelSize: 16
+        type: eTypeE
+        enabled: nextEnable
+        onButtonClicked: {
+            nextClicked()
         }
     }
 }

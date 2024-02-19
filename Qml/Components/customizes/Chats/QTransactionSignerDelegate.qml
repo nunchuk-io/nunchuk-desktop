@@ -29,6 +29,7 @@ import "../../customizes"
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
+import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -46,7 +47,12 @@ Rectangle {
     property bool   signerReadyToSign: true
     property int    signerType: -1
     property int    tx_status: -1
+    property int    accountIndex: 0
     property string card_id: ""
+    property string tag: ""
+    property bool has_sign_btn: true
+    property bool is_cosigning: false
+    property string myRole: ""
     signal signRequest()
     signal scanRequest()
     signal exportRequest()
@@ -66,11 +72,12 @@ Rectangle {
                 radius: width
                 color: "#F5F5F5"
                 anchors.verticalCenter: parent.verticalCenter
-                QImage {
-                    width: 24
-                    height: 24
+                QSignerDarkIcon {
+                    iconSize: 24
                     anchors.centerIn: parent
-                    source: GlobalData.iconTypes(devicetype,signerType)
+                    device_type: roomRoot.devicetype
+                    type: roomRoot.signerType
+                    tag: roomRoot.tag
                 }
             }
 
@@ -87,23 +94,39 @@ Rectangle {
                     color: "#031F2B"
                     elide: Text.ElideRight
                 }
-                Rectangle {
-                    width: typesigner.width + 10
-                    height: 16
-                    color: "#EAEAEA"
-                    visible: isLocaluser && (signerType === NUNCHUCKTYPE.AIRGAP ||
-                                             signerType === NUNCHUCKTYPE.SOFTWARE ||
-                                             signerType === NUNCHUCKTYPE.COLDCARD_NFC ||
-                                             signerType === NUNCHUCKTYPE.NFC)
-                    radius: 8
-                    QText {
-                        id: typesigner
-                        font.family: "Lato"
-                        color: "#031F2B"
-                        font.pixelSize: 10
-                        anchors.centerIn: parent
-                        font.weight: Font.Bold
-                        text: GlobalData.signers(signerType)
+                Row {
+                    spacing: 4
+                    Rectangle {
+                        width: typesigner.width + 10
+                        height: 16
+                        color: "#EAEAEA"
+                        visible: isLocaluser && (signerType !== NUNCHUCKTYPE.SERVER)
+                        radius: 8
+                        QText {
+                            id: typesigner
+                            font.family: "Lato"
+                            color: "#031F2B"
+                            font.pixelSize: 10
+                            anchors.centerIn: parent
+                            font.weight: Font.Bold
+                            text: GlobalData.signers(signerType)
+                        }
+                    }
+                    Rectangle {
+                        width: accttext.width + 10
+                        height: 16
+                        color: "#EAEAEA"
+                        visible: (accountIndex > 0) && (signerType !== NUNCHUCKTYPE.SERVER)
+                        radius: 8
+                        QText {
+                            id: accttext
+                            font.family: "Lato"
+                            color: "#031F2B"
+                            font.pixelSize: 10
+                            anchors.centerIn: parent
+                            font.weight: Font.Bold
+                            text: qsTr("Acct %1").arg(accountIndex)
+                        }
                     }
                 }
                 QText {
@@ -123,27 +146,45 @@ Rectangle {
                 }
                 QText {
                     height: 16
-                    visible: serverkeyMessage !== "" && signerType === NUNCHUCKTYPE.SERVER
+                    visible: (is_cosigning || serverkeyMessage !== "") && signerType === NUNCHUCKTYPE.SERVER
                     font.family: "Lato"
                     font.pixelSize: 12
                     color: "#A66800"
-                    text:  serverkeyMessage
+                    text:  is_cosigning ? STR.STR_QML_1002 : serverkeyMessage
                 }
             }
             Loader {
                 width: 80
                 height: parent.height
+                visible: myRole !== "OBSERVER"
                 sourceComponent: {
                     if(alreadySigned ) return signedComp
                     else{
-                        if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES) return null;
+                        if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES) {
+                            return null;
+                        }
                         else{
-                            if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){ return helpComp; }
-                            else if(signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.NFC || signerType === NUNCHUCKTYPE.UNKNOWN ) { return keysignOption; }
-                            else if(signerType === NUNCHUCKTYPE.SERVER) { return null; }
-                            else {
-                                if(signerReadyToSign){ return requiredSignature}
-                                else {requiredScan}
+                            if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE || signerType === NUNCHUCKTYPE.NFC){
+                                return helpComp;
+                            }
+                            if(isLocaluser || isDummy){
+                                if(signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.UNKNOWN ) {
+                                    return has_sign_btn ? keysignOption : null;
+                                }
+                                else if(signerType === NUNCHUCKTYPE.SERVER) {
+                                    return null;
+                                }
+                                else {
+                                    if(signerReadyToSign){
+                                        return has_sign_btn ? requiredSignature : null;
+                                    }
+                                    else {
+                                        return has_sign_btn ? requiredScan : null;
+                                    }
+                                }
+                            }
+                            else{
+                                return null;
                             }
                         }
                     }
@@ -152,20 +193,20 @@ Rectangle {
         }
         Row {
             visible: (tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES) ?
-                         false : !alreadySigned && !signerReadyToSign && (signerType === NUNCHUCKTYPE.HARDWARE)
+                         false : !alreadySigned && (signerType === NUNCHUCKTYPE.HARDWARE || signerType === NUNCHUCKTYPE.COLDCARD_NFC)
             height: 16
             spacing: 4
             QImage {
                 width: 16
                 height: 16
-                source: "qrc:/Images/Images/OnlineMode/warning_amber-24px 2.png"
+                source: signerReadyToSign ? "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png" : "qrc:/Images/Images/OnlineMode/warning_amber-24px 2.png"
                 anchors.verticalCenter: parent.verticalCenter
             }
             QText {
                 font.family: "Lato"
-                color: "#A66800"
-                font.pixelSize: 16
-                text: STR.STR_QML_506
+                color: signerReadyToSign ? "#031F2B" : "#A66800"
+                font.pixelSize: 12
+                text: signerReadyToSign ? STR.STR_QML_983 : STR.STR_QML_506
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -194,9 +235,8 @@ Rectangle {
     Component {
         id: signedComp
         Item {
-            QImage {
-                width: 24
-                height: 24
+            QIcon {
+                iconSize: 24
                 source: "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png"
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right

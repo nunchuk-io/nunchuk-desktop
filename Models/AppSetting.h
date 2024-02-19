@@ -37,6 +37,14 @@
 #define EXPLORER_SIGNNET "https://mempool.space/signet/tx/"
 #define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
 
+template <typename T1, typename T2, typename T3>
+class QTriple {
+public:
+    QTriple(){}
+    T1 first;
+    T2 second;
+    T3 third;
+};
 
 class  NunchukSettings : public QSettings {
 
@@ -47,8 +55,10 @@ public:
     void setGroupSetting(QString group);
     bool contains(const QString& key) const;
     void setValue(const QString &key, const QVariant &value);
+    void setValueCommon(const QString &key, const QVariant &value);
     QVariant value(const QString &key, const QVariant &defaultValue = QVariant()) const;
-
+    QVariant valueCommon(const QString &key, const QVariant &defaultValue = QVariant()) const;
+    void removeKey(const QString &key);
     bool containsCommon(const QString& key) const;
     void setCommonValue(const QString &key, const QVariant &value);
     QVariant commonValue(const QString &key, const QVariant &defaultValue = QVariant()) const;
@@ -93,7 +103,6 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(bool isStarted                   READ isStarted                                                      NOTIFY isStartedChanged)
     Q_PROPERTY(bool enableMultiDeviceSync       READ enableMultiDeviceSync      WRITE setEnableMultiDeviceSync      NOTIFY enableMultiDeviceSyncChanged)
     Q_PROPERTY(QString currency                 READ currency                   WRITE setCurrency                   NOTIFY currencyChanged)
-    Q_PROPERTY(bool enableCoSigning             READ enableCoSigning            WRITE setEnableCoSigning            NOTIFY enableCoSigningChanged)
     Q_PROPERTY(QString currencySymbol           READ currencySymbol                                                 NOTIFY currencyChanged)
 
 public:
@@ -227,9 +236,9 @@ public:
     QString currency();
     void setCurrency(QString currency);
 
-    bool enableCoSigning();
-    void setEnableCoSigning(bool enableCoSigning);
-
+    void setWalletCached(QString id, QTriple<QString /*group id*/, QString /*group slug*/, QString /*group role*/> data);
+    bool getwalletCached(QString id, QTriple<QString /*group id*/, QString /*group slug*/, QString /*group role*/> &result);
+    void deleteWalletCached(QString id);
 private:
     AppSetting();
     ~AppSetting();
@@ -268,7 +277,6 @@ private:
     bool enableDebugMode_;
     bool enableMultiDeviceSync_;
     bool isStarted_;
-    bool m_enableCoSigning;
 
 signals:
     void unitChanged();
@@ -307,7 +315,6 @@ signals:
     void isStartedChanged(bool isStarted);
     void enableMultiDeviceSyncChanged();
     void currencyChanged();
-    void enableCoSigningChanged();
 };
 
 #endif // APPSETTING_H

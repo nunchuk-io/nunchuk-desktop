@@ -63,10 +63,9 @@ Rectangle {
             top: parent.top
             topMargin: 29
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: icoClose
-            width: 24
-            height: 24
             scale: closeinfoMouse.containsMouse ? 1.1 : 1
             transformOrigin: Item.Center
             source: "qrc:/Images/Images/OnlineMode/close_24px_white.png"
@@ -115,24 +114,23 @@ Rectangle {
     }
     Row {
         id: optionRow
-        width: 234
         height: 88
         anchors.top: memberCntInfo.bottom
         anchors.topMargin: 24
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 0
         Item {
-            width: parent.width/2
+            width: 117
             height: parent.height
+            visible: !RoomWalletData.isIgnoredCollabWallet
             Rectangle {
                 width: 48
                 height: 48
                 radius: 48
                 color: "#595959"
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: RoomWalletData.roomWalletCreated ? "qrc:/Images/Images/OnlineMode/monetization_on-24px_2.png" :
                                                                "qrc:/Images/Images/OnlineMode/Joint wallet_FFFFFF.png"
                     anchors.centerIn: parent
@@ -169,7 +167,7 @@ Rectangle {
             }
         }
         Item {
-            width: parent.width/2
+            width: 117
             height: parent.height
             Rectangle {
                 width: 48
@@ -177,9 +175,8 @@ Rectangle {
                 radius: 48
                 color: "#595959"
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
                     anchors.centerIn: parent
                     scale: moreOptionsMouse.pressed ? 1 : moreOptionsMouse.containsMouse ? 1.1 : 1
@@ -331,10 +328,9 @@ Rectangle {
                     height: txCollapse.height
                     anchors.right: parent.right
                     property bool isCollapsed: false
-                    QImage {
+                    QIcon {
+                        iconSize: 24
                         id: txCollapse
-                        width: 24
-                        height: 24
                         scale: closeinfoMouse.containsMouse ? 1.1 : 1
                         transformOrigin: Item.Center
                         rotation: collapseTx.isCollapsed ? 0 : 180
@@ -480,10 +476,9 @@ Rectangle {
                     height: icoCollapse.height
                     anchors.right: parent.right
                     property bool isCollapsed: false
-                    QImage {
+                    QIcon {
+                        iconSize: 24
                         id: icoCollapse
-                        width: 24
-                        height: 24
                         scale: closeinfoMouse.containsMouse ? 1.1 : 1
                         transformOrigin: Item.Center
                         rotation: collapseMember.isCollapsed ? 0 : 180
@@ -509,9 +504,7 @@ Rectangle {
                     contactAvt: model.avatar
                     onItemRightClicked:  memberMenu.popup()
                     onItemDoubleClicked: {
-                        var requestlistChatId = [model.id]
-                        var requestlist = [model.name]
-                        ClientController.createRoomChat(requestlistChatId, requestlist, "")
+                        ClientController.createRoomDirectChat(model.id, model.name)
                         conversationContentLoader.changeCurrentRoomComponent()
                     }
 
@@ -658,9 +651,8 @@ Rectangle {
                             elide: Text.ElideRight
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        QImage {
-                            width: 24
-                            height: 24
+                        QIcon {
+                            iconSize: 24
                             source: "qrc:/Images/Images/OnlineMode/Escrow Wallet.png"
                             anchors.verticalCenter: parent.verticalCenter
                             visible: RoomWalletData.isEscrow

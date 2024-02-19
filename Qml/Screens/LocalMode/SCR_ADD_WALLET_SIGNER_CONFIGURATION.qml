@@ -28,6 +28,8 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
+import "../../Components/customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -110,7 +112,7 @@ QScreen {
             }
             Flickable {
                 id: flickerSignerList
-                width: 269
+                width: 280
                 height: 190
                 clip: true
                 flickableDirection: Flickable.VerticalFlick
@@ -127,8 +129,8 @@ QScreen {
                     id: contentDisplay
                     QListView {
                         id: mastersigners
-                        width: 269
-                        height: 40*mastersigners.count
+                        width: 280
+                        height: 50*mastersigners.count
                         clip: true
                         interactive: false
                         model: AppModel.masterSignerList
@@ -136,74 +138,55 @@ QScreen {
                             id: delegateMastersigner
                             color: master_signer_checked ? Qt.rgba(0, 0, 0, 0.1): "transparent"
                             width: 269
-                            height: 40
+                            height: 50
                             Rectangle {
-                                width: 269
+                                width: parent.width
                                 height: 1
                                 color: "#C9DEF1"
                                 anchors.bottom: parent.bottom
                             }
                             Row {
-                                height: 24
+                                width: parent.width
                                 spacing: 8
                                 anchors {
                                     left: parent.left
-                                    leftMargin: 16
+                                    leftMargin: 8
                                     verticalCenter: parent.verticalCenter
                                 }
-                                QImage {
-                                    width: 24
-                                    height: 24
+                                QIcon {
+                                    iconSize: 24
                                     source: master_signer_checked ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
-                                }
-                                QText {
-                                    width: 200
-                                    elide: Text.ElideRight
                                     anchors.verticalCenter: parent.verticalCenter
-                                    font.pixelSize: 14
-                                    color: master_signer_checked ? "#9CAEB8" :  "#031F2B"
-                                    text: master_signer_name
                                 }
-                            }
-                            Rectangle {
-                                width: _txt.paintedWidth + 8*2
-                                height: 21
-                                color: "#FDD95C"
-                                visible: model.master_signer_primary_key
-                                radius: 4
-                                anchors{
-                                    verticalCenter: parent.verticalCenter
-                                    right: _type.left
-                                    rightMargin: 4
-                                }
-                                QText {
-                                    id:_txt
-                                    text: STR.STR_QML_641
-                                    font.family: "Lato"
-                                    font.weight: Font.Bold
-                                    font.pixelSize: 10
-                                    anchors.centerIn: parent
-                                    color: "#031F2B"
-                                }
-                            }
-                            Rectangle {
-                                id:_type
-                                width: 85
-                                height: 21
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.right: parent.right
-                                anchors.rightMargin: 5
-                                color: "#C9DEF1"
-                                radius: 4
-                                visible: master_signer_type !== NUNCHUCKTYPE.HARDWARE
-                                QText {
-                                    id: signerTypeText
-                                    text: GlobalData.signers(master_signer_type)
-                                    font.family: "Lato"
-                                    font.weight: Font.Bold
-                                    font.pixelSize: 10
-                                    anchors.centerIn: parent
-                                    color: "#031F2B"
+                                Column {
+                                    width: parent.width - 40
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 4
+                                    QText {
+                                        width: 200
+                                        elide: Text.ElideRight
+                                        font.pixelSize: 14
+                                        color: master_signer_checked ? "#9CAEB8" :  "#031F2B"
+                                        text: master_signer_name
+                                    }
+                                    Item{
+                                        width: parent.width
+                                        height: 16
+                                        QText {
+                                            height: 16
+                                            font.pixelSize: 12
+                                            color: "#031F2B"
+                                            font.family: "Lato"
+                                            text: "XFP: " + model.master_signer_fingerPrint
+                                            font.capitalization: Font.AllUppercase
+                                        }
+                                        QRowSingleSignerType {
+                                            isPrimaryKey: model.master_signer_primary_key
+                                            signerType: model.master_signer_type
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.right: parent.right
+                                        }
+                                    }
                                 }
                             }
                             MouseArea {
@@ -217,8 +200,10 @@ QScreen {
                                     else{
                                         if(master_signer_type == NUNCHUCKTYPE.SOFTWARE || model.master_signer_primary_key){
                                             if (master_signer_need_passphrase) {
-                                                var signerObj = { "mastersigner_id"    : master_signer_id,
-                                                    "mastersigner_index" : index};
+                                                var signerObj = {
+                                                    "mastersigner_id"    : master_signer_id,
+                                                    "mastersigner_index" : index
+                                                };
                                                 QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_MASTER_SIGNER_SEND_PASSPHRASE, signerObj)
                                             } else {
                                                 _warning.model = model
@@ -241,8 +226,8 @@ QScreen {
                     }
                     QListView {
                         id: remotesigners
-                        width: 269
-                        height: 40*remotesigners.count
+                        width: 280
+                        height: 50*remotesigners.count
                         clip: true
                         interactive: false
                         model: AppModel.remoteSignerList
@@ -250,51 +235,57 @@ QScreen {
                             id: delegateRemoteSigner
                             color: single_signer_checked ? Qt.rgba(0, 0, 0, 0.1): "transparent"
                             width: 269
-                            height: 40
+                            height: 50
                             Rectangle {
-                                width: 269
+                                width: parent.width
                                 height: 1
                                 color: "#C9DEF1"
                                 anchors.bottom: parent.bottom
                             }
                             Row {
-                                height: 24
+                                width: parent.width
                                 spacing: 8
                                 anchors {
                                     left: parent.left
-                                    leftMargin: 16
+                                    leftMargin: 8
                                     verticalCenter: parent.verticalCenter
                                 }
-                                QImage {
-                                    width: 24
-                                    height: 24
+                                QIcon {
+                                    iconSize: 24
                                     source: single_signer_checked ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
-                                }
-                                QText {
-                                    width: 150
-                                    elide: Text.ElideRight
                                     anchors.verticalCenter: parent.verticalCenter
-                                    font.pixelSize: 14
-                                    color: single_signer_checked  ? "#9CAEB8" :  "#031F2B"
-                                    text: singleSigner_name
                                 }
-                            }
-
-                            Rectangle {
-                                width: 85
-                                height: 21
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.right: parent.right
-                                anchors.rightMargin: 5
-                                color: "#C9DEF1"
-                                radius: 4
-                                QText {
-                                    text: GlobalData.signers(single_signer_type)
-                                    font.family: "Lato"
-                                    font.weight: Font.Bold
-                                    font.pixelSize: 10
-                                    anchors.centerIn: parent
-                                    color: "#031F2B"
+                                Column {
+                                    width: parent.width - 40
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 4
+                                    QText {
+                                        width: 200
+                                        elide: Text.ElideRight
+                                        font.pixelSize: 14
+                                        color: single_signer_checked ? "#9CAEB8" :  "#031F2B"
+                                        text: singleSigner_name
+                                    }
+                                    Item{
+                                        width: parent.width
+                                        height: 16
+                                        QText {
+                                            id: xfptext
+                                            height: 16
+                                            font.pixelSize: 12
+                                            color: "#031F2B"
+                                            font.family: "Lato"
+                                            text: "XFP: " + model.singleSigner_masterFingerPrint
+                                            font.capitalization: Font.AllUppercase
+                                        }
+                                        QRowSingleSignerType {
+                                            isPrimaryKey: model.single_signer_primary_key
+                                            signerType: model.single_signer_type
+                                            accountIndex: model.single_signer_account_index
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.right: parent.right
+                                        }
+                                    }
                                 }
                             }
                             MouseArea {
@@ -512,36 +503,10 @@ QScreen {
                                 text: "XFP: " + model.singleSigner_masterFingerPrint
                                 font.capitalization: Font.AllUppercase
                             }
-                            Rectangle {
-                                width: _txt1.paintedWidth + 8*2
-                                height: 16
-                                color: "#FDD95C"
-                                visible: model.single_signer_primary_key
-                                radius: 4
-                                QText {
-                                    id:_txt1
-                                    text: STR.STR_QML_641
-                                    font.family: "Lato"
-                                    font.weight: Font.Bold
-                                    font.pixelSize: 10
-                                    anchors.centerIn: parent
-                                    color: "#031F2B"
-                                }
-                            }
-                            Rectangle {
-                                width: 85
-                                height: 16
-                                color: "#C9DEF1"
-                                radius: 4
-                                visible: model.single_signer_type !== NUNCHUCKTYPE.HARDWARE
-                                QText {
-                                    text: GlobalData.signers(model.single_signer_type)
-                                    font.family: "Lato"
-                                    font.weight: Font.Bold
-                                    font.pixelSize: 10
-                                    anchors.centerIn: parent
-                                    color: "#031F2B"
-                                }
+                            QRowSingleSignerType {
+                                isPrimaryKey: model.single_signer_primary_key
+                                signerType: model.single_signer_type
+                                accountIndex: model.single_signer_account_index
                             }
                         }
                     }
@@ -784,17 +749,16 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_TRY_REVIEW)
             }
         }
-        QPopupInfoVertical {
+        QPopupInfoTwoButtons {
             id: _warning
             property var model
             title: STR.STR_QML_661
             contentText: STR.STR_QML_669
             labels: [STR.STR_QML_670,STR.STR_QML_035]
-            onConfirmNo: close()
-            onConfirmYes: {
-                close()
-                model.master_signer_checked = true
-            }
+            funcs: [
+                function() { model.master_signer_checked = true; },
+                function() {}
+            ]
         }
     }
 }

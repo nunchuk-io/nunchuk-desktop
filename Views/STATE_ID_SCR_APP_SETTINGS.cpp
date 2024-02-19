@@ -24,7 +24,7 @@
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
 #include <QProcess>
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "ProfileSetting.h"
 
 void SCR_APP_SETTING_Entry(QVariant msg) {
@@ -67,10 +67,7 @@ void EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
         QString signature = bridge::SignLoginMessage(pKey->id(),message);
         if(Draco::instance()->pkey_delete_confirmation(signature)){
             bridge::nunchukDeletePrimaryKey();
-            AppModel::instance()->showToast(0,
-                                            STR_CPP_109,
-                                            EWARNING::WarningType::SUCCESS_MSG,
-                                            STR_CPP_109);
+            AppModel::instance()->showToast(0, STR_CPP_109, EWARNING::WarningType::SUCCESS_MSG );
         }
     }
 }

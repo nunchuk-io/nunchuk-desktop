@@ -24,6 +24,22 @@
 #include <QCryptographicHash>
 #include <QJsonDocument>
 
+QString qUtils::encryptXOR(const QString data, const QString key) {
+    if(key == ""){
+        return data;
+    }
+
+    QString encryptedData;
+    for (int i = 0; i < data.length(); ++i) {
+        encryptedData += QChar(data.at(i).unicode() ^ key.at(i % key.length()).unicode());
+    }
+    return encryptedData;
+}
+
+QString qUtils::decryptXOR(const QString encryptedData, const QString key) {
+    return qUtils::encryptXOR(encryptedData, key);
+}
+
 qint64 qUtils::QAmountFromValue(const QString &value, const bool allow_negative) {
     qint64 ret = -1;
     try {
@@ -193,6 +209,26 @@ nunchuk::Wallet qUtils::ParseKeystoneWallet(nunchuk::Chain chain, const QStringL
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return ret;
+}
+
+QString qUtils::ParseQRTransaction(const QStringList &qrtags, QWarningMessage& msg)
+{
+    std::string psbt = "";
+    std::vector<std::string> qr_result;
+    for (QString it : qrtags) {
+        qr_result.push_back(it.toStdString());
+    }
+    try {
+        psbt = nunchuk::Utils::ParseKeystoneTransaction(qr_result);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return QString::fromStdString(psbt);
 }
 
 std::vector<nunchuk::PrimaryKey> qUtils::GetPrimaryKeys(const QString &storage_path, nunchuk::Chain chain)
@@ -393,9 +429,9 @@ QString qUtils::CreateRequestToken(const QString &signature,
 
 QString qUtils::currencyLocale(qint64 amountSats)
 {
-    double btRates = AppModel::instance()->btcRates()/100000000;
+    double btcRates = AppModel::instance()->btcRates()/100000000;
     double exRates = AppModel::instance()->exchangeRates();
-    double balanceCurrency = btRates*exRates*amountSats;
+    double balanceCurrency = btcRates*exRates*amountSats;
     QLocale locale(QLocale::English);
     QString output = locale.toString(balanceCurrency, 'f', 2);
 #if 0
@@ -460,6 +496,7 @@ QJsonObject qUtils::GetJsonObject(QString text)
 uint qUtils::GetTimeSecond(QString time_str)
 {
     QStringList list = time_str.split("/");
+    if (list.size() < 2) return 0;
     QString month = list.at(0);
     QString day = list.at(1);
     QString year = list.at(2);
@@ -471,4 +508,123 @@ uint qUtils::GetTimeSecond(QString time_str)
 uint qUtils::GetCurrentTimeSecond()
 {
     return QDateTime::currentDateTime().toTime_t();
+}
+
+bool qUtils::strCompare(const QString &str1, const QString &str2)
+{
+    return 0 == QString::compare(str1, str2, Qt::CaseInsensitive);
+}
+
+nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags)
+{
+    nunchuk::AnalyzeQRResult result;
+    std::vector<std::string> qr_result;
+    QWarningMessage msg;
+    for (QString it : qrtags) {
+        qr_result.push_back(it.toStdString());
+    }
+    try {
+        result = nunchuk::Utils::AnalyzeQR(qr_result);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return result;
+}
+
+QStringList qUtils::ExportQRTransaction(const QString &tx_to_sign, QWarningMessage &msg)
+{
+    QStringList result {};
+    try {
+        std::vector<std::string> data = nunchuk::Utils::ExportKeystoneTransaction(tx_to_sign.toStdString());
+        result.reserve(data.size());
+        for (std::string it : data) {
+            result.append(QString::fromStdString(it));
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return result;
+}
+
+QStringList qUtils::DeriveAddresses(const nunchuk::Wallet &wallet, int from_index, int to_index, QWarningMessage &msg)
+{
+    QStringList result {};
+    try {
+        std::vector<std::string> data = nunchuk::Utils::DeriveAddresses(wallet, from_index, to_index);
+        result.reserve(data.size());
+        for (std::string it : data) {
+            result.append(QString::fromStdString(it));
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return result;
+}
+
+int qUtils::GetIndexFromPath(const QString &path)
+{
+    QWarningMessage msg;
+    int index = -1;
+    try {
+        index = nunchuk::Utils::GetIndexFromPath(path.toStdString());
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    DBG_INFO << index;
+    return index;
+}
+
+bool qUtils::IsValidAddress(const QString &address)
+{
+    QWarningMessage msg;
+    bool ret {false};
+    try {
+        ret = nunchuk::Utils::IsValidAddress(address.toStdString());
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QString qUtils::GetBip32DerivationPath(const nunchuk::WalletType& wallet_type, const nunchuk::AddressType& address_type)
+{
+    QWarningMessage msg;
+    std::string path = "";
+    try {
+        nunchuk::Chain chain = static_cast<nunchuk::Chain>(AppSetting::instance()->primaryServer());
+        path = GetBip32Path(chain, wallet_type, address_type, 0);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return QString::fromStdString(path);
 }

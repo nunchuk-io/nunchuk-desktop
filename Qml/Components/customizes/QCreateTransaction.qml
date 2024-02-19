@@ -548,10 +548,9 @@ Item {
                                     Item {
                                         width: addresstab.width
                                         height: parent.height
-                                        QImage {
+                                        QIcon {
+                                            iconSize: 24
                                             id: checkboxutxo
-                                            width: 24
-                                            height: 24
                                             source: utxo_selected ? (utxos.enabled ? iconChecked[0] : iconChecked[1]) : (utxos.enabled ? iconUnChecked[0] : iconUnChecked[1])
                                             anchors.verticalCenter: parent.verticalCenter
                                             anchors.left: parent.left
@@ -670,10 +669,9 @@ Item {
                                 source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
                             }
                         }
-                        QImage {
+                        QIcon {
+                            iconSize: 24
                             id: icosubtract
-                            width: 24
-                            height: 24
                             source: subtract.selected ? (subtract.enabled ? iconChecked[0]: iconChecked[1]) : (subtract.enabled ? iconUnChecked[0]: iconUnChecked[1])
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
@@ -702,10 +700,9 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: STR.STR_QML_228
                         }
-                        QImage {
+                        QIcon {
+                            iconSize: 24
                             id: manualfeeico
-                            width: 24
-                            height: 24
                             source: manualfee.selected ? iconChecked[0] : iconUnChecked[0]
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right

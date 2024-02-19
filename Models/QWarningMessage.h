@@ -29,7 +29,7 @@ class EWARNING: public QObject
     Q_ENUMS(WarningType)
 public:
     enum class WarningType {
-        NONE_MSG,
+        NONE_MSG = 0,
         SUCCESS_MSG,
         WARNING_MSG,
         ERROR_MSG,
@@ -48,14 +48,14 @@ public:
         PopupNone,
         PopupTop,
         PopupCenter,
-        PopupBottom
+        PopupBottom,
+        PopupBottomA
     };
     enum class WalletImportType {
         IMPORT_WALLET_DB = 0,
         IMPORT_WALLET_DESCRIPTOR,
         IMPORT_WALLET_CONFIGFILE,
-        IMPORT_WALLET_QRCODE_KEYSTONE,
-        IMPORT_WALLET_QRCODE_PASSPORT
+        IMPORT_WALLET_QRCODE,
     };
 };
 Q_DECLARE_METATYPE(POPUP::PopupType)
@@ -63,12 +63,12 @@ Q_DECLARE_METATYPE(POPUP::PopupType)
 class QWarningMessage : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString  contentDisplay  READ contentDisplay NOTIFY contentDisplayChanged)
-    Q_PROPERTY(QString  explaination    READ explaination   NOTIFY explainationChanged)
-    Q_PROPERTY(QString  what READ what NOTIFY whatChanged)
-    Q_PROPERTY(int      code READ code NOTIFY codeChanged)
-    Q_PROPERTY(int      type READ type WRITE setType NOTIFY typeChanged)
-    Q_PROPERTY(int      popupType READ popupType WRITE setPopupType NOTIFY popupTypeChanged)
+    Q_PROPERTY(QString  contentDisplay  READ contentDisplay                     NOTIFY contentDisplayChanged)
+    Q_PROPERTY(QString  explaination    READ explaination                       NOTIFY explainationChanged)
+    Q_PROPERTY(QString  what            READ what                               NOTIFY whatChanged)
+    Q_PROPERTY(int      code            READ code                               NOTIFY codeChanged)
+    Q_PROPERTY(int      type            READ type           WRITE setType       NOTIFY typeChanged)
+    Q_PROPERTY(int      popupType       READ popupType      WRITE setPopupType  NOTIFY popupTypeChanged)
 public:
     QWarningMessage();
     ~QWarningMessage();
@@ -81,7 +81,7 @@ public:
     QString what() const;
     void setWhat(const QString &what);
 
-    void setWarningMessage(int code, const QString &what, EWARNING::WarningType type = EWARNING::WarningType::EXCEPTION_MSG, const QString& explain = "");
+    void setWarningMessage(int code, const QString &what, EWARNING::WarningType type = EWARNING::WarningType::EXCEPTION_MSG);
     void resetWarningMessage();
 
     int type() const;

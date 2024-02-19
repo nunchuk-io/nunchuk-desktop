@@ -23,7 +23,7 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "ifaces/Chats/matrixbrigde.h"
 
 void SCR_TRANSACTION_HISTORY_Entry(QVariant msg) {
@@ -59,8 +59,10 @@ void EVT_TRANSACTION_INFO_ITEM_SELECTED_HANDLER(QVariant msg) {
                 }
             }
             if(wallet.data()->isAssistedWallet()){
-                QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id, txid);
-                it->setServerKeyMessage(data);
+                QJsonObject data = wallet.data()->GetServerKeyInfo(txid);
+                if(!data.isEmpty()){
+                    it->setServerKeyMessage(data);
+                }
             }
         }
         AppModel::instance()->setTransactionInfo(it);

@@ -33,9 +33,8 @@ import "../../Components/customizes/services"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    function fclose() {
-        QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_SHARE_YOUR_SECRETS)
-    }
+    property int flow: AppModel.walletInfo.flow
+    property var inheritancePlanInfo: flow === AlertType.CREATE_INHERITANCE_PLAN_SUCCESS ? AppModel.walletInfo.inheritancePlanInfo : ServiceSetting.walletInfo.inheritancePlanInfo
     property string option: STR.STR_QML_881
     property string selectedOption: ""
 
@@ -51,7 +50,7 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_847
-        onCloseClicked: fclose()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Column {
                 anchors.fill: parent
@@ -119,7 +118,7 @@ QScreen {
                 _Option.nextClicked()
             }
         }
-        onPrevClicked: fclose()
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         onNextClicked: {
             selectedOption = option
         }
@@ -131,7 +130,7 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_881
-        onCloseClicked: fclose()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Row {
                 spacing: 36
@@ -163,13 +162,13 @@ QScreen {
             type: eTypeE
             onButtonClicked: {
                 findObj(parent, "nextClicked").nextClicked()
-                fclose()
+                QMLHandle.sendEvent(EVT.EVT_UPDATE_YOUR_SECRET_REQUEST)
             }
         }
         bottomLeft: Item {}
-        onPrevClicked: fclose()
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         onNextClicked: {
-            AppModel.qInheritanceSecret = selectedOption
+            inheritancePlanInfo.secret = selectedOption
         }
     }
 
@@ -179,7 +178,7 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_883
-        onCloseClicked: fclose()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Row {
                 spacing: 36
@@ -211,13 +210,13 @@ QScreen {
             type: eTypeE
             onButtonClicked: {
                 findObj(parent, "nextClicked").nextClicked()
-                fclose()
+                QMLHandle.sendEvent(EVT.EVT_UPDATE_YOUR_SECRET_REQUEST)
             }
         }
         bottomLeft: Item {}
-        onPrevClicked: fclose()
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         onNextClicked: {
-            AppModel.qInheritanceSecret = selectedOption
+            inheritancePlanInfo.secret = selectedOption
         }
     }
 
@@ -227,7 +226,7 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_885
-        onCloseClicked: fclose()
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Row {
                 spacing: 36
@@ -259,13 +258,13 @@ QScreen {
             type: eTypeE
             onButtonClicked: {
                 findObj(parent, "nextClicked").nextClicked()
-                fclose()
+                QMLHandle.sendEvent(EVT.EVT_UPDATE_YOUR_SECRET_REQUEST)
             }
         }
         bottomLeft: Item {}
-        onPrevClicked: fclose()
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         onNextClicked: {
-            AppModel.qInheritanceSecret = selectedOption
+            inheritancePlanInfo.secret = selectedOption
         }
     }
 

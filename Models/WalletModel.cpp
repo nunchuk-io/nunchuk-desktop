@@ -23,8 +23,19 @@
 #include "AppModel.h"
 #include <QQmlEngine>
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
+#include "Servers/Byzantine.h"
+#include "Premiums/QServerKey.h"
+#include "Premiums/QGroupDashboard.h"
+#include "Premiums/QInheritancePlan.h"
+#include "Premiums/QGroupWalletDummyTx.h"
+#include "Premiums/QUserWalletDummyTx.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
+#include "Premiums/QRecurringPayment.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
+int Wallet::m_flow = 0;
 Wallet::Wallet() :
     m_addressType(QString::number((int)ENUNCHUCK::AddressType::NATIVE_SEGWIT)), // Default is NATIVE_SEGWIT
     m_createDate(QDateTime::currentDateTime()),
@@ -32,16 +43,25 @@ Wallet::Wallet() :
     m_transactionHistory(QTransactionListModelPtr(new TransactionListModel())),
     m_creationMode((int)CreationMode::CREATE_NEW_WALLET)
 {
+    m_roomMembers.clear();
+    init();
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Wallet::Wallet(const nunchuk::Wallet &w) : m_wallet(w)
+Wallet::Wallet(const nunchuk::Wallet &w)
+    : Wallet()
 {
+    m_wallet = w;
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 Wallet::~Wallet(){
 
+}
+
+void Wallet::init()
+{
+    QObject::connect(this, &Wallet::signalSyncCollabKeyname, this, &Wallet::slotSyncCollabKeyname, Qt::QueuedConnection);
 }
 
 void Wallet::convert(const Wallet *w)
@@ -53,6 +73,7 @@ void Wallet::convert(const Wallet *w)
 
 void Wallet::convert(const nunchuk::Wallet &w)
 {
+    m_wallet = w;
     setId(QString::fromStdString(w.get_id()));
     setM(w.get_m());
     setN(w.get_n());
@@ -63,10 +84,25 @@ void Wallet::convert(const nunchuk::Wallet &w)
     setEscrow(w.is_escrow());
     setGapLimit(w.get_gap_limit());
     setDescription(QString::fromStdString(w.get_description()));
+    serverKeyPtr();
+    inheritancePlanPtr();
+    QGroupDashboardPtr dash = dashboard();
+    if (dash && dash->myInfo().isEmpty()) {
+        dash->GetMemberInfo();
+        QtConcurrent::run([dash]() {
+            dash->GetAlertsInfo();
+            dash->GetWalletInfo();
+            dash->GetHealthCheckInfo();
+        });
+    }
+
     m_signers->cleardata();
     for (nunchuk::SingleSigner signer : w.get_signers()) {
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         m_signers->addSingleSigner(ret);
+    }
+    if(m_signers){
+        m_signers.data()->requestSort();
     }
 }
 
@@ -79,7 +115,17 @@ int Wallet::n() {
     return n_n;
 }
 
-QString Wallet::name() const {return m_name;}
+QString Wallet::name() {
+    if(isByzantineWallet() && "" != aliasName()){
+        return aliasName();
+    }
+    return m_name;
+}
+
+QString Wallet::walletOriginName() const
+{
+    return m_name;
+}
 
 QString Wallet::addressType() const {return m_addressType;}
 
@@ -194,13 +240,9 @@ void Wallet::setDescriptior(const QString &descriptior)
     m_descriptior = descriptior;
 }
 
-SingleSignerListModel* Wallet::singleSignersAssigned() const {
+SingleSignerListModel* Wallet::singleSignersAssigned() {
+    m_signers->requestSort();
     return m_signers.data();
-}
-
-QSingleSignerListModelPtr Wallet::singleSignersAssignedPtr() const
-{
-    return m_signers;
 }
 
 QString Wallet::address() const {
@@ -320,11 +362,29 @@ void Wallet::setTransactionHistory(const QTransactionListModelPtr &d) {
     emit transactionHistoryChanged();
 }
 
-void Wallet::updateTransaction(const QString txid, const QTransactionPtr &tx)
+QString Wallet::unUseAddress() const
 {
-    if(m_transactionHistory){
-         m_transactionHistory.data()->updateTransaction(txid, tx);
+    QString address;
+    QStringList addrs = bridge::nunchukGetUnusedAddresses(id(), false);
+    if (addrs.size() > 0) {
+        address = addrs.first();
+    } else {
+        address = bridge::nunchukGenNewAddresses(id(),false);
     }
+    return address;
+}
+
+bool Wallet::isDeleting() const
+{
+    return m_isDeleting;
+}
+
+void Wallet::setIsDeleting(const bool val)
+{
+    if (m_isDeleting == val)
+        return;
+    m_isDeleting = val;
+    emit isDeletingChanged();
 }
 
 int Wallet::getCreationMode() const
@@ -399,7 +459,45 @@ void Wallet::setInitEventId(const QString &initEventId)
 
 bool Wallet::isAssistedWallet() const
 {
-    return AppModel::instance()->getUserWallets().contains(m_id);
+    return isUserWallet() || isGroupWallet();
+}
+
+bool Wallet::isUserWallet() const
+{
+    bool result = false;
+    result = WalletsMng->isUserWallet(m_id);
+    if(!result){
+        QTriple<QString, QString, QString> triple;
+        bool ret = AppSetting::instance()->getwalletCached(id(), triple);
+        if(ret){
+            DBG_INFO << triple.first;
+            return (triple.first == "");
+        }
+    }
+    return result;
+}
+
+bool Wallet::isGroupWallet() const
+{
+    bool result = false;
+    result = WalletsMng->isGroupWallet(m_id);
+    if(!result){
+        QTriple<QString, QString, QString> triple;
+        bool ret = AppSetting::instance()->getwalletCached(id(), triple);
+        if(ret){
+            DBG_INFO << triple.first;
+            return (triple.first != "");
+        }
+    }
+    return result;
+}
+
+bool Wallet::containsColdcard()
+{
+    if(m_signers){
+        return m_signers.data()->containsColdcard();
+    }
+    return false;
 }
 
 int Wallet::gapLimit() const
@@ -420,9 +518,392 @@ nunchuk::Wallet Wallet::wallet() const
     return m_wallet;
 }
 
-void Wallet::syncAissistedTxs()
+void Wallet::GetAssistedTxs()
 {
-    if(isAssistedWallet()){
+    DBG_INFO << "FIXME user:" << isUserWallet() << " group:" << isGroupWallet();
+    if(isGroupWallet()){
+        GetGroupTxs();
+    }
+    else if(isUserWallet()){
+        GetUserTxs();
+    }
+    else{}
+}
+
+void Wallet::GetAssistedCancelledTxs()
+{
+    if(isGroupWallet()){
+        GetGroupCancelledTxs();
+    }
+    else if(isUserWallet()){
+        GetUserCancelledTxs();
+    }
+    else{}
+}
+
+QTransactionPtr Wallet::SyncAssistedTxs(const nunchuk::Transaction &tx)
+{
+    if(isGroupWallet()){
+        return SyncGroupTxs(tx);
+    }
+    else if(isUserWallet()){
+        return SyncUserTxs(tx);
+    }
+    else{
+        //TBD
+    }
+    return bridge::convertTransaction(tx, id());
+}
+
+void Wallet::UpdateAssistedTxs(const QString &txid, const QString &memo)
+{
+    if(isGroupWallet()){
+        UpdateGroupTxs(txid, memo);
+    }
+    else if(isUserWallet()){
+        UpdateUserTxs(txid, memo);
+    }
+    else{
+        //TBD
+    }
+}
+
+void Wallet::CancelAssistedTxs(const QString &txid)
+{
+    if(isGroupWallet()){
+        CancelGroupTxs(txid);
+    }
+    else if(isUserWallet()){
+        CancelUserTxs(txid);
+    }
+    else{
+        //TBD
+    }
+}
+
+void Wallet::CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo)
+{
+    if(isGroupWallet()){
+        CreateGroupTxs(txid, psbt, memo);
+    }
+    else if(isUserWallet()){
+        CreateUserTxs(txid, psbt, memo);
+    }
+    else{
+        //TBD
+    }
+}
+
+void Wallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo)
+{
+    if(isGroupWallet()){
+        SignGroupTxs(tx_id, psbt, memo);
+    }
+    else if(isUserWallet()){
+        SignUserTxs(tx_id, psbt, memo);
+    }
+    else{
+        //TBD
+    }
+}
+
+bool Wallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt)
+{
+    QJsonObject data;
+    QString errormsg = "";
+    QString wallet_id = id();
+    if(isGroupWallet()){
+        QString group_id = groupId();
+        bool ret = Byzantine::instance()->RbfTransaction(group_id, wallet_id, tx_id, psbt, data, errormsg);
+        return ret;
+    }
+    else if(isUserWallet()){
+        bool ret = Draco::instance()->assistedRbfTx(wallet_id, tx_id, psbt, data, errormsg);
+        return ret;
+    }
+    else{
+        //TBD
+    }
+    return false;
+}
+
+void Wallet::UpdateWallet(const QString &name, const QString &description)
+{
+    setName(name);
+    setDescription(description);
+    if(isGroupWallet()){
+        UpdateGroupWallet(name, description);
+    }
+    else if(isUserWallet()){
+        UpdateUserWallet(name, description);
+    }
+    else{
+        //TBD
+    }
+}
+
+QJsonObject Wallet::GetServerKeyInfo(const QString &txid)
+{
+    QString wallet_id = id();
+    QString group_id = groupId();
+    if(isGroupWallet()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Byzantine::instance()->GetOneTransaction(group_id, wallet_id, txid, output, errormsg);
+        if(ret){
+            return output;
+        }
+        else{
+            return QJsonObject();
+        }
+    }
+    else if(isUserWallet()){
+        return Draco::instance()->assistedWalletGetTx(wallet_id, txid);
+    }
+    else{
+        return QJsonObject();
+    }
+}
+
+bool Wallet::DeleteAssistedWallet()
+{
+    QString passwordToken = ServiceSetting::instance()->servicesTagPtr()->passwordToken();
+    auto tag = ServiceSetting::instance()->servicesTagPtr();
+    QJsonObject output;
+    QString errormsg = "";
+    bool ret {false};
+    if(isGroupWallet()){
+        ret = Byzantine::instance()->DeleteGroupWallet(id(), groupId(), {}, passwordToken, tag->secQuesToken(), output, errormsg);
+    }
+    else if(isUserWallet()){
+        ret = Draco::instance()->DeleteAssistedWallet(id(), {}, passwordToken, tag->secQuesToken(), output, errormsg);
+    }
+    if (ret) {
+        setIsDeleting(false);
+    }
+    return ret;
+}
+
+bool Wallet::DeleteWalletRequiredSignatures()
+{
+    auto tag = ServiceSetting::instance()->servicesTagPtr();
+    ReqiredSignaturesInfo info;
+    QString errormsg = "";
+    QJsonObject output;
+    bool ret {false};
+    if(isGroupWallet()){
+        ret = Byzantine::instance()->DeleteGroupWalletRequiredSignatures(id(), groupId(), output, errormsg);
+    }
+    else if(isUserWallet()){
+        ret = Draco::instance()->DeleteWalletRequiredSignatures(id(), output, errormsg);
+    }
+    if (ret) {
+        DBG_INFO << output;
+        QJsonObject resultObj = output["result"].toObject();
+        tag->setReqiredSignatures(resultObj);
+        info = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
+        if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
+            if (tag->CreateSecurityQuestionsAnswered()) {
+                DBG_INFO;
+                setIsDeleting(true);
+//                AppModel::instance()->walletInfoPtr()->setIsDeleting(true);
+            }
+        }
+    }
+    return ret;
+}
+
+QVariantList Wallet::aliasMembers() const
+{
+    return m_aliasMembers.toVariantList();
+}
+
+QString Wallet::aliasName() const
+{
+    if (auto dash = dashboard()) {
+        DBG_INFO << dash->walletJson()["alias"].toString();
+        return dash->walletJson()["alias"].toString();
+    }
+    return "";
+}
+
+QVariantList Wallet::ownerMembers() const
+{
+    if (auto dash = dashboard()) {
+        QJsonArray origin = dash->groupInfo()["members"].toArray();
+        QJsonArray arrs;
+        for (auto member : origin) {
+            QJsonObject it = member.toObject();
+            QJsonObject user = it["user"].toObject();
+            QString role = it["role"].toString();
+            if (role == "KEYHOLDER" || role == "MASTER" || role == "ADMIN") {
+                if (!user.isEmpty()) {
+                    arrs.append(member);
+                }
+            }
+        }
+        return arrs.toVariantList();
+    }
+    return {};
+}
+
+QVariant Wallet::ownerPrimary() const
+{
+    if (auto dash = dashboard()) {
+        QString primary_membership_id =  dash->walletJson()["primary_membership_id"].toString();
+        QJsonArray origin = dash->groupInfo()["members"].toArray();
+        for (auto member : origin) {
+            QJsonObject it = member.toObject();
+            QJsonObject user = it["user"].toObject();
+            QString membership_id = it["membership_id"].toString();
+            if (qUtils::strCompare(primary_membership_id, membership_id)) {
+                return QVariant::fromValue(user);
+            }
+        }
+    }
+    return {};
+}
+
+bool Wallet::GetWalletAlias()
+{
+    QJsonObject output;
+    QString errormsg;
+    bool ret = Byzantine::instance()->GetWalletAlias(groupId(), id(), output, errormsg);
+    DBG_INFO << output;
+    if (ret) {
+        auto findMember = [this](const QString& id) -> QJsonObject {
+            if (auto dash = dashboard()) {
+                QJsonArray members = dash->groupInfo()["members"].toArray();
+                QString my_membership_id = dash->myInfo()["membership_id"].toString();
+                for (auto member : members) {
+                    QJsonObject it = member.toObject();
+                    QString membership_id = it["membership_id"].toString();
+                    if(qUtils::strCompare(id, membership_id) && !qUtils::strCompare(id, my_membership_id)) {
+                        return it["user"].toObject();
+                    }
+                }
+            }
+            return {};
+        };
+        QJsonArray aliases = output["aliases"].toArray();
+        QJsonArray arrs;
+        for (auto js : aliases) {
+            QJsonObject it = js.toObject();
+            QString membership_id = it["membership_id"].toString();
+            QJsonObject membership = findMember(membership_id);
+            if (!membership.isEmpty()) {
+                it["user"] = membership;
+                arrs.append(it);
+            }
+        }
+        m_aliasMembers = arrs;
+        emit aliasMembersChanged();
+    }
+    return ret;
+}
+
+bool Wallet::updateWalletAlias(const QString &nameWallet)
+{
+    QJsonObject output;
+    QString errormsg;
+    bool ret = Byzantine::instance()->UpdateWalletAlias(groupId(), id(), nameWallet, output, errormsg);
+    if(ret){
+        QGroupDashboardPtr dash = dashboard();
+        if (dash) {
+            QtConcurrent::run([this, dash]() {
+                dash->GetWalletInfo();
+                if(AppModel::instance()->walletList()){
+                    AppModel::instance()->walletList()->dataUpdated(id());
+                }
+                emit aliasNameChanged();
+                emit nameChanged();
+            });
+        }
+    }
+    DBG_INFO << ret << output;
+    return ret;
+}
+
+bool Wallet::deleteWalletAlias()
+{
+    QJsonObject output;
+    QString errormsg;
+    bool ret = Byzantine::instance()->DeleteWalletAlias(groupId(), id(), output, errormsg);
+    if(ret){
+        QGroupDashboardPtr dash = dashboard();
+        if (dash) {
+            QtConcurrent::run([this, dash]() {
+                dash->GetWalletInfo();
+                if(AppModel::instance()->walletList()){
+                    AppModel::instance()->walletList()->dataUpdated(id());
+                }
+                emit aliasNameChanged();
+                emit nameChanged();
+            });
+        }
+    }
+    DBG_INFO << output;
+    return ret;
+}
+
+bool Wallet::updateWalletPrimaryOwner(const QString &membership_id)
+{
+    QJsonObject output;
+    QString errormsg;
+    bool ret = Byzantine::instance()->UpdateWalletPrimaryOwner(groupId(), id(), membership_id, output, errormsg);
+    if(ret){
+        QGroupDashboardPtr dash = dashboard();
+        if (dash) {
+            QtConcurrent::run([this, dash]() {
+                dash->GetWalletInfo();
+                emit groupInfoChanged();
+            });
+        }
+    }
+    DBG_INFO << output;
+    return ret;
+}
+
+QVariant Wallet::dummyTx() const
+{
+    if (auto dummy = dummyTxPtr()) {
+        if(isGroupWallet()){
+            return QVariant::fromValue(dummy->get<QGroupWalletDummyTxPtr>().data());
+        }
+        else if(isUserWallet()){
+            return QVariant::fromValue(dummy->get<QUserWalletDummyTxPtr>().data());
+        }
+    }
+    return {};
+}
+
+bool Wallet::isPro()
+{
+    if (auto dash = dashboard()) {
+        return dash->inheritanceCount() > 0;
+    }
+    return false;
+}
+
+bool Wallet::hasGroup()
+{
+    return !groupId().isEmpty();
+}
+
+int Wallet::flow() const
+{
+    return m_flow;
+}
+
+void Wallet::setFlow(int flow)
+{
+    m_flow = flow;
+    emit flowChanged();
+}
+
+void Wallet::GetUserTxs()
+{
+    if(isUserWallet()){
         QString wallet_id = id();
         QJsonObject data = Draco::instance()->assistedWalletGetListTx(wallet_id);
         QJsonArray transactions = data.value("transactions").toArray();
@@ -431,7 +912,7 @@ void Wallet::syncAissistedTxs()
             QString status = transaction.value("status").toString();
             QString psbt = transaction.value("psbt").toString();
             QString note = transaction.value("note").toString();
-            QString memo = (note != "")? note : "--";
+            QString memo = note;
             QString type = transaction.value("type").toString();
             QString transaction_id = transaction.value("transaction_id").toString();
             if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
@@ -454,13 +935,13 @@ void Wallet::syncAissistedTxs()
             }
         }
         //Remove cancelled txs
-        syncAissistedCancelledTxs();
+        GetUserCancelledTxs();
     }
 }
 
-void Wallet::syncAissistedCancelledTxs()
+void Wallet::GetUserCancelledTxs()
 {
-    if(isAssistedWallet()){
+    if(isUserWallet()){
         int offset = 0;
         const int limit = 10;
         QString wallet_id = id();
@@ -481,6 +962,514 @@ void Wallet::syncAissistedCancelledTxs()
             offset += transactions.size();
         }
     }
+}
+
+QTransactionPtr Wallet::SyncUserTxs(const nunchuk::Transaction &tx)
+{
+    QString wallet_id = id();
+    if(isUserWallet()){
+        QWarningMessage msg;
+        if (tx.get_status() == nunchuk::TransactionStatus::PENDING_SIGNATURES || tx.get_status() == nunchuk::TransactionStatus::READY_TO_BROADCAST)
+        {
+            QJsonObject data = Draco::instance()->assistedWalletGetTx(wallet_id,QString::fromStdString(tx.get_txid()));
+            QJsonObject transaction = data.value("transaction").toObject();
+            if (!transaction.isEmpty()) {
+                QString type = transaction.value("type").toString();
+                QString status = transaction.value("status").toString();
+                QString psbt = transaction.value("psbt").toString();
+                QString transaction_id = transaction.value("transaction_id").toString();
+                QString hex = transaction.value("hex").toString();
+                QString reject_msg = transaction.value("reject_msg").toString();
+                QString note = transaction.value("note").toString();
+                QString replace_txid = transaction.value("replace_txid").toString();
+
+                long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
+                // honey badger feature: schedule broadcast
+                long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
+
+                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
+                    bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), broadcast_time_milis/1000,msg);
+                }
+
+                if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED" || status == "NETWORK_REJECTED") {
+                    msg.resetWarningMessage();
+                    bridge::nunchukImportPsbt(wallet_id, psbt,msg);
+                    msg.resetWarningMessage();
+                    bridge::nunchukUpdateTransaction(wallet_id, QString::fromStdString(tx.get_txid()), transaction_id, hex, reject_msg, msg);
+                }
+                else if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES") {
+                    msg.resetWarningMessage();
+                    auto trans = bridge::nunchukImportPsbt(wallet_id, psbt,msg);
+                    if(trans && (int)EWARNING::WarningType::NONE_MSG == msg.type()){
+                        if (trans->psbt() != psbt) {
+                            Draco::instance()->assistedSyncTx(wallet_id, transaction_id, psbt, note);
+                        }
+                        if (replace_txid != "" && !qUtils::strCompare(QString::fromStdString(tx.get_replace_txid()), replace_txid)) {
+                            bridge::nunchukReplaceTransactionId(wallet_id, transaction_id, replace_txid, msg);
+                        }
+                    }
+                }
+                else{}
+                return bridge::nunchukGetTransaction(wallet_id, transaction_id);
+            }
+        }
+    }
+    return bridge::convertTransaction(tx, wallet_id);
+}
+
+void Wallet::UpdateUserTxs(const QString &txid, const QString &memo)
+{
+    if(isUserWallet()){
+        Draco::instance()->assistedWalletUpdateTx(id(),txid, memo);
+    }
+}
+
+void Wallet::CancelUserTxs(const QString &txid)
+{
+    if(isUserWallet()){
+        bool ret = Draco::instance()->assistedWalletCancelTx(id(), txid);
+        if(ret){
+            //TDB
+        }
+        else{
+            //TDB
+        }
+    }
+}
+
+void Wallet::CreateUserTxs(const QString &txid, const QString &psbt, const QString &memo)
+{
+    if(isUserWallet()){
+        bool ret = Draco::instance()->assistedWalletCreateTx(id(), psbt, memo);
+        if(ret){
+//            QJsonObject serverKeyData = GetServerKeyInfo(txid);
+//            if(!serverKeyData.isEmpty() && AppModel::instance()->transactionInfo()){
+//                AppModel::instance()->transactionInfo()->setServerKeyMessage(serverKeyData);
+//            }
+        }
+    }
+}
+
+void Wallet::SignUserTxs(const QString &tx_id, const QString &psbt, const QString &memo)
+{
+    if(isUserWallet()){
+        QString wallet_id = id();
+        QJsonObject data =  Draco::instance()->assistedWalletSignTx(wallet_id, tx_id, psbt, memo);
+        QJsonObject transaction = data.value("transaction").toObject();
+        QString status = transaction.value("status").toString();
+        QString psbt = transaction.value("psbt").toString();
+        if (qUtils::strCompare(status, "PENDING_CONFIRMATION") || qUtils::strCompare(status, "CONFIRMED") || qUtils::strCompare(status, "NETWORK_REJECTED")){
+            QWarningMessage _msg;
+            bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
+            QString id = transaction.value("id").toString();
+            QString hex = transaction.value("hex").toString();
+            QString reject_msg = transaction.value("reject_msg").toString();
+            bridge::nunchukUpdateTransaction(wallet_id, tx_id, id, hex, reject_msg, _msg);
+        }
+        else if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES") {
+            QWarningMessage _msg;
+            bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
+        }
+        else{}
+    }
+}
+
+void Wallet::UpdateUserWallet(const QString &name, const QString &description)
+{
+    if(isUserWallet()){
+        QJsonObject data;
+        QString error_msg = "";
+        QString wallet_id = id();
+        bool ret = Draco::instance()->assistedWalletUpdate(wallet_id, name, description, data, error_msg);
+        if(!ret){
+            //TBD
+        }
+    }
+}
+
+void Wallet::GetGroupTxs()
+{
+    if(isGroupWallet()){
+        QJsonObject output;
+        QString errormsg = "";
+        QString wallet_id = id();
+        QString group_id = groupId();
+        bool ret = Byzantine::instance()->GetAllTransaction(group_id, wallet_id, output, errormsg);
+        if(ret){
+            QJsonArray transactions = output["transactions"].toArray();
+            for (auto i : transactions) {
+                QJsonObject transaction = i.toObject();
+                QString status = transaction.value("status").toString();
+                QString psbt = transaction.value("psbt").toString();
+                QString note = transaction.value("note").toString();
+                QString memo = note;
+                QString type = transaction.value("type").toString();
+                QString transaction_id = transaction.value("transaction_id").toString();
+                if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
+                    QWarningMessage warningmsg;
+                    QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, warningmsg);
+                    if(tran && (int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                        DBG_INFO << ">>>>>>>>>>>" << name() << transaction_id << status << memo << tran.data()->txid();
+                        QString old_memo = "";
+                        if(transactionHistory()){
+                            QTransactionPtr tx = transactionHistory()->getTransactionByTxid(transaction_id);
+                            if(tx){
+                                old_memo = tx.data()->memo();
+                            }
+                            else {
+                                old_memo = tran.data()->memo();
+                            }
+                            if(!qUtils::strCompare(memo, old_memo)){
+                                bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
+                            }
+                        }
+                        long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
+                        // honey badger feature: schedule broadcast
+                        long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
+                        if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
+                            warningmsg.resetWarningMessage();
+                            bridge::nunchukUpdateTransactionSchedule(wallet_id, transaction_id, broadcast_time_milis/1000, warningmsg);
+                        }
+                    }
+                    warningmsg.resetWarningMessage();
+                }
+            }
+        }
+        //Remove cancelled txs
+        GetGroupCancelledTxs();
+    }
+}
+
+void Wallet::GetGroupCancelledTxs()
+{
+    if(isGroupWallet()){
+        QJsonObject output;
+        QString errormsg = "";
+        int offset = 0;
+        const int limit = 10;
+        QString wallet_id = id();
+        QString group_id = groupId();
+        while (true) {
+            bool ret = Byzantine::instance()->GetAllCancelledTransaction(group_id, wallet_id, offset, limit, output, errormsg);
+            if(ret){
+                QJsonArray transactions = output.value("transactions").toArray();
+                for (QJsonValue js_value : transactions) {
+                    QJsonObject transaction = js_value.toObject();
+                    QString wallet_local_id = transaction.value("wallet_local_id").toString();
+                    QString transaction_id = transaction.value("transaction_id").toString();
+                    if(transactionHistory() && transactionHistory()->contains(transaction_id)){
+                        bridge::nunchukDeleteTransaction(wallet_local_id, transaction_id);
+                    }
+                }
+                if (transactions.size() == 0 || transactions.size() < limit) {
+                    return; // exit while loop
+                }
+                offset += transactions.size();
+            }
+            else{
+                return;
+            }
+        }
+    }
+}
+
+QTransactionPtr Wallet::SyncGroupTxs(const nunchuk::Transaction &tx)
+{
+    QString wallet_id = id();
+    if(isGroupWallet()){
+        QWarningMessage msg;
+        if (tx.get_status() == nunchuk::TransactionStatus::PENDING_SIGNATURES || tx.get_status() == nunchuk::TransactionStatus::READY_TO_BROADCAST)
+        {
+            QString group_id = groupId();
+            QJsonObject data;
+            QString msgerror = "";
+            bool ret = Byzantine::instance()->GetOneTransaction(group_id, wallet_id, QString::fromStdString(tx.get_txid()), data, msgerror);
+            if(ret){
+                QJsonObject transaction = data.value("transaction").toObject();
+                QString type = transaction.value("type").toString();
+                QString status = transaction.value("status").toString();
+                QString psbt = transaction.value("psbt").toString();
+                QString transaction_id = transaction.value("transaction_id").toString();
+                QString hex = transaction.value("hex").toString();
+                QString reject_msg = transaction.value("reject_msg").toString();
+                QString note = transaction.value("note").toString();
+
+                long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
+                // honey badger feature: schedule broadcast
+                long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
+                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
+                    bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), broadcast_time_milis/1000,msg);
+                }
+                if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED" || status == "NETWORK_REJECTED") {
+                    bridge::nunchukImportPsbt(wallet_id, psbt, msg);
+                    msg.resetWarningMessage();
+                    bridge::nunchukUpdateTransaction(wallet_id, QString::fromStdString(tx.get_txid()), transaction_id, hex, reject_msg, msg);
+                    msg.resetWarningMessage();
+                }
+                else if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES") {
+                    msg.resetWarningMessage();
+                    auto tran = bridge::nunchukImportPsbt(wallet_id, psbt, msg);
+                    if(tran && (int)EWARNING::WarningType::NONE_MSG == msg.type()){
+                        if (tran->psbt() != psbt) {
+                            QJsonObject dataSync;
+                            QString syncError = "";
+                            Byzantine::instance()->SyncTransaction(group_id, wallet_id, transaction_id, psbt, note, dataSync, syncError);
+                        }
+                    }
+                }
+                else{}
+                return bridge::nunchukGetTransaction(wallet_id, transaction_id);
+            }
+        }
+    }
+    return bridge::convertTransaction(tx, wallet_id);
+}
+
+void Wallet::UpdateGroupTxs(const QString &txid, const QString &memo)
+{
+    if(isGroupWallet()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Byzantine::instance()->UpdateTransaction(groupId(), id(), txid, memo, output, errormsg);
+        if(ret){
+            //TDB
+        }
+        else{
+            //TDB
+        }
+    }
+}
+
+void Wallet::CancelGroupTxs(const QString &txid)
+{
+    if(isGroupWallet()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Byzantine::instance()->CancelTransaction(groupId(), id(), txid, output, errormsg);
+        if(ret){
+            //TDB
+        }
+        else{
+            //TDB
+        }
+    }
+}
+
+void Wallet::CreateGroupTxs(const QString &txid, const QString &psbt, const QString &memo)
+{
+    if(isGroupWallet()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Byzantine::instance()->CreateTransaction(groupId(), id(), psbt, memo, output, errormsg);
+        if(ret){
+//            QJsonObject serverKeyData = GetServerKeyInfo(txid);
+//            if(!serverKeyData.isEmpty() && AppModel::instance()->transactionInfo()){
+//                AppModel::instance()->transactionInfo()->setServerKeyMessage(serverKeyData);
+//            }
+        }
+        else{
+            //TDB
+        }
+    }
+}
+
+void Wallet::SignGroupTxs(const QString &tx_id, const QString &psbt, const QString &memo)
+{
+    if(isGroupWallet()){
+        QJsonObject data;
+        QString errormsg = "";
+        QString wallet_id = id();
+        QString group_id = groupId();
+        bool ret = Byzantine::instance()->SignTransaction(group_id, wallet_id, tx_id, psbt, memo, data, errormsg);
+        if(ret){
+            QJsonObject transaction = data.value("transaction").toObject();
+            QString status = transaction.value("status").toString();
+            QString psbt = transaction.value("psbt").toString();
+            if (qUtils::strCompare(status, "PENDING_CONFIRMATION") || qUtils::strCompare(status, "CONFIRMED") || qUtils::strCompare(status, "NETWORK_REJECTED")){
+                QWarningMessage _msg;
+                bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
+                QString id = transaction.value("id").toString();
+                QString hex = transaction.value("hex").toString();
+                QString reject_msg = transaction.value("reject_msg").toString();
+                bridge::nunchukUpdateTransaction(wallet_id, tx_id, id, hex, reject_msg, _msg);
+            }
+            else if (qUtils::strCompare(status, "READY_TO_BROADCAST") || qUtils::strCompare(status, "PENDING_SIGNATURES")){
+                QWarningMessage _msg;
+                bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
+            }
+            QJsonObject serverKeyData = GetServerKeyInfo(tx_id);
+            if(!serverKeyData.isEmpty() && AppModel::instance()->transactionInfo()){
+                AppModel::instance()->transactionInfo()->setServerKeyMessage(serverKeyData);
+            }
+            else{}
+        }
+    }
+}
+
+void Wallet::UpdateGroupWallet(const QString &name, const QString &description)
+{
+    if(isGroupWallet()){
+        QJsonObject data;
+        QString error_msg = "";
+        QString wallet_id = id();
+        QString group_id  = groupId();
+        bool ret = Byzantine::instance()->UpdateWallet(group_id, wallet_id, name, description, data, error_msg);
+        if(!ret){
+            //TBD
+        }
+    }
+}
+
+QVariant Wallet::serverKeyInfo() const
+{
+    return QVariant::fromValue(serverKeyPtr().data());
+}
+
+QServerKeyPtr Wallet::serverKeyPtr() const
+{
+    return QServerKey::information<QServerKeyPtr>(id());
+}
+
+QVariant Wallet::inheritancePlanInfo() const
+{
+    return QVariant::fromValue(inheritancePlanPtr().data());
+}
+
+QInheritancePlanPtr Wallet::inheritancePlanPtr() const
+{
+    return QInheritancePlan::information<QInheritancePlanPtr>(id());
+}
+
+QVariant Wallet::recurringPayment() const
+{
+    return QVariant::fromValue(recurringPaymentPtr().data());
+}
+
+QRecurringPaymentPtr Wallet::recurringPaymentPtr() const
+{
+    return QRecurringPayment::information<QRecurringPaymentPtr>(id());
+}
+
+QGroupWalletDummyTxPtr Wallet::groupDummyTxPtr() const
+{
+    if (auto dummy = dummyTxPtr()) {
+        return dummy->get<QGroupWalletDummyTxPtr>();
+    }
+    return {};
+}
+
+QUserWalletDummyTxPtr Wallet::userDummyTxPtr() const
+{
+    if (auto dummy = dummyTxPtr()) {
+        return dummy->get<QUserWalletDummyTxPtr>();
+    }
+    return {};
+}
+
+QGroupWalletHealthCheckPtr Wallet::healthPtr() const
+{
+    return QGroupWalletHealthCheck::information<QGroupWalletHealthCheckPtr>(id());
+}
+
+QWalletDummyTxPtr Wallet::dummyTxPtr() const
+{
+    return QWalletDummyTx::information<QWalletDummyTxPtr>(id());
+}
+
+void Wallet::syncCollabKeyname()
+{
+    if(isSharedWallet()){
+        QString room_id = roomId();
+        if(room_id != ""){
+            DBG_INFO << room_id;
+            QList<DracoUser> users = Draco::instance()->getRoomMembers(room_id);
+            if(users.count() > 0 && m_signers){
+                emit signalSyncCollabKeyname(users);
+            }
+        }
+    }
+}
+
+QVariant Wallet::dashboardInfo() const
+{
+    return QVariant::fromValue(dashboard().data());
+}
+
+void Wallet::slotSyncCollabKeyname(QList<DracoUser> users){
+    DBG_INFO << roomId();
+    if(m_signers){
+        m_signers.data()->syncNunchukEmail(users);
+    }
+}
+
+bool Wallet::isValidAddress(const QString &address)
+{
+    return qUtils::IsValidAddress(address);
+}
+
+QString Wallet::groupId() const
+{
+    QString group_id = WalletsMng->groupId(m_id);
+    if(group_id == ""){
+        QTriple<QString, QString, QString> triple;
+        bool ret = AppSetting::instance()->getwalletCached(id(), triple);
+        if(ret){
+            group_id = triple.first;
+            DBG_INFO << group_id;
+        }
+    }
+    return group_id;
+}
+
+QString Wallet::slug() const
+{
+    QString slug = WalletsMng->slugInfo(m_id);
+    if(slug == ""){
+        QTriple<QString, QString, QString> triple;
+        bool ret = AppSetting::instance()->getwalletCached(id(), triple);
+        if(ret){
+            slug = triple.second;
+            DBG_INFO << slug;
+        }
+    }
+    return slug;
+}
+
+QString Wallet::myRole() const
+{
+    QString role = "";
+    if(dashboard()){
+        role = dashboard().data()->myRole();
+    }
+    if (role == "") {
+        QTriple<QString, QString, QString> triple;
+        bool ret = AppSetting::instance()->getwalletCached(id(), triple);
+        if(ret){
+            role = triple.third;
+            DBG_INFO << role;
+        }
+    }
+    return role;
+}
+
+QGroupDashboardPtr Wallet::dashboard() const
+{
+    return QGroupDashboard::information<QGroupDashboardPtr>(id());
+}
+
+bool Wallet::isByzantineWallet()
+{
+    QString wallet_slug = slug();
+    bool ret =    qUtils::strCompare(wallet_slug, "byzantine_testnet")
+               || qUtils::strCompare(wallet_slug, "byzantine_pro_testnet")
+               || qUtils::strCompare(wallet_slug, "byzantine_premier_testnet")
+               || qUtils::strCompare(wallet_slug, "byzantine")
+               || qUtils::strCompare(wallet_slug, "byzantine_pro")
+               || qUtils::strCompare(wallet_slug, "byzantine_premier");
+    if(ret) {
+        return true;
+    }
+    return false;
 }
 
 WalletListModel::WalletListModel(){
@@ -529,6 +1518,16 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
             return d_[index.row()]->isSharedWallet();
         case wallet_isAssistedWallet_Role:
             return d_[index.row()]->isAssistedWallet();
+        case wallet_groupid_Role:
+            return d_[index.row()]->groupId();
+        case wallet_dashboard_Role:
+            return d_[index.row()]->dashboardInfo();
+        case wallet_myRole_Role:
+            return d_[index.row()]->myRole();
+        case wallet_hasOwner_Role:
+            return d_[index.row()]->ownerPrimary().isValid();
+        case wallet_primaryOwner_Role:
+            return d_[index.row()]->ownerPrimary();
         default:
             return QVariant();
         }
@@ -563,6 +1562,11 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_unUsedAddressList_Role]    = "wallet_unUsedAddressList";
     roles[wallet_isSharedWallet_Role]       = "wallet_isSharedWallet";
     roles[wallet_isAssistedWallet_Role]     = "wallet_isAssistedWallet";
+    roles[wallet_groupid_Role]              = "wallet_group_id";
+    roles[wallet_dashboard_Role]            = "wallet_dashboard";
+    roles[wallet_myRole_Role]               = "wallet_role";
+    roles[wallet_hasOwner_Role]             = "wallet_hasOwner";
+    roles[wallet_primaryOwner_Role]         = "wallet_primaryOwner";
     return roles;
 }
 
@@ -604,7 +1608,6 @@ void WalletListModel::addSharedWallet(const QWalletPtr &wallet)
 
 void WalletListModel::updateBalance(const QString &walletId, const qint64 balance)
 {
-    DBG_INFO << walletId << balance;
     for (int i = 0; i < d_.count(); i++) {
         if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
             d_.at(i)->setBalance(balance);
@@ -613,23 +1616,20 @@ void WalletListModel::updateBalance(const QString &walletId, const qint64 balanc
     }
 }
 
-void WalletListModel::updateAddress(const QString &walletId, const QStringList &used, const QStringList &unused)
-{
-    beginResetModel();
-    foreach (QWalletPtr it, d_) {
-        if(0 == QString::compare(walletId, it.data()->id(), Qt::CaseInsensitive)){
-            it.data()->setUsedAddressList(used);
-            it.data()->setunUsedAddressList(unused);
-        }
-    }
-    endResetModel();
-}
-
 void WalletListModel::updateName(const QString &walletId, const QString &value)
 {
     for (int i = 0; i < d_.count(); i++) {
         if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
             d_.at(i)->setName(value);
+            emit dataChanged(index(i),index(i));
+        }
+    }
+}
+
+void WalletListModel::dataUpdated(const QString &walletId)
+{
+    for (int i = 0; i < d_.count(); i++) {
+        if(d_.at(i).data() && 0 == QString::compare(walletId, d_.at(i)->id(), Qt::CaseInsensitive)){
             emit dataChanged(index(i),index(i));
         }
     }
@@ -734,12 +1734,12 @@ void WalletListModel::notifyUnitChanged()
     }
 }
 
-void WalletListModel::updateSignerHealthStatus(const QString &masterSignerId, const int status, const time_t time)
+void WalletListModel::updateSignerHealthStatus(const QString &xfp, const int status, const time_t time)
 {
     beginResetModel();
     foreach (QWalletPtr i , d_ ){
         if(NULL != i.data()->singleSignersAssigned()){
-            i.data()->singleSignersAssigned()->updateSignerHealthStatus(masterSignerId, status, time);
+            i.data()->singleSignersAssigned()->updateSignerHealthStatus(xfp, status, time);
         }
     }
     endResetModel();
@@ -842,6 +1842,66 @@ void WalletListModel::cleardata()
     beginResetModel();
     d_.clear();
     endResetModel();
+}
+
+bool WalletListModel::existProWallet()
+{
+    foreach (QWalletPtr it , d_ ){
+        if (it->isPro()) return true;
+    }
+    return false;
+}
+
+bool WalletListModel::existGroupWallet()
+{
+    foreach (QWalletPtr it , d_ ){
+        if (it->hasGroup()) return true;
+    }
+    return false;
+}
+
+bool WalletListModel::isContainsPremier()
+{
+    foreach (QWalletPtr it , d_ ){
+        QString slug = it.data()->slug();
+        bool ret =    qUtils::strCompare(slug, "byzantine_premier_testnet")
+                   || qUtils::strCompare(slug, "byzantine_premier");
+        if(ret) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void WalletListModel::checkContainsGroup()
+{
+    emit containsGroupChanged();
+}
+
+QVariant WalletListModel::removeOrNot(const QString &masterFingerPrint, const QString& derivation_path)
+{
+    bool used_in_assisted_wallet {false};
+    bool used_in_free_wallet {false};
+    foreach (QWalletPtr i , d_ ){
+        if(NULL != i.data()->singleSignersAssigned()){
+            bool exist = i.data()->singleSignersAssigned()->containsSigner(masterFingerPrint, derivation_path);
+            if (exist && i->isAssistedWallet()) used_in_assisted_wallet = true;
+            else if (exist && !i->isAssistedWallet()) used_in_free_wallet = true;
+        }
+    }
+    QJsonObject ret {
+       {"used_in_assisted_wallet", used_in_assisted_wallet},
+       {"used_in_free_wallet", used_in_free_wallet}
+    };
+    return QVariant::fromValue(ret);
+}
+
+bool WalletListModel::hasAssistedWallet() const
+{
+    foreach (QWalletPtr it , d_ ){
+        if (it->isAssistedWallet()) return true;
+    }
+    return false;
 }
 
 bool sortWalletByNameAscending(const QWalletPtr &v1, const QWalletPtr &v2)

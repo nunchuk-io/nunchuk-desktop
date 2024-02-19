@@ -44,10 +44,9 @@ QScreen {
         onCloseClicked: {
             QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_REVIEW_SHARED_WALLET)
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             id: compressButton
-            width: 24
-            height: 24
             anchors {
                 right: parent.right
                 rightMargin: 84

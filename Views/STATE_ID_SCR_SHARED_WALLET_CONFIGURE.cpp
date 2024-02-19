@@ -68,7 +68,7 @@ void EVT_SHARED_WALLET_FINALIZE_WALLET_HANDLER(QVariant msg) {
 
 void EVT_SHARED_WALLET_CONFIGURE_EXPORT_COLDCARD_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    if(AppModel::instance()->walletInfo() && (file_path != "")){
+    if(AppModel::instance()->walletInfo() && CLIENT_CURRENTROOM->roomWallet() && (file_path != "")){
         bool ret = bridge::nunchukExportWallet(CLIENT_CURRENTROOM->roomWallet()->get_wallet_id(),
                                                file_path,
                                                nunchuk::ExportFormat::COLDCARD);
@@ -88,10 +88,7 @@ void EVT_SHARED_WALLET_CONFIGURE_EXPORT_QRCODE_HANDLER(QVariant msg) {
         AppModel::instance()->setQrExported(qrtags);
     }
     else{
-        AppModel::instance()->showToast(msgwarning.code(),
-                                        msgwarning.what(),
-                                        (EWARNING::WarningType)msgwarning.type(),
-                                        STR_CPP_084);
+        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
     }
 }
 

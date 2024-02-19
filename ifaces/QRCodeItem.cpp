@@ -18,19 +18,27 @@
  *                                                                        *
  **************************************************************************/
 #include "QRCodeItem.h"
+#include "QZXing.h"
+
+#if 0 // nayuki
 QSharedPointer<QRGenerator> QRCodeItem::m_QRgen = QSharedPointer<QRGenerator>(NULL);
-QRCodeItem::QRCodeItem()
+#endif
+
+QRCodeItem::QRCodeItem() : m_borderWitdh(0)
 {
-    m_borderWitdh  = 0;
+#if 0 // nayuki
     if (m_QRgen.data() == NULL) {
         m_QRgen = QSharedPointer<QRGenerator>(new QRGenerator());
     }
+#endif
     connect(this, &QQuickPaintedItem::widthChanged, this, &QRCodeItem::slotUpdate);
     connect(this, &QQuickPaintedItem::heightChanged, this, &QRCodeItem::slotUpdate);
 }
 
 QRCodeItem::~QRCodeItem()
-{}
+{
+
+}
 
 QString QRCodeItem::textInput() const
 {
@@ -42,26 +50,13 @@ int QRCodeItem::borderWitdh() const
     return m_borderWitdh;
 }
 
-QString QRCodeItem::save(QString name, QString path)
-{
-    if(name.isEmpty()) {
-        return "";
-    } else {
-        int border = 10;
-        QImage qrImage = m_QRgen.data()->qrImage(name, QSize(this->width(), this->height()), border);
-
-        QDir dir(path);
-        if(dir.exists() == false){
-        }
-        qrImage.save(path+"Img0.png", "PNG");
-        return path + "Img0.png";
-    }
-}
-
 void QRCodeItem::paint(QPainter *painter)
 {
     if(NULL != painter &&  !m_textInput.isEmpty() ){
-        QImage qrImage = m_QRgen.data()->qrImage(m_textInput, QSize(this->width(), this->height()), m_borderWitdh);
+        QImage qrImage = QZXing::encodeData(m_textInput, QZXing::EncoderFormat::EncoderFormat_QR_CODE, QSize(this->width(), this->height()));
+#if 0 // nayuki
+//        QImage qrImage = m_QRgen.data()->qrImage(m_textInput, QSize(this->width(), this->height()), m_borderWitdh);
+#endif
         painter->drawImage(QRectF(0, 0, qrImage.width(), qrImage.height()), qrImage);
     }
 }
@@ -86,5 +81,5 @@ void QRCodeItem::setBorderWitdh(int arg)
 
 void QRCodeItem::slotUpdate()
 {
-    QQuickPaintedItem::update();;
+    QQuickPaintedItem::update();
 }

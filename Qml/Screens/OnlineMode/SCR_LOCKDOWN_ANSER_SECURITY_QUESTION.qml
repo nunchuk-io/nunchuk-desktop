@@ -33,18 +33,50 @@ import "../../Components/customizes/Buttons"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    id: _question
-    QAnswerSecurityQuestion {
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_LOCKDOWN_ANSER_SECURITY_QUESTION)
+    property var reqiredSignature: ServiceSetting.servicesTag.reqiredSignatures
+    Loader {
+        anchors.centerIn: parent
+        sourceComponent: {
+            if (reqiredSignature.type === "SECURITY_QUESTION") {
+                return security_question
+            }
+            else if (reqiredSignature.type === "CONFIRMATION_CODE") {
+                return confirm_code
+            }
+            return null
         }
+    }
+    Component {
+        id: security_question
+        QAnswerSecurityQuestion {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
 
-        onPrevClicked: {
-            QMLHandle.sendEvent(EVT.EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_BACK)
+            onPrevClicked: {
+                QMLHandle.sendEvent(EVT.EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_BACK)
+            }
+
+            onNextClicked: {
+                QMLHandle.sendEvent(EVT.EVT_INPUT_LOCKDOWN_ANSER_REQUEST)
+            }
         }
+    }
 
-        onNextClicked: {
-            QMLHandle.sendEvent(EVT.EVT_INPUT_LOCKDOWN_ANSER_REQUEST)
+    Component {
+        id: confirm_code
+        QAnswerSQConfirmCode {
+            id: _confirm_code
+            label.text: STR.STR_QML_1026
+            description_bottom: STR.STR_QML_1028_bottom
+            onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+
+            onPrevClicked: {
+                QMLHandle.sendEvent(EVT.EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_BACK)
+            }
+
+            onNextClicked: {
+                _confirm_code.loading()
+                QMLHandle.sendEvent(EVT.EVT_INPUT_LOCKDOWN_ANSER_REQUEST, _confirm_code.code())
+            }
         }
     }
 }

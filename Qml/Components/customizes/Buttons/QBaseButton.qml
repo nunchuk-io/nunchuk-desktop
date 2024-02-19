@@ -41,6 +41,9 @@ Item {
     readonly property int eTypeL: 11
     readonly property int eTypeM: 12
     readonly property int eTypeN: 13
+    readonly property int eTypeO: 14
+
+    readonly property int eTypeP: 15
 
     // Click state
     readonly property int eNORMAL: 0
@@ -62,10 +65,20 @@ Item {
         anchors.fill: parent
         onPressed: _item.pressed(mouse)
         onClicked: {
-            _item.buttonClicked(mouse)
-            _item.clicked(mouse)
+            if (!timer1s.running) {
+                timer1s.restart()
+                _item.buttonClicked(mouse)
+                _item.clicked(mouse)
+            }
         }
         onReleased: _item.released(mouse)
         onContainsMouseChanged: _item.containsMouseChanged()
+    }
+    Timer {
+        id: timer1s
+        interval: 1000
+        repeat: false
+        running: false
+        onTriggered: timer1s.stop()
     }
 }

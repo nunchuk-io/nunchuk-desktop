@@ -24,7 +24,7 @@
 #include "Chats/matrixbrigde.h"
 #include "Chats/ClientController.h"
 #include "localization/STR_CPP.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 
 void SCR_TRANSACTION_INFO_Entry(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
@@ -100,24 +100,23 @@ void EVT_TRANSACTION_EXPORT_REQUEST_HANDLER(QVariant msg) {
                                                     file_path,
                                                     msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG != msgwarning.type()){
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_076);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
+
         DBG_INFO << ret << file_path;
     }
 }
 
 void EVT_TRANSACTION_IMPORT_REQUEST_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
-    QWalletPtr w = AppModel::instance()->walletInfoPtr();
-    if (file_path != "" && w){
-        QString wallet_id = w->id();
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+    if (file_path != "" && wallet){
+        QString wallet_id = wallet.data()->id();
         QWarningMessage msgwarning;
-        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, w->isAssistedWallet(), msgwarning);
+        QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         if(trans){
             AppModel::instance()->setTransactionInfo(trans);
+            wallet.data()->SignAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
             AppModel::instance()->requestSyncWalletDb(wallet_id);
         }
     }
@@ -143,47 +142,29 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
                     }
                     room->startGetPendingTxs();
                     AppModel::instance()->requestSyncWalletDb(wallet_id);
-                    AppModel::instance()->showToast(0,
-                                                    STR_CPP_085,
-                                                    EWARNING::WarningType::SUCCESS_MSG,
-                                                    STR_CPP_085,
-                                                    POPUP::PopupType::PopupBottom);
+                    AppModel::instance()->showToast(0, STR_CPP_085, EWARNING::WarningType::SUCCESS_MSG);
                 }
                 else{
-                    AppModel::instance()->showToast(msgwarning.code(),
-                                                    msgwarning.what(),
-                                                    (EWARNING::WarningType)msgwarning.type(),
-                                                    STR_CPP_087);
+                    AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
                 }
             }
         }
         else{
             QWarningMessage msgwarning;
-            QTransactionPtr trans = bridge::nunchukBroadcastTransaction(wallet_id,
-                                                                        AppModel::instance()->transactionInfo()->txid(),
-                                                                        msgwarning);
+            QTransactionPtr trans = bridge::nunchukBroadcastTransaction(wallet_id, AppModel::instance()->transactionInfo()->txid(), msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                 if(trans){
                     AppModel::instance()->setTransactionInfo(trans);
-                    AppModel::instance()->showToast(0,
-                                                    STR_CPP_085,
-                                                    EWARNING::WarningType::SUCCESS_MSG,
-                                                    STR_CPP_085);
+                    AppModel::instance()->showToast(0, STR_CPP_085, EWARNING::WarningType::SUCCESS_MSG);
                 }
             }
             else{
                 if(nunchuk::NunchukException::SERVER_REQUEST_ERROR == msgwarning.code()){
                     AppModel::instance()->transactionInfo()->setStatus((int)ENUNCHUCK::TransactionStatus::NETWORK_REJECTED);
-                    AppModel::instance()->showToast(nunchuk::NunchukException::SERVER_REQUEST_ERROR,
-                                                    STR_CPP_086,
-                                                    EWARNING::WarningType::EXCEPTION_MSG,
-                                                    STR_CPP_086);
+                    AppModel::instance()->showToast(nunchuk::NunchukException::SERVER_REQUEST_ERROR, STR_CPP_086, EWARNING::WarningType::EXCEPTION_MSG);
                 }
                 else{
-                    AppModel::instance()->showToast(msgwarning.code(),
-                                                    msgwarning.what(),
-                                                    (EWARNING::WarningType)msgwarning.type(),
-                                                    STR_CPP_087);
+                    AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
                 }
             }
             wallet_id = AppModel::instance()->transactionInfo()->walletId();
@@ -207,20 +188,15 @@ void EVT_TRANSACTION_SET_MEMO_REQUEST_HANDLER(QVariant msg) {
     if(AppModel::instance()->transactionInfo() && memo != ""){
         QString tx_id = AppModel::instance()->transactionInfo()->txid();
         QString wallet_id = AppModel::instance()->transactionInfo()->walletId();
-        bridge::nunchukUpdateTransactionMemo(wallet_id,
-                                             tx_id,
-                                             memo);
-        if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
-            AppModel::instance()->walletInfo()->transactionHistory()->updateTransactionMemo(tx_id,
-                                                                                            memo);
-        }
-        if (AppModel::instance()->walletInfo()->isAssistedWallet()) {
-            Draco::instance()->assistedWalletUpdateTx(wallet_id,tx_id,memo);
+        bridge::nunchukUpdateTransactionMemo(wallet_id, tx_id, memo);
+        if(AppModel::instance()->walletInfo()){
+            if(AppModel::instance()->walletInfo()->transactionHistory()){
+                AppModel::instance()->walletInfo()->transactionHistory()->updateTransactionMemo(tx_id, memo);
+            }
+            AppModel::instance()->walletInfo()->UpdateAssistedTxs(tx_id, memo);
         }
         if(CLIENT_INSTANCE){
-            CLIENT_INSTANCE->updateTransactionMemo(wallet_id,
-                                                   tx_id,
-                                                   memo);
+            CLIENT_INSTANCE->updateTransactionMemo(wallet_id, tx_id, memo);
         }
     }
 }
@@ -238,28 +214,34 @@ void EVT_TRANSACTION_SCAN_DEVICE_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
-    if(AppModel::instance()->transactionInfo()){
-        QString wallet_id = AppModel::instance()->transactionInfo()->walletId();
-        QString txid = AppModel::instance()->transactionInfo()->txid();
-        bool ret = bridge::nunchukDeleteTransaction(wallet_id, txid);
-        if(ret){
-            QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
-            if(wallet && wallet->isAssistedWallet()){
-                Draco::instance()->assistedWalletCancelTx(wallet_id,txid);
-            }
-            AppModel::instance()->requestSyncWalletDb(wallet_id);
-            if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
-                QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
-            }
-            else{
-                if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+    if (auto trans = AppModel::instance()->transactionInfo()) {
+        if (trans->status() == (int)ENUNCHUCK::TransactionStatus::PENDING_CONFIRMATION) {
+            DBG_INFO;
+            QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_TO_CREATE_TRANSACTION_REQUEST);
+        }
+        else {
+            QString wallet_id = trans->walletId();
+            QString txid = trans->txid();
+            bool ret = bridge::nunchukDeleteTransaction(wallet_id, txid);
+            if(ret){
+                QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
+                if(wallet){
+                    wallet.data()->CancelAssistedTxs(txid);
+                }
+                AppModel::instance()->requestSyncWalletDb(wallet_id);
+                if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
+                    QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
                 }
                 else{
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                    if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
+                        QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                    }
+                    else{
+                        QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                    }
                 }
+                AppModel::instance()->setTransactionInfo( QTransactionPtr(new Transaction()));
             }
-            AppModel::instance()->setTransactionInfo( QTransactionPtr(new Transaction()));
         }
     }
 }
@@ -280,50 +262,30 @@ void EVT_TRANSACTION_EXPORT_QRCODE_HANDLER(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
     if(AppModel::instance()->walletInfo() && AppModel::instance()->transactionInfo()){
         QWarningMessage msgwarning;
-#if 0
-        QStringList qrtags = bridge::nunchukExportCoboTransaction(AppModel::instance()->walletInfo()->id(),
-                                                                  AppModel::instance()->transactionInfo()->txid(),
-                                                                  msgwarning);
-#endif
-        QString qrtype = msg.toString();
-        QStringList qrtags;
-        qrtags.clear();
-        if(0 == QString::compare(qrtype, "keystone", Qt::CaseInsensitive)){
-            qrtags = bridge::nunchukExportKeystoneTransaction(AppModel::instance()->walletInfo()->id(),
-                                                              AppModel::instance()->transactionInfo()->txid(),
-                                                              msgwarning);
-        }
-        else if(0 == QString::compare(qrtype, "passport", Qt::CaseInsensitive)){
-            qrtags = bridge::nunchukExportPassportTransaction(AppModel::instance()->walletInfo()->id(),
-                                                              AppModel::instance()->transactionInfo()->txid(),
-                                                              msgwarning);
-        }
-        else{
-            return;
-        }
-        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
+        QStringList qrtags = bridge::nunchukExportQRTransaction(AppModel::instance()->walletInfo()->id(),
+                                                                AppModel::instance()->transactionInfo()->txid(),
+                                                                msgwarning);
+        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
             AppModel::instance()->setQrExported(qrtags);
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_084);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
     }
 }
 
 void EVT_TRANSACTION_IMPORT_QRCODE_HANDLER(QVariant msg) {
-    AppModel::instance()->showToast(0,
-                                    STR_CPP_101,
-                                    EWARNING::WarningType::SUCCESS_MSG,
-                                    STR_CPP_101);
+    if(AppModel::instance()->transactionInfo() && AppModel::instance()->walletInfo()){
+        AppModel::instance()->walletInfo()->SignAsisstedTxs(AppModel::instance()->transactionInfo()->txid(),
+                                                            AppModel::instance()->transactionInfo()->psbt(),
+                                                            AppModel::instance()->transactionInfo()->memo());
+    }
+    AppModel::instance()->showToast(0, STR_CPP_101, EWARNING::WarningType::SUCCESS_MSG);
 }
 
 void EVT_TRANSACTION_VERIFY_ADDRESS_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->id(),
-                                                  msg.toString());
+        AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->id(), msg.toString());
     }
 }
 
@@ -357,10 +319,7 @@ void EVT_TRANSACTION_CANCEL_REQUEST_HANDLER(QVariant msg) {
                 }
             }
             else{
-                AppModel::instance()->showToast(warningmsg.code(),
-                                                warningmsg.what(),
-                                                (EWARNING::WarningType)warningmsg.type(),
-                                                STR_CPP_078);
+                AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
             }
         }
     }

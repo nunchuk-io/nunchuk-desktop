@@ -32,6 +32,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: roots

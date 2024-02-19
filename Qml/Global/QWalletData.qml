@@ -48,6 +48,7 @@ QtObject {
                                             .arg(AppSetting.currencySymbol)
                                             .arg((roomWalletReady && currentRoom.roomWallet.info ? currentRoom.roomWallet.info.walletBalanceCurrency : "0" ))
                                             .arg(AppSetting.currency)
+    readonly property bool   isIgnoredCollabWallet: currentRoom ? currentRoom.isIgnoredCollabWallet : false
 
     function getValidFilename( name ){ return name.replace(/(\W+)/gi, '').trim()}
 }

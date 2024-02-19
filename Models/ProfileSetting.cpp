@@ -1,5 +1,5 @@
 #include "ProfileSetting.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "localization/STR_CPP.h"
 
 ProfileSetting::ProfileSetting(QObject *parent) : QObject(parent)
@@ -77,5 +77,19 @@ void ProfileSetting::setCurrency(const QString &currency)
     QtConcurrent::run([=]() {
         Draco::instance()->exchangeRates(currency);
     });
+}
+
+int ProfileSetting::optionIndex() const
+{
+    return m_optionIndex;
+}
+
+void ProfileSetting::setOptionIndex(int optionIndex)
+{
+    if (m_optionIndex == optionIndex)
+        return;
+
+    m_optionIndex = optionIndex;
+    emit optionIndexChanged();
 }
 

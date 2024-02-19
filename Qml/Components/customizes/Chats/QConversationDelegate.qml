@@ -215,9 +215,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -562,9 +561,8 @@ Item {
                             height: 24
                             spacing: 8
                             layoutDirection: isSentByMe ? Qt.RightToLeft : Qt.LeftToRight
-                            QImage {
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
                                 anchors.verticalCenter: parent.verticalCenter
                                 source: RoomWalletData.fullSigners ? "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png" :
                                                                      "qrc:/Images/Images/OnlineMode/pending_actions-24px 1.png"
@@ -676,9 +674,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -733,9 +730,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -770,9 +766,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#A7F0BA"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -825,9 +820,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -1069,9 +1063,8 @@ Item {
                             height: 24
                             spacing: 8
                             layoutDirection: isSentByMe ? Qt.RightToLeft : Qt.LeftToRight
-                            QImage {
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
                                 anchors.verticalCenter: parent.verticalCenter
                                 source: {
                                     if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED) return "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png"
@@ -1216,9 +1209,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -1287,9 +1279,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -1347,9 +1338,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -1409,9 +1399,8 @@ Item {
                 radius: 44
                 anchors.centerIn: parent
                 color: "#F5F5F5"
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter

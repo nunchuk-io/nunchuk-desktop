@@ -29,9 +29,7 @@
 void SCR_SEND_Entry(QVariant msg) {
     AppModel::instance()->setTransactionInfo(NULL);
     if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->escrow()){
-        AppModel::instance()->showToast(0,
-                                        STR_CPP_083,
-                                        EWARNING::WarningType::WARNING_MSG);
+        AppModel::instance()->showToast(0, STR_CPP_083, EWARNING::WarningType::WARNING_MSG);
     }
 }
 
@@ -80,7 +78,12 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
         DBG_INFO << "Destination : " << outputs;
     }
     QWarningMessage msgwarning;
-    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id, outputs, NULL, -1, subtractFromAmount, msgwarning);
+    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                            outputs,
+                                                            NULL, -1,
+                                                            subtractFromAmount,
+                                                            "",
+                                                            msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
         if(trans){
             AppModel::instance()->setTransactionInfo(trans);
@@ -95,7 +98,13 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
         {
             DBG_INFO << "Retry make draft transaction with subtract true";
             msgwarning.resetWarningMessage();
-            QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id, outputs, NULL, -1, true, msgwarning);
+            QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                                    outputs,
+                                                                    NULL,
+                                                                    -1,
+                                                                    true,
+                                                                    "",
+                                                                    msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                 if(trans){
                     AppModel::instance()->setTransactionInfo(trans);
@@ -104,18 +113,12 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
                 }
             }
             else{
-                AppModel::instance()->showToast(msgwarning.code(),
-                                                msgwarning.what(),
-                                                (EWARNING::WarningType)msgwarning.type(),
-                                                STR_CPP_073);
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
             }
 
         }
         else{
-            AppModel::instance()->showToast(msgwarning.code(),
-                                            msgwarning.what(),
-                                            (EWARNING::WarningType)msgwarning.type(),
-                                            STR_CPP_073);
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
     }
 }

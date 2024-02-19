@@ -25,10 +25,9 @@ Row {
     id: radioRootD
     property bool selected: false
     property string labelTop: ""
-    property string labelCenter: ""
     property string labelBottom: ""
-    property string type: ""
-    property string icon: ""
+    property alias center1: _center1
+    property alias center2: _center2
     signal buttonClicked()
     spacing: 12
     Column {
@@ -48,14 +47,13 @@ Row {
             Row {
                 anchors.fill: parent
                 QBadge {
-                    text: labelCenter
+                    id: _center1
                     color: "#EAEAEA"
                 }
                 QBadge {
-                    text: type
-                    icon: icon
+                    id: _center2
                     color: "#EAEAEA"
-                    visible: icon !== ""
+                    visible: _center2.icon !== ""
                 }
             }
         }
@@ -67,10 +65,9 @@ Row {
             color: "#595959"
         }
     }
-    QImage {
+    QIcon {
         id: icon
-        width: 24
-        height: 24
+        iconSize: 24
         source: selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
         anchors.verticalCenter: parent.verticalCenter
         MouseArea {

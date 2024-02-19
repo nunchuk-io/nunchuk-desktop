@@ -33,8 +33,11 @@ void SCR_REMOTE_SIGNER_INFO_Exit(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
-    if(AppModel::instance()->singleSignerInfoPtr()){
-        AppModel::instance()->startHealthCheckRemoteSigner();
+    if(AppModel::instance()->singleSignerInfo()){
+        AppModel::instance()->startHealthCheckRemoteSigner(E::STATE_ID_SCR_REMOTE_SIGNER_INFO,
+                                                           AppModel::instance()->singleSignerInfo()->masterFingerPrint(),
+                                                           AppModel::instance()->singleSignerInfo()->signerType(),
+                                                           AppModel::instance()->singleSignerInfo()->message());
     }
 }
 
@@ -44,7 +47,7 @@ void EVT_REMOTE_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
             AppModel::instance()->singleSignerInfo()->setName(msg.toString());
             bridge::nunchukUpdateRemoteSigner(AppModel::instance()->singleSignerInfoPtr());
             if(AppModel::instance()->remoteSignerList()){
-                AppModel::instance()->remoteSignerList()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
+                AppModel::instance()->remoteSignerList()->requestSort();
             }
         }
     }

@@ -67,10 +67,9 @@ QScreen {
                 width: 536
                 height: _1.paintedHeight
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
-                    width: 24
-                    height: 24
                     source: "qrc:/Images/Images/1.Active.svg"
                 }
                 QText {
@@ -92,10 +91,9 @@ QScreen {
                 width: 536
                 height: _2.paintedHeight
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
+                QIcon {
+                    iconSize: 24
                     anchors.left: parent.left
-                    width: 24
-                    height: 24
                     source: "qrc:/Images/Images/2.Active.svg"
                 }
                 QText {

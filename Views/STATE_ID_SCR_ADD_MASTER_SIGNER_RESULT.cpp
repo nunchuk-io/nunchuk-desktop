@@ -24,7 +24,7 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "STATE_ID_SCR_LOGIN_ONLINE.h"
 
 void SCR_ADD_MASTER_SIGNER_RESULT_Entry(QVariant msg) {

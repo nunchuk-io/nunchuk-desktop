@@ -95,6 +95,7 @@ private:
     bool showScreen(uint id, QVariant msg = QVariant());
     bool showPopup(uint id, QVariant msg = QVariant());
     bool closePopup(uint id, QVariant msg = QVariant());
+    bool showToastMessage(QVariant msg);
     void setOnsRequester(const uint id);
     void collectGarbage();
 signals:
@@ -102,14 +103,18 @@ signals:
     void eventReceiver(int event, int data);
     void signalNotifySendEvent(uint eventID, QVariant msg = QVariant());
     void currentFlowChanged();
+    void signalNotifyToastMessage(QVariant msg);
 
 public slots:
     void onVisibleChanged(bool state);
     void sendEvent(uint eventID, QVariant msg = QVariant());
     void notifySendEvent(uint eventID, QVariant msg = QVariant());
+    void sendToastMessage(QVariant msg);
     // For resize
     void onWidthChanged(int w);
+    void onHeightChanged(int h);
     void aboutToQuit(QPrivateSignal signal);
+    void slotNotifyToastMessage(QVariant msg);
 };
 
 #endif // QQUICKVIEWER_H

@@ -30,8 +30,10 @@ import "../../customizes/Texts"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
+    property var inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
+    property var planInfo: inheritancePlanInfo.planInfo
+
     property string title: STR.STR_QML_887
-    property string magicPhrase: ServiceSetting.qInheritanceMagic
     property string warning: STR.STR_QML_890
     width: 346
     height: 512
@@ -53,9 +55,8 @@ Item {
             Row {
                 anchors.fill: parent
                 spacing: 12
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/1.Active.svg"
                 }
                 Column {
@@ -74,7 +75,7 @@ Item {
                         radius: 12
                         QLato {
                             width: 310
-                            text: magicPhrase
+                            text: planInfo.magic
                             anchors.centerIn: parent
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -88,9 +89,8 @@ Item {
             Row {
                 anchors.fill: parent
                 spacing: 12
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/2.Active.svg"
                 }
                 QLato {
@@ -114,9 +114,8 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 12
                 spacing: 12
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/warning-dark.svg"
                     anchors.verticalCenter: parent.verticalCenter
                 }

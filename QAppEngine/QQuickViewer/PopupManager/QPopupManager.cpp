@@ -90,7 +90,7 @@ bool QPopupManager::closePopup(POPUP_DATA p)
                 m_listPopup.at(i).data()->stop();
             }
             ret = true;
-            m_listPopup.at(i).data()->closePopupTimeout(m_listPopup.at(i).data()->popupInfo().id);
+            onClosePopupTimeout(m_listPopup.at(i).data()->popupInfo().id);
         }
     }
     return ret;
@@ -102,10 +102,18 @@ bool QPopupManager::closeAll()
         if(m_listPopup.at(i).data()->isActive()){
             m_listPopup.at(i).data()->stop();
         }
-        m_listPopup.at(i).data()->closePopupTimeout(m_listPopup.at(i).data()->popupInfo().id);
+        onClosePopupTimeout(m_listPopup.at(i).data()->popupInfo().id);
     }
     m_listPopup.clear();
     return m_listPopup.isEmpty();
+}
+
+bool QPopupManager::showToastMessage(QVariant msg)
+{
+    if(m_rootObject){
+        return QMetaObject::invokeMethod(m_rootObject, JS_TOASTS_TRANSITION_FUNCTION, Q_ARG(QVariant, msg));
+    }
+    return false;
 }
 
 void QPopupManager::qmlSyncup()

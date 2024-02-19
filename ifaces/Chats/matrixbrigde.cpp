@@ -263,6 +263,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
         QJsonObject joins = json_content_object["joins"].toObject();
         QStringList joins_Id = joins.keys();
         for (QString userId : joins_Id) {
+            DBG_INFO << userId;
             QJsonArray joiner = joins[userId].toArray();
             for (auto v : joiner) {
                 QJsonObject it = v.toObject();
@@ -273,9 +274,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                 signerInfo["joid_id"] = it["join_event_id"].toString();
                 signerInfo["signer_type"] = (int)qUtils::GetSignerType(it["signer_type"].toString());
                 signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
-                signerInfo["name"] = room->getNunchukMemberEmail(userId);
-                signerInfo["username"] = room->getNunchukMemberName(userId);
-                signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
+                signerInfo["name"] = userId;//roomuser.email;
                 ret.data()->updateSignerInfo(signerInfo);
             }
             if(userIds.contains(userId)){
@@ -290,9 +289,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
             signerInfo["joid_id"] = "";
             signerInfo["signer_type"] = (int)qUtils::GetSignerType("HARDWARE");
             signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
-            signerInfo["name"] = room->getNunchukMemberEmail(userId);
-            signerInfo["username"] = room->getNunchukMemberName(userId);
-            signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
+            signerInfo["name"] = userId;//roomuser.email;
             ret.data()->updateSignerInfo(signerInfo);
         }
         room->setWalletImport(room->createWalletFromJson(json_content_object));
@@ -314,6 +311,9 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                 }
                 else{
                     AppModel::instance()->walletList()->updateSharedWalletById(wallet_id, room->id(), ret.data()->get_init_event_id(), ret.data()->walletName());
+                    if(AppModel::instance()->walletInfo() && (0 == QString::compare(AppModel::instance()->walletInfo()->id(), wallet_id, Qt::CaseInsensitive))){
+                        AppModel::instance()->walletInfo()->setIsSharedWallet(true);
+                    }
                     QWalletPtr realWl = AppModel::instance()->walletList()->getWalletById(wallet_id);
                     ret.data()->setWalletInfo(realWl);
                 }
@@ -471,7 +471,7 @@ QList<QRoomWalletPtr> matrixbrigde::GetAllRoomWallets(QWarningMessage &msg)
         if(wallet.get_wallet_id() != "" && wallet.get_finalize_event_id() != "")
         {
             QString room_id = QString::fromStdString(wallet.get_room_id());
-            if(CLIENT_INSTANCE->rooms() && CLIENT_INSTANCE->rooms()->containsRoom(room_id)){
+            if(CLIENT_INSTANCE->rooms() && CLIENT_INSTANCE->rooms()->containsRoomId(room_id)){
                 QNunchukRoomPtr room = CLIENT_INSTANCE->rooms()->getRoomById(room_id);
                 QRoomWalletPtr roomWallet = QRoomWalletPtr( new QRoomWallet(wallet));
                 QWarningMessage msggetevt;
@@ -502,9 +502,7 @@ QList<QRoomWalletPtr> matrixbrigde::GetAllRoomWallets(QWarningMessage &msg)
                             signerInfo["joid_id"] = it["join_event_id"].toString();
                             signerInfo["signer_type"] = (int)qUtils::GetSignerType(it["signer_type"].toString());
                             signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
-                            signerInfo["name"] = room->getNunchukMemberEmail(userId);
-                            signerInfo["username"] = room->getNunchukMemberName(userId);
-                            signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
+                            signerInfo["name"] = userId;//roomuser.email;
                             roomWallet.data()->updateSignerInfo(signerInfo);
                         }
                         if(userIds.contains(userId)){
@@ -519,9 +517,7 @@ QList<QRoomWalletPtr> matrixbrigde::GetAllRoomWallets(QWarningMessage &msg)
                         signerInfo["joid_id"] = "";
                         signerInfo["signer_type"] = (int)qUtils::GetSignerType("HARDWARE");
                         signerInfo["is_localuser"] = room->checkIsLocalUser(userId);
-                        signerInfo["name"] = room->getNunchukMemberEmail(userId);
-                        signerInfo["username"] = room->getNunchukMemberName(userId);
-                        signerInfo["avatar"] = room->getNunchukMemberAvatar(userId);
+                        signerInfo["name"] = userId;//roomuser.email;
                         roomWallet.data()->updateSignerInfo(signerInfo);
                     }
                 }
@@ -560,6 +556,17 @@ nunchuk::RoomTransaction matrixbrigde::GetOriginRoomTransaction(const QString &r
     return matrixifaces::instance()->GetRoomTransaction(room_id.toStdString(),
                                                         init_event_id.toStdString(),
                                                         msg);
+}
+
+nunchuk::RoomTransaction matrixbrigde::GetOriginPendingTransaction(const QString &room_id, const QString &tx_id, QWarningMessage &msg)
+{
+    std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msg);
+    foreach (nunchuk::RoomTransaction tx, results) {
+        if(0 == tx.get_tx_id().compare(tx_id.toStdString())){
+            return tx;
+        }
+    }
+    return {};
 }
 
 QString matrixbrigde::GetTransactionId(const QString &room_id,const QString &init_event_id, QWarningMessage &msg)
@@ -666,11 +673,11 @@ QNunchukMatrixEvent matrixbrigde::ImportWallet(const QString &room_id,
 }
 
 QNunchukMatrixEvent matrixbrigde::ImportWalletQR(const QString &room_id,
-                                   const QString &name,
-                                   const QString &description,
-                                   nunchuk::Chain chain,
-                                   const QStringList qrtags,
-                                   QWarningMessage& msg)
+                                                 const QString &name,
+                                                 const QString &description,
+                                                 nunchuk::Chain chain,
+                                                 const QStringList qrtags,
+                                                 QWarningMessage& msg)
 {
     DBG_INFO << room_id << name << qrtags;
     nunchuk::NunchukMatrixEvent e;

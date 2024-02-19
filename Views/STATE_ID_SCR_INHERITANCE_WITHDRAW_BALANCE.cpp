@@ -21,8 +21,10 @@
 
 #include "STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE.h"
 #include "localization/STR_CPP.h"
-#include "Chats/QUserWallets.h"
-#include "Draco.h"
+#include "Models/AppModel.h"
+#include "Servers/Draco.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
 void SCR_INHERITANCE_WITHDRAW_BALANCE_Entry(QVariant msg) {
 
@@ -35,8 +37,9 @@ void SCR_INHERITANCE_WITHDRAW_BALANCE_Exit(QVariant msg) {
 void EVT_INHERITANCE_CREATE_DRAFT_TX_REQUEST_HANDLER(QVariant msg)
 {
     QString to_wallet_id = msg.toString();
-    QUserWallets::instance()->setInheritanceAddress(to_wallet_id);
-    QUserWallets::instance()->inheritanceCreateDraftTransaction();
+    DBG_INFO << to_wallet_id;
+    ServiceSetting::instance()->servicesTagPtr()->setInheritanceAddress(to_wallet_id);
+    ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction();
 }
 
 void EVT_INHERITANCE_WITHDRAW_BALANCE_BACK_HANDLER(QVariant msg) {
@@ -51,6 +54,6 @@ void EVT_INHERITANCE_NEW_TRANSACTION_REQ_HANDLER(QVariant msg)
 {
     DBG_INFO << msg;
     QString destinationAddress = msg.toString();
-    QUserWallets::instance()->setInheritanceAddressNewTransaction(destinationAddress);
-    QUserWallets::instance()->inheritanceCreateDraftTransaction();
+    ServiceSetting::instance()->servicesTagPtr()->setInheritanceAddressNewTransaction(destinationAddress);
+    ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction();
 }

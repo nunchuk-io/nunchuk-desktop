@@ -310,6 +310,24 @@ void QMasterSigner::setOriginMasterSigner(const nunchuk::MasterSigner &signer)
     masterSigner_ = signer;
 }
 
+QString QMasterSigner::tag() const
+{
+    if (masterSigner_.get_tags().size() > 0) {
+        nunchuk::SignerTag tag = masterSigner_.get_tags().front();
+        return QString::fromStdString(SignerTagToStr(tag));
+    }
+    return "";
+}
+
+QStringList QMasterSigner::tags() const
+{
+    QStringList list;
+    for (auto tag : masterSigner_.get_tags()) {
+        list.append(QString::fromStdString(SignerTagToStr(tag)));
+    }
+    return list;
+}
+
 MasterSignerListModel::MasterSignerListModel() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -347,6 +365,8 @@ QVariant MasterSignerListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->needXpub();
     case master_signer_primary_key_Role:
         return d_[index.row()]->isPrimaryKey();
+    case master_signer_tag_Role:
+        return d_[index.row()]->tag();
     default:
         return QVariant();
     }
@@ -376,6 +396,7 @@ QHash<int, QByteArray> MasterSignerListModel::roleNames() const {
     roles[master_signer_need_pin_Role]      = "master_signer_need_pin";
     roles[master_signer_need_xpub_Role]     = "master_signer_need_xpub";
     roles[master_signer_primary_key_Role]   = "master_signer_primary_key";
+    roles[master_signer_tag_Role]           = "master_signer_tag";
     return roles;
 }
 
@@ -562,9 +583,19 @@ bool MasterSignerListModel::isColdCard(const QString &xfp)
             return true;
         }
         else{
-            if(i.data()->device() && 0 == QString::compare("coldcard", i.data()->device()->type(), Qt::CaseInsensitive)){
+            if(i.data()->device() && i.data()->device()->type().contains("coldcard")){
                 return true;
             }
+        }
+    }
+    return false;
+}
+
+bool MasterSignerListModel::isPrimaryKey(const QString &xfp)
+{
+    foreach (QMasterSignerPtr i , d_ ){
+        if (qUtils::strCompare(xfp, i->fingerPrint())) {
+            return i.data()->isPrimaryKey();
         }
     }
     return false;

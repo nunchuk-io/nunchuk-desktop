@@ -35,9 +35,8 @@ Row {
 
     signal pageRequest(var pageNumber)
 
-    QImage {
-        width: 24
-        height: 24
+    QIcon {
+        iconSize: 24
         enabled: currentPage != 1
         source: enabled ? firstPage[0] : firstPage[1]
         MouseArea {
@@ -50,9 +49,8 @@ Row {
             }
         }
     }
-    QImage {
-        width: 24
-        height: 24
+    QIcon {
+        iconSize: 24
         enabled: (currentPage > 1)
         source: enabled ? chevronLeft[0] : chevronLeft[1]
         MouseArea {
@@ -66,9 +64,8 @@ Row {
         }
     }
 
-    QImage {
-        width: 24
-        height: 24
+    QIcon {
+        iconSize: 24
         enabled: (currentPage < totalPage)
         source: enabled ? chevronRight[0] : chevronRight[1]
         MouseArea {
@@ -81,9 +78,8 @@ Row {
             }
         }
     }
-    QImage {
-        width: 24
-        height: 24
+    QIcon {
+        iconSize: 24
         enabled: (currentPage != totalPage)
         source: enabled ? lastPage[0] : lastPage[1]
         MouseArea {

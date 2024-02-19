@@ -22,7 +22,7 @@
 #define QCONTACTMODEL_H
 
 #include <QAbstractListModel>
-#include "DracoDefines.h"
+#include "Servers/DracoDefines.h"
 
 class QContactModel : public QAbstractListModel
 {

@@ -19,19 +19,20 @@
  **************************************************************************/
 #include "AppSetting.h"
 #include "AppModel.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "QOutlog.h"
 
 NunchukSettings::NunchukSettings():
-    QSettings(QSettings::NativeFormat,
-              QSettings::UserScope,
-              qApp->organizationName(),
-              qApp->applicationName()),
+    QSettings(QSettings::NativeFormat, QSettings::UserScope, qApp->organizationName(), qApp->applicationName()),
     m_group("")
-{ }
+{
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
 
 NunchukSettings::~NunchukSettings()
-{ }
+{
+
+}
 
 QString NunchukSettings::groupSetting() const
 {
@@ -56,10 +57,26 @@ void NunchukSettings::setValue(const QString &key, const QVariant &value)
     QSettings::setValue(realkey, value);
 }
 
+void NunchukSettings::setValueCommon(const QString &key, const QVariant &value)
+{
+    QSettings::setValue(key, value);
+}
+
 QVariant NunchukSettings::value(const QString &key, const QVariant &defaultValue) const
 {
     QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
     return QSettings::value(realkey, defaultValue);
+}
+
+QVariant NunchukSettings::valueCommon(const QString &key, const QVariant &defaultValue) const
+{
+    return QSettings::value(key, defaultValue);
+}
+
+void NunchukSettings::removeKey(const QString &key)
+{
+    QString realkey = m_group == "" ? key : QString("%1/%2").arg(m_group).arg(key);
+    QSettings::remove(realkey);
 }
 
 bool NunchukSettings::containsCommon(const QString &key) const
@@ -444,18 +461,11 @@ void AppSetting::setTorProxyPassword(const QString &torProxyPassword)
 int AppSetting::primaryServer()
 {
     if(NunchukSettings::contains("primaryServer")){
-        primaryServer_ = NunchukSettings::value("primaryServer").toInt();
+        primaryServer_ = NunchukSettings::valueCommon("primaryServer").toInt();
     }
     else{
-        NunchukSettings::setValue("primaryServer", primaryServer_);
+        NunchukSettings::setValueCommon("primaryServer", primaryServer_);
     }
-#ifndef SIGNET_SUPPORT
-    if(primaryServer_ == (int)Chain::SIGNET)
-    {
-        primaryServer_ = (int)Chain::TESTNET;
-        NunchukSettings::setValue("primaryServer", primaryServer_);
-    }
-#endif
     return primaryServer_;
 }
 
@@ -463,7 +473,7 @@ void AppSetting::setPrimaryServer(int primaryServer)
 {
     if(primaryServer_ != primaryServer){
         primaryServer_ = primaryServer;
-        NunchukSettings::setValue("primaryServer", primaryServer_);
+        NunchukSettings::setValueCommon("primaryServer", primaryServer_);
         emit primaryServerChanged();
     }
 }
@@ -827,16 +837,28 @@ void AppSetting::setCurrency(QString currency)
     emit currencyChanged();
 }
 
-bool AppSetting::enableCoSigning()
+void AppSetting::setWalletCached(QString id, QTriple<QString, QString, QString> data)
 {
-    return m_enableCoSigning;
+    QByteArray dataByteArray;
+    QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
+    stream << data.first << data.second << data.third;
+    NunchukSettings::setValue(id, dataByteArray);
 }
 
-void AppSetting::setEnableCoSigning(bool enableCoSigning)
+bool AppSetting::getwalletCached(QString id, QTriple<QString, QString, QString> &result)
 {
-    if(m_enableCoSigning != enableCoSigning){
-        m_enableCoSigning = enableCoSigning;
-        emit enableCoSigningChanged();
+    if(NunchukSettings::contains(id)){
+        QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
+        QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
+        stream >> result.first >> result.second >> result.third;
+        DBG_INFO << result.first << result.second << result.third;
+        return true;
     }
+    return false;
+}
+
+void AppSetting::deleteWalletCached(QString id)
+{
+    NunchukSettings::removeKey(id);
 }
 

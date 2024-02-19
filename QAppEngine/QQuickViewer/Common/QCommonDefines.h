@@ -34,7 +34,7 @@
 #define MAIN_VIEWPORT_QML               "qrc:/main.qml"
 #define JS_SCREEN_TRANSITION_FUNCTION   "screen_Transition"
 #define JS_POPUPS_TRANSITION_FUNCTION   "load_Popup"
-#define JS_TOASTS_TRANSITION_FUNCTION   "load_Toast"
+#define JS_TOASTS_TRANSITION_FUNCTION   "loadToastMessage"
 
 #define DECLARE_PROPERTY(TYPE, NAME, WRITE_NAME, READ_NAME)                                          \
 private:                                                                                             \

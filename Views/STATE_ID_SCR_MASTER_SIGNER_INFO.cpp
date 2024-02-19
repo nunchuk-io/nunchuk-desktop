@@ -45,7 +45,7 @@ void EVT_MASTER_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
                 if(signer){
                     signer.data()->setName(newname);
                 }
-                AppModel::instance()->remoteSignerList()->requestSort(SingleSignerListModel::SingleSignerRoles::single_signer_name_Role, Qt::AscendingOrder);
+                AppModel::instance()->remoteSignerList()->requestSort();
                 bridge::nunchukUpdateRemoteSigner(signer);
             }
         }
@@ -85,9 +85,6 @@ void EVT_MASTER_SIGNER_INFO_BACK_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
     QString mastersigner_id = msg.toString();
-    if (mastersigner_id == "") {
-        return;
-    }
     QMasterSignerPtr key = AppModel::instance()->masterSignerInfoPtr();
     NunchukType1 func = [](const QString &id){
         DBG_INFO << "Delete Key " << id;
@@ -101,11 +98,14 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
                     if(remoteSigners){
                         AppModel::instance()->setRemoteSignerList(remoteSigners);
                     }
-                    QQuickViewer::instance()->sendEvent(E::EVT_REMOTE_SIGNER_INFO_BACK_HOME);
+                    QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
                     AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
                 }
             }
         } else {
+            if (id == "") {
+                return;
+            }
             bridge::nunchukDeleteMasterSigner(id);
             QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
             if (mastersigners) {

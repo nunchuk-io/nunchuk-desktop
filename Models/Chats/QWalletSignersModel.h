@@ -66,6 +66,7 @@ public:
         role_signer_primary_key,
         role_username,
         role_avatar,
+        role_signer_account_index,
     };
 private:
     QList<SignerAssigned> m_data;

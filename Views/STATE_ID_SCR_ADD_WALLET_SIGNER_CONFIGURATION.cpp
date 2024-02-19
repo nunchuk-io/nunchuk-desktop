@@ -24,6 +24,7 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
+#include "Chats/ClientController.h"
 
 void SCR_ADD_WALLET_SIGNER_CONFIGURATION_Entry(QVariant msg) {
     Q_UNUSED(msg);
@@ -126,7 +127,7 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
                     || (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()){
                 QSingleSignerPtr signer{nullptr};
                 QWarningMessage warningmsg;
-                if (AppModel::instance()->getIsPremiumUser() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
+                if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
                     signer = bridge::nunchukGetDefaultSignerFromMasterSigner(it.data()->masterSignerId(),
                                                                              walletType,
                                                                              addressType,
@@ -144,6 +145,7 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
                 }
                 else{
                     it.data()->setNeedTopUpXpub(true);
+                    AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type() );
                 }
             }
         }
@@ -151,10 +153,7 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
         AppModel::instance()->newWalletInfo()->setCapableCreate(!needTopUp);
         QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REVIEW);
         if(needTopUp){
-            AppModel::instance()->showToast(0,
-                                            0,
-                                            EWARNING::WarningType::WARNING_MSG,
-                                            STR_CPP_071);
+            AppModel::instance()->showToast(0, STR_CPP_071, EWARNING::WarningType::EXCEPTION_MSG );
         }
     }
 }

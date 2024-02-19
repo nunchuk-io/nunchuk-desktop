@@ -31,6 +31,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 QScreen {
     id: roots
@@ -134,7 +135,7 @@ QScreen {
 
             QContextMenu {
                 id: exportMenu
-                labels: ["Export wallet to Coldcard", "Export wallet as QR code"]
+                labels: [STR.STR_QML_328, "Export wallet as QR code"]
                 icons: ["qrc:/Images/Images/OnlineMode/Export.png", "qrc:/Images/Images/OnlineMode/QRCodeScan.png"]
                 onItemClicked: {
                     switch(index){

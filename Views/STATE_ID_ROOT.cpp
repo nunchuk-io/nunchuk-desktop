@@ -24,10 +24,15 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 #include "ProfileSetting.h"
 #include "ServiceSetting.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QGroupDashboard.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
+#include "Premiums/QServerKey.h"
+#include "Premiums/QInheritancePlan.h"
 
 void ROOT_Entry(QVariant msg) {
     Q_UNUSED(msg);
@@ -67,7 +72,6 @@ void EVT_ONS_CLOSE_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_STARTING_APPLICATION_LOCALMODE_HANDLER(QVariant msg) {
-    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     int isPrimaryKey = msg.toInt();
     if(!AppModel::instance()->inititalized()){
         if(isPrimaryKey > 0){
@@ -87,7 +91,6 @@ void EVT_STARTING_APPLICATION_LOCALMODE_HANDLER(QVariant msg) {
             QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
         }
     }
-    qApp->restoreOverrideCursor();
 }
 
 void EVT_GOTO_HOME_WALLET_TAB_HANDLER(QVariant msg) {
@@ -223,7 +226,7 @@ void EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_NUNCHUK_LOGIN_SUCCEEDED_HANDLER(QVariant msg) {
     AppModel::instance()->requestClearData();
-    timeoutHandler(1500, [](){
+    timeoutHandler(100, [](){
         QMap<QString, QVariant> makeInstanceData;
         makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME_ONLINE;
         AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
@@ -232,5 +235,60 @@ void EVT_NUNCHUK_LOGIN_SUCCEEDED_HANDLER(QVariant msg) {
 
 void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
 {
+    int option = msg.toInt() == 0 ? 1 : msg.toInt();
+    ServiceSetting::instance()->setOptionIndex(option);
+    if (option == 4) { // View Inheritance Plan
+        if (auto w = AppModel::instance()->walletInfoPtr()) {
+            QMap<QString, QVariant> maps;
+            maps["type"] = "inheritance-planing";
+            maps["wallet_id"] = w->id();
+            DBG_INFO << maps;
+            timeoutHandler(500,[maps](){
+                QQuickViewer::instance()->sendEvent(E::EVT_SERVICE_SELECT_WALLET_REQUEST, QVariant::fromValue(maps));
+            });
+        }
+    }
+}
+
+void EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER(QVariant msg)
+{
+    DBG_INFO << QBasePremium::mode();
+    if (QBasePremium::mode() == USER_WALLET){
+        if(auto w = ServiceSetting::instance()->walletInfoPtr())
+        {
+            AppModel::instance()->setWalletInfo(w->id());
+        }
+    }
+    else {
+        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+            if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
+                QMap<QString, QVariant> maps = msg.toMap();
+                QString xfp = maps["xfp"].toString();
+                QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
+            }
+            AppModel::instance()->setWalletInfo(dashboard->walletInfoPtr());
+        }
+    }
+}
+
+void EVT_DUMMY_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg)
+{
+
+}
+
+void EVT_DASHBOARD_ALERT_SUCCESS_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER(QVariant msg)
+{
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (dashboard->flow() != (int)AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS) {
+            dashboard->setFlow((int)AlertEnum::E_Alert_t::SERVICE_TAG_SHARE_YOUR_SECRET);
+        }
+    }
+}
+
+void EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER(QVariant msg) {
 
 }

@@ -38,19 +38,21 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_211
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, EVT.STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION)
-        }
+        onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
         content: QCreateTransaction {
             transactionInfo: AppModel.transactionInfo
             pendingSignatureShow: false
             onSignalDraftTransaction: {
-                QMLHandle.sendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, msg)
+                var input = { type: "update-fee",
+                            fee: msg}
+                QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
             }
             onSignalCreateTransaction: {
                 createTxBusyBox.open()
                 timerCreateTx.restart()
-                QMLHandle.sendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, msg)
+                var input = { type: "create-transaction",
+                            fee: msg}
+                QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
             }
             onRequestSort: {
             }
@@ -146,7 +148,6 @@ QScreen {
         id: timerCreateTx
         interval: 500
         onTriggered: {
-            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST)
             createTxBusyBox.close()
         }
     }

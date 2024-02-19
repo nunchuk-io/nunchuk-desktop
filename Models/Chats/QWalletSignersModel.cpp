@@ -21,6 +21,7 @@
 #include "QOutlog.h"
 #include "AppSetting.h"
 #include "AppModel.h"
+#include "qUtils.h"
 
 QWalletSignersModel::QWalletSignersModel()
 {
@@ -60,6 +61,8 @@ QVariant QWalletSignersModel::data(const QModelIndex &index, int role) const
         return m_data[index.row()].username;
     case role_avatar:
         return m_data[index.row()].avatar;
+    case role_signer_account_index:
+        return qUtils::GetIndexFromPath(m_data[index.row()].bip32path);
     default:
         return QVariant();
     }
@@ -74,10 +77,11 @@ QHash<int, QByteArray> QWalletSignersModel::roleNames() const
     names[role_bip32] = "signer_bip32";
     names[role_joid_id]      = "signer_joid_id";
     names[role_is_localuser] = "signer_is_localuser";
-    names[role_signer_type] = "signer_type";
-    names[role_signer_primary_key] ="signer_primary_key";
+    names[role_signer_type]  = "signer_type";
+    names[role_signer_primary_key] = "signer_primary_key";
     names[role_username] = "username";
-    names[role_avatar] ="avatar";
+    names[role_avatar]   = "avatar";
+    names[role_signer_account_index] = "signer_account_index";
     return names;
 }
 

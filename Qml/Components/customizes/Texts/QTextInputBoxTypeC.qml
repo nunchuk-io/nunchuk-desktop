@@ -121,10 +121,9 @@ Column {
             }
         }
 
-        QImage {
+        QIcon {
+            iconSize: 24
             id: copy_
-            width: 24
-            height: 24
             property bool visiblity: false
             source: "qrc:/Images/Images/copy-dark.svg"
             anchors.verticalCenter: parent.verticalCenter

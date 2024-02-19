@@ -38,7 +38,6 @@ Rectangle {
     property int  unReadCount: 0
     property int  roomJoinState: 0
     property bool isCurrentItem: false
-    property bool isActived: false
     property string contactAvt: ""
     property string contactname: "name"
     property string lasttimestamp: "lasttime"
@@ -64,7 +63,6 @@ Rectangle {
             id: avatar
             width: 36
             height: 36
-            activeStatus: false
             userCount: roomRoot.userCount
             avatarUrl: contactAvt
             username: contactname

@@ -27,9 +27,13 @@
 #include <QObject>
 #include "nunchuk.h"
 #include "utils/enumconverter.hpp"
+#include "utils/bip32.hpp"
 #include "QWarningMessage.h"
 
 namespace qUtils {
+QString encryptXOR(const QString data, const QString key);
+
+QString decryptXOR(const QString encryptedData, const QString key);
 
 qint64 QAmountFromValue(const QString &value, const bool allow_negative = false);
 
@@ -63,9 +67,13 @@ void SetPassPhrase(const QString& storage_path,
 nunchuk::Wallet ParseWalletDescriptor(const QString& descs,
                                       QWarningMessage &msg);
 
+nunchuk::AnalyzeQRResult AnalyzeQR(const QStringList& qrtags);
+
 nunchuk::Wallet ParseKeystoneWallet(nunchuk::Chain chain,
                                     const QStringList qrtags,
                                     QWarningMessage& msg);
+
+QString ParseQRTransaction(const QStringList& qrtags, QWarningMessage &msg);
 
 std::vector<nunchuk::PrimaryKey> GetPrimaryKeys(const QString &storage_path,
                                                 nunchuk::Chain chain);
@@ -120,6 +128,18 @@ QJsonObject GetJsonObject(QString text);
 
 uint GetTimeSecond(QString time_str);
 uint GetCurrentTimeSecond();
+
+bool strCompare(const QString& str1, const QString& str2);
+
+QStringList ExportQRTransaction(const QString &tx_to_sign, QWarningMessage &msg);
+
+QStringList DeriveAddresses(const nunchuk::Wallet& wallet, int from_index, int to_index, QWarningMessage &msg);
+
+int GetIndexFromPath(const QString& path);
+
+bool IsValidAddress(const QString& address);
+
+QString GetBip32DerivationPath(const nunchuk::WalletType& wallet_type, const nunchuk::AddressType& address_type);
 }
 
 #endif // QUTILS_H

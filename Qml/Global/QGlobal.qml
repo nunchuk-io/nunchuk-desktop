@@ -29,8 +29,9 @@ QtObject {
     property int    stateID     : -1
     property string fingerPrint : ""
     property int    settingIndex: 0
-    property int    serviceIndex: 0
     property bool   customMsgHealthcheck: false
+    property int    listFocusing: 0
+
     property var backgroundColor: [
         ["#F6D65D", "#96833B", "#9CAEB8", "#B8A048"],
         ["transparent", "#031F2B", "transparent", "#1A333D"],
@@ -48,8 +49,8 @@ QtObject {
         ["transparent", "transparent", "#F1FAFE", "transparent"],
         ["#D0E2FF", "#FFFFFF", "transparent", "#D0E2FF"],
         ["#031F2B", "#1A333D","#031F2B", "#031F2B"],
+        ["transparent", "#1A333D", "transparent", "transparent"],
 
-        ["transparent", "transparent", "transparent", "transparent"], // eTHIRTEEN
         ["transparent", "transparent", "transparent", "transparent"], // eFOURTEEN
         ["transparent", "transparent", "transparent", "transparent"]  // eFIFTEEN
     ]
@@ -57,7 +58,7 @@ QtObject {
         ["transparent", "transparent", "transparent", "#F6D65D"],
         ["#031F2B", "#031F2B", "#9CAEB8", "#031F2B"],
         ["#F1FAFE", Qt.rgba(241, 250, 254, 0.4), "#F1FAFE", "#F1FAFE"],
-        ["#FF7A00", "#FF7A00", "#FF7A00", "#FF7A00"],
+        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
         ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"],
         ["#FFFFFF", "#031F2B", "#EAEAEA", "#595959"],
         ["#FFFFFF", "#FFFFFF", "#EAEAEA", "#FFFFFF"],
@@ -70,8 +71,8 @@ QtObject {
         ["#F1FAFE", "#839096", "transparent", "#F1FAFE"],
         ["transparent", "transparent", "transparent", "transparent"],
         ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"],
+        ["transparent", "transparent", "transparent", "transparent"],
 
-        ["transparent", "transparent", "transparent", "transparent"],   // eTHIRTEEN
         ["transparent", "transparent", "transparent", "transparent"],   // eFOURTEEN
         ["transparent", "transparent", "transparent", "transparent"]    // eFIFTEEN
     ]
@@ -79,7 +80,7 @@ QtObject {
         ["#031F2B", "#C9DEF1", "#C9DEF1", "#031F2B"],
         ["#031F2B", "#F1FAFE", "#9CAEB8", "#F1FAFE"],
         ["#F1FAFE", "#F1FAFE", "#F1FAFE", "#F1FAFE"],
-        ["#FF7A00", "#FFFFFF", "#FF7A00", "#FFFFFF"],
+        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
         ["#FFFFFF", "#FFFFFF", "#595959", "#FFFFFF"],
         ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
         ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
@@ -92,80 +93,24 @@ QtObject {
         ["#F1FAFE", "#839096", "#031F2B", "#F1FAFE"],
         ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
         ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
+        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
 
-        ["transparent", "transparent", "transparent", "transparent"],// eTHIRTEEN
-        ["transparent", "transparent", "transparent", "transparent"],// eFOURTEEN
+        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
         ["transparent", "transparent", "transparent", "transparent"],// eFIFTEEN
     ]
 
-    function icons(type,intType){
-        var img = ""
-        switch(type){
-        case "trezor":    img = "qrc:/Images/Images/Device_Icons/trezor.png"; break
-        case "coldcard":  img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
-        case "bitbox02":  img = "qrc:/Images/Images/Device_Icons/bitbox.png"; break
-        case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger.png"; break
-        case "software":  img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
-        case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
-        default: switch(intType){
-            case NUNCHUCKTYPE.SOFTWARE:  img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
-            case NUNCHUCKTYPE.SERVER: img = "qrc:/Images/Images/Device_Icons/server-key-dark.svg"; break
-            case NUNCHUCKTYPE.COLDCARD_NFC: img = img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
-            default:img = "qrc:/Images/Images/Device_Icons/other.png"; break
-            }
-        }
-        return img
-    }
-
-    function iconTypes(type,intType){
-        var img = ""
-        switch(type){
-        case "trezor":    img = "qrc:/Images/Images/Device_Icons/Trezor.svg"; break
-        case "coldcard":  img = "qrc:/Images/Images/Device_Icons/ColdCard.svg"; break
-        case "bitbox02":  img = "qrc:/Images/Images/Device_Icons/bitbox.png"; break
-        case "ledger":    img = "qrc:/Images/Images/Device_Icons/Ledger.svg"; break
-        case "software":  img = "qrc:/Images/Images/Device_Icons/software_drak.svg"; break
-        case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
-        default: switch(intType){
-            case NUNCHUCKTYPE.SOFTWARE:  img = "qrc:/Images/Images/Device_Icons/software_drak.svg"; break
-            case NUNCHUCKTYPE.SERVER: img = "qrc:/Images/Images/Device_Icons/server-key-dark.svg"; break
-            case NUNCHUCKTYPE.COLDCARD_NFC: img = "qrc:/Images/Images/Device_Icons/ColdCard.svg"; break
-            default:img = "qrc:/Images/Images/Device_Icons/unknown-key-dark.svg"; break
-            }
-        }
-        return img
-    }
-
     function signers(type){
-        var n = ""
         switch(type){
-        case NUNCHUCKTYPE.HARDWARE: n = "HARDWARE"; break
-        case NUNCHUCKTYPE.AIRGAP:   n = "AIR-GAPPED"; break
-        case NUNCHUCKTYPE.SOFTWARE: n = "SOFTWARE"; break
-        case NUNCHUCKTYPE.FOREIGN_SOFTWARE: n = "FOREIGN"; break
-        case NUNCHUCKTYPE.NFC: n = "NFC"; break
-        case NUNCHUCKTYPE.COLDCARD_NFC: n = "COLDCARD-NFC"; break
-        case NUNCHUCKTYPE.SERVER: n = "PLATFORM"; break
-        case NUNCHUCKTYPE.UNKNOWN: n = "UNKNOWN"; break
-        default: n = ""
+        case NUNCHUCKTYPE.HARDWARE:          return "HARDWARE";
+        case NUNCHUCKTYPE.AIRGAP:            return "AIRGAPPED";
+        case NUNCHUCKTYPE.SOFTWARE:          return "SOFTWARE";
+        case NUNCHUCKTYPE.FOREIGN_SOFTWARE:  return "FOREIGN";
+        case NUNCHUCKTYPE.NFC:               return "NFC";
+        case NUNCHUCKTYPE.COLDCARD_NFC:      return "COLDCARD-NFC";
+        case NUNCHUCKTYPE.SERVER:            return "PLATFORM";
+        case NUNCHUCKTYPE.UNKNOWN:           return "UNKNOWN";
+        default:                             return "UNKNOWN";
         }
-        return n
-    }
-
-    function signerNames(type){
-        var name = ""
-        switch(type){
-        case NUNCHUCKTYPE.HARDWARE: name = STR.STR_QML_044; break
-        case NUNCHUCKTYPE.AIRGAP:   name = STR.STR_QML_045; break
-        case NUNCHUCKTYPE.SOFTWARE: name = STR.STR_QML_046; break
-        case NUNCHUCKTYPE.FOREIGN_SOFTWARE: name = STR.STR_QML_047; break
-        case NUNCHUCKTYPE.NFC: name = STR.STR_QML_678; break
-        case NUNCHUCKTYPE.COLDCARD_NFC: name = "COLDCARD-NFC"; break
-        case NUNCHUCKTYPE.SERVER: name = "Platform"; break
-        case NUNCHUCKTYPE.UNKNOWN: name = "UNKNOWN"; break
-        default: name = ""
-        }
-        return name
     }
 
     property int countRandom : 0
@@ -179,5 +124,56 @@ QtObject {
             countRandom = 0;
         }
         return generatedValues;
+    }
+
+    function transactionColor(status){
+        switch(status){
+        case NUNCHUCKTYPE.PENDING_SIGNATURES:   return "#FFD7D9";
+        case NUNCHUCKTYPE.READY_TO_BROADCAST:   return "#FDEBD2";
+        case NUNCHUCKTYPE.NETWORK_REJECTED:     return "#CF4018";
+        case NUNCHUCKTYPE.PENDING_CONFIRMATION: return "#E8DAFF";
+        case NUNCHUCKTYPE.CONFIRMED:            return "#D0E2FF";
+        default:                                return "#FFD7D9"
+        }
+    }
+
+    function transactionStatus(status, confirmation){
+        switch(status){
+        case NUNCHUCKTYPE.PENDING_SIGNATURES:   return STR.STR_QML_283 ;
+        case NUNCHUCKTYPE.READY_TO_BROADCAST:   return STR.STR_QML_284 ;
+        case NUNCHUCKTYPE.NETWORK_REJECTED:     return STR.STR_QML_285 ;
+        case NUNCHUCKTYPE.PENDING_CONFIRMATION: return STR.STR_QML_286 ;
+        case NUNCHUCKTYPE.CONFIRMED:            return (qsTr("%1 %2").arg(confirmation).arg(STR.STR_QML_287)) ;
+        default:                                return STR.STR_QML_456
+        }
+    }
+
+    function getHealthStatusColor(status) {
+        if (status === "LessThan6months") {
+            return "#A7F0BA"
+        }
+        else if (status === "MoreThan6months") {
+            return "#FDEBD2"
+        }
+        else if (status === "MoreThan1year") {
+            return "#FFD7D9"
+        }
+        else{
+            return "#FFD7D9";
+        }
+    }
+    function getHealthStatusLabel(status) {
+        if (status === "LessThan6months") {
+            return STR.STR_QML_975
+        }
+        else if (status === "MoreThan6months") {
+            return STR.STR_QML_976
+        }
+        else if (status === "MoreThan1year") {
+            return STR.STR_QML_977
+        }
+        else{
+            return "Not checked yet"
+        }
     }
 }

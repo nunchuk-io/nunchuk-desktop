@@ -69,12 +69,15 @@ public slots:
                                      bool isSoftware);
 
     void slotStartHealthCheckMasterSigner(const int state_id,
-                                          const QString& signerId,
+                                          const QString& xfp,
                                           const QString& message);
 
     void slotStartTopXPUBsMasterSigner(const QVariant &data);
 
-    void slotStartHealthCheckRemoteSigner();
+    void slotStartHealthCheckRemoteSigner(const int state_id,
+                                          const QString& xfp,
+                                          const int signer_type,
+                                          const QString& message);
 
     void slotStartDisplayAddress(const QString &wallet_id,
                                  const QString &address);
@@ -161,7 +164,7 @@ signals:
                                        const int status,
                                        const QString &message,
                                        const QString &signature,
-                                       const QString &id,
+                                       const QString &xfp,
                                        QString what,
                                        int type,
                                        int code);
@@ -271,7 +274,7 @@ public slots:
                                            const int status,
                                            const QString &message,
                                            const QString& signature,
-                                           const QString & id,
+                                           const QString & xfp,
                                            QString what,
                                            int type,
                                            int code);
@@ -360,12 +363,15 @@ signals:
                                  bool isSoftware);
 
     void startHealthCheckMasterSigner(const int state_id,
-                                      const QString& signerId,
+                                      const QString& xfp,
                                       const QString& message);
 
     void startTopXPUBsMasterSigner(const QVariant &data);
 
-    void startHealthCheckRemoteSigner();
+    void startHealthCheckRemoteSigner(const int state_id,
+                                      const QString& xfp,
+                                      const int signer_type,
+                                      const QString& message);
 
     void startDisplayAddress(const QString &wallet_id,
                              const QString &address);

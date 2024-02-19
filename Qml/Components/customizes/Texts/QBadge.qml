@@ -5,6 +5,8 @@ Rectangle {
     property alias text: _txt.text
     property bool iconInRight: false
     property int iconSize: 16
+    property int fontSize: 16
+    property alias font: _txt.font
     property string icon: ""
     width: _row.implicitWidth + 20
     height: 24
@@ -22,12 +24,9 @@ Rectangle {
         }
         QLato {
             id: _txt
-            font.weight: Font.Medium
-            font.pixelSize: 12
+            font.weight: Font.Bold
+            font.pixelSize: fontSize
             anchors.verticalCenter: parent.verticalCenter
-
         }
     }
-
-
 }

@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_ONLINE_ADD_CONTACTS.h"
 #include "QQuickViewer.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 
 void SCR_ONLINE_ADD_CONTACTS_Entry(QVariant msg) {

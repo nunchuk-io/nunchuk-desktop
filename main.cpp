@@ -30,10 +30,13 @@
 #include "Models/QWarningMessage.h"
 #include "ifaces/QRCodeItem.h"
 #include "bridgeifaces.h"
-#include "Draco.h"
+#include "Servers/Draco.h"
 #include "Chats/ClientController.h"
-#include "Chats/QUserWallets.h"
+#include "Premiums/QUserWallets.h"
+#include "Premiums/QGroupWallets.h"
 #include "contrib/libnunchuk/src/utils/loguru.hpp"
+#include "RegisterTypes/DashRectangle.h"
+#include "QPingThread.h"
 
 #ifdef ENABLE_DECODER_QR_CODE
 #include "contrib/qzxing/src/QZXing.h"
@@ -96,8 +99,8 @@ inline void calculateScaleFactor()
         if (screenHeight <= appHeight || screenWidth <= appWidth) {
             scalePref = min((double)screenHeight / appHeight, (double)screenWidth / appWidth);
         }
-        DBG_INFO << screenHeight << screenWidth << appHeight << appWidth << scalePref << primaryScr->devicePixelRatio();
-        std::string scaleAsString = std::to_string(scalePref);
+        std::string scaleAsString = QString::number(scalePref, 'f', 1).toStdString();
+        DBG_INFO << screenHeight << screenWidth << appHeight << appWidth << scaleAsString << primaryScr->devicePixelRatio() ;
         QByteArray scaleAsQByteArray(scaleAsString.c_str(), scaleAsString.length());
         qputenv("QT_SCALE_FACTOR", scaleAsQByteArray);
     }
@@ -120,10 +123,16 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.20");
+    app.setApplicationVersion("1.9.29");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
+    QWalletManagement::instance();
+
+#ifndef RELEASE_MODE
+//    MonitoringThread objTracking;
+//    objTracking.startTracking();
+#endif
 
     DBG_INFO << "Execution Path: " << qApp->applicationDirPath();
 
@@ -135,6 +144,7 @@ int main(int argc, char* argv[])
     QQuickViewer::registerStates(STATE_ALL, ALEN(STATE_ALL));
     qmlRegisterType<E>("HMIEVENTS", 1, 0, "EVT");
     qmlRegisterType<QRCodeItem>("QRCodeItem", 1, 0, "QRCodeItem");
+    qmlRegisterType<DashRectangle>("RegisterTypes", 1, 0, "DashRectangle");
     qmlRegisterType<ENUNCHUCK>("NUNCHUCKTYPE", 1, 0, "NUNCHUCKTYPE");
     qmlRegisterType<ServiceSetting>("NUNCHUCKTYPE", 1, 0, "ServiceType");
     qmlRegisterType<EWARNING>("EWARNING", 1, 0, "EWARNING");
@@ -142,6 +152,7 @@ int main(int argc, char* argv[])
     qmlRegisterType<DRACO_CODE>("DRACO_CODE", 1, 0, "DRACO_CODE");
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QWalletData.qml"), "DataPool", 1, 0, "RoomWalletData");
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QGlobal.qml"), "DataPool", 1, 0, "GlobalData");
+    qmlRegisterType<AlertEnum>("NUNCHUCKTYPE", 1, 0, "AlertType");
     QQuickViewer::instance()->addImageProvider("nunchuk", CLIENT_INSTANCE->imageprovider());
     QQuickViewer::instance()->initialized();
     QQuickViewer::instance()->initFonts(latoFonts);
@@ -164,6 +175,7 @@ int main(int argc, char* argv[])
     QQuickViewer::instance()->registerContextProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
     QQuickViewer::instance()->registerContextProperty("qapplicationVersion", app.applicationVersion());
     QQuickViewer::instance()->registerContextProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
+    QQuickViewer::instance()->registerContextProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
     QQuickViewer::instance()->registerContextProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
     QQuickViewer::instance()->registerContextProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
     QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
