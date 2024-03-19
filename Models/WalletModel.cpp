@@ -119,7 +119,9 @@ QString Wallet::name() {
     if(isByzantineWallet() && "" != aliasName()){
         return aliasName();
     }
-    return m_name;
+    QRegularExpression re("\\p{So}");
+    m_name.remove(re);
+    return  m_name;
 }
 
 QString Wallet::walletOriginName() const
@@ -721,8 +723,11 @@ QVariantList Wallet::aliasMembers() const
 QString Wallet::aliasName() const
 {
     if (auto dash = dashboard()) {
-        DBG_INFO << dash->walletJson()["alias"].toString();
-        return dash->walletJson()["alias"].toString();
+        QString alias = dash->walletJson()["alias"].toString();
+        QRegularExpression re("\\p{So}");
+        alias.remove(re);
+        DBG_INFO << dash->walletJson()["alias"].toString() << alias;
+        return alias;
     }
     return "";
 }
@@ -864,15 +869,20 @@ bool Wallet::updateWalletPrimaryOwner(const QString &membership_id)
     return ret;
 }
 
+bool Wallet::isContainKey(const QString &xfp)
+{
+    for (auto signer : m_signers->fullList()) {
+        if (qUtils::strCompare(signer->masterFingerPrint(), xfp) && isAssistedWallet()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 QVariant Wallet::dummyTx() const
 {
     if (auto dummy = dummyTxPtr()) {
-        if(isGroupWallet()){
-            return QVariant::fromValue(dummy->get<QGroupWalletDummyTxPtr>().data());
-        }
-        else if(isUserWallet()){
-            return QVariant::fromValue(dummy->get<QUserWalletDummyTxPtr>().data());
-        }
+        return QVariant::fromValue(dummy->get<QGroupWalletDummyTxPtr>().data());
     }
     return {};
 }
@@ -1358,17 +1368,73 @@ QGroupWalletDummyTxPtr Wallet::groupDummyTxPtr() const
     return {};
 }
 
-QUserWalletDummyTxPtr Wallet::userDummyTxPtr() const
-{
-    if (auto dummy = dummyTxPtr()) {
-        return dummy->get<QUserWalletDummyTxPtr>();
-    }
-    return {};
-}
-
 QGroupWalletHealthCheckPtr Wallet::healthPtr() const
 {
     return QGroupWalletHealthCheck::information<QGroupWalletHealthCheckPtr>(id());
+}
+
+void Wallet::updateSignMessage(const QString &xfp, int wallet_type)
+{
+    QtConcurrent::run([=, this]() {
+        ENUNCHUCK::AddressType type = (ENUNCHUCK::AddressType)wallet_type;
+        QWarningMessage msg;
+        QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
+        if (single) {
+            QString address = bridge::GetSignerAddress(single->originSingleSigner(), (nunchuk::AddressType)type);
+            QString signature = bridge::SignMessage(single->originSingleSigner(), single->message());
+            single->setAddress(address);
+            single->setSignature(signature);
+            DBG_INFO << address << signature;
+            if (!signature.isEmpty()) {
+                AppModel::instance()->showToast(0, "The message has been signed", EWARNING::WarningType::SUCCESS_MSG );
+            }
+        }
+        if (single.isNull()) {
+            QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
+            single = bridge::nunchukGetDefaultSignerFromMasterSigner(master->id(),
+                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
+                                                                     type ,
+                                                                     msg);
+            if (single) {
+                QString address = bridge::GetSignerAddress(single->originSingleSigner(), (nunchuk::AddressType)type);
+                if (master) {
+                    QString signature = bridge::SignMessage(single->originSingleSigner(), master->message());
+                    master->setAddress(address);
+                    master->setSignature(signature);
+                    DBG_INFO << address << signature;
+                    if (!signature.isEmpty()) {
+                        AppModel::instance()->showToast(0, "The message has been signed", EWARNING::WarningType::SUCCESS_MSG );
+                    }
+                }
+            }
+        }
+        emit signMessageChanged();
+    });
+}
+
+void Wallet::exportBitcoinSignedMessage(const QString &xfp, const QString &file_path, int wallet_type)
+{
+    QString path = qUtils::QGetFilePath(file_path);
+    QString address_type = qUtils::qAddressTypeToStr((nunchuk::AddressType)wallet_type);
+    QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
+    QString signMessage;
+    if (single) {
+        signMessage = qUtils::ExportBitcoinSignedMessage(single->message(), address_type, single->signature());
+    }
+    if (single.isNull()) {
+        QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
+        if (master) {
+            signMessage = qUtils::ExportBitcoinSignedMessage(master->message(), address_type, master->signature());
+        }
+    }
+    QFile file(path);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream st(&file);
+        st.setCodec("UTF-8");
+        st << signMessage << endl;
+        st.flush();
+        file.close();
+    }
 }
 
 QWalletDummyTxPtr Wallet::dummyTxPtr() const
@@ -1645,37 +1711,35 @@ void WalletListModel::updateDescription(const QString &walletId, const QString &
     }
 }
 
-QStringList WalletListModel::walletListByMasterSigner(const QString& masterSignerId){
-    QStringList ret;
+QVariantList WalletListModel::walletListByMasterSigner(const QString& masterSignerId){
+    QVariantList ret;
     foreach (QWalletPtr i , d_ ){
         if(NULL != i.data()->singleSignersAssigned()){
             bool exist = i.data()->singleSignersAssigned()->containsMasterSignerId(masterSignerId);
             if(true == exist){
-                if(i.data()->escrow()){
-                    ret << QString("%1 [%2/%3]").arg(i.data()->name()).arg(i.data()->m()).arg(i.data()->n());
-                }
-                else{
-                    ret << QString("%1 [%2/%3]").arg(i.data()->name()).arg(i.data()->m()).arg(i.data()->n());
-                }
+                QJsonObject json;
+                json["name"] = i.data()->name();
+                json["walletM"] = i.data()->m();
+                json["walletN"] = i.data()->n();
+                ret << QVariant::fromValue(json);
             }
         }
     }
     return ret;
 }
 
-QStringList WalletListModel::walletListByFingerPrint(const QString &masterFingerPrint)
+QVariantList WalletListModel::walletListByFingerPrint(const QString &masterFingerPrint)
 {
-    QStringList ret;
+    QVariantList ret;
     foreach (QWalletPtr i , d_ ){
         if(NULL != i.data()->singleSignersAssigned()){
             bool exist = i.data()->singleSignersAssigned()->containsFingerPrint(masterFingerPrint);
             if(true == exist){
-                if(i.data()->escrow()){
-                    ret << QString("%1 [%2/%3]").arg(i.data()->name()).arg(i.data()->m()).arg(i.data()->n());
-                }
-                else{
-                    ret << QString("%1 [%2/%3]").arg(i.data()->name()).arg(i.data()->m()).arg(i.data()->n());
-                }
+                QJsonObject json;
+                json["name"] = i.data()->name();
+                json["walletM"] = i.data()->m();
+                json["walletN"] = i.data()->n();
+                ret << QVariant::fromValue(json);
             }
         }
     }

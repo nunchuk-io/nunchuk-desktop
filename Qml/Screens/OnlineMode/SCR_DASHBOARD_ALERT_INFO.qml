@@ -117,6 +117,7 @@ QScreen {
         id: _update_inheritance_plan
         QInheritancePlanInfo {
             description: STR.STR_QML_1036
+            descriptionHb: STR.STR_QML_1215
             planInfo: AppModel.walletInfo.inheritancePlanInfo.planInfoUpdate
         }
     }
@@ -125,6 +126,7 @@ QScreen {
         id: _cancel_inheritance_plan
         QInheritancePlanInfo {
             description: STR.STR_QML_1034
+            descriptionHb: STR.STR_QML_1214
             planIsCancel: true
         }
     }

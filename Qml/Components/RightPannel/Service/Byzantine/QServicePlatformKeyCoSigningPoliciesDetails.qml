@@ -37,6 +37,9 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Item {
     property var serverKeyInfo: ServiceSetting.walletInfo.serverKeyInfo
+    property string myRole: ServiceSetting.walletInfo.myRole
+    property bool isDisable: myRole === "KEYHOLDER" || myRole === "KEYHOLDER_LIMITED"
+    enabled: !isDisable
     Connections {
         target: ServiceSetting.servicesTag
         onServerKeyVerifyPasswordAlert: {
@@ -68,7 +71,6 @@ Item {
             }
         }
     }
-    property bool anyChanged: autoBroadcast.isChanged()
     QText {
         anchors {
             left: parent.left
@@ -181,7 +183,6 @@ Item {
                 label.text: STR.STR_QML_804
                 label.font.pixelSize: 16
                 type: eTypeE
-//                enabled: anyChanged
                 onButtonClicked: {
                     serverKeyInfo.setKeyCoSigning(get_policies())
                     QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST)

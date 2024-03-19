@@ -51,11 +51,13 @@ Rectangle {
     property bool   isLocked:       dashboardInfo.isLocked
     property bool   groupId:        dashboardInfo.groupId
     property bool   isPremierUser:  ClientController.user.isByzantineUserPremier
+    property bool   isIronHandUser:  ClientController.user.isIronHandUser
+    property bool   isHoneyBadgerUser:  ClientController.user.isHoneyBadgerUser
     property bool   isPremierGroup: dashboardInfo.isPremierGroup
     property bool hasPro: AppModel.walletInfo.isPro
-    property bool hasViewInheritancePlan: AppModel.walletInfo.inheritancePlanInfo.isActived && hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")
-    property bool hasPlatformKeyCoSign: hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")
-    property bool hasWalletLockdown: (myRole === "MASTER" || myRole === "ADMIN")
+    property bool hasViewInheritancePlan: (AppModel.walletInfo.inheritancePlanInfo.isActived && hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")) || myRole === ""
+    property bool hasPlatformKeyCoSign: (hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")) || isIronHandUser || isHoneyBadgerUser
+    property bool hasWalletLockdown: (myRole === "MASTER" || myRole === "ADMIN") || isIronHandUser || isHoneyBadgerUser
     Loader {
         anchors.fill: parent
         sourceComponent: accepted ? acceptedGroup : notAcceptedGroup
@@ -350,6 +352,7 @@ Rectangle {
                 Item {
                     width: parent.width
                     height: 24
+                    visible: dashboardInfo.members.count > 0
                     Row {
                         anchors.fill: parent
                         spacing: 8

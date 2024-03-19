@@ -628,3 +628,23 @@ QString qUtils::GetBip32DerivationPath(const nunchuk::WalletType& wallet_type, c
     }
     return QString::fromStdString(path);
 }
+
+QString qUtils::ExportBitcoinSignedMessage(const QString &message, const QString &address, const QString &signature)
+{
+    nunchuk::BitcoinSignedMessage btc(message.toStdString(), address.toStdString(), signature.toStdString());
+    return QString::fromStdString(nunchuk::ExportBitcoinSignedMessage(btc));
+}
+
+QString qUtils::qAddressTypeToStr(const nunchuk::AddressType &address_type)
+{
+    return QString::fromStdString(AddressTypeToStr(address_type));
+}
+
+bool qUtils::isPrimaryKey(const QString &xfp)
+{
+    nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(xfp);
+    if(key.get_master_fingerprint() != ""){
+        return true;
+    }
+    return false;
+}

@@ -15,6 +15,7 @@ Column {
     }
     QMemberRole {
         height: 16
+        visible: _id.role !== ""
         role: _id.role
         font.weight: Font.Bold
     }

@@ -158,6 +158,7 @@ enum CMD_IDX {
     ASSISTED_WALLET_GET_LIST_KEY,
     ASSISTED_WALLET_REMOVE_ID,
     ASSISTED_WALLET_GET_CONFIG,
+    ASSISTED_WALLET_GET_INFO,
     ASSISTED_WALLET_UPDATE_NAME,
     ASSISTED_KEY_UPDATE_NAME,
     ASSISTED_WALLET_REMOVE_WALLET,
@@ -214,6 +215,20 @@ enum CMD_IDX {
     SERVER_KEYS_REQUIRED_SIGNATURES,
 
     GET_CURRENCIES,
+    ASSISTED_WALLET_ALERTS,
+    ASSISTED_WALLET_ALERTS_COUNT,
+    ASSISTED_WALLET_ALERTS_READ,
+    ASSISTED_WALLET_ALERTS_DISMISS,
+
+    ASSISTED_WALLET_HEALTHCHECK,
+    ASSISTED_WALLET_GET_HEALTH,
+
+    ASSISTED_WALLET_GET_DUMMY_TX,
+    ASSISTED_WALLET_UPDATE_DUMMY_TX,
+    ASSISTED_WALLET_CANCEL_DUMMY_TX,
+    ASSISTED_WALLET_FINALIZE_DUMMY_TX,
+
+    ASSISTED_WALLET_HEALTH_CHECK_HISTORY_GET,
 
     CONFIRMATION_CODE,
     VERIFY_CONFIRMATION_CODE,
@@ -433,6 +448,7 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_REMOVE_ID    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/request-add-key/{request_id}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_CONFIG   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("configs") },
     { Premium::CMD_IDX::ASSISTED_KEY_UPDATE_NAME     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallet-keys/{xfp}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_INFO     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_UPDATE_NAME  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_REMOVE_WALLET, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_REMOVE_WALLET_REQUIRED_SIGNATURES, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/calculate-required-signatures") },
@@ -488,6 +504,23 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::SERVER_KEYS_REQUIRED_SIGNATURES, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("server-keys/{key_id_or_xfp}/calculate-required-signatures") },
 
     { Premium::CMD_IDX::GET_CURRENCIES               , QString("%1/%2").arg(DRAGON_FOREX_URL).arg("currencies") },
+
+    { Premium::CMD_IDX::ASSISTED_WALLET_ALERTS               , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/alerts") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_COUNT         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/alerts/total") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_READ          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/alerts/{alert_id}/mark-as-read") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_DISMISS       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/alerts/{alert_id}/dismiss") },
+
+    { Premium::CMD_IDX::ASSISTED_WALLET_HEALTHCHECK        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health/{xfp}/health-check") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_HEALTH         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health") },
+
+    //Dummy transaction
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_DUMMY_TX       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/dummy-transactions/{dummy_transaction_id}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_UPDATE_DUMMY_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/dummy-transactions/{dummy_transaction_id}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_CANCEL_DUMMY_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/dummy-transactions/{dummy_transaction_id}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_FINALIZE_DUMMY_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/dummy-transactions/{dummy_transaction_id}/finalize") },
+
+    { Premium::CMD_IDX::ASSISTED_WALLET_HEALTH_CHECK_HISTORY_GET  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallet-keys/{xfp}/history") },
+
 
     //DRAGON_GROUP_WALLETS
     { Group::CMD_IDX::GROUP_WALLET_LIST_WALLETS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("wallets") },

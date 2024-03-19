@@ -659,6 +659,11 @@ bool UpdateWallet(const nunchuk::Wallet &wallet, QWarningMessage &msg);
 
 nunchuk::TapsignerStatus GetTapsignerStatusFromMasterSigner(const QString& fingerPrint);
 
+QString SignMessage(const nunchuk::SingleSigner& signer,
+                    const QString& message);
+
+QString GetSignerAddress(const nunchuk::SingleSigner& signer,
+                         const nunchuk::AddressType& address_type);
 }
 
 #endif // BRIDGEINTERFACE_H

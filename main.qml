@@ -101,7 +101,8 @@ Item {
         console.log(toastObj.code, toastObj.type, toastObj.what)
         for(var i = 0; i < toastLoader.model.count; i++){
             console.log(toastLoader.model.get(i).code , toastObj.code, toastObj.type)
-            if(toastLoader.model.get(i).code === toastObj.code && (toastObj.type >= EWARNING.ERROR_MSG)) {
+            if(toastLoader.model.get(i).code === toastObj.code && (toastObj.type > EWARNING.ERROR_MSG)) {
+                // exception check show already ? (by error code)
                 return false;
             }
         }

@@ -40,7 +40,7 @@ Rectangle {
     color: "#031F2B"
     Behavior on width {NumberAnimation{duration: 200}}
     visible: width > 0
-    QText {
+    QLato {
         color: "#FFFFFF"
         font.family: "Lato"
         font.weight: Font.Bold
@@ -85,7 +85,7 @@ Rectangle {
         username: RoomWalletData.currentRoom ? RoomWalletData.currentRoom.roomName : STR.STR_QML_502
         displayStatus: userCount > 2
     }
-    QText {
+    QLato {
         id: roomnameInfo
         width: 234
         lineHeight: 28
@@ -102,7 +102,7 @@ Rectangle {
         anchors.top: avatarInfo.bottom
         anchors.topMargin: 12
     }
-    QText {
+    QLato {
         id: memberCntInfo
         color: "#FFFFFF"
         font.family: "Lato"
@@ -153,7 +153,7 @@ Rectangle {
                     }
                 }
             }
-            QText {
+            QLato {
                 width: 109
                 height: 32
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -190,7 +190,7 @@ Rectangle {
                     onClicked: optionMenu.popup()
                 }
             }
-            QText {
+            QLato {
                 width: 109
                 height: 32
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -302,7 +302,7 @@ Rectangle {
                 Row {
                     height: 24
                     spacing: 8
-                    QText {
+                    QLato {
                         height: 24
                         color: "#FFFFFF"
                         font.family: "Lato"
@@ -311,7 +311,7 @@ Rectangle {
                         text: STR.STR_QML_505
                         verticalAlignment: Text.AlignBottom
                     }
-                    QText {
+                    QLato {
                         height: 24
                         color: "#FFFFFF"
                         font.family: "Lato"
@@ -391,7 +391,7 @@ Rectangle {
                                         else if(iteminit.tx_status === NUNCHUCKTYPE.NETWORK_REJECTED){ return "#CF4018" }
                                         else{ return "#EAEAEA" }
                                     }
-                                    QText {
+                                    QLato {
                                         id: currentState
                                         font.family: "Lato"
                                         font.pixelSize: 10
@@ -411,14 +411,14 @@ Rectangle {
                                 Row {
                                     spacing: 0
                                     height: 16
-                                    QText {
+                                    QLato {
                                         text: STR.STR_QML_491
                                         font.family: "Lato"
                                         font.pixelSize: 12
                                         color: "#031F2B"
                                         height: parent.height
                                     }
-                                    QText {
+                                    QLato {
                                         width: 120
                                         height: parent.height
                                         text: iteminit.to_addr
@@ -429,7 +429,7 @@ Rectangle {
                                         font.weight: Font.Bold
                                     }
                                 }
-                                QText {
+                                QLato {
                                     height: 16
                                     font.pixelSize: 12
                                     font.family: "Lato"
@@ -450,7 +450,7 @@ Rectangle {
                 Row {
                     height: 24
                     spacing: 8
-                    QText {
+                    QLato {
                         height: 24
                         color: "#FFFFFF"
                         font.family: "Lato"
@@ -459,7 +459,7 @@ Rectangle {
                         text: STR.STR_QML_472
                         verticalAlignment: Text.AlignBottom
                     }
-                    QText {
+                    QLato {
                         height: 24
                         color: "#FFFFFF"
                         font.family: "Lato"
@@ -574,7 +574,7 @@ Rectangle {
                             width: currentState.width + 20
                             radius: 20
                             color: RoomWalletData.roomWalletCreated ? "#A7F0BA" : RoomWalletData.fullSigners ? "#FDEBD2" : "#FFD7D9"
-                            QText {
+                            QLato {
                                 id: currentState
                                 font.family: "Lato"
                                 font.pixelSize: 10
@@ -585,14 +585,14 @@ Rectangle {
                             }
                         }
 
-                        QText {
+                        QLato {
                             font.family: "Lato"
                             font.pixelSize: 12
                             text: RoomWalletData.multisigConfiguration + " " + RoomWalletData.addressType
                             color: "#031F2B"
                         }
 
-                        QText {
+                        QLato {
                             font.family: "Lato"
                             font.pixelSize: 12
                             text: RoomWalletData.walletName
@@ -641,7 +641,7 @@ Rectangle {
                         height: 24
                         width: parent.width
                         spacing: 4
-                        QText {
+                        QLato {
                             width: parent.width - 28
                             font.family: "Lato"
                             font.pixelSize: 16
@@ -662,7 +662,7 @@ Rectangle {
                     Item {
                         height: 16
                         width: parent.width
-                        QText {
+                        QLato {
                             font.family: "Lato"
                             font.pixelSize: 12
                             text: RoomWalletData.amount
@@ -684,7 +684,7 @@ Rectangle {
                                     source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
-                                QText {
+                                QLato {
                                     font.family: "Lato"
                                     font.pixelSize: 10
                                     text: STR.STR_QML_438
@@ -698,7 +698,7 @@ Rectangle {
                     Item {
                         height: 16
                         width: parent.width
-                        QText {
+                        QLato {
                             font.family: "Lato"
                             font.pixelSize: 12
                             text: RoomWalletData.amountCurrency
@@ -710,7 +710,7 @@ Rectangle {
                             radius: 20
                             color: "#EAEAEA"
                             anchors.right: parent.right
-                            QText {
+                            QLato {
                                 font.family: "Lato"
                                 font.pixelSize: 10
                                 text: qsTr("%1 %2").arg(RoomWalletData.multisigConfiguration).arg(STR.STR_QML_069)

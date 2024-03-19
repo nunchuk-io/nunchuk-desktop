@@ -78,7 +78,7 @@ bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown()
 
     QJsonObject body;
     body["period_id"] = m_period_id;
-    body["group_id"] = w->groupId();
+    body["group_id"] = m_mode == USER_WALLET ? "" : w->groupId();
     body["wallet"] = w->id();
     QJsonObject data;
     data["nonce"] = Draco::instance()->randomNonce();
@@ -374,7 +374,7 @@ int QWalletServicesTag::inheritanceDownloadBackup(const QString &magic, const QS
     QJsonObject result;
     QString errormsg;
     int response_code = DRACO_CODE::RESPONSE_OK;
-    bool ret = Draco::instance()->inheritanceDownloadBackup(magic, response_code, result, errormsg);
+    bool ret = Draco::instance()->inheritanceDownloadBackup(magic, backup_keys, response_code, result, errormsg);
     DBG_INFO << ret << errormsg;
     if (ret) {
         QJsonArray keys = result["keys"].toArray();
@@ -442,6 +442,7 @@ int QWalletServicesTag::inheritanceDownloadBackup(const QString &magic, const QS
             emit hasNotBeenActivatedYetAlert();
             break;
         default:
+            AppModel::instance()->showToast(response_code, errormsg, EWARNING::WarningType::EXCEPTION_MSG);
             break;
         }
     }
@@ -702,11 +703,17 @@ void QWalletServicesTag::setListLockdown()
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
             if (auto dash = w->dashboard()) {
-                auto hasPermission = dash->role() == "MASTER" || dash->role() == "ADMIN";
-                if (hasPermission) {
-                    setuped << wallet_id; // for GroupWallet
+                if (m_mode == GROUP_WALLET) {
+                    auto hasPermission = dash->role() == "MASTER" || dash->role() == "ADMIN";
+                    if (hasPermission) {
+                        setuped << wallet_id; // for GroupWallet
+                    }
                 }
-            } else {
+                else {
+                    setuped << wallet_id;
+                }
+            }
+            else {
                 setuped << wallet_id;
             }
         }
@@ -754,6 +761,9 @@ void QWalletServicesTag::setListPolicy()
             if (auto dash = w->dashboard()) {
                 auto hasPermission = dash->role() == "KEYHOLDER" || dash->role() == "MASTER" || dash->role() == "ADMIN";
                 if (w->isPro() && hasPermission) {
+                    setuped << wallet_id;
+                }
+                else if (w->isUserWallet()) {
                     setuped << wallet_id;
                 }
             } else {

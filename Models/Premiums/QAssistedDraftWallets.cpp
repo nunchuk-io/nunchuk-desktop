@@ -177,6 +177,7 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
         }
     }
     AppModel::instance()->setAddSignerWizard(4);
+    return false;
 }
 
 bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHardware hardware, nunchuk::SingleSigner keyresued)
@@ -227,6 +228,7 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
             return false;
         }
     }
+    return false;
 }
 
 void QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString& group_id)
@@ -524,15 +526,8 @@ void QAssistedDraftWallets::finishScanDevices()
         emit deviceListChanged();
     }
     if (auto w = AppModel::instance()->walletInfoPtr()) {
-        if (m_mode == USER_WALLET) {
-            if (auto dummy = w->userDummyTxPtr()) {
-                dummy->finishScanDevices();
-            }
-        }
-        else if (m_mode == GROUP_WALLET) {
-            if (auto dummy = w->groupDummyTxPtr()) {
-                dummy->finishScanDevices();
-            }
+        if (auto dummy = w->groupDummyTxPtr()) {
+            dummy->finishScanDevices();
         }
     }
 }

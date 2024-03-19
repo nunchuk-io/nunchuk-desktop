@@ -47,86 +47,59 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
         if (type == "address-to-verify") {
             QString address = maps["address"].toString();
             AppModel::instance()->startDisplayAddress(w->id(), address);
-        } else if (type == "memo-notify") {
+        }
+        else if (type == "memo-notify") {
             //Not use for dummy tx
-        } else if (type == "scan-device") {
+        }
+        else if (type == "scan-device") {
             AppModel::instance()->startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
-        } else if (type == "dummy-tx-sign") {
+        }
+        else if (type == "dummy-tx-sign") {
             QtConcurrent::run([maps, w]() {
                 QString xfp = maps["xfp"].toString();
-                if (QBasePremium::mode() == USER_WALLET) {
-                    if (auto dummy = w->userDummyTxPtr()) {
-                        dummy->requestSignTx(xfp);
-                    }
-                }
-                else {
-                    if (auto dummy = w->groupDummyTxPtr()) {
-                        dummy->requestSignTx(xfp);
-                    }
+                if (auto dummy = w->groupDummyTxPtr()) {
+                    dummy->requestSignTx(xfp);
                 }
             });
-        } else if (type == "dummy-tx-import-qr") {
+        }
+        else if (type == "dummy-tx-import-qr") {
             QStringList tags = maps["tags"].toStringList();
             if (!tags.isEmpty()) {
-                if (QBasePremium::mode() == USER_WALLET) {
-                    if (auto dummy = w->userDummyTxPtr()) {
-                        dummy->requestSignTxViaQR(tags);
-                    }
-                }
-                else {
-                    if (auto dummy = w->groupDummyTxPtr()) {
-                        dummy->requestSignTxViaQR(tags);
-                    }
+                if (auto dummy = w->groupDummyTxPtr()) {
+                    dummy->requestSignTxViaQR(tags);
                 }
             }
-        } else if (type == "dummy-tx-import") {
+        }
+        else if (type == "dummy-tx-import") {
             QString file = maps["file"].toString();
             QString file_path = qUtils::QGetFilePath(file);
             if(file_path != ""){
-                if (QBasePremium::mode() == USER_WALLET) {
-                    if (auto dummy = w->userDummyTxPtr()) {
-                        dummy->requestSignTxViaFile(file_path);
-                    }
-                }
-                else {
-                    if (auto dummy = w->groupDummyTxPtr()) {
-                        dummy->requestSignTxViaFile(file_path);
-                    }
+                if (auto dummy = w->groupDummyTxPtr()) {
+                    dummy->requestSignTxViaFile(file_path);
                 }
             }
-        } else if (type == "dummy-tx-export") {
+        }
+        else if (type == "dummy-tx-export") {
             QString file = maps["file"].toString();
             QString file_path = qUtils::QGetFilePath(file);
             if(file_path != ""){
-                if (QBasePremium::mode() == USER_WALLET) {
-                    if (auto dummy = w->userDummyTxPtr()) {
-                        dummy->ExportPsbtViaFile(file_path);
-                    }
-                }
-                else {
-                    if (auto dummy = w->groupDummyTxPtr()) {
-                        dummy->ExportPsbtViaFile(file_path);
-                    }
+                if (auto dummy = w->groupDummyTxPtr()) {
+                    dummy->ExportPsbtViaFile(file_path);
                 }
             }
-        } else if (type == "register-wallet") {
+        }
+        else if (type == "register-wallet") {
             QGroupWallets::instance()->dashboardInfoPtr()->setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP);
             if (QGroupWallets::instance()->dashboardInfoPtr()->register_wallet()) {
                 QQuickViewer::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
             }
-        } else if (type == "dummy-tx-export-qr") {
+        }
+        else if (type == "dummy-tx-export-qr") {
             AppModel::instance()->setQrExported(QStringList());
             QWarningMessage msgwarning;
             QStringList qrtags {};
-            if (QBasePremium::mode() == USER_WALLET) {
-                if (auto dummy = w->userDummyTxPtr()) {
-                    qrtags = dummy->ExportPsbtViaQR(msgwarning);
-                }
-            }
-            else {
-                if (auto dummy = w->groupDummyTxPtr()) {
-                    qrtags = dummy->ExportPsbtViaQR(msgwarning);
-                }
+            if (auto dummy = w->groupDummyTxPtr()) {
+                qrtags = dummy->ExportPsbtViaQR(msgwarning);
             }
             if(!qrtags.isEmpty()){
                 AppModel::instance()->setQrExported(qrtags);
@@ -135,5 +108,11 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
                 AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
             }
         }
+        else if (type == "force-sync-dummy-tx") {
+            if (auto dummy = w->groupDummyTxPtr()) {
+                dummy->requestForceSyncTx(w->groupId(), w->id(), dummy->tx_id());
+            }
+        }
+        else{}
     }
 }

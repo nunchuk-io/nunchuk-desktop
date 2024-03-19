@@ -80,7 +80,7 @@ Item {
                     boxWidth: 539
                     boxHeight: 48
                     label: STR.STR_QML_851
-                    textInputted: inheritance.buffer_period.display_name
+                    textInputted: inheritance.buffer_period.id === "" ? STR.STR_QML_921 : inheritance.buffer_period.display_name
                     enabled: false
                     visible: !isCancel
                     input.color: inheritance.buffer_period_isChanged ? "#CF4018": "#031F2B"

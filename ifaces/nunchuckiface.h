@@ -497,6 +497,14 @@ public:
                     QWarningMessage& msg);
 
     std::vector<nunchuk::UnspentOutput> GetUnspentOutputsFromTxInputs(const std::string& wallet_id, const std::vector<nunchuk::TxInput>& inputs, QWarningMessage &msg);
+
+    std::string SignMessage(const nunchuk::SingleSigner& signer,
+                                          const std::string& message,
+                                          QWarningMessage& msg);
+
+    std::string GetSignerAddress(const nunchuk::SingleSigner& signer,
+                                          const nunchuk::AddressType& address_type,
+                                          QWarningMessage& msg);
 private:
     nunchukiface();
     ~nunchukiface();

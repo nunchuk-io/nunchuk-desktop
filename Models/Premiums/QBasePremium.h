@@ -24,7 +24,6 @@ public:
     virtual QGroupWalletHealthCheckPtr healthPtr() const;
 
     virtual QGroupWalletDummyTxPtr groupDummyTxPtr() const;
-    virtual QUserWalletDummyTxPtr userDummyTxPtr() const;
     virtual QRecurringPaymentPtr recurringPaymentPtr() const;
 private:
     WalletId m_wallet_id;

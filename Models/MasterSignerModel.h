@@ -26,6 +26,7 @@
 #include "DeviceModel.h"
 #include "QOutlog.h"
 #include "qUtils.h"
+#include <QJsonArray>
 
 class QMasterSigner : public QObject {
     Q_OBJECT
@@ -46,6 +47,8 @@ class QMasterSigner : public QObject {
     Q_PROPERTY(int  signerType             READ signerType                              NOTIFY signerTypeChanged)
     Q_PROPERTY(QString passphrase          READ passphrase                              NOTIFY passphraseChanged)
     Q_PROPERTY(bool isPrimaryKey           READ isPrimaryKey    WRITE setIsPrimaryKey   NOTIFY isPrimaryKeyChanged)
+    Q_PROPERTY(QVariantList healthCheckHistory READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
+    Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
 public:
     QMasterSigner();
     QMasterSigner(const nunchuk::MasterSigner &signer);
@@ -111,6 +114,16 @@ public:
     QString tag() const;
     QStringList tags() const;
 
+    QVariantList healthCheckHistory() const;
+    void setHealthCheckHistory(QJsonArray list);
+
+    bool GetHistorySignerList();
+
+    QString address() const;
+    void setAddress(const QString &address);
+
+    Q_INVOKABLE QVariantList getWalletList();
+
 private:
     QString id_ = "";
     QString name_ = "";
@@ -129,6 +142,8 @@ private:
     nunchuk::MasterSigner masterSigner_;
     bool isPrimaryKey_ = false;
     bool isDraft = false;
+    QJsonArray m_healthCheckHistory {};
+    QString m_address;
 signals:
     void idChanged();
     void nameChanged();
@@ -147,6 +162,8 @@ signals:
     void signerTypeChanged();
     void passphraseChanged();
     void isPrimaryKeyChanged();
+    void healthCheckHistoryChanged();
+    void addressChanged();
 };
 typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;
 

@@ -859,11 +859,11 @@ void AppModel::setSingleSignerInfo(const QSingleSignerPtr &d)
     emit singleSignerInfoChanged();
 }
 
-QStringList AppModel::walletsUsingSigner() const {
+QVariantList AppModel::walletsUsingSigner() const {
     return walletsUsingSigner_;
 }
 
-void AppModel::setWalletsUsingSigner(QStringList d){
+void AppModel::setWalletsUsingSigner(QVariantList d){
     walletsUsingSigner_ = d;
     emit walletsUsingSigner();
 }

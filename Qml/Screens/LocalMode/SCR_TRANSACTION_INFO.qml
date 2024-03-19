@@ -257,7 +257,7 @@ QScreen {
                                                         && (myRole !== "KEYHOLDER_LIMITED")
                 enableRequestSignature : allowMoreOption
                 enableScheduleBroadcast: false
-                enableCancelTransaction: AppModel.walletInfo.isAssistedWallet ? allowMoreOption : true
+                enableCancelTransaction: AppModel.walletInfo.isGroupWallet ? allowMoreOption : true
                 isAssisedWallet: AppModel.walletInfo.isAssistedWallet
                 isSharedWallet:  AppModel.walletInfo.isSharedWallet
                 visible: myRole !== "OBSERVER"

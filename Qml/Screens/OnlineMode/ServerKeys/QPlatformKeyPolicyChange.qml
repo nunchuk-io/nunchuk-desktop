@@ -50,7 +50,7 @@ QOnScreenContentTypeB {
             QLato {
                 width: 656
                 height: paintedHeight
-                text: STR.STR_QML_1010.arg(requester_user.name).arg(requester_user.email).replace("()","")
+                text: AppModel.walletInfo.isUserWallet ? STR.STR_QML_1213 : STR.STR_QML_1010.arg(requester_user.name).arg(requester_user.email).replace("()","")
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.WordWrap

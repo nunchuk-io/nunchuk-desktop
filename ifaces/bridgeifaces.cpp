@@ -2070,3 +2070,15 @@ nunchuk::TapsignerStatus bridge::GetTapsignerStatusFromMasterSigner(const QStrin
     QWarningMessage msgGetTap;
     return nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(fingerPrint.toStdString(), msgGetTap);
 }
+
+QString bridge::SignMessage(const nunchuk::SingleSigner &signer, const QString &message)
+{
+    QWarningMessage msg;
+    return QString::fromStdString(nunchukiface::instance()->SignMessage(signer, message.toStdString(), msg));
+}
+
+QString bridge::GetSignerAddress(const nunchuk::SingleSigner &signer, const nunchuk::AddressType &address_type)
+{
+    QWarningMessage msg;
+    return QString::fromStdString(nunchukiface::instance()->GetSignerAddress(signer, address_type, msg));
+}

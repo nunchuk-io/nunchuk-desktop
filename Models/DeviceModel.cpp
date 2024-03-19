@@ -63,7 +63,16 @@ QString QDevice::masterFingerPrint() const {
 }
 
 bool QDevice::connected() const {
-    return m_device.connected();
+    return isConnected;
+}
+
+void QDevice::setConnected(bool b)
+{
+    if (isConnected == b)
+        return;
+
+    isConnected = b;
+    emit connectedChanged();
 }
 
 bool QDevice::needsPassPhraseSent() const {

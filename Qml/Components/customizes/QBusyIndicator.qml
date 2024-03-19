@@ -47,4 +47,10 @@ Item {
         running: rootBusy.visible
         loops: Animation.Infinite
     }
+    function loading() {
+        rootBusy.visible = true
+    }
+    function stop() {
+        rootBusy.visible = false
+    }
 }

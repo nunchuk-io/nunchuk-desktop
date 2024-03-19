@@ -80,7 +80,7 @@ Rectangle {
         }
         Column {
             anchors.right: parent.right
-            height: parent.height
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 8
             QTextButton {
                 width: 200
@@ -96,6 +96,7 @@ Rectangle {
                 label.text: STR.STR_QML_974
                 label.font.pixelSize: 16
                 type: eTypeB
+                visible: walletInfo.isByzantineWallet
                 enabled: modelData.can_request_health_check
                 onButtonClicked: requestHealthCheck()
             }

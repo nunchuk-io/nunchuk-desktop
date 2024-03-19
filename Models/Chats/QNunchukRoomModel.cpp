@@ -42,6 +42,7 @@
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QInheritancePlan.h"
 #include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QGroupWalletDummyTx.h"
 
 QNunchukRoom::QNunchukRoom(Room *r):
     m_room(r),
@@ -1777,13 +1778,16 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
         QString matrixType = evt.matrixType();
         if(qUtils::strCompare(matrixType, NUNCHUK_ROOM_MESSAGE))
         {
+            auto w = AppModel::instance()->walletInfoPtr();
+            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+            dashboard = w ? w->dashboard() : dashboard;
             QString msgtype = evt.contentJson()["msgtype"].toString();
             DBG_INFO << msgtype;
             if (msgtype.contains("io.nunchuk.custom.draft_wallet", Qt::CaseInsensitive))
             {
                 QGroupWallets::instance()->GetAllGroups();
                 QUserWallets::instance()->GetListAllRequestAddKey();
-                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                if (dashboard) {
                     dashboard->GetAlertsInfo();
                 }
             }
@@ -1830,13 +1834,13 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                         AppModel::instance()->startSyncWalletDb(wallet_id);
                     }
                 }
-                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                if (dashboard) {
                     dashboard->GetAlertsInfo();
                 }
             }
             else if (msgtype.contains("io.nunchuk.custom.group", Qt::CaseInsensitive))
             {
-                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                if (dashboard) {
                     dashboard->GetAlertsInfo();
                     dashboard->GetHealthCheckInfo();
                 }
@@ -1848,17 +1852,41 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     AppModel::instance()->requestCreateUserWallets();
                 }
             }
-            else if (     msgtype.contains("io.nunchuk.custom.dummy_transaction", Qt::CaseInsensitive)
-                       || msgtype.contains("io.nunchuk.custom.server_key_change", Qt::CaseInsensitive)
-                       || msgtype.contains("io.nunchuk.custom.wallet_inheritance", Qt::CaseInsensitive)
-                       || msgtype.contains("io.nunchuk.custom.health_check", Qt::CaseInsensitive)
-                       || msgtype.contains("io.nunchuk.custom.recurring_payment", Qt::CaseInsensitive))
+            else if (   msgtype.contains("io.nunchuk.custom.dummy_transaction", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.server_key_change", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.wallet_inheritance", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.health_check", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.server_key", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.recurring_payment", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.key_recovery", Qt::CaseInsensitive))
             {
-                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+
+
+                if (dashboard) {
                     dashboard->GetAlertsInfo();
+                    dashboard->GetHealthCheckInfo();
                     if (auto plan = dashboard->inheritancePlanPtr()) {
                         plan->GetInheritancePlan();
                         ServiceSetting::instance()->servicesTagPtr()->setListSetuped();
+                    }
+                }
+                if (msgtype.contains("io.nunchuk.custom.wallet_inheritance_updated", Qt::CaseInsensitive)
+                 || msgtype.contains("io.nunchuk.custom.health_check_completed", Qt::CaseInsensitive)
+                 || msgtype.contains("io.nunchuk.custom.server_key_updated", Qt::CaseInsensitive)
+                 || msgtype.contains("io.nunchuk.custom.recurring_payment_approved", Qt::CaseInsensitive)
+                 || msgtype.contains("io.nunchuk.custom.key_recovery_approved", Qt::CaseInsensitive))
+                {
+                    QJsonObject content = evt.fullJson()["content"].toObject();
+                    QString dummy_transaction_id     = content["dummy_transaction_id"].toString();
+                    if (dashboard) {
+                        if (auto dummy = dashboard->groupDummyTxPtr()) {
+                            if (qUtils::strCompare(dummy_transaction_id, dummy->tx_id())) {
+                                QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+                                if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_DUMMY_TRANSACTION_INFO) {
+                                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1868,7 +1896,13 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             else if(msgtype.contains("io.nunchuk.custom.group_wallet_alias", Qt::CaseInsensitive)){
                 // TBD
             }
-            else{}
+            else {
+                // for honey badger
+                if (dashboard) {
+                    dashboard->GetAlertsInfo();
+                    dashboard->GetHealthCheckInfo();
+                }
+            }
         }
     }
 }

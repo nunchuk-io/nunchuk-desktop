@@ -53,6 +53,8 @@ namespace LocalMode {
 #define SCR_UTXO_OUTPUT                     	 "qrc:/Qml/Screens/LocalMode/SCR_UTXO_INFO.qml"
 #define SCR_WALLET_CHANGE_ADDRESSES         	 "qrc:/Qml/Screens/LocalMode/SCR_CHANGE_ADDRESS.qml"
 #define SCR_WALLET_INFO                     	 "qrc:/Qml/Screens/LocalMode/SCR_WALLET_INFO.qml"
+#define SCR_ONBOARDING                           "qrc:/Qml/Screens/LocalMode/SCR_ONBOARDING.qml"
+
 }
 
 namespace OnlineMode {

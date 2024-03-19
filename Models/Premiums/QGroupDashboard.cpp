@@ -1,6 +1,7 @@
 #include "QGroupDashboard.h"
 #include "ViewsEnums.h"
 #include "Chats/ClientController.h"
+#include "Servers/Draco.h"
 #include "Servers/Byzantine.h"
 #include "QGroupWalletHealthCheck.h"
 #include "QGroupWalletDummyTx.h"
@@ -11,6 +12,7 @@
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QKeyRecovery.h"
 #include "Premiums/QRecurringPayment.h"
+#include "Premiums/QGroupWallets.h"
 
 int StringToInt(const QString &type) {
     const QMetaObject &mo = AlertEnum::staticMetaObject;
@@ -84,7 +86,12 @@ QString QGroupDashboard::myRole() const
 
 bool QGroupDashboard::accepted() const
 {
-    return (qUtils::strCompare(myInfo()["status"].toString(), "ACTIVE"));
+    if (mode() == USER_WALLET) {
+        return true;
+    }
+    else {
+        return qUtils::strCompare(myInfo()["status"].toString(), "ACTIVE");
+    }
 }
 
 QString QGroupDashboard::userName() const
@@ -136,6 +143,7 @@ QJsonObject QGroupDashboard::walletJson() const
 
 void QGroupDashboard::GetMemberInfo()
 {
+    if (mode() == USER_WALLET) return;
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->GetOneGroupWallets(groupId(), output, error_msg);
@@ -148,7 +156,13 @@ void QGroupDashboard::GetAlertsInfo()
 {
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->GetGroupAlerts(groupId(), output, error_msg);
+    bool ret {false};
+    if (mode() == USER_WALLET) {
+        ret = Draco::instance()->GetAlerts(wallet_id(), output, error_msg);
+    }
+    else {
+        ret = Byzantine::instance()->GetGroupAlerts(groupId(), output, error_msg);
+    }
     if(ret){
         DBG_INFO << output;
         // Handle preparing model here.
@@ -178,7 +192,13 @@ bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
 {
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->MarkGroupAlertAsRead(groupId(), alert_id, output, error_msg);
+    bool ret {false};
+    if (mode() == USER_WALLET) {
+        ret = Draco::instance()->MarkAlertAsRead(groupId(), alert_id, output, error_msg);
+    }
+    else {
+        ret = Byzantine::instance()->MarkGroupAlertAsRead(groupId(), alert_id, output, error_msg);
+    }
     DBG_INFO << ret << error_msg;
     if(ret){
         // Handle preparing model here.
@@ -193,7 +213,13 @@ bool QGroupDashboard::DismissAlert(const QString &alert_id)
 {
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->DismissGroupAlert(groupId(), alert_id, output, error_msg);
+    bool ret {false};
+    if (mode() == USER_WALLET) {
+        ret = Draco::instance()->DismissAlert(wallet_id(), alert_id, output, error_msg);
+    }
+    else {
+        ret = Byzantine::instance()->DismissGroupAlert(groupId(), alert_id, output, error_msg);
+    }
     if(ret){
         // Handle preparing model here.
     }
@@ -212,7 +238,12 @@ void QGroupDashboard::GetWalletInfo()
 {
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->GetCurrentGroupWallet(groupId(), output, error_msg);
+    bool ret {false};
+    if (mode() == USER_WALLET) {
+        ret = Draco::instance()->assistedWalletGetInfo(wallet_id(), output, error_msg);
+    } else {
+        ret = Byzantine::instance()->GetCurrentGroupWallet(groupId(), output, error_msg);
+    }
     if (ret) {
         QJsonObject wallet = output["wallet"].toObject();
         if (wallet.isEmpty()) return;
@@ -247,6 +278,7 @@ void QGroupDashboard::checkInheritanceWallet()
 
 void QGroupDashboard::GetDraftWalletInfo()
 {
+    if (mode() == USER_WALLET) return;
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->GetCurrentGroupDraftWallet(groupId(), output, error_msg);
@@ -543,6 +575,19 @@ void QGroupDashboard::setInheritanceCount(int count)
     emit inheritanceCountChanged();
 }
 
+void QGroupDashboard::requestHealthCheck(const QString &xfp){
+    if (auto wallet = walletInfoPtr()) {
+        setConfigFlow("health-check-procedure");
+        setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS);
+        AppModel::instance()->setWalletInfo(wallet);
+        QGroupWallets::instance()->setDashboardInfo(wallet);
+        QQuickViewer::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+        if (auto health = healthPtr()) {
+            health->HealthCheckForKey(xfp);
+        }
+    }
+}
+
 bool QGroupDashboard::requestByzantineChat()
 {
     if(!groupInfo().empty()){
@@ -577,6 +622,7 @@ bool QGroupDashboard::requestByzantineChat()
 
 void QGroupDashboard::byzantineRoomCreated(QString room_id, bool existed)
 {
+    if (mode() == USER_WALLET) return;
     DBG_INFO << room_id << existed;
     QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
     if(room_id != "" && !existed){
@@ -591,6 +637,7 @@ void QGroupDashboard::byzantineRoomCreated(QString room_id, bool existed)
 
 void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
 {
+    if (mode() == USER_WALLET) return;
     DBG_INFO << room_id << group_id;
     if(qUtils::strCompare(group_id, groupId())){
         QJsonObject output;
@@ -738,6 +785,8 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const
                 signer["tag"] = tag.toString();
             }
             signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
+            signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());
+            signer["signer_is_primary"] = qUtils::isPrimaryKey(xfp);
             return signer;
         }
     }

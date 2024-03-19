@@ -253,21 +253,13 @@ void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
 void EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER(QVariant msg)
 {
     DBG_INFO << QBasePremium::mode();
-    if (QBasePremium::mode() == USER_WALLET){
-        if(auto w = ServiceSetting::instance()->walletInfoPtr())
-        {
-            AppModel::instance()->setWalletInfo(w->id());
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
+            QMap<QString, QVariant> maps = msg.toMap();
+            QString xfp = maps["xfp"].toString();
+            QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
         }
-    }
-    else {
-        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-            if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
-                QMap<QString, QVariant> maps = msg.toMap();
-                QString xfp = maps["xfp"].toString();
-                QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
-            }
-            AppModel::instance()->setWalletInfo(dashboard->walletInfoPtr());
-        }
+        AppModel::instance()->setWalletInfo(dashboard->walletInfoPtr());
     }
 }
 
@@ -290,5 +282,9 @@ void EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER(QVariant msg)
 }
 
 void EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_ONBOARDING_REQUEST_HANDLER(QVariant msg) {
 
 }

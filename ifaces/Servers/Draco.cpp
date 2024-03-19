@@ -180,7 +180,7 @@ void Draco::verifyNewDevice(const QString &pin)
             CLIENT_INSTANCE->setIsNewDevice(true);
         }
         else{
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
         emit verifyNewDeviceResult(reply_code, response_code, response_msg);
     }
@@ -201,7 +201,7 @@ void Draco::resendVerifyNewDeviceCode()
         QString response_msg = errorObj["message"].toString();
         emit resendVerifyNewDeviceCodeResult(reply_code, response_code, response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -220,7 +220,7 @@ void Draco::inviteFriends(const QStringList& emails)
             QString response_msg = errorObj["message"].toString();
             emit resendVerifyNewDeviceCodeResult(reply_code, response_code, response_msg);
             if(response_code != DRACO_CODE::RESPONSE_OK){
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             }
         }
     }
@@ -241,7 +241,7 @@ void Draco::removeContact(const QString &contact_id)
             refreshContacts();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -258,7 +258,7 @@ void Draco::cancelFriendRequest(const QString &contact_id)
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
         if(response_code != DRACO_CODE::RESPONSE_OK){
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -386,7 +386,7 @@ void Draco::createAccount(const QString& name, const QString& email)
             setEmailRequested(email);
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -458,7 +458,7 @@ void Draco::recoverPassword(const QString& email, const QString& forgotToken, co
         QString response_msg = errorObj["message"].toString();
         emit recoverPasswordResult(reply_code, response_code, response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -479,7 +479,7 @@ void Draco::forgotPassword(const QString& email)
             setEmailRequested(email);
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -502,7 +502,7 @@ void Draco::changePassword(const QString& oldpassword, const QString& newpasswor
             getMe();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
         emit changePasswordResult(reply_code, response_code, response_msg);
     }
@@ -544,7 +544,7 @@ void Draco::getMe()
             AppModel::instance()->stopCheckAuthorize();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 
@@ -588,7 +588,7 @@ void Draco::getMepKey(const QString &public_address)
             AppModel::instance()->stopCheckAuthorize();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -618,7 +618,7 @@ DracoUser Draco::search(const QString &email)
             user.chat_id = userObj["chat_id"].toString();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return user;
@@ -654,7 +654,7 @@ QVariant Draco::requestFriends(const QVariant emails)
             return QVariant::fromValue(ret);
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return QVariant::fromValue(ret);
@@ -678,7 +678,7 @@ bool Draco::requestSingleFriend(const QString &email)
                 ret = true;
             }
             else {
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             }
         }
     }
@@ -703,7 +703,7 @@ bool Draco::requestMutipleFriend(const QStringList &email, QStringList &failed_e
                 return true;
             }
             else {
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             }
         }
     }
@@ -742,7 +742,7 @@ QList<DracoUser> Draco::getContacts()
             }
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return contacts;
@@ -781,7 +781,7 @@ QList<DracoUser> Draco::getContactsSent()
             }
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return contacts;
@@ -820,7 +820,7 @@ QList<DracoUser> Draco::getContactsReceived()
             }
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return contacts;
@@ -860,7 +860,7 @@ QList<DracoUser> Draco::getRoomMembers(const QString &id)
             }
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return members;
@@ -909,7 +909,7 @@ QList<DracoDevice> Draco::getDevices()
         }
         else {
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -930,7 +930,7 @@ void Draco::accecptFriendRequest(const QString &id)
         if(response_code == DRACO_CODE::RESPONSE_OK){
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -950,7 +950,7 @@ void Draco::ignoreFriendRequest(const QString &id)
 
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -970,7 +970,7 @@ bool Draco::deleteCurrentUser()
             ret = true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return ret;
@@ -995,7 +995,7 @@ bool Draco::sendDeleteConfirmation(const QString &code)
             ret = true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     else{
@@ -1039,7 +1039,7 @@ void Draco::setUserProfile(const QString &name, const QString &avartaPath)
             CLIENT_INSTANCE->setMe(user);
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -1073,7 +1073,7 @@ void Draco::checkForUpdate()
             emit startCheckForUpdate(result,title,message,doItLaterCTALbl);
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -1093,7 +1093,7 @@ void Draco::signoutDeice(const QString &device_id)
         QString response_msg = errorObj["message"].toString();
         emit loggedInDeviceChanged(reply_code,response_code,response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -1110,7 +1110,7 @@ void Draco::signoutAllDeices()
         QString response_msg = errorObj["message"].toString();
         emit loggedInDeviceChanged(reply_code,response_code,response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -1130,7 +1130,7 @@ void Draco::markAsCompromised(const QString &device_id)
         QString response_msg = errorObj["message"].toString();
         emit loggedInDeviceChanged(reply_code,response_code,response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
 }
@@ -1160,7 +1160,7 @@ bool Draco::pkey_signup(const QString &address, const QString &username, const Q
             ret = true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
         emit signalpkey_signup(reply_code, response_code, response_msg);
     }
@@ -1229,7 +1229,7 @@ QString Draco::get_pkey_nonce(const QString &address,const QString &username)
             ret = dataObj["nonce"].toString();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return ret;
@@ -1266,7 +1266,7 @@ QString Draco::pkey_manual_nonce(const QString &address, const QString &username
             ret = dataObj["nonce"].toString();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return ret;
@@ -1290,7 +1290,7 @@ bool Draco::pkey_username_availability(const QString &username)
         else {
             DBG_INFO << response_code << response_msg;
 #if 0 // NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1315,7 +1315,7 @@ bool Draco::pkey_delete_confirmation(const QString &signed_message)
             return true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     else{
@@ -1344,7 +1344,7 @@ bool Draco::pkey_change_pkey(const QString &new_key, const QString &old_signed_m
             return true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -1427,7 +1427,7 @@ bool Draco::getAssistedWallets(QJsonObject &output, QString &errormsg)
         else {
             errormsg = response_msg;
 #if 0 // NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1452,7 +1452,7 @@ bool Draco::assistedWalletCreateTx(const QString &wallet_id, const QString &psbt
             return true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -1476,7 +1476,7 @@ bool Draco::assistedWalletUpdateTx(const QString &wallet_id, const QString &txid
         }
         else {
 #if 0 // NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1503,7 +1503,7 @@ QJsonObject Draco::assistedWalletSignTx(const QString &wallet_id, const QString 
         }
         else {
 #if 0 // NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1527,7 +1527,7 @@ bool Draco::assistedWalletCancelTx(const QString &wallet_id, const QString &tran
         }
         else {
 #if 0 // NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1552,7 +1552,7 @@ QJsonObject Draco::assistedWalletGetTx(const QString &wallet_id, const QString &
         else {
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1582,7 +1582,7 @@ QJsonObject Draco::assistedWalletGetListTx(const QString &wallet_id)
         else {
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1612,7 +1612,7 @@ QJsonObject Draco::assistedWalletDeleteListTx(const QString &wallet_id, const in
         else {
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1640,7 +1640,7 @@ void Draco::assistedSyncTx(const QString &wallet_id, const QString &transaction_
         }
         else {
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1670,7 +1670,7 @@ bool Draco::assistedRbfTx(const QString &wallet_id, const QString &transaction_i
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1697,7 +1697,7 @@ bool Draco::assistedWalletGetListKey(QJsonObject &output, QString &errormsg)
         else {
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1725,7 +1725,7 @@ bool Draco::assistedWalletAddKey(const QString &request_id, const QJsonObject& d
             if (message.contains("Duplicate")) {
                 isDuplicateKey = true;
             }
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -1747,7 +1747,7 @@ bool Draco::assistedWalletRemoveId(const QString &request_id)
             return true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -1767,10 +1767,36 @@ QJsonObject Draco::assistedGetWalletConfig()
             return data;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return {};
+}
+
+bool Draco::assistedWalletGetInfo(const QString &wallet_id, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_GET_INFO];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    QJsonObject jsonObj = getSync(cmd, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+        }
+    }
+    return false;
 }
 
 bool Draco::assistedWalletUpdate(const QString &wallet_id, const QString &name, const QString &description, QJsonObject &output, QString &errormsg)
@@ -1800,7 +1826,7 @@ bool Draco::assistedWalletUpdate(const QString &wallet_id, const QString &name, 
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
         }
     }
@@ -1824,7 +1850,7 @@ bool Draco::assistedKeyUpdateName(const QString &fingerPrint, const QString &nam
             return true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -1857,7 +1883,7 @@ bool Draco::DeleteAssistedWallet(const QString &wallet_id, const QStringList &si
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1882,7 +1908,7 @@ bool Draco::DeleteWalletRequiredSignatures(const QString &wallet_id, QJsonObject
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1912,7 +1938,7 @@ bool Draco::verifyPasswordToken(const QString& password, const int action, QStri
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -1933,7 +1959,7 @@ QString Draco::randomNonce()
             return nonceObj["nonce"].toString();
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return "";
@@ -1954,7 +1980,7 @@ bool Draco::secQuesGet(QJsonObject& output, QString& errormsg)
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1995,7 +2021,7 @@ bool Draco::SecQuesUpdate(const QJsonObject &request_body,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2020,7 +2046,7 @@ bool Draco::UpdateSecQuesRequiredSignatures(const QJsonObject& request_body,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2052,7 +2078,7 @@ bool Draco::secQuesAnswer(const QJsonArray& answers,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2077,7 +2103,7 @@ bool Draco::lockdownPeriods(QJsonArray& output, QString& errormsg)
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2107,7 +2133,7 @@ bool Draco::lockdownRequiredSignatures(const QString &period_id,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2147,7 +2173,7 @@ bool Draco::lockdownByAnswerSecQues(const QString &passwordToken,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2193,7 +2219,7 @@ bool Draco::lockdownBySignDummyTx(const QStringList &signatures,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2226,7 +2252,7 @@ bool Draco::UserKeysMarkAKeyAsVerified(const QString &xfpOrId,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2269,7 +2295,7 @@ bool Draco::UserKeysRequestRecoveryKey(const QString &xfpOrId,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2307,7 +2333,7 @@ bool Draco::UserKeysRecoveryKey(const QString &xfpOrId,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2336,7 +2362,7 @@ bool Draco::UserKeysMarkRecoverStatus(const QString &xfpOrId,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2364,7 +2390,7 @@ bool Draco::UserKeysCalculateRequiredSignatures(const QString &xfpOrId,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2391,7 +2417,7 @@ bool Draco::UserKeysGetListUserKey(const QString &passwordToken,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2421,7 +2447,7 @@ bool Draco::UserKeysGetUserKey(const QString &xfpOrId,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2446,7 +2472,7 @@ bool Draco::UserKeysCreateUserCustomizedQuestion(const QString &question, QJsonO
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2483,7 +2509,7 @@ bool Draco::UserKeysDownloadBackup(const QString &verify_token,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2491,10 +2517,16 @@ bool Draco::UserKeysDownloadBackup(const QString &verify_token,
     return false;
 }
 
-bool Draco::inheritanceDownloadBackup(const QString &magic, int &response_code, QJsonObject &output, QString &errormsg)
+bool Draco::inheritanceDownloadBackup(const QString &magic, const QStringList &backup_passwords, int &response_code, QJsonObject &output, QString &errormsg)
 {
     QJsonObject data;
     data["magic"] = magic;
+    QJsonArray hashed_bps;
+    for (QString bp : backup_passwords) {
+        QString hashed_bp = qUtils::GetSHA256(qUtils::GetSHA256(bp));
+        hashed_bps.push_back(hashed_bp);
+    }
+    data["hashed_bps"] = hashed_bps;
     QString cmd = commands[Premium::CMD_IDX::INHERITANCE_DOWNLOAD_BACKUP];
     int     reply_code = -1;
     QString reply_msg  = "";
@@ -2509,7 +2541,7 @@ bool Draco::inheritanceDownloadBackup(const QString &magic, int &response_code, 
         }
         else{
             errormsg = response_msg;
-//            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+//            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2537,7 +2569,7 @@ bool Draco::inheritanceClaimRequest(const QString& magic, const QString& psbt, Q
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2565,7 +2597,7 @@ bool Draco::inheritanceClaimStatus(const QJsonObject& data, const QStringList& a
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2593,7 +2625,7 @@ bool Draco::inheritanceCreateTx(const QJsonObject& data, const QStringList& auth
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2618,7 +2650,7 @@ bool Draco::inheritanceCheck(const QString& magic, const QString& environment, Q
             return true;
         } else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -2628,7 +2660,11 @@ bool Draco::inheritanceGetPlan(const QString& wallet_id, const QString &group_id
 {
     QJsonObject data;
     data["wallet"] = wallet_id;
-    data["group_id"] = group_id;
+    if (group_id == wallet_id) {
+        data["group_id"] = "";
+    } else {
+        data["group_id"] = group_id;
+    }
     int     reply_code = -1;
     QString reply_msg  = "";
     QJsonObject jsonObj = getSync(commands[Premium::CMD_IDX::INHERITANCE_GET_PLAN], data, reply_code, reply_msg);
@@ -2646,7 +2682,7 @@ bool Draco::inheritanceGetPlan(const QString& wallet_id, const QString &group_id
             if(errormsg == "on") {
                 // FIXME
                 // Temporary check timing show toast
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             }
             return false;
         }
@@ -2677,7 +2713,7 @@ bool Draco::inheritancePlanCreate(const QStringList &signatures, const QJsonObje
             return true;
         } else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2715,7 +2751,7 @@ bool Draco::inheritancePlanUpdate(const QString &passwordToken,
             return true;
         } else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2754,7 +2790,7 @@ bool Draco::inheritancePlanCancel(const QString &passwordToken,
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2780,7 +2816,7 @@ bool Draco::inheritanceFakeUpdate()
             return true;
         }
         else {
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -2800,7 +2836,7 @@ bool Draco::inheritancePlanRequiredSignatures(const QJsonObject &data, QJsonObje
             return true;
         } else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
     return false;
@@ -2823,7 +2859,7 @@ bool Draco::inheritancePlanBufferPeriod(QJsonArray& output, QString& errormsg)
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2837,7 +2873,11 @@ bool Draco::InheritancePlanningRequestApprove(const QString &request_id, const Q
     QString reply_msg  = "";
     QMap<QString, QString> paramsQuery;
     paramsQuery["wallet"] = wallet_id;
-    paramsQuery["group_id"] = group_id;
+    if (group_id == wallet_id) {
+        paramsQuery["group_id"] = "";
+    } else {
+        paramsQuery["group_id"] = group_id;
+    }
     QString cmd = commands[Premium::CMD_IDX::INHERITANCE_REQUEST_PLANING_APPROVE];
     cmd.replace("{request_id}", request_id);
 
@@ -2851,7 +2891,7 @@ bool Draco::InheritancePlanningRequestApprove(const QString &request_id, const Q
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2865,7 +2905,11 @@ bool Draco::InheritancePlanningRequestDeny(const QString &request_id, const QStr
     QString reply_msg  = "";
     QMap<QString, QString> paramsQuery;
     paramsQuery["wallet"] = wallet_id;
-    paramsQuery["group_id"] = group_id;
+    if (group_id == wallet_id) {
+        paramsQuery["group_id"] = "";
+    } else {
+        paramsQuery["group_id"] = group_id;
+    }
     QString cmd = commands[Premium::CMD_IDX::INHERITANCE_REQUEST_PLANING_DENY];
     cmd.replace("{request_id}", request_id);
 
@@ -2879,7 +2923,7 @@ bool Draco::InheritancePlanningRequestDeny(const QString &request_id, const QStr
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2908,7 +2952,7 @@ bool Draco::ServerKeysGet(const QString &id_or_xfp, const QString &derivation_pa
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2951,7 +2995,7 @@ bool Draco::ServerKeysUpdate(const QString& passwordToken,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2981,7 +3025,7 @@ bool Draco::ServerKeysRequiredSignature(const QString &key_id_or_xfp,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -3013,7 +3057,7 @@ bool Draco::RequestConfirmationCode(const QString &action,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -3043,7 +3087,7 @@ bool Draco::VerifyConfirmationCode(const QString &code_id,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -3051,3 +3095,324 @@ bool Draco::VerifyConfirmationCode(const QString &code_id,
     return false;
 }
 
+bool Draco::GetAlerts(const QString wallet_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    QJsonObject criteria;
+    criteria["offset"] = 0; // Adjust offset
+    criteria["limit"] = 0;  // Adjust limit
+    data["criteria"] = criteria;
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_ALERTS];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetAlertsCount(const QString wallet_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_COUNT];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::DismissAlert(const QString wallet_id, const QString alert_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_DISMISS];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{alert_id}", alert_id);
+
+    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::MarkAlertAsRead(const QString wallet_id, const QString alert_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_READ];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{alert_id}", alert_id);
+
+    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::HealthCheckForKey(const QString &wallet_id, const QString &xfp, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_HEALTHCHECK];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+
+    data["nonce"] = randomNonce();
+    data["body"] = QJsonObject();
+
+    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetWalletHealthStatus(const QString &wallet_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_GET_HEALTH];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_GET_DUMMY_TX];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{dummy_transaction_id}", txid);
+
+    QJsonObject data;
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::UpdateDummyTransaction(const QString &wallet_id, const QStringList &authorizations, const QString &txid, QJsonObject &output, QString &errormsg)
+{
+    QMap<QString, QString> params;
+    for (int i = 0; i < authorizations.count(); i++) {
+        params[QString("AuthorizationX-%1").arg(i+1)] = authorizations.at(i);
+    }
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_UPDATE_DUMMY_TX];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{dummy_transaction_id}", txid);
+
+    QJsonObject data;
+    QJsonObject jsonObj = putSync(cmd, {}, params, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::CancelDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_GET_DUMMY_TX];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{dummy_transaction_id}", txid);
+
+    QJsonObject data;
+    QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::FinalizeDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_FINALIZE_DUMMY_TX];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{dummy_transaction_id}", txid);
+
+    QJsonObject data;
+    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetHistorySignerList(const QString &xfp, QJsonObject& output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_HEALTH_CHECK_HISTORY_GET];
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = getSync(cmd, {}, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        } else {
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}

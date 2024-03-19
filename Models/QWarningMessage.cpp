@@ -32,6 +32,8 @@ QString QWarningMessage::contentDisplay()
 {
     switch(type()){
     case (int)EWARNING::WarningType::ERROR_MSG:
+        return QString("%1").arg(what());
+        break;
     case (int)EWARNING::WarningType::EXCEPTION_MSG:
         return QString("%1: [%2] %3").arg(explaination()).arg(code()).arg(what());
         break;

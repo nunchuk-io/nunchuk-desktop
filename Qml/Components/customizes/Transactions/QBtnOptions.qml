@@ -25,13 +25,18 @@ import "../../../../localization/STR_QML.js" as STR
 
 QButtonLargeTail {
     id: advancedBtn
-    property alias funcs: imExContextMenu.functions
+    property alias funcs    : imExContextMenu.functions
+    property alias labels   : imExContextMenu.labels
+    property alias icons    : imExContextMenu.icons
+    property alias colors   : imExContextMenu.colors
+    property alias enables  : imExContextMenu.enables
+    property alias visibles : imExContextMenu.visibles
+
     property bool  enableRequestSignature : false
     property bool  enableScheduleBroadcast: false
     property bool  enableCancelTransaction: false
     property bool  isAssisedWallet        : false
     property bool  isSharedWallet         : false
-
 
     width: 160
     height: 48

@@ -28,6 +28,7 @@
 #include "nunchuk.h"
 #include "utils/enumconverter.hpp"
 #include "utils/bip32.hpp"
+#include "utils/rfc2440.hpp"
 #include "QWarningMessage.h"
 
 namespace qUtils {
@@ -140,6 +141,12 @@ int GetIndexFromPath(const QString& path);
 bool IsValidAddress(const QString& address);
 
 QString GetBip32DerivationPath(const nunchuk::WalletType& wallet_type, const nunchuk::AddressType& address_type);
+
+QString ExportBitcoinSignedMessage(const QString &message, const QString &address, const QString &signature);
+
+QString qAddressTypeToStr(const nunchuk::AddressType& address_type);
+
+bool isPrimaryKey(const QString& xfp);
 }
 
 #endif // QUTILS_H

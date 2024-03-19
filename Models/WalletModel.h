@@ -74,8 +74,11 @@ class Wallet : public QObject
     Q_PROPERTY(QVariantList aliasMembers                            READ aliasMembers                                   NOTIFY aliasMembersChanged)
     Q_PROPERTY(QString      aliasName                               READ aliasName                                      NOTIFY aliasNameChanged)
     Q_PROPERTY(bool         isByzantineWallet                       READ isByzantineWallet                              CONSTANT)
+    Q_PROPERTY(bool         isUserWallet                            READ isUserWallet                                   CONSTANT)
+    Q_PROPERTY(bool         isGroupWallet                           READ isGroupWallet                                  CONSTANT)
     Q_PROPERTY(QVariantList ownerMembers                            READ ownerMembers                                   CONSTANT)
     Q_PROPERTY(QVariant     ownerPrimary                            READ ownerPrimary                                   CONSTANT)
+
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -193,6 +196,7 @@ public:
     Q_INVOKABLE bool updateWalletAlias(const QString &nameWallet);
     Q_INVOKABLE bool deleteWalletAlias();
     Q_INVOKABLE bool updateWalletPrimaryOwner(const QString &membership_id);
+    Q_INVOKABLE bool isContainKey(const QString &xfp);
 
     QVariant dummyTx() const;
 
@@ -212,9 +216,11 @@ public:
     QRecurringPaymentPtr recurringPaymentPtr() const;
 
     QGroupWalletDummyTxPtr groupDummyTxPtr() const;
-    QUserWalletDummyTxPtr userDummyTxPtr() const;
 
     QGroupWalletHealthCheckPtr healthPtr() const;
+
+    Q_INVOKABLE void updateSignMessage(const QString &xfp, int wallet_type);
+    Q_INVOKABLE void exportBitcoinSignedMessage(const QString &xfp, const QString &file_path, int wallet_type);
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
 protected:
@@ -304,6 +310,7 @@ signals:
     void isDeletingChanged();
     void aliasMembersChanged();
     void aliasNameChanged();
+    void signMessageChanged();
 public slots:
     void slotSyncCollabKeyname(QList<DracoUser> users);
     bool isValidAddress(const QString& address);
@@ -332,8 +339,8 @@ public:
     void updateName(const QString &walletId, const QString &value);
     void dataUpdated(const QString &walletId);
     void updateDescription(const QString &walletId, const QString &value);
-    QStringList walletListByMasterSigner(const QString& masterSignerId);
-    QStringList walletListByFingerPrint(const QString& masterFingerPrint);
+    QVariantList walletListByMasterSigner(const QString& masterSignerId);
+    QVariantList walletListByFingerPrint(const QString& masterFingerPrint);
     QWalletPtr getWalletByIndex(const int index);
     QWalletPtr getWalletById(const QString& walletId);
     bool removeWallet(const QWalletPtr it);

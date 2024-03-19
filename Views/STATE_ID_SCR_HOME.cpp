@@ -103,13 +103,38 @@ void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
 void EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
     AppModel::instance()->setMasterSignerInfo(msg.toInt());
     AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(AppModel::instance()->masterSignerInfo()->id()));
+    if (auto signer = AppModel::instance()->masterSignerInfoPtr()) {
+        signer->GetHistorySignerList();
+        if (auto wallet = AppModel::instance()->walletInfoPtr()) {
+            if (auto dashboard = wallet->dashboard()) {
+                if (auto health = dashboard->healthPtr()) {
+                    health->setKeyXfp(signer->fingerPrint());
+                }
+            }
+        }
+    }
 }
 
 void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
+    DBG_INFO;
     QSingleSignerPtr it = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(msg.toInt());
     if(it) {
         AppModel::instance()->setSingleSignerInfo(it);
         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
+
+    }
+    if (auto signer = AppModel::instance()->singleSignerInfoPtr()) {
+        signer->GetHistorySignerList();
+        if (auto wallet = AppModel::instance()->walletInfoPtr()) {
+            DBG_INFO;
+            if (auto dashboard = wallet->dashboard()) {
+                DBG_INFO;
+                if (auto health = dashboard->healthPtr()) {
+                    DBG_INFO;
+                    health->setKeyXfp(signer->masterFingerPrint());
+                }
+            }
+        }
     }
 }
 
@@ -233,6 +258,16 @@ void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
         AppModel::instance()->setSingleSignerInfo(it);
         AppModel::instance()->setMasterSignerInfo(signer);
         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(AppModel::instance()->masterSignerInfo()->id()));
+        if (auto signer = AppModel::instance()->masterSignerInfoPtr()) {
+            signer->GetHistorySignerList();
+            if (auto wallet = AppModel::instance()->walletInfoPtr()) {
+                if (auto dashboard = wallet->dashboard()) {
+                    if (auto health = dashboard->healthPtr()) {
+                        health->setKeyXfp(signer->fingerPrint());
+                    }
+                }
+            }
+        }
     }
 }
 

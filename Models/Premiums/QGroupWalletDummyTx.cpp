@@ -53,6 +53,29 @@ void QGroupWalletDummyTx::setDummyTxData(QJsonObject data)
     }
 }
 
+bool QGroupWalletDummyTx::requestForceSyncTx(const QString &group_id, const QString &wallet_id, const QString &txid)
+{
+    bool ret = false;
+    QJsonObject output;
+    QString     errormsg = "";
+    if (mode() == USER_WALLET) {
+        ret = Draco::instance()->GetDummyTransaction(wallet_id, txid, output, errormsg);
+    }
+    else {
+        ret = Byzantine::instance()->GetDummyTransaction(group_id, wallet_id, txid, output, errormsg);
+    }
+    if(ret){
+        QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
+        setDummyTxData(dummy_transaction);
+
+        AppModel::instance()->showToast(0, "Transaction updated", EWARNING::WarningType::SUCCESS_MSG);
+    }
+    else {
+        AppModel::instance()->showToast(0, "Transaction not updated", EWARNING::WarningType::ERROR_MSG);
+    }
+    return ret;
+}
+
 bool QGroupWalletDummyTx::requestSignTx(const QString &xfp)
 {
     if(transactionPtr()){
@@ -181,14 +204,14 @@ bool QGroupWalletDummyTx::requestSignTxViaFile(const QString &filepath)
 
 void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &signatures, const QMap<QString, QString> &signers)
 {
-    if (dashBoardPtr()){
+    if (auto dashboard = dashBoardPtr()){
         QStringList authorizations;
         authorizations.clear();
         QWarningMessage msg;
         QJsonObject output;
         QString errormsg = "";
-        QString group_id = dashBoardPtr()->groupId();
-        QString wallet_id = dashBoardPtr()->wallet_id();
+        QString group_id = dashboard->groupId();
+        QString wallet_id = dashboard->wallet_id();
         QString txid = tx_id();
         QStringList xfps = signatures.keys();
         for (QString xfp : xfps) {
@@ -197,16 +220,21 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
             authorizations.append(authorization);
         }
         DBG_INFO << authorizations;
-        bool ret = Byzantine::instance()->UpdateDummyTransaction(group_id, wallet_id, authorizations, txid, output, errormsg);
+        bool ret {false};
+        if (mode() == USER_WALLET) {
+            ret = Draco::instance()->UpdateDummyTransaction(wallet_id, authorizations, txid, output, errormsg);
+        }
+        else {
+            ret = Byzantine::instance()->UpdateDummyTransaction(group_id, wallet_id, authorizations, txid, output, errormsg);
+        }
         if(ret){
             DBG_INFO << output;
-            dashBoardPtr()->GetAlertsInfo();
-            dashBoardPtr()->GetHealthCheckInfo();
+            dashboard->GetAlertsInfo();
+            dashboard->GetHealthCheckInfo();
             // GO TO KEY STATUS SCREEN
             QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
             transactionPtr()->setTxJson(dummy_transaction);
             emit transactionPtr()->singleSignerAssignedChanged();
-            emit transactionSignedSuccess();
             QString type = dummy_transaction["type"].toString();
             int pending_signatures = dummy_transaction["pending_signatures"].toInt();
             int flow = StringToInt(type);
@@ -215,9 +243,16 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
             case AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING:
             case AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS:
             {
-                QQuickViewer::instance()->sendEvent(E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST);
-                QString keyName = QString("%1 %2 healthy").arg(signers.values().join(", ")).arg(signers.count() > 1 ? "are" : "is");
-                AppModel::instance()->showToast(0, keyName, EWARNING::WarningType::SUCCESS_MSG);
+                if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
+                    dashboard->setConfigFlow("accessing-wallet-configuration");
+                    QQuickViewer::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+                    AppModel::instance()->showToast(0, "The key has been claimed", EWARNING::WarningType::SUCCESS_MSG);
+                }
+                else {
+                    QQuickViewer::instance()->sendEvent(E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST);
+                    QString keyName = QString("%1 %2 healthy").arg(signers.values().join(", ")).arg(signers.count() > 1 ? "are" : "is");
+                    AppModel::instance()->showToast(0, keyName, EWARNING::WarningType::SUCCESS_MSG);
+                }
                 break;
             }
             case AlertEnum::E_Alert_t::UPDATE_SERVER_KEY:
@@ -354,7 +389,13 @@ bool QGroupWalletDummyTx::CancelDummyTransaction()
     QString errormsg = "";
     QJsonObject payload = dashBoardPtr()->alertJson()["payload"].toObject();
     QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
-    bool ret = Byzantine::instance()->CancelDummyTransaction(dashBoardPtr()->groupId(), dashBoardPtr()->wallet_id(), dummy_transaction_id, output, errormsg);
+    bool ret {false};
+    if (mode() == USER_WALLET) {
+        ret = Draco::instance()->CancelDummyTransaction(dashBoardPtr()->wallet_id(), dummy_transaction_id, output, errormsg);
+    }
+    else {
+        ret = Byzantine::instance()->CancelDummyTransaction(dashBoardPtr()->groupId(), dashBoardPtr()->wallet_id(), dummy_transaction_id, output, errormsg);
+    }
     DBG_INFO << ret;
     if(ret){
 

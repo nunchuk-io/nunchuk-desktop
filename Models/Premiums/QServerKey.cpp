@@ -84,6 +84,7 @@ QVariant QServerKey::broadcastDelay() const
 
 void QServerKey::UpdateFromDummyTx(QJsonObject data)
 {
+    DBG_INFO << data;
     setPoliciesOld(ConvertToDisplayQml(data["payload"].toObject()["old_policies"].toObject()));
     setPoliciesNew(ConvertToDisplayQml(data["payload"].toObject()["new_policies"].toObject()));
     emit spendingLimitChangeChanged();
@@ -140,6 +141,8 @@ QVariantList QServerKey::spendingLimitChange() const
     for (auto member : members) {
         QString membership_id = member.toObject()["membership_id"].toString();
         QJsonObject membership = member.toObject();
+        QString role = membership["role"].toString();
+        if (role == "OBSERVER") continue;
         membership["spending_limit"] = find_id(membership_id)["spending_limit"];
         membership["isChanged"] = find_id(membership_id)["isChanged"];
         membersLimit.append(membership);
@@ -169,6 +172,22 @@ QVariantList QServerKey::spendingLimitCurrent() const
         }
     }
     return membersLimit.toVariantList();
+}
+
+QVariant QServerKey::hbSpendingLimitChange() const
+{
+    QJsonValue new_member_limit = m_policiesNew["spending_limit"];
+    QJsonValue old_member_limit = m_policiesOld["spending_limit"];
+    QJsonObject member_limit = new_member_limit.toObject();
+    if (new_member_limit != old_member_limit) {
+        member_limit["isChanged"] = true;
+    } else {
+        member_limit["isChanged"] = false;
+    }
+    QJsonObject membership;
+    membership["spending_limit"] = member_limit;
+    membership["isChanged"] = member_limit["isChanged"];
+    return QVariant::fromValue(membership);
 }
 
 QString QServerKey::groupId() const
@@ -259,9 +278,7 @@ bool QServerKey::ServerKeyRequiredSignature()
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
             return true;
         } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
-            if (mode() != USER_WALLET) {
-                ServerKeyUpdatePoliciesChange();
-            }
+            ServerKeyUpdatePoliciesChange();
             //Show popup support in moble
             emit serverKeyDummyTransactionAlert();
         } else {

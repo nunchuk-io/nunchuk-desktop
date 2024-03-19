@@ -171,6 +171,7 @@ public:
     void setInheritanceCount(int count);
 
 public slots:
+    void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
 
     void byzantineRoomCreated(QString room_id, bool existed);

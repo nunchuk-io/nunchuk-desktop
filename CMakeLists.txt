@@ -153,6 +153,7 @@ set(Views_SRCS
     Views/STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION.cpp
     Views/STATE_ID_SCR_SETUP_SECURITY_QUESTION.cpp
     Views/STATE_ID_SCR_RECURRING_PAYMENTS.cpp
+    Views/STATE_ID_SCR_ONBOARDING.cpp
     )
 
 set(Views_MOCS
@@ -300,6 +301,10 @@ endif()
 
 if(WIN32)
 #    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE FALSE)
+endif()
+
+if (NOT WIN32)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Werror=return-type)
 endif()
 
 target_link_libraries (${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )

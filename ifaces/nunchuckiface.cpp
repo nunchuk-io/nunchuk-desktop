@@ -2308,3 +2308,43 @@ std::vector<nunchuk::UnspentOutput> nunchukiface::GetUnspentOutputsFromTxInputs(
     }
     return ret;
 }
+
+std::string nunchukiface::SignMessage(const nunchuk::SingleSigner& signer,
+                                      const std::string& message,
+                                      QWarningMessage& msg)
+{
+    std::string ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->SignMessage(signer, message);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::string nunchukiface::GetSignerAddress(const nunchuk::SingleSigner& signer,
+                                      const nunchuk::AddressType& address_type,
+                                      QWarningMessage& msg)
+{
+    std::string ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSignerAddress(signer, address_type);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}

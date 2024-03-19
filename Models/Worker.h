@@ -430,8 +430,8 @@ signals:
     // Qml
     void finishedScanDevices();
     void finishedSigningTransaction();
-    void finishedHealthCheckMasterSigner();
-    void finishedHealthCheckRemoteSigner();
+    void finishedHealthCheckMasterSigner(bool isResult);
+    void finishedHealthCheckRemoteSigner(bool isResult);
     void finishedDisplayAddress(bool result);
     void finishedCreateWallet();
     void finishedCreateRemoteSigner();

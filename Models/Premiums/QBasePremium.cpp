@@ -90,15 +90,6 @@ QGroupWalletDummyTxPtr QBasePremium::groupDummyTxPtr() const
     return {};
 }
 
-QUserWalletDummyTxPtr QBasePremium::userDummyTxPtr() const
-{
-    if (auto w = walletInfoPtr())
-    {
-        return w->userDummyTxPtr();
-    }
-    return {};
-}
-
 QRecurringPaymentPtr QBasePremium::recurringPaymentPtr() const
 {
     if (auto w = walletInfoPtr())

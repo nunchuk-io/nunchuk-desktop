@@ -509,7 +509,18 @@ QOnScreenContent {
         QContextMenu {
             id: othersContextMenu
             property string myRole: AppModel.walletInfo.groupId !== "" ? AppModel.walletInfo.myRole : ""
-            property bool isAssisted: AppModel.walletInfo.isAssistedWallet && parseFloat(AppModel.walletInfo.walletBalance) === 0 && (AppModel.walletInfo.groupId !== "" ? myRole === "MASTER" : true)
+            property bool isAssisted: {
+                if (AppModel.walletInfo.isAssistedWallet && parseFloat(AppModel.walletInfo.walletBalance) === 0) {
+                    if (AppModel.walletInfo.isAssistedWallet) {
+                        return true
+                    }
+                    else {
+                        return (AppModel.walletInfo.groupId !== "" ? myRole === "MASTER" : true)
+                    }
+                }
+                return false
+
+            }
             property bool isCanDeleted: !AppModel.walletInfo.isAssistedWallet || isAssisted
             menuWidth: 300
             labels: {

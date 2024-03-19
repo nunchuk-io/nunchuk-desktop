@@ -39,7 +39,7 @@ Row {
     }
     QTextBadgeVerical {
         id: _textBadge
-        height: 40
+        height: _textBadge.childrenRect.height
         anchors.verticalCenter: parent.verticalCenter
         role: _id.role
         label: user ? user.name : ""

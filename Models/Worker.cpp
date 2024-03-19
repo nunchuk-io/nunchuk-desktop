@@ -772,6 +772,12 @@ void Controller::slotFinishScanDevices(const int state_id,
     if(AppModel::instance()->transactionInfo() && AppModel::instance()->transactionInfo()->singleSignersAssigned()){
         emit AppModel::instance()->transactionInfo()->singleSignerAssignedChanged();
     }
+    if (auto s = AppModel::instance()->masterSignerInfoPtr()) {
+        if (auto d = s->devicePtr()) {
+            d->setConnected(true);
+            DBG_INFO << d->connected();
+        }
+    }
     DBG_INFO << deviceList->rowCount();
     QGroupWallets::instance()->finishScanDevices();
     QUserWallets::instance()->finishScanDevices();
@@ -849,14 +855,15 @@ void Controller::slotFinishHealthCheckMasterSigner(const int state_id,
         if(AppModel::instance()->walletList()) {
             AppModel::instance()->walletList()->updateSignerHealthStatus(xfp, status, QDateTime::currentDateTime().toTime_t());
         }
+        emit finishedHealthCheckMasterSigner(true);
     }
     else{
         if(type == (int)EWARNING::WarningType::EXCEPTION_MSG && nunchuk::HWIException::DEVICE_CONN_ERROR == code){
             startScanDevices(state_id);
         }
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
+        emit finishedHealthCheckMasterSigner(false);
     }
-    emit finishedHealthCheckMasterSigner();
 }
 
 void Controller::slotFinishTopXPUBsMasterSigner(const QVariant &data)
@@ -893,11 +900,13 @@ void Controller::slotFinishHealthCheckRemoteSigner(const int status,
 {
     if((int)EWARNING::WarningType::NONE_MSG == type){
         AppModel::instance()->singleSignerInfo()->setHealth(status);
+        emit finishedHealthCheckRemoteSigner(true);
     }
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
+        emit finishedHealthCheckRemoteSigner(false);
     }
-    emit finishedHealthCheckRemoteSigner();
+    
 }
 
 void Controller::slotFinishDisplayAddress(bool result)

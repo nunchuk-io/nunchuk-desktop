@@ -49,6 +49,7 @@ public:
     QString model() const;
     QString masterFingerPrint() const;
     bool connected() const;
+    void setConnected(bool);
     bool needsPassPhraseSent() const;
     bool needsPinSent() const;
     bool usableToAdd() const;
@@ -63,6 +64,7 @@ private:
     bool m_isDraft = true;
     QString m_cardId = "";
     nunchuk::Device m_device;
+    bool isConnected {false};
 signals:
     void typeChanged();
     void pathChanged();

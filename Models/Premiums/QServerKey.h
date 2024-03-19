@@ -17,6 +17,7 @@ class QServerKey : public QBasePremium
     Q_PROPERTY(QVariantList spendingLimitChange   READ spendingLimitChange   NOTIFY spendingLimitChangeChanged)
     Q_PROPERTY(QVariantList spendingLimitCurrent  READ spendingLimitCurrent  NOTIFY spendingLimitCurrentChanged)
     Q_PROPERTY(QVariant keyCoSigning              READ keyCoSigning          NOTIFY keyCoSigningChanged)
+    Q_PROPERTY(QVariant hbSpendingLimitChange  READ hbSpendingLimitChange  NOTIFY spendingLimitCurrentChanged)
 public:
     explicit QServerKey(const QString &wallet_id);
     // Update
@@ -37,6 +38,7 @@ public:
     QVariantList spendingLimitChange() const;
 
     QVariantList spendingLimitCurrent() const;
+    QVariant hbSpendingLimitChange() const;
 
     QString groupId() const;
     nunchuk::SingleSigner ServerKey();

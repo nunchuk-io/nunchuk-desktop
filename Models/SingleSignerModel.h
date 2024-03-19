@@ -27,6 +27,7 @@
 #include "qUtils.h"
 #include "Chats/QWalletSignersModel.h"
 #include "Servers/DracoDefines.h"
+#include <QJsonArray>
 
 class QSingleSigner : public QObject {
     Q_OBJECT
@@ -39,8 +40,8 @@ class QSingleSigner : public QObject {
     Q_PROPERTY(QString signerLastHealthCheck    READ lastHealthCheck                                NOTIFY healthChanged)
     Q_PROPERTY(bool    signerSigned             READ signerSigned                                   NOTIFY signerSignedChanged)
     Q_PROPERTY(bool    signerNeedTopUpXpub      READ needTopUpXpub                                  NOTIFY needTopUpXpubChanged)
-    Q_PROPERTY(QString signerMessage            READ message            WRITE setMessage            NOTIFY messageChanged)
-    Q_PROPERTY(QString signerSignature          READ signature          WRITE setSignature          NOTIFY signatureChanged)
+    Q_PROPERTY(QString message                  READ message            WRITE setMessage            NOTIFY messageChanged)
+    Q_PROPERTY(QString signature                READ signature          WRITE setSignature          NOTIFY signatureChanged)
     Q_PROPERTY(int     signerHealth             READ health                                         NOTIFY healthChanged)
     Q_PROPERTY(bool    isColdCard               READ isColdCard                                     NOTIFY isColdCardChanged)
     Q_PROPERTY(int     signerType               READ signerType                                     NOTIFY signerTypeChanged)
@@ -49,6 +50,8 @@ class QSingleSigner : public QObject {
     Q_PROPERTY(QString tag                      READ tag                                            CONSTANT)
     Q_PROPERTY(bool hasSignBtn                  READ hasSignBtn                                     CONSTANT)
     Q_PROPERTY(int  accountIndex                READ accountIndex                                   CONSTANT)
+    Q_PROPERTY(QVariantList healthCheckHistory  READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
+    Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
@@ -131,6 +134,16 @@ public:
     void setHasSignBtn(bool hasSignBtn);
 
     int accountIndex();
+
+    QVariantList healthCheckHistory() const;
+    void setHealthCheckHistory(QJsonArray list);
+
+    bool GetHistorySignerList();
+
+    QString address() const;
+    void setAddress(const QString &address);
+
+    Q_INVOKABLE QVariantList getWalletList();
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -152,6 +165,8 @@ private:
     bool isPrimaryKey_;
     bool isDraft = true;
     bool m_hasSignBtn {true};
+    QJsonArray m_healthCheckHistory {};
+    QString m_address;
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -180,6 +195,8 @@ signals:
     void devicetypeChanged();
     void isPrimaryKeyChanged();
     void emailChanged();
+    void healthCheckHistoryChanged();
+    void addressChanged();
 };
 typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;
 

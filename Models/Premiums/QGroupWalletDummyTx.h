@@ -16,7 +16,7 @@ class QGroupWalletDummyTx : public QWalletDummyTx
 public:
     QGroupWalletDummyTx(WalletId wallet_id);
     void setDummyTxData(QJsonObject data);
-
+    bool requestForceSyncTx(const QString &group_id, const QString &wallet_id, const QString &txid);
     bool requestSignTx(const QString& xfp) final;
     bool requestSignTxViaQR(const QStringList &qrtags) final;
     bool requestSignTxViaFile(const QString &filepath) final;
@@ -37,7 +37,6 @@ public:
     QJsonObject tx() const;
 
 signals:
-    void transactionSignedSuccess();
     void registerWalletWithDevice();
 private:
     QJsonObject             m_tx {};

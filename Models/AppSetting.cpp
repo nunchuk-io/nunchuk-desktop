@@ -792,6 +792,15 @@ void AppSetting::setIsStarted(bool isStarted, bool isSetting)
 
 bool AppSetting::enableMultiDeviceSync()
 {
+    // Hide for all user
+    if(NunchukSettings::contains("enableMultiDeviceSync")){
+        enableMultiDeviceSync_ = NunchukSettings::value("enableMultiDeviceSync").toBool();
+        if(enableMultiDeviceSync_){
+            setEnableMultiDeviceSync(false);
+        }
+    }
+    return false; // Hide for all user
+#if 0
     if(NunchukSettings::contains("enableMultiDeviceSync")){
         enableMultiDeviceSync_ = NunchukSettings::value("enableMultiDeviceSync").toBool();
     }
@@ -799,6 +808,7 @@ bool AppSetting::enableMultiDeviceSync()
         NunchukSettings::setValue("enableMultiDeviceSync", enableMultiDeviceSync_);
     }
     return enableMultiDeviceSync_;
+#endif
 }
 
 void AppSetting::setEnableMultiDeviceSync(bool enableMultiDeviceSync)

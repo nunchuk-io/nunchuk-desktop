@@ -72,6 +72,9 @@ QOnScreenContentTypeB {
                     card_id_or_xfp: modelData.keyinfo.tapsigner ? modelData.keyinfo.tapsigner.card_id : modelData.keyinfo.xfp
                     key_color: "#F5F5F5"
                     selected: currentSelect === index
+                    key_isPrimaryKey: modelData.keyinfo.signer_is_primary
+                    key_signerType: modelData.keyinfo.signer_type
+                    key_accountIndex: modelData.keyinfo.account_index
                     onButtonClicked: {
                         if (modelData.keyinfo.type === "NFC") {
                             _info.open()

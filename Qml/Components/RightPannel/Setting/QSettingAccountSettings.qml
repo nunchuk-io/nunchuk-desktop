@@ -306,6 +306,7 @@ Item {
                 color: "#EAEAEA"
                 anchors.left: parent.left
                 anchors.leftMargin: 24
+                visible: false // Hide for all user
             }
 
             Item{
@@ -313,6 +314,7 @@ Item {
                 height: 25*2 + 48
                 anchors.left: parent.left
                 anchors.leftMargin: 24
+                visible: false // Hide for all user
                 QText {
                     width: 309
                     height: 28

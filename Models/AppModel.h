@@ -47,7 +47,7 @@ class AppModel final : public Controller
     Q_PROPERTY(DeviceListModel*         deviceList          READ deviceList         NOTIFY deviceListChanged)
     Q_PROPERTY(QMasterSigner*           masterSignerInfo    READ masterSignerInfo   NOTIFY masterSignerInfoChanged)
     Q_PROPERTY(QSingleSigner*           singleSignerInfo    READ singleSignerInfo   NOTIFY singleSignerInfoChanged)
-    Q_PROPERTY(QStringList              walletsUsingSigner  READ walletsUsingSigner NOTIFY walletsUsingSignerChanged)
+    Q_PROPERTY(QVariantList             walletsUsingSigner  READ walletsUsingSigner NOTIFY walletsUsingSignerChanged)
     Q_PROPERTY(Transaction*             transactionInfo     READ transactionInfo    NOTIFY transactionInfoChanged)
     Q_PROPERTY(UTXOListModel*           utxoList            READ utxoList           NOTIFY utxoListChanged)
     Q_PROPERTY(UTXO*                    utxoInfo            READ utxoInfo           NOTIFY utxoInfoChanged)
@@ -120,8 +120,8 @@ public:
     QSingleSignerPtr singleSignerInfoPtr() const;
     void setSingleSignerInfo(const QSingleSignerPtr &d);
 
-    QStringList walletsUsingSigner() const;
-    void setWalletsUsingSigner(QStringList d);
+    QVariantList walletsUsingSigner() const;
+    void setWalletsUsingSigner(QVariantList d);
 
     bool removeMasterSigner(const QString& masterSignerId);
     void removeWallet(const QString& wallet_id);
@@ -259,7 +259,7 @@ private:
     QSingleSignerListModelPtr remoteSignerList_;
     QMasterSignerPtr    masterSignerInfo_;
     QSingleSignerPtr    singleSignerInfo_;
-    QStringList         walletsUsingSigner_;
+    QVariantList        walletsUsingSigner_;
     QWalletPtr          newWalletInfo_;
     QWalletPtr          walletInfo_;
     QTransactionPtr     transactionInfo_;

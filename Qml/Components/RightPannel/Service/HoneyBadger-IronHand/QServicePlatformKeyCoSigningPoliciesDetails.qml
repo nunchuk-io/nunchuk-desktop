@@ -65,19 +65,10 @@ Item {
         }
         onServerKeyDummyTransactionAlert: {
             if (ServiceSetting.optionIndex === _PLATFORM_KEY_CO_SIGNING_POLICIES) {
-                _info1.contentText = STR.STR_QML_806
-                _info1.open();
+                QMLHandle.sendEvent(EVT.EVT_HEALTH_CHECK_STARTING_REQUEST)
             }
         }
-        onKeyCoSigningChanged: {
-            _currency.loadCompleted()
-            _interal.loadCompleted()
-        }
     }
-    property bool anyChanged: co_signing.dataChanged ||
-                             _currency.dataChanged ||
-                             _interal.dataChanged ||
-                             autoBroadcast.dataChanged
     Column {
         anchors.fill: parent
         anchors.margins: 24
@@ -112,94 +103,14 @@ Item {
                     }
                 }
             }
-            Item {
-                width: 627
-                height: 72
-                Row {
-                    anchors.fill: parent
-                    spacing: 14
-                    QTextInputBoxTypeB {
-                        id: co_signing
-                        label: STR.STR_QML_801
-                        boxWidth: 306
-                        boxHeight: 48
-                        isValid: true
-                        textInputted: policies.spending_limit.limit
-                        onTextInputtedChanged: {
-                            if(!co_signing.isValid){
-                                co_signing.isValid = true
-                                co_signing.errorText = ""
-                            }
-                            co_signing.showError = false;
-                        }
-                        function limit() {
-                            return co_signing.textInputted
-                        }
-                        property bool dataChanged: policies.spending_limit.limit !== co_signing.textInputted
-                    }
-                    QComboBox {
-                        id: _currency
-                        anchors.bottom: co_signing.bottom
-                        width: 128
-                        height: 48
-                        displayText: policies.spending_limit.currency
-                        model: list()
-                        textRole: "displayName"
-                        function list() {
-                            var ls = []
-                            ls.push({ displayName: qsTr("%1").arg(AppSetting.currency) })
-                            ls.push({ displayName: qsTr("BTC") })
-                            ls.push({ displayName: qsTr("sat") })
-                            return ls
-                        }
-                        function getIndex(displayName) {
-                            var lys = list()
-                            for (var i = 0; i < lys.length; i++) {
-                                if (lys[i].displayName === displayName) {
-                                    return i;
-                                }
-                            }
-                            return -1;
-                        }
-                        function currency() {
-                            return currentIndex < 0 ? AppSetting.currency : _currency.model[currentIndex].displayName
-                        }
-                        function loadCompleted() {
-                            _currency.currentIndex = _currency.getIndex(policies.spending_limit.currency)
-                        }
-                        property bool dataChanged: _currency.getIndex(policies.spending_limit.currency) !== _currency.currentIndex
-                    }
-                    QComboBox {
-                        id: _interal
-                        anchors.bottom: co_signing.bottom
-                        currentIndex: _interal.getIndex(currentText)
-                        width: 165
-                        height: 48
-                        model:  [
-                            { displayName: qsTr("DAILY") },
-                            { displayName: qsTr("WEEKLY") },
-                            { displayName: qsTr("MONTHLY") },
-                            { displayName: qsTr("YEARLY") }
-                        ]
-                        textRole: "displayName"
-                        function getIndex(displayName) {
-                            var lys = ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
-                            for (var i = 0; i < lys.length; i++) {
-                                if (lys[i] === displayName) {
-                                    return i;
-                                }
-                            }
-                            return 0;
-                        }
-                        function interval() {
-                            return _interal.model[currentIndex].displayName
-                        }
-                        property bool dataChanged: _interal.getIndex(policies.spending_limit.interval) !== _interal.currentIndex
-                        function loadCompleted() {
-                            _interal.currentIndex = _interal.getIndex(policies.spending_limit.interval)
-                        }
-                    }
-                }
+            QPoliciesCoSigningSpendingLimit {
+                id: _limit_all
+                width: 595
+                height: 68
+                titleFontSize: 12
+                limit: serverKeyInfo.policies.spending_limit.limit
+                currency: serverKeyInfo.policies.spending_limit.currency
+                interval: serverKeyInfo.policies.spending_limit.interval
             }
         }
         Rectangle {
@@ -215,11 +126,7 @@ Item {
     }
     function get_policies() {
         var broadcast = autoBroadcast.policies_broadcast()
-        var spending_limit = {
-            "limit" : co_signing.limit(),
-            "currency" : _currency.currency(),
-            "interval" : _interal.interval(),
-        }
+        var spending_limit = _limit_all.spending_limit()
         var isIronHand = ClientController.user.isIronHandUser
         var ret = {
             "signing_delay_seconds" : broadcast.signing_delay_seconds,
@@ -259,7 +166,6 @@ Item {
                 label.text: STR.STR_QML_804
                 label.font.pixelSize: 16
                 type: eTypeE
-                enabled: anyChanged
                 onButtonClicked: {
                     serverKeyInfo.setKeyCoSigning(get_policies())
                     QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST)

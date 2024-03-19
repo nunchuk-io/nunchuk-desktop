@@ -39,11 +39,12 @@ Row {
     property bool accountVisible: true
     spacing: 4
     Rectangle {
-        width: signerPrimaryText.width + 8
+        width: signerPrimaryText.width + 16
         height: 16
         color: "#FDD95C"
         visible: isPrimaryKey
         radius: 20
+        anchors.verticalCenter: parent.verticalCenter
         QText {
             id: signerPrimaryText
             text: STR.STR_QML_641
@@ -55,11 +56,12 @@ Row {
         }
     }
     Rectangle {
-        width: signerTypeText.width + 8
-        height: 16
+        width: signerTypeText.implicitWidth + 16
+        height: signerTypeText.implicitHeight + 8
         color: "#EAEAEA"
         radius: 20
         visible: signerType !== NUNCHUCKTYPE.SERVER
+        anchors.verticalCenter: parent.verticalCenter
         QText {
             id: signerTypeText
             text: GlobalData.signers(signerType)
@@ -71,10 +73,11 @@ Row {
         }
     }
     Rectangle {
-        width: accttext.width + 10
-        height: 16
+        width: accttext.implicitWidth + 16
+        height: accttext.implicitHeight + 8
         color: "#EAEAEA"
         visible: (accountIndex > 0) && (signerType !== NUNCHUCKTYPE.SERVER) && accountVisible
+        anchors.verticalCenter: parent.verticalCenter
         radius: 8
         QText {
             id: accttext

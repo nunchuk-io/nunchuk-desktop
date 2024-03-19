@@ -61,6 +61,7 @@ Item {
                     width: 595
                     height: 68
                     titleFontSize: 12
+                    enabled: member.role !== "KEYHOLDER_LIMITED"
                     limit: del.member.spending_limit.limit
                     currency: del.member.spending_limit.currency
                     interval: del.member.spending_limit.interval

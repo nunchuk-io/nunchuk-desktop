@@ -404,6 +404,18 @@
         <file>Qml/Components/customizes/Wallets/QWalletPrimaryOwner.qml</file>
         <file>Qml/Components/customizes/Wallets/QMemberPrimaryOwner.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletDelegateBackground.qml</file>
+        <file>Qml/Components/customizes/Signers/QHealthCheckHistory.qml</file>
+        <file>Qml/Components/customizes/Signers/QUsedInWallets.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerInfo.qml</file>
+        <file>Qml/Components/customizes/Texts/QLabelTextInput.qml</file>
+        <file>Qml/Components/customizes/Signers/QRemiderAndHistory.qml</file>
+        <file>Qml/Components/customizes/Signers/QKeyInfo.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignMessage.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QOnboarding.qml</file>
+        <file>Qml/Screens/LocalMode/SCR_ONBOARDING.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QOnboardingWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QUnassistedWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QAssistedWallet.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -678,6 +690,10 @@
         <file>Images/OnlineMode/scheduling-dark.png</file>
         <file>Images/OnlineMode/signature-dark.png</file>
         <file>Images/OnlineMode/visibility-dark.svg</file>
+        <file>Images/connected.svg</file>
+        <file>Images/onboarding-assisted-wallet.svg</file>
+        <file>Images/onboarding-unassisted-wallet.svg</file>
+        <file>Images/disconnected.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

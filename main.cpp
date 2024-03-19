@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.29");
+    app.setApplicationVersion("1.9.30");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();

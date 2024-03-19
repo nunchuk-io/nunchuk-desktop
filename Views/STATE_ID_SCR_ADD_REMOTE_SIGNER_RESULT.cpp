@@ -58,9 +58,16 @@ void EVT_REMOTE_SIGNER_RESULT_IMPORT_SIGNATURE_HANDLER(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_RESULT_EXPORT_MESSAGE_HANDLER(QVariant msg) {
-    QString file_path = qUtils::QGetFilePath(msg.toString());
-    if(AppModel::instance()->singleSignerInfo() && (file_path != "")){
-        bridge::nunchukExportHealthCheckMessage(file_path, AppModel::instance()->singleSignerInfo()->message());
+    QString file_txt = msg.toMap().value("file").toString();
+    QString signature    = msg.toMap().value("signature").toString();
+    QString file_path = qUtils::QGetFilePath(file_txt);
+    QFile file(file_path);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream st(&file);
+        st.setCodec("UTF-8");
+        st << signature << endl;
+        st.flush();
+        file.close();
     }
 }
 

@@ -35,7 +35,7 @@ import "../../../../localization/STR_QML.js" as STR
 
 Column {
     width: 539
-    height: 20 + 16 + list.contentHeight
+    height: 20 + 16 + list.contentHeight + (list.count === 0 ? 52 : 0)
     spacing: 16
     property var serverKeyInfo
     QLato {
@@ -44,6 +44,28 @@ Column {
         text: STR.STR_QML_1009
         font.weight: Font.DemiBold
         verticalAlignment: Text.AlignVCenter
+    }
+    property var hbMember: serverKeyInfo.hbSpendingLimitChange
+    Rectangle {
+        color: "#F5F5F5"
+        radius: 12
+        height: 52
+        width: 539
+        QLato {
+            anchors {
+                left: parent.left
+                leftMargin: 16
+                verticalCenter: parent.verticalCenter
+            }
+            width: 223
+            height: 20
+            font.weight: Font.DemiBold
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
+            color: hbMember.isChanged ? "#CF4018" : "#031F2B"
+            text: hbMember.spending_limit.limit + " " + hbMember.spending_limit.currency + " / " + hbMember.spending_limit.interval
+        }
+        visible: list.count === 0
     }
     QListView {
         id: list

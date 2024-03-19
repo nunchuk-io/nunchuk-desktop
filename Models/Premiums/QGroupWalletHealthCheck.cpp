@@ -21,8 +21,15 @@ void QGroupWalletHealthCheck::GetStatuses()
     if (auto dashboard = dashBoardPtr()) {
         QJsonObject output;
         QString errormsg = "";
-        bool ret = Byzantine::instance()->GetWalletHealthStatus(dashboard->groupId(), dashboard->wallet_id(), output, errormsg);
+        bool ret {false};
+        if (mode() == USER_WALLET) {
+            ret = Draco::instance()->GetWalletHealthStatus(dashboard->wallet_id(), output, errormsg);
+        }
+        else {
+            ret = Byzantine::instance()->GetWalletHealthStatus(dashboard->groupId(), dashboard->wallet_id(), output, errormsg);
+        }
         if(ret){
+            DBG_INFO << output;
             QJsonArray statuses = output["statuses"].toArray();
             QJsonArray result;
             for (auto obj : statuses) {
@@ -63,7 +70,13 @@ void QGroupWalletHealthCheck::HealthCheckForKey(const QString &xfp)
     if (auto dashboard = dashBoardPtr()) {
         QJsonObject output;
         QString errormsg = "";
-        bool ret = Byzantine::instance()->HealthCheckForKey(dashboard->groupId(), dashboard->wallet_id(), xfp, output, errormsg);
+        bool ret {false};
+        if (mode() == USER_WALLET) {
+            ret = Draco::instance()->HealthCheckForKey(dashboard->wallet_id(), xfp, output, errormsg);
+        }
+        else {
+            ret = Byzantine::instance()->HealthCheckForKey(dashboard->groupId(), dashboard->wallet_id(), xfp, output, errormsg);
+        }
         if(ret){
             QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
             if (auto dummy = groupDummyTxPtr()) {
@@ -101,13 +114,24 @@ bool QGroupWalletHealthCheck::HealthCheckPendingForTx(const QString &dummy_trans
     if (auto dashboard = dashBoardPtr()) {
         QJsonObject output;
         QString errormsg = "";
-        bool ret = Byzantine::instance()->GetDummyTransaction(dashboard->groupId(), dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+        bool ret {false};
+        if (mode() == USER_WALLET) {
+            ret = Draco::instance()->GetDummyTransaction(dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+        }
+        else {
+            ret = Byzantine::instance()->GetDummyTransaction(dashboard->groupId(), dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+        }
         DBG_INFO << ret << output;
         if(ret){
             QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
             bool is_draft = dummy_transaction["is_draft"].toBool();
             if (is_draft) {
-                Byzantine::instance()->FinalizeDummyTransaction(dashboard->groupId(), dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+                if (mode() == USER_WALLET) {
+                    Draco::instance()->FinalizeDummyTransaction(dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+                }
+                else {
+                    Byzantine::instance()->FinalizeDummyTransaction(dashboard->groupId(), dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+                }
             }
             else {
             }
@@ -155,3 +179,24 @@ QVariantList QGroupWalletHealthCheck::healthStatuses() const
     return m_healthStatuses.toVariantList();
 }
 
+QVariant QGroupWalletHealthCheck::aKeyStatus() const
+{
+    if (auto dashboard = dashBoardPtr()) {
+        for (auto status : m_healthStatuses) {
+            if (status.toObject()["xfp"].toString() == m_keyXfp) {
+                return status;
+            }
+        }
+        QJsonObject obj;
+        obj["xfp"] = m_keyXfp;
+        obj["lastState"] = "NotCheckedYet";
+        obj["keyinfo"] = dashboard->GetSigner(m_keyXfp);
+        return QVariant::fromValue(obj);
+    }
+    return QVariant();
+}
+
+void QGroupWalletHealthCheck::setKeyXfp(const QString &xfp)
+{
+    m_keyXfp = xfp;
+}

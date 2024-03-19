@@ -40,7 +40,7 @@ bool Byzantine::GetListGroupWallets(QJsonObject &output, QString &errormsg)
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -69,7 +69,7 @@ bool Byzantine::GetAllGroupWallets(QJsonObject &output, QString &errormsg)
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -97,7 +97,7 @@ bool Byzantine::GetOneGroupWallets(const QString group_id, QJsonObject &output, 
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -125,7 +125,7 @@ bool Byzantine::AcceptGroupWallet(const QString group_id, QJsonObject &output, Q
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -153,7 +153,7 @@ bool Byzantine::DenyGroupWallet(const QString group_id, QJsonObject &output, QSt
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -181,7 +181,7 @@ bool Byzantine::ResetGroupWallet(const QString group_id, QJsonObject &output, QS
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -218,7 +218,7 @@ bool Byzantine::DeleteGroupWallet(const QString &wallet_id, const QString &group
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -244,7 +244,7 @@ bool Byzantine::DeleteGroupWalletRequiredSignatures(const QString &wallet_id, co
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -278,7 +278,7 @@ bool Byzantine::GetGroupAlerts(const QString group_id, QJsonObject &output, QStr
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -306,7 +306,7 @@ bool Byzantine::GetGroupAlertsCount(const QString group_id, QJsonObject &output,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -336,7 +336,7 @@ bool Byzantine::DismissGroupAlert(const QString group_id, const QString alert_id
         else{
             errormsg = response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -367,7 +367,7 @@ bool Byzantine::MarkGroupAlertAsRead(const QString group_id, const QString alert
         else{
             errormsg = response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -393,7 +393,7 @@ bool Byzantine::GetAllPermissions(QJsonObject &output, QString &errormsg)
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -419,7 +419,7 @@ bool Byzantine::GetOnePermissions(const QString slug, QJsonObject &output, QStri
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -448,7 +448,7 @@ bool Byzantine::GetDefaultPermissions(QJsonObject &output, QString &errormsg)
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -480,7 +480,7 @@ bool Byzantine::DraftWalletAddKey(const QString group_id, const QString request_
                 isDuplicateKey = true;
             }
             DBG_INFO << errorObj << isDuplicateKey;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -509,7 +509,7 @@ bool Byzantine::GetCurrentGroupWallet(const QString group_id, QJsonObject &outpu
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -538,7 +538,7 @@ bool Byzantine::GetCurrentGroupDraftWallet(const QString group_id, QJsonObject &
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -568,7 +568,7 @@ bool Byzantine::GetAllListRequestAddKey(const QString &group_id, QJsonObject &ou
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -595,7 +595,7 @@ bool Byzantine::DeleteRequestAddKey(const QString &group_id, const QString &requ
             return true;
         }
         else{
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -632,7 +632,7 @@ bool Byzantine::UpdateWallet(const QString &group_id, const QString &wallet_id, 
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -664,7 +664,7 @@ bool Byzantine::GetWalletAlias(const QString &group_id, const QString &wallet_id
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -697,7 +697,7 @@ bool Byzantine::UpdateWalletAlias(const QString &group_id, const QString &wallet
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -729,7 +729,7 @@ bool Byzantine::DeleteWalletAlias(const QString &group_id, const QString &wallet
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -762,7 +762,7 @@ bool Byzantine::UpdateWalletPrimaryOwner(const QString &group_id, const QString 
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -829,7 +829,7 @@ bool Byzantine::RequestHealthCheckForKey(const QString &group_id, const QString 
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -862,7 +862,7 @@ bool Byzantine::HealthCheckForKey(const QString &group_id, const QString &wallet
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -893,7 +893,7 @@ bool Byzantine::GetWalletHealthStatus(const QString &group_id, const QString &wa
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -924,7 +924,7 @@ bool Byzantine::GetDummyTransaction(const QString &group_id, const QString &wall
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -958,7 +958,7 @@ bool Byzantine::UpdateDummyTransaction(const QString &group_id, const QString &w
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -988,7 +988,7 @@ bool Byzantine::CancelDummyTransaction(const QString &group_id, const QString &w
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1018,7 +1018,7 @@ bool Byzantine::FinalizeDummyTransaction(const QString &group_id, const QString 
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1054,7 +1054,7 @@ bool Byzantine::GetAllTransaction(const QString &group_id, const QString &wallet
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1091,7 +1091,7 @@ bool Byzantine::GetAllCancelledTransaction(const QString &group_id, const QStrin
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1123,7 +1123,7 @@ bool Byzantine::GetOneTransaction(const QString &group_id, const QString &wallet
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1158,7 +1158,7 @@ bool Byzantine::UpdateTransaction(const QString &group_id, const QString &wallet
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 // NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1190,7 +1190,7 @@ bool Byzantine::CancelTransaction(const QString &group_id, const QString &wallet
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1226,7 +1226,7 @@ bool Byzantine::SyncTransaction(const QString &group_id, const QString &wallet_i
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1261,7 +1261,7 @@ bool Byzantine::RbfTransaction(const QString &group_id, const QString &wallet_id
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1295,7 +1295,7 @@ bool Byzantine::SignTransaction(const QString &group_id, const QString &wallet_i
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1327,7 +1327,7 @@ bool Byzantine::CreateTransaction(const QString &group_id, const QString &wallet
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1358,7 +1358,7 @@ bool Byzantine::requestSignature(const QString &group_id, const QString &wallet_
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1389,7 +1389,7 @@ bool Byzantine::ServerKeysGet(const QString &group_id, const QString &key_id_or_
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1438,7 +1438,7 @@ bool Byzantine::ServerKeysUpdate(const QString &group_id,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1474,7 +1474,7 @@ bool Byzantine::ServerKeysRequiredSignature(const QString &group_id,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1530,7 +1530,7 @@ bool Byzantine::lockdownRequiredSignatures(const QString &group_id,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1567,7 +1567,7 @@ bool Byzantine::lockdownByAnswerSecQues(const QString &group_id, const QString &
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1596,7 +1596,7 @@ bool Byzantine::lockdownByConfirmationCode(const QString &passwordToken, const Q
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1637,7 +1637,7 @@ bool Byzantine::lockdownBySignDummyTx(const QString &group_id, const QStringList
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1659,7 +1659,7 @@ QJsonObject Byzantine::assistedGetWalletConfig()
             return data;
         }
         else{
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return {};
         }
         DBG_INFO << errorObj;
@@ -1687,7 +1687,7 @@ bool Byzantine::GetGroupChat(const QString &group_id, QJsonObject &output, QStri
             }
             else {
                 errormsg = response_msg;
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
                 return false;
             }
         }
@@ -1717,7 +1717,7 @@ bool Byzantine::UpdateGroupChat(const QString &group_id, QJsonObject &output, QS
             }
             else {
                 errormsg = response_msg;
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
                 return false;
             }
         }
@@ -1747,7 +1747,7 @@ bool Byzantine::DeleteGroupChat(const QString &group_id, QJsonObject &output, QS
             }
             else {
                 errormsg = response_msg;
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
                 return false;
             }
         }
@@ -1782,7 +1782,7 @@ bool Byzantine::CreateGroupChat(const QString &group_id, const QString &room_id,
             }
             else {
                 errormsg = response_msg;
-                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+                AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
                 return false;
             }
         }
@@ -1807,7 +1807,7 @@ bool Byzantine::GetAllGroupChat(QJsonObject &output, QString &errormsg)
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1832,7 +1832,7 @@ bool Byzantine::GetHistoryPeriodsGroupChat(QJsonObject &output, QString &errorms
         }
         else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1863,7 +1863,7 @@ bool Byzantine::GetListRecurringPayment(const QString &group_id, const QString &
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1906,7 +1906,7 @@ bool Byzantine::CreateRecurringPayment(const QString &group_id,
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -1938,7 +1938,7 @@ bool Byzantine::GetOneRecurringPayment(const QString &group_id, const QString &w
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }
@@ -1984,7 +1984,7 @@ bool Byzantine::CancelRecurringPayment(const QString &group_id,
             errormsg = response_msg;
             DBG_INFO << response_code << response_msg;
 #if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
             return false;
         }

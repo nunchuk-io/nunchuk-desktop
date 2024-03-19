@@ -38,6 +38,7 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     property int flow: AppModel.walletInfo.flow
+    property var walletInfo: AppModel.walletInfo
     readonly property var map_flow: [
         {flow_action: AlertType.HEALTH_CHECK_STATUS,        screen_component: _saving_account},
     ]

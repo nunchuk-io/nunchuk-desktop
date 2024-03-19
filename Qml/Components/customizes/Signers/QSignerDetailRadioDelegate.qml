@@ -38,6 +38,10 @@ Row {
     property string signerName: ""
     property string card_id_or_xfp: ""
     property string key_color: ""
+    property bool key_isPrimaryKey: false
+    property int  key_signerType: 0
+    property int  key_accountIndex: 0
+
     spacing: 12
     QCircleIcon {
         bgSize: 48
@@ -61,10 +65,10 @@ Row {
             font.family: "Lato"
             font.pixelSize: 16
         }
-        QSignerBadgeName {
-            typeStr: del.typeStr
-            tag: del.tag
-            color: key_color
+        QRowSingleSignerType {
+            isPrimaryKey: del.key_isPrimaryKey
+            signerType: del.key_signerType
+            accountIndex: del.key_accountIndex
         }
         QText {
             width: 146

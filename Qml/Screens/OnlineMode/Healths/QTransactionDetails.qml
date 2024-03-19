@@ -95,26 +95,49 @@ QOnScreenContentTypeA {
         }
     }
     bottomLeft: Item {}
-    bottomRight: QBtnExportImport {
-        id: advancedBtn
-        funcs: [
-        function() {
-            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                    + RoomWalletData.getValidFilename(transactionInfo.txid)
-                    + ".psbt"
-            savefileDialog.open()
-        },
-        function() {
-            requestExportViaQR()
-        },
-        function() {
-            openfileDialog.open()
-        },
-        function() {
-            transactionInfo.setScan_percent(0)
-            qrcodeImport.open()
+    bottomRight: Row {
+        spacing: 12
+        QBtnOptions {
+            id: optionsBtn
+            width: 102
+            height: 48
+            label: "More"
+            labels: ["Force sync"]
+            icons: ["qrc:/Images/Images/cached_24px.png"]
+            colors:   [ "#031F2B"]
+            enables:  [ true ]
+            visibles: [ true ]
+            funcs: [
+                function(){ // Force sync
+                    var data = {
+                        type: "force-sync-dummy-tx",
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, data)
+                }
+            ]
         }
-        ]
+
+        QBtnExportImport {
+            id: advancedBtn
+            funcs: [
+                function() {
+                    savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                            + RoomWalletData.getValidFilename(transactionInfo.txid)
+                            + ".psbt"
+                    savefileDialog.open()
+                },
+                function() {
+                    requestExportViaQR()
+                },
+                function() {
+                    openfileDialog.open()
+                },
+                function() {
+                    transactionInfo.setScan_percent(0)
+                    qrcodeImport.open()
+                }
+            ]
+        }
     }
 
     QPopupDisplayAddressBusyBox {
@@ -217,11 +240,6 @@ QOnScreenContentTypeA {
     }
     Connections {
         target: dummyTx
-        onTransactionSignedSuccess: {
-            if (flow === AlertType.GROUP_WALLET_SETUP) {
-                QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, {type: "accessing-wallet-configuration"})
-            }
-        }
         onRegisterWalletWithDevice: {
             _warning.open()
         }

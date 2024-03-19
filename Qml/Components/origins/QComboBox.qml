@@ -118,10 +118,10 @@ ComboBox {
                 rightMargin: 24
                 verticalCenter: parent.verticalCenter
             }
-            visible: control.currentIndex === index
+            visible: current_id.id === modelData.id
             source: "qrc:/Images/Images/check-dark.svg"
         }
-        font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
+        font.weight: current_id.id === modelData.id ? Font.DemiBold : Font.Normal
         font.pixelSize: 16
         highlighted: control.highlightedIndex == index
     }

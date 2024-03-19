@@ -38,6 +38,7 @@ QOnScreenContentTypeB {
     property var requester_user: dummyTx.requester_user
     property string walletName: AppModel.walletInfo.walletName
     property string description: ""
+    property string descriptionHb: ""
     property var planInfo
     property bool planIsCancel: false
     width: popupWidth
@@ -48,7 +49,16 @@ QOnScreenContentTypeB {
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     content: QInheritancePlanDetails {
-        title:  description.arg(requester_user.name).arg(requester_user.email).arg(walletName).replace("()","")
+        title:  {
+            if (AppModel.walletInfo.isUserWallet) {
+                var _old = AppModel.walletInfo.inheritancePlanInfo.planInfoOld.activation_date
+                var _new = AppModel.walletInfo.inheritancePlanInfo.planInfoNew.activation_date
+                descriptionHb.arg(walletName).arg(_old).arg(_new).replace("()","")
+            }
+            else {
+                description.arg(requester_user.name).arg(requester_user.email).arg(walletName).replace("()","")
+            }
+        }
         inheritance: planInfo
         isCancel: planIsCancel
     }

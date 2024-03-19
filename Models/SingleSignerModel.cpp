@@ -23,6 +23,8 @@
 #include "bridgeifaces.h"
 #include <QQmlEngine>
 #include "utils/enumconverter.hpp"
+#include "Servers/Draco.h"
+#include "AppModel.h"
 
 QSingleSigner::QSingleSigner()
     : isPrimaryKey_(false)
@@ -421,6 +423,46 @@ int QSingleSigner::accountIndex()
     return qUtils::GetIndexFromPath(derivationPath());
 }
 
+QVariantList QSingleSigner::healthCheckHistory() const
+{
+    return m_healthCheckHistory.toVariantList();
+}
+
+void QSingleSigner::setHealthCheckHistory(QJsonArray list)
+{
+    if (m_healthCheckHistory == list)
+        return;
+    m_healthCheckHistory = list;
+    emit healthCheckHistoryChanged();
+}
+
+bool QSingleSigner::GetHistorySignerList()
+{
+    QJsonObject output;
+    QString errormsg = "";
+    bool ret {false};
+    ret = Draco::instance()->GetHistorySignerList(masterFingerPrint(), output, errormsg);
+    DBG_INFO << ret << output;
+    if(ret){
+        QJsonArray histories = output["history"].toArray();
+        setHealthCheckHistory(histories);
+    }
+    return ret;
+}
+
+QString QSingleSigner::address() const
+{
+    return m_address;
+}
+
+void QSingleSigner::setAddress(const QString &address)
+{
+    if (m_address == address)
+        return;
+    m_address = address;
+    emit addressChanged();
+}
+
 QString QSingleSigner::timeGapCalculationShort(QDateTime in)
 {
     QDateTime today = QDateTime::currentDateTime();
@@ -492,6 +534,16 @@ QString QSingleSigner::timeGapCalculation(QDateTime in)
     }
 }
 
+QVariantList QSingleSigner::getWalletList()
+{
+    QVariantList ret;
+    for (auto wallet : AppModel::instance()->walletListPtr()->fullList()) {
+        if (wallet->isContainKey(masterFingerPrint())) {
+            ret.append(QVariant::fromValue(wallet.data()));
+        }
+    }
+    return ret;
+}
 
 SingleSignerListModel::SingleSignerListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);

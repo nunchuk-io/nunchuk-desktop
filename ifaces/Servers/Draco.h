@@ -128,6 +128,7 @@ public:
     bool assistedWalletAddKey(const QString &request_id, const QJsonObject& data, bool &isDuplicateKey, QString &errormsg);
     bool assistedWalletRemoveId(const QString &request_id);
     QJsonObject assistedGetWalletConfig();
+    bool assistedWalletGetInfo(const QString &wallet_id, QJsonObject &output, QString &errormsg);
     bool assistedWalletUpdate(const QString &wallet_id, const QString &name, const QString &description, QJsonObject &output, QString &errormsg);
     bool assistedKeyUpdateName(const QString &fingerPrint, const QString &name);
 
@@ -223,6 +224,7 @@ public:
     void btcRates();
 
     bool inheritanceDownloadBackup(const QString& magic,
+                                   const QStringList &backup_passwords,
                                    int& response_code,
                                    QJsonObject &output,
                                    QString& errormsg);
@@ -315,6 +317,21 @@ public:
                                 QJsonObject &output,
                                 QString &errormsg);
 
+    bool GetAlerts(const QString wallet_id, QJsonObject &output, QString &errormsg);
+    bool GetAlertsCount(const QString wallet_id, QJsonObject &output, QString &errormsg);
+    bool DismissAlert(const QString wallet_id, const QString alert_id, QJsonObject &output, QString &errormsg);
+    bool MarkAlertAsRead(const QString wallet_id, const QString alert_id, QJsonObject &output, QString &errormsg);
+
+    bool HealthCheckForKey(const QString &wallet_id, const QString &xfp, QJsonObject &output, QString &errormsg);
+    bool GetWalletHealthStatus(const QString &wallet_id, QJsonObject &output, QString &errormsg);
+
+    // Dummy transaction
+    bool GetDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject& output, QString &errormsg);
+    bool UpdateDummyTransaction(const QString &wallet_id, const QStringList& authorizations, const QString &txid, QJsonObject& output, QString &errormsg);
+    bool CancelDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject& output, QString &errormsg);
+    bool FinalizeDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject& output, QString &errormsg);
+
+    bool GetHistorySignerList(const QString &xfp, QJsonObject& output, QString &errormsg);
 private:
     Draco();
     ~Draco();

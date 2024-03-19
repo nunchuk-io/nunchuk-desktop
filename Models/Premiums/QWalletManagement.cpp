@@ -71,7 +71,12 @@ void QWalletManagement::GetListWallet(int mode)
             QString group_id    = wallet_obj["group_id"].toString();
             QString status      = wallet_obj["status"].toString();
             if (status == "ACTIVE") {
-                mWallets.insert(wallet_id, group_id);
+                if (mode == USER_WALLET) {
+                    mWallets.insert(wallet_id, wallet_id);
+                }
+                else {
+                    mWallets.insert(wallet_id, group_id);
+                }
                 mWalletsInfo.insert(wallet_id, wallet_obj);
             }
         }
@@ -283,12 +288,22 @@ QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const
 
 bool QWalletManagement::isGroupWallet(WalletId wallet_id) const
 {
-    return mWallets.contains(wallet_id) && !groupId(wallet_id).isEmpty();
+    GroupId group_id = groupId(wallet_id);
+    if (group_id == wallet_id) {
+        return false;
+    } else {
+        return mWallets.contains(wallet_id) && !group_id.isEmpty();
+    }
 }
 
 bool QWalletManagement::isUserWallet(WalletId wallet_id) const
 {
-    return mWallets.contains(wallet_id) && groupId(wallet_id).isEmpty();
+    GroupId group_id = groupId(wallet_id);
+    if (group_id == wallet_id) {
+        return true;
+    } else {
+        return mWallets.contains(wallet_id) && group_id.isEmpty();
+    }
 }
 
 void QWalletManagement::clear()

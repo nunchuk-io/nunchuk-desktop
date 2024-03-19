@@ -109,9 +109,10 @@ static const APPLICATION_STATE STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS             
 static const APPLICATION_STATE STATE_ID_SCR_SETUP_SECURITY_QUESTION              = {E::STATE_ID_SCR_SETUP_SECURITY_QUESTION             , SCR_SETUP_SECURITY_QUESTION_Entry             , SCR_SETUP_SECURITY_QUESTION_Exit             , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_SECURITY_QUESTION              };
 static const APPLICATION_STATE STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION       = {E::STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION      , SCR_SETUP_ANSWER_SECURITY_QUESTION_Entry      , SCR_SETUP_ANSWER_SECURITY_QUESTION_Exit      , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_ANSWER_SECURITY_QUESTION       };
 static const APPLICATION_STATE STATE_ID_SCR_RECURRING_PAYMENTS                   = {E::STATE_ID_SCR_RECURRING_PAYMENTS                  , SCR_RECURRING_PAYMENTS_Entry                  , SCR_RECURRING_PAYMENTS_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_RECURRING_PAYMENTS                   };
+static const APPLICATION_STATE STATE_ID_SCR_ONBOARDING                           = {E::STATE_ID_SCR_ONBOARDING                          , SCR_ONBOARDING_Entry                          , SCR_ONBOARDING_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ONBOARDING                           };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_ROOT_trigger[30] = 
+static const STATE_TRIGGER STATE_ID_ROOT_trigger[31] = 
 {
 	{E::EVT_STARTING_APPLICATION_LOCALMODE   , EVT_STARTING_APPLICATION_LOCALMODE_HANDLER   , NULL                                  },
 	{E::EVT_STARTING_APPLICATION_ONLINEMODE  , EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER  , NULL                                  },
@@ -143,6 +144,7 @@ static const STATE_TRIGGER STATE_ID_ROOT_trigger[30] =
 	{E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST  , EVT_DASHBOARD_ALERT_SUCCESS_REQUEST_HANDLER  , &STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS },
 	{E::EVT_SHARE_YOUR_SECRET_REQUEST        , EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER        , &STATE_ID_SCR_SHARE_YOUR_SECRETS      },
 	{E::EVT_REENTER_YOUR_PASSWORD_REQUEST    , EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER    , &STATE_ID_SCR_REENTER_YOUR_PASSWORD   },
+	{E::EVT_ONBOARDING_REQUEST               , EVT_ONBOARDING_REQUEST_HANDLER               , &STATE_ID_SCR_ONBOARDING              },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -666,6 +668,15 @@ static const STATE_TRIGGER STATE_ID_SCR_MASTER_SIGNER_INFO_trigger[9] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const STATE_TRIGGER STATE_ID_SCR_ONBOARDING_trigger[2] = 
+{
+	{E::EVT_ONBOARDING_ACTION_REQUEST, EVT_ONBOARDING_ACTION_REQUEST_HANDLER, NULL           },
+	{E::EVT_ONBOARDING_CLOSE         , EVT_ONBOARDING_CLOSE_HANDLER         , &STATE_ID_ROOT },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const STATE_TRIGGER STATE_ID_SCR_ONLINE_ADD_CONTACTS_trigger[3] = 
 {
 	{E::EVT_ONLINE_ADD_CONTACTS_SEARCH_ID      , EVT_ONLINE_ADD_CONTACTS_SEARCH_ID_HANDLER      , NULL                      },
@@ -1079,7 +1090,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[81] = 
+static const STATE_SYSTEM STATE_ALL[82] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1162,6 +1173,7 @@ static const STATE_SYSTEM STATE_ALL[81] =
 	{E::STATE_ID_SCR_SETUP_SECURITY_QUESTION             , STATE_ID_SCR_SETUP_SECURITY_QUESTION_trigger             , ALEN(STATE_ID_SCR_SETUP_SECURITY_QUESTION_trigger)             , &STATE_ID_SCR_SETUP_SECURITY_QUESTION              },
 	{E::STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION      , STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger      , ALEN(STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger)      , &STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION       },
 	{E::STATE_ID_SCR_RECURRING_PAYMENTS                  , STATE_ID_SCR_RECURRING_PAYMENTS_trigger                  , ALEN(STATE_ID_SCR_RECURRING_PAYMENTS_trigger)                  , &STATE_ID_SCR_RECURRING_PAYMENTS                   },
+	{E::STATE_ID_SCR_ONBOARDING                          , STATE_ID_SCR_ONBOARDING_trigger                          , ALEN(STATE_ID_SCR_ONBOARDING_trigger)                          , &STATE_ID_SCR_ONBOARDING                           },
 
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

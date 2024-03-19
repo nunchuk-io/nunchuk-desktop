@@ -281,6 +281,10 @@ QScreen {
         }
     }
 
+    // Component.onCompleted: {
+    //         QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+    // }
+
     QConfirmYesNoPopup{
         id:_confirm
         property var data

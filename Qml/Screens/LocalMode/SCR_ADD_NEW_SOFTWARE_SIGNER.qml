@@ -90,7 +90,7 @@ QScreen {
                         samples: 17
                         color: "#80000000"
                         source: itembg
-                        QText {
+                        QLato {
                             id: nemonictext
                             anchors {
                                 fill: parent
@@ -123,11 +123,9 @@ QScreen {
                     width: height
                     source: "qrc:/Images/Images/info-60px.png"
                 }
-                QText {
+                QLato {
                     height: parent.height
                     text: STR.STR_QML_144
-                    color: "#031F2B"
-                    font.family: "Lato"
                 }
             }
         }

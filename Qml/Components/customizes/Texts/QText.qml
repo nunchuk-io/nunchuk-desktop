@@ -26,6 +26,7 @@ Text {
     smooth: true
     antialiasing: true
     color: "#031F2B"
+    fontSizeMode: Text.FixedSize
 /*
 Font.Thin
 Font.Light

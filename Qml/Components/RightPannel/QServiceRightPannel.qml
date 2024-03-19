@@ -23,7 +23,7 @@ import "./Service/Byzantine" as B
 import "./Service/Common"
 
 Item {
-    property var highestPermissionAccount: GroupWallet.highestPermissionAccount
+    property var  highestPermissionAccount: GroupWallet.highestPermissionAccount
     property bool hasGroupWallet: highestPermissionAccount.hasGroupWallet
     property bool hasGroupPending: highestPermissionAccount.hasGroupPending
     property bool isObserver: highestPermissionAccount.role === "OBSERVER"
@@ -33,21 +33,26 @@ Item {
             var user = ClientController.user
             if (user.isIronHandUser) {
                 return hb_ih_subscriber
-            } else if (user.isHoneyBadgerUser) {
+            }
+            else if (user.isHoneyBadgerUser) {
                 return hb_ih_subscriber
-            } else if (user.isByzantineUser) {
+            }
+            else if (user.isByzantineUser) {
                 if (hasGroupWallet) {
                     return isObserver ? observer_subscriber() : b_subscriber
-                } else {
+                }
+                else {
                     return observer_subscriber()
                 }
-            } else {
+            }
+            else {
                 if (!hasGroupWallet && hasGroupPending) {
                     return observer_subscriber()
                 }
                 if (hasGroupWallet) {
                     return isObserver ? observer_subscriber() : b_subscriber
-                } else {
+                }
+                else {
                     return not_subscriber()
                 }
             }

@@ -83,6 +83,7 @@ Item {
             width: 48
             height: 48
             bgColor: parent.color
+            visible: inheritancePlanInfo.isActived
             icon: "qrc:/Images/Images/more-horizontal-dark.svg"
             onClicked: {
                 optionMenu.popup()

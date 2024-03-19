@@ -217,7 +217,7 @@ QJsonObject QInheritancePlan::JsBody()
 {
     QJsonObject body;
     body["wallet"] = wallet_id();
-    body["group_id"] = walletInfoPtr()->groupId();
+    body["group_id"] = mode() == USER_WALLET ? "" : walletInfoPtr()->groupId();
     body["note"] = m_planInfo["note"].toString();
     body["buffer_period_id"] = m_planInfo["buffer_period"].toObject()["id"].toString();
     QString email = m_planInfo["display_emails"].toString();
@@ -250,27 +250,25 @@ bool QInheritancePlan::RequestInheritancePlanUpdate()
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
         }
         else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
-            if (auto w = walletInfoPtr()) {
-                if (w->isGroupWallet()) {
-                    QJsonObject output;
-                    QString errormsg = "";
-                    QJsonObject data;
-                    data["nonce"] = Draco::instance()->randomNonce();
-                    data["body"]  = JsBody();
-                    QStringList authorizations;
-                    bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(),
-                                                                        servicesTagPtr()->secQuesToken(),
-                                                                        authorizations,
-                                                                        data,
-                                                                        true,
-                                                                        output,
-                                                                        errormsg);
-                    if(ret){
-                        QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
-                        if (auto dummy = groupDummyTxPtr()) {
-                            dummy->setDummyTxData(dummy_transaction);
-                        }
-                    }
+            QJsonObject output;
+            QString errormsg = "";
+            QJsonObject data;
+            data["nonce"] = Draco::instance()->randomNonce();
+            data["body"]  = JsBody();
+            QStringList authorizations;
+            bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(),
+                                                                servicesTagPtr()->secQuesToken(),
+                                                                authorizations,
+                                                                data,
+                                                                true,
+                                                                output,
+                                                                errormsg);
+            DBG_INFO << ret << output;
+            if(ret){
+                QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
+                DBG_INFO << dummy_transaction;
+                if (auto dummy = groupDummyTxPtr()) {
+                    dummy->setDummyTxData(dummy_transaction);
                 }
             }
             //Show popup support in moble
@@ -290,6 +288,26 @@ bool QInheritancePlan::RequestInheritancePlanCreate()
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
         }
         else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
+            QJsonObject output;
+            QString errormsg = "";
+            QJsonObject data;
+            data["nonce"] = Draco::instance()->randomNonce();
+            data["body"]  = JsBody();
+            QStringList authorizations;
+            bool ret = Draco::instance()->inheritancePlanCreate(authorizations,
+                                                                data,
+                                                                true,
+                                                                output,
+                                                                errormsg);
+            DBG_INFO << ret << output;
+            if(ret){
+                QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
+                DBG_INFO << dummy_transaction;
+                if (auto dummy = groupDummyTxPtr()) {
+                    dummy->setDummyTxData(dummy_transaction);
+                }
+            }
+            //Show popup support in moble
             emit inheritanceDummyTransactionAlert();
         }
         else {}
@@ -310,32 +328,28 @@ bool QInheritancePlan::RequestInheritancePlanCancel()
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
         }
         else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
-            if (auto w = walletInfoPtr()) {
-                if (w->isGroupWallet()) {
-                    QJsonObject output;
-                    QString errormsg = "";
-                    QJsonObject data;
-                    data["nonce"] = Draco::instance()->randomNonce();
+            QJsonObject output;
+            QString errormsg = "";
+            QJsonObject data;
+            data["nonce"] = Draco::instance()->randomNonce();
 
-                    QJsonObject body;
-                    body["wallet"] = wallet_id();
-                    body["group_id"] = wallet->groupId();
-                    data["body"]  = body;
+            QJsonObject body;
+            body["wallet"] = wallet_id();
+            body["group_id"] = mode() == USER_WALLET ? "" : wallet->groupId();
+            data["body"]  = body;
 
-                    QStringList authorizations;
-                    bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(),
-                                                                        servicesTagPtr()->secQuesToken(),
-                                                                        authorizations,
-                                                                        data,
-                                                                        true,
-                                                                        output,
-                                                                        errormsg);
-                    if(ret){
-                        QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
-                        if (auto dummy = groupDummyTxPtr()) {
-                            dummy->setDummyTxData(dummy_transaction);
-                        }
-                    }
+            QStringList authorizations;
+            bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(),
+                                                                servicesTagPtr()->secQuesToken(),
+                                                                authorizations,
+                                                                data,
+                                                                true,
+                                                                output,
+                                                                errormsg);
+            if(ret){
+                QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
+                if (auto dummy = groupDummyTxPtr()) {
+                    dummy->setDummyTxData(dummy_transaction);
                 }
             }
             //Show popup support in moble
@@ -362,7 +376,7 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     }
     QJsonObject bodyCancel;
     bodyCancel["wallet"] = wallet_id();
-    bodyCancel["group_id"] = wallet->groupId();
+    bodyCancel["group_id"] = mode() == USER_WALLET ? "" : wallet->groupId();
 
     QJsonObject body_data = isCancel ? bodyCancel : JsBody();
     QString errormsg = "";
@@ -379,33 +393,10 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
 
 bool QInheritancePlan::InheritancePlanUpdateSucceed()
 {
-    QWarningMessage msg;
     QJsonObject data;
     QStringList authorizations;
-    if (auto w = walletInfoPtr()) {
-        if (w->isGroupWallet()) {
-            data["nonce"] = Draco::instance()->randomNonce();
-            data["body"]  = JsBody();
-        } else {
-            if (auto dummy = userDummyTxPtr()) {
-                QMap<QString, QString> signatures = dummy->transactionPtr()->signatures();
-                QStringList xfps = signatures.keys();
-                for (QString xfp : xfps) {
-                    QString signature = signatures[xfp];
-                    QString authorization = qUtils::CreateRequestToken(signature, xfp, msg);
-                    authorizations.append(authorization);
-                }
-                ReqiredSignaturesInfo info = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
-                if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
-                    data["nonce"] = Draco::instance()->randomNonce();
-                    data["body"]  = JsBody();
-                }
-                else {
-                    data = dummy->nonceBody();
-                }
-            }
-        }
-    }
+    data["nonce"] = Draco::instance()->randomNonce();
+    data["body"]  = JsBody();
 
     QJsonObject output;
     QString errormsg = "";
@@ -421,19 +412,10 @@ bool QInheritancePlan::InheritancePlanUpdateSucceed()
 
 bool QInheritancePlan::InheritancePlanCreateSucceed()
 {
-    QWarningMessage msg;
     QStringList authorizations;
     QJsonObject data;
-    if (auto dummy = userDummyTxPtr()) {
-        QMap<QString, QString> signatures = dummy->transactionPtr()->signatures();
-        QStringList xfps = signatures.keys();
-        for (QString xfp : xfps) {
-            QString signature = signatures[xfp];
-            QString authorization = qUtils::CreateRequestToken(signature, xfp, msg);
-            authorizations.append(authorization);
-        }
-        data = dummy->nonceBody();
-    }
+    data["nonce"] = Draco::instance()->randomNonce();
+    data["body"]  = JsBody();
 
     QJsonObject output;
     QString errormsg = "";
@@ -448,37 +430,13 @@ bool QInheritancePlan::InheritancePlanCreateSucceed()
 bool QInheritancePlan::InheritancePlanCancelSucceed()
 {
     if (auto w = walletInfoPtr()) {
-        QWarningMessage msg;
         QStringList authorizations;
         QJsonObject data;
-        if (w->isGroupWallet()) {
-            data["nonce"] = Draco::instance()->randomNonce();
-            QJsonObject body;
-            body["wallet"] = wallet_id();
-            body["group_id"] = w->groupId();
-            data["body"]  = body;
-        } else {
-            if (auto dummy = userDummyTxPtr()) {
-                QMap<QString, QString> signatures = dummy->transactionPtr()->signatures();
-                QStringList xfps = signatures.keys();
-                for (QString xfp : xfps) {
-                    QString signature = signatures[xfp];
-                    QString authorization = qUtils::CreateRequestToken(signature, xfp, msg);
-                    authorizations.append(authorization);
-                }
-                ReqiredSignaturesInfo info = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
-                if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
-                    data["nonce"] = Draco::instance()->randomNonce();
-                    QJsonObject body;
-                    body["wallet"] = wallet_id();
-                    body["group_id"] = w->groupId();
-                    data["body"]  = body;
-                }
-                else {
-                    data = dummy->nonceBody();
-                }
-            }
-        }
+        data["nonce"] = Draco::instance()->randomNonce();
+        QJsonObject body;
+        body["wallet"] = wallet_id();
+        body["group_id"] = mode() == USER_WALLET ? "" : w->groupId();
+        data["body"]  = body;
 
         QJsonObject output;
         QString errormsg = "";
