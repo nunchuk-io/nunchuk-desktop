@@ -22,12 +22,12 @@ private:
     int m_pingCount;
 };
 
-class MonitoringThread : public QObject
+class QPingThread : public QObject
 {
     Q_OBJECT
 public:
-    MonitoringThread();
-    void startTracking();
+    QPingThread();
+    void startPing();
 
 private slots:
     void handlePing();

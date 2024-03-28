@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SHARED_WALLET_CONFIGURE.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -42,7 +42,7 @@ void EVT_SHARED_WALLET_CONFIGURE_CANCEL_HANDLER(QVariant msg) {
         QWarningMessage execption;
         matrixbrigde::CancelWallet(roomid, STR_CPP_010, execption);
         if((int)EWARNING::WarningType::NONE_MSG == execption.type()){
-            QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_SHARED_WALLET_CONFIGURE);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_SHARED_WALLET_CONFIGURE);
         }
     }
 }
@@ -61,7 +61,7 @@ void EVT_SHARED_WALLET_FINALIZE_WALLET_HANDLER(QVariant msg) {
         QWarningMessage msgwarning;
         matrixbrigde::CreateWallet(roomid, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-            QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_SHARED_WALLET_CONFIGURE);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_SHARED_WALLET_CONFIGURE);
         }
     }
 }

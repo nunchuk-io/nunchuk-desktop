@@ -46,7 +46,7 @@ void EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST_HANDLER(QVariant msg) {
         if (!dummy_transaction_id.isEmpty()) {
             if (auto health = dashboard->healthPtr()) {
                 if (health->HealthCheckPendingForTx(dummy_transaction_id)) {
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                     dashboard->GetAlertsInfo();
                 }
             }
@@ -57,7 +57,7 @@ void EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST_HANDLER(QVariant msg) {
         if (!dummy_transaction_id.isEmpty()) {
             if (auto health = dashboard->healthPtr()) {
                 if (health->HealthCheckPendingForTx(dummy_transaction_id)) {
-                    QQuickViewer::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
                     dashboard->GetAlertsInfo();
                 }
             }

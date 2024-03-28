@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_CREATE_TRANSACTION.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
 #include "Chats/matrixbrigde.h"
@@ -72,7 +72,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     }
                     AppModel::instance()->setTransactionInfo(trans);
                     AppModel::instance()->requestSyncWalletDb(wallet_id);
-                    QQuickViewer::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
+                    QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                     AppModel::instance()->setTxidReplacing("");
                     QString msg_name = QString("The transaction has been replaced");
                     AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
@@ -127,10 +127,10 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                                       subtractFromFeeAmout,
                                                                                       msginit);
                         if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
-                            QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                            QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                         }
                         else{
-                            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                         }
                         if((int)EWARNING::WarningType::NONE_MSG == msginit.type()){
                             AppModel::instance()->requestSyncWalletDb(wallet_id);
@@ -174,7 +174,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                 wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());
                             }
                             AppModel::instance()->requestSyncWalletDb(wallet_id);
-                            QQuickViewer::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
+                            QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                             if (!unUseAddress.isEmpty()) {
                                 QString msg_name = QString("The transaction has been replaced");
                                 AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
@@ -268,7 +268,7 @@ void EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX_HANDLER(QVariant msg) {
         if(trans){
             if(AppModel::instance()->transactionInfo()){
                 trans.data()->setMemo(AppModel::instance()->transactionInfo()->memo());
-                if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_INFO){
+                if(QEventProcessor::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_INFO){
                     DBG_INFO << "REPLACE BY FEE, KEEP ORIGIN FEE";
                     trans.data()->setFee(AppModel::instance()->transactionInfo()->feeSats());
                 }

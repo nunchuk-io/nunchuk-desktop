@@ -14,7 +14,7 @@ void ObjectTracking::run()
     {
         msleep(TIMEOUT_TRACKING);
         if(m_pingCount > 4){
-            DBG_INFO << "MONITORING: NO FEEDBACK FROM MAINTHREAD IN" << m_pingCount * TIMEOUT_TRACKING << "seconds";
+            DBG_INFO << "NO FEEDBACK IN" << m_pingCount * TIMEOUT_TRACKING << "seconds";
             abort();
             // trace bt with: thread apply all bt
         }
@@ -28,19 +28,19 @@ void ObjectTracking::handleFeedback()
     m_pingCount = 0;
 }
 
-MonitoringThread::MonitoringThread() : m_objtracking(NULL)
+QPingThread::QPingThread() : m_objtracking(NULL)
 {
     m_objtracking = new ObjectTracking();
-    connect(m_objtracking, &ObjectTracking::pingSignal, this, &MonitoringThread::handlePing);
+    connect(m_objtracking, &ObjectTracking::pingSignal, this, &QPingThread::handlePing);
 }
 
-void MonitoringThread::startTracking() {
+void QPingThread::startPing() {
     if(m_objtracking){
         m_objtracking->start();
     }
 }
 
-void MonitoringThread::handlePing()
+void QPingThread::handlePing()
 {
     DBG_INFO << "MONITORING: Handling ping signal ... >> OK MAIN THREAD FINE";
     emit m_objtracking->feedbackSignal();

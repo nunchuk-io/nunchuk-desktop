@@ -22,7 +22,7 @@
 #include "nunchuckiface.h"
 #include "Chats/ClientController.h"
 #include "AppSetting.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "ViewsEnums.h"
 
 QJsonObject matrixbrigde::stringToJson(const QString &content)

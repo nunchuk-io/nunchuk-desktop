@@ -58,6 +58,7 @@ QScreen {
         {flow_action: AlertType.RECURRING_PAYMENT_CANCELATION_PENDING,   screen_component:_cancel_payment_request},
 
         {flow_action: AlertType.KEY_RECOVERY_REQUEST,        screen_component: _request_key_recovery_for},
+        {flow_action: AlertType.UPDATE_SECURITY_QUESTIONS,   screen_component: _update_security_questions},
     ]
     readonly property var map_screens: [
         {screen_name: "register-gapped-device",         screen_component: _register_gapped_device},
@@ -186,4 +187,10 @@ QScreen {
         }
     }
 
+    Component {
+        id: _update_security_questions
+        QSecurityQuestionsUpdate {
+
+        }
+    }
 }

@@ -43,6 +43,6 @@ void EVT_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
             w->serverKeyPtr()->serverKeyGetCurrentPolicies();
         });
     }
-    QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE);
+    QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST, E::STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE);
 }
 

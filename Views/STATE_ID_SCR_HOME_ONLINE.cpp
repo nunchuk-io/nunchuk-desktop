@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_HOME_ONLINE.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -76,10 +76,10 @@ void EVT_HOME_ONLINE_CREATE_SHARED_WALLET_HANDLER(QVariant msg) {
         if(CLIENT_CURRENTROOM){
             CLIENT_CURRENTROOM->setRoomWallet(QRoomWalletPtr(new QRoomWallet()));
         }
-        QQuickViewer::instance()->sendEvent(E::EVT_HOME_ONLINE_SIGNER_AVAILABLE_FOR_SWL);
+        QEventProcessor::instance()->sendEvent(E::EVT_HOME_ONLINE_SIGNER_AVAILABLE_FOR_SWL);
     }
     else{
-        QQuickViewer::instance()->sendEvent(E::EVT_HOME_ONLINE_SIGNER_UNAVAILABLE_FOR_SWL);
+        QEventProcessor::instance()->sendEvent(E::EVT_HOME_ONLINE_SIGNER_UNAVAILABLE_FOR_SWL);
     }
 }
 

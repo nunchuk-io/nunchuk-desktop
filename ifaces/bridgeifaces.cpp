@@ -30,7 +30,7 @@
 void bridge::nunchukMakeInstance(const QString& passphrase,
                                  QWarningMessage& msg)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     AppModel::instance()->requestClearData();
     bool encrypted = (passphrase == "") ? false : true;
     AppSetting::instance()->setGroupSetting("");
@@ -115,7 +115,7 @@ void bridge::nunchukMakeInstanceForAccount(const QString &account,
                                            const QString &passphrase,
                                            QWarningMessage &msg)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     AppModel::instance()->requestClearData();
     bool encrypted = (passphrase == "") ? false : true;
     AppSetting::instance()->setGroupSetting(account);
@@ -575,6 +575,26 @@ nunchuk::Wallet bridge::nunchukCreateOriginWallet(const QString &name,
 
 }
 
+nunchuk::Wallet bridge::nunchukCreateOriginWallet(const QString &name,
+                                                  int m,
+                                                  int n,
+                                                  const std::vector<nunchuk::SingleSigner>& signers,
+                                                  ENUNCHUCK::AddressType address_type,
+                                                  bool is_escrow,
+                                                  const QString &desc,
+                                                  QWarningMessage &msg)
+{
+    return nunchukiface::instance()->CreateWallet(name.toStdString(),
+                                                  m,
+                                                  n,
+                                                  signers,
+                                                  (nunchuk::AddressType)address_type,
+                                                  is_escrow,
+                                                  desc.toStdString(),
+                                                  msg);
+
+}
+
 QString bridge::nunchukDraftWallet(const QString &name,
                                    int m,
                                    int n,
@@ -689,8 +709,10 @@ QWalletPtr bridge::nunchukImportWalletDescriptor(const QString &dbFile,
                                                                                     description.toStdString(),
                                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        bool needTopUp = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->needTopUpXpubs();
-        AppModel::instance()->newWalletInfo()->setCapableCreate(!needTopUp);
+        if (auto w = AppModel::instance()->newWalletInfo()) {
+            bool needTopUp = w->singleSignersAssigned()->needTopUpXpubs();
+            w->setCapableCreate(!needTopUp);
+        }
         return bridge::convertWallet(walletResult);
     }
     else {
@@ -1704,8 +1726,10 @@ QWalletPtr bridge::nunchukImportKeystoneWallet(const QList<QString> &qr_data,
     }
     nunchuk::Wallet walletResult = nunchukiface::instance()->ImportKeystoneWallet(qr_result, description.toStdString(), msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        bool needTopUp = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->needTopUpXpubs();
-        AppModel::instance()->newWalletInfo()->setCapableCreate(!needTopUp);
+        if (auto w = AppModel::instance()->newWalletInfo()) {
+            bool needTopUp = w->singleSignersAssigned()->needTopUpXpubs();
+            w->setCapableCreate(!needTopUp);
+        }
         return bridge::convertWallet(walletResult);
     }
     else {
@@ -2081,4 +2105,34 @@ QString bridge::GetSignerAddress(const nunchuk::SingleSigner &signer, const nunc
 {
     QWarningMessage msg;
     return QString::fromStdString(nunchukiface::instance()->GetSignerAddress(signer, address_type, msg));
+}
+
+QString bridge::GetHotWalletMnemonic(const QString &wallet_id, const QString &passphrase)
+{
+    QWarningMessage msg;
+    return QString::fromStdString(nunchukiface::instance()->GetHotWalletMnemonic(wallet_id.toStdString(), passphrase.toStdString(), msg));
+}
+
+QWalletPtr bridge::nunchukCreateHotWallet(const QString &mnemonic, const QString &passphrase,  bool need_backup, QWarningMessage &msg)
+{
+    nunchuk::Wallet walletResult = nunchukiface::instance()->CreateHotWallet(mnemonic.toStdString(), passphrase.toStdString(), need_backup, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return bridge::convertWallet(walletResult);
+    }
+    else {
+        return NULL;
+    }
+}
+
+QStringList bridge::nunchukExportBCR2020010Wallet(const QString &wallet_id, QWarningMessage &msg)
+{
+    std::vector<std::string> data = nunchukiface::instance()->ExportBCR2020010Wallet(wallet_id.toStdString(), msg);
+    QStringList result;
+    result.reserve(data.size());
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        for (std::string it : data) {
+            result.append(QString::fromStdString(it));
+        }
+    }
+    return result;
 }

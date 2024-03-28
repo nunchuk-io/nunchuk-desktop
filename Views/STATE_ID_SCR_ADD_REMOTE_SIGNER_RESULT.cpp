@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -85,7 +85,7 @@ void EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST_HANDLER(QVariant msg) {
         if(remoteSigners){
             AppModel::instance()->setRemoteSignerList(remoteSigners);
         }
-        QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST,E::STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT);
+        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST,E::STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT);
         AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     }
 }

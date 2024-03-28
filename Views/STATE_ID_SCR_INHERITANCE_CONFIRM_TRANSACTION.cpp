@@ -62,7 +62,7 @@ void EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ_HANDLER(QVariant msg)
     else if (type == "create-transaction") {
         if (draft_tx_fee(fee_input)) {
             if (ServiceSetting::instance()->servicesTagPtr()->inheritanceSignTransaction()) {
-                QQuickViewer::instance()->signalNotifySendEvent(E::EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST);
+                QEventProcessor::instance()->signalNotifySendEvent(E::EVT_INHERITANCE_TRANSACTION_DETAILS_REQUEST);
             }
         }
     }

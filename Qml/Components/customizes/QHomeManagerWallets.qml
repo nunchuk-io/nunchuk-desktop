@@ -90,7 +90,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 icon:"qrc:/Images/Images/add-light.svg"
                 onClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_HOME_ADD_WALLET_REQUEST)
+                    OnBoarding.state = "addAWallet"
+                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
                 }
             }
         }
@@ -210,6 +211,7 @@ Item {
                             walletRole: model.wallet_role
                             hasOwner: model.wallet_hasOwner
                             primaryOwner: model.wallet_primaryOwner
+                            isHotWallet: model.wallet_isHotWallet
                             onDashboard: {
                                 GlobalData.listFocusing = 1
                                 var obj = {

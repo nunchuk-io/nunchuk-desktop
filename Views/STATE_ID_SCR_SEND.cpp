@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SEND.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/AppSetting.h"
 #include "Models/SingleSignerModel.h"
@@ -88,7 +88,7 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
         if(trans){
             AppModel::instance()->setTransactionInfo(trans);
             AppModel::instance()->transactionInfo()->setMemo(memo);
-            QQuickViewer::instance()->sendEvent(E::EVT_SEND_CREATE_TRANSACTION_SUCCEED);
+            QEventProcessor::instance()->sendEvent(E::EVT_SEND_CREATE_TRANSACTION_SUCCEED);
         }
     }
     else{
@@ -109,7 +109,7 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
                 if(trans){
                     AppModel::instance()->setTransactionInfo(trans);
                     AppModel::instance()->transactionInfo()->setMemo(memo);
-                    QQuickViewer::instance()->sendEvent(E::EVT_SEND_CREATE_TRANSACTION_SUCCEED);
+                    QEventProcessor::instance()->sendEvent(E::EVT_SEND_CREATE_TRANSACTION_SUCCEED);
                 }
             }
             else{

@@ -160,7 +160,7 @@ void EVT_RECURRING_PAYMENTS_ENTER_HANDLER(QVariant msg) {
                 if (payment->CreateRecurringPayment()) {
                     if (auto dash = w->dashboard()) {
                         dash->setFlow((int)AlertEnum::E_Alert_t::CREATE_RECURRING_PAYMENT);
-                        QQuickViewer::instance()->notifySendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+                        QEventProcessor::instance()->notifySendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
                     }
                 }
             }
@@ -168,19 +168,19 @@ void EVT_RECURRING_PAYMENTS_ENTER_HANDLER(QVariant msg) {
                 if (payment->CancelRecurringPayment()) {
                     if (auto dash = w->dashboard()) {
                         dash->setFlow((int)AlertEnum::E_Alert_t::CANCEL_RECURRING_PAYMENT);
-                        QQuickViewer::instance()->notifySendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+                        QEventProcessor::instance()->notifySendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
                     }
                 }
             }
             else if (type == "approve-recurring-payment") {
-                QQuickViewer::instance()->notifySendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+                QEventProcessor::instance()->notifySendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
             }
             else if (type == "deny-recurring-payment") {
                 if (payment->CancelPaymentCancellationPending()) {
                     if (auto dashboard = payment->dashBoardPtr()) {
                         dashboard->GetAlertsInfo();
                     }
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                     QString msg_cancel = "Recurring payment denied";
                     AppModel::instance()->showToast(0, msg_cancel, EWARNING::WarningType::SUCCESS_MSG);
                 }

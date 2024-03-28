@@ -38,7 +38,7 @@ void EVT_KEY_HEALTH_CHECK_STATUS_ENTER_HANDLER(QVariant msg) {
     DBG_INFO << type;
     if (type == "health-check") {
         QGroupWallets::instance()->dashboardInfoPtr()->setConfigFlow("health-check-procedure");
-        QQuickViewer::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
         QString xfp = maps["xfp"].toString();
         QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
     } else if (type == "request-health-check") {
@@ -46,7 +46,7 @@ void EVT_KEY_HEALTH_CHECK_STATUS_ENTER_HANDLER(QVariant msg) {
         QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->RequestHealthCheckForKey(xfp);
     } else if (type == "health-check-request-sent") {
         QGroupWallets::instance()->dashboardInfoPtr()->setConfigFlow("health-check-request-sent");
-        QQuickViewer::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
     }
 }
 

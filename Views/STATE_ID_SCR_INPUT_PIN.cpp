@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_INPUT_PIN.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -53,14 +53,14 @@ void EVT_INPUT_PIN_SEND_PIN_HANDLER(QVariant msg) {
             AppModel::instance()->startSendPinToDevice(state_id, device_idx, pinInputted);
         }
         else{
-            QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
+            QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
             AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG );
         }
         break;
     }
     default:
     {
-        QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
+        QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
     }
         break;
     }

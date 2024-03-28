@@ -94,25 +94,20 @@ Popup {
         color: "#80000000"
         source: qrmask
     }
-    Connections {
-        target: qrcameraLoader.item
-        onTagFound : {
-            qrscaner.tags.push(tag)
-            qrscaner.tagFound(tag)
-        }
-    }
     Component {
         id: qrcameraComp
         Item {
             id: qrcameraItem
             width: 450
             height: 450
-            signal tagFound(var tag)
             QQrScanner {
                 id: qrcamera
                 anchors.fill: parent
                 anchors.margins: 6
-                onTagFound: { qrcameraItem.tagFound(tag) }
+                onTagFound: {
+                    qrscaner.tags.push(tag)
+                    qrscaner.tagFound(tag)
+                }
             }
         }
     }

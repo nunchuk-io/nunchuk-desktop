@@ -17,19 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-#include "QScreenManager.h"
+#include "QScreenDelegate.h"
 
-QScreenQueue QScreenManager::cacheScreen;
+QScreenQueue QScreenDelegate::cacheScreen;
 
-QScreenManager::QScreenManager(QQuickItem* rootObject, QQmlContext* context): m_rootObject(rootObject), m_context(context), m_CurrentScreen(NULL)
+QScreenDelegate::QScreenDelegate(QQuickItem* rootObject, QQmlContext* context): m_rootObject(rootObject), m_context(context), m_CurrentScreen(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QScreenManager::~QScreenManager()
+QScreenDelegate::~QScreenDelegate()
 {}
 
-bool QScreenManager::showScreen(const APPLICATION_STATE *scr, QVariant msg)
+bool QScreenDelegate::showScreen(const APPLICATION_STATE *scr, QVariant msg)
 {
     bool ret = false;
     if((NULL != m_rootObject) && (NULL != scr) && (m_CurrentScreen != scr)){
@@ -64,12 +64,12 @@ bool QScreenManager::showScreen(const APPLICATION_STATE *scr, QVariant msg)
     return ret;
 }
 
-uint QScreenManager::getCurrentScreen() const
+uint QScreenDelegate::getCurrentScreen() const
 {
     return (NULL != m_CurrentScreen) ? m_CurrentScreen->id : 0;
 }
 
-QQmlComponentPtr QScreenManager::getComponent(QObject *parent, QString screenFile) {
+QQmlComponentPtr QScreenDelegate::getComponent(QObject *parent, QString screenFile) {
     if(NULL != parent){
         QQmlEngine *engine = qmlEngine(parent);
         if(engine) {

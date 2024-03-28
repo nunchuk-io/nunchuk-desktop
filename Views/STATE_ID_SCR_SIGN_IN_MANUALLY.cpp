@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SIGN_IN_MANUALLY.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -75,7 +75,7 @@ void EVT_PRIMARY_KEY_CHECK_USERNAME_REQUEST_HANDLER(QVariant msg) {
     bool isAvailable = Draco::instance()->pkey_username_availability(username);
     DBG_INFO << isAvailable;
     if(isAvailable){
-        QObject *obj = QQuickViewer::instance()->getQmlObj().first();
+        QObject *obj = QEventProcessor::instance()->getQmlObj().first();
         if(obj){
             obj->setProperty("whereIn",1);
             QString nonce = Draco::instance()->pkey_manual_nonce("",username,"");
@@ -88,7 +88,7 @@ void EVT_PRIMARY_KEY_CHECK_USERNAME_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_CHALLENGE_MESSAGE_REFRESH_REQUEST_HANDLER(QVariant msg) {
     QString username = msg.toString();
-    QObject *obj = QQuickViewer::instance()->getQmlObj().first();
+    QObject *obj = QEventProcessor::instance()->getQmlObj().first();
     if(obj){
         QString nonce = Draco::instance()->pkey_manual_nonce("",username,"");
         if(!nonce.isEmpty()){

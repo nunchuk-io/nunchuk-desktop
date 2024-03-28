@@ -90,3 +90,15 @@ LogWriteToFile::~LogWriteToFile()
 {
 
 }
+
+QFunctionTime::QFunctionTime(QString _func) : mFunc(_func)
+{
+    mTime.start();
+}
+
+QFunctionTime::~QFunctionTime()
+{
+#ifndef RELEASE_MODE
+    DBG_FUNCTION_TIME_INFO << QString("%1 takes %2 ms").arg(mFunc).arg(mTime.elapsed());
+#endif
+}

@@ -34,11 +34,19 @@ import "../LocalMode/Onboarding"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property string screen_state: "onboarding"
+    property string screen_state: OnBoarding.state
     readonly property var map_screens: [
         {screen_name: "onboarding",                 screen_component: _onboarding},
         {screen_name: "unassistedWallet",           screen_component: _unassistedWallet},
         {screen_name: "assistedWallet",             screen_component: _assistedWallet},
+        {screen_name: "hotWallet",                  screen_component: _hotWallet},
+        {screen_name: "getMore",                    screen_component: _getMore},
+        {screen_name: "addAWallet",                 screen_component: _addAWallet},
+        {screen_name: "recoverHotWallet",           screen_component: _recoverHotWallet},
+        {screen_name: "haveAnAdvisor",              screen_component: _haveAnAdvisor},
+        {screen_name: "dontHaveAnAdvisor",          screen_component: _dontHaveAnAdvisor},
+        {screen_name: "seedPhrase",                 screen_component: _seedPhrase},
+        {screen_name: "confirmSeedPhrase",          screen_component: _confirmSeedPhrase}
     ]
 
     Loader {
@@ -59,6 +67,36 @@ QScreen {
         id: _assistedWallet
         QAssistedWallet {}
     }
-
-
+    Component {
+        id: _hotWallet
+        QHotWallet {}
+    }
+    Component {
+        id: _getMore
+        QGetMoreOutOfNunchukWithAnAssistedWallet {}
+    }
+    Component {
+        id: _addAWallet
+        QAddAWallet {}
+    }
+    Component {
+        id: _recoverHotWallet
+        QRecoverHotWallet {}
+    }
+    Component {
+        id: _haveAnAdvisor
+        QHaveAnAdvisor {}
+    }
+    Component {
+        id: _dontHaveAnAdvisor
+        QDontHaveAnAdvisor {}
+    }
+    Component {
+        id: _seedPhrase
+        QSeedPhrase {}
+    }
+    Component {
+        id: _confirmSeedPhrase
+        QConfirmSeedPhrase {}
+    }
 }

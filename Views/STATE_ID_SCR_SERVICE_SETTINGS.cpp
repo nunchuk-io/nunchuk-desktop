@@ -23,7 +23,7 @@
 #include "bridgeifaces.h"
 #include "Chats/ClientController.h"
 #include "ServiceSetting.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QServerKey.h"
@@ -110,12 +110,12 @@ void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD;
             data["wallet_id"] = wallet->id();
-            QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+            QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     } else if (type == "wallet-lockdown") {
         if (ServiceSetting::instance()->servicesTagPtr()->createLockdownPeriods()) {
             DBG_INFO << type;
-            QQuickViewer::instance()->sendEvent(E::EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_SELECT_YOUR_LOCKDOWN_PERIOD_REQUEST);
         }
     } else if (type == "platform-key-co-signing-policies") {
         QString wallet_id = maps["wallet_id"].toString();
@@ -124,7 +124,7 @@ void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_SERVICE_SETTINGS;
             data["wallet_id"] = wallet->id();
-            QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+            QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     } else if (type == "inheritance-planing") {
         QString wallet_id = maps["wallet_id"].toString();
@@ -133,7 +133,7 @@ void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN;
             data["wallet_id"] = wallet->id();
-            QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+            QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     }
 }

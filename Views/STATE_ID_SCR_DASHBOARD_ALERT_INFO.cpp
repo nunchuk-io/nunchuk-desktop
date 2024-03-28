@@ -46,7 +46,7 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
     if (dashboard.isNull()) return;
     QJsonObject payload = dashboard->alertJson()["payload"].toObject();
     if (type == "continue-health-check") {
-        QQuickViewer::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
         QString xfp = payload["xfp"].toString();
         if (auto dummy = dashboard->groupDummyTxPtr()) {
             dummy->setCurrentXfp(xfp);
@@ -109,7 +109,7 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
             if (auto plan = w->inheritancePlanPtr()) {
                 if (plan->InheritancePlanningRequestApprove()) {
                     dashboard->GetAlertsInfo();
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                     QString msg_name = QString("Inheritance planning request approved");
                     AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
                 }
@@ -121,7 +121,7 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
             if (auto plan = w->inheritancePlanPtr()) {
                 if (plan->InheritancePlanningRequestDeny()) {
                     dashboard->GetAlertsInfo();
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                     QString msg_name = QString("Inheritance planning request denied");
                     AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
                 }
@@ -132,7 +132,7 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
         QString password = maps["password"].toString();
         if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->startRecovery(password)) {
             dashboard->setFlow((int)AlertEnum::E_Alert_t::KEY_RECOVERY_SUCCESS);
-            QQuickViewer::instance()->sendEvent(E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST);
             if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->UserKeysMarkRecoverStatus())
             {
                 dashboard->GetAlertsInfo();
@@ -143,7 +143,7 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
         if (dashboard->healthPtr()) {
             if (dashboard->healthPtr()->CancelHealthCheckPending()) {
                 dashboard->GetAlertsInfo();
-                QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                 QString msg_cancel = "Health check request has been canceled";
                 AppModel::instance()->showToast(0, msg_cancel, EWARNING::WarningType::SUCCESS_MSG);
             }
@@ -152,14 +152,14 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
     else if (type == "review-recurring-payment") {
         if (auto payment = dashboard->recurringPaymentPtr()) {
             payment->addFlow((int)PaymentEnum::Enum_t::VIEWING_RECURRING_PAYMENTS_ALERT);
-            QQuickViewer::instance()->sendEvent(E::EVT_RECURRING_PAYMENTS_REQUEST, true);
+            QEventProcessor::instance()->sendEvent(E::EVT_RECURRING_PAYMENTS_REQUEST, true);
         }
     }
     else if (type == "cancel-recurring-payment-cancelation-pending") {
         if (auto payment = dashboard->recurringPaymentPtr()) {
             if (payment->CancelPaymentCancellationPending()) {
                 dashboard->GetAlertsInfo();
-                QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                 QString msg_cancel = "Pending cancellation has been cancelled";
                 AppModel::instance()->showToast(0, msg_cancel, EWARNING::WarningType::SUCCESS_MSG);
             }
@@ -168,8 +168,21 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
     else if (type == "cancel-recovery-key") {
         if (dashboard->CancelRecoveryKey()) {
             dashboard->GetAlertsInfo();
-            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
         }
+    }
+    if (type == "cancel-security-question-update") {
+        if (auto dummy = dashboard->groupDummyTxPtr()) {
+            if (dummy->CancelDummyTransaction()) {
+                dashboard->GetAlertsInfo();
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                QString msg_cancel = "Security questions has been canceled";
+                AppModel::instance()->showToast(0, msg_cancel, EWARNING::WarningType::SUCCESS_MSG);
+            }
+        }
+    }
+    else if (type == "continue-security-question-update") {
+        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
     }
     else {}
 }

@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_ADD_WALLET_CONFIRMATION.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -121,7 +121,7 @@ void EVT_ADD_WALLET_GENERATE_SIGNER_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_WALLET_GET_WALLET_DESCRIPTOR_HANDLER(QVariant msg) {
-    if(QQuickViewer::instance()->onsRequester() != E::STATE_ID_SCR_ADD_WALLET){
+    if(QEventProcessor::instance()->onsRequester() != E::STATE_ID_SCR_ADD_WALLET){
         QWarningMessage msgWarning;
         QString ret = bridge::nunchukDraftWallet(AppModel::instance()->newWalletInfo()->name(),
                                                   AppModel::instance()->newWalletInfo()->m(),

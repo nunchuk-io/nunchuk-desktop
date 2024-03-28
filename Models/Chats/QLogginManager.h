@@ -26,7 +26,7 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QDir>
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 
 #define HOME_SERVER "https://matrix.nunchuk.io/"
 

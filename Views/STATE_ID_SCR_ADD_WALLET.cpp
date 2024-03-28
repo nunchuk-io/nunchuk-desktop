@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_ADD_WALLET.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -41,7 +41,7 @@ void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
     QWarningMessage importmsg;
 
     if ((int)POPUP::WalletImportType::IMPORT_WALLET_QRCODE == importType) {
-        QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
+        QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
         AppModel::instance()->showToast(0, STR_CPP_067, EWARNING::WarningType::SUCCESS_MSG);
     }
     else {
@@ -74,7 +74,7 @@ void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
                 if(-1 != index){
                     AppModel::instance()->setWalletListCurrentIndex(index);
                 }
-                QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
+                QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
                 AppModel::instance()->showToast(0, STR_CPP_067, EWARNING::WarningType::SUCCESS_MSG);
             }
             else{

@@ -377,11 +377,13 @@ void Transaction::cancelTransaction()
 
 }
 
-bool Transaction::ImportQRTransaction(const QStringList& qr_data)
+bool Transaction::ImportQRTransaction(const QStringList& qrtags)
 {
+    QStringList in = qrtags;
+    in.removeDuplicates();
     QString wallet_id = walletId();
     QWarningMessage msg;
-    nunchuk::Transaction trans_result = bridge::nunchukImportQRTransaction(wallet_id, qr_data, msg);
+    nunchuk::Transaction trans_result = bridge::nunchukImportQRTransaction(wallet_id, in, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         setNunchukTransaction(trans_result);
         if (roomId() != "") {

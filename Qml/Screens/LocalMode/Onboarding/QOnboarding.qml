@@ -37,7 +37,10 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: ""
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: {
+        AppSetting.isFirstTimeOnboarding = true
+        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    }
     content: Item {
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -59,10 +62,11 @@ QOnScreenContentTypeB {
                     height: 196
                     title: STR.STR_QML_1219
                     description: STR.STR_QML_1220
-                    desImg: "qrc:/Images/Images/onboarding-assisted-wallet.svg"
+                    desImg: "qrc:/Images/Images/onboarding-assisted-wallet.png"
                     color: "#D0E2FF"
                     onBoardingclicked: {
-
+                        AppSetting.isFirstTimeOnboarding = true
+                        OnBoarding.state = "assistedWallet"
                     }
                 }
                 QOnboardingWallet {
@@ -70,10 +74,11 @@ QOnScreenContentTypeB {
                     height: 168
                     title: STR.STR_QML_1221
                     description: STR.STR_QML_1222
-                    desImg: "qrc:/Images/Images/onboarding-unassisted-wallet.svg"
+                    desImg: "qrc:/Images/Images/onboarding-unassisted-wallet.png"
                     color: "#FDEBD2"
                     onBoardingclicked: {
-                        screen_state = "unassistedWallet"
+                        AppSetting.isFirstTimeOnboarding = true
+                        OnBoarding.state = "unassistedWallet"
                     }
                 }
             }

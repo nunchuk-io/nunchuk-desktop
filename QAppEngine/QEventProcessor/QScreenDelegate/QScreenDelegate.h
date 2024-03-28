@@ -18,58 +18,33 @@
  *                                                                        *
  **************************************************************************/
 
-#ifndef QPOPUPMANAGER_H
-#define QPOPUPMANAGER_H
+#ifndef QSCREENDELEGATE_H
+#define QSCREENDELEGATE_H
 
 #include <QObject>
-#include <QStack>
-#include <QSharedPointer>
-#include <QTimer>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQmlContext>
+
 #include "QAppEngine.h"
+#include "QScreenQueue.h"
 
-class PopupObject;
-class QPopupManager;
-typedef QSharedPointer<PopupObject> PopupObjectPtr;
-
-class QPopupManager : public QObject
+class QScreenDelegate : public QObject
 {
-    Q_OBJECT
 public:
-    explicit QPopupManager(QQuickItem* rootObject, QQmlContext* context);
-    virtual ~QPopupManager();
-    QList<uint> getCurrentPopups() const;
-    bool showPopup(POPUP_DATA p);
-    bool closePopup(POPUP_DATA p);
-    bool closeAll();
-    bool showToastMessage(QVariant msg);
-private:
-    QQuickItem              *m_rootObject;
-    QQmlContext             *m_context;
-    QList<PopupObjectPtr>   m_listPopup;
-    QStringList             m_QmlOder;
-    void qmlSyncup();
+    explicit QScreenDelegate(QQuickItem* rootObject, QQmlContext* context);
+    virtual ~QScreenDelegate();
 
-public slots:
-    void onClosePopupTimeout(uint id);
+    bool showScreen(const APPLICATION_STATE *scr, QVariant msg = QVariant());
+    uint getCurrentScreen() const;
+private:
+    static QScreenQueue cacheScreen;
+    QQuickItem          *m_rootObject;
+    QQmlContext         *m_context;
+    const APPLICATION_STATE *m_CurrentScreen;
+
+private:
+    QQmlComponentPtr getComponent(QObject *parent, QString screenFile);
 };
 
-class PopupObject: public QTimer
-{
-    Q_OBJECT
-public:
-    explicit PopupObject(POPUP_DATA p);
-    virtual ~PopupObject();
-    POPUP_DATA popupInfo() const;
-private:
-    POPUP_DATA   m_popInfo;
-signals:
-    void closePopupTimeout(uint id);
-public slots:
-    void timeout_exec();
-};
-
-
-#endif // QPOPUPMANAGER_H
+#endif // QSCREENDELEGATE_H

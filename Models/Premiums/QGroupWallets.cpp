@@ -1,6 +1,6 @@
 #include "QGroupWallets.h"
 #include "Chats/ClientController.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "ViewsEnums.h"
 
 QGroupWallets::QGroupWallets()
@@ -144,7 +144,7 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
             if (mDashboard && qUtils::strCompare(mDashboard->groupId(), remove->groupId())) {
                 mDashboard->setShowDashBoard(false);
                 mDashboard.clear();
-                QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             }
         }
     }
@@ -239,14 +239,14 @@ void QGroupWallets::markRead(const QString &alert_id)
         case AlertEnum::E_Alert_t::TRANSACTION_SIGNATURE_REQUEST:{
             QJsonObject payload = mDashboard->alertJson()["payload"].toObject();
             QString transaction_id = payload["transaction_id"].toString();
-            QQuickViewer::instance()->sendEvent(E::EVT_HOME_TRANSACTION_INFO_REQUEST, transaction_id);
+            QEventProcessor::instance()->sendEvent(E::EVT_HOME_TRANSACTION_INFO_REQUEST, transaction_id);
             if(auto tx = AppModel::instance()->transactionInfoPtr()) {
                 tx->setHasMoreBtn(false);
             }
             break;
         }
         default:
-            QQuickViewer::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
             break;
         }
     }

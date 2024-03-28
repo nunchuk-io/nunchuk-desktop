@@ -517,12 +517,19 @@ QScreen {
                 readonly property var sourceItems: [emptyroomstate,newroom,roomChat]
                 sourceComponent: {
                     var ret = null
+                    var isEmpty = ClientController.rooms.count === 0 && ClientController.contacts.count === 0
                     if(ClientController.isNunchukLoggedIn){
-                        if(tabselect.currentIndex == 0){
-                            ret = conversationContentLoader.sourceItems[conversationContentLoader.eCURRENT_MODE]
+                        if(tabselect.currentIndex === 0){
+                            if (conversationContentLoader.eCURRENT_MODE === eRIGHT_A_NEW_ROOM) {
+                                ret = conversationContentLoader.sourceItems[conversationContentLoader.eCURRENT_MODE]
+                            }
+                            else {
+                                var mode = isEmpty ? eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM
+                                ret = conversationContentLoader.sourceItems[mode]
+                            }
                         }
                         else{
-                            if(ClientController.contacts.count !== 0){ ret = contactInfo }
+                            if(!isEmpty){ ret = contactInfo }
                             else{ ret = emptyroomstate }
                         }
                     }
@@ -533,7 +540,7 @@ QScreen {
                 function changeNewRoomComponent( ){
                     conversationContentLoader.eCURRENT_MODE = eRIGHT_A_NEW_ROOM
                 }
-                function changeCurrentRoomComponent( ){
+                function changeCurrentRoomComponent(){
                     if(ClientController.rooms.count === 0 && ClientController.contacts.count === 0){
                         conversationContentLoader.eCURRENT_MODE = eRIGHT_EMPTY_ROOM
                     }
@@ -599,16 +606,31 @@ QScreen {
                 id: emptyroomstate
                 QAddWelcome{
                     anchors.fill: parent
-                    btnTextLink: STR.STR_QML_369
-                    titleSuggest: STR.STR_QML_369
                     titleWelcome: STR.STR_QML_379
-                    content: STR.STR_QML_368
-                    icon:"qrc:/Images/Images/OnlineMode/addContact.png"
-                    enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
-                    onAddButtonClicked: {
-                        preventTimer.restart()
-                        QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
+                    addKey {
+                        btnTextLink: STR.STR_QML_369
+                        titleSuggest: STR.STR_QML_369
+                        content: STR.STR_QML_368
+                        height: 180
+                        icon:"qrc:/Images/Images/OnlineMode/addContact.png"
+                        onBtnClicked: {
+                            preventTimer.restart()
+                            QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
+                        }
                     }
+                    hotWallet {
+                        visible: false
+                        btnTextLink: STR.STR_QML_1255
+                        titleSuggest: STR.STR_QML_1251
+                        content: STR.STR_QML_1252
+                        height: 180
+                        icon:"qrc:/Images/Images/create-hot-wallet.png"
+                        onBtnClicked: {
+                            OnBoarding.state = "hotWallet"
+                            QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+                        }
+                    }
+                    enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
                     onSupportButtonClicked: {
                         preventTimer.restart()
                         QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ)

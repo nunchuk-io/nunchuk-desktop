@@ -984,11 +984,11 @@ void QNunchukRoom::joinAndLeaveWallet()
             }
         }
         if(!anyFailure){
-            QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET);
         }
     }
     else{
-        QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET);
+        QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_ASSIGN_SIGNER_TO_SHARED_WALLET);
     }
 }
 
@@ -1881,9 +1881,9 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     if (dashboard) {
                         if (auto dummy = dashboard->groupDummyTxPtr()) {
                             if (qUtils::strCompare(dummy_transaction_id, dummy->tx_id())) {
-                                QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+                                QList<uint> states = QEventProcessor::instance()->getCurrentStates();
                                 if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_DUMMY_TRANSACTION_INFO) {
-                                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                                 }
                             }
                         }

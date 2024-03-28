@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -34,7 +34,7 @@ void SCR_PRIMARY_KEY_CONFIGURATION_Entry(QVariant msg) {
     QString mnemonic = AppModel::instance()->getMnemonic();
     qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
     QString fingerprint = qUtils::GetMasterFingerprint(mnemonic,passphrase);
-    QObject *obj = QQuickViewer::instance()->getCurrentScreen();
+    QObject *obj = QEventProcessor::instance()->getCurrentScreen();
     DBG_INFO << fingerprint << dataMap;
     if(obj){
         obj->setProperty("primaryKeyUsername",fingerprint);
@@ -61,7 +61,7 @@ void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
         QString message = QString("%1%2").arg(username).arg(nonce);
         QString signature = qUtils::SignLoginMessage(mnemonic,passphrase,message);
         if(Draco::instance()->pkey_signup(address,username,signature)){
-            QQuickViewer::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_FINISHED);
+            QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_FINISHED);
         }
     }
 }

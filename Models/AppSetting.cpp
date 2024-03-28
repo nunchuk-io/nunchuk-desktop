@@ -125,7 +125,8 @@ AppSetting::AppSetting() :
     signetStream_(GLOBAL_SIGNET_EXPLORER),
     enableDebugMode_(false),
     enableMultiDeviceSync_(false),
-    isStarted_(false)
+    isStarted_(false),
+    isFirstTimeOnboarding_(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     DBG_INFO << "Setting in:" << NunchukSettings::fileName();
@@ -783,7 +784,7 @@ void AppSetting::setIsStarted(bool isStarted, bool isSetting)
 {
     if(isSetting){
         NunchukSettings::setCommonValue("isStarted", isStarted);
-        emit isStartedChanged(isStarted);
+        emit isStartedChanged();
     }
     else{
         isStarted_ = isStarted;
@@ -870,5 +871,26 @@ bool AppSetting::getwalletCached(QString id, QTriple<QString, QString, QString> 
 void AppSetting::deleteWalletCached(QString id)
 {
     NunchukSettings::removeKey(id);
+}
+
+bool AppSetting::isFirstTimeOnboarding()
+{
+    isFirstTimeOnboarding_ = false;
+    if(NunchukSettings::contains("isFirstTimeOnboarding")){
+        isFirstTimeOnboarding_ = NunchukSettings::value("isFirstTimeOnboarding").toBool();
+    }
+    else{
+        NunchukSettings::setValue("isFirstTimeOnboarding", isFirstTimeOnboarding_);
+    }
+    return isFirstTimeOnboarding_;
+}
+
+void AppSetting::setIsFirstTimeOnboarding(bool isFirstTime)
+{
+    if (isFirstTimeOnboarding_ != isFirstTime){
+        isFirstTimeOnboarding_ = isFirstTime;
+        NunchukSettings::setValue("isFirstTimeOnboarding", isFirstTimeOnboarding_);
+        emit isFirstTimeOnboardingChanged();
+    }
 }
 

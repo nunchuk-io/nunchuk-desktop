@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_CREATE_ACCOUNT.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
@@ -52,7 +52,7 @@ void EVT_CREATE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
     QMap<QString, QVariant> makeInstanceData;
     makeInstanceData["state_id"] = E::STATE_ID_SCR_CREATE_ACCOUNT;
     makeInstanceData["isSignIn"] = msg;
-    QQuickViewer::instance()->sendEvent(E::EVT_CREATE_ACCOUNT_PRIMARY_KEY_REQUEST,msg);
+    QEventProcessor::instance()->sendEvent(E::EVT_CREATE_ACCOUNT_PRIMARY_KEY_REQUEST,msg);
 }
 
 

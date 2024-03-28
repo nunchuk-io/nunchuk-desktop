@@ -231,7 +231,7 @@ public slots:
     void scheduleBroadcast();
     void cancelTransaction();
 protected:
-    bool ImportQRTransaction(const QStringList& qr_data);
+    bool ImportQRTransaction(const QStringList& qrtags);
 
 private:
     QDestinationListModelPtr    m_destinations;

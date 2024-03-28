@@ -144,6 +144,7 @@ public:
                        const QString& passwordToken,
                        const QString& secQuesToken,
                        const QString& confirmToken,
+                       bool isDraft,
                        QJsonObject &output,
                        QString &errormsg);
 
@@ -332,6 +333,9 @@ public:
     bool FinalizeDummyTransaction(const QString &wallet_id, const QString &txid, QJsonObject& output, QString &errormsg);
 
     bool GetHistorySignerList(const QString &xfp, QJsonObject& output, QString &errormsg);
+
+    bool GetCountryCodeList(QJsonObject &output, QString &errormsg);
+    bool RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note, QString &errormsg);
 private:
     Draco();
     ~Draco();

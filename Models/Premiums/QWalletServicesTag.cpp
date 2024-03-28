@@ -534,10 +534,10 @@ bool QWalletServicesTag::inheritanceCreateTx(const QJsonObject& data, const QStr
             QTransactionPtr trans = bridge::convertTransaction(mInheritance.tx, QString::fromStdString(mInheritance.wallet.get_id()));
             if(trans){
                 AppModel::instance()->setTransactionInfo(trans);
-                QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+                QList<uint> states = QEventProcessor::instance()->getCurrentStates();
                 if(!states.isEmpty() && states.last() == E::STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE){
                     DBG_INFO << "Entry here ";
-                    QQuickViewer::instance()->sendEvent(E::EVT_INHERITANCE_CONFIRM_TRANSACTION_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_INHERITANCE_CONFIRM_TRANSACTION_REQUEST);
                 }
             }
         }
@@ -637,7 +637,8 @@ void QWalletServicesTag::additionalGetWalletConfig()
         QString slug = CLIENT_INSTANCE->slug();
         slug = slug.remove("_testnet");
         DBG_INFO << slug;
-        config = wallet_config[slug].toObject();
+        DBG_INFO << wallet_config;
+        config = wallet_config;//wallet_config[slug].toObject();
     }
     setWalletConfig(config);
     DBG_INFO << config;
@@ -788,8 +789,13 @@ void QWalletServicesTag::setList2FA()
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
             if (auto dash = w->dashboard()) {
-                auto hasPermission = dash->role() == "MASTER";
-                if (hasPermission) {
+                if (w->isGroupWallet()) {
+                    auto hasPermission = dash->role() == "MASTER";
+                    if (hasPermission) {
+                        setuped << wallet_id;
+                    }
+                }
+                else {
                     setuped << wallet_id;
                 }
             } else {
@@ -853,6 +859,15 @@ void QWalletServicesTag::setWalletConfig(const QJsonObject &config)
         return;
 
     m_walletConfig = config;
+
+    int total_remaining = 0;
+    for (const QString &key : m_walletConfig.keys()) {
+        if (m_walletConfig[key].isObject()) {
+            QJsonObject subObj = m_walletConfig[key].toObject();
+            total_remaining += subObj["remaining_wallet_count"].toInt();
+        }
+    }
+    m_walletConfig["remaining_wallet_count"] = total_remaining;
     emit walletConfigChanged();
 }
 

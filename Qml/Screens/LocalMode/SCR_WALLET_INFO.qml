@@ -48,22 +48,17 @@ QScreen {
         id: contenCenter
         anchors.centerIn: parent
         sourceComponent: {
-            if (AppModel.walletInfo.isByzantineWallet) {
-                if (eFlow === eWALLET_CONFIG) {
-                    return wallet_config
-                }
-                else if (eFlow === eWALLET_SET_ALIAS || eFlow === eWALLET_CHANGE_ALIAS) {
-                    return wallet_alias
-                }
-                else if (eFlow === eWALLET_PRIMARY_OWNER) {
-                    return wallet_primary_owner
-                }
-                else {
-                    return isDelete ? _security_question : wallet_info
-                }
+            if (eFlow === eWALLET_CONFIG) {
+                return wallet_config
+            }
+            else if (eFlow === eWALLET_SET_ALIAS || eFlow === eWALLET_CHANGE_ALIAS) {
+                return wallet_alias
+            }
+            else if (eFlow === eWALLET_PRIMARY_OWNER) {
+                return wallet_primary_owner
             }
             else {
-                return isDelete ? _security_question : wallet_info
+                return isDelete ? _security_question : wallet_config
             }
         }
     }

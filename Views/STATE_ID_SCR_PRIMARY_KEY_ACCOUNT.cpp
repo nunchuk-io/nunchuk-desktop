@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_PRIMARY_KEY_ACCOUNT.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
@@ -45,7 +45,7 @@ void SCR_PRIMARY_KEY_ACCOUNT_Entry(QVariant msg) {
         primaryKeyList.append(getPrimaryKey(key));
     }
     DBG_INFO << msg << primaryKeyList.size() << primaryKeys.size();
-    QObject *obj = QQuickViewer::instance()->getQmlObj().first();
+    QObject *obj = QEventProcessor::instance()->getQmlObj().first();
     if(obj){
         obj->setProperty("isSignIn",msg);
         obj->setProperty("primaryKeyList",primaryKeyList);
@@ -63,7 +63,7 @@ void EVT_PRIMARY_KEY_ACCOUNT_BACK_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
 }
 
 void EVT_SHOW_PRIMARY_KEY_ENTER_PASSPHRASE_REQUEST_HANDLER(QVariant msg) {
@@ -71,11 +71,11 @@ void EVT_SHOW_PRIMARY_KEY_ENTER_PASSPHRASE_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_SHOW_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
 }
 
 void EVT_SCR_SIGN_IN_MANUALLY_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
 }
 
 void LOGIN_WITH_SOFTWARE_KEY_BACK_HANDLER(QVariant msg) {
@@ -99,7 +99,7 @@ void EVT_SELECT_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
         primary_key.insert("state_id",E::STATE_ID_SCR_PRIMARY_KEY_ACCOUNT);
         bool ret = AppModel::instance()->makeNunchukInstanceForAccount(primary_key,"");
         if(ret){
-            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,msg);
+            QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,msg);
         }
     }
 }

@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_HOME.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -97,7 +97,7 @@ void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
     AppModel::instance()->setNewWalletInfo(newWallet);
     AppModel::instance()->resetSignersChecked();
     AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET);
 }
 
 void EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
@@ -214,7 +214,7 @@ void EVT_HOME_DISPLAY_ADDRESS_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER);
 }
 
 

@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_REENTER_YOUR_PASSWORD.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Servers/Draco.h"
 #include "AppModel.h"
 #include "ServiceSetting.h"
@@ -50,7 +50,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
     case E::STATE_ID_SCR_KEY_RECOVERY:
         if (ServiceSetting::instance()->servicesTagPtr()->requestRecoverKeyVerifyPassword(password)) {
             ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->CreateTapsigners();
-            QQuickViewer::instance()->sendEvent(E::EVT_KEY_RECOVERY_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_KEY_RECOVERY_REQUEST);
         }
         break;
     case E::STATE_ID_SCR_SETUP_SECURITY_QUESTION:
@@ -64,13 +64,13 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
                 }
             }
             ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->CreateAllSecurityQuestions();
-            QQuickViewer::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
         }
         break;
     case E::STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD:
         if (ServiceSetting::instance()->servicesTagPtr()->requestLockDownVerifyPassword(password)) {
             ServiceSetting::instance()->setWalletInfo(wallet);
-            QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
         }
         break;
     case E::STATE_ID_SCR_SERVICE_SETTINGS:
@@ -82,7 +82,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
                 });
             }
             QTimer::singleShot(100,[=](){
-                QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
             });
         }
         break;
@@ -95,7 +95,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
                 });
             }
             QTimer::singleShot(100,[=](){
-                QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
             });
         }
     }break;
@@ -104,7 +104,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             if (wallet && wallet->DeleteWalletRequiredSignatures()) {
                 AppModel::instance()->walletInfoPtr()->setIsDeleting(wallet->isDeleting());
             }
-            QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_BACK);
+            QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_BACK);
         }
     }break;
     default:

@@ -392,6 +392,9 @@ public:
                                                        const std::string& tx_id,
                                                        QWarningMessage& msg);
 
+    std::vector<std::string> ExportBCR2020010Wallet(const std::string& wallet_id,
+                                                    QWarningMessage& msg);
+
     nunchuk::Transaction ImportKeystoneTransaction(const std::string& wallet_id,
                                                    const std::vector<std::string>& qr_data,
                                                    QWarningMessage& msg);
@@ -505,6 +508,10 @@ public:
     std::string GetSignerAddress(const nunchuk::SingleSigner& signer,
                                           const nunchuk::AddressType& address_type,
                                           QWarningMessage& msg);
+
+    std::string GetHotWalletMnemonic(const std::string& wallet_id, const std::string& passphrase, QWarningMessage& msg);
+
+    nunchuk::Wallet CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, QWarningMessage &msg);
 private:
     nunchukiface();
     ~nunchukiface();

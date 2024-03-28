@@ -104,6 +104,7 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(bool enableMultiDeviceSync       READ enableMultiDeviceSync      WRITE setEnableMultiDeviceSync      NOTIFY enableMultiDeviceSyncChanged)
     Q_PROPERTY(QString currency                 READ currency                   WRITE setCurrency                   NOTIFY currencyChanged)
     Q_PROPERTY(QString currencySymbol           READ currencySymbol                                                 NOTIFY currencyChanged)
+    Q_PROPERTY(bool isFirstTimeOnboarding       READ isFirstTimeOnboarding      WRITE setIsFirstTimeOnboarding      NOTIFY isFirstTimeOnboardingChanged)
 
 public:
     enum class Chain : int {
@@ -239,6 +240,10 @@ public:
     void setWalletCached(QString id, QTriple<QString /*group id*/, QString /*group slug*/, QString /*group role*/> data);
     bool getwalletCached(QString id, QTriple<QString /*group id*/, QString /*group slug*/, QString /*group role*/> &result);
     void deleteWalletCached(QString id);
+
+    bool isFirstTimeOnboarding();
+    void setIsFirstTimeOnboarding(bool isFirstTime);
+
 private:
     AppSetting();
     ~AppSetting();
@@ -277,6 +282,7 @@ private:
     bool enableDebugMode_;
     bool enableMultiDeviceSync_;
     bool isStarted_;
+    bool isFirstTimeOnboarding_;
 
 signals:
     void unitChanged();
@@ -312,9 +318,10 @@ signals:
     void signetStreamChanged();
     void enableSignetStreamChanged();
     void enableDebugChanged();
-    void isStartedChanged(bool isStarted);
+    void isStartedChanged();
     void enableMultiDeviceSyncChanged();
     void currencyChanged();
+    void isFirstTimeOnboardingChanged();
 };
 
 #endif // APPSETTING_H

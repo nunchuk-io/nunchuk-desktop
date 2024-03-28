@@ -524,6 +524,7 @@ bool QGroupDashboard::canEntryClickAlert()
         }
         return true;
     }
+    case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
     case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS:
     case AlertEnum::E_Alert_t::KEY_RECOVERY_REQUEST:
     case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:
@@ -581,7 +582,7 @@ void QGroupDashboard::requestHealthCheck(const QString &xfp){
         setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS);
         AppModel::instance()->setWalletInfo(wallet);
         QGroupWallets::instance()->setDashboardInfo(wallet);
-        QQuickViewer::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
         if (auto health = healthPtr()) {
             health->HealthCheckForKey(xfp);
         }
@@ -624,7 +625,7 @@ void QGroupDashboard::byzantineRoomCreated(QString room_id, bool existed)
 {
     if (mode() == USER_WALLET) return;
     DBG_INFO << room_id << existed;
-    QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
+    QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
     if(room_id != "" && !existed){
         QJsonObject output;
         QString error_msg = "";

@@ -1,6 +1,6 @@
 
 #include "STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "AppModel.h"
 #include "ServiceSetting.h"
 #include "Premiums/QWalletServicesTag.h"
@@ -23,11 +23,11 @@ void EVT_INPUT_DAYS_VALUE_REQUEST_HANDLER(QVariant msg) {
 
         } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION == type) {
             if (ServiceSetting::instance()->servicesTagPtr()->CreateSecurityQuestionsAnswered()) {
-                QQuickViewer::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
             }
         } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE == type) {
             if (ServiceSetting::instance()->servicesTagPtr()->RequestConfirmationCodeEmergencyLockdown()) {
-                QQuickViewer::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_LOCKDOWN_ANSER_SECURITY_QUESTION_REQUEST);
             }
         }
     }

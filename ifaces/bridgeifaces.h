@@ -353,6 +353,15 @@ nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
                                           const QString &desc,
                                           QWarningMessage &msg);
 
+nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
+                                          int m,
+                                          int n,
+                                          const std::vector<nunchuk::SingleSigner>& signers,
+                                          ENUNCHUCK::AddressType address_type,
+                                          bool is_escrow,
+                                          const QString &desc,
+                                          QWarningMessage &msg);
+
 QString nunchukDraftWallet(const QString& name,
                            int m,
                            int n,
@@ -571,6 +580,9 @@ QString nunchukParseKeystoneSigner(const QString& qr_data);
 QStringList nunchukExportKeystoneWallet(const QString& wallet_id,
                                         QWarningMessage& msg);
 
+QStringList nunchukExportBCR2020010Wallet(const QString& wallet_id,
+                                          QWarningMessage& msg);
+
 QStringList nunchukExportKeystoneTransaction(const QString& wallet_id,
                                              const QString& tx_id,
                                              QWarningMessage& msg);
@@ -664,6 +676,10 @@ QString SignMessage(const nunchuk::SingleSigner& signer,
 
 QString GetSignerAddress(const nunchuk::SingleSigner& signer,
                          const nunchuk::AddressType& address_type);
+
+QString GetHotWalletMnemonic(const QString& wallet_id, const QString& passphrase);
+
+QWalletPtr nunchukCreateHotWallet(const QString &mnemonic, const QString& passphrase, bool need_backup, QWarningMessage &msg);
 }
 
 #endif // BRIDGEINTERFACE_H

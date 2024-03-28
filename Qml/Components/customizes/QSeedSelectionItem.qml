@@ -32,7 +32,7 @@ Column {
     property int        indexNeeded: -1
     property string     phraseNeeded: ""
     property string     phraseSelect: ""
-    readonly property bool correct: phraseNeeded === phraseNeeded && randomlist.currentIndex !== -1
+    readonly property bool correct: phraseSelect === phraseNeeded && randomlist.currentIndex !== -1
 
     signal itemClicked(var index)
 

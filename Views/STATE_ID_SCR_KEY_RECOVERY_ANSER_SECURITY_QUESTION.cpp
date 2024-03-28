@@ -20,7 +20,7 @@ void EVT_INPUT_KEY_RECOVERY_ANSER_REQUEST_HANDLER(QVariant msg) {
 
     } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION == type) {
         if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->KeyRecoveryDownloadBackup()) {
-            QQuickViewer::instance()->sendEvent(E::EVT_ENTER_BACKUP_PASSWORD_RERQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_ENTER_BACKUP_PASSWORD_RERQUEST);
         }
     } else if ((int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE == type) {
         QString code = msg.toString();
@@ -38,7 +38,7 @@ void EVT_INPUT_KEY_RECOVERY_ANSER_REQUEST_HANDLER(QVariant msg) {
         if (step == "RECOVER") {
             QString password = msg.toString();
             if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->startRecovery(password)) {
-                QQuickViewer::instance()->sendEvent(E::EVT_ENTER_BACKUP_PASSWORD_RERQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_ENTER_BACKUP_PASSWORD_RERQUEST);
                 if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->UserKeysMarkRecoverStatus())
                 {
                     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {

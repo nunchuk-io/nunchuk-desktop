@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_LOGIN_WITH_SOFTWARE_KEY.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
@@ -30,7 +30,7 @@
 #include "localization/STR_CPP.h"
 
 void SCR_LOGIN_WITH_SOFTWARE_KEY_Entry(QVariant msg) {
-    QObject *obj = QQuickViewer::instance()->getQmlObj().first();
+    QObject *obj = QEventProcessor::instance()->getQmlObj().first();
     if(obj){
         obj->setProperty("primary_key",msg);
     }

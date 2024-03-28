@@ -54,8 +54,8 @@ Item {
         {screen:_GET_ADDITIONAL_WALLETS,            visible: true, enable:true,  title:STR.STR_QML_707, icon: ""   ,action: function(){
             ServiceSetting.servicesTag.additionalGetWalletConfig()
             _InfoVer.link = "https://nunchuk.io/my-plan";
-            var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count;
-            _InfoVer.contentText = (remainCount > 1 ? STR.STR_QML_841 : STR.STR_QML_842).arg(remainCount);
+            var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count !== undefined ? ServiceSetting.servicesTag.walletConfig.remaining_wallet_count : 0;
+            _InfoVer.contentText = (remainCount === 1 ? STR.STR_QML_842.arg(remainCount) : STR.STR_QML_841.arg(remainCount));
             _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
             _InfoVer.open();
             return false;

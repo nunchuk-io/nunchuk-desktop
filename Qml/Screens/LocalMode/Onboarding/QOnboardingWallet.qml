@@ -35,15 +35,15 @@ Rectangle {
     width: 500
     height: 196
     color: "#D0E2FF"
-    property string title: "Assisted wallet"
-    property string description: "For those who are new to Bitcoin, need expert guidance, or want advanced features such as inheritance planning, spending limit and multi-user wallets."
+    property string title: ""
+    property string description: ""
     property string desImg: ""
     radius: 12
-    signal onBoardingclicked
+    signal boardingclicked
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            onBoardingclicked()
+            boardingclicked()
         }
     }
     Row {   

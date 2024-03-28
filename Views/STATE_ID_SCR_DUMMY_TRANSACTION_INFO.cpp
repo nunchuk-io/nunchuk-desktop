@@ -91,7 +91,7 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
         else if (type == "register-wallet") {
             QGroupWallets::instance()->dashboardInfoPtr()->setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP);
             if (QGroupWallets::instance()->dashboardInfoPtr()->register_wallet()) {
-                QQuickViewer::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
             }
         }
         else if (type == "dummy-tx-export-qr") {

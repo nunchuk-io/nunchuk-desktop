@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_TRANSACTION_INFO.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
 #include "Chats/matrixbrigde.h"
@@ -60,7 +60,7 @@ void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     passPhraseData["device_index"] = deviceIndex;
                     passPhraseData["device_xfp"] = device.data()->masterFingerPrint();
                     passPhraseData["is_software"] = true;
-                    QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
                 }
                 else{
                     AppModel::instance()->startSigningTransaction(wallet_id,
@@ -135,10 +135,10 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
                                                    msgwarning);
                 if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                     if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
-                        QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                     else{
-                        QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                     room->startGetPendingTxs();
                     AppModel::instance()->requestSyncWalletDb(wallet_id);
@@ -217,7 +217,7 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
     if (auto trans = AppModel::instance()->transactionInfo()) {
         if (trans->status() == (int)ENUNCHUCK::TransactionStatus::PENDING_CONFIRMATION) {
             DBG_INFO;
-            QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_TO_CREATE_TRANSACTION_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_TO_CREATE_TRANSACTION_REQUEST);
         }
         else {
             QString wallet_id = trans->walletId();
@@ -229,15 +229,15 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
                     wallet.data()->CancelAssistedTxs(txid);
                 }
                 AppModel::instance()->requestSyncWalletDb(wallet_id);
-                if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
-                    QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
+                if(QEventProcessor::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
+                    QEventProcessor::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
                 }
                 else{
                     if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
-                        QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                     else{
-                        QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                 }
                 AppModel::instance()->setTransactionInfo( QTransactionPtr(new Transaction()));
@@ -306,15 +306,15 @@ void EVT_TRANSACTION_CANCEL_REQUEST_HANDLER(QVariant msg) {
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                 AppModel::instance()->requestSyncWalletDb(AppModel::instance()->transactionInfo()->walletId());
                 room->startGetPendingTxs();
-                if(QQuickViewer::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
-                    QQuickViewer::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
+                if(QEventProcessor::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_HISTORY){
+                    QEventProcessor::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_REQUEST);
                 }
                 else{
                     if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
-                        QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                     else{
-                        QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                 }
             }

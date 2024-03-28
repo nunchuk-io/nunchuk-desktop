@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_STARTING_CREATE_SIGNER.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -43,6 +43,6 @@ void EVT_STARTING_CREATE_SIGNER_BACK_HANDLER(QVariant msg) {
 }
 
 void EVT_ONLINE_MODE_ADD_NEW_SIGNER_HANDLER(QVariant msg) {
-//    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ONLINE_ADD_SIGNER);
+//    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ONLINE_ADD_SIGNER);
 }
 

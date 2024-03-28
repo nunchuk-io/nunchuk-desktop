@@ -57,6 +57,7 @@ enum class LOG_LEVEL : int
 #define DBG_WARN     QOutlog().begin(LOG_LEVEL::LOG_WARN)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_QT_MSG   QOutlog().begin(LOG_LEVEL::LOG_ERROR)
+#define DBG_FUNCTION_TIME_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << "[Funtion time]"
 
 static const QString logfilePath = "logfile_nunchuck-client-qt.log";
 
@@ -249,20 +250,11 @@ template< class T > inline void safeDelete( T*& pVal )
 }
 #endif
 
-class FuncTime
+class QFunctionTime
 {
 public:
-    FuncTime(QString _func) : mFunc(_func)
-    {
-        mTime.start();
-    }
-
-    ~FuncTime()
-    {
-#ifndef RELEASE_MODE
-        DBG_INFO << QString("%1 takes %2 ms").arg(mFunc).arg(mTime.elapsed());
-#endif
-    }
+    QFunctionTime(QString _func);
+    ~QFunctionTime();
 private:
     QString mFunc;
     QElapsedTimer mTime;

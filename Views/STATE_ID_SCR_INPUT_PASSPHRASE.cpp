@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_INPUT_PASSPHRASE.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -69,7 +69,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
                         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
                     }
                 }
-                QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
+                QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
             }
         }
         else{
@@ -116,7 +116,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
             else{
                 AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
             }
-            QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
+            QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         }
         else{
             int device_idx = passPhraseObject.toMap().value("device_idx").toInt();
@@ -135,7 +135,7 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
                 AppModel::instance()->masterSignerList()->setUserChecked(true, mastersigner_index);
             }
         }
-        QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
+        QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         break;
     }
     case E::STATE_ID_SCR_ADD_HARDWARE_SIGNER:
@@ -151,12 +151,12 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
         QWarningMessage msgwarning;
         bridge::nunchukSendSignerPassphrase( mastersigner_id, passphraseInput, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-            QQuickViewer::instance()->sendEvent(E::EVT_REPLACE_PRIMARY_KEY_REQUEST,true);
+            QEventProcessor::instance()->sendEvent(E::EVT_REPLACE_PRIMARY_KEY_REQUEST,true);
         }
         else{
             AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
-        QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
+        QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         break;
     }
     case E::STATE_ID_SCR_APP_SETTINGS:
@@ -165,12 +165,12 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
         QWarningMessage msgwarning;
         bridge::nunchukSendSignerPassphrase( mastersigner_id, passphraseInput, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-            QQuickViewer::instance()->sendEvent(E::EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST);
         }
         else{
             AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
-        QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
+        QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
         break;
     }
     default:

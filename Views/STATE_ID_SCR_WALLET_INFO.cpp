@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_WALLET_INFO.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -62,7 +62,7 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
                     bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
                     if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                         AppModel::instance()->removeWallet(wallet_id);
-                        QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
+                        QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
                         AppModel::instance()->setWalletListCurrentIndex(0);
                     }
                     else {
@@ -76,7 +76,7 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
                 QMap<QString, QVariant> data;
                 data["state_id"] = E::STATE_ID_SCR_WALLET_INFO;
                 data["wallet_id"] = wallet->id();
-                QQuickViewer::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+                QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
             }
             else {
                 bool is_shared_wallet = wallet->isSharedWallet();
@@ -84,7 +84,7 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
                 bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
                 if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                     AppModel::instance()->removeWallet(wallet_id);
-                    QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
                     AppModel::instance()->setWalletListCurrentIndex(0);
                     if(is_shared_wallet){
                         QString roomId = CLIENT_INSTANCE->rooms()->getRoomIdByWalletId(wallet_id);
@@ -183,7 +183,7 @@ void EVT_WALLET_INFO_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->setSingleSignerInfo(it);
             if((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType()){
                 AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
-                QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
             }
             else{
                 if(AppModel::instance()->masterSignerList()){
@@ -191,11 +191,11 @@ void EVT_WALLET_INFO_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
                     if(localsigner){
                         AppModel::instance()->setMasterSignerInfo(localsigner);
                         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(it.data()->masterSignerId()));
-                        QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_MASTER_SIGNER_INFO_REQUEST);
+                        QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_MASTER_SIGNER_INFO_REQUEST);
                     }
                     else{
                         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
-                        QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
+                        QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
                     }
                 }
             }
@@ -216,14 +216,35 @@ void EVT_WALLET_INFO_EDIT_DESCRIPTION_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_EXPORT_QRCODE_HANDLER(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
     if(AppModel::instance()->walletInfo()){
-        QString qrtype = msg.toString();
+        QString qrtype = msg.toMap().value("qrtype").toString();;
+        DBG_INFO << qrtype;
         QWarningMessage msgwarning;
-        QStringList qrtags = bridge::nunchukExportKeystoneWallet(AppModel::instance()->walletInfo()->id(), msgwarning);
-        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
-            AppModel::instance()->setQrExported(qrtags);
+        if(qUtils::strCompare(qrtype, "BC-UR2-QR")){ // Seedhammer
+            QStringList qrtags = bridge::nunchukExportBCR2020010Wallet(AppModel::instance()->walletInfo()->id(), msgwarning);
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+            }
         }
-        else{
-            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+        else if(qUtils::strCompare(qrtype, "BC-UR2-QR-Legacy")){ //Keystone, Passport, SeedSigner, Jade
+            QStringList qrtags = bridge::nunchukExportKeystoneWallet(AppModel::instance()->walletInfo()->id(), msgwarning);
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+            }
+        }
+        else { // if(qUtils::strCompare(qrtype, "BBQR-Coldcard")){ //Keystone, Passport, SeedSigner, Jade
+            QStringList qrtags = qUtils::ExportBBQRWallet(AppModel::instance()->walletInfo()->wallet(), msgwarning);
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+            }
         }
     }
 }
@@ -240,7 +261,7 @@ void EVT_WALLET_INFO_IMPORT_PSBT_HANDLER(QVariant msg) {
                 AppModel::instance()->setTransactionInfo(trans);
                 wallet.data()->CreateAsisstedTxs(trans.data()->txid(), trans.data()->psbt(), trans.data()->memo());
                 AppModel::instance()->requestSyncWalletDb(wallet_id);
-                QQuickViewer::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
                 AppModel::instance()->showToast(0, STR_CPP_091, EWARNING::WarningType::SUCCESS_MSG);
             }
         }

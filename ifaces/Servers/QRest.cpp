@@ -53,7 +53,7 @@ QByteArray QRest::machineUniqueId()
 QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
-    FuncTime f(QString("POST %1").arg(command));
+    QFunctionTime f(QString("POST %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
     QString headerData = QString("Bearer %1").arg(dracoToken());
@@ -94,7 +94,7 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
 QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
-    FuncTime f(QString("POST %1").arg(command));
+    QFunctionTime f(QString("POST %1").arg(command));
     QJsonObject ret;
     QUrl url = QUrl::fromUserInput(command);
     if(!paramsQuery.isEmpty()){
@@ -148,7 +148,7 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
 QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
-    FuncTime f(QString("GET %1").arg(command));
+    QFunctionTime f(QString("GET %1").arg(command));
     QJsonObject ret;
     QUrl url = QUrl::fromUserInput(command);
     if(!data.isEmpty()){
@@ -200,7 +200,7 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
 QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
-    FuncTime f(QString("GET %1").arg(command));
+    QFunctionTime f(QString("GET %1").arg(command));
     QJsonObject ret;
     QUrl url = QUrl::fromUserInput(command);
     if(!data.isEmpty()){
@@ -254,7 +254,7 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
 QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
-    FuncTime f(QString("PUT %1").arg(command));
+    QFunctionTime f(QString("PUT %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
     QString headerData = QString("Bearer %1").arg(dracoToken());
@@ -305,7 +305,7 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
         }
         url.setQuery(params);
     }
-    FuncTime f(QString("PUT %1").arg(url.toString()));
+    QFunctionTime f(QString("PUT %1").arg(url.toString()));
     QNetworkRequest requester_(url);
     QString headerData = QString("Bearer %1").arg(dracoToken());
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
@@ -349,7 +349,7 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
 QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
-    FuncTime f(QString("DELETE %1").arg(command));
+    QFunctionTime f(QString("DELETE %1").arg(command));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
     QString headerData = QString("Bearer %1").arg(dracoToken());
@@ -399,7 +399,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
         }
         url.setQuery(params);
     }
-    FuncTime f(QString("DELETE %1").arg(url.toString()));
+    QFunctionTime f(QString("DELETE %1").arg(url.toString()));
     QJsonObject ret;
     QNetworkRequest requester_(QUrl::fromUserInput(command));
     QString headerData = QString("Bearer %1").arg(dracoToken());

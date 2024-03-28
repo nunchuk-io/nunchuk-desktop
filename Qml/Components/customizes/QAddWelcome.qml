@@ -36,14 +36,10 @@ import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
     color: "#FFFFFF"
-    signal addButtonClicked()
-    signal supportButtonClicked()
-    property string btnTextLink: "btnTextLink"
-    property string titleSuggest: "titleSuggest"
     property string titleWelcome: "titleWelcome"
-    property string content: "content"
-    property string icon: "icon"
-    property int contentHeight: 180
+    signal supportButtonClicked()
+    property alias addKey: _addKey
+    property alias hotWallet: _hotWallet
     property bool isSubscribedUser: ClientController.user.isSubscribedUser
     Column {
         visible: !isSubscribedUser
@@ -59,75 +55,26 @@ Rectangle {
             color: "#000000"
         }
         Item {width: parent.width; height: 24}
-        Item {
+        QEmptyWelcome {
+            id: _addKey
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 600
-            height: contentHeight
-            Rectangle {
-                id: rectEmptyState
-                anchors.fill: parent
-                anchors.margins: 2
-                color: "#FFFFFF"
-                radius: 24
-                layer.enabled: true
-                layer.effect: OpacityMask {
-                    maskSource: Rectangle {
-                        width: rectEmptyState.width
-                        height: rectEmptyState.height
-                        radius: rectEmptyState.radius
-                    }
-                }
-                Row {
-                    anchors.fill: parent
-                    anchors.margins: 28
-                    spacing: 24
-                    QImage {
-                        width: 96
-                        height: 96
-                        source: icon
-                    }
-                    Column {
-                        spacing: 4
-                        QText {
-                            font.family: "Lato"
-                            font.pixelSize: 20
-                            font.weight: Font.Bold
-                            text: titleSuggest
-                            color: "#000000"
-                        }
-                        QText {
-                            width: 424
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                            text: content
-                            color: "#000000"
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 28
-                            wrapMode: Text.WordWrap
-                        }
-                        QButtonTextLink {
-                            width: 122
-                            height: 24
-                            label: btnTextLink
-                            direction: eRIGHT
-                            fontPixelSize: 16
-                            onButtonClicked: {
-                                addButtonClicked()
-                            }
-                        }
-                    }
-                }
-            }
-            DropShadow {
-                anchors.fill: rectEmptyState
-                horizontalOffset: 0
-                verticalOffset: 0
-                spread: 0
-                radius: 8
-                samples: 30
-                color: "#aa000000"
-                source: rectEmptyState
-            }
+        }
+        QLato {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            text: "Or"
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            visible: _hotWallet.visible
+        }
+        Item {
+            width: parent.width;
+            height: 24
+            visible: _hotWallet.visible
+        }
+        QEmptyWelcome {
+            id: _hotWallet
+            anchors.horizontalCenter: parent.horizontalCenter
         }
     }
     Column {

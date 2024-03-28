@@ -78,7 +78,7 @@ void nunchukiface::makeNunchukInstanceForAccount(const nunchuk::AppSettings &app
                                                  const std::string &account,
                                                  QWarningMessage &msg)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     nunchuk_instance_[ONLINE_MODE] = NULL;
     try {
         nunchuk_instance_[ONLINE_MODE] = nunchuk::MakeNunchukForAccount(appsettings, passphrase, account);
@@ -1833,6 +1833,24 @@ std::vector<std::string> nunchukiface::ExportKeystoneTransaction(const std::stri
     return ret;
 }
 
+std::vector<std::string> nunchukiface::ExportBCR2020010Wallet(const std::string &wallet_id, QWarningMessage &msg)
+{
+    std::vector<std::string> ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ExportBCR2020010Wallet(wallet_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
 nunchuk::Transaction nunchukiface::ImportKeystoneTransaction(const std::string &wallet_id,
                                                              const std::vector<std::string> &qr_data,
                                                              QWarningMessage& msg)
@@ -2337,6 +2355,42 @@ std::string nunchukiface::GetSignerAddress(const nunchuk::SingleSigner& signer,
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetSignerAddress(signer, address_type);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::string nunchukiface::GetHotWalletMnemonic(const std::string &wallet_id, const std::string &passphrase, QWarningMessage &msg)
+{
+    std::string ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetHotWalletMnemonic(wallet_id, passphrase);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::Wallet nunchukiface::CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, QWarningMessage &msg)
+{
+    nunchuk::Wallet ret(false);
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateHotWallet(mnemonic, passphraser, need_backup);
         }
     }
     catch (const nunchuk::BaseException &ex) {

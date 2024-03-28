@@ -37,7 +37,12 @@ Item {
     }
     Camera {
         id: camera
+        focus {
+            focusMode: CameraFocus.FocusContinuous
+            focusPointMode: CameraFocus.FocusPointCenter
+        }
     }
+
     VideoOutput {
         id: videoOutput
         source: camera
@@ -46,10 +51,18 @@ Item {
         anchors.centerIn: parent
         fillMode: VideoOutput.PreserveAspectCrop
         filters: [ zxingFilter ]
+        transform:  Rotation {
+            origin.x: width / 2
+            axis { x: 0; y: 1; z: 0 }
+            angle: 180
+        }
     }
     QZXingFilter {
         id: zxingFilter
+        orientation: videoOutput.orientation
         decoder {
+            tryHarder: false
+            enabledDecoders: QZXing.DecoderFormat_QR_CODE
             onTagFound: { qrscannerRoot.tagFound(tag) }
         }
         captureRect: {
@@ -57,19 +70,12 @@ Item {
             videoOutput.contentRect;
             videoOutput.sourceRect;
             // only scan the central quarter of the area for a barcode
-            return videoOutput.mapRectToSource(videoOutput.mapNormalizedRectToItem(Qt.rect(captureRectX,
-                                                                                           captureRectY,
-                                                                                           captureRectW,
-                                                                                           captureRectH)));
+            return videoOutput.mapRectToSource(videoOutput.mapNormalizedRectToItem(Qt.rect(0.125, 0.125, 0.75, 0.75)));
         }
     }
 
-    readonly property real areaSize: videoOutput.width*0.75
-    readonly property real captureRectX: (videoOutput.width - areaSize)/(videoOutput.width*2)
-    readonly property real captureRectY: (videoOutput.height - areaSize)/(videoOutput.height*2)
-    readonly property real captureRectW: areaSize/videoOutput.width
-    readonly property real captureRectH: areaSize/videoOutput.height
     readonly property int  iconsize: 20
+    readonly property real areaSize: videoOutput.width*0.75
 
     Item {
         id: captureArea

@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -39,17 +39,8 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
         for (int i = 0; i < AppModel::instance()->masterSignerList()->rowCount(); i++) {
             QMasterSignerPtr ret = AppModel::instance()->masterSignerList()->getMasterSignerByIndex(i);
             if(ret && ret.data()->checked()){
-                QSingleSignerPtr signer = QSingleSignerPtr(new QSingleSigner());
-                signer.data()->setName(ret.data()->name());
-                signer.data()->setMasterSignerId(ret.data()->id());
-                signer.data()->setSignerType(ret.data()->signerType());
-                signer.data()->setDevicetype(ret.data()->device()->type());
-                signer.data()->setCardId(ret.data()->device()->cardId());
-                signer.data()->setMasterFingerPrint(ret.data()->fingerPrint());
-                signer.data()->setDerivationPath(ret.data()->device()->path());
-                if(signer){
-                    AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
-                }
+                AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(ret->cloneSingleSigner());
+                AppModel::instance()->newWalletInfo()->singleSignersAssigned()->signers();
             }
         }
     }
@@ -63,6 +54,7 @@ void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
             if(signer && signer.data()->checked()){
                 signer.data()->setSignerType((int)signer.data()->signerType());
                 AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
+                AppModel::instance()->newWalletInfo()->singleSignersAssigned()->signers();
             }
         }
     }
@@ -107,7 +99,7 @@ void EVT_SIGNER_CONFIGURATION_MASTER_SIGNER_SEND_PASSPHRASE_HANDLER(QVariant msg
         passPhraseData["state_id"] = E::STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION;
         passPhraseData["mastersigner_id"] = msg.toMap().value("mastersigner_id");
         passPhraseData["mastersigner_index"] = msg.toMap().value("mastersigner_index");
-        QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+        QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
     }
 }
 
@@ -151,7 +143,7 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
         }
         bool needTopUp = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->needTopUpXpubs();
         AppModel::instance()->newWalletInfo()->setCapableCreate(!needTopUp);
-        QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REVIEW);
+        QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REVIEW);
         if(needTopUp){
             AppModel::instance()->showToast(0, STR_CPP_071, EWARNING::WarningType::EXCEPTION_MSG );
         }

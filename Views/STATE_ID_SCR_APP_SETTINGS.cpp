@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_APP_SETTINGS.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
@@ -50,9 +50,9 @@ void EVT_APP_SETTING_DELETE_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
             QMap<QString, QVariant> passPhraseData;
             passPhraseData["state_id"] = E::STATE_ID_SCR_APP_SETTINGS;
             passPhraseData["master_signer_id"] = pKey->id();
-            QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+            QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
         }else{
-            QQuickViewer::instance()->sendEvent(E::EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST);
         }
     }
 }
@@ -97,5 +97,5 @@ void EVT_APP_SETTING_BACK_TO_ONLINE_MODE_HANDLER(QVariant msg) {
 
 void EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
 {
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY);
 }

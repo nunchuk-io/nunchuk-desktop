@@ -27,6 +27,7 @@
 #include "QOutlog.h"
 #include "qUtils.h"
 #include <QJsonArray>
+#include "TypeDefine.h"
 
 class QMasterSigner : public QObject {
     Q_OBJECT
@@ -124,6 +125,7 @@ public:
 
     Q_INVOKABLE QVariantList getWalletList();
 
+    QSingleSignerPtr cloneSingleSigner();
 private:
     QString id_ = "";
     QString name_ = "";
@@ -203,6 +205,7 @@ public:
     QList<QMasterSignerPtr> fullList() const;
     void cleardata();
     void reloadOriginMasterSignerById(const QString &id);
+    int getHotKeyIndex() const;
 
     enum MasterSignerRoles {
         master_signer_id_Role,

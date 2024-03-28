@@ -273,17 +273,28 @@ QScreen {
         contentText: STR.STR_QML_1048
     }
 
-    QPopupGuestMode{
-        id: guestMode
-        onGotItClicked: { close() }
-        Component.onCompleted: {
-            if(!ClientController.isNunchukLoggedIn){ guestMode.open() }
-        }
+    QPopupInfoTwoButtons {
+        id: _info2
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1115
+        labels: [STR.STR_QML_341,STR.STR_QML_1114]
+        isVertical: true
+        funcs: [
+            function() {},
+            function() {
+                _content.signalChangeDate()
+            }
+        ]
     }
 
-    // Component.onCompleted: {
-    //         QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
-    // }
+     Component.onCompleted: {
+         if (ClientController.isNunchukLoggedIn === false) {
+            if (AppSetting.isFirstTimeOnboarding === false) {
+                OnBoarding.state = "onboarding"
+                QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+            }
+         }
+     }
 
     QConfirmYesNoPopup{
         id:_confirm

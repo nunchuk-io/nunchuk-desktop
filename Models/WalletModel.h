@@ -78,7 +78,7 @@ class Wallet : public QObject
     Q_PROPERTY(bool         isGroupWallet                           READ isGroupWallet                                  CONSTANT)
     Q_PROPERTY(QVariantList ownerMembers                            READ ownerMembers                                   CONSTANT)
     Q_PROPERTY(QVariant     ownerPrimary                            READ ownerPrimary                                   CONSTANT)
-
+    Q_PROPERTY(bool         needBackup                              READ needBackup             WRITE setNeedBackup NOTIFY needBackupChanged)
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -144,6 +144,9 @@ public:
 
     bool isDeleting() const;
     void setIsDeleting(const bool);
+
+    bool needBackup() const;
+    void setNeedBackup(const bool);
 
     int getCreationMode() const;
     void setCreationMode(int creationMode);
@@ -311,6 +314,7 @@ signals:
     void aliasMembersChanged();
     void aliasNameChanged();
     void signMessageChanged();
+    void needBackupChanged();
 public slots:
     void slotSyncCollabKeyname(QList<DracoUser> users);
     bool isValidAddress(const QString& address);
@@ -354,6 +358,7 @@ public:
     bool containsId(const QString& id);
     void updateSharedWalletById(const QString &wallet_id, const QString &room_id, const QString &init_id, const QString &name);
     void updateSignerOfRoomWallet(const QString &wallet_id, const SignerAssigned &signer);
+
     enum WalletRoles {
         wallet_Id_Role,
         wallet_Name_Role,
@@ -376,6 +381,7 @@ public:
         wallet_myRole_Role,
         wallet_hasOwner_Role,
         wallet_primaryOwner_Role,
+        wallet_isHotWallet_Role,
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

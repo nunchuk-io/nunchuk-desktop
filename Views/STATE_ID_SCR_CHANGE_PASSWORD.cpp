@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_CHANGE_PASSWORD.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"

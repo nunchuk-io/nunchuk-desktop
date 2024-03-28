@@ -27,12 +27,13 @@ import "../../customizes/Buttons"
 
 Item {
     id: _item
+    property bool isHotWallet: false
     property bool isAssisted: false
     property bool hasOwner: true
     property bool isDashboard: false
     property bool isLocked: false
-    readonly property string gradientFrom   : isLocked ? "#595959" : (isAssisted || isDashboard ? "#2F766D" : "#2F466C")
-    readonly property string gradientTo     : isLocked ? "#595959" : (isAssisted || isDashboard ? "#1C4A21" : "#1C4A21")
+    readonly property string gradientFrom   : isHotWallet ? "#A66800" : (isLocked ? "#595959" : (isAssisted || isDashboard ? "#2F766D" : "#2F466C"))
+    readonly property string gradientTo     : isHotWallet ? "#A66800" : (isLocked ? "#595959" : (isAssisted || isDashboard ? "#1C4A21" : "#1C4A21"))
     Item {
         id: _detail
         anchors.fill: parent

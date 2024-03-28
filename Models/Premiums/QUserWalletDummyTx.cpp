@@ -204,7 +204,7 @@ void QUserWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sign
                 if (auto plan = w->inheritancePlanPtr()) {
                     if (pending_signatures() == 0) {
                         if (plan->InheritancePlanCreateSucceed()) {
-                            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                         }
                     }
                 }
@@ -213,7 +213,7 @@ void QUserWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sign
                 if (auto plan = w->inheritancePlanPtr()) {
                     if (pending_signatures() == 0) {
                         if (plan->InheritancePlanUpdateSucceed()) {
-                            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                         }
                     }
                 }
@@ -222,7 +222,7 @@ void QUserWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sign
                 if (auto plan = w->inheritancePlanPtr()) {
                     if (pending_signatures() == 0) {
                         if (plan->InheritancePlanCancelSucceed()) {
-                            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                         }
                     }
                 }

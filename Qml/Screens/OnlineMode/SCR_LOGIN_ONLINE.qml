@@ -38,8 +38,26 @@ QScreen {
     readonly property int eRECOVER_PASSWORD : 3
     readonly property int eCHANGE_PASSWORD  : 4
     readonly property int eVERIFY_NEWDEVICE : 5
-    property int whereAmI: eSIGN_IN // 0: Create account - 1: Sign-in - 2: Forgot password - 3: Change password
-    property var whereMyComponent: [createAccount, signin, forgotPassword, recoverPassword, changePassword, verifyNewDevice]
+    readonly property int eONBOARDING_CREATE_ACCOUNT: 6
+    readonly property int eONBOARDING_SIGN_IN: 7
+    property int whereAmI: {
+        if (OnBoarding.state === "create-account") {
+            return eONBOARDING_CREATE_ACCOUNT
+        }
+        else if (OnBoarding.state === "sign-in") {
+            return eONBOARDING_SIGN_IN
+        }
+        return eSIGN_IN
+    }
+
+    property var whereMyComponent: [createAccount, // 0: Create account
+        signin, // 1: Sign in
+        forgotPassword, // 2: Forgot password
+        recoverPassword, // 3: Recover password
+        changePassword, // 4: Change password
+        verifyNewDevice, // 5: Verify new device
+        onboardingCreateAccount, // 6: Onboarding create account
+        onboardingSignIn] // 7: Onboarding sign in
 
     Row {
         id: getStarted
@@ -232,7 +250,7 @@ QScreen {
                     height: 48
                     label.text: STR.STR_QML_395
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     enabled: username.textInputted !== "" && email.textInputted !== ""
                     onButtonClicked: {
                         commonError.visible = false
@@ -415,7 +433,7 @@ QScreen {
                     height: 48
                     label.text: STR.STR_QML_405
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     enabled: changePasswordNewPassword.textInputted !== "" && (changePasswordNewPassword.textInputted === changePasswordConfirmPassword.textInputted)
                     onButtonClicked: {
                         if(changePasswordNewPassword.textInputted === changePasswordOldPassword.textInputted){
@@ -524,7 +542,7 @@ QScreen {
                     height: 48
                     label.text: STR.STR_QML_410
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     enabled: emailbackup.textInputted !== ""
                     onButtonClicked: {
                         commonError.visible = false
@@ -657,7 +675,7 @@ QScreen {
                     height: 48
                     label.text: STR.STR_QML_405
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     enabled:  tokenPassword.textInputted !== "" && newpassword.textInputted !== "" && newpassword.textInputted === confirmPassword.textInputted
                     onButtonClicked: {
                         var requestBody = {
@@ -845,7 +863,7 @@ QScreen {
                     height: 48
                     label.text: STR.STR_QML_419
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     enabled: emailaddrs.textInputted !== "" && passwd.textInputted !== "" && !processing
                     onButtonClicked: {
                         processing = true
@@ -1023,7 +1041,7 @@ QScreen {
                     height: 48
                     label.text: STR.STR_QML_427
                     label.font.pixelSize: 16
-                    type: eTypeA
+                    type: eTypeE
                     enabled: confirmCode.textInputted !== ""
                     onButtonClicked: {
                         commonError.visible = false
@@ -1054,7 +1072,388 @@ QScreen {
             }
         }
     }
-
+    Component {
+        id: onboardingCreateAccount
+        Item {
+            id: createAccountItem
+            QText {
+                id: title
+                anchors.top: parent.bottom
+                anchors.topMargin: 12
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: STR.STR_QML_392
+                font.family: "Lato"
+                font.weight: Font.Bold
+                font.pixelSize: 20
+                horizontalAlignment: Text.AlignHCenter
+                color: "#031F2B"
+            }
+            Column {
+                id: inputUserEmail
+                spacing: 16
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: title.bottom
+                anchors.topMargin: 36
+                QTextInputBoxTypeB {
+                    id: username
+                    label: STR.STR_QML_393
+                    boxWidth: 338
+                    boxHeight: 48
+                    isValid: true
+                    onTextInputtedChanged: {
+                        if(!username.isValid){
+                            username.isValid = true
+                            username.errorText = ""
+                        }
+                        email.showError = false;
+                    }
+                }
+                QTextInputBoxTypeB {
+                    id: email
+                    label: STR.STR_QML_394
+                    boxWidth: 338
+                    boxHeight: 48
+                    isValid: true
+                    onTextInputtedChanged: {
+                        if(!email.isValid){
+                            email.isValid = true
+                            email.errorText = ""
+                        }
+                        email.showError = false;
+                    }
+                }
+                QText {
+                    id: commonError
+                    width: 338
+                    height: 48
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    color: "#CF4018"
+                    visible: false
+                    wrapMode: Text.WordWrap
+                }
+            }
+            Column {
+                id: buttonCreateSignin
+                spacing: 16
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: inputUserEmail.bottom
+                anchors.topMargin: 24
+                QTextButton {
+                    width: 338
+                    height: 48
+                    label.text: STR.STR_QML_395
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    enabled: username.textInputted !== "" && email.textInputted !== ""
+                    onButtonClicked: {
+                        commonError.visible = false
+                        commonError.text = ""
+                        if(username.textInputted !== "" && email.textInputted !== ""){
+                            var newAccountInfo = {
+                                "name"  : username.textInputted,
+                                "email" : email.textInputted
+                            };
+                            QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_CREATE_ACCOUNT, newAccountInfo)
+                        }
+                        else{
+                            if(username.textInputted === ""){
+                                username.isValid = false
+                                username.errorText = STR.STR_QML_396
+                            }
+                            if(email.textInputted === ""){
+                                email.isValid = false
+                                email.errorText = STR.STR_QML_396
+                            }
+                        }
+                    }
+                }
+                QTextButton {
+                    id: btnSignin
+                    width: 338
+                    height: 48
+                    label.text: STR.STR_QML_419
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    onButtonClicked: {
+                        whereAmI = eONBOARDING_SIGN_IN
+                    }
+                }
+                QButtonTextLink {
+                    height: 20
+                    label: STR.STR_QML_420
+                    direction: eRIGHT
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onButtonClicked: {
+                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE)
+                    }
+                }
+                QText {
+                    id: privacyTerms
+                    width: parent.width
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    property string privacylink: "https://www.nunchuk.io/privacy.html"
+                    property string termslink: "https://www.nunchuk.io/terms.html"
+                    text: STR.STR_QML_421.arg(privacyTerms.termslink).arg(privacyTerms.privacylink)
+                    font.family: "Lato"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#031F2B"
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 16
+                    wrapMode: Text.WordWrap
+                    onLinkActivated: Qt.openUrlExternally(link)
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: privacyTerms.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        acceptedButtons: Qt.NoButton
+                    }
+                }
+            }
+            function processingCreateAccountResult(https_code, error_code, error_msg){
+                if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.REGISTER_EXCEPTION){
+                    commonError.visible = true
+                    commonError.text = qsTr("https_code[%1] error_code[%2] error_msg[%3], %4").arg(https_code).arg(error_code).arg(error_msg).arg(STR.STR_QML_399)
+                }
+                else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
+                    OnBoarding.state = ""
+                    whereAmI = eCHANGE_PASSWORD
+                }
+                else{
+                    email.isValid = false
+                    email.errorText = error_msg
+                    email.showError = true;
+                }
+            }
+        }
+    }
+    Component {
+        id: onboardingSignIn
+        Item {
+            QText {
+                id: title
+                anchors.top: parent.bottom
+                anchors.topMargin: 12
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: STR.STR_QML_415
+                font.family: "Lato"
+                font.weight: Font.Bold
+                font.pixelSize: 20
+                horizontalAlignment: Text.AlignHCenter
+                color: "#031F2B"
+            }
+            Column {
+                id: inputUserEmail
+                spacing: 16
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: title.bottom
+                anchors.topMargin: 36
+                QTextInputBoxTypeB {
+                    id: emailaddrs
+                    label: STR.STR_QML_394
+                    boxWidth: 338
+                    boxHeight: 48
+                    isValid: true
+                    onTextInputtedChanged: {
+                        if(!emailaddrs.isValid){
+                            emailaddrs.isValid = true
+                            emailaddrs.errorText = ""
+                        }
+                        emailaddrs.showError = false
+                        passwd.showError = false
+                    }
+                }
+                QTextInputBoxTypeB {
+                    id: passwd
+                    label: STR.STR_QML_416
+                    isPassword: true
+                    boxWidth: 338
+                    boxHeight: 48
+                    isValid: true
+                    onTextInputtedChanged: {
+                        if(!passwd.isValid){
+                            passwd.isValid = true
+                            passwd.errorText = ""
+                        }
+                        emailaddrs.showError = false
+                        passwd.showError = false
+                    }
+                    onEnterKeyRequest: {
+                        if(emailaddrs.textInputted !== "" && passwd.textInputted !== ""){
+                            var requestBody = {
+                                "email"      : emailaddrs.textInputted,
+                                "password"   : passwd.textInputted,
+                            };
+                            QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_SIGN_IN, requestBody)
+                        }
+                    }
+                }
+                QText {
+                    id: commonError
+                    width: 338
+                    height: 48
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    color: "#CF4018"
+                    visible: false
+                    wrapMode: Text.WordWrap
+                }
+            }
+            Row {
+                id: staySignedin
+                property bool isStaySignedIn: false
+                anchors.left: inputUserEmail.left
+                anchors.top: inputUserEmail.bottom
+                anchors.topMargin: 14
+                spacing: 4
+                QImage {
+                    width: 18
+                    height: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    source: Draco.stayLoggedIn ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {Draco.stayLoggedIn = !Draco.stayLoggedIn}
+                    }
+                }
+                QText {
+                    width: 98
+                    height: 28
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: STR.STR_QML_417
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {Draco.stayLoggedIn = !Draco.stayLoggedIn}
+                    }
+                }
+            }
+            QText {
+                width: 98
+                height: 28
+                anchors.right: inputUserEmail.right
+                anchors.top: inputUserEmail.bottom
+                anchors.topMargin: 14
+                horizontalAlignment: Text.AlignRight
+                text: STR.STR_QML_418
+                font.family: "Lato"
+                font.pixelSize: 16
+                font.underline : true
+                color: btnMouseForgotPwd.containsMouse ? "#35ABEE" : "#031F2B"
+                MouseArea {
+                    id: btnMouseForgotPwd
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    anchors.fill: parent
+                    onClicked: {
+                        whereAmI = eFORGOT_PASSWORD
+                    }
+                }
+            }
+            Column {
+                id: buttonGroupSignin
+                spacing: 16
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: inputUserEmail.bottom
+                anchors.topMargin: 64
+                QTextButton {
+                    id: btnSignin
+                    width: 338
+                    height: 48
+                    label.text: STR.STR_QML_419
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    enabled: emailaddrs.textInputted !== "" && passwd.textInputted !== "" && !processing
+                    onButtonClicked: {
+                        processing = true
+                        var requestBody = {
+                            "email"      : emailaddrs.textInputted,
+                            "password"   : passwd.textInputted,
+                        };
+                        QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_SIGN_IN, requestBody)
+                        processing = false
+                    }
+                }
+                QTextButton {
+                    width: 338
+                    height: 48
+                    label.text: STR.STR_QML_395
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    onButtonClicked: {
+                        whereAmI = eONBOARDING_CREATE_ACCOUNT
+                    }
+                }
+                QButtonTextLink {
+                    height: 20
+                    label: STR.STR_QML_420
+                    direction: eRIGHT
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onButtonClicked: {
+                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_LOCALMODE)
+                    }
+                }
+                QText {
+                    id: privacyTerms
+                    width: parent.width
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    property string privacylink: "https://www.nunchuk.io/privacy.html"
+                    property string termslink: "https://www.nunchuk.io/terms.html"
+                    text: STR.STR_QML_421.arg(privacyTerms.termslink).arg(privacyTerms.privacylink)
+                    font.family: "Lato"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#031F2B"
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 16
+                    wrapMode: Text.WordWrap
+                    onLinkActivated: Qt.openUrlExternally(link)
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: privacyTerms.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        acceptedButtons: Qt.NoButton
+                    }
+                }
+            }
+            function processingSigninResult(https_code, error_code, error_msg){
+                if(https_code !== DRACO_CODE.SUCCESSFULL || error_code === DRACO_CODE.SIGN_IN_EXCEPTION){
+                    if (error_code === DRACO_CODE.SIGN_IN_EXCEPTION) {
+                        errorInfo.contentText = error_msg
+                        errorInfo.open()
+                    } else {
+                        emailaddrs.isValid = false
+                        emailaddrs.errorText = error_msg
+                        emailaddrs.showError = true;
+                    }
+                } else {
+                    if(https_code === DRACO_CODE.SUCCESSFULL) {
+                        if (error_code === DRACO_CODE.RESPONSE_OK) {
+                            OnBoarding.state = ""
+                            QMLHandle.sendEvent(EVT.EVT_NUNCHUK_LOGIN_SUCCEEDED)
+                        } else if (error_code === DRACO_CODE.LOGIN_NEW_DEVICE) {
+                            commonError.visible = false
+                            commonError.text = ""
+                            OnBoarding.state = ""
+                            whereAmI = eVERIFY_NEWDEVICE
+                        } else {
+                            passwd.isValid = false
+                            passwd.errorText = error_msg
+                            passwd.showError = true
+                        }
+                    } else {
+                        passwd.isValid = false
+                        passwd.errorText = error_msg
+                    }
+                }
+            }
+        }
+    }
     Connections {
         target: Draco
         onCreateAccountResult: {

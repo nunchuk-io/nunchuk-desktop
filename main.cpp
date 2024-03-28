@@ -21,13 +21,14 @@
 #include <QQmlApplicationEngine>
 #include <QScreen>
 #include <QDir>
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Views/Views.h"
 #include "Models/AppModel.h"
 #include "Models/AppSetting.h"
 #include "Models/ProfileSetting.h"
 #include "Models/ServiceSetting.h"
 #include "Models/QWarningMessage.h"
+#include "Models/OnBoardingModel.h"
 #include "ifaces/QRCodeItem.h"
 #include "bridgeifaces.h"
 #include "Servers/Draco.h"
@@ -123,15 +124,15 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.30");
+    app.setApplicationVersion("1.9.31");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
     QWalletManagement::instance();
 
 #ifndef RELEASE_MODE
-//    MonitoringThread objTracking;
-//    objTracking.startTracking();
+//    QPingThread objTracking;
+//    objTracking.startPing();
 #endif
 
     DBG_INFO << "Execution Path: " << qApp->applicationDirPath();
@@ -141,7 +142,7 @@ int main(int argc, char* argv[])
 #endif
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
 
-    QQuickViewer::registerStates(STATE_ALL, ALEN(STATE_ALL));
+    QEventProcessor::registerStates(STATE_ALL, ALEN(STATE_ALL));
     qmlRegisterType<E>("HMIEVENTS", 1, 0, "EVT");
     qmlRegisterType<QRCodeItem>("QRCodeItem", 1, 0, "QRCodeItem");
     qmlRegisterType<DashRectangle>("RegisterTypes", 1, 0, "DashRectangle");
@@ -153,36 +154,37 @@ int main(int argc, char* argv[])
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QWalletData.qml"), "DataPool", 1, 0, "RoomWalletData");
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QGlobal.qml"), "DataPool", 1, 0, "GlobalData");
     qmlRegisterType<AlertEnum>("NUNCHUCKTYPE", 1, 0, "AlertType");
-    QQuickViewer::instance()->addImageProvider("nunchuk", CLIENT_INSTANCE->imageprovider());
-    QQuickViewer::instance()->initialized();
-    QQuickViewer::instance()->initFonts(latoFonts);
-    QQuickViewer::instance()->initFonts(montserratFonts);
-    QQuickViewer::instance()->completed();
-    QQuickViewer::instance()->registerContextProperty("MAINNET_SERVER", MAINNET_SERVER);
-    QQuickViewer::instance()->registerContextProperty("TESTNET_SERVER", TESTNET_SERVER);
+    QEventProcessor::instance()->addImageProvider("nunchuk", CLIENT_INSTANCE->imageprovider());
+    QEventProcessor::instance()->initialized();
+    QEventProcessor::instance()->initFonts(latoFonts);
+    QEventProcessor::instance()->initFonts(montserratFonts);
+    QEventProcessor::instance()->completed();
+    QEventProcessor::instance()->registerCtxProperty("MAINNET_SERVER", MAINNET_SERVER);
+    QEventProcessor::instance()->registerCtxProperty("TESTNET_SERVER", TESTNET_SERVER);
 #ifdef SIGNET_SUPPORT
-    QQuickViewer::instance()->registerContextProperty("SIGNET_SERVER", SIGNET_SERVER);
+    QEventProcessor::instance()->registerCtxProperty("SIGNET_SERVER", SIGNET_SERVER);
 #else
-    QQuickViewer::instance()->registerContextProperty("SIGNET_SERVER", "");
+    QEventProcessor::instance()->registerCtxProperty("SIGNET_SERVER", "");
 #endif
-    QQuickViewer::instance()->registerContextProperty("EXPLORER_TESTNET", EXPLORER_TESTNET);
-    QQuickViewer::instance()->registerContextProperty("EXPLORER_MAINNET", EXPLORER_MAINNET);
-    QQuickViewer::instance()->registerContextProperty("EXPLORER_SIGNNET", EXPLORER_SIGNNET);
-    QQuickViewer::instance()->registerContextProperty("MAX_UNUSED_ADDR", MAX_UNUSED_ADDR);
-    QQuickViewer::instance()->registerContextProperty("AppModel", QVariant::fromValue(AppModel::instance()));
-    QQuickViewer::instance()->registerContextProperty("AppSetting", QVariant::fromValue(AppSetting::instance()));
-    QQuickViewer::instance()->registerContextProperty("Draco", QVariant::fromValue(Draco::instance()));
-    QQuickViewer::instance()->registerContextProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
-    QQuickViewer::instance()->registerContextProperty("qapplicationVersion", app.applicationVersion());
-    QQuickViewer::instance()->registerContextProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
-    QQuickViewer::instance()->registerContextProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
-    QQuickViewer::instance()->registerContextProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
-    QQuickViewer::instance()->registerContextProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
-    QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
-    //    QQuickViewer::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
+    QEventProcessor::instance()->registerCtxProperty("EXPLORER_TESTNET", EXPLORER_TESTNET);
+    QEventProcessor::instance()->registerCtxProperty("EXPLORER_MAINNET", EXPLORER_MAINNET);
+    QEventProcessor::instance()->registerCtxProperty("EXPLORER_SIGNNET", EXPLORER_SIGNNET);
+    QEventProcessor::instance()->registerCtxProperty("MAX_UNUSED_ADDR", MAX_UNUSED_ADDR);
+    QEventProcessor::instance()->registerCtxProperty("AppModel", QVariant::fromValue(AppModel::instance()));
+    QEventProcessor::instance()->registerCtxProperty("AppSetting", QVariant::fromValue(AppSetting::instance()));
+    QEventProcessor::instance()->registerCtxProperty("Draco", QVariant::fromValue(Draco::instance()));
+    QEventProcessor::instance()->registerCtxProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
+    QEventProcessor::instance()->registerCtxProperty("qapplicationVersion", app.applicationVersion());
+    QEventProcessor::instance()->registerCtxProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
+    QEventProcessor::instance()->registerCtxProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
+    QEventProcessor::instance()->registerCtxProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
+    QEventProcessor::instance()->registerCtxProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
+    QEventProcessor::instance()->registerCtxProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
+    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
+    //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),
         [](int result, const QString& title, const QString& message, const QString& doItLaterCTALbl)->void {
-            QObject* obj = QQuickViewer::instance()->getQuickWindow()->rootObject();
+            QObject* obj = QEventProcessor::instance()->getQuickWindow()->rootObject();
             if (result == 2) // Forced update
             {
                 QMetaObject::invokeMethod(obj, "funcUpdateRequired", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
@@ -196,7 +198,7 @@ int main(int argc, char* argv[])
             }
         }
     , Qt::QueuedConnection);
-    QObject::connect(QQuickViewer::instance()->getQuickWindow(), &QQuickView::windowStateChanged, [=](int windowState) {
+    QObject::connect(QEventProcessor::instance()->getQuickWindow(), &QQuickView::windowStateChanged, [=](int windowState) {
         QtConcurrent::run([windowState]() {
             static int state = -1;
             if (state != windowState) {
@@ -207,6 +209,6 @@ int main(int argc, char* argv[])
             }
         });
     });
-    QQuickViewer::instance()->show();
+    QEventProcessor::instance()->show();
     return app.exec();
 }

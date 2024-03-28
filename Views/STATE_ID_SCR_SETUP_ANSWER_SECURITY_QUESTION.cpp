@@ -39,7 +39,7 @@ void EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ_HANDLER(QVariant msg) {
         if (ServiceSetting::instance()->servicesTagPtr()->verifyConfirmationCode(code)) {
             DBG_INFO << "success: " << code;
             if (ServiceSetting::instance()->servicesTagPtr()->keyRecoveryPtr()->UpdateSecurityQuestions()) {
-                QQuickViewer::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_SETUP_SECURITY_QUESTION_REQUEST);
                 QString msg_name = QString("Security questions updated");
                 AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
             }

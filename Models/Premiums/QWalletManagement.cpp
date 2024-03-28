@@ -289,7 +289,7 @@ QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const
 bool QWalletManagement::isGroupWallet(WalletId wallet_id) const
 {
     GroupId group_id = groupId(wallet_id);
-    if (group_id == wallet_id) {
+    if (group_id != "" && group_id == wallet_id) {
         return false;
     } else {
         return mWallets.contains(wallet_id) && !group_id.isEmpty();
@@ -299,7 +299,7 @@ bool QWalletManagement::isGroupWallet(WalletId wallet_id) const
 bool QWalletManagement::isUserWallet(WalletId wallet_id) const
 {
     GroupId group_id = groupId(wallet_id);
-    if (group_id == wallet_id) {
+    if (group_id != "" && group_id == wallet_id) {
         return true;
     } else {
         return mWallets.contains(wallet_id) && group_id.isEmpty();

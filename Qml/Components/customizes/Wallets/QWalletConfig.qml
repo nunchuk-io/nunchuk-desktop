@@ -373,8 +373,9 @@ QOnScreenContent {
                     STR.STR_QML_325,
                     STR.STR_QML_326,
                     STR.STR_QML_327,
-                    STR.STR_QML_329,
                     STR.STR_QML_328,
+                    STR.STR_QML_1279,
+                    STR.STR_QML_1280,
                     STR.STR_QML_674
                 ]
                 icons: [
@@ -382,8 +383,9 @@ QOnScreenContent {
                     "qrc:/Images/Images/backup.png",
                     "qrc:/Images/Images/backup.png",
                     "qrc:/Images/Images/backup.png",
-                    "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/fileDownload.png",
+                    "qrc:/Images/Images/exportqr.png",
+                    "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/fileDownload.png"
                 ]
                 onItemClicked: {
@@ -416,18 +418,29 @@ QOnScreenContent {
                                 + "-utxos.csv"
                         exportwalletDialog.open()
                         break;
-                    case 4: // "Export as QR"
-                        qrcodeExportResult.open()
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE)
-                        break;
-                    case 5: // "Export To Coldcard"
+                    case 4: // "Export To Coldcard"
                         exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD
                         exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                 + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                 + "-Coldcard-Config.txt"
                         exportwalletDialog.open()
                         break;
-                    case 6: //"Export wallet to Bitbox"
+                    case 5: // "Export as BC-UR2 QR (legacy)"
+                        qrcodeExportResult.open()
+                        var datalegacy = {
+                            "qrtype": "BC-UR2-QR-Legacy"
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
+                        break;
+                    case 6: // "Export as BC-UR2 QR"
+                        qrcodeExportResult.open()
+                        var data_seedhammer = {
+                            "qrtype": "BC-UR2-QR"
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, data_seedhammer)
+                        break;
+
+                    case 7: //"Export wallet to Bitbox"
                         var addrs = AppModel.walletInfo.walletunUsedAddressList;
                         if(addrs.length > 0){
                             displayAddressBusybox.addrToVerify = addrs[0]

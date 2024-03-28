@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_PENDING_REQUEST.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 

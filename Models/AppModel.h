@@ -30,7 +30,7 @@
 #include "MasterSignerModel.h"
 #include "TransactionModel.h"
 #include "UTXOModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Worker.h"
 #include "Premiums/QWalletManagement.h"
 #include "TypeDefine.h"

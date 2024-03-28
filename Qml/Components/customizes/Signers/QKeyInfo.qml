@@ -155,7 +155,7 @@ QOnScreenContentTypeA {
                 enables: [true, true, true]
                 visibles: [ (signerType === NUNCHUCKTYPE.SOFTWARE || signerType === NUNCHUCKTYPE.HARDWARE),
                     isTopXPubs,
-                    signerType !== NUNCHUCKTYPE.SOFTWARE && signerType !== NUNCHUCKTYPE.FOREIGN_SOFTWARE
+                    signerType !== NUNCHUCKTYPE.FOREIGN_SOFTWARE
                 ]
                 functions: {
                     var ls = [];
@@ -204,7 +204,14 @@ QOnScreenContentTypeA {
             type: eTypeB
             label.text: STR.STR_QML_129
             label.font.pixelSize: 16
-            visible: true
+            enabled: {
+                if (signerType === NUNCHUCKTYPE.AIRGAP) {
+                    var list = signerInfo.getWalletList()
+                    return list.length > 0
+                }
+                return true
+            }
+
             onButtonClicked: {
                 if (signerType === NUNCHUCKTYPE.NFC) {
                     _info.open()

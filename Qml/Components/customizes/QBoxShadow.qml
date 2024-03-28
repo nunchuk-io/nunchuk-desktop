@@ -36,6 +36,12 @@ Item {
     DropShadow {
         id: drshd
         anchors.fill: bg
+        horizontalOffset: 0
+        verticalOffset: 0
+        spread: 0
+        radius: 8
+        samples: 30
+        color: "#aa000000"
         source: bg
     }
 }

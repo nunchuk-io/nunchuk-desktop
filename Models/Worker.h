@@ -29,7 +29,7 @@
 #include "SingleSignerModel.h"
 #include "MasterSignerModel.h"
 #include "TransactionModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "nunchuk.h"
 
 Q_DECLARE_METATYPE(nunchuk::Transaction)

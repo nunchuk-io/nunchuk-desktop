@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_ROOT.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -43,7 +43,7 @@ void ROOT_Exit(QVariant msg) {
 }
 
 void EVT_ONS_CLOSE_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
+    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
     switch (msg.toInt()) {
     case E::STATE_ID_SCR_SEND:
     case E::STATE_ID_SCR_ADD_WALLET:
@@ -75,9 +75,9 @@ void EVT_STARTING_APPLICATION_LOCALMODE_HANDLER(QVariant msg) {
     int isPrimaryKey = msg.toInt();
     if(!AppModel::instance()->inititalized()){
         if(isPrimaryKey > 0){
-            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB, msg);
+            QEventProcessor::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB, msg);
         }else{
-            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+            QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
         }
         QMap<QString, QVariant> makeInstanceData;
         makeInstanceData["state_id"] = E::STATE_ID_SCR_HOME;
@@ -86,9 +86,9 @@ void EVT_STARTING_APPLICATION_LOCALMODE_HANDLER(QVariant msg) {
     else {
         AppModel::instance()->requestInitialData();
         if(isPrimaryKey > 0){
-            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB, msg);
+            QEventProcessor::instance()->sendEvent(E::EVT_GOTO_APP_SETTINGS_TAB, msg);
         }else{
-            QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+            QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
         }
     }
 }
@@ -107,7 +107,7 @@ void EVT_ROOT_PROMT_PASSPHRASE_HANDLER(QVariant msg) {
 
 void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
     if(CLIENT_INSTANCE->isNunchukLoggedIn()){
-        QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+        QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
         timeoutHandler(1000, []() {
             emit CLIENT_INSTANCE->contactsChanged();
         });
@@ -117,14 +117,14 @@ void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
             Draco::instance()->getMe();
             if(Draco::instance()->Uid() == CLIENT_INSTANCE->getMe().email){
                 bridge::nunchukSetCurrentMode(ONLINE_MODE);
-                QQuickViewer::instance()->notifySendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
+                QEventProcessor::instance()->notifySendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
             }
             else{
-                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
             }
         }
         else{
-            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
         }
     }
     timeoutHandler(1000, []() {
@@ -152,7 +152,7 @@ void EVT_ONLINE_ONS_CLOSE_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_STARTING_APPLICATION_ONLINE_HWL_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+    QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
 }
 
 void EVT_SHOW_TOAST_MESSAGE_HANDLER(QVariant msg) {
@@ -198,17 +198,17 @@ void EVT_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ONS_CLOSE_ALL_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->closeAllPopup();
+    QEventProcessor::instance()->closeAllPopup();
 }
 
 void EVT_ROOT_SIGN_IN_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
 {
-    QQuickViewer::instance()->sendEvent(E::EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST,true);
+    QEventProcessor::instance()->sendEvent(E::EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST,true);
 }
 
 void EVT_ROOT_CREATE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
 {
-    QQuickViewer::instance()->sendEvent(E::EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST,false);
+    QEventProcessor::instance()->sendEvent(E::EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST,false);
 }
 
 void EVT_ROOT_ENTRY_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
@@ -244,7 +244,7 @@ void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
             maps["wallet_id"] = w->id();
             DBG_INFO << maps;
             timeoutHandler(500,[maps](){
-                QQuickViewer::instance()->sendEvent(E::EVT_SERVICE_SELECT_WALLET_REQUEST, QVariant::fromValue(maps));
+                QEventProcessor::instance()->sendEvent(E::EVT_SERVICE_SELECT_WALLET_REQUEST, QVariant::fromValue(maps));
             });
         }
     }

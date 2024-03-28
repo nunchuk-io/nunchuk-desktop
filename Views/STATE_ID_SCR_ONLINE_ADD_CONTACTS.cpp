@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_ONLINE_ADD_CONTACTS.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Servers/Draco.h"
 #include "Chats/ClientController.h"
 
@@ -44,14 +44,14 @@ void EVT_ONLINE_ADD_CONTACTS_SEND_INVITATION_HANDLER(QVariant msg) {
         bool ret = Draco::instance()->requestSingleFriend(emails.at(0));
         if(ret){
             Draco::instance()->refreshContacts();
-            QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ADD_CONTACTS_BACK);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ADD_CONTACTS_BACK);
         }
     }
     else{
         bool ret = Draco::instance()->requestSingleFriend(emails.at(0));
         if(ret){
             Draco::instance()->refreshContacts();
-            QQuickViewer::instance()->sendEvent(E::EVT_ONLINE_ADD_CONTACTS_BACK);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ADD_CONTACTS_BACK);
         }
     }
 }

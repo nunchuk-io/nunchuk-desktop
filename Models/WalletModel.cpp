@@ -389,6 +389,19 @@ void Wallet::setIsDeleting(const bool val)
     emit isDeletingChanged();
 }
 
+bool Wallet::needBackup() const
+{
+    return m_wallet.need_backup();
+}
+
+void Wallet::setNeedBackup(const bool bVal)
+{
+    if (bVal != needBackup()) {
+        m_wallet.set_need_backup(bVal);
+        emit needBackupChanged();
+    }
+}
+
 int Wallet::getCreationMode() const
 {
     return m_creationMode;
@@ -633,6 +646,7 @@ void Wallet::UpdateWallet(const QString &name, const QString &description)
 {
     setName(name);
     setDescription(description);
+    DBG_INFO << isGroupWallet() << isUserWallet();
     if(isGroupWallet()){
         UpdateGroupWallet(name, description);
     }
@@ -1594,6 +1608,8 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
             return d_[index.row()]->ownerPrimary().isValid();
         case wallet_primaryOwner_Role:
             return d_[index.row()]->ownerPrimary();
+        case wallet_isHotWallet_Role:
+            return d_[index.row()]->needBackup();
         default:
             return QVariant();
         }
@@ -1633,6 +1649,7 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_myRole_Role]               = "wallet_role";
     roles[wallet_hasOwner_Role]             = "wallet_hasOwner";
     roles[wallet_primaryOwner_Role]         = "wallet_primaryOwner";
+    roles[wallet_isHotWallet_Role]          = "wallet_isHotWallet";
     return roles;
 }
 

@@ -17,39 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "QOutlog.h"
 #include <QFontDatabase>
 #include <QScreen>
 
-bool        QQuickViewer::m_register    = false;
-QHash<uint, const APPLICATION_STATE*>     QQuickViewer::m_stateRegisted;
-QHash<uint, QHash<uint, STATE_TRIGGER> >  QQuickViewer::m_poolEvt;
+bool        QEventProcessor::m_register    = false;
+QHash<uint, const APPLICATION_STATE*>     QEventProcessor::m_stateRegisted;
+QHash<uint, QHash<uint, STATE_TRIGGER> >  QEventProcessor::m_poolEvt;
 
-QQuickViewer::QQuickViewer() : m_viewer(new QQuickView()), m_scrMng(NULL), m_popMng(NULL), m_RootState(0),
+QEventProcessor::QEventProcessor() : m_viewer(new QQuickView()), m_scrMng(NULL), m_popMng(NULL), m_RootState(0),
     m_popRequester(0), m_currentSize(QSize(0,0)), m_currentScale(1.0), m_currentFlow(-1)
 {
     if(!m_PopupTriger.isEmpty()){
         m_PopupTriger.clear();
     }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(this, &QQuickViewer::signalNotifySendEvent,     this, &QQuickViewer::sendEvent,              Qt::QueuedConnection);
-    connect(this, &QQuickViewer::signalNotifyToastMessage,  this, &QQuickViewer::slotNotifyToastMessage, Qt::QueuedConnection);
+    connect(this, &QEventProcessor::signalNotifySendEvent,     this, &QEventProcessor::sendEvent,              Qt::QueuedConnection);
+    connect(this, &QEventProcessor::signalNotifyToastMessage,  this, &QEventProcessor::slotNotifyToastMessage, Qt::QueuedConnection);
 }
 
-QQuickViewer::~QQuickViewer()
+QEventProcessor::~QEventProcessor()
 {
     m_viewer->deleteLater();
     m_scrMng->deleteLater();
     m_popMng->deleteLater();
 }
 
-QQuickViewer *QQuickViewer::instance(){
-    static QQuickViewer mInstance;
+QEventProcessor *QEventProcessor::instance(){
+    static QEventProcessor mInstance;
     return &mInstance;
 }
 
-void QQuickViewer::initialized()
+void QEventProcessor::initialized()
 {
     QObject::connect(m_viewer, SIGNAL(visibleChanged(bool)), this, SIGNAL(visibleChanged(bool)));
     QObject::connect(m_viewer, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
@@ -57,13 +57,13 @@ void QQuickViewer::initialized()
     QObject::connect(m_viewer, SIGNAL(heightChanged(int)), this, SLOT(onHeightChanged(int)));
     m_ctxProperties.clear();
     m_qmlObj.clear();
-    QQuickViewer::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
-    this->registerContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
-    this->registerContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
-    this->registerContextProperty("QMLHandle", QVariant::fromValue(this));
+    QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
+    this->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
+    this->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
+    this->registerCtxProperty("QMLHandle", QVariant::fromValue(this));
 }
 
-void QQuickViewer::initFonts(QStringList &fonts)
+void QEventProcessor::initFonts(QStringList &fonts)
 {
     for (int i = 0; i < fonts.count(); i++) {
         int fontID = QFontDatabase::addApplicationFont(fonts.at(i));
@@ -74,11 +74,11 @@ void QQuickViewer::initFonts(QStringList &fonts)
     QFont::insertSubstitution("Montserrat", "Montserrat");
 }
 
-void QQuickViewer::completed()
+void QEventProcessor::completed()
 {
     loadQml(m_viewer, QUrl(QStringLiteral(MAIN_VIEWPORT_QML)), m_viewer->rootContext());
-    m_scrMng = new QScreenManager(m_viewer->rootObject(), m_viewer->rootContext());
-    m_popMng = new QPopupManager(m_viewer->rootObject(), m_viewer->rootContext());
+    m_scrMng = new QScreenDelegate(m_viewer->rootObject(), m_viewer->rootContext());
+    m_popMng = new QPopupDelegate(m_viewer->rootObject(), m_viewer->rootContext());
 
     for (int i = 0; i < m_stateRegisted.keys().count(); i++) {
         if(LAYER::LAYER_BASE == m_stateRegisted[m_stateRegisted.keys().at(i)]->layerbase){
@@ -89,7 +89,7 @@ void QQuickViewer::completed()
     }
 }
 
-bool QQuickViewer::registerContextProperty(const QString &str, const QVariant &var)
+bool QEventProcessor::registerCtxProperty(const QString &str, const QVariant &var)
 {
     if(m_ctxProperties.contains(str)){
         DBG_ERROR << "Property " << str << "Already existed";
@@ -102,12 +102,7 @@ bool QQuickViewer::registerContextProperty(const QString &str, const QVariant &v
     return true;
 }
 
-QList<QString> QQuickViewer::contextPropertiesRegisted() const
-{
-    return m_ctxProperties;
-}
-
-bool QQuickViewer::updateContextProperty(const QString &str, const QVariant &var)
+bool QEventProcessor::updateCtxProperty(const QString &str, const QVariant &var)
 {
     bool ret = false;
     if(m_ctxProperties.contains(str) && (NULL != m_viewer->rootContext())){
@@ -120,7 +115,7 @@ bool QQuickViewer::updateContextProperty(const QString &str, const QVariant &var
     return ret;
 }
 
-void QQuickViewer::sendEvent(uint eventID, QVariant msg)
+void QEventProcessor::sendEvent(uint eventID, QVariant msg)
 {
     // CHECK IN CURRENT POPUP
     if(NULL != m_popMng){
@@ -167,50 +162,46 @@ void QQuickViewer::sendEvent(uint eventID, QVariant msg)
     }
 }
 
-void QQuickViewer::notifySendEvent(uint eventID, QVariant msg)
+void QEventProcessor::notifySendEvent(uint eventID, QVariant msg)
 {
     emit signalNotifySendEvent(eventID, msg);
 }
 
-void QQuickViewer::sendToastMessage(QVariant msg)
+void QEventProcessor::sendToastMessage(QVariant msg)
 {
     emit signalNotifyToastMessage(msg);
 }
 
-void QQuickViewer::onWidthChanged(int w)
+void QEventProcessor::onWidthChanged(int w)
 {
     if(w > m_currentSize.width()){
         DBG_INFO << "FULL SIZE REQUEST" << w;
-        this->updateContextProperty("QAPP_DEVICE_WIDTH", m_viewer->geometry().width());
-//        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
+        this->updateCtxProperty("QAPP_DEVICE_WIDTH", m_viewer->geometry().width());
     }
     else{
         DBG_INFO << "ORIGIN SIZE REQUEST" << w;
-        this->updateContextProperty("QAPP_DEVICE_WIDTH", m_currentSize.width());
-//        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
+        this->updateCtxProperty("QAPP_DEVICE_WIDTH", m_currentSize.width());
     }
 }
 
-void QQuickViewer::onHeightChanged(int h)
+void QEventProcessor::onHeightChanged(int h)
 {
     if(h > m_currentSize.height()){
         DBG_INFO << "FULL SIZE REQUEST" << h;
-//        this->updateContextProperty("QAPP_DEVICE_WIDTH", m_viewer->geometry().width());
-        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
+        this->updateCtxProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
     }
     else{
         DBG_INFO << "ORIGIN SIZE REQUEST" << h;
-//        this->updateContextProperty("QAPP_DEVICE_WIDTH", m_currentSize.width());
-        this->updateContextProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
+        this->updateCtxProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
     }
 }
 
-void QQuickViewer::aboutToQuit(QQuickViewer::QPrivateSignal signal)
+void QEventProcessor::aboutToQuit(QEventProcessor::QPrivateSignal signal)
 {
     DBG_INFO;
 }
 
-void QQuickViewer::doRegisterQML(QObject *objPropose)
+void QEventProcessor::doRegisterQML(QObject *objPropose)
 {
     m_currentScreen = objPropose;
     m_qmlObj.insert(0, objPropose);
@@ -226,7 +217,7 @@ void QQuickViewer::doRegisterQML(QObject *objPropose)
     }
 }
 
-void QQuickViewer::unRegisterQML(QObject *objPropose)
+void QEventProcessor::unRegisterQML(QObject *objPropose)
 {
     m_qmlObj.removeAll(objPropose);
     for (QObject* obj: m_qmlObj) {
@@ -241,7 +232,7 @@ void QQuickViewer::unRegisterQML(QObject *objPropose)
     }
 }
 
-bool QQuickViewer::setViewerSize(int width, int height)
+bool QEventProcessor::setViewerSize(int width, int height)
 {
     m_viewer->setMinimumSize(QSize(width, height));
 //    m_viewer->setMaximumSize(QSize(width, height));
@@ -249,7 +240,7 @@ bool QQuickViewer::setViewerSize(int width, int height)
     return true;
 }
 
-bool QQuickViewer::show()
+bool QEventProcessor::show()
 {
     bool state = false;
     if(NULL != m_viewer){
@@ -259,7 +250,7 @@ bool QQuickViewer::show()
     return state;
 }
 
-bool QQuickViewer::hide()
+bool QEventProcessor::hide()
 {
     bool state = false;
     if(NULL != m_viewer){
@@ -269,17 +260,17 @@ bool QQuickViewer::hide()
     return state;
 }
 
-QQmlContext *QQuickViewer::getQmlContext() const
+QQmlContext *QEventProcessor::getQmlContext() const
 {
     return m_viewer->rootContext();
 }
 
-QQuickView *QQuickViewer::getQuickWindow() const
+QQuickView *QEventProcessor::getQuickWindow() const
 {
     return m_viewer;
 }
 
-QList<uint> QQuickViewer::getCurrentStates() const
+QList<uint> QEventProcessor::getCurrentStates() const
 {
     QList<uint> list ;
     if(NULL != m_scrMng){
@@ -295,7 +286,7 @@ QList<uint> QQuickViewer::getCurrentStates() const
     return list;
 }
 
-void QQuickViewer::registerStates(const STATE_SYSTEM tbl[], uint len)
+void QEventProcessor::registerStates(const STATE_SYSTEM tbl[], uint len)
 {
     if(false == m_register){
         if(!m_poolEvt.isEmpty()){
@@ -319,12 +310,12 @@ void QQuickViewer::registerStates(const STATE_SYSTEM tbl[], uint len)
     }
 }
 
-int QQuickViewer::currentFlow() const
+int QEventProcessor::currentFlow() const
 {
     return m_currentFlow;
 }
 
-void QQuickViewer::setCurrentFlow(int currentFlow)
+void QEventProcessor::setCurrentFlow(int currentFlow)
 {
     if(m_currentFlow != currentFlow){
         DBG_INFO << currentFlow;
@@ -333,29 +324,29 @@ void QQuickViewer::setCurrentFlow(int currentFlow)
     }
 }
 
-int QQuickViewer::popupTrigger(int popupId) const
+int QEventProcessor::popupTrigger(int popupId) const
 {
     return m_PopupTriger[popupId];
 }
 
-void QQuickViewer::setPopupTrigger(int popupId, int trigger)
+void QEventProcessor::setPopupTrigger(int popupId, int trigger)
 {
     m_PopupTriger[popupId] = trigger;
 }
 
-void QQuickViewer::addImageProvider(const QString &id, QQmlImageProviderBase *provider)
+void QEventProcessor::addImageProvider(const QString &id, QQmlImageProviderBase *provider)
 {
     if(m_viewer && m_viewer->engine()){
         m_viewer->engine()->addImageProvider(id, provider);
     }
 }
 
-QList<QObject *> QQuickViewer::getQmlObj() const
+QList<QObject *> QEventProcessor::getQmlObj() const
 {
     return m_qmlObj;
 }
 
-bool QQuickViewer::closeAllPopup()
+bool QEventProcessor::closeAllPopup()
 {
     bool ret = false;
     if(NULL != m_popMng){
@@ -364,17 +355,17 @@ bool QQuickViewer::closeAllPopup()
     return ret;
 }
 
-QObject *QQuickViewer::getCurrentScreen() const
+QObject *QEventProcessor::getCurrentScreen() const
 {
     return m_currentScreen;
 }
 
-uint QQuickViewer::onsRequester() const
+uint QEventProcessor::onsRequester() const
 {
     return m_popRequester;
 }
 
-QQuickItem* QQuickViewer::loadQml(QQuickView *view, const QUrl &url, QQmlContext *context)
+QQuickItem* QEventProcessor::loadQml(QQuickView *view, const QUrl &url, QQmlContext *context)
 {
     auto component = new QQmlComponent(view->engine(), url, view);
     if (component->isError()) {
@@ -396,7 +387,7 @@ QQuickItem* QQuickViewer::loadQml(QQuickView *view, const QUrl &url, QQmlContext
     return view->rootObject();
 }
 
-void QQuickViewer::handleTransition(const APPLICATION_STATE *from, const APPLICATION_STATE *to, QVariant msg)
+void QEventProcessor::handleTransition(const APPLICATION_STATE *from, const APPLICATION_STATE *to, QVariant msg)
 {
     if(((NULL != from) && (NULL != to))){
         if((LAYER::LAYER_POPUP == to->layerbase) || (LAYER::LAYER_TOAST == to->layerbase)){
@@ -432,7 +423,7 @@ void QQuickViewer::handleTransition(const APPLICATION_STATE *from, const APPLICA
     }
 }
 
-bool QQuickViewer::showScreen(uint id, QVariant msg)
+bool QEventProcessor::showScreen(uint id, QVariant msg)
 {
     bool ret = false;
     if((NULL != m_scrMng) && m_stateRegisted.contains(id)){
@@ -443,7 +434,7 @@ bool QQuickViewer::showScreen(uint id, QVariant msg)
     return ret;
 }
 
-bool QQuickViewer::showPopup(uint id, QVariant msg)
+bool QEventProcessor::showPopup(uint id, QVariant msg)
 {
     bool ret = false;
     if((NULL != m_popMng) && m_stateRegisted.contains(id)){
@@ -464,7 +455,7 @@ bool QQuickViewer::showPopup(uint id, QVariant msg)
     return ret;
 }
 
-bool QQuickViewer::closePopup(uint id, QVariant msg)
+bool QEventProcessor::closePopup(uint id, QVariant msg)
 {
     bool ret = false;
     if((NULL != m_popMng) && m_stateRegisted.contains(id)){
@@ -485,7 +476,7 @@ bool QQuickViewer::closePopup(uint id, QVariant msg)
     return ret;
 }
 
-bool QQuickViewer::showToastMessage(QVariant msg)
+bool QEventProcessor::showToastMessage(QVariant msg)
 {
     if(m_popMng){
         return m_popMng->showToastMessage(msg);
@@ -493,23 +484,23 @@ bool QQuickViewer::showToastMessage(QVariant msg)
     return false;
 }
 
-void QQuickViewer::setOnsRequester(const uint id)
+void QEventProcessor::setOnsRequester(const uint id)
 {
     m_popRequester = id;
 }
 
-void QQuickViewer::collectGarbage()
+void QEventProcessor::collectGarbage()
 {
     if(NULL != m_viewer->engine()){
         m_viewer->engine()->collectGarbage();
     }
 }
 
-void QQuickViewer::onVisibleChanged(bool state)
+void QEventProcessor::onVisibleChanged(bool state)
 {
     Q_UNUSED(state);
 }
 
-void QQuickViewer::slotNotifyToastMessage(QVariant msg) {
+void QEventProcessor::slotNotifyToastMessage(QVariant msg) {
     showToastMessage(msg);
 }

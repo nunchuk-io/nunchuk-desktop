@@ -27,3 +27,7 @@ class QUserWalletDummyTx;
 typedef OurSharedPointer<QUserWalletDummyTx> QUserWalletDummyTxPtr;
 class QRecurringPayment;
 typedef OurSharedPointer<QRecurringPayment> QRecurringPaymentPtr;
+class QMasterSigner;
+typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;
+class QSingleSigner;
+typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;

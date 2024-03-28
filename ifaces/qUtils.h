@@ -147,6 +147,14 @@ QString ExportBitcoinSignedMessage(const QString &message, const QString &addres
 QString qAddressTypeToStr(const nunchuk::AddressType& address_type);
 
 bool isPrimaryKey(const QString& xfp);
+
+nunchuk::Wallet parseBBQRWallet(nunchuk::Chain chain, const QStringList& qrtags, QWarningMessage& msg);
+
+std::vector<nunchuk::Wallet> ParseBBQRWallets(const QStringList& qrtags, QWarningMessage& msg);
+
+QStringList ExportBBQRTransaction( const QString& psbt, QWarningMessage& msg);
+
+QStringList ExportBBQRWallet(const nunchuk::Wallet& wallet, QWarningMessage& msg);
 }
 
 #endif // QUTILS_H

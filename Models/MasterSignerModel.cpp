@@ -390,6 +390,20 @@ QVariantList QMasterSigner::getWalletList()
     return ret;
 }
 
+QSingleSignerPtr QMasterSigner::cloneSingleSigner()
+{
+    QSingleSignerPtr signer = QSingleSignerPtr(new QSingleSigner());
+
+    signer.data()->setName(name());
+    signer.data()->setMasterSignerId(id());
+    signer.data()->setSignerType(signerType());
+    signer.data()->setDevicetype(device()->type());
+    signer.data()->setCardId(device()->cardId());
+    signer.data()->setMasterFingerPrint(fingerPrint());
+    signer.data()->setDerivationPath(device()->path());
+    return signer;
+}
+
 MasterSignerListModel::MasterSignerListModel() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -724,6 +738,17 @@ void MasterSignerListModel::reloadOriginMasterSignerById(const QString &id)
         }
     }
     endResetModel();
+}
+
+int MasterSignerListModel::getHotKeyIndex() const
+{
+    int index = 0;
+    foreach (QMasterSignerPtr i , d_ ){
+        if(i->name().contains("My key")){
+            index++;
+        }
+    }
+    return (index + 1);
 }
 
 bool sortMasterSignerByNameAscending(const QMasterSignerPtr &v1, const QMasterSignerPtr &v2)

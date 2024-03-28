@@ -46,7 +46,7 @@ void EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER(QVariant msg) {
             if (auto dash = w->dashboard()) {
                 dash->GetMemberInfo();
                 AppModel::instance()->requestSyncWalletDb(dash->wallet_id());
-                QQuickViewer::instance()->sendEvent(E::EVT_CLOSE_LOCKDOWN_SUCCESS);
+                QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_LOCKDOWN_SUCCESS);
                 ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
             }
             else {
@@ -61,5 +61,5 @@ void EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_CLOSE_LOCKDOWN_SUCCESS_HANDLER(QVariant msg)
 {
-//    QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+//    QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
 }

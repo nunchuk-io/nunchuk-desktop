@@ -27,7 +27,7 @@
 #include "QCommonDefines.h"
 #include "QCommonStructs.h"
 #include "QCommonEnums.h"
-#include "QScreenManager.h"
-#include "QPopupManager.h"
+#include "QScreenDelegate.h"
+#include "QPopupDelegate.h"
 
 #endif // QAPPFRAMEWORK_H

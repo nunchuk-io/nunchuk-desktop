@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SIGN_IN.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -41,7 +41,7 @@ void EVT_SIGN_IN_PASSWORD_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_SIGN_IN_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->sendEvent(E::EVT_SHOW_SIGN_IN_PRIMARY_KEY_REQUEST,true);
+    QEventProcessor::instance()->sendEvent(E::EVT_SHOW_SIGN_IN_PRIMARY_KEY_REQUEST,true);
 }
 
 

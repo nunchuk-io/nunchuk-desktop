@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_CONFIGURE_SHARED_WALLET.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -33,7 +33,7 @@ void SCR_CONFIGURE_SHARED_WALLET_Exit(QVariant msg) {
 }
 
 void EVT_CONFIGURE_SHARED_WALLET_REQUEST_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->sendEvent(E::EVT_CONFIGURE_SHARED_WALLET_REVIEW_REQUEST);
+    QEventProcessor::instance()->sendEvent(E::EVT_CONFIGURE_SHARED_WALLET_REVIEW_REQUEST);
 }
 
 void EVT_CONFIGURE_SHARED_WALLET_BACK_HANDLER(QVariant msg) {

@@ -6,6 +6,7 @@
 #include "Premiums/QGroupWallets.h"
 #include "ServiceSetting.h"
 #include "QWalletServicesTag.h"
+#include "Premiums/QGroupWalletDummyTx.h"
 
 QKeyRecovery::QKeyRecovery()
 {
@@ -120,7 +121,7 @@ bool QKeyRecovery::UserKeysCalculateRequiredSignatures(const QString &xfp)
         resultObj["type"] = "SECURITY_QUESTION";
         servicesTagPtr()->setReqiredSignatures(resultObj);
         if (servicesTagPtr()->CreateSecurityQuestionsAnswered()) {
-            QQuickViewer::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
         }
         return true;
     }
@@ -141,12 +142,12 @@ bool QKeyRecovery::UserKeysCalculateRequiredSignatures(const QString &xfp)
             ReqiredSignaturesInfo required_question = servicesTagPtr()->reqiredSignaturesInfo();
             if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
                 if (servicesTagPtr()->CreateSecurityQuestionsAnswered()) {
-                    QQuickViewer::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
                 }
                 return true;
             } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE) {
                 if (RequestConfirmationCodeKeyRecovery()) {
-                    QQuickViewer::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
                 }
                 return true;
             } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
@@ -154,7 +155,7 @@ bool QKeyRecovery::UserKeysCalculateRequiredSignatures(const QString &xfp)
             } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::NONE) {
                 if (step == "RECOVER") {
                     if (UserKeysRecoveryKey()) {
-                        QQuickViewer::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
                         return true;
                     }
                 }
@@ -239,7 +240,7 @@ bool QKeyRecovery::UserKeysRequestRecoveryKey()
                                                              errormsg);
     DBG_INFO << ret << output;
     if (ret) {
-        QQuickViewer::instance()->sendEvent(E::EVT_ENTER_BACKUP_PASSWORD_RERQUEST);
+        QEventProcessor::instance()->sendEvent(E::EVT_ENTER_BACKUP_PASSWORD_RERQUEST);
     }
     return ret;
 }
@@ -352,6 +353,7 @@ bool QKeyRecovery::UpdateSecurityQuestions()
                                                 servicesTagPtr()->passwordToken(),
                                                 servicesTagPtr()->secQuesToken(),
                                                 servicesTagPtr()->confirmToken(),
+                                                false,
                                                 output,
                                                 errormsg);
     if (ret) {
@@ -374,20 +376,45 @@ bool QKeyRecovery::UpdateSecurityQuestionsRequiredSignatures()
         ReqiredSignaturesInfo required_question = servicesTagPtr()->reqiredSignaturesInfo();
         if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
 //            if (servicesTagPtr()->CreateSecurityQuestions()) {
-//                QQuickViewer::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
+//                QEventProcessor::instance()->sendEvent(E::EVT_ANSER_SECURITY_QUESTION_REQUEST);
 //            }
             return false;
         } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE) {
             if (RequestConfirmationCodeSetupSecurityQuestions()) {
-                QQuickViewer::instance()->sendEvent(E::EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ);
+                QEventProcessor::instance()->sendEvent(E::EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ);
             }
             return true;
         } else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
-            QQuickViewer::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+            QJsonObject output;
+            QString errormsg = "";
+            QJsonObject data;
+            data["nonce"] = Draco::instance()->randomNonce();
+            data["body"]  = JsBody();
+            QStringList authorizations;
+            bool ret = Draco::instance()->SecQuesUpdate(data,
+                                                        authorizations,
+                                                        servicesTagPtr()->passwordToken(),
+                                                        "",
+                                                        "",
+                                                        true,
+                                                        output,
+                                                        errormsg);
+            if(ret){
+                QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
+                if (auto w = ServiceSetting::instance()->walletInfoPtr()) {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->setDummyTxData(dummy_transaction);
+                        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+                    }
+                }
+            }
             return true;
         } else {
             return false;
         }
+    }
+    else {
+        DBG_INFO << errormsg;
     }
     return ret;
 }
@@ -503,7 +530,7 @@ void QKeyRecovery::setupSecQuesAnswer(int index, const QString &id, const QStrin
     QString id_change = json["id"].toString();
     json["isChanged"] = true;
     if (qUtils::strCompare(id_change, id)) {
-        json["answer"] = answer;
+        json["answer"] = answer.trimmed();
         json["change"] = true;
     }
     require_questions[index] = json;

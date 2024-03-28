@@ -54,18 +54,18 @@ endif()
 set(QAppEngine_SRCS
     QAppEngine/QOutlog/QOutlog.cpp
     QAppEngine/QOutlog/QPingThread.cpp
-    QAppEngine/QQuickViewer/QQuickViewer.cpp
-    QAppEngine/QQuickViewer/PopupManager/QPopupManager.cpp
-    QAppEngine/QQuickViewer/ScreenManager/QScreenManager.cpp
-    QAppEngine/QQuickViewer/ScreenManager/QScreenQueue.cpp
+    QAppEngine/QEventProcessor/QEventProcessor.cpp
+    QAppEngine/QEventProcessor/QPopupDelegate/QPopupDelegate.cpp
+    QAppEngine/QEventProcessor/QScreenDelegate/QScreenDelegate.cpp
+    QAppEngine/QEventProcessor/QScreenDelegate/QScreenQueue.cpp
     )
 
 set(QAppEngine_MOCS
     QAppEngine/QOutlog/QOutlog.h
     QAppEngine/QOutlog/QPingThread.h
-    QAppEngine/QQuickViewer/QQuickViewer.h
-    QAppEngine/QQuickViewer/PopupManager/QPopupManager.h
-    QAppEngine/QQuickViewer/ScreenManager/QScreenQueue.h
+    QAppEngine/QEventProcessor/QEventProcessor.h
+    QAppEngine/QEventProcessor/QPopupDelegate/QPopupDelegate.h
+    QAppEngine/QEventProcessor/QScreenDelegate/QScreenQueue.h
     )
 QT5_WRAP_CPP(MOCS_APPENGINE ${QAppEngine_MOCS})
 
@@ -177,6 +177,7 @@ set(${PROJECT_NAME}_SRCS
     Models/WalletModel.cpp
     Models/Worker.cpp
     Models/QWarningMessage.cpp
+    Models/OnBoardingModel.cpp
     ifaces/QRCodeItem.cpp
     ifaces/QRGenerator.cpp
     ifaces/bridgeifaces.cpp
@@ -233,10 +234,10 @@ QT5_ADD_RESOURCES(RSCS ${${PROJECT_NAME}_RSCS})
 
 set(${PROJECT_NAME}_INC_PATH
     QAppEngine/QOutlog
-    QAppEngine/QQuickViewer
-    QAppEngine/QQuickViewer/ScreenManager
-    QAppEngine/QQuickViewer/PopupManager
-    QAppEngine/QQuickViewer/Common
+    QAppEngine/QEventProcessor
+    QAppEngine/QEventProcessor/QScreenDelegate
+    QAppEngine/QEventProcessor/QPopupDelegate
+    QAppEngine/QEventProcessor/Common
     Views/Common
     Views
     ifaces
@@ -255,6 +256,7 @@ set(${PROJECT_NAME}_MOCS
     Models/UTXOModel.h
     Models/WalletModel.h
     Models/Worker.h
+    Models/OnBoardingModel.h
     ifaces/QRCodeItem.h
     ifaces/bridgeifaces.h
     RegisterTypes/DashRectangle.h

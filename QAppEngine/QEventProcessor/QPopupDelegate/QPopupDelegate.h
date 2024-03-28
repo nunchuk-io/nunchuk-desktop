@@ -18,33 +18,58 @@
  *                                                                        *
  **************************************************************************/
 
-#ifndef SCREENMANAGER_H
-#define SCREENMANAGER_H
+#ifndef QPOPUPDELEGATE_H
+#define QPOPUPDELEGATE_H
 
 #include <QObject>
+#include <QStack>
+#include <QSharedPointer>
+#include <QTimer>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQmlContext>
-
 #include "QAppEngine.h"
-#include "QScreenQueue.h"
 
-class QScreenManager : public QObject
+class PopupObject;
+class QPopupDelegate;
+typedef QSharedPointer<PopupObject> PopupObjectPtr;
+
+class QPopupDelegate : public QObject
 {
+    Q_OBJECT
 public:
-    explicit QScreenManager(QQuickItem* rootObject, QQmlContext* context);
-    virtual ~QScreenManager();
-
-    bool showScreen(const APPLICATION_STATE *scr, QVariant msg = QVariant());
-    uint getCurrentScreen() const;
+    explicit QPopupDelegate(QQuickItem* rootObject, QQmlContext* context);
+    virtual ~QPopupDelegate();
+    QList<uint> getCurrentPopups() const;
+    bool showPopup(POPUP_DATA p);
+    bool closePopup(POPUP_DATA p);
+    bool closeAll();
+    bool showToastMessage(QVariant msg);
 private:
-    static QScreenQueue cacheScreen;
-    QQuickItem          *m_rootObject;
-    QQmlContext         *m_context;
-    const APPLICATION_STATE *m_CurrentScreen;
+    QQuickItem              *m_rootObject;
+    QQmlContext             *m_context;
+    QList<PopupObjectPtr>   m_listPopup;
+    QStringList             m_QmlOder;
+    void qmlSyncup();
 
-private:
-    QQmlComponentPtr getComponent(QObject *parent, QString screenFile);
+public slots:
+    void onClosePopupTimeout(uint id);
 };
 
-#endif // SCREENMANAGER_H
+class PopupObject: public QTimer
+{
+    Q_OBJECT
+public:
+    explicit PopupObject(POPUP_DATA p);
+    virtual ~PopupObject();
+    POPUP_DATA popupInfo() const;
+private:
+    POPUP_DATA   m_popInfo;
+signals:
+    void closePopupTimeout(uint id);
+public slots:
+    void timeout_exec();
+};
+
+
+#endif // QPOPUPDELEGATE_H

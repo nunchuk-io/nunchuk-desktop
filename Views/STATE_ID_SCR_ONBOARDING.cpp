@@ -20,9 +20,26 @@
 
 
 #include "STATE_ID_SCR_ONBOARDING.h"
+#include "Models/AppModel.h"
+#include "Models/OnBoardingModel.h"
+#include "bridgeifaces.h"
+#include "localization/STR_CPP.h"
+#include "Premiums/QGroupWallets.h"
 
 void SCR_ONBOARDING_Entry(QVariant msg) {
-
+    if (OnBoardingModel::instance()->state() == "seedPhrase") {
+        if (auto w = AppModel::instance()->walletInfoPtr()) {
+            DBG_INFO << w->id();
+            QString mnemonic = bridge::GetHotWalletMnemonic(w->id(), "");
+            AppModel::instance()->setMnemonic(mnemonic);
+        }
+    }
+    else {
+        AppModel::instance()->setMnemonic("");
+        AppModel::instance()->setSuggestMnemonics(bridge::nunchuckGetBIP39WordList());
+        OnBoardingModel::instance()->GetCountryCodeList();
+        QGroupWallets::instance()->findPermissionAccount();
+    }
 }
 
 void SCR_ONBOARDING_Exit(QVariant msg) {
@@ -30,6 +47,83 @@ void SCR_ONBOARDING_Exit(QVariant msg) {
 }
 
 void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
+    QString type = msg.toMap()["type"].toString();
+    if (type == "send-query") {
+        QString country_code = msg.toMap()["country_code"].toString();
+        QString email = msg.toMap()["email"].toString();
+        QString note = msg.toMap()["note"].toString();
+        if (OnBoardingModel::instance()->RequestOnboardingNoAdvisor(country_code, email, note)) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+        }
+    }
+    else if (type == "create-a-hot-wallet-now") {
+        if (auto w = OnBoardingModel::instance()->CreateAHotWallet()) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            timeoutHandler(1000, [w]() {
+                int index = AppModel::instance()->walletListPtr()->getWalletIndexById(w->id());
+                DBG_INFO << w->id() << index;
+                if (index >= 0) {
+                    AppModel::instance()->setWalletListCurrentIndex(index);
+                }
+            });
+        }
+    }
+    else if (type == "create-an-account") {
+        OnBoardingModel::instance()->setState("create-account");
+        QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
+    }
+    else if (type == "sign-in-account") {
+        OnBoardingModel::instance()->setState("sign-in");
+        QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
+    }
+    else if (type == "create-new-wallet") {
+        QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_WALLET_REQUEST);
+    }
+    else if (type == "recover-existing-wallet") {
+        QString filePath = msg.toMap()["filePath"].toString();
+        QString file_path = qUtils::QGetFilePath(filePath);
+        QString recoverType = msg.toMap()["recoverType"].toString();
+        QWalletPtr wallet {nullptr};
+        if (recoverType == "recover-via-bsms-config-file") {
+            wallet = OnBoardingModel::instance()->ImportWalletDescriptor(file_path);
+        }
+        else if (recoverType == "recover-via-coldcard") {
+            wallet = OnBoardingModel::instance()->ImportWalletDescriptor(file_path);
+        }
+        if (wallet) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            timeoutHandler(1000, [wallet]() {
+                int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->id());
+                DBG_INFO << wallet->id() << index;
+                if (index >= 0) {
+                    AppModel::instance()->setWalletListCurrentIndex(index);
+                }
+            });
+        }
+    }
+    else if (type == "recover-hot-wallet") {
+        QString mnemonic = msg.toMap()["mnemonic"].toString();
+        DBG_INFO << mnemonic;
+        bool checkmnemonic = qUtils::CheckMnemonic(mnemonic);
+        if(checkmnemonic){
+            if (auto wallet = OnBoardingModel::instance()->CreateAHotWallet(mnemonic, false)) {
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                timeoutHandler(1000, [wallet]() {
+                    int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->id());
+                    DBG_INFO << wallet->id() << index;
+                    if (index >= 0) {
+                        AppModel::instance()->setWalletListCurrentIndex(index);
+                    }
+                });
+                QString msg = QString("%1 has been recovered.").arg(wallet->name());
+                AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+            }
+        }
+        else{
+            AppModel::instance()->setMnemonic("-101");
+            AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
 
 }
 

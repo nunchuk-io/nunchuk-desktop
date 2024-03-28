@@ -19,7 +19,7 @@
  **************************************************************************/
 #include "STATE_ID_SCR_CONSOLIDATE_OUTPUT.h"
 #include "Models/AppModel.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
@@ -100,7 +100,7 @@ void EVT_CONSOLIDATE_MAKE_TRANSACTION_HANDLER(QVariant msg) {
             }
             AppModel::instance()->setTransactionInfo(trans);
             AppModel::instance()->transactionInfo()->setMemo(memo);
-            QQuickViewer::instance()->sendEvent(E::EVT_CONSOLIDATE_MAKE_TRANSACTION_SUCCEED);
+            QEventProcessor::instance()->sendEvent(E::EVT_CONSOLIDATE_MAKE_TRANSACTION_SUCCEED);
         }
     }
     else{

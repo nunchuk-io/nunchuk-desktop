@@ -37,6 +37,7 @@
 #include <QSqlDatabase>
 #include <database.h>
 #include <QTextDocument>
+#include "OnBoardingModel.h"
 
 using Quotient::NetworkAccessManager;
 using Quotient::Settings;
@@ -127,6 +128,21 @@ void ClientController::setIsNunchukLoggedIn(bool isLogged)
     }
 }
 
+void ClientController::onCheckingOnboarding()
+{
+    timeoutHandler(1000,[=, this]{
+        if (isSubscribed()) {
+            AppSetting::instance()->setIsFirstTimeOnboarding(true);
+        } else {
+            DBG_INFO << "Checking Onboarding " << AppSetting::instance()->isFirstTimeOnboarding();
+            if (!AppSetting::instance()->isFirstTimeOnboarding()) {
+                OnBoardingModel::instance()->setState("onboarding");
+                QEventProcessor::instance()->sendEvent(E::EVT_ONBOARDING_REQUEST);
+            }
+        }
+    });
+}
+
 QLogginManager *ClientController::loginHandler() const
 {
     return m_loginHandler.data();
@@ -145,6 +161,7 @@ void ClientController::requestLogin()
     if(loginHandler()){
         loginHandler()->invokeLogin(Draco::instance()->chatId(), Draco::instance()->dracoToken());
     }
+    onCheckingOnboarding();
 }
 
 void ClientController::syncContacts(QList<DracoUser> data)
@@ -339,7 +356,7 @@ void ClientController::requestSignout()
         m_loginHandler.data()->requestLogout();
     }
     Draco::instance()->signout();
-    QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+    QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
     setIsNunchukLoggedIn(false);
     setAttachmentEnable(false);
     deleteStayLoggedInData();

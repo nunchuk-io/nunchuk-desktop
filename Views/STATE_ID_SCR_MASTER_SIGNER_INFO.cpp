@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_MASTER_SIGNER_INFO.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -69,7 +69,7 @@ void EVT_MASTER_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
             passPhraseData["master_signer_msg"] = AppModel::instance()->masterSignerInfo()->message();
             passPhraseData["is_software"] = true;
             passPhraseData["is_check_heath"] = true;
-            QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+            QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
         }
         else{
             AppModel::instance()->startHealthCheckMasterSigner(E::STATE_ID_SCR_MASTER_SIGNER_INFO,
@@ -98,7 +98,7 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
                     if(remoteSigners){
                         AppModel::instance()->setRemoteSignerList(remoteSigners);
                     }
-                    QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
                     AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
                 }
             }
@@ -111,7 +111,7 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
             if (mastersigners) {
                 AppModel::instance()->setMasterSignerList(mastersigners);
             }
-            QQuickViewer::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_MASTER_SIGNER_INFO_BACK_REQUEST);
             AppModel::instance()->setMasterSignerInfo(QMasterSignerPtr(new QMasterSigner()));
             if (AppModel::instance()->walletList()) {
                 AppModel::instance()->walletList()->notifyMasterSignerDeleted(id);
@@ -125,7 +125,7 @@ void EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST_HANDLER(QVariant msg) {
         passPhraseData["is_software"] = true;
         passPhraseData["is_remove"] = true;
         passPhraseData["func_remove_key"] = QVariant::fromValue(func);
-        QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+        QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
     }
     else{
         func(mastersigner_id);
@@ -160,7 +160,7 @@ void EVT_MASTER_SIGNER_INFO_GET_XPUBS_HANDLER(QVariant msg) {
             passPhraseData["master_signer_msg"] = signer->message();
             passPhraseData["is_software"] = true;
             passPhraseData["is_top_up"] = true;
-            QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+            QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
         }
         else{
             QMap<QString, QVariant> data;

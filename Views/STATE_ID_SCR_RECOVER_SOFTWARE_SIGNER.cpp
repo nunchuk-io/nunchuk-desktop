@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_RECOVER_SOFTWARE_SIGNER.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -38,7 +38,7 @@ void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
     QString mnemonicinput = msg.toString();
     bool checkmnemonic = qUtils::CheckMnemonic(mnemonicinput);
     if(checkmnemonic){
-        QQuickViewer::instance()->sendEvent(E::EVT_RECOVER_SOFTWARE_SIGNER_SUCCEED);
+        QEventProcessor::instance()->sendEvent(E::EVT_RECOVER_SOFTWARE_SIGNER_SUCCEED);
         AppModel::instance()->setMnemonic(mnemonicinput);
     }
     else{

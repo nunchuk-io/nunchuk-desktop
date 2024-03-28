@@ -20,7 +20,7 @@
 #include "AppModel.h"
 #include "AppSetting.h"
 #include "bridgeifaces.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "ViewsEnums.h"
 #include "Servers/Draco.h"
 #include "localization/STR_CPP.h"
@@ -206,7 +206,7 @@ void AppModel::stopCheckAuthorize()
 
 bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassphrase)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     bool ret = true;
     QWarningMessage nunchukMsg;
     bridge::nunchukSetCurrentMode(ONLINE_MODE);
@@ -232,11 +232,11 @@ bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassp
     else if((int)EWARNING::WarningType::EXCEPTION_MSG == nunchukMsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == nunchukMsg.code()){
         DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE" << nunchukMsg.code();
         ret = false;
-        QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+        QList<uint> states = QEventProcessor::instance()->getCurrentStates();
         if(!states.isEmpty() && states.last() != (uint)E::STATE_ID_SCR_UNLOCK_DB)
         {
             timeoutHandler(500,[msg](){
-                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, msg);
+                QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, msg);
             });
         }
         else{
@@ -252,7 +252,7 @@ bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassp
 
 bool AppModel::makeNunchukInstanceForAccount(const QVariant msg, const QString &dbPassphrase)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     bool ret = true;
     QWarningMessage warningmsg;
     bridge::nunchukSetCurrentMode(ONLINE_MODE);
@@ -268,11 +268,11 @@ bool AppModel::makeNunchukInstanceForAccount(const QVariant msg, const QString &
     else if((int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == warningmsg.code()){
         DBG_INFO << "COULD NOT MAKE NUNCHUCK INSTANCE" << warningmsg.code();
         ret = false;
-        QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+        QList<uint> states = QEventProcessor::instance()->getCurrentStates();
         if(!states.isEmpty() && states.last() != (uint)E::STATE_ID_SCR_UNLOCK_DB)
         {
             timeoutHandler(500,[msg](){
-                QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, msg);
+                QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, msg);
             });
         }
         else{
@@ -317,10 +317,10 @@ bool AppModel::makeNunchukInstance(const QVariant makeInstanceData, const QStrin
     }
     else if((int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type() && nunchuk::NunchukException::INVALID_PASSPHRASE == warningmsg.code()){
         ret = false;
-        QList<uint> states = QQuickViewer::instance()->getCurrentStates();
+        QList<uint> states = QEventProcessor::instance()->getCurrentStates();
         if(!states.isEmpty() && states.last() != (uint)E::STATE_ID_SCR_UNLOCK_DB)
         {
-            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, makeInstanceData);
+            QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_DB_REQUEST, makeInstanceData);
         }
         else{
             AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
@@ -1229,6 +1229,6 @@ void AppModel::recieveToast(int code, const QString &what, EWARNING::WarningType
         data["code"          ] = message.code();
         data["type"          ] = message.type();
         data["popupType"     ] = message.popupType();
-        QQuickViewer::instance()->sendToastMessage(QVariant::fromValue(data));
+        QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(data));
     });
 }

@@ -18,8 +18,8 @@
  *                                                                        *
  **************************************************************************/
 
-#ifndef QQUICKVIEWER_H
-#define QQUICKVIEWER_H
+#ifndef QEVENTPROCESSOR_H
+#define QEVENTPROCESSOR_H
 
 #include <QObject>
 #include <QGuiApplication>
@@ -27,7 +27,6 @@
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QQmlComponent>
-
 #include "QAppEngine.h"
 
 template<typename Function>
@@ -36,23 +35,22 @@ void timeoutHandler(int timeoutInterval, Function&& f)
     QTimer::singleShot(timeoutInterval, std::forward<Function>(f));
 }
 
-class QQuickViewer : public QObject
+class QEventProcessor : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int currentFlow READ currentFlow WRITE setCurrentFlow NOTIFY currentFlowChanged)
 
 public:
-    static QQuickViewer *instance();
-    QQuickViewer(QQuickViewer &other) = delete;
-    QQuickViewer(QQuickViewer const &other) = delete;
-    void operator=(const QQuickViewer &other) = delete;
+    static QEventProcessor *instance();
+    QEventProcessor(QEventProcessor &other) = delete;
+    QEventProcessor(QEventProcessor const &other) = delete;
+    void operator=(const QEventProcessor &other) = delete;
 
     void initialized();
     void initFonts(QStringList &fonts);
     void completed();
-    bool registerContextProperty(const QString &str, const QVariant &var);
-    QList<QString> contextPropertiesRegisted() const;
-    bool updateContextProperty(const QString &str, const QVariant &var);
+    bool registerCtxProperty(const QString &str, const QVariant &var);
+    bool updateCtxProperty(const QString &str, const QVariant &var);
     Q_INVOKABLE void doRegisterQML(QObject* objPropose);
     Q_INVOKABLE void unRegisterQML(QObject* objPropose);
     Q_INVOKABLE uint onsRequester() const;
@@ -76,8 +74,8 @@ private:
     static QHash<uint, const APPLICATION_STATE*>        m_stateRegisted;
     static QHash<uint, QHash<uint, STATE_TRIGGER> >     m_poolEvt;
     QQuickView                                          *m_viewer;
-    QScreenManager                                      *m_scrMng;
-    QPopupManager                                       *m_popMng;
+    QScreenDelegate                                     *m_scrMng;
+    QPopupDelegate                                      *m_popMng;
     QList<QString>                                      m_ctxProperties;
     uint                                                m_RootState;
     QList<QObject*>                                     m_qmlObj;
@@ -88,8 +86,8 @@ private:
     QMap<int, int>                                      m_PopupTriger;
     QObject*                                            m_currentScreen;
 private:
-    explicit QQuickViewer();
-    virtual ~QQuickViewer();
+    explicit QEventProcessor();
+    virtual ~QEventProcessor();
     QQuickItem* loadQml(QQuickView *view, const QUrl &url, QQmlContext *context);
     void handleTransition(const APPLICATION_STATE *from, const APPLICATION_STATE *to, QVariant msg = QVariant());
     bool showScreen(uint id, QVariant msg = QVariant());
@@ -117,4 +115,4 @@ public slots:
     void slotNotifyToastMessage(QVariant msg);
 };
 
-#endif // QQUICKVIEWER_H
+#endif // QEVENTPROCESSOR_H

@@ -29,6 +29,7 @@
 #define DRAGON_CHAT_URL         "https://api.nunchuk.io/v1.1/chat"
 #define DRAGON_APP_URL          "https://api.nunchuk.io/v1.1/app"
 #define DRAGON_FOREX_URL        "https://api.nunchuk.io/v1.1/forex"
+#define DRAGON_BANNERS_URL      "https://api.nunchuk.io/v1.1/banners"
 
 #define DRAGON_SUBSCRIPTIONS_URL            "https://api.nunchuk.io/v1.1/subscriptions"
 #define DRAGON_USER_WALLETS_URL             "https://api.nunchuk.io/v1.1/user-wallets"
@@ -232,6 +233,8 @@ enum CMD_IDX {
 
     CONFIRMATION_CODE,
     VERIFY_CONFIRMATION_CODE,
+    COUNTRY_CODE_LIST,
+    ONBOARDING_NO_ADVISOR,
 
     CMD_MAX
 };
@@ -520,6 +523,9 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_FINALIZE_DUMMY_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/dummy-transactions/{dummy_transaction_id}/finalize") },
 
     { Premium::CMD_IDX::ASSISTED_WALLET_HEALTH_CHECK_HISTORY_GET  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallet-keys/{xfp}/history") },
+
+    { Premium::CMD_IDX::COUNTRY_CODE_LIST             , QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/countries") },
+    { Premium::CMD_IDX::ONBOARDING_NO_ADVISOR         , QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/no-advisor") },
 
 
     //DRAGON_GROUP_WALLETS

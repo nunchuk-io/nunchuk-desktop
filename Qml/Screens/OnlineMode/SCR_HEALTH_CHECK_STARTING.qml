@@ -60,6 +60,7 @@ QScreen {
 
         {flow_action: AlertType.CREATE_RECURRING_PAYMENT,             screen_component: _authorize_recurring_payment},
         {flow_action: AlertType.RECURRING_PAYMENT_REQUEST,            screen_component: _signature_require_three},
+        {flow_action: AlertType.UPDATE_SECURITY_QUESTIONS,            screen_component: _signature_require_one},
 
         {flow_action: AlertType.CANCEL_RECURRING_PAYMENT,             screen_component: _cancel_recurring_payment},
         {flow_action: AlertType.RECURRING_PAYMENT_CANCELATION_PENDING,screen_component: _cancel_recurring_payment},

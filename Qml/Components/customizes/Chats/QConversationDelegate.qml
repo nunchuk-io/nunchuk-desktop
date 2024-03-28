@@ -234,6 +234,7 @@ Item {
                     textFormat: Text.RichText
                     lineHeight: 16
                     lineHeightMode: Text.FixedHeight
+                    font.pixelSize: 16
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -356,6 +357,7 @@ Item {
                                 font.family: "Lato"
                                 textFormat: Text.RichText
                                 lineHeight: 1.5
+                                font.pixelSize: 16
                                 horizontalAlignment: Text.AlignJustify
                                 onLinkActivated: Qt.openUrlExternally( link )
                                 MouseArea {
@@ -693,6 +695,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -705,6 +708,7 @@ Item {
                     anchors.rightMargin: 12
                     font.weight: Font.Bold
                     font.family: "Lato"
+                    font.pixelSize: 16
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea {
                         anchors.fill: parent
@@ -749,6 +753,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -784,6 +789,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -793,6 +799,7 @@ Item {
                     color: "#031F2B"
                     anchors.right: parent.right
                     anchors.rightMargin: 12
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     font.family: "Lato"
                     anchors.verticalCenter: parent.verticalCenter
@@ -838,6 +845,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -849,6 +857,7 @@ Item {
                     anchors.rightMargin: 12
                     font.weight: Font.Bold
                     font.family: "Lato"
+                    font.pixelSize: 16
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea {
                         anchors.fill: parent
@@ -1227,6 +1236,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     verticalAlignment: Text.AlignVCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -1237,6 +1247,7 @@ Item {
                     color: "#031F2B"
                     anchors.right: parent.right
                     anchors.rightMargin: 12
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     font.family: "Lato"
                     anchors.verticalCenter: parent.verticalCenter
@@ -1301,6 +1312,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     verticalAlignment: Text.AlignVCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -1311,6 +1323,7 @@ Item {
                     color: "#031F2B"
                     anchors.right: parent.right
                     anchors.rightMargin: 12
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     font.family: "Lato"
                     anchors.verticalCenter: parent.verticalCenter
@@ -1362,6 +1375,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -1371,6 +1385,7 @@ Item {
                     color: "#031F2B"
                     anchors.right: parent.right
                     anchors.rightMargin: 12
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     font.family: "Lato"
                     anchors.verticalCenter: parent.verticalCenter
@@ -1417,6 +1432,7 @@ Item {
                     font.family: "Lato"
                     textFormat: Text.RichText
                     lineHeight: 16
+                    font.pixelSize: 16
                     lineHeightMode: Text.FixedHeight
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -1549,6 +1565,7 @@ Item {
                                     font.family: "Lato"
                                     textFormat: Text.RichText
                                     lineHeight: 1.5
+                                    font.pixelSize: 16
                                     horizontalAlignment: Text.AlignJustify
                                     onLinkActivated: Qt.openUrlExternally( link )
                                 }
@@ -1877,6 +1894,7 @@ Item {
                                     font.family: "Lato"
                                     textFormat: Text.RichText
                                     lineHeight: 1.5
+                                    font.pixelSize: 16
                                     horizontalAlignment: Text.AlignJustify
                                     onLinkActivated: Qt.openUrlExternally( link )
                                 }

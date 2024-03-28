@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_UTXO_OUTPUT.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/UTXOModel.h"
 #include "bridgeifaces.h"
@@ -39,7 +39,7 @@ void EVT_UTXO_INFO_CHECKOUT_TX_RELATED_HANDLER(QVariant msg) {
     if(msg.toString() != "" && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->transactionHistory()){
         QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(msg.toString());
         AppModel::instance()->setTransactionInfo(it);
-        QQuickViewer::instance()->sendEvent(E::EVT_UTXO_INFO_VIEW_TX_RELATED);
+        QEventProcessor::instance()->sendEvent(E::EVT_UTXO_INFO_VIEW_TX_RELATED);
     }
 }
 

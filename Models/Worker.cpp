@@ -21,7 +21,7 @@
 #include "bridgeifaces.h"
 #include "Chats/matrixbrigde.h"
 #include "ViewsEnums.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Servers/Draco.h"
 #include "localization/STR_CPP.h"
 #include "Premiums/QUserWallets.h"
@@ -69,7 +69,7 @@ void Worker::slotStartCreateMasterSigner(const QString &id,
     }
     else{
         DBG_INFO << "CREATE MASTER SIGNER FAIL" << msg.what() << msg.type() << msg.code();
-        int last = QQuickViewer::instance()->getCurrentStates().last();
+        int last = QEventProcessor::instance()->getCurrentStates().last();
         if (last == E::STATE_ID_SCR_ADD_HARDWARE) {
             AppModel::instance()->setAddSignerWizard(1);
         }
@@ -279,8 +279,8 @@ void Worker::slotStartCreateSoftwareSigner(const QString name,
                                            const QString passphrase)
 {
     QWarningMessage msg;
-    bool isPrimaryKey = QQuickViewer::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY ||
-            QQuickViewer::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY;
+    bool isPrimaryKey = QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY ||
+            QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY;
     AppModel::instance()->setAddSignerPercentage(0);
     QMasterSignerPtr ret = bridge::nunchukCreateSoftwareSigner(name,
                                                                mnemonic,
@@ -461,7 +461,7 @@ void Worker::slotStartMultiDeviceSync(const bool state)
 
 void Worker::slotStartReloadUserDb()
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QWarningMessage msg;
     std::vector<nunchuk::Wallet> wallets = bridge::nunchukGetOriginWallets(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
@@ -698,12 +698,12 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
             AppModel::instance()->setMasterSignerInfo(newsigner);
             selectFingerPrint = newsigner->fingerPrint();
         }
-        int last = QQuickViewer::instance()->getCurrentStates().last();
+        int last = QEventProcessor::instance()->getCurrentStates().last();
         if(last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER){
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_MASTER_SIGNER_RESULT);
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_MASTER_SIGNER_RESULT);
         }
         else if (last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER_TO_WALLET){
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_RESULT);
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_RESULT);
         }
         else if (last == E::STATE_ID_SCR_ADD_HARDWARE) {
             if (QAssistedDraftWallets::IsByzantine()) {
@@ -738,10 +738,10 @@ void Controller::slotFinishCreateRemoteSigner(const int event,
         }
         DBG_INFO << event;
         if(event == E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER){
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER_RESULT);
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER_RESULT);
         }
         else{
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_REMOTE_SIGNER_RESULT);
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_REMOTE_SIGNER_RESULT);
         }
         AppModel::instance()->showToast(0, STR_CPP_057, EWARNING::WarningType::SUCCESS_MSG);
     }
@@ -932,18 +932,18 @@ void Controller::slotFinishCreateSoftwareSigner(const QMasterSignerPtr ret,
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }
 
-        switch (QQuickViewer::instance()->currentFlow()) {
+        switch (QEventProcessor::instance()->currentFlow()) {
         case (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY:
         {
-            uint last = QQuickViewer::instance()->getCurrentStates().last();
+            uint last = QEventProcessor::instance()->getCurrentStates().last();
             if(last == (int)E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION){
                 AppModel::instance()->showToast(0, STR_CPP_102.arg(ret.data()->name()), EWARNING::WarningType::SUCCESS_MSG);
             }
             else if(last == (int)E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY){
-                QQuickViewer::instance()->sendEvent(E::EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED);
+                QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED);
             }
             else if(last == (int)E::STATE_ID_SCR_UNLOCK_DB){
-                QQuickViewer::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+                QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
                 AppModel::instance()->makeMatrixInstanceForAccount();
                 QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
                 if(pKey){
@@ -959,19 +959,19 @@ void Controller::slotFinishCreateSoftwareSigner(const QMasterSignerPtr ret,
         }
         case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY:
         {
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
             AppModel::instance()->setPrimaryKey(ClientController::instance()->getMe().username);
             break;
         }
         case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER:
         case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET:
         {
-            QQuickViewer::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
             AppModel::instance()->showToast(0, STR_CPP_062, EWARNING::WarningType::SUCCESS_MSG);
             break;
         }
         default:
-            QQuickViewer::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
+            QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
             break;
         }
     }
@@ -995,7 +995,7 @@ void Controller::slotFinishCreateWallet(nunchuk::Wallet ret,
         if(-1 != index){
             AppModel::instance()->setWalletListCurrentIndex(index);
         }
-        QQuickViewer::instance()->sendEvent(E::EVT_ADD_WALLET_SUCCESSFULLY);
+        QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_SUCCESSFULLY);
         AppModel::instance()->showToast(0, STR_CPP_064, EWARNING::WarningType::SUCCESS_MSG);
     }
     else{
@@ -1110,7 +1110,7 @@ void Controller::slotCheckAndUnlockDevice(const int state_id)
                         QMap<QString, QVariant> pinData;
                         pinData["state_id"] = state_id;
                         pinData["device_idx"] = i;
-                        QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PIN, pinData);
+                        QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PIN, pinData);
                     }
                     else{
                         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
@@ -1121,7 +1121,7 @@ void Controller::slotCheckAndUnlockDevice(const int state_id)
                     passPhraseData["state_id"] = state_id;
                     passPhraseData["device_idx"] = i;
                     passPhraseData["is_software"] = false;
-                    QQuickViewer::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ROOT_PROMT_PASSPHRASE, passPhraseData);
                 }
                 else{}
             }
@@ -1142,7 +1142,7 @@ void Controller::slotFinishSendPinToDevice(const int state_id,
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
     }
-    QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
+    QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PIN_CLOSE);
     emit finishSendPinToDevice(type);
 }
 
@@ -1157,7 +1157,7 @@ void Controller::slotFinishSendPassphraseToDevice(const int state_id,
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
     }
-    QQuickViewer::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
+    QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);
     emit finishSendPassphraseToDevice(type);
 }
 
@@ -1185,7 +1185,7 @@ void Controller::slotFinishRemoveAllSigners()
 
 void Controller::slotFinishReloadMasterSigners(std::vector<nunchuk::MasterSigner> masterSigners)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QMasterSignerListModelPtr ret = bridge::nunchukConvertMasterSigners(masterSigners);
     if(ret){
         AppModel::instance()->setMasterSignerList(ret);
@@ -1194,7 +1194,7 @@ void Controller::slotFinishReloadMasterSigners(std::vector<nunchuk::MasterSigner
 
 void Controller::slotFinishReloadRemoteSigners(std::vector<nunchuk::SingleSigner> remoteSigners)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QSingleSignerListModelPtr ret = bridge::nunchukConvertRemoteSigners(remoteSigners);
     if(ret){
         AppModel::instance()->setRemoteSignerList(ret);
@@ -1203,7 +1203,7 @@ void Controller::slotFinishReloadRemoteSigners(std::vector<nunchuk::SingleSigner
 
 void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
 {
-    FuncTime f(__PRETTY_FUNCTION__);
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QWalletListModelPtr ret = bridge::nunchukConvertWallets(wallets);
     if(ret){
         AppModel::instance()->setWalletList(ret);

@@ -193,10 +193,12 @@ nunchuk::Wallet qUtils::ParseWalletDescriptor(const QString &descs,
 
 nunchuk::Wallet qUtils::ParseKeystoneWallet(nunchuk::Chain chain, const QStringList qrtags, QWarningMessage& msg)
 {
+    QStringList in = qrtags;
+    in.removeDuplicates();
     nunchuk::Wallet ret(false);
     std::vector<std::string> qr_result;
-    for (QString it : qrtags) {
-        qr_result.push_back(it.toStdString());
+    for (QString tag : in) {
+        qr_result.push_back(tag.toStdString());
     }
     try {
         ret = nunchuk::Utils::ParseKeystoneWallet(chain,qr_result);
@@ -213,10 +215,12 @@ nunchuk::Wallet qUtils::ParseKeystoneWallet(nunchuk::Chain chain, const QStringL
 
 QString qUtils::ParseQRTransaction(const QStringList &qrtags, QWarningMessage& msg)
 {
+    QStringList in = qrtags;
+    in.removeDuplicates();
     std::string psbt = "";
     std::vector<std::string> qr_result;
-    for (QString it : qrtags) {
-        qr_result.push_back(it.toStdString());
+    for (QString tag : in) {
+        qr_result.push_back(tag.toStdString());
     }
     try {
         psbt = nunchuk::Utils::ParseKeystoneTransaction(qr_result);
@@ -517,11 +521,13 @@ bool qUtils::strCompare(const QString &str1, const QString &str2)
 
 nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags)
 {
+    QStringList in = qrtags;
+    in.removeDuplicates();
     nunchuk::AnalyzeQRResult result;
     std::vector<std::string> qr_result;
     QWarningMessage msg;
-    for (QString it : qrtags) {
-        qr_result.push_back(it.toStdString());
+    for (QString tag : in) {
+        qr_result.push_back(tag.toStdString());
     }
     try {
         result = nunchuk::Utils::AnalyzeQR(qr_result);
@@ -542,8 +548,8 @@ QStringList qUtils::ExportQRTransaction(const QString &tx_to_sign, QWarningMessa
     try {
         std::vector<std::string> data = nunchuk::Utils::ExportKeystoneTransaction(tx_to_sign.toStdString());
         result.reserve(data.size());
-        for (std::string it : data) {
-            result.append(QString::fromStdString(it));
+        for (std::string tag : data) {
+            result.append(QString::fromStdString(tag));
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -647,4 +653,92 @@ bool qUtils::isPrimaryKey(const QString &xfp)
         return true;
     }
     return false;
+}
+
+nunchuk::Wallet qUtils::parseBBQRWallet(nunchuk::Chain chain, const QStringList &qrtags, QWarningMessage &msg)
+{
+    QStringList in = qrtags;
+    in.removeDuplicates();
+    nunchuk::Wallet ret(false);
+    std::vector<std::string> qr_result;
+    for (QString tag : in) {
+        qr_result.push_back(tag.toStdString());
+    }
+    try {
+        // ret = nunchuk::Utils::ParseBBQRWallet(chain, qr_result);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<nunchuk::Wallet> qUtils::ParseBBQRWallets(const QStringList &qrtags, QWarningMessage &msg)
+{
+    QStringList in = qrtags;
+    in.removeDuplicates();
+    std::vector<nunchuk::Wallet> ret;
+    std::vector<std::string> qr_result;
+    for (QString tag : in) {
+        qr_result.push_back(tag.toStdString());
+    }
+    try {
+        ret = nunchuk::Utils::ParseBBQRWallets(qr_result);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QStringList qUtils::ExportBBQRTransaction(const QString &psbt, QWarningMessage &msg)
+{
+    QStringList result {};
+    try {
+        std::vector<std::string> data = nunchuk::Utils::ExportBBQRTransaction(psbt.toStdString());
+        result.reserve(data.size());
+        for (std::string tag : data) {
+            result.append(QString::fromStdString(tag));
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return result;
+}
+
+QStringList qUtils::ExportBBQRWallet(const nunchuk::Wallet &wallet, QWarningMessage &msg)
+{
+    QStringList result {};
+    try {
+        std::vector<std::string> data = nunchuk::Utils::ExportBBQRWallet(wallet);
+        result.reserve(data.size());
+        for (std::string tag : data) {
+            result.append(QString::fromStdString(tag));
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return result;
 }

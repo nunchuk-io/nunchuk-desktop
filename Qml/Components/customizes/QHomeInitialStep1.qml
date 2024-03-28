@@ -29,14 +29,27 @@ Rectangle {
     color: "#F1FAFE"
     QAddWelcome{
         anchors.fill: parent
-        btnTextLink: STR.STR_QML_083
-        titleSuggest: STR.STR_QML_614
         titleWelcome: STR.STR_QML_463
-        content: STR.STR_QML_615
-        contentHeight: 152
-        icon:"qrc:/Images/Images/OnlineMode/keys.png"
-        onAddButtonClicked: {
-            QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
+        addKey {
+            btnTextLink: STR.STR_QML_083
+            titleSuggest: STR.STR_QML_614
+            content: STR.STR_QML_615
+            height: 152
+            icon:"qrc:/Images/Images/OnlineMode/keys.png"
+            onBtnClicked: {
+                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
+            }
+        }
+        hotWallet {
+            btnTextLink: STR.STR_QML_1255
+            titleSuggest: STR.STR_QML_1251
+            content: STR.STR_QML_1252
+            height: 180
+            icon:"qrc:/Images/Images/create-hot-wallet.png"
+            onBtnClicked: {
+                OnBoarding.state = "hotWallet"
+                QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+            }
         }
     }
 }

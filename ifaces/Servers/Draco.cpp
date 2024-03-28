@@ -532,11 +532,11 @@ void Draco::getMe()
             user.chat_id     = userObj["chat_id"].toString();
             user.username    = userObj["username"].toString();
             user.login_type  = userObj["login_type"].toString();
-            AppModel::instance()->startCheckAuthorize();
-            CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
             if(0 != QString::compare(user.email, AppSetting::instance()->groupSetting(), Qt::CaseInsensitive)){
                 AppSetting::instance()->setGroupSetting(user.email);
             }
+            AppModel::instance()->startCheckAuthorize();
+            CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
             getCurrentUserSubscription();
         }
         else if(response_code == DRACO_CODE::UNAUTHORIZED){
@@ -576,12 +576,12 @@ void Draco::getMepKey(const QString &public_address)
             user.chat_id     = userObj["chat_id"].toString();
             user.username    = userObj["username"].toString();
             user.login_type  = userObj["login_type"].toString();
-            CLIENT_INSTANCE->setMe(user);
-            AppModel::instance()->startCheckAuthorize();
-            CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
             if(0 != QString::compare(user.email, AppSetting::instance()->groupSetting(), Qt::CaseInsensitive)){
                 AppSetting::instance()->setGroupSetting(user.email);
             }
+            CLIENT_INSTANCE->setMe(user);
+            AppModel::instance()->startCheckAuthorize();
+            CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
         }
         else if(response_code == DRACO_CODE::UNAUTHORIZED){
             CLIENT_INSTANCE->requestSignout();
@@ -1993,6 +1993,7 @@ bool Draco::SecQuesUpdate(const QJsonObject &request_body,
                           const QString &passwordToken,
                           const QString &secQuesToken,
                           const QString &confirmToken,
+                          bool isDraft,
                           QJsonObject &output,
                           QString &errormsg)
 {
@@ -2007,10 +2008,12 @@ bool Draco::SecQuesUpdate(const QJsonObject &request_body,
     if (!confirmToken.isEmpty()) {
         params["Confirmation-token"] = confirmToken;
     }
+    QMap<QString, QString> paramsQuery;
+    paramsQuery["draft"] = isDraft ? "true" : "false";
     DBG_INFO << confirmToken << request_body;
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = putSync(commands[Premium::CMD_IDX::SEC_QUES_UPDATE], {}, params, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = putSync(commands[Premium::CMD_IDX::SEC_QUES_UPDATE], paramsQuery, params, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -3409,9 +3412,52 @@ bool Draco::GetHistorySignerList(const QString &xfp, QJsonObject& output, QStrin
             return true;
         } else {
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::ERROR_MSG);
             return false;
         }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetCountryCodeList(QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::COUNTRY_CODE_LIST];
+
+    QJsonObject jsonObj = getSync(cmd, {}, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        response_msg = reply_msg;
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note, QString &errormsg)
+{
+    QJsonObject data;
+    data["country_code"] = country_code;
+    data["email"] = email;
+    data["note"] = note;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(commands[Premium::CMD_IDX::ONBOARDING_NO_ADVISOR], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK) {
+
+            return true;
+        }
+        response_msg = reply_msg;
     }
     errormsg = reply_msg;
     return false;

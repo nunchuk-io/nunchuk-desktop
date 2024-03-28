@@ -35,63 +35,85 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_923
+    label.text: STR.STR_QML_1219
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-    content: Item {
-        Row {
-            spacing: 36
-            Rectangle {
-                width: 346
-                height: 512
-                radius: 24
-                color: "#D0E2FF"
-                QImage {
-                    width: 208
-                    height: 136
-                    anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/hot-wallet-description.svg"
-                }
+    readonly property var option_map: [
+        {visible: true,        height: 164, headline:STR.STR_QML_1230, content: STR.STR_QML_1231, icon: "qrc:/Images/Images/mulitsig-dark.svg"             },
+        {visible: true,        height: 136, headline:STR.STR_QML_1232, content: STR.STR_QML_1233, icon: "qrc:/Images/Images/inheritance-dark.svg"          },
+        {visible: true,        height: 108, headline:STR.STR_QML_1234, content: STR.STR_QML_1235, icon: "qrc:/Images/Images/emergency-lockdown-dark.svg"   },
+        {visible: true,        height: 108, headline:STR.STR_QML_1236, content: STR.STR_QML_1237, icon: "qrc:/Images/Images/signing-policy-dark.svg"       },
+        {visible: true,        height: 136, headline:STR.STR_QML_1238, content: STR.STR_QML_1239, icon: "qrc:/Images/Images/key-recovery-dark.svg"         },
+        {visible: true,        height: 80,  headline:STR.STR_QML_1240, content: STR.STR_QML_1241, icon: "qrc:/Images/Images/contact-support-dark.svg"      },
+        {visible: true,        height: 108, headline:STR.STR_QML_1242, content: STR.STR_QML_1243, icon: "qrc:/Images/Images/member-discount-dark.svg"      },
+    ]
+    content: Flickable {
+        id: _flick
+        width: 728
+        height: 486
+        contentWidth: parent.width; contentHeight: 816
+        clip: true
+        ScrollBar.vertical: ScrollBar { active: true }
+
+        Column {
+            spacing: 24
+            QImage {
+                width: 96
+                height: 96
+                anchors.horizontalCenter: parent.horizontalCenter
+                source: "qrc:/Images/Images/circle-assisted-wallet.svg"
             }
-            Item {
-                width: 346
-                height: 512
-                Column {
-                    width: parent.width
-                    spacing: 24
-                    QLato {
-                        width: parent.width
-                        text: STR.STR_QML_817
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 28
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
+            QLato {
+                width: 600
+                height: 60
+                text: STR.STR_QML_1229
+                anchors.horizontalCenter: parent.horizontalCenter
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 20
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            Rectangle {
+                width: 728
+                height: 612
+                color: "#F5F5F5"
+                radius: 12
+                Flow {
+                    anchors {
+                        top: parent.top
+                        topMargin: 24
+                        left: parent.left
+                        leftMargin: 16
                     }
+                    width: parent.width
+                    spacing: 16
                     Repeater {
-                        id: _guide
                         width: parent.width
-                        readonly property var content_map: [
-                            {height: 84, headline:STR.STR_QML_818, content: STR.STR_QML_926, icon: "qrc:/Images/Images/1.Active.svg" },
-                            {height: 112, headline:STR.STR_QML_095, content: STR.STR_QML_927, icon: "qrc:/Images/Images/2.Active.svg" },
-                        ]
-                        model: content_map.length
-                        Rectangle {
-                            property var _item: _guide.content_map[index]
-                            width: 346
+                        model: option_map.length
+                        Item {
+                            property var _item: option_map[index]
+                            width: 336
                             height: _item.height
+                            visible: _item.visible
                             Row {
                                 spacing: 12
-                                QIcon {
-                                    iconSize: 24
-                                    id: _ico
-                                    source: _item.icon
+                                Item {
+                                    width: 48
+                                    height: 48
+                                    visible: _ico.source != ""
+                                    QIcon {
+                                        iconSize: 24
+                                        id: _ico
+                                        anchors.centerIn: parent
+                                        source: _item.icon
+                                    }
                                 }
                                 Column {
-                                    width: 310
+                                    width: 276
                                     height: _item.height
                                     spacing: 4
                                     QText {
-                                        width: 310
+                                        width: 276
                                         text: _item.headline
                                         color: "#031F2B"
                                         font.family: "Lato"
@@ -101,7 +123,7 @@ QOnScreenContentTypeA {
                                         verticalAlignment: Text.AlignVCenter
                                     }
                                     QText {
-                                        width: 310
+                                        width: 276
                                         text: _item.content
                                         color: "#031F2B"
                                         font.family: "Lato"
@@ -117,13 +139,33 @@ QOnScreenContentTypeA {
                         }
                     }
                 }
+
             }
         }
-
     }
 
     onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-    onNextClicked: {
-        AppModel.addSignerWizard = eADD_REFRESH_DEVICE
+    bottomRight: Row {
+        spacing: 12
+        QTextButton {
+            width: 191
+            height: 48
+            label.text: STR.STR_QML_1244
+            label.font.pixelSize: 16
+            type: eTypeB
+            onButtonClicked: {
+                OnBoarding.state = "dontHaveAnAdvisor"
+            }
+        }
+        QTextButton {
+            width: 151
+            height: 48
+            label.text: STR.STR_QML_1245
+            label.font.pixelSize: 16
+            type: eTypeE
+            onButtonClicked: {
+                OnBoarding.state = "haveAnAdvisor"
+            }
+        }
     }
 }

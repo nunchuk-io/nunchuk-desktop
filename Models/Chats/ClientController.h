@@ -160,6 +160,7 @@ public slots:
     void removeContact(const QString& contact_id);
     void onUserAvatarChanged();
     void onUserDisplaynameChanged();
+    void onCheckingOnboarding();
 
     QStringList contactsByStringList();
     void setUserDisplayname(const QString &name);

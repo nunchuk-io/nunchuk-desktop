@@ -44,7 +44,6 @@ Rectangle {
     property int addressWidth: 160
 
     color: btnMouse.containsMouse ?"#C9DEF1" : "transparent"
-
     Rectangle {
         width: parent.width
         height: 1
@@ -79,8 +78,7 @@ Rectangle {
                 }
             }
         }
-
-        Item {
+        Item{
             id: idstate
             width: statusWidth
             height: parent.height
@@ -127,7 +125,7 @@ Rectangle {
                 visible: (transactionstatus === NUNCHUCKTYPE.PENDING_SIGNATURES)
             }
         }
-        Item {
+        Item{
             id: blocktime
             width: timeWidth
             height: parent.height
@@ -146,8 +144,8 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 verticalAlignment: Text.AlignVCenter
             }
-        }
-        Item {
+        }        
+        Item{
             width: memoWidth
             height: parent.height
             Column{
@@ -172,8 +170,7 @@ Rectangle {
                 }
             }
         }
-
-        Item {
+        Item{
             width: amountWidth
             height: parent.height
             Column{

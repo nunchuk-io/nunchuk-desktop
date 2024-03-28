@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -51,13 +51,13 @@ void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {
     QString signername = dataMap.value("signername").toString();
     QString passphrase = dataMap.value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();
-    if(QQuickViewer::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY &&
-       QQuickViewer::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
+    if(QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY &&
+       QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
         AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
     }
     else{
-        DBG_INFO << QQuickViewer::instance()->currentFlow();
-        if(QQuickViewer::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
+        DBG_INFO << QEventProcessor::instance()->currentFlow();
+        if(QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
             if(replaceKey(mnemonic,passphrase)){
                 DBG_INFO << "startCreateSoftwareSigner";
                 AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
@@ -65,7 +65,7 @@ void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {
         }
         else{
             DBG_INFO << dataMap;
-            QQuickViewer::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_REQUEST,msg);
+            QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_REQUEST,msg);
         }
     }
 }

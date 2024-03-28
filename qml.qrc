@@ -416,6 +416,18 @@
         <file>Qml/Screens/LocalMode/Onboarding/QOnboardingWallet.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QUnassistedWallet.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QAssistedWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QHotWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QGetMoreOutOfNunchukWithAnAssistedWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QAddAWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QCreateHotWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QRecoverHotWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QHaveAnAdvisor.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QDontHaveAnAdvisor.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QSelectACountry.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QSeedPhrase.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QConfirmSeedPhrase.qml</file>
+        <file>Qml/Components/customizes/QEmptyWelcome.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QSecurityQuestionsUpdate.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -694,6 +706,15 @@
         <file>Images/onboarding-assisted-wallet.svg</file>
         <file>Images/onboarding-unassisted-wallet.svg</file>
         <file>Images/disconnected.svg</file>
+        <file>Images/unassisted-wallet-description.svg</file>
+        <file>Images/hot-wallet-description.svg</file>
+        <file>Images/circle-assisted-wallet.svg</file>
+        <file>Images/create-hot-wallet.svg</file>
+        <file>Images/chevron-right-dark.svg</file>
+        <file>Images/create-hot-wallet.png</file>
+        <file>Images/unassisted-wallet-description.png</file>
+        <file>Images/onboarding-assisted-wallet.png</file>
+        <file>Images/onboarding-unassisted-wallet.png</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

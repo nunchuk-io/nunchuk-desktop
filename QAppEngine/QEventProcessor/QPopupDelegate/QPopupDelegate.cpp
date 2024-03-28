@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-#include "QPopupManager.h"
+#include "QPopupDelegate.h"
 
-QPopupManager::QPopupManager(QQuickItem *rootObject, QQmlContext *context): m_rootObject(rootObject), m_context(context)
+QPopupDelegate::QPopupDelegate(QQuickItem *rootObject, QQmlContext *context): m_rootObject(rootObject), m_context(context)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     if(!m_listPopup.isEmpty()){
@@ -30,12 +30,12 @@ QPopupManager::QPopupManager(QQuickItem *rootObject, QQmlContext *context): m_ro
     }
 }
 
-QPopupManager::~QPopupManager()
+QPopupDelegate::~QPopupDelegate()
 {
 
 }
 
-QList<uint> QPopupManager::getCurrentPopups() const
+QList<uint> QPopupDelegate::getCurrentPopups() const
 {
     QList<uint> list;
     for (int i = 0; i < m_listPopup.count(); i++) {
@@ -44,7 +44,7 @@ QList<uint> QPopupManager::getCurrentPopups() const
     return list;
 }
 
-bool QPopupManager::showPopup(POPUP_DATA p)
+bool QPopupDelegate::showPopup(POPUP_DATA p)
 {
     int cIdx = -1;
     bool existed = false;
@@ -81,7 +81,7 @@ bool QPopupManager::showPopup(POPUP_DATA p)
     return true;
 }
 
-bool QPopupManager::closePopup(POPUP_DATA p)
+bool QPopupDelegate::closePopup(POPUP_DATA p)
 {
     bool ret = false;
     for (int i = 0; i < m_listPopup.count(); i++) {
@@ -96,7 +96,7 @@ bool QPopupManager::closePopup(POPUP_DATA p)
     return ret;
 }
 
-bool QPopupManager::closeAll()
+bool QPopupDelegate::closeAll()
 {
     for (int i = 0; i < m_listPopup.count(); i++) {
         if(m_listPopup.at(i).data()->isActive()){
@@ -108,7 +108,7 @@ bool QPopupManager::closeAll()
     return m_listPopup.isEmpty();
 }
 
-bool QPopupManager::showToastMessage(QVariant msg)
+bool QPopupDelegate::showToastMessage(QVariant msg)
 {
     if(m_rootObject){
         return QMetaObject::invokeMethod(m_rootObject, JS_TOASTS_TRANSITION_FUNCTION, Q_ARG(QVariant, msg));
@@ -116,7 +116,7 @@ bool QPopupManager::showToastMessage(QVariant msg)
     return false;
 }
 
-void QPopupManager::qmlSyncup()
+void QPopupDelegate::qmlSyncup()
 {
     QStringList m_PopupQmlData;
     m_PopupQmlData.clear();
@@ -134,7 +134,7 @@ void QPopupManager::qmlSyncup()
     m_PopupQmlData.clear();
 }
 
-void QPopupManager::onClosePopupTimeout(uint id)
+void QPopupDelegate::onClosePopupTimeout(uint id)
 {
     QMutableListIterator<PopupObjectPtr> i(m_listPopup);
     while (i.hasNext()) {

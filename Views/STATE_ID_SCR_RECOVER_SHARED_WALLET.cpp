@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_RECOVER_SHARED_WALLET.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -55,7 +55,7 @@ void EVT_IMPORT_BSMS_SHARED_WALLET_HANDLER(QVariant msg) {
                                            file_path,
                                            msgwarning);
                 if(msgwarning.type() == (int)EWARNING::WarningType::NONE_MSG){
-                    QQuickViewer::instance()->sendEvent(E::EVT_IMPORT_SHARED_WALLET_SUCCEED);
+                    QEventProcessor::instance()->sendEvent(E::EVT_IMPORT_SHARED_WALLET_SUCCEED);
                 }
                 else{
                     AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -66,7 +66,7 @@ void EVT_IMPORT_BSMS_SHARED_WALLET_HANDLER(QVariant msg) {
 }
 
 void EVT_IMPORT_QR_SHARED_WALLET_HANDLER(QVariant msg) {
-    QQuickViewer::instance()->sendEvent(E::EVT_IMPORT_SHARED_WALLET_SUCCEED);
+    QEventProcessor::instance()->sendEvent(E::EVT_IMPORT_SHARED_WALLET_SUCCEED);
 }
 
 void EVT_IMPORT_SHARED_WALLET_SUCCEED_HANDLER(QVariant msg) {

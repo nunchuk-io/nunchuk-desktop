@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_UNLOCK_DB.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -48,7 +48,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
     {
         bool ret = AppModel::instance()->makeNunchukInstance(makeInstanceObject,dbPassphrase);
         if(ret){
-            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
         }
         break;
     }
@@ -56,7 +56,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
     {
         bool ret = AppModel::instance()->makeInstanceForAccount(makeInstanceObject,dbPassphrase);
         if(ret){
-            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
         }
         break;
     }
@@ -64,7 +64,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
     {
         bool ret = AppModel::instance()->makeInstanceForAccount(makeInstanceObject, dbPassphrase);
         if(ret){
-            QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             QString username = ClientController::instance()->getMe().username;
             AppModel::instance()->setPrimaryKey(username);
             QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
@@ -93,7 +93,7 @@ void EVT_LOGIN_PERFORM_PASSWORD_REQUEST_HANDLER(QVariant msg) {
     {
         bool ret = AppModel::instance()->makeNunchukInstanceForAccount(makeInstanceObject, dbPassphrase);
         if(ret){
-            QQuickViewer::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,dataMap);
+            QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,dataMap);
         }
         break;
     }

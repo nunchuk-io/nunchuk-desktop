@@ -245,16 +245,17 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
             {
                 if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
                     dashboard->setConfigFlow("accessing-wallet-configuration");
-                    QQuickViewer::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
                     AppModel::instance()->showToast(0, "The key has been claimed", EWARNING::WarningType::SUCCESS_MSG);
                 }
                 else {
-                    QQuickViewer::instance()->sendEvent(E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST);
+                    QEventProcessor::instance()->sendEvent(E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST);
                     QString keyName = QString("%1 %2 healthy").arg(signers.values().join(", ")).arg(signers.count() > 1 ? "are" : "is");
                     AppModel::instance()->showToast(0, keyName, EWARNING::WarningType::SUCCESS_MSG);
                 }
                 break;
             }
+            case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
             case AlertEnum::E_Alert_t::UPDATE_SERVER_KEY:
             case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:
             case AlertEnum::E_Alert_t::UPDATE_INHERITANCE_PLAN:
@@ -264,14 +265,15 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
                 DBG_INFO << dashBoardPtr()->flow();
                 if (dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_POLICY_UPDATE
                     || dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_UPDATE
-                    || dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL) {
-                    QQuickViewer::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                    || dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL
+                    || dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_UPDATE_SECURITY_QUESTION) {
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
                     dashBoardPtr()->setShowDashBoard(true);
                     int wallet_index = AppModel::instance()->walletListPtr()->getWalletIndexById(dashBoardPtr()->wallet_id());
                     AppModel::instance()->setWalletListCurrentIndex(wallet_index);
                 }
                 else {
-                    QQuickViewer::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
+                    QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
                 }
                 QString msg_name = QString("Transaction updated");
                 if (pending_signatures > 0) {
@@ -289,12 +291,12 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
             case AlertEnum::E_Alert_t::KEY_RECOVERY_APPROVED:
             {
                 dashBoardPtr()->setFlow(flow);
-                QQuickViewer::instance()->sendEvent(E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST);
+                QEventProcessor::instance()->sendEvent(E::EVT_DASHBOARD_ALERT_SUCCESS_REQUEST);
                 break;
             }
             case AlertEnum::E_Alert_t::CANCEL_RECURRING_PAYMENT:
             case AlertEnum::E_Alert_t::CREATE_RECURRING_PAYMENT: {
-                QQuickViewer::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
+                QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);
                 QString msg_name = QString("Transaction updated");
                 if (pending_signatures > 0) {
                     AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
@@ -330,6 +332,7 @@ QString QGroupWalletDummyTx::textForToast(int flow)
     case AlertEnum::E_Alert_t::RECURRING_PAYMENT_APPROVED: return "The recurring payment has been approved";
     case AlertEnum::E_Alert_t::CREATE_RECURRING_PAYMENT: return "Recurring payment approved";
     case AlertEnum::E_Alert_t::CANCEL_RECURRING_PAYMENT: return "Recurring payment canceled";
+    case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS: return "Security questions updated";
     default:
         break;
     }

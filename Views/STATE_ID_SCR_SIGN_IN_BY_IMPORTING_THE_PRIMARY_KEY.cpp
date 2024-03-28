@@ -18,7 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.h"
-#include "QQuickViewer.h"
+#include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
@@ -69,7 +69,7 @@ void EVT_IMPORT_PRIMARY_KEY_WITH_SEED_REQUEST_HANDLER(QVariant msg){
     QString mnemonicinput = msg.toString();
     bool checkmnemonic = qUtils::CheckMnemonic(mnemonicinput);
     if(checkmnemonic){
-        QObject *obj = QQuickViewer::instance()->getCurrentScreen();
+        QObject *obj = QEventProcessor::instance()->getCurrentScreen();
         if(obj){
             obj->setProperty("whereIn",1);
         }
