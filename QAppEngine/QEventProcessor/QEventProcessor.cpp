@@ -57,7 +57,6 @@ void QEventProcessor::initialized()
     QObject::connect(m_viewer, SIGNAL(heightChanged(int)), this, SLOT(onHeightChanged(int)));
     m_ctxProperties.clear();
     m_qmlObj.clear();
-    QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
     this->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
     this->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
     this->registerCtxProperty("QMLHandle", QVariant::fromValue(this));
@@ -187,11 +186,12 @@ void QEventProcessor::onWidthChanged(int w)
 void QEventProcessor::onHeightChanged(int h)
 {
     if(h > m_currentSize.height()){
-        DBG_INFO << "FULL SIZE REQUEST" << h;
+        DBG_INFO << "FULL SIZE REQUEST" << h << (double)h/(double)QAPP_HEIGHT_EXPECTED;
         this->updateCtxProperty("QAPP_DEVICE_HEIGHT", m_viewer->geometry().height());
+        this->updateCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", qMin(1.0, (double)h/(double)QAPP_HEIGHT_EXPECTED));
     }
     else{
-        DBG_INFO << "ORIGIN SIZE REQUEST" << h;
+        DBG_INFO << "ORIGIN SIZE REQUEST" << h ;
         this->updateCtxProperty("QAPP_DEVICE_HEIGHT", m_currentSize.height());
     }
 }
@@ -235,7 +235,7 @@ void QEventProcessor::unRegisterQML(QObject *objPropose)
 bool QEventProcessor::setViewerSize(int width, int height)
 {
     m_viewer->setMinimumSize(QSize(width, height));
-//    m_viewer->setMaximumSize(QSize(width, height));
+    this->updateCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", qMin(1.0, (double)height/(double)QAPP_HEIGHT_EXPECTED));
     m_currentSize = QSize(width, height);
     return true;
 }

@@ -647,6 +647,27 @@ bool ClientController::isByzantinePro() const
     return ret;
 }
 
+bool ClientController::isFinneyPro() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "finney_pro_testnet")
+               || qUtils::strCompare(type, "finney_pro");
+    return ret;
+}
+
+bool ClientController::isFinneyStandard() const
+{
+    QString type = slug();
+    bool ret =    qUtils::strCompare(type, "finney_testnet")
+               || qUtils::strCompare(type, "finney");
+    return ret;
+}
+
+bool ClientController::isFinney() const
+{
+    return isFinneyPro() || isFinneyStandard();
+}
+
 bool ClientController::isByzantinePremier() const
 {
     QString type = slug();

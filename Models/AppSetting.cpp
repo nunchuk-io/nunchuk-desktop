@@ -775,6 +775,26 @@ void AppSetting::setEnableDebug(bool enableDebugMode)
     }
 }
 
+bool AppSetting::enableColab()
+{
+    if(NunchukSettings::contains("enableColab")){
+        enableColab_ = NunchukSettings::value("enableColab").toBool();
+    }
+    else{
+        NunchukSettings::setValue("enableColab", enableColab_);
+    }
+    return enableColab_;
+}
+
+void AppSetting::setEnableColab(bool enableColab)
+{
+    if (enableColab_ != enableColab){
+        enableColab_ = enableColab;
+        NunchukSettings::setValue("enableColab", enableColab_);
+        emit enableColabChanged();
+    }
+}
+
 bool AppSetting::isStarted()
 {
     return isStarted_ || NunchukSettings::commonValue("isStarted").toBool();

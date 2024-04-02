@@ -118,6 +118,9 @@ public:
     bool isByzantineStandard() const;
     bool isByzantinePremier() const;
     bool isByzantinePro() const;
+    bool isFinneyPro() const;
+    bool isFinneyStandard() const;
+    bool isFinney() const;
     bool isByzantine() const;
     bool isHoneyBadger() const;
     bool isIronHand() const;

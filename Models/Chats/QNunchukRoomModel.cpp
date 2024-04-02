@@ -66,6 +66,7 @@ QNunchukRoom::QNunchukRoom(Room *r):
     }
     qmlRegisterType<FileTransferInfo>();
     qRegisterMetaType<FileTransferInfo>();
+    connect(AppSetting::instance(), &AppSetting::enableColabChanged, this, &QNunchukRoom::isIgnoredCollabWalletChanged);
 }
 
 QNunchukRoom::~QNunchukRoom()
@@ -76,8 +77,15 @@ QNunchukRoom::~QNunchukRoom()
 bool QNunchukRoom::isIgnoredCollabWallet() const
 {
     bool isByzantineAccount = CLIENT_INSTANCE->isByzantine();
-    bool isContainsGroup = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->existGroupWallet() : false;
-    return (isContainsGroup || isByzantineAccount);
+    bool isFinneyAccount = CLIENT_INSTANCE->isFinney();
+    bool ret {false};
+    if (isByzantineAccount || isFinneyAccount) {
+        ret = true;
+    }
+    else {
+        ret = !AppSetting::instance()->enableColab();
+    }
+    return ret;
 }
 
 bool QNunchukRoom::isNunchukByzantineRoom() const
@@ -1055,7 +1063,7 @@ void QNunchukRoom::downloadHistorical()
                     for (auto e = m_room->messageEvents().begin(); e != m_room->messageEvents().end(); ++e){
                         nunchukConsumeEvent(**e);
                     }
-                    if(!isIgnoredCollabWallet() && !roomWallet()) {
+                    if(!roomWallet()) {
                         Conversation init;
                         init.timestamp = -100;
                         init.messageType = (int)ENUNCHUCK::ROOM_EVT::INITIALIZE;

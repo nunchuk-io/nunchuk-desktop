@@ -49,7 +49,7 @@ QScreen {
         anchors.centerIn: parent
         sourceComponent: {
             if (eFlow === eWALLET_CONFIG) {
-                return wallet_config
+                return isDelete ? _security_question : wallet_config
             }
             else if (eFlow === eWALLET_SET_ALIAS || eFlow === eWALLET_CHANGE_ALIAS) {
                 return wallet_alias

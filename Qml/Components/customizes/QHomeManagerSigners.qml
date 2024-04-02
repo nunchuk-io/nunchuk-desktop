@@ -33,14 +33,16 @@ import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../../localization/STR_QML.js" as STR
 
-Item {
+Rectangle {
+    color: "transparent"
     property int count: masterList.count + remoteList.count
+    clip: true
     Column {
         anchors.fill: parent
         spacing: 12
         Item {
             width: parent.width
-            height: 36
+            height: 24
             QText {
                 id: keysTextTitle
                 anchors {
@@ -68,7 +70,7 @@ Item {
         }
         Item {
             width: parent.width
-            height: parent.height - 48
+            height: parent.height - 24
             Loader {
                 anchors.fill: parent
                 sourceComponent: flickerSignerList.signerReady ? null : loadingSignerBusy
@@ -81,7 +83,7 @@ Item {
                 clip: true
                 flickableDirection: Flickable.VerticalFlick
                 interactive: true
-                contentHeight: contentDisplay.height
+                contentHeight: contentDisplay.height + 12
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
                     id: contentDisplay
@@ -176,14 +178,14 @@ Item {
                     }
                 }
             }
-            QImage {
-                width: flickerSignerList.width
-                height: 36
-                anchors.bottom: flickerSignerList.bottom
-                anchors.bottomMargin: -1
-                anchors.horizontalCenter: flickerSignerList.horizontalCenter
-                source: "qrc:/Images/Images/OnlineMode/Cover.png"
-            }
+            // QImage {
+            //     width: flickerSignerList.width
+            //     height: 36
+            //     anchors.bottom: flickerSignerList.bottom
+            //     anchors.bottomMargin: -1
+            //     anchors.horizontalCenter: flickerSignerList.horizontalCenter
+            //     source: "qrc:/Images/Images/OnlineMode/Cover.png"
+            // }
         }
     }
     readonly property int _LIMIT_WAITING_BUSY: 5000

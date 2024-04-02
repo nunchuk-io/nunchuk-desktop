@@ -35,11 +35,17 @@ import "./../../customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
-    Flickable{
-        width: 651; height: 910
-        contentWidth: 651; contentHeight: _netAcc.childrenRect.height
+    anchors.fill: parent
+    Flickable {
+        anchors.fill: parent
+        contentWidth: parent.width
+        contentHeight: _netAcc.childrenRect.height
         visible: ClientController.isNunchukLoggedIn === true
-        interactive: _netAcc.childrenRect.height > 890
+        interactive: contentHeight > height
+        clip: true
+        flickableDirection: Flickable.VerticalFlick
+        ScrollBar.vertical: ScrollBar { active: true }
+
         Column{
             id:_netAcc
             anchors{

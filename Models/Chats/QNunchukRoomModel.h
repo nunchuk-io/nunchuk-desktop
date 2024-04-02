@@ -100,7 +100,7 @@ class QNunchukRoom: public QObject
     Q_PROPERTY(int                  roomType                READ roomType                                       CONSTANT)
     Q_PROPERTY(QStringList          talkersName             READ talkersName                                    NOTIFY usersChanged)
     Q_PROPERTY(QStringList          talkersAvatar           READ talkersAvatar                                  NOTIFY usersChanged)
-    Q_PROPERTY(bool                 isIgnoredCollabWallet   READ isIgnoredCollabWallet                          CONSTANT)
+    Q_PROPERTY(bool                 isIgnoredCollabWallet   READ isIgnoredCollabWallet                          NOTIFY isIgnoredCollabWalletChanged)
 
 public:
     QNunchukRoom(Room* r);
@@ -276,6 +276,7 @@ signals:
     void signalFinishedGetPendingTxs(QRoomTransactionModelPtr txs);
     void pinTransactionChanged();
     void roomNeedTobeLeaved(const QString& id);
+    void isIgnoredCollabWalletChanged();
 };
 Q_DECLARE_METATYPE(Conversation)
 Q_DECLARE_METATYPE(nunchuk::RoomTransaction)

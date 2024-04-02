@@ -95,6 +95,15 @@ QOnScreenContent {
                             font.family: "Montserrat"
                             font.pixelSize: 16
                             anchors.horizontalCenter: parent.horizontalCenter
+                            enabled: {
+                                if (AppModel.walletInfo.isGroupWallet) {
+                                    return AppModel.walletInfo.myRole === "MASTER"
+                                }
+                                else {
+                                    return true
+                                }
+                            }
+
                             onTypingFinished: {
                                 if(currentText !== AppModel.walletInfo.walletName) {
                                     var infoObj = {
@@ -278,7 +287,16 @@ QOnScreenContent {
             QContextMenu {
                 id: othersContextMenu
                 property string myRole: AppModel.walletInfo.groupId !== "" ? AppModel.walletInfo.myRole : ""
-                property bool isAssisted: AppModel.walletInfo.isAssistedWallet && parseFloat(AppModel.walletInfo.walletBalance) === 0 && (AppModel.walletInfo.groupId !== "" ? myRole === "MASTER" : true)
+                property bool isAssisted: {
+
+                    var isAss = AppModel.walletInfo.isAssistedWallet && parseFloat(AppModel.walletInfo.walletBalance) === 0
+                    if (AppModel.walletInfo.isGroupWallet) {
+                        return isAss && (AppModel.walletInfo.groupId !== "" ? myRole === "MASTER" : true)
+                    }
+                    else {
+                        return isAss
+                    }
+                }
                 property bool isCanDeleted: !AppModel.walletInfo.isAssistedWallet || isAssisted
                 property bool isPrimaryOwner: (myRole === "MASTER" || myRole === "ADMIN") && (walletInfo.ownerMembers.length > 0)
                 menuWidth: 300

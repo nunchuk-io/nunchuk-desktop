@@ -127,9 +127,10 @@ QScreen {
                     anchors.fill: parent
                     anchors.topMargin: 24
                     anchors.bottomMargin: 0
-                    spacing: 24
+                    spacing: 8
                     QHomeManagerWallets {
                         id: walletmanagerlst
+                        height: parent.height/2
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         onAskDeny: {
@@ -140,6 +141,7 @@ QScreen {
                     }
                     QHomeManagerSigners {
                         id: mastersignerlist
+                        height: parent.height/2
                         Layout.fillWidth: true
                         Layout.preferredHeight: (parent.height - 150)/2
                     }

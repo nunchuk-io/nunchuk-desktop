@@ -77,11 +77,14 @@ QStringList montserratFonts = {
     ":/fonts/fonts/Montserrat/Montserrat-Thin.ttf"
 };
 
-inline void calculateScaleFactor()
+inline double calculateScaleFactor()
 {
     static char  temp_arg[] = "";
     static char* temp_argv = temp_arg;
     static int   temp_argc = 1;
+    // assumes that the default desktop resolution is 1080 (scale of 1)
+    double scalePref = 1.0;
+
     QGuiApplication* temp = new QGuiApplication(temp_argc, &temp_argv);
     QScreen* primaryScr = QGuiApplication::primaryScreen();
     if (primaryScr) {
@@ -95,8 +98,6 @@ inline void calculateScaleFactor()
         int appWidth = screenWidth = QAPP_WIDTH_EXPECTED;
         int appHeight = screenHeight = QAPP_HEIGHT_EXPECTED;
 #endif
-        // assumes that the default desktop resolution is 1080 (scale of 1)
-        double scalePref = 1.0;
         if (screenHeight <= appHeight || screenWidth <= appWidth) {
             scalePref = min((double)screenHeight / appHeight, (double)screenWidth / appWidth);
         }
@@ -106,6 +107,7 @@ inline void calculateScaleFactor()
         qputenv("QT_SCALE_FACTOR", scaleAsQByteArray);
     }
     delete temp;
+    return scalePref;
 }
 
 int main(int argc, char* argv[])
@@ -114,7 +116,7 @@ int main(int argc, char* argv[])
     Q_UNUSED(argv);
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-    calculateScaleFactor();
+    double scale_factor = calculateScaleFactor();
     static char  qt_arg[] = "";
     static char* qt_argv = qt_arg;
     static int   argc_own = 1;
@@ -124,7 +126,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.31");
+    app.setApplicationVersion("1.9.32");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -159,6 +161,34 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->initFonts(latoFonts);
     QEventProcessor::instance()->initFonts(montserratFonts);
     QEventProcessor::instance()->completed();
+
+    // Handle window size
+#if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
+    QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
+    QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
+    QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
+    QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
+#else
+    DBG_INFO << scale_factor;
+    QScreen* primaryScr = QGuiApplication::primaryScreen();
+    if (primaryScr) {
+        QRect rect = primaryScr->availableGeometry();
+        int screenHeight = rect.height();
+        if(screenHeight < QAPP_HEIGHT_EXPECTED){
+            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_MIN);
+            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_MIN);
+            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_MIN/(double)QAPP_HEIGHT_EXPECTED));
+            QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_MIN, QAPP_HEIGHT_MIN);
+        }
+        else {
+            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
+            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
+            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
+            QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
+        }
+    }
+#endif
+
     QEventProcessor::instance()->registerCtxProperty("MAINNET_SERVER", MAINNET_SERVER);
     QEventProcessor::instance()->registerCtxProperty("TESTNET_SERVER", TESTNET_SERVER);
 #ifdef SIGNET_SUPPORT

@@ -438,15 +438,24 @@ bool QGroupDashboard::isLocked() const
 bool QGroupDashboard::registerKeyDone()
 {
     QJsonObject payload = alertJson()["payload"].toObject();
-    QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
-    bool ret = m_registered_key_xfps.size() == register_key_xfps.size() && m_registered_key_xfps.size() > 0;
-    if (ret) {
-        QtConcurrent::run([this](){
-            DismissAlert();
-            GetAlertsInfo();
-        });
+    if (payload.contains("register_key_xfps")) {
+        QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
+        bool ret = m_registered_key_xfps.size() == register_key_xfps.size() && m_registered_key_xfps.size() > 0;
+        if (ret) {
+            QtConcurrent::run([this](){
+                DismissAlert();
+                GetAlertsInfo();
+            });
+        }
+        else if (register_key_xfps.size() == 0) {
+            QtConcurrent::run([this](){
+                DismissAlert();
+                GetAlertsInfo();
+            });
+        }
+        return ret;
     }
-    return ret;
+    return false;
 }
 
 bool QGroupDashboard::registerKeyNext()

@@ -165,7 +165,7 @@ Rectangle {
                         }
                         else{
                             if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE || signerType === NUNCHUCKTYPE.NFC){
-                                return helpComp;
+                                return isDummy ? null : helpComp;
                             }
                             if(isLocaluser || isDummy){
                                 if(signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.UNKNOWN ) {

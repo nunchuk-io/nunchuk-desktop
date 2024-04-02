@@ -86,7 +86,8 @@ Item {
         id: initConversationComponent
         Item {
             width: conversationRoot.width
-            height: contentInit.height
+            height: visible ? contentInit.height : 0
+            visible: !RoomWalletData.isIgnoredCollabWallet
             Column {
                 id: contentInit
                 spacing: 8

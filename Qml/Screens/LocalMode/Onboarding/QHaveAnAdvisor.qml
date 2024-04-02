@@ -61,6 +61,7 @@ QOnScreenContentTypeA {
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             font.underline: false
+            visible: !ClientController.isNunchukLoggedIn
             onTextClicked: {
                 var _input = {
                     type: "sign-in-account"
@@ -84,6 +85,7 @@ QOnScreenContentTypeA {
             label.text: STR.STR_QML_395
             label.font.pixelSize: 16
             type: eTypeE
+            visible: !ClientController.isNunchukLoggedIn
             onButtonClicked: {
                 var _input = {
                     type: "create-an-account"

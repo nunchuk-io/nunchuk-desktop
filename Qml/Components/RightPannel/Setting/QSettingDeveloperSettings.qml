@@ -46,30 +46,57 @@ Item {
             font.weight: Font.Bold
             text: STR.STR_QML_588
         }
-        Row {
-            spacing: 0
-            QText {
-                width: 627-84
-                text: STR.STR_QML_589
-                color: "#000000"
-                font.pixelSize: 16
-                font.family: "Lato"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            QSwitchTypeB {
-                id: developerswitch
-                width: 84
-                height: 48
-                switchOn: AppSetting.enableDebugMode
-                anchors.verticalCenter: parent.verticalCenter
-                property bool anyChanged: (AppSetting.enableDebugMode !== developerswitch.switchOn)
-                onSwitchOnChanged: {
-                    applySettings()
+        Column {
+            spacing: 24
+            Row {
+                spacing: 0
+                QText {
+                    width: 627-84
+                    text: STR.STR_QML_1281
+                    color: "#000000"
+                    font.pixelSize: 16
+                    font.family: "Lato"
+                    anchors.verticalCenter: parent.verticalCenter
                 }
-                function applySettings(){
-                    AppSetting.enableDebugMode = developerswitch.switchOn
+                QSwitchTypeB {
+                    id: collaboratorswitch
+                    width: 84
+                    height: 48
+                    switchOn: AppSetting.enableColab
+                    anchors.verticalCenter: parent.verticalCenter
+                    onSwitchOnChanged: {
+                        applySettings()
+                    }
+                    function applySettings(){
+                        AppSetting.enableColab = collaboratorswitch.switchOn
+                    }
                 }
             }
+            Row {
+                spacing: 0
+                QText {
+                    width: 627-84
+                    text: STR.STR_QML_589
+                    color: "#000000"
+                    font.pixelSize: 16
+                    font.family: "Lato"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QSwitchTypeB {
+                    id: developerswitch
+                    width: 84
+                    height: 48
+                    switchOn: AppSetting.enableDebugMode
+                    anchors.verticalCenter: parent.verticalCenter
+                    onSwitchOnChanged: {
+                        applySettings()
+                    }
+                    function applySettings(){
+                        AppSetting.enableDebugMode = developerswitch.switchOn
+                    }
+                }
+            }
+
         }
 
     }

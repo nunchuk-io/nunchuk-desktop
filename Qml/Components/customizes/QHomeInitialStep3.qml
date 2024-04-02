@@ -100,7 +100,6 @@ Item {
                 Item {
                     height: parent.height
                     width: parent.width * _walletDes.ratio
-
                     QText {
                         id: displayWalletname
                         width: 460
@@ -118,7 +117,6 @@ Item {
                             topMargin: 24
                         }
                     }
-
                     QIconButton{
                         id:_more
                         width: 24
@@ -127,7 +125,7 @@ Item {
                             right: parent.right
                             rightMargin: 36
                             top: parent.top
-                            topMargin: 30
+                            topMargin: 30*QAPP_DEVICE_HEIGHT_RATIO
                         }
                         visible: myRole !== "OBSERVER"
                         icon: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
@@ -135,7 +133,6 @@ Item {
                             optionMenu.popup(_more,mouse.x - 250 + 24,24)
                         }
                     }
-
                     QText {
                         id: displayDescription
                         text: AppModel.walletInfo.walletDescription
@@ -150,13 +147,12 @@ Item {
                             top: displayWalletname.bottom
                         }
                     }
-
                     Row{
                         anchors {
                             left: parent.left
                             leftMargin: 24
                             top: displayDescription.bottom
-                            topMargin: 16
+                            topMargin: 16*QAPP_DEVICE_HEIGHT_RATIO
                         }
                         width: parent.width
                         height: 16
@@ -224,13 +220,15 @@ Item {
                             }
                         }
                     }
-
                     Column {
                         id: balanceInfoCol
                         width: parent.width*0.9
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.top: parent.top
-                        anchors.topMargin: 143
+                        anchors {
+                            top: parent.top
+                            topMargin: 143*QAPP_DEVICE_HEIGHT_RATIO
+                            left: parent.left
+                            leftMargin: 24
+                        }
                         spacing: 4
                         QText {
                             id: wlBalance
@@ -254,7 +252,6 @@ Item {
                             .arg(AppSetting.currency)
                         }
                     }
-
                     QButtonTextLink {
                         height: 24
                         label: STR.STR_QML_574
@@ -275,20 +272,19 @@ Item {
                             left: parent.left
                             leftMargin: 24
                             top: parent.top
-                            topMargin: 239
+                            topMargin: 239*QAPP_DEVICE_HEIGHT_RATIO
                         }
                         onButtonClicked: {
                             QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST)
                         }
                     }
-
                     Row {
                         id: buttongHandles
                         spacing: parent.width - 204 *2 - 24*2
                         anchors {
                             horizontalCenter: parent.horizontalCenter
                             bottom: parent.bottom
-                            bottomMargin: 24
+                            bottomMargin: 24*QAPP_DEVICE_HEIGHT_RATIO
                         }
                         QTextButton {
                             label.text: STR.STR_QML_002
@@ -351,7 +347,7 @@ Item {
                     Column {
                         width: parent.width
                         anchors.centerIn: parent
-                        spacing: 16
+                        spacing: 16*QAPP_DEVICE_HEIGHT_RATIO
                         QText {
                             id: quickRecv
                             font.weight: Font.Bold
@@ -360,7 +356,6 @@ Item {
                             text: STR.STR_QML_004
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
-
                         Rectangle {
                             width: 162
                             height: 162
@@ -383,10 +378,9 @@ Item {
                                 color: "#80000000"
                             }
                         }
-
                         Item{
                             width: 329
-                            height: 72
+                            height: 72*QAPP_DEVICE_HEIGHT_RATIO
                             anchors.horizontalCenter: parent.horizontalCenter
                             Rectangle {
                                 id: qrHex
@@ -414,7 +408,6 @@ Item {
                                 text: qrCode.textInput
                             }
                         }
-
                         Row {
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: 311
@@ -523,9 +516,10 @@ Item {
                 QListView {
                     id: transaction_lst
                     width: parent.width
-                    height: 6*64
+                    height: 6*64*QAPP_DEVICE_HEIGHT_RATIO
                     model: AppModel.walletInfo.transactionHistory
-                    interactive: false
+                    interactive: QAPP_DEVICE_HEIGHT_RATIO == 1 ? false : true
+                    ScrollBar.vertical: ScrollBar { active: interactive }
                     cacheBuffer: 0
                     anchors {
                         right: parent.right
@@ -568,9 +562,6 @@ Item {
             }
         }
     }
-
-
-
     FileDialog {
         id: openfileDialog
         fileMode: FileDialog.OpenFile
@@ -586,20 +577,17 @@ Item {
             QMLHandle.sendEvent(EVT.EVT_HOME_EXPORT_BSMS, exportwalletDialog.currentFile)
         }
     }
-
     enabled: !isLocked
     property bool isLocked:  AppModel.walletInfo.dashboardInfo ? AppModel.walletInfo.dashboardInfo.isLocked : false
     Loader {
         anchors.fill: parent
         sourceComponent: isLocked ? locked : null
     }
-
     Component {
         id: locked
         QHomeLockdownInProgress {
             anchors.fill: parent
         }
     }
-
 }
 

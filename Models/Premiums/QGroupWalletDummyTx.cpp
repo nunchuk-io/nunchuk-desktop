@@ -245,6 +245,7 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
             {
                 if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
                     dashboard->setConfigFlow("accessing-wallet-configuration");
+                    dashboard->registerKeyDone();
                     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
                     AppModel::instance()->showToast(0, "The key has been claimed", EWARNING::WarningType::SUCCESS_MSG);
                 }

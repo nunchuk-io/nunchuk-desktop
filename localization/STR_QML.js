@@ -695,7 +695,7 @@ var STR_QML_586 = qsTr("Changes are saved")
 var STR_QML_587 = qsTr("Please name your wallet")
 
 var STR_QML_588 = qsTr("Developer settings")
-var STR_QML_589 = qsTr("Enable debug mode")
+var STR_QML_589 = qsTr("Debug mode")
 
 var STR_QML_590 = qsTr("You might not be able to read encrypted messages from the original device. A Device Verification feature will allow you to do so in the feature. Follow us on Twitter for updates.")
 var STR_QML_591 = qsTr("Type contact's email or username")
@@ -1570,4 +1570,5 @@ var STR_QML_1278 = qsTr("Cancel request")
 
 var STR_QML_1279 = qsTr("Export as BC-UR2 QR (legacy)")
 var STR_QML_1280 = qsTr("Export as BC-UR2 QR")
+var STR_QML_1281 = qsTr("Matrix-based collaborative wallet")
 

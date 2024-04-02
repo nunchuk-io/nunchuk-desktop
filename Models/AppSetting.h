@@ -105,6 +105,7 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(QString currency                 READ currency                   WRITE setCurrency                   NOTIFY currencyChanged)
     Q_PROPERTY(QString currencySymbol           READ currencySymbol                                                 NOTIFY currencyChanged)
     Q_PROPERTY(bool isFirstTimeOnboarding       READ isFirstTimeOnboarding      WRITE setIsFirstTimeOnboarding      NOTIFY isFirstTimeOnboardingChanged)
+    Q_PROPERTY(bool enableColab                 READ enableColab                WRITE setEnableColab                NOTIFY enableColabChanged)
 
 public:
     enum class Chain : int {
@@ -227,6 +228,9 @@ public:
     bool enableDebug();
     void setEnableDebug(bool enableDebugMode);
 
+    bool enableColab();
+    void setEnableColab(bool enableColab);
+
     bool isStarted();
     Q_INVOKABLE void setIsStarted(bool isStarted, bool isSetting);
 
@@ -283,7 +287,7 @@ private:
     bool enableMultiDeviceSync_;
     bool isStarted_;
     bool isFirstTimeOnboarding_;
-
+    bool enableColab_ {false};
 signals:
     void unitChanged();
     void mainnetServerChanged();
@@ -322,6 +326,7 @@ signals:
     void enableMultiDeviceSyncChanged();
     void currencyChanged();
     void isFirstTimeOnboardingChanged();
+    void enableColabChanged();
 };
 
 #endif // APPSETTING_H

@@ -32,18 +32,20 @@ import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../../localization/STR_QML.js" as STR
 
-Item {
+Rectangle {
+    color: "transparent"
     signal askDeny(var deny)
     property int count: walletList.count
     property bool isPending: pendingList.count > 0 ? true : false
     width: parent.width
     height: (parent.height - 215)/2
+    clip: true
     Column {
         anchors.fill: parent
         spacing: 12
         Item {
             width: parent.width
-            height: 36
+            height: 24
             QText {
                 id: walletsTextTitle
                 anchors {
@@ -97,7 +99,7 @@ Item {
         }
         Item {
             width: parent.width
-            height: parent.height - 48
+            height: parent.height - 24
             Loader {
                 visible: (walletList.count + pendingList.count) === 0
                 anchors.fill: parent
@@ -109,7 +111,7 @@ Item {
                 clip: true
                 flickableDirection: Flickable.VerticalFlick
                 interactive: true
-                contentHeight: contentDisplay.childrenRect.height
+                contentHeight: contentDisplay.childrenRect.height + 12
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
                     id: contentDisplay

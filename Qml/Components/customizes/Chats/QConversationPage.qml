@@ -594,7 +594,7 @@ Row {
                 source: bgfooter
                 QTextField {
                     id: messageField
-                    width: parent.width - 108
+                    width: parent.width - (!RoomWalletData.isIgnoredCollabWallet ? 108 : 48)
                     height: 48
                     anchors.left: parent.left
                     anchors.leftMargin: 24
