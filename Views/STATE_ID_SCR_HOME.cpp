@@ -50,6 +50,7 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
     QString group_id = maps["group_id"].toString();
+    QString wallet_id = maps["wallet_id"].toString();
     DBG_INFO << type << "group:" << group_id;
     if (qUtils::strCompare(type, "selected")) {
         int index = maps["data"].toInt();
@@ -59,7 +60,7 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
         QString myRole = AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->dashboard() ? AppModel::instance()->walletInfo()->dashboard()->myRole() : "";
         DBG_INFO << myRole;
         if(qUtils::strCompare(myRole, "KEYHOLDER_LIMITED")){
-            QGroupWallets::instance()->dashboard(group_id);
+            QGroupWallets::instance()->dashboard(group_id, wallet_id);
         }
         else {
             if (QGroupWallets::instance()->dashboardInfoPtr()) {
@@ -69,14 +70,14 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
         }
     }
     else if (qUtils::strCompare(type, "dashboard")) {
-        QGroupWallets::instance()->dashboard(group_id);
+        QGroupWallets::instance()->dashboard(group_id, wallet_id);
     }
     else if (qUtils::strCompare(type, "wallet_dashboard")) {
         int index = maps["data"].toInt();
         if (index >= 0) {
             AppModel::instance()->setWalletListCurrentIndex(index);
         }
-        QGroupWallets::instance()->dashboard(group_id);
+        QGroupWallets::instance()->dashboard(group_id, wallet_id);
     }
     else if (qUtils::strCompare(type, "deny")) {
         QGroupWallets::instance()->deny(group_id);
@@ -284,7 +285,7 @@ void EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER(QVariant msg)
 
 void EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER(QVariant msg)
 {
-    QGroupDashboardPtr dash = QGroupWallets::instance()->dashboardInfoPtr();
+    QGroupDashboardPtr dash = QGroupWallets::instance()->dashboardInfoPtr() ? QGroupWallets::instance()->dashboardInfoPtr() : AppModel::instance()->walletInfoPtr()->dashboard();
     if (dash) {
         dash->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS);
         QtConcurrent::run([dash]() {

@@ -58,7 +58,7 @@ bool QGroupWalletDummyTx::requestForceSyncTx(const QString &group_id, const QStr
     bool ret = false;
     QJsonObject output;
     QString     errormsg = "";
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id)) {
         ret = Draco::instance()->GetDummyTransaction(wallet_id, txid, output, errormsg);
     }
     else {
@@ -221,7 +221,7 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
         }
         DBG_INFO << authorizations;
         bool ret {false};
-        if (mode() == USER_WALLET) {
+        if (WalletsMng->isUserWallet(wallet_id)) {
             ret = Draco::instance()->UpdateDummyTransaction(wallet_id, authorizations, txid, output, errormsg);
         }
         else {
@@ -394,7 +394,7 @@ bool QGroupWalletDummyTx::CancelDummyTransaction()
     QJsonObject payload = dashBoardPtr()->alertJson()["payload"].toObject();
     QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->CancelDummyTransaction(dashBoardPtr()->wallet_id(), dummy_transaction_id, output, errormsg);
     }
     else {

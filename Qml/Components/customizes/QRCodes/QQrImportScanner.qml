@@ -34,10 +34,21 @@ Popup {
     closePolicy: Popup.CloseOnEscape
     background: Item{}
     signal tagFound(var tag)
-    property var tags: []
-    property int percent: 0
-    onOpened: { qrscaner.tags = [] }
-    onClosed: { qrscaner.tags = [] }
+
+    property var    tags: []
+    property int    percent: 0
+    property bool   complete: false
+
+    onOpened: {
+        qrscaner.complete = false
+        qrscaner.percent = 0;
+        qrscaner.tags = []
+    }
+    onClosed: {
+        qrscaner.complete = false
+        qrscaner.percent = 0;
+        qrscaner.tags = []
+    }
 
     Rectangle {
         id: qrmask
@@ -107,6 +118,12 @@ Popup {
                 onTagFound: {
                     qrscaner.tags.push(tag)
                     qrscaner.tagFound(tag)
+                }
+                onPercentChanged: {
+                    qrscaner.percent = qrcamera.percent
+                }
+                onCompleteChanged: {
+                    qrscaner.complete = qrcamera.complete
                 }
             }
         }

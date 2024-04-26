@@ -1540,12 +1540,8 @@ QGroupDashboardPtr Wallet::dashboard() const
 bool Wallet::isByzantineWallet()
 {
     QString wallet_slug = slug();
-    bool ret =    qUtils::strCompare(wallet_slug, "byzantine_testnet")
-               || qUtils::strCompare(wallet_slug, "byzantine_pro_testnet")
-               || qUtils::strCompare(wallet_slug, "byzantine_premier_testnet")
-               || qUtils::strCompare(wallet_slug, "byzantine")
-               || qUtils::strCompare(wallet_slug, "byzantine_pro")
-               || qUtils::strCompare(wallet_slug, "byzantine_premier");
+    bool ret = wallet_slug.contains("byzantine")
+               || wallet_slug.contains("finney");
     if(ret) {
         return true;
     }
@@ -1610,6 +1606,8 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
             return d_[index.row()]->ownerPrimary();
         case wallet_isHotWallet_Role:
             return d_[index.row()]->needBackup();
+        case wallet_slug_Role:
+            return d_[index.row()]->slug();
         default:
             return QVariant();
         }
@@ -1650,6 +1648,7 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_hasOwner_Role]             = "wallet_hasOwner";
     roles[wallet_primaryOwner_Role]         = "wallet_primaryOwner";
     roles[wallet_isHotWallet_Role]          = "wallet_isHotWallet";
+    roles[wallet_slug_Role]                 = "wallet_slug";
     return roles;
 }
 

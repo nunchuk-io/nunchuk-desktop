@@ -35,7 +35,7 @@ QIcon {
         var img = ""
         switch(type) {
         case NUNCHUCKTYPE.HARDWARE: img = ""; break
-        case NUNCHUCKTYPE.AIRGAP:   img = ""; break
+        // case NUNCHUCKTYPE.AIRGAP:   img = "qrc:/Images/Images/Device_Icons/air-gapped-key-dark.svg"; break
         case NUNCHUCKTYPE.SOFTWARE: img = "qrc:/Images/Images/Device_Icons/software_dark.svg"; break
         case NUNCHUCKTYPE.FOREIGN_SOFTWARE: img = "qrc:/Images/Images/Device_Icons/software_dark.svg"; break
         case NUNCHUCKTYPE.NFC: img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
@@ -46,7 +46,7 @@ QIcon {
         if (img === "") {
             switch(typeStr) {
             case "HARDWARE": img = ""; break
-            case "AIRGAP":   img = ""; break
+            // case "AIRGAP":   img = "qrc:/Images/Images/Device_Icons/air-gapped-key-dark.svg"; break
             case "SOFTWARE": img = "qrc:/Images/Images/Device_Icons/software_dark.svg"; break
             case "FOREIGN_SOFTWARE": img = "qrc:/Images/Images/Device_Icons/software_dark.svg"; break
             case "NFC": img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break

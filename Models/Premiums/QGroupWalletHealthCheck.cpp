@@ -22,7 +22,7 @@ void QGroupWalletHealthCheck::GetStatuses()
         QJsonObject output;
         QString errormsg = "";
         bool ret {false};
-        if (mode() == USER_WALLET) {
+        if (WalletsMng->isUserWallet(wallet_id())) {
             ret = Draco::instance()->GetWalletHealthStatus(dashboard->wallet_id(), output, errormsg);
         }
         else {
@@ -71,7 +71,7 @@ void QGroupWalletHealthCheck::HealthCheckForKey(const QString &xfp)
         QJsonObject output;
         QString errormsg = "";
         bool ret {false};
-        if (mode() == USER_WALLET) {
+        if (WalletsMng->isUserWallet(wallet_id())) {
             ret = Draco::instance()->HealthCheckForKey(dashboard->wallet_id(), xfp, output, errormsg);
         }
         else {
@@ -115,7 +115,7 @@ bool QGroupWalletHealthCheck::HealthCheckPendingForTx(const QString &dummy_trans
         QJsonObject output;
         QString errormsg = "";
         bool ret {false};
-        if (mode() == USER_WALLET) {
+        if (WalletsMng->isUserWallet(wallet_id())) {
             ret = Draco::instance()->GetDummyTransaction(dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
         }
         else {
@@ -126,7 +126,7 @@ bool QGroupWalletHealthCheck::HealthCheckPendingForTx(const QString &dummy_trans
             QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
             bool is_draft = dummy_transaction["is_draft"].toBool();
             if (is_draft) {
-                if (mode() == USER_WALLET) {
+                if (WalletsMng->isUserWallet(wallet_id())) {
                     Draco::instance()->FinalizeDummyTransaction(dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
                 }
                 else {

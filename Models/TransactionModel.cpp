@@ -315,18 +315,6 @@ void Transaction::setIsCosigning(bool is_cosigning)
     m_is_cosigning = is_cosigning;
 }
 
-int Transaction::scan_percent() const
-{
-    return m_scan_percent;
-}
-
-void Transaction::setScan_percent(int scan_percent)
-{
-    if (m_scan_percent == scan_percent) return;
-    m_scan_percent = scan_percent;
-    emit scan_percentChanged();
-}
-
 bool Transaction::parseQRTransaction(const QStringList &qrtags)
 {
     QStringList in = qrtags;
@@ -341,13 +329,6 @@ bool Transaction::parseQRTransaction(const QStringList &qrtags)
         return true;
     }
     return false;
-}
-
-bool Transaction::parseQRSuccess(const QStringList &qrtags)
-{
-    nunchuk::AnalyzeQRResult progress = qUtils::AnalyzeQR(qrtags);
-    setScan_percent(progress.estimated_percent_complete * 100);
-    return progress.is_complete;
 }
 
 void Transaction::copyTransactionID()

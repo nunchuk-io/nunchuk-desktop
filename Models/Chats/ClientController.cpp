@@ -61,11 +61,12 @@ ClientController::ClientController()
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(NetworkAccessManager::instance(), &QNetworkAccessManager::proxyAuthenticationRequired, this, &ClientController::proxyAuthenticationRequired);
     connect(NetworkAccessManager::instance(), &QNetworkAccessManager::sslErrors, this, &ClientController::sslErrors);
+    setSubscriptions(QJsonArray());
 }
 
 ClientController::~ClientController()
 {
-
+    setSubscriptions(QJsonArray());
 }
 
 ClientController *ClientController::instance()
@@ -125,22 +126,10 @@ void ClientController::setIsNunchukLoggedIn(bool isLogged)
     if(m_isNunchukLoggedIn != isLogged){
         m_isNunchukLoggedIn = isLogged;
         emit isNunchukLoggedInChanged();
-    }
-}
-
-void ClientController::onCheckingOnboarding()
-{
-    timeoutHandler(1000,[=, this]{
-        if (isSubscribed()) {
-            AppSetting::instance()->setIsFirstTimeOnboarding(true);
-        } else {
-            DBG_INFO << "Checking Onboarding " << AppSetting::instance()->isFirstTimeOnboarding();
-            if (!AppSetting::instance()->isFirstTimeOnboarding()) {
-                OnBoardingModel::instance()->setState("onboarding");
-                QEventProcessor::instance()->sendEvent(E::EVT_ONBOARDING_REQUEST);
-            }
+        if (m_isNunchukLoggedIn) {
+            AppModel::instance()->setTimeLogging(QDateTime::currentDateTime());
         }
-    });
+    }
 }
 
 QLogginManager *ClientController::loginHandler() const
@@ -161,7 +150,6 @@ void ClientController::requestLogin()
     if(loginHandler()){
         loginHandler()->invokeLogin(Draco::instance()->chatId(), Draco::instance()->dracoToken());
     }
-    onCheckingOnboarding();
 }
 
 void ClientController::syncContacts(QList<DracoUser> data)
@@ -360,7 +348,7 @@ void ClientController::requestSignout()
     setIsNunchukLoggedIn(false);
     setAttachmentEnable(false);
     deleteStayLoggedInData();
-    setSubscription(QJsonObject());
+    setSubscriptions(QJsonArray());
     AppSetting::instance()->setGroupSetting("");
     AppModel::instance()->requestClearData();
     if(rooms()){
@@ -518,15 +506,19 @@ QVariant ClientController::user() const
     maps["username"]    = m_me.username;
     maps["login_type"]  = m_me.login_type;
     maps["isPrimaryKey"] = m_me.login_type.localeAwareCompare("PRIMARY_KEY") == 0;
-    QJsonObject plan = CLIENT_INSTANCE->subscription()["plan"].toObject();
-    if(plan.isEmpty() == false){
+    bool subscribed = CLIENT_INSTANCE->isSubscribed();
+    if(subscribed){
         maps["isSubscribedUser"] = isSubscribed();
         maps["isByzantineUser"]  = isByzantine();
         maps["isByzantineUserPro"] = isByzantinePro();
         maps["isByzantineUserStandard"] = isByzantineStandard();
         maps["isByzantineUserPremier"]  = isByzantinePremier();
-        maps["isHoneyBadgerUser"]   = isHoneyBadger();
-        maps["isIronHandUser"]      = isIronHand();
+        maps["isHoneyBadgerUser"]    = isHoneyBadger();
+        maps["isIronHandUser"]       = isIronHand();
+        maps["isFinneyUserPro"]      = isFinneyPro();
+        maps["isFinneyUserStandard"] = isFinneyStandard();
+        maps["isFinneyUser"]         = isFinney();
+        maps["isMultiSubscriptions"] = isMultiSubscriptions();
     }
     else{
         maps["isSubscribedUser"] = false;
@@ -534,8 +526,12 @@ QVariant ClientController::user() const
         maps["isByzantineUserPro"] = false;
         maps["isByzantineUserStandard"] = false;
         maps["isByzantineUserPremier"]  = false;
-        maps["isHoneyBadgerUser"]  = false;
-        maps["isIronHandUser"]     = false;
+        maps["isHoneyBadgerUser"]    = false;
+        maps["isIronHandUser"]       = false;
+        maps["isFinneyUserPro"]      = false;
+        maps["isFinneyUserStandard"] = false;
+        maps["isFinneyUser"]         = false;
+        maps["isMultiSubscriptions"] = false;
     }
     if(AppModel::instance()->getPrimaryKey()){
         maps["master_fingerprint"] = AppModel::instance()->getPrimaryKey()->fingerPrint();
@@ -623,7 +619,8 @@ void ClientController::setAttachmentEnable(bool AttachmentEnable)
 
 bool ClientController::isSubscribed() const
 {
-    return isByzantine() || isHoneyBadger() || isIronHand();
+    DBG_INFO << m_slugs.count();
+    return m_slugs.count() > 0;
 }
 
 bool ClientController::isByzantine() const
@@ -633,34 +630,22 @@ bool ClientController::isByzantine() const
 
 bool ClientController::isByzantineStandard() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "byzantine_testnet")
-               || qUtils::strCompare(type, "byzantine");
-    return ret;
+    return slugs().contains("byzantine") || slugs().contains("byzantine_testnet");
 }
 
 bool ClientController::isByzantinePro() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "byzantine_pro_testnet")
-               || qUtils::strCompare(type, "byzantine_pro");
-    return ret;
+    return slugs().contains("byzantine_pro_testnet") || slugs().contains("byzantine_pro");
 }
 
 bool ClientController::isFinneyPro() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "finney_pro_testnet")
-               || qUtils::strCompare(type, "finney_pro");
-    return ret;
+    return slugs().contains("finney_pro_testnet") || slugs().contains("finney_pro");
 }
 
 bool ClientController::isFinneyStandard() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "finney_testnet")
-               || qUtils::strCompare(type, "finney");
-    return ret;
+    return slugs().contains("finney_testnet") || slugs().contains("finney");
 }
 
 bool ClientController::isFinney() const
@@ -670,49 +655,60 @@ bool ClientController::isFinney() const
 
 bool ClientController::isByzantinePremier() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "byzantine_premier_testnet")
-               || qUtils::strCompare(type, "byzantine_premier");
-    return ret;
+    return slugs().contains("byzantine_premier_testnet") || slugs().contains("byzantine_premier");
 }
 
 bool ClientController::isHoneyBadger() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "honey_badger_testnet")
-               || qUtils::strCompare(type, "honey_badger");
-    return ret;
+    return slugs().contains("honey_badger_testnet") || slugs().contains("honey_badger");
 }
 
 bool ClientController::isIronHand() const
 {
-    QString type = slug();
-    bool ret =    qUtils::strCompare(type, "iron_hand_testnet")
-               || qUtils::strCompare(type, "iron_hand");
-    return ret;
+    return slugs().contains("iron_hand_testnet") || slugs().contains("iron_hand");
 }
 
-QString ClientController::slug() const
+QJsonArray ClientController::subscriptions() const
 {
-    return subscription()["plan"].toObject()["slug"].toString();
+    return m_subscriptions;
 }
 
-QJsonObject ClientController::subscription() const
+void ClientController::setSubscriptions(const QJsonArray &data)
 {
-    return m_subscription;
-}
+    m_slugs.clear();
+    QJsonArray valid_subcriptions;
 
-void ClientController::setSubscription(const QJsonObject &sub)
-{
-    m_subscription = sub;
-    DBG_INFO << sub;
-    QJsonObject plan = m_subscription["plan"].toObject();
-    if (plan.isEmpty() == false) {
-        setAttachmentEnable(isSubscribed());
-    } else {
+    foreach (const QJsonValue &value, data) {
+        QJsonObject subscription = value.toObject();
+        qint64 grace_valid_until_utc_millis = static_cast<qint64>(subscription.value("grace_valid_until_utc_millis").toDouble());
+        QDateTime grace_valid_until_utc = QDateTime::fromMSecsSinceEpoch(grace_valid_until_utc_millis);
+        bool valid = grace_valid_until_utc.isValid() && grace_valid_until_utc >= QDateTime::currentDateTime();
+        DBG_INFO << grace_valid_until_utc.toString("yyyy-MM-dd-hh-mm-ss-zzz") << valid;
+        if(valid){
+            m_slugs.append(subscription["plan"].toObject()["slug"].toString());
+            valid_subcriptions.push_back(subscription);
+        }
+    }
+    m_subscriptions = valid_subcriptions;
+    if(m_subscriptions.size() > 0){
+        setAttachmentEnable(true);
+    }
+    else{
         setAttachmentEnable(false);
     }
-    emit subscriptionChanged();
+    DBG_INFO << m_slugs;
+    emit subscriptionsChanged();
+}
+
+bool ClientController::isMultiSubscriptions() const
+{
+    DBG_INFO << m_slugs.count();
+    return m_slugs.count() > 1;
+}
+
+QStringList ClientController::slugs() const
+{
+    return m_slugs;
 }
 
 void ClientController::saveStayLoggedInData()

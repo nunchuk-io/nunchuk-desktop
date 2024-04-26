@@ -90,6 +90,7 @@ public:
     void requestCreateUserWallets();
     void requestSyncSharedWallets();
     void requestClearData();
+    void requestOnboarding();
 
     WalletListModel *walletList() const;
     QWalletListModelPtr walletListPtr() const;
@@ -134,9 +135,8 @@ public:
     // Wallet selection
     Wallet *walletInfo() const;
     QWalletPtr walletInfoPtr() const;
-    void setWalletInfo(WalletId wallet_id);
-    void setWalletInfo(const QWalletPtr &d);
-    void setWalletInfoByIndex(const int index);
+    void setWalletInfo(const QWalletPtr &d, bool force = false);
+    void setWalletInfoByIndex(const int index, bool force = false);
 
     // For new transaction
     Transaction *transactionInfo() const;
@@ -152,7 +152,7 @@ public:
     void setDestinationList(const QDestinationListModelPtr &destinationList);
 
     int walletListCurrentIndex() const;
-    void setWalletListCurrentIndex(int index);
+    void setWalletListCurrentIndex(int index, bool force = false);
 
     int chainTip() const;
     void setChainTip(int chainTip);
@@ -249,6 +249,9 @@ public:
     void setAddSignerWizard(int index);
     int addSignerWizard() const;
 
+    bool checkAutoSignOut();
+    void setTimeLogging(const QDateTime &newTimeLogging);
+
 private:
     AppModel();
     ~AppModel();
@@ -296,7 +299,7 @@ private:
     QString             newKeySignMessage_;
     std::vector<nunchuk::PrimaryKey> m_primaryKeys;
     int m_addSignerWizard {0};
-
+    QDateTime           timeLogging_;
 signals:
     void signalShowToast();
     void walletListChanged();
@@ -341,7 +344,11 @@ signals:
     void forwardToast(int code, const QString &what, EWARNING::WarningType type);
     void listMessagesChanged();
     void txidReplacingChanged();
+    void notifySignerExist(bool isSoftware, const QString fingerPrint);
+    void syncingWalletFromServer(const QString fingerPrint);
+    void syncingConfirmWalletRemoveKey(const QString fingerPrint);
 public slots:
+    void confirmSyncingWalletFromServer(bool yes, bool no);
     void timerHealthCheckTimeHandle();
     void timerFeeRatesHandle();
     void timerCheckAuthorizedHandle();

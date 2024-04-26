@@ -41,7 +41,7 @@ QOnScreenContentTypeB {
     label.text: STR.STR_QML_948
     extraHeader: Item {}
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-    property var dashboardInfo: GroupWallet.dashboardInfo ? GroupWallet.dashboardInfo : AppModel.walletInfo.dashboardInfo
+    property var dashboardInfo: GroupWallet.dashboardInfo
     content: Item {
         Column {
             anchors.fill: parent
@@ -58,7 +58,7 @@ QOnScreenContentTypeB {
                 id: masterList
                 width: parent.width
                 height: parent.height - 24 - 20
-                model: GroupWallet.dashboardInfo.health.healthStatuses
+                model: dashboardInfo.health.healthStatuses
                 interactive: masterList.count > 3
                 clip: true
                 ScrollBar.vertical: ScrollBar { active: true }
@@ -113,7 +113,7 @@ QOnScreenContentTypeB {
         }
     }
     Connections {
-        target: GroupWallet.dashboardInfo.health
+        target: dashboardInfo.health
         onRequestHealthCheckSuccess: {
             var _continue = {
                 type: "health-check-request-sent"

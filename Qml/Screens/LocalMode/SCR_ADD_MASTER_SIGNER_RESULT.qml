@@ -52,7 +52,7 @@ QScreen {
         id: _keyInfo
         QKeyInfo {
             signerName: AppModel.masterSignerInfo.masterSignername
-            signerSpec: AppModel.masterSignerInfo.fingerPrint
+            signerSpec: ""
             signerXfp: AppModel.masterSignerInfo.fingerPrint
             signerDerivationPath: ""
             signerCardId: AppModel.masterSignerInfo.masterSignerDevice.cardId
@@ -76,6 +76,19 @@ QScreen {
 
             onRequestDeleteKey: {
                 QMLHandle.sendEvent(EVT.EVT_ADD_MASTER_SIGNER_INFO_REMOVE_REQUEST, AppModel.masterSignerInfo.masterSignerId)
+            }
+            onCloseClicked: {
+                if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                }
+                else{
+                    if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
+                        QMLHandle.sendEvent(EVT.EVT_ADD_MASTER_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_CONFIGURATION)
+                    }
+                    else {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
+                }
             }
         }
     }

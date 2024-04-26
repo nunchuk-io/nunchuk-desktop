@@ -21,6 +21,7 @@
 #include <QQmlEngine>
 #include "bridgeifaces.h"
 #include "Servers/Draco.h"
+#include "ViewsEnums.h"
 
 QMasterSigner::QMasterSigner(): isPrimaryKey_(false), isDraft(true)
 {
@@ -83,26 +84,13 @@ void QMasterSigner::setName(const QString &d) {
 }
 
 QDevice *QMasterSigner::device() {
-    if(!device_){
-        if(isDraft){
-            device_ = QDevicePtr(new QDevice());
-        }
-        else{
-            device_ = QDevicePtr(new QDevice(masterSigner_.get_device()));
-        }
-    }
-    return device_.data();
+    return devicePtr().data();
 }
 
 QDevicePtr QMasterSigner::devicePtr()
 {
     if(!device_){
-        if(isDraft){
-            device_ = QDevicePtr(new QDevice());
-        }
-        else{
-            device_ = QDevicePtr(new QDevice(masterSigner_.get_device()));
-        }
+        device_ = QDevicePtr(new QDevice(masterSigner_.get_device()));
     }
     return device_;
 }
@@ -523,6 +511,16 @@ QString MasterSignerListModel::getMasterSignerNameByFingerPrint(const QString &f
         }
     }
     return "";
+}
+
+int MasterSignerListModel::getIndexNameByFingerPrint(const QString &fingerprint)
+{
+    for (int i = 0; i < d_.count(); i++) {
+        if(0 == QString::compare(fingerprint, d_[i].data()->fingerPrint(), Qt::CaseInsensitive)){
+            return i;
+        }
+    }
+    return -1;
 }
 
 bool MasterSignerListModel::removeMasterSigner(const QString &masterSignerId)

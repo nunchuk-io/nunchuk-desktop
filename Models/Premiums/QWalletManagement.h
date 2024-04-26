@@ -2,8 +2,10 @@
 #define QWALLETMANAGEMENT_H
 
 #include <QObject>
+#include <QJsonArray>
 #include "QSwitchAPI.h"
 #include "TypeDefine.h"
+#include <nunchuk.h>
 
 #define WalletsMng  QWalletManagement::instance()
 class QWalletManagement : public QObject
@@ -14,6 +16,9 @@ public:
     explicit QWalletManagement();
     virtual ~QWalletManagement();
     void GetListWallet(int mode);
+    void UpdateSyncWalletFlows();
+    QString UpdateSyncWalletFlows(bool yes, bool no);
+    bool SyncSignerToServer(const nunchuk::SingleSigner &signer);
     WalletIdList wallets() const;
     GroupIdList groupIds() const;
     GroupId groupId(WalletId wallet_id) const;
@@ -23,8 +28,6 @@ public:
     bool isGroupWallet(WalletId wallet_id) const;
     bool isUserWallet(WalletId wallet_id) const;
     void clear();
-
-    bool hasWallet(GroupId group_id) const;
 
     template<typename T>
     bool contains(WalletId wallet_id);
@@ -48,6 +51,9 @@ private:
     QList<QWalletDummyTxPtr>    mDummyTxs;
     QList<QGroupWalletHealthCheckPtr> mHealths;
     QList<QRecurringPaymentPtr> mRecurringPayments;
+    QJsonArray                  walletArray;
+    QJsonObject                 software_signer;
+    nunchuk::SingleSigner       m_local_signer;
 };
 
 #endif // QWALLETMANAGEMENT_H

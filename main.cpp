@@ -29,7 +29,7 @@
 #include "Models/ServiceSetting.h"
 #include "Models/QWarningMessage.h"
 #include "Models/OnBoardingModel.h"
-#include "ifaces/QRCodeItem.h"
+#include "QRScanner/QBarcodeGenerator.h"
 #include "bridgeifaces.h"
 #include "Servers/Draco.h"
 #include "Chats/ClientController.h"
@@ -38,10 +38,7 @@
 #include "contrib/libnunchuk/src/utils/loguru.hpp"
 #include "RegisterTypes/DashRectangle.h"
 #include "QPingThread.h"
-
-#ifdef ENABLE_DECODER_QR_CODE
-#include "contrib/qzxing/src/QZXing.h"
-#endif
+#include "QRScanner/QBarcodeFilter.h"
 
 QStringList latoFonts = {
     ":/fonts/fonts/Lato/Lato-BlackItalic.ttf",
@@ -126,7 +123,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.32");
+    app.setApplicationVersion("1.9.33");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -136,17 +133,12 @@ int main(int argc, char* argv[])
 //    QPingThread objTracking;
 //    objTracking.startPing();
 #endif
-
     DBG_INFO << "Execution Path: " << qApp->applicationDirPath();
-
-#ifdef ENABLE_DECODER_QR_CODE
-    QZXing::registerQMLTypes();
-#endif
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
 
     QEventProcessor::registerStates(STATE_ALL, ALEN(STATE_ALL));
     qmlRegisterType<E>("HMIEVENTS", 1, 0, "EVT");
-    qmlRegisterType<QRCodeItem>("QRCodeItem", 1, 0, "QRCodeItem");
+    qmlRegisterType<QBarcodeGenerator>("QRCodeItem", 1, 0, "QRCodeItem");
     qmlRegisterType<DashRectangle>("RegisterTypes", 1, 0, "DashRectangle");
     qmlRegisterType<ENUNCHUCK>("NUNCHUCKTYPE", 1, 0, "NUNCHUCKTYPE");
     qmlRegisterType<ServiceSetting>("NUNCHUCKTYPE", 1, 0, "ServiceType");
@@ -156,11 +148,11 @@ int main(int argc, char* argv[])
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QWalletData.qml"), "DataPool", 1, 0, "RoomWalletData");
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QGlobal.qml"), "DataPool", 1, 0, "GlobalData");
     qmlRegisterType<AlertEnum>("NUNCHUCKTYPE", 1, 0, "AlertType");
+    qmlRegisterType<QBarcodeFilter>("QBarcodeFilter", 1, 0, "QBarcodeFilter");
     QEventProcessor::instance()->addImageProvider("nunchuk", CLIENT_INSTANCE->imageprovider());
     QEventProcessor::instance()->initialized();
     QEventProcessor::instance()->initFonts(latoFonts);
     QEventProcessor::instance()->initFonts(montserratFonts);
-    QEventProcessor::instance()->completed();
 
     // Handle window size
 #if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
@@ -210,6 +202,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->registerCtxProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
     QEventProcessor::instance()->registerCtxProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
     QEventProcessor::instance()->registerCtxProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
+    QEventProcessor::instance()->completed();
     QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),

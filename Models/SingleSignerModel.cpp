@@ -25,6 +25,7 @@
 #include "utils/enumconverter.hpp"
 #include "Servers/Draco.h"
 #include "AppModel.h"
+#include "ViewsEnums.h"
 
 QSingleSigner::QSingleSigner()
     : isPrimaryKey_(false)
@@ -90,6 +91,7 @@ void QSingleSigner::setName(const QString &d) {
 }
 
 QString QSingleSigner::xpub() {
+    DBG_INFO << singleSigner_.get_xpub();
     if(isDraft){
         return xpub_;
     }
@@ -296,6 +298,16 @@ void QSingleSigner::setSignerType(int signer_type)
     emit signerTypeChanged();
 }
 
+std::vector<nunchuk::SignerTag> QSingleSigner::signerTags() const
+{
+    return singleSigner_.get_tags();
+}
+
+void QSingleSigner::setSignerTags(const std::vector<nunchuk::SignerTag> signer_tags)
+{
+    singleSigner_.set_tags(signer_tags);
+}
+
 bool QSingleSigner::isColdCard()
 {
     DBG_INFO << tag();
@@ -461,6 +473,14 @@ void QSingleSigner::setAddress(const QString &address)
         return;
     m_address = address;
     emit addressChanged();
+}
+
+QString QSingleSigner::descriptor() const
+{
+    DBG_INFO << singleSigner_.get_descriptor();
+    DBG_INFO << singleSigner_.get_xpub();
+    DBG_INFO << singleSigner_.get_public_key();
+    return QString::fromStdString(singleSigner_.get_descriptor());
 }
 
 QString QSingleSigner::timeGapCalculationShort(QDateTime in)
@@ -763,10 +783,10 @@ QString SingleSignerListModel::getMasterSignerXfpByIndex(const int index)
     return ret;
 }
 
-QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QString &fp) {
+QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QString &xfp) {
 
     foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(fp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
             return i;
         }
     }

@@ -4,6 +4,6 @@
 [submodule "contrib/quotient"]
 	path = contrib/quotient
 	url = https://github.com/tongvanlinh/libQuotient.git
-[submodule "contrib/qzxing"]
-	path = contrib/qzxing
-	url = https://github.com/ftylitak/qzxing.git
+[submodule "contrib/zxing"]
+	path = contrib/zxing
+	url = https://github.com/zxing-cpp/zxing-cpp.git

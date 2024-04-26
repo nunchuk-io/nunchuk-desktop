@@ -23,6 +23,7 @@
 #include "QOutlog.h"
 #include <QCryptographicHash>
 #include <QJsonDocument>
+#include <boost/algorithm/string.hpp>
 
 QString qUtils::encryptXOR(const QString data, const QString key) {
     if(key == ""){
@@ -741,4 +742,68 @@ QStringList qUtils::ExportBBQRWallet(const nunchuk::Wallet &wallet, QWarningMess
         msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return result;
+}
+
+nunchuk::SingleSigner qUtils::ParseSignerString(const QString key_spec, QWarningMessage &msg)
+{
+    nunchuk::SingleSigner ret {};
+    static std::regex SIGNER_REGEX("\\[([0-9a-fA-F]{8})(.+)\\](.+?)(/.*\\*)?\n?");
+    std::string key_spec_str = key_spec.toStdString();
+    std::smatch sm;
+    if (std::regex_match(key_spec_str, sm, SIGNER_REGEX)) {
+        const std::string xfp = boost::algorithm::to_lower_copy(sm[1].str());
+        if (sm[3].str().rfind("tpub", 0) == 0 ||
+            sm[3].str().rfind("xpub", 0) == 0) {
+            try {
+                ret = nunchuk::SingleSigner(sm[1], sm[3], {}, "m" + sm[2].str(), xfp, 0);
+            }
+            catch (const nunchuk::BaseException &ex) {
+                DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            }
+            catch (std::exception &e) {
+                DBG_INFO << "THROW EXCEPTION" << e.what();
+                msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            }
+        }
+        else {
+            try {
+                ret = nunchuk::SingleSigner(sm[1], {}, sm[3], "m" + sm[2].str(), xfp, 0);
+            }
+            catch (const nunchuk::BaseException &ex) {
+                DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            }
+            catch (std::exception &e) {
+                DBG_INFO << "THROW EXCEPTION" << e.what();
+                msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            }
+        }
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+            ret = qUtils::SanitizeSingleSigner(ret, msg);
+        }
+    }
+    else{
+        msg.setWarningMessage(nunchuk::NunchukException::INVALID_PARAMETER,
+                              "Could not parse descriptor. Please check your input and try again.",
+                              EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::SingleSigner qUtils::SanitizeSingleSigner(const nunchuk::SingleSigner &signer, QWarningMessage &msg)
+{
+    nunchuk::SingleSigner ret {};
+    try {
+        ret = nunchuk::Utils::SanitizeSingleSigner(signer);
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
 }

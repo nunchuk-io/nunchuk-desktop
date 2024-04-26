@@ -37,7 +37,9 @@ Item {
     signal tapsignerClicked()
     signal serkeyClicked()
     signal hardwareClicked()
+    property bool ourAccount: modelData.added_by_user_id === ClientController.user.email
     Loader {
+        id: _source
         anchors.fill: parent
         sourceComponent: {
             if(modelData.type === "NFC") {
@@ -50,6 +52,13 @@ Item {
                 return modelData.has ? hardwareAdded : hardwareAdd
             }
         }
+    }
+
+    FastBlur {
+        anchors.fill: _source
+        source: _source
+        radius: 32
+        visible: modelData.type === "SERVER" ? isKeyHolderLimited : (isKeyHolderLimited && modelData.has && !modelData.ourAccount)
     }
 
     Component {
@@ -336,6 +345,7 @@ Item {
             radius: 8
             borderWitdh: 2
             borderColor: "#031F2B"
+            enabled: !isKeyHolderLimited
             Row {
                 anchors {
                     fill: parent
@@ -381,6 +391,7 @@ Item {
             anchors.fill: parent
             color: "#A7F0BA"
             radius: 8
+            enabled: !isKeyHolderLimited
             Row {
                 anchors {
                     fill: parent

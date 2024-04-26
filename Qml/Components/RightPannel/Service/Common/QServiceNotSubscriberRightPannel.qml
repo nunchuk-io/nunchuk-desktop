@@ -45,7 +45,7 @@ Item {
         {visible: true,        height: 108, headline:STR.STR_QML_767, content: STR.STR_QML_768 , icon: "qrc:/Images/Images/contact-support-dark.svg"      },
         {visible: isLoggedIn,  height: 108, headline:STR.STR_QML_790, content: STR.STR_QML_791 , icon: "qrc:/Images/Images/member-discount-dark.svg"      },
     ]
-    property bool isByzantine: ClientController.user.isByzantineUser
+    property bool isByzantine: ClientController.user.isByzantineUser || ClientController.user.isFinneyUser
     property bool isLoggedIn: ClientController.isNunchukLoggedIn
     Rectangle {
         width: parent.width

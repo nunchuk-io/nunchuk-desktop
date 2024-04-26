@@ -57,7 +57,7 @@ QScreen {
                 height: 40
                 text: {
                     var user = ClientController.user
-                    return user.isByzantineUser ? STR.STR_QML_1029.arg(ServiceSetting.walletInfo.walletName) : STR.STR_QML_720
+                    return (user.isByzantineUser || user.isFinneyUser) ? STR.STR_QML_1029.arg(ServiceSetting.walletInfo.walletName) : STR.STR_QML_720
                 }
                 font.pixelSize: 32
                 font.weight: Font.DemiBold

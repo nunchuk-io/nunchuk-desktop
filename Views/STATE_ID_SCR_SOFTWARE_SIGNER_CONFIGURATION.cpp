@@ -53,7 +53,8 @@ void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {
     QString mnemonic = AppModel::instance()->getMnemonic();
     if(QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY &&
        QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
-        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+        bool yesBtn = msg.toMap().value("key_yes_accept").toBool();
+        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase, yesBtn);
     }
     else{
         DBG_INFO << QEventProcessor::instance()->currentFlow();

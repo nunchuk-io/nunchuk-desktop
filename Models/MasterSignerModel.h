@@ -124,7 +124,6 @@ public:
     void setAddress(const QString &address);
 
     Q_INVOKABLE QVariantList getWalletList();
-
     QSingleSignerPtr cloneSingleSigner();
 private:
     QString id_ = "";
@@ -187,6 +186,7 @@ public:
     QMasterSignerPtr getMasterSignerById(const QString& id);
     QMasterSignerPtr getMasterSignerByXfp(const QString& xfp);
     QString getMasterSignerNameByFingerPrint(const QString &fingerprint);
+    int getIndexNameByFingerPrint(const QString &fingerprint);
     bool removeMasterSigner(const QMasterSignerPtr it);
     bool removeMasterSigner(const QString& masterSignerId);
     void resetUserChecked();

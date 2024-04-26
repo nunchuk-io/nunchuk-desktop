@@ -27,7 +27,7 @@ bool QUserWalletDummyTx::CreateDummyTransaction()
             break;
         case AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL:
             bodydata["wallet"] = wallet_id();
-            bodydata["group_id"] = mode() == USER_WALLET ? "" : w->groupId();
+            bodydata["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : w->groupId();
             break;
         default:
             break;

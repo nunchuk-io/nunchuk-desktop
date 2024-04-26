@@ -35,7 +35,7 @@ Rectangle {
         id: qrCode
         anchors.centerIn: parent
         width: iconSize - 2*offset
-        height: iconSize - 2*offset
+        height: width
         borderWitdh: 0
         textInput: address
     }

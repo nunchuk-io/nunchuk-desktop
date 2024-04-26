@@ -22,13 +22,24 @@ QGroupWallets *QGroupWallets::instance()
     return &mInstance;
 }
 
-QGroupDashboard* QGroupWallets::dashboardInfo() const
+QGroupDashboard* QGroupWallets::dashboardInfo()
 {
-    return mDashboard.data();
+    return dashboardInfoPtr().data();
 }
 
-QGroupDashboardPtr QGroupWallets::dashboardInfoPtr() const
+QGroupDashboardPtr QGroupWallets::dashboardInfoPtr()
 {
+    if (mDashboard) {
+        return mDashboard;
+    } else {
+        mDashboard = AppModel::instance()->walletInfoPtr() ? AppModel::instance()->walletInfoPtr()->dashboard() : nullptr;
+    }
+    if (mDashboard) {
+        QString myRole = mDashboard->myRole();
+        if(qUtils::strCompare(myRole, "KEYHOLDER_LIMITED")){
+            mDashboard->setShowDashBoard(true);
+        }
+    }
     return mDashboard;
 }
 
@@ -155,7 +166,7 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
         if (mDashboard.isNull()) {
             if (auto w = AppModel::instance()->walletInfoPtr()) {
                 if (w->id().isEmpty()) { // There not wallet selected
-                    dashboard(mPendingWallets.first()->groupId());
+                    dashboard(mPendingWallets.first()->groupId(), "");
                     mDashboard->setShowDashBoard(true);
                 }
             }
@@ -169,12 +180,12 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
             if (auto w = AppModel::instance()->walletInfoPtr()) {
                 if (w->id().isEmpty()) { // There not wallet selected
                     if (auto w_0 = AppModel::instance()->walletListPtr()->getWalletByIndex(0)) {
-                        dashboard(w_0->groupId());
+                        dashboard(w_0->groupId(), w_0->id());
                     }
                 }
             }
             else if (auto w_0 = AppModel::instance()->walletListPtr()->getWalletByIndex(0)) {
-                dashboard(w_0->groupId());
+                dashboard(w_0->groupId(), w_0->id());
             }
         }
     }
@@ -182,9 +193,9 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
     emit dashboardListChanged();
 }
 
-void QGroupWallets::dashboard(const QString &group_id)
+void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
 {
-    setDashboardInfo(group_id);
+    setDashboardInfo(group_id, wallet_id);
     DBG_INFO << mDashboard;
     if (!mDashboard) return;
     mDashboard->setShowDashBoard(true);
@@ -238,6 +249,7 @@ void QGroupWallets::markRead(const QString &alert_id)
         switch ((AlertEnum::E_Alert_t)mDashboard->flow()) {
         case AlertEnum::E_Alert_t::TRANSACTION_SIGNATURE_REQUEST:{
             QJsonObject payload = mDashboard->alertJson()["payload"].toObject();
+            DBG_INFO << payload;
             QString transaction_id = payload["transaction_id"].toString();
             QEventProcessor::instance()->sendEvent(E::EVT_HOME_TRANSACTION_INFO_REQUEST, transaction_id);
             if(auto tx = AppModel::instance()->transactionInfoPtr()) {
@@ -277,9 +289,20 @@ void QGroupWallets::refresh()
     });
 }
 
-void QGroupWallets::setDashboardInfo(const QString &group_id)
+void QGroupWallets::setDashboardInfo(const QString &group_id, const QString &wallet_id)
 {
-    if(group_id != "") {
+    if (wallet_id != "") {
+        if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id))
+        {
+            DBG_INFO << wallet_id << w->dashboard();
+            if (auto dash = w->dashboard()) {
+                mDashboard = dash;
+            }
+        }
+        DBG_INFO << wallet_id << mDashboard;
+        emit dashboardInfoChanged();
+    }
+    else if (group_id != "") {
         if (mDashboard) {
             if (qUtils::strCompare(group_id, mDashboard->groupId())){
                 return;
@@ -295,8 +318,8 @@ void QGroupWallets::setDashboardInfo(const QString &group_id)
             }
         }
 
-        QString wallet_id = WalletsMng->walletId(group_id);
-        if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id))
+        QString w_id = WalletsMng->walletId(group_id);
+        if (auto w = AppModel::instance()->walletListPtr()->getWalletById(w_id))
         {
             if (auto dash = w->dashboard()) {
                 mDashboard = dash;
@@ -359,6 +382,7 @@ void QGroupWallets::reset()
     if (mPendingWallets.size() > 0) {
         mPendingWallets.clear();
     }
+    clearDashBoard();
 }
 
 bool QGroupWallets::AddOrUpdateAKeyToDraftWallet()

@@ -52,7 +52,7 @@ QScreen {
         id: _keyInfo
         QKeyInfo {
             signerName: AppModel.singleSignerInfo.signerName
-            signerSpec: AppModel.walletInfo.walletEscrow ? AppModel.singleSignerInfo.signerPublickey : AppModel.singleSignerInfo.signerXpub
+            signerSpec: AppModel.singleSignerInfo.descriptor
             signerXfp: AppModel.singleSignerInfo.signerMasterFingerPrint
             signerDerivationPath: AppModel.singleSignerInfo.signerDerivationPath
             signerCardId: ""
@@ -76,6 +76,9 @@ QScreen {
                 var remoteSignerObj = { "master_fingerprint"    : AppModel.singleSignerInfo.signerMasterFingerPrint,
                     "derivation_path"       : AppModel.singleSignerInfo.signerDerivationPath };
                 QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_DELETE_REQUEST, remoteSignerObj)
+            }
+            onCloseClicked: {
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
     }

@@ -64,5 +64,6 @@ void DashRectangle::paint(QPainter *painter)
     pen.setJoinStyle(Qt::RoundJoin);
 
     painter->setPen(pen);
+    painter->setBrush(Qt::white);
     painter->drawRoundedRect(QRectF(m_borderWitdh, m_borderWitdh, width() - 2*m_borderWitdh, height() - 2*m_borderWitdh), m_radius, m_radius);
 }

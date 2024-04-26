@@ -110,8 +110,8 @@ public:
     void setStayLoggedIn(bool value);
 
     // USER_SUBSCRIPTION
-    void getCurrentUserSubscription();
-    bool getTestNetUserSubscription();
+    void getUserSubscriptions();
+    bool getUserSubscriptionsTestnet();
 
     // ASSISTED_WALLETS
     bool getAssistedWallets(QJsonObject &output, QString &errormsg);
@@ -130,7 +130,7 @@ public:
     QJsonObject assistedGetWalletConfig();
     bool assistedWalletGetInfo(const QString &wallet_id, QJsonObject &output, QString &errormsg);
     bool assistedWalletUpdate(const QString &wallet_id, const QString &name, const QString &description, QJsonObject &output, QString &errormsg);
-    bool assistedKeyUpdateName(const QString &fingerPrint, const QString &name);
+    bool assistedKeyUpdateName(const QString &fingerPrint, const QString &name, const QJsonObject& json = {});
 
     bool DeleteAssistedWallet(const QString& wallet_id, const QStringList &signatures, const QString& passwordToken, const QString& secQuesToken, QJsonObject &output, QString &errormsg);
     bool DeleteWalletRequiredSignatures(const QString &wallet_id, QJsonObject &output, QString &errormsg);

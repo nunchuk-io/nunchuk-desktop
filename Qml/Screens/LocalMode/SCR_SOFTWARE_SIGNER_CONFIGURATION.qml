@@ -30,12 +30,14 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: rootAddsignerToWallet
     property string signerNameInputted: ""
     QOnScreenContent {
+        id: _content
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
@@ -231,11 +233,30 @@ QScreen {
                         type: eTypeE
                         enabled: rootAddsignerToWallet.signerNameInputted !== ""
                         onButtonClicked: {
+                            passphrase.textInputted = ""
                             var signerObj = { "signername"    : rootAddsignerToWallet.signerNameInputted,
                                               "passphrase"    : ""};
                             QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
                             stateAddSigner.visible = true
                         }
+                    }
+                }
+
+                Connections {
+                    target: AppModel
+                    onNotifySignerExist: {
+                        _content.showPopupInfo(isSoftware, fingerPrint)
+                    }
+                }
+                Connections {
+                    target: _info
+                    onYesClicked: {
+                        var signerObj = {
+                            "signername"    : rootAddsignerToWallet.signerNameInputted,
+                            "passphrase"    : passphrase.textInputted,
+                            "key_yes_accept": true
+                        };
+                        QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
                     }
                 }
             }
@@ -457,6 +478,29 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
             }
             onConfirmNo: close()
+        }
+
+        QPopupInfoTwoButtons {
+            id: _info
+            signal yesClicked()
+            title: STR.STR_QML_661
+            labels: [STR.STR_QML_433,STR.STR_QML_432]
+            funcs: [
+                function() { yesClicked() },
+                function() {}
+            ]
+        }
+        function showPopupInfo(isSoftware, fingerPrint){
+            if (isSoftware) {
+                _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+                _info.contentTextTwo = STR.STR_QML_1284
+                _info.open()
+            }
+            else {
+                _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+                _info.contentTextTwo = ""
+                _info.open()
+            }
         }
     }
 }

@@ -55,7 +55,7 @@ Item {
         id: _select_wallet
         QSelectAnAssistedWallet {
             header: STR.STR_QML_875
-            wallets: ServiceSetting.servicesTag.listSetuped
+            wallets: ServiceSetting.servicesTag.listInheritantPlans
             onSelectWalletRequest: {
                 var _input = {
                     type: "inheritance-planing",

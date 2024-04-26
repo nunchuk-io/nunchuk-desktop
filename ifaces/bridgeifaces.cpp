@@ -507,7 +507,9 @@ QSingleSignerPtr bridge::nunchukCreateSigner(const QString &name,
                                              const QString &public_key,
                                              const QString &derivation_path,
                                              const QString &master_fingerprint,
-                                             const QString& type)
+                                             const nunchuk::SignerType type,
+                                             const std::vector<nunchuk::SignerTag> tags,
+                                             bool replace)
 {
     QWarningMessage msg;
     nunchuk::SingleSigner signer = nunchukiface::instance()->CreateSigner(name.toStdString(),
@@ -515,7 +517,9 @@ QSingleSignerPtr bridge::nunchukCreateSigner(const QString &name,
                                                                           public_key.toStdString(),
                                                                           derivation_path.toStdString(),
                                                                           master_fingerprint.toStdString(),
-                                                                          type.toStdString(),
+                                                                          type,
+                                                                          tags,
+                                                                          replace,
                                                                           msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
@@ -531,6 +535,9 @@ nunchuk::SingleSigner bridge::nunchukCreateOriginSigner(const QString &name,
                                                         const QString &public_key,
                                                         const QString &derivation_path,
                                                         const QString &master_fingerprint,
+                                                        const nunchuk::SignerType type,
+                                                        const std::vector<nunchuk::SignerTag> tags,
+                                                        bool replace,
                                                         QWarningMessage &msg)
 {
     return nunchukiface::instance()->CreateSigner(name.toStdString(),
@@ -538,7 +545,9 @@ nunchuk::SingleSigner bridge::nunchukCreateOriginSigner(const QString &name,
                                                   public_key.toStdString(),
                                                   derivation_path.toStdString(),
                                                   master_fingerprint.toStdString(),
-                                                  "AIRGAP",
+                                                  type,
+                                                  tags,
+                                                  replace,
                                                   msg);
 }
 
@@ -1433,39 +1442,21 @@ bool bridge::nunchukSetSelectedWallet(const QString &wallet_id)
 void bridge::nunchukPromtPinOnDevice(const QDevicePtr &device, QWarningMessage &msg)
 {
     if(device.data()){
-        nunchuk::Device dv(device.data()->type().toStdString(),
-                           device.data()->path().toStdString(),
-                           device.data()->model().toStdString(),
-                           device.data()->masterFingerPrint().toStdString(),
-                           device.data()->needsPassPhraseSent(),
-                           device.data()->needsPinSent());
-        nunchukiface::instance()->PromtPinOnDevice(dv, msg);
+        nunchukiface::instance()->PromtPinOnDevice(device->originDevice(), msg);
     }
 }
 
 void bridge::nunchukSendPinToDevice(const QDevicePtr &device, const QString &pin, QWarningMessage &msg)
 {
     if(device.data()){
-        nunchuk::Device dv(device.data()->type().toStdString(),
-                           device.data()->path().toStdString(),
-                           device.data()->model().toStdString(),
-                           device.data()->masterFingerPrint().toStdString(),
-                           device.data()->needsPassPhraseSent(),
-                           device.data()->needsPinSent());
-        nunchukiface::instance()->SendPinToDevice(dv, pin.toStdString(), msg);
+        nunchukiface::instance()->SendPinToDevice(device->originDevice(), pin.toStdString(), msg);
     }
 }
 
 void bridge::nunchukSendPassphraseToDevice(const QDevicePtr &device, const QString &passphrase, QWarningMessage &msg)
 {
     if(device.data()){
-        nunchuk::Device dv(device.data()->type().toStdString(),
-                           device.data()->path().toStdString(),
-                           device.data()->model().toStdString(),
-                           device.data()->masterFingerPrint().toStdString(),
-                           device.data()->needsPassPhraseSent(),
-                           device.data()->needsPinSent());
-        nunchukiface::instance()->SendPassphraseToDevice(dv, passphrase.toStdString(), msg);
+        nunchukiface::instance()->SendPassphraseToDevice(device->originDevice(), passphrase.toStdString(), msg);
     }
 }
 
@@ -1571,13 +1562,16 @@ void bridge::nunchukRescanBlockchain(int start_height, int stop_height)
     nunchukiface::instance()->RescanBlockchain(start_height, stop_height, msg);
 }
 
-QMasterSignerPtr bridge::nunchukCreateSoftwareSigner(const QString &name, const QString &mnemonic, const QString &passphrase, QWarningMessage &msg,bool isPrimaryKey)
+QMasterSignerPtr bridge::nunchukCreateSoftwareSigner(const QString &name, const QString &mnemonic, const QString &passphrase, bool isPrimaryKey,
+                                                     bool replace,
+                                                     QWarningMessage& msg)
 {
     nunchuk::MasterSigner masterSigner = nunchukiface::instance()->CreateSoftwareSigner(name.toStdString(),
                                                                                         mnemonic.toStdString(),
                                                                                         passphrase.toStdString(),
-                                                                                        msg,
-                                                                                        isPrimaryKey);
+                                                                                        isPrimaryKey,
+                                                                                        replace,
+                                                                                        msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QMasterSignerPtr signer =  QMasterSignerPtr(new QMasterSigner(masterSigner));
         return signer;
@@ -1790,6 +1784,20 @@ QString bridge::nunchukParseQRSigners(const QStringList &qr_data)
     }
 }
 
+
+QString bridge::loadJsonFile(const QString &filePathName)
+{
+    DBG_INFO << filePathName;
+    QFile file(filePathName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return NULL;
+    QTextStream in(&file);
+    QString json_str = in.readAll();
+    file.close();
+    if(json_str.isEmpty()) return "";
+    return json_str;
+}
+
 QString bridge::nunchukParseJSONSigners(const QString &filePathName)
 {
     QWarningMessage msg;
@@ -1811,16 +1819,7 @@ QString bridge::nunchukParseJSONSigners(const QString &filePathName)
 
 QSingleSignerPtr bridge::nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, QWarningMessage &msg)
 {
-    DBG_INFO << filePathName;
-    QFile file(filePathName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return NULL;
-    QTextStream in(&file);
-    QString json_str = in.readAll();
-    DBG_INFO << json_str;
-    file.close();
-    if(json_str.isEmpty()) return NULL;
-
+    QString json_str = loadJsonFile(filePathName);
     std::vector<nunchuk::SingleSigner> signers = nunchukiface::instance()->ParseJSONSigners(json_str.toStdString(), (nunchuk::SignerType)signer_type, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
         nunchuk::SingleSigner signer = signers.at(0);
@@ -1836,15 +1835,7 @@ QSingleSignerPtr bridge::nunchukParseJSONSigners(const QString &filePathName, EN
 
 QSingleSignerPtr bridge::nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, ENUNCHUCK::AddressType address_type, QWarningMessage &msg)
 {
-    DBG_INFO << filePathName;
-    QFile file(filePathName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return NULL;
-    QTextStream in(&file);
-    QString json_str = in.readAll();
-    DBG_INFO << json_str;
-    file.close();
-    if(json_str.isEmpty()) return NULL;
+    QString json_str = loadJsonFile(filePathName);
     QString path = qUtils::GetBip32DerivationPath(nunchuk::WalletType::MULTI_SIG, static_cast<nunchuk::AddressType>(address_type));
     //m/48h/0h/0h/2h
     QString prefix = path.mid(0, 8);
@@ -1966,10 +1957,10 @@ bool bridge::nunchukHasWallet(const QString &wallet_id)
     return nunchukiface::instance()->HasWallet(wallet_id.toStdString(),msg);
 }
 
-void bridge::AddTapsigner(const QString &card_ident, const QString &xfp, const QString &name, const QString &version, int birth_height, bool is_testnet)
+void bridge::AddTapsigner(const QString &card_ident, const QString &xfp, const QString &name, const QString &version, int birth_height, bool is_testnet, bool replace)
 {
     QWarningMessage msg;
-    nunchukiface::instance()->AddTapsigner(card_ident.toStdString(),xfp.toStdString(),name.toStdString(),version.toStdString(),birth_height,is_testnet,msg);
+    nunchukiface::instance()->AddTapsigner(card_ident.toStdString(), xfp.toStdString(), name.toStdString(), version.toStdString(), birth_height, is_testnet, replace, msg);
 }
 
 bool bridge::nunchukUpdateTransactionSchedule(const QString &wallet_id, const QString &tx_id, time_t ts, QWarningMessage &msg)
@@ -2113,9 +2104,9 @@ QString bridge::GetHotWalletMnemonic(const QString &wallet_id, const QString &pa
     return QString::fromStdString(nunchukiface::instance()->GetHotWalletMnemonic(wallet_id.toStdString(), passphrase.toStdString(), msg));
 }
 
-QWalletPtr bridge::nunchukCreateHotWallet(const QString &mnemonic, const QString &passphrase,  bool need_backup, QWarningMessage &msg)
+QWalletPtr bridge::nunchukCreateHotWallet(const QString &mnemonic, const QString &passphrase,  bool need_backup, bool replace, QWarningMessage &msg)
 {
-    nunchuk::Wallet walletResult = nunchukiface::instance()->CreateHotWallet(mnemonic.toStdString(), passphrase.toStdString(), need_backup, msg);
+    nunchuk::Wallet walletResult = nunchukiface::instance()->CreateHotWallet(mnemonic.toStdString(), passphrase.toStdString(), need_backup, replace, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         return bridge::convertWallet(walletResult);
     }

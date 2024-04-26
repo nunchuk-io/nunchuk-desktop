@@ -21,7 +21,9 @@
 #include "QEventProcessor.h"
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
+#include "Models/MasterSignerModel.h"
 #include "Models/WalletModel.h"
+#include "Models/Chats/ClientController.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
 
@@ -40,56 +42,128 @@ void SCR_ADD_HARDWARE_SIGNER_Exit(QVariant msg) {
 }
 
 void EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    QString signerNameInputted = msg.toMap().value("signerNameInputted").toString();
+    QString key_name = msg.toMap().value("key_name").toString();
     int deviceIndexSelected    = msg.toMap().value("deviceIndexSelected").toInt();
+    bool yesBtn      = msg.toMap().value("key_yes_accept").toBool();
     if(AppModel::instance()->deviceList()){
-        QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected) ;
-        if(selectedDv){
-            if(selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()){
-                AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
-            }
-            else{
-                AppModel::instance()->startCreateMasterSigner(signerNameInputted, deviceIndexSelected);
+        QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected);
+        if (selectedDv) {
+            bool isSubscribed = ClientController::instance()->isSubscribed();
+            auto request = [&]() {
+                if(selectedDv){
+                    if(selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()){
+                        AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
+                    }
+                    else {
+                        AppModel::instance()->startCreateMasterSigner(key_name, deviceIndexSelected);
+                    }
+                }
+            };
+            if (isSubscribed) {
+                if (AppModel::instance()->masterSignerListPtr()->containsFingerPrint(selectedDv->masterFingerPrint())) {
+                    if (yesBtn) {
+                        request();
+                    }
+                    else {
+                        auto oldKey = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(selectedDv->masterFingerPrint());
+                        if (oldKey->originMasterSigner().get_type() == nunchuk::SignerType::SOFTWARE) {
+                            emit AppModel::instance()->notifySignerExist(true, selectedDv->masterFingerPrint());
+                        } else {
+                            emit AppModel::instance()->notifySignerExist(false, selectedDv->masterFingerPrint());
+                        }
+                    }
+                } else {
+                    request();
+                }
+            } else {
+                request();
             }
         }
     }
 }
 
 void EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     // Trimmed input
-    QString signerNameInputted = msg.toMap().value("signerNameInputted").toString().simplified();
-    QString xpubInputted = msg.toMap().value("xpubInputted").toString().simplified();
-    QString bip32Inputted = msg.toMap().value("bip32Inputted").toString().simplified();
-    QString masterFingerPrintInputted = msg.toMap().value("masterFingerPrintInputted").toString().simplified();
-    bool isValidFingerPrint = false;
+    QString key_name    = msg.toMap().value("key_name").toString().simplified();
+    QString key_tag     = msg.toMap().value("key_tag").toString();
+    QString key_spec    = msg.toMap().value("key_spec").toString();
+    bool key_yes_accept = msg.toMap().value("key_yes_accept").toBool();
+    DBG_INFO << msg.toMap();
 
-    // Adding a Remote Signer whose Master Signer already exists: disallowed
-    if(AppModel::instance()->masterSignerList() && AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrintInputted)){
-        isValidFingerPrint = false;
+    QWarningMessage warningmsg;
+    nunchuk::SingleSigner singleSigner = qUtils::ParseSignerString(key_spec, warningmsg);
+    if((int)EWARNING::WarningType::EXCEPTION_MSG == warningmsg.type()) {
+        AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
     }
     else{
-        isValidFingerPrint = qUtils::QIsValidFingerPrint(masterFingerPrintInputted);
+        singleSigner.set_name(key_name.toStdString());
+        if (ClientController::instance()->isSubscribed()) {
+            if(key_yes_accept){
+                nunchuk::SignerTag tag;
+                try {
+                    tag = SignerTagFromStr(key_tag.toStdString());
+                    singleSigner.set_tags({tag});
+                }
+                catch (const nunchuk::BaseException &ex) {
+                    DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                }
+                catch (std::exception &e) {
+                    DBG_INFO << "THROW EXCEPTION " << e.what();
+                }
+                AppModel::instance()->startCreateRemoteSigner(QString::fromStdString(singleSigner.get_name()),
+                                                              QString::fromStdString(singleSigner.get_xpub()),
+                                                              QString::fromStdString(singleSigner.get_public_key()),
+                                                              QString::fromStdString(singleSigner.get_derivation_path()),
+                                                              QString::fromStdString(singleSigner.get_master_fingerprint()),
+                                                              nunchuk::SignerType::AIRGAP,
+                                                              singleSigner.get_tags(),
+                                                              true, // Replace existing signer
+                                                              E::EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST);
+            }
+            else{
+                bool isExisted = false;
+                isExisted = AppModel::instance()->masterSignerList() ? AppModel::instance()->masterSignerList()->containsFingerPrint(QString::fromStdString(singleSigner.get_master_fingerprint())) : false;
+                if(isExisted){
+                    DBG_INFO << isExisted;
+                    QMasterSignerPtr old_key = AppModel::instance()->masterSignerList()->getMasterSignerByXfp(QString::fromStdString(singleSigner.get_master_fingerprint()));
+                    emit AppModel::instance()->notifySignerExist(old_key ? (int)ENUNCHUCK::SignerType::SOFTWARE == old_key.data()->signerType() : false,
+                                                                 QString::fromStdString(singleSigner.get_master_fingerprint()));
+                }
+                else{
+                    isExisted = AppModel::instance()->remoteSignerList() ? AppModel::instance()->remoteSignerList()->containsSigner(QString::fromStdString(singleSigner.get_master_fingerprint()), QString::fromStdString(singleSigner.get_derivation_path())) : false;
+                    DBG_INFO << isExisted;
+                    if(isExisted){
+                        QSingleSignerPtr old_key = AppModel::instance()->remoteSignerList()->getSingleSignerByFingerPrint(QString::fromStdString(singleSigner.get_master_fingerprint()));
+                        emit AppModel::instance()->notifySignerExist(old_key ? (int)ENUNCHUCK::SignerType::SOFTWARE == old_key.data()->signerType() : false,
+                                                                     QString::fromStdString(singleSigner.get_master_fingerprint()));
+                    }
+                    else{
+                        AppModel::instance()->startCreateRemoteSigner(QString::fromStdString(singleSigner.get_name()),
+                                                                      QString::fromStdString(singleSigner.get_xpub()),
+                                                                      QString::fromStdString(singleSigner.get_public_key()),
+                                                                      QString::fromStdString(singleSigner.get_derivation_path()),
+                                                                      QString::fromStdString(singleSigner.get_master_fingerprint()),
+                                                                      nunchuk::SignerType::AIRGAP,
+                                                                      singleSigner.get_tags(),
+                                                                      false, // Key doesn't existing
+                                                                      E::EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST);
+                    }
+                }
+            }
+        }
+        else{
+            AppModel::instance()->startCreateRemoteSigner(QString::fromStdString(singleSigner.get_name()),
+                                                          QString::fromStdString(singleSigner.get_xpub()),
+                                                          QString::fromStdString(singleSigner.get_public_key()),
+                                                          QString::fromStdString(singleSigner.get_derivation_path()),
+                                                          QString::fromStdString(singleSigner.get_master_fingerprint()),
+                                                          nunchuk::SignerType::AIRGAP,
+                                                          singleSigner.get_tags(),
+                                                          true, // Replace existing signer
+                                                          E::EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST);
+        }
     }
-    bool isValidDerivationPath = qUtils::QIsValidDerivationPath(bip32Inputted);
-    QString xpubOutput = "";
-    bool isValidXpub = qUtils::QIsValidXPub(xpubInputted, xpubOutput);
-    bool inputValid = isValidDerivationPath && isValidFingerPrint && isValidXpub;
-    if(inputValid){
-        AppModel::instance()->startCreateRemoteSigner(signerNameInputted,
-                                                      xpubOutput,
-                                                      "",
-                                                      bip32Inputted,
-                                                      masterFingerPrintInputted,
-                                                      E::EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST);
-    }
-    else{
-        AppModel::instance()->singleSignerInfo()->setDerivationPath(!isValidDerivationPath ? "false" : "");
-        AppModel::instance()->singleSignerInfo()->setMasterFingerPrint(!isValidFingerPrint ? "false" : "");
-        AppModel::instance()->singleSignerInfo()->setXpub(!isValidXpub ? "false" : "");
-        AppModel::instance()->singleSignerInfo()->setPublickey("");
-        emit AppModel::instance()->finishedCreateRemoteSigner();
-    }
+    emit AppModel::instance()->finishedCreateRemoteSigner();
 }
 
 void EVT_ADD_HARDWARE_SIGNER_BACK_REQUEST_HANDLER(QVariant msg) {

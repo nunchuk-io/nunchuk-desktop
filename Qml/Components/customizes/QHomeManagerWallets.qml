@@ -208,7 +208,7 @@ Rectangle {
                             walletBalance: model.wallet_Balance
                             walletM: model.wallet_M
                             walletN: model.wallet_N
-                            isDashboard: model.wallet_group_id !== ""
+                            isDashboard: model.wallet_slug !== ""
                             isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
                             walletRole: model.wallet_role
                             hasOwner: model.wallet_hasOwner
@@ -219,7 +219,8 @@ Rectangle {
                                 var obj = {
                                     type: "wallet_dashboard",
                                     data: index,
-                                    group_id: model.wallet_group_id
+                                    group_id: model.wallet_group_id,
+                                    wallet_id: model.wallet_id
                                 }
                                 QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
                             }
@@ -228,7 +229,8 @@ Rectangle {
                                 var obj = {
                                     type: "selected",
                                     data: index,
-                                    group_id: model.wallet_group_id
+                                    group_id: model.wallet_group_id,
+                                    wallet_id: model.wallet_id
                                 }
                                 QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
                             }

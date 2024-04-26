@@ -129,7 +129,10 @@ Column {
                         color: "#031F2B"
                         text: {
                             var user = ClientController.user
-                            if (user.isIronHandUser) {
+                            if (user.isMultiSubscriptions) {
+                                return STR.STR_QML_1294
+                            }
+                            else if (user.isIronHandUser) {
                                 return STR.STR_QML_680
                             }
                             else if (user.isHoneyBadgerUser) {
@@ -143,6 +146,12 @@ Column {
                             }
                             else if (user.isByzantineUserPremier) {
                                 return STR.STR_QML_1003_Premier
+                            }
+                            else if (user.isFinneyUserPro) {
+                                return STR.STR_QML_1287
+                            }
+                            else if (user.isFinneyUserStandard) {
+                                return STR.STR_QML_1286
                             }
                             return ""
                         }

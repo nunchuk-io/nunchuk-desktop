@@ -133,7 +133,6 @@ QOnScreenContentTypeA {
                     openfileDialog.open()
                 },
                 function() {
-                    transactionInfo.setScan_percent(0)
                     qrcodeImport.open()
                 }
             ]
@@ -169,7 +168,7 @@ QOnScreenContentTypeA {
     QQrImportScanner {
         id: qrcodeImport
         onTagFound: {
-            if(transactionInfo.parseQRSuccess(qrcodeImport.tags)){
+            if(qrcodeImport.complete){
                 var _input = {
                     type: "dummy-tx-import-qr",
                     tags: qrcodeImport.tags
@@ -178,7 +177,6 @@ QOnScreenContentTypeA {
                 QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _input)
             }
         }
-        percent: transactionInfo.scan_percent
     }
     QQrExportResult {
         id: qrcodeExportResult

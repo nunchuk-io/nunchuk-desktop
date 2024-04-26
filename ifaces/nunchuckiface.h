@@ -122,7 +122,9 @@ public:
                                        const std::string& public_key,
                                        const std::string& derivation_path,
                                        const std::string& master_fingerprint,
-                                       const std::string& type,
+                                       const nunchuk::SignerType &type,
+                                       std::vector<nunchuk::SignerTag> tags,
+                                       const bool replace,
                                        QWarningMessage& msg);
     
     int GetLastUsedSignerIndex( const std::string& xfp,
@@ -142,7 +144,7 @@ public:
 
     void AddTapsigner(const std::string& card_ident, const std::string& xfp,
                       const std::string& name, const std::string& version,
-                      int birth_height, bool is_testnet, QWarningMessage& msg);
+                      int birth_height, bool is_testnet, bool replace, QWarningMessage& msg);
 
     int GetNumberOfSignersFromMasterSigner(const std::string& mastersigner_id,
                                            QWarningMessage& msg);
@@ -350,8 +352,9 @@ public:
     nunchuk::MasterSigner CreateSoftwareSigner(const std::string& name,
                                                const std::string& mnemonic,
                                                const std::string &passphrase,
-                                               QWarningMessage& msg,
-                                               bool isPrimaryKey);
+                                               bool isPrimaryKey,
+                                               bool replace,
+                                               QWarningMessage& msg);
 
     bool DeletePrimaryKey();
 
@@ -511,7 +514,7 @@ public:
 
     std::string GetHotWalletMnemonic(const std::string& wallet_id, const std::string& passphrase, QWarningMessage& msg);
 
-    nunchuk::Wallet CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, QWarningMessage &msg);
+    nunchuk::Wallet CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, bool replace, QWarningMessage &msg);
 private:
     nunchukiface();
     ~nunchukiface();

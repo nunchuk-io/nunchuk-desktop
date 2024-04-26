@@ -217,7 +217,7 @@ QJsonObject QInheritancePlan::JsBody()
 {
     QJsonObject body;
     body["wallet"] = wallet_id();
-    body["group_id"] = mode() == USER_WALLET ? "" : walletInfoPtr()->groupId();
+    body["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : walletInfoPtr()->groupId();
     body["note"] = m_planInfo["note"].toString();
     body["buffer_period_id"] = m_planInfo["buffer_period"].toObject()["id"].toString();
     QString email = m_planInfo["display_emails"].toString();
@@ -335,7 +335,7 @@ bool QInheritancePlan::RequestInheritancePlanCancel()
 
             QJsonObject body;
             body["wallet"] = wallet_id();
-            body["group_id"] = mode() == USER_WALLET ? "" : wallet->groupId();
+            body["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : wallet->groupId();
             data["body"]  = body;
 
             QStringList authorizations;
@@ -376,7 +376,7 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     }
     QJsonObject bodyCancel;
     bodyCancel["wallet"] = wallet_id();
-    bodyCancel["group_id"] = mode() == USER_WALLET ? "" : wallet->groupId();
+    bodyCancel["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : wallet->groupId();
 
     QJsonObject body_data = isCancel ? bodyCancel : JsBody();
     QString errormsg = "";
@@ -435,7 +435,7 @@ bool QInheritancePlan::InheritancePlanCancelSucceed()
         data["nonce"] = Draco::instance()->randomNonce();
         QJsonObject body;
         body["wallet"] = wallet_id();
-        body["group_id"] = mode() == USER_WALLET ? "" : w->groupId();
+        body["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : w->groupId();
         data["body"]  = body;
 
         QJsonObject output;

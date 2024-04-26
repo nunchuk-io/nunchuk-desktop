@@ -40,6 +40,7 @@ Item {
     property var inviter: dashInfo.inviter.user
     property bool isRead: false
     property int key_index: -1
+    property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
 
     QOnScreenContentTypeB {
         visible: alert.status === "UNREAD"
@@ -214,7 +215,7 @@ Item {
             width: 600
             height: 516
             anchors.centerIn: parent
-            label.text: STR.STR_QML_086
+            label.text: STR.STR_QML_106
             extraHeader: Item {}
             onCloseClicked: { _Security.close() }
             content: Item {
@@ -228,15 +229,33 @@ Item {
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
+                    QLato {
+                        width: parent.width
+                        height: 32
+                        text: STR.STR_QML_1282
+                        font.weight: Font.Normal
+                        font.pixelSize: 12
+                        color: "#595959"
+                        wrapMode: Text.WordWrap
+                        lineHeightMode: Text.FixedHeight
+                        lineHeight: 16
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        visible: isKeyHolderLimited
+                    }
                     Column {
                         spacing: 0
                         Repeater {
-                            model: [
-                                {add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"},
-                                {add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  },
-                                {add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  },
-                                {add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  }
-                            ]
+                            model: {
+                                var ls = []
+                                if (!isKeyHolderLimited) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
+                                }
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
+                                return ls
+                            }
                             QRadioButtonTypeA {
                                 id: btn
                                 width: 528
@@ -254,10 +273,11 @@ Item {
                             }
                         }
                     }
-                    QWarningBg {
-                        icon: "qrc:/Images/Images/info-60px.png"
-                        txt.text: STR.STR_QML_943
-                    }
+                }
+                QWarningBg {
+                    icon: "qrc:/Images/Images/info-60px.png"
+                    txt.text: STR.STR_QML_943
+                    anchors.bottom: parent.bottom
                 }
             }
             nextEnable: GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_COLDCARD ||

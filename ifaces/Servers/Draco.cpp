@@ -537,7 +537,7 @@ void Draco::getMe()
             }
             AppModel::instance()->startCheckAuthorize();
             CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
-            getCurrentUserSubscription();
+            getUserSubscriptions();
         }
         else if(response_code == DRACO_CODE::UNAUTHORIZED){
             CLIENT_INSTANCE->requestSignout();
@@ -1363,24 +1363,25 @@ void Draco::setStayLoggedIn(bool value)
     }
 }
 
-void Draco::getCurrentUserSubscription()
+void Draco::getUserSubscriptions()
 {
     int     reply_code = -1;
     QString reply_msg  = "";
-    QString cmd = commands[Common::CMD_IDX::USER_SUBCRIPTIONS_CURRENT];
+    QString cmd = commands[Common::CMD_IDX::USER_SUBCRIPTIONS_STATUS];
     QJsonObject jsonObj = getSync(cmd, QJsonObject(), reply_code, reply_msg);
     DBG_INFO << jsonObj;
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         if(response_code == DRACO_CODE::RESPONSE_OK){
-            QJsonObject dataObj = jsonObj["data"].toObject();
-            CLIENT_INSTANCE->setSubscription(dataObj);
+            QJsonObject data = jsonObj["data"].toObject();
+            QJsonArray subs = data["subscriptions"].toArray();
+            CLIENT_INSTANCE->setSubscriptions(subs);
             return;
         }
         else {
             if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::TESTNET){
-                if (getTestNetUserSubscription()) {
+                if (getUserSubscriptionsTestnet()) {
                     return;
                 }
             }
@@ -1388,20 +1389,20 @@ void Draco::getCurrentUserSubscription()
     }
 }
 
-
-bool Draco::getTestNetUserSubscription()
+bool Draco::getUserSubscriptionsTestnet()
 {
     int     reply_code = -1;
     QString reply_msg  = "";
-    QString cmd = commands[Common::CMD_IDX::USER_SUBCRIPTIONS_TESTNET];
+    QString cmd = commands[Common::CMD_IDX::USER_SUBCRIPTIONS_STATUS_TESTNET];
     QJsonObject jsonObj = getSync(cmd, QJsonObject(), reply_code, reply_msg);
     DBG_INFO << jsonObj;
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         if(response_code == DRACO_CODE::RESPONSE_OK){
-            QJsonObject dataObj = jsonObj["data"].toObject();
-            CLIENT_INSTANCE->setSubscription(dataObj);
+            QJsonObject data = jsonObj["data"].toObject();
+            QJsonArray subs = data["subscriptions"].toArray();
+            CLIENT_INSTANCE->setSubscriptions(subs);
             return true;
         }
         else {
@@ -1833,10 +1834,15 @@ bool Draco::assistedWalletUpdate(const QString &wallet_id, const QString &name, 
     return false;
 }
 
-bool Draco::assistedKeyUpdateName(const QString &fingerPrint, const QString &name)
+bool Draco::assistedKeyUpdateName(const QString &fingerPrint, const QString &name, const QJsonObject& json)
 {
     QJsonObject data;
-    data["name"] = name;
+    if (json.isEmpty()) {
+        data["name"] = name;
+    }
+    else {
+        data = json;
+    }
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Premium::CMD_IDX::ASSISTED_KEY_UPDATE_NAME];

@@ -52,7 +52,7 @@ QScreen {
         id: _keyInfo
         QKeyInfo {
             signerName: AppModel.singleSignerInfo.signerName
-            signerSpec: AppModel.walletInfo.walletEscrow ? AppModel.singleSignerInfo.signerPublickey : AppModel.singleSignerInfo.signerXpub
+            signerSpec: AppModel.singleSignerInfo.descriptor
             signerXfp: AppModel.singleSignerInfo.signerMasterFingerPrint
             signerDerivationPath: AppModel.singleSignerInfo.signerDerivationPath
             signerCardId: ""
@@ -73,9 +73,25 @@ QScreen {
             }
 
             onRequestDeleteKey: {
-                var remoteSignerObj = { "master_fingerprint"    : AppModel.singleSignerInfo.signerMasterFingerPrint,
-                    "derivation_path"       : AppModel.singleSignerInfo.signerDerivationPath };
+                var remoteSignerObj = {
+                    "master_fingerprint"    : AppModel.singleSignerInfo.signerMasterFingerPrint,
+                    "derivation_path"       : AppModel.singleSignerInfo.signerDerivationPath
+                };
                 QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_RESULT_DELETE_REQUEST, remoteSignerObj)
+            }
+
+            onCloseClicked: {
+                if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                }
+                else{
+                    if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
+                        QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_RESULT_CONFIRM_ADD_TO_WALLET_SIGNER_CONFIG)
+                    }
+                    else {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
+                }
             }
         }
     }

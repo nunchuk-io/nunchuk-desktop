@@ -1801,7 +1801,8 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             }
             else if (msgtype.contains("io.nunchuk.custom.wallet_created", Qt::CaseInsensitive) ||
                      msgtype.contains("io.nunchuk.custom.wallet_name_changed", Qt::CaseInsensitive) ||
-                     msgtype.contains("io.nunchuk.custom.key_name_changed", Qt::CaseInsensitive))
+                     msgtype.contains("io.nunchuk.custom.key_name_changed", Qt::CaseInsensitive) ||
+                     msgtype.contains("io.nunchuk.custom.key_updated", Qt::CaseInsensitive))
             {
                 AppModel::instance()->requestCreateUserWallets();
             }
@@ -1875,7 +1876,7 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     dashboard->GetHealthCheckInfo();
                     if (auto plan = dashboard->inheritancePlanPtr()) {
                         plan->GetInheritancePlan();
-                        ServiceSetting::instance()->servicesTagPtr()->setListSetuped();
+                        ServiceSetting::instance()->servicesTagPtr()->setListInheritantPlans();
                     }
                 }
                 if (msgtype.contains("io.nunchuk.custom.wallet_inheritance_updated", Qt::CaseInsensitive)

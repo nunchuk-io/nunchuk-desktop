@@ -41,7 +41,7 @@ Item {
         {screen:_EMERGENCY_LOCKDOWN,                 visible: hasWalletLockdown, enable:true,   title:STR.STR_QML_697, icon: ""                                           ,action: function(){return true;} },
         {screen:_KEY_RECOVERY,                       visible: true, enable:true,   title:STR.STR_QML_698, icon: ""                                           ,action: function(){return true;} },
         {screen:_INHERITANCE_PLANING,                visible: true, enable:false,  title:STR.STR_QML_736, icon: "qrc:/Images/Images/inheritance-light.svg"   ,action: function(){return true;} },
-        {screen:_VIEW_INHERITANCE_PLANING,           visible: ServiceSetting.servicesTag.listSetuped.length > 0, enable:true,  title:STR.STR_QML_875, icon: ""      ,action: function(){
+        {screen:_VIEW_INHERITANCE_PLANING,           visible: ServiceSetting.servicesTag.listInheritantPlans.length > 0, enable:true,  title:STR.STR_QML_875, icon: ""      ,action: function(){
             ServiceSetting.clearWalletInfo()
             return true;
         } },

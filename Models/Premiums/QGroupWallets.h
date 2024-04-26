@@ -47,8 +47,8 @@ public:
     QGroupWallets(QGroupWallets const &other) = delete;
     void operator=(const QGroupWallets &other) = delete;
 
-    QGroupDashboard* dashboardInfo() const;
-    QGroupDashboardPtr dashboardInfoPtr() const;
+    QGroupDashboard* dashboardInfo();
+    QGroupDashboardPtr dashboardInfoPtr();
     QList<QObject *> dashboards() const;
 
     void GetAllGroups();
@@ -74,14 +74,14 @@ public:
 
 public slots:
     void MakePendingDashboardList(const QJsonArray& groups);
-    void dashboard(const QString& group_id);
+    void dashboard(const QString& group_id, const QString& wallet_id);
     void accept(const QString& group_id);
     void deny(const QString& group_id);
     void reset(const QString& group_id);
     void markRead(const QString& alert_id);
     void dismiss(const QString& alert_id);
     void refresh();
-    void setDashboardInfo(const QString& group_id);
+    void setDashboardInfo(const QString& group_id, const QString &wallet_id = "");
     void setDashboardInfo(const QWalletPtr &wallet);
     void slotAcceptChanged(const QString& group_id);
     void clearDashBoard();

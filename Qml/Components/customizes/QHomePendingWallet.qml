@@ -44,7 +44,7 @@ Rectangle {
     anchors.fill: parent
     color: "#F5F5F5"
     enabled: !isLocked
-    property var dashboardInfo: GroupWallet.dashboardInfo ? GroupWallet.dashboardInfo : AppModel.walletInfo.dashboardInfo
+    property var dashboardInfo: GroupWallet.dashboardInfo
     property bool   accepted:       dashboardInfo.accepted
     property string myRole:         dashboardInfo.myRole
     property string groupStatus:    dashboardInfo.groupStatus

@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.1 )
 #set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
-project(nunchuk-qt VERSION 0.1.0)
+project(Nunchuk VERSION 1.9.33)
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON)
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
@@ -47,9 +47,6 @@ if(DQLIMIT_ONE)
 endif(DQLIMIT_ONE)
 
 find_package(Qt5 REQUIRED Qml Quick Core Gui Multimedia Sql Concurrent Svg)
-if(APPLE)
-    find_package(Iconv)
-endif()
 
 set(QAppEngine_SRCS
     QAppEngine/QOutlog/QOutlog.cpp
@@ -68,6 +65,19 @@ set(QAppEngine_MOCS
     QAppEngine/QEventProcessor/QScreenDelegate/QScreenQueue.h
     )
 QT5_WRAP_CPP(MOCS_APPENGINE ${QAppEngine_MOCS})
+
+set(QRScranner_SRCS
+    QRScanner/QBarcodeDecoder.cpp
+    QRScanner/QBarcodeFilter.cpp
+    QRScanner/QBarcodeGenerator.cpp
+    )
+
+set(QRScranner_MOCS
+    QRScanner/QBarcodeDecoder.h
+    QRScanner/QBarcodeFilter.h
+    QRScanner/QBarcodeGenerator.h
+    )
+QT5_WRAP_CPP(MOCS_QRSCANNER ${QRScranner_MOCS})
 
 set(Views_SRCS
     Views/STATE_ID_ROOT.cpp
@@ -162,7 +172,6 @@ set(Views_MOCS
 QT5_WRAP_CPP(MOCS_VIEWS ${Views_MOCS})
 
 set(${PROJECT_NAME}_SRCS
-    contrib/nayuki/QrCode.cpp
     Models/AppSetting.cpp
     Models/AppModel.cpp
     Models/ServiceSetting.cpp
@@ -178,8 +187,6 @@ set(${PROJECT_NAME}_SRCS
     Models/Worker.cpp
     Models/QWarningMessage.cpp
     Models/OnBoardingModel.cpp
-    ifaces/QRCodeItem.cpp
-    ifaces/QRGenerator.cpp
     ifaces/bridgeifaces.cpp
     ifaces/nunchuckiface.cpp
     ifaces/nunchucklistener.cpp
@@ -243,6 +250,8 @@ set(${PROJECT_NAME}_INC_PATH
     ifaces
     Models
     RegisterTypes
+    QRScanner
+    QRScanner/private
     contrib/libnunchuk/src
     )
 include_directories(${${PROJECT_NAME}_INC_PATH})
@@ -257,7 +266,6 @@ set(${PROJECT_NAME}_MOCS
     Models/WalletModel.h
     Models/Worker.h
     Models/OnBoardingModel.h
-    ifaces/QRCodeItem.h
     ifaces/bridgeifaces.h
     RegisterTypes/DashRectangle.h
     ifaces/Servers/DracoDefines.h
@@ -267,15 +275,13 @@ QT5_WRAP_CPP(MOCS ${${PROJECT_NAME}_MOCS})
 
 set( QRCODE_SCANNER ON )
 if(QRCODE_SCANNER)
-    SET(QZXING_MULTIMEDIA ON)
-    SET(QZXING_USE_QML ON)
-    add_definitions( -DQZXING_QML )
-    add_definitions( -DQZXING_MULTIMEDIA )
-    add_definitions( -DENABLE_ENCODER_GENERIC )
-    add_definitions( -DENABLE_DECODER_QR_CODE )
-    add_definitions( -DENABLE_ENCODER_QR_CODE )
-    add_definitions( -DNO_ICONV )
-    add_subdirectory(contrib/qzxing/src qzxing)
+    set(ZXING_UNIT_TESTS OFF)
+    set(ZXING_BLACKBOX_TESTS OFF)
+    set(ZXING_EXAMPLES OFF)
+    set(BUILD_SHARED_LIBS OFF)
+    # add_definitions ( -DQR_DFS_IMPROVE )
+    # add_definitions ( -DQR_DFS_IMPROVE_TEST )
+    add_subdirectory(contrib/zxing ZXing)
 endif(QRCODE_SCANNER)
 
 add_subdirectory(contrib/libnunchuk nunchuk EXCLUDE_FROM_ALL)
@@ -291,9 +297,9 @@ if(APPLE)
     # And this part tells CMake where to find and install the file itself
     set(APP_ICON_MACOSX ${CMAKE_CURRENT_SOURCE_DIR}/Icon.icns)
     set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    add_executable( ${PROJECT_NAME} MACOSX_BUNDLE ${QAppEngine_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_VIEWS} ${MOCS} ${APP_ICON_MACOSX})
+    add_executable( ${PROJECT_NAME} MACOSX_BUNDLE ${QAppEngine_SRCS} ${QRScranner_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_QRSCANNER} ${MOCS_VIEWS} ${MOCS} ${APP_ICON_MACOSX})
 else()
-    add_executable ( ${PROJECT_NAME} WIN32 ${QAppEngine_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_VIEWS} ${MOCS})
+    add_executable ( ${PROJECT_NAME} WIN32 ${QAppEngine_SRCS} ${QRScranner_SRCS} ${Views_SRCS} ${${PROJECT_NAME}_SRCS} ${UIS} ${RSCS} ${MOCS_APPENGINE} ${MOCS_QRSCANNER} ${MOCS_VIEWS} ${MOCS})
 endif()
 
 if(APPLE)
@@ -309,19 +315,20 @@ if (NOT WIN32)
     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=return-type)
 endif()
 
-target_link_libraries (${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )
+target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )
 
 if(UNIX AND NOT APPLE)
-    target_link_libraries("${PROJECT_NAME}" -Wl,--start-group nunchuk)
+    target_link_libraries("${PROJECT_NAME}" PUBLIC -Wl,--start-group nunchuk)
 else()
-    target_link_libraries("${PROJECT_NAME}" nunchuk)
+    target_link_libraries("${PROJECT_NAME}" PUBLIC nunchuk)
 endif()
 
-target_link_libraries("${PROJECT_NAME}" Quotient Qt5::Sql )
+target_link_libraries("${PROJECT_NAME}" PUBLIC Quotient Qt5::Sql )
 target_include_directories("${PROJECT_NAME}" PUBLIC "${PROJECT_SOURCE_DIR}/contrib/quotient/lib" )
 
 if(QRCODE_SCANNER)
-    target_link_libraries (${PROJECT_NAME} Qt5::Multimedia qzxing)
+    target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Multimedia)
+    target_link_libraries (${PROJECT_NAME} PUBLIC ZXing)
 endif(QRCODE_SCANNER)
 
 find_package(Qt5Keychain QUIET)
@@ -331,6 +338,6 @@ endif()
 if(USE_KEYCHAIN)
     message( STATUS "Using Qt Keychain ${Qt5Keychain_VERSION} at ${Qt5Keychain_DIR}")
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_KEYCHAIN)
-    target_link_libraries(${PROJECT_NAME} ${QTKEYCHAIN_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${QTKEYCHAIN_LIBRARIES})
     include_directories(${QTKEYCHAIN_INCLUDE_DIR})
 endif()

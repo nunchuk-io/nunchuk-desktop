@@ -75,6 +75,10 @@ void Worker::slotStartCreateMasterSigner(const QString &id,
         }
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
         slotStartScanDevices(last);
+        emit finishCreateMasterSigner(NULL,
+                                      msg.what(),
+                                      msg.type(),
+                                      msg.code());
     }
 }
 
@@ -83,6 +87,9 @@ void Worker::slotStartCreateRemoteSigner(const QString &name,
                                          const QString &public_key,
                                          const QString &derivation_path,
                                          const QString &master_fingerprint,
+                                         const nunchuk::SignerType type,
+                                         const std::vector<nunchuk::SignerTag> tags,
+                                         const bool replace,
                                          const int event)
 {
     QWarningMessage msg;
@@ -91,7 +98,14 @@ void Worker::slotStartCreateRemoteSigner(const QString &name,
                                                                   public_key,
                                                                   derivation_path,
                                                                   master_fingerprint,
+                                                                  type,
+                                                                  tags,
+                                                                  replace,
                                                                   msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && replace){
+        WalletsMng->SyncSignerToServer(ret);
+        AppModel::instance()->startReloadWallets();
+    }
     AppModel::instance()->setWalletsUsingSigner({});
     emit finishCreateRemoteSigner(event,
                                   ret,
@@ -276,7 +290,8 @@ void Worker::slotStartRescanBlockchain(int start,
 
 void Worker::slotStartCreateSoftwareSigner(const QString name,
                                            const QString mnemonic,
-                                           const QString passphrase)
+                                           const QString passphrase,
+                                           bool replace)
 {
     QWarningMessage msg;
     bool isPrimaryKey = QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY ||
@@ -285,21 +300,41 @@ void Worker::slotStartCreateSoftwareSigner(const QString name,
     QMasterSignerPtr ret = bridge::nunchukCreateSoftwareSigner(name,
                                                                mnemonic,
                                                                passphrase,
-                                                               msg,
-                                                               isPrimaryKey);
+                                                               isPrimaryKey,
+                                                               replace,
+                                                               msg);
     AppModel::instance()->setAddSignerPercentage(100);
     AppModel::instance()->setWalletsUsingSigner({});
     if((int)EWARNING::WarningType::NONE_MSG == msg.type() && ret){
+        if (replace) {
+            nunchuk::SingleSigner singlesinger(ret->name().toStdString(),
+                                               "",
+                                               "",
+                                               "",
+                                               ret->fingerPrint().toStdString(),
+                                               std::time(0),
+                                               ret->id().toStdString(),
+                                               true,
+                                               nunchuk::SignerType::SOFTWARE,
+                                               ret->originMasterSigner().get_tags()
+                                               );
+            WalletsMng->SyncSignerToServer(singlesinger);
+        }
         emit finishCreateSoftwareSigner(ret,
                                         msg.what(),
                                         msg.type(),
                                         msg.code());
     }
     else{
-        emit finishCreateSoftwareSigner(NULL,
-                                        msg.what(),
-                                        msg.type(),
-                                        msg.code());
+        if (msg.code() == (int)nunchuk::StorageException::SIGNER_EXISTS) {
+            QString fingerprint = qUtils::GetMasterFingerprint(mnemonic, passphrase);
+            emit AppModel::instance()->notifySignerExist(true, fingerprint);
+        } else {
+            emit finishCreateSoftwareSigner(NULL,
+                                            msg.what(),
+                                            msg.type(),
+                                            msg.code());
+        }
     }
 }
 
@@ -384,13 +419,6 @@ void Worker::slotStartGetEstimatedFee()
     if(AppSetting::instance()->primaryServer() == (int)AppSetting::Chain::MAIN){
         Draco::instance()->feeRates();
     }
-}
-
-void Worker::slotStartDeviceClosePin(int device_index)
-{
-    QWarningMessage msgwarning;
-    QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(device_index) ;
-    bridge::nunchukSendPinToDevice(selectedDv, "1", msgwarning);
 }
 
 void Worker::slotStartSendPinToDevice(const int state_id, const int device_idx, const QString &pin)
@@ -543,6 +571,8 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
     emit finishSyncWalletDb(wallet_id);
 }
 
+Q_DECLARE_METATYPE(nunchuk::SignerTag)
+Q_DECLARE_METATYPE(nunchuk::SignerType)
 Controller::Controller() {
     qRegisterMetaType<Conversation>();
     qRegisterMetaType<nunchuk::Wallet>();
@@ -554,6 +584,8 @@ Controller::Controller() {
     qRegisterMetaType<nunchuk::Device>();
     qRegisterMetaType<std::vector<nunchuk::Device> >();
     qRegisterMetaType<std::vector<nunchuk::Transaction> >();
+    qRegisterMetaType<std::vector<nunchuk::SignerTag> >();
+    qRegisterMetaType<nunchuk::SignerType>();
 
     Worker *worker = Worker::create(&workerThread);
 
@@ -631,8 +663,6 @@ Controller::Controller() {
     connect(this, &Controller::startGetEstimatedFee, worker, &Worker::slotStartGetEstimatedFee, Qt::QueuedConnection);
 
     connect(this, &Controller::checkAndUnlockDevice, this, &Controller::slotCheckAndUnlockDevice, Qt::QueuedConnection);
-
-    connect(this, &Controller::startDeviceClosePin, worker, &Worker::slotStartDeviceClosePin, Qt::QueuedConnection);
 
     connect(this, &Controller::startSendPinToDevice, worker, &Worker::slotStartSendPinToDevice, Qt::QueuedConnection);
     connect(worker, &Worker::finishSendPinToDevice, this, &Controller::slotFinishSendPinToDevice, Qt::QueuedConnection);
@@ -716,7 +746,8 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
         }
 
         if (last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER || last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER_TO_WALLET) {
-            AppModel::instance()->showToast(0, STR_CPP_057, EWARNING::WarningType::SUCCESS_MSG);
+            QString msg = QString("<b>%1</b> has been added").arg(selectFingerPrint);
+            AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
         }
     }
     AppModel::instance()->setAddSignerStep(-1);
@@ -743,7 +774,8 @@ void Controller::slotFinishCreateRemoteSigner(const int event,
         else{
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_REMOTE_SIGNER_RESULT);
         }
-        AppModel::instance()->showToast(0, STR_CPP_057, EWARNING::WarningType::SUCCESS_MSG);
+        QString msg = QString("<b>%1</b> has been added").arg(signer->masterFingerPrint());
+        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
     }
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
@@ -1103,6 +1135,7 @@ void Controller::slotCheckAndUnlockDevice(const int state_id)
         for (int i = 0; i < AppModel::instance()->deviceList()->fullList().count(); i++) {
             QDevicePtr selectedDv = AppModel::instance()->deviceList()->fullList()[i];
             if(selectedDv){
+                DBG_INFO << selectedDv.data()->needsPinSent() << selectedDv.data()->needsPassPhraseSent();
                 if(selectedDv.data()->needsPinSent()){
                     QWarningMessage msgwarning;
                     bridge::nunchukPromtPinOnDevice(selectedDv, msgwarning);
@@ -1208,20 +1241,10 @@ void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
     if(ret){
         AppModel::instance()->setWalletList(ret);
         emit WalletsMng->getListWalletFinish();
-        if(-1 == AppModel::instance()->walletListCurrentIndex() && ret->rowCount() > 0){
-            QString lastWalletId = bridge::nunchukGetSelectedWallet();
-            int lastIndex = -1;
-            if(lastWalletId != ""){
-                lastIndex = AppModel::instance()->walletList()->getWalletIndexById(lastWalletId);
-            }
-            else{
-                lastIndex = 0;
-            }
-            AppModel::instance()->setWalletListCurrentIndex(lastIndex == -1 ? 0 : lastIndex);
-#if 0
-    // CHECK ROLE TO BLOCK WALLET DETAIL WITH ROLE = LIMITTED
-#endif
-        }
+        QString lastWalletId = bridge::nunchukGetSelectedWallet();
+        int lastIndex = lastWalletId == "" ? 0 : AppModel::instance()->walletList()->getWalletIndexById(lastWalletId);
+        lastIndex = max(0, lastIndex);
+        AppModel::instance()->setWalletListCurrentIndex(lastIndex, true);
         AppModel::instance()->walletListCurrentIndexChanged();
     }
     if(ONLINE_MODE == bridge::nunchukCurrentMode()){

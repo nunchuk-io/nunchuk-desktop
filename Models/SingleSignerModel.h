@@ -28,6 +28,7 @@
 #include "Chats/QWalletSignersModel.h"
 #include "Servers/DracoDefines.h"
 #include <QJsonArray>
+#include "TypeDefine.h"
 
 class QSingleSigner : public QObject {
     Q_OBJECT
@@ -51,7 +52,8 @@ class QSingleSigner : public QObject {
     Q_PROPERTY(bool hasSignBtn                  READ hasSignBtn                                     CONSTANT)
     Q_PROPERTY(int  accountIndex                READ accountIndex                                   CONSTANT)
     Q_PROPERTY(QVariantList healthCheckHistory  READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
-    Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
+    Q_PROPERTY(QString address                  READ address            WRITE setAddress            NOTIFY addressChanged)
+    Q_PROPERTY(QString descriptor               READ descriptor                                     CONSTANT)
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
@@ -86,6 +88,9 @@ public:
 
     int signerType() const;
     void setSignerType(int signer_type);
+
+    std::vector<nunchuk::SignerTag> signerTags() const;
+    void setSignerTags(const std::vector<nunchuk::SignerTag> signer_tags);
 
     QString lastHealthCheck();
     QDateTime lastHealthCheckDateTime() const;
@@ -143,6 +148,8 @@ public:
     QString address() const;
     void setAddress(const QString &address);
 
+    QString descriptor() const;
+
     Q_INVOKABLE QVariantList getWalletList();
 private:
     QString xpub_ = "";
@@ -197,6 +204,7 @@ signals:
     void emailChanged();
     void healthCheckHistoryChanged();
     void addressChanged();
+    void notifySignerExist(bool isSoftware);
 };
 typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;
 
@@ -250,7 +258,7 @@ public:
     bool removeSingleSignerByIndex(const int index);
     QString getMasterSignerIdByIndex(const int index);
     QString getMasterSignerXfpByIndex(const int index);
-    QSingleSignerPtr getSingleSignerByFingerPrint(const QString &fp);
+    QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp);
     int getnumberSigned();
     bool containsHardwareKey();
     bool containsFingerPrint(const QString& masterFingerPrint);

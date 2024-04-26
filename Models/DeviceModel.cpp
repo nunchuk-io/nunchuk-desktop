@@ -21,11 +21,6 @@
 #include "AppModel.h"
 #include <QQmlEngine>
 
-QDevice::QDevice(): m_isDraft(true)
-{
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-}
-
 QDevice::QDevice(const nunchuk::Device &device) : m_device(device)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);

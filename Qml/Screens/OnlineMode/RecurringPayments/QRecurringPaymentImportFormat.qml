@@ -111,7 +111,7 @@ QOnScreenContentTypeA {
     QQrImportScanner {
         id: qrscaner
         onTagFound: {
-            if(recurringPayment.parseQRSuccess(qrscaner.tags)){
+            if(qrscaner.complete){
                 if(recurringPayment.importQRWallet(qrscaner.tags)){
                     qrscaner.close()
                     var _input = {
@@ -122,7 +122,6 @@ QOnScreenContentTypeA {
                 }
             }
         }
-        percent: recurringPayment.scan_percent
     }
     FileDialog {
         id: fileDialog

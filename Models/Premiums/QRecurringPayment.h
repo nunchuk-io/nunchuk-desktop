@@ -43,7 +43,6 @@ class QRecurringPayment : public QBasePremium
     Q_PROPERTY(QVariant payment         READ paymentCurrent     NOTIFY paymentCurrentChanged)
     Q_PROPERTY(QVariantList paymentList READ paymentList        NOTIFY paymentListChanged)
     Q_PROPERTY(QString sortOption       READ sortOption         NOTIFY sortOptionChanged)
-    Q_PROPERTY(int scan_percent         READ scan_percent       NOTIFY scan_percentChanged)
 public:
     explicit QRecurringPayment(WalletId wallet_id);
 Flow_Payment:
@@ -77,11 +76,8 @@ Method_Payment:
     bool ImportAddressesWallet(const QStringList addresses);
     bool ImportWallet(WalletId wallet_id);
 
-    int scan_percent() const;
 public slots:
     bool hasServerKey();
-    void setScan_percent(int scan_percent);
-    bool parseQRSuccess(const QStringList& qrtags);
     bool importQRWallet(const QStringList qrtags);
     bool isValidDate(const QString& start_date, const QString& end_date, bool noEndDate, const QString& frequ);
     bool isValidDate(const QString& date);
@@ -101,14 +97,12 @@ signals:
     void paymentListChanged();
     void paymentCurrentChanged();
     void sortOptionChanged();
-    void scan_percentChanged();
 private:
     QStack<int> m_flows;
     bool m_has_server_key {false};
     QJsonArray m_payment_list {};
     QJsonObject m_payment {};
     QString m_sortOption {"newest"};
-    int     m_scan_percent {0};
 };
 
 #endif // QRECURRINGPAYMENT_H

@@ -82,7 +82,7 @@ Popup {
             delegate: QRCodeItem {
                 id: qrCode
                 width: listQr.width
-                height: listQr.height
+                height: width
                 borderWitdh: 9
                 textInput: modelData
             }

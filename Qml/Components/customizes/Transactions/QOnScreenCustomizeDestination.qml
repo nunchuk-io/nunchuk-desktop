@@ -101,6 +101,5 @@ QOnScreenContent {
             _content.signalSetAddress(tag)
             qrscaner.close()
         }
-        percent: transactionInfo.scan_percent
     }
 }

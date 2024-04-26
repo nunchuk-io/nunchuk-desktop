@@ -155,6 +155,10 @@ std::vector<nunchuk::Wallet> ParseBBQRWallets(const QStringList& qrtags, QWarnin
 QStringList ExportBBQRTransaction( const QString& psbt, QWarningMessage& msg);
 
 QStringList ExportBBQRWallet(const nunchuk::Wallet& wallet, QWarningMessage& msg);
+
+nunchuk::SingleSigner ParseSignerString(const QString key_spec, QWarningMessage& msg);
+
+nunchuk::SingleSigner SanitizeSingleSigner(const nunchuk::SingleSigner& signer, QWarningMessage& msg);
 }
 
 #endif // QUTILS_H

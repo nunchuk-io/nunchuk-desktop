@@ -275,7 +275,7 @@ QScreen {
             QRCodeItem {
                 id: qrCode
                 width: 150
-                height: 150
+                height: width
                 borderWitdh: 9
                 anchors {
                     top: parent.top

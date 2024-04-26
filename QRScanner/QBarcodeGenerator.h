@@ -17,38 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
+#ifndef QBARCODEGENERATOR_H
+#define QBARCODEGENERATOR_H
 
-#ifndef QRCODEITEM_H
-#define QRCODEITEM_H
-
-#include <QtCore>
 #include <QQuickPaintedItem>
-#include <QRect>
-#include <QBrush>
+#include <QDir>
+#include <QImage>
+#include <qqml.h>
+#include <QQuickItem>
+#include <QObject>
 #include <QPainter>
 
-#if 0 // nayuki
-#include "QRGenerator.h"
-#include <QSharedPointer>
-#endif
-
-class QRCodeItem : public QQuickPaintedItem
+class QBarcodeGenerator : public QQuickPaintedItem
 {
     Q_OBJECT
     Q_PROPERTY(QString  textInput       READ textInput      WRITE setTextInput      NOTIFY textInputChanged)
     Q_PROPERTY(int      borderWitdh     READ borderWitdh    WRITE setBorderWitdh    NOTIFY borderWitdhChanged)
 public:
-    QRCodeItem();
-    ~QRCodeItem();
+    QBarcodeGenerator();
+    ~QBarcodeGenerator();
     QString textInput() const;
     int borderWitdh() const;
 protected:
     void paint(QPainter *painter);
 private:
-#if 0 // nayuki
-    static QSharedPointer<QRGenerator> m_QRgen;
-#endif
-
     QString m_textInput;
     int m_borderWitdh;
 signals:
@@ -60,4 +52,5 @@ public:
     void setBorderWitdh(int arg);
     void slotUpdate();
 };
-#endif // QRCODEITEM_H
+
+#endif // QBARCODEGENERATOR_H

@@ -56,7 +56,7 @@ class QWalletServicesTag : public QSwitchAPI
     Q_PROPERTY(QString untilTime                READ untilTime              NOTIFY untilTimeChanged)
 
     Q_PROPERTY(QVariant inheritanceInfo         READ inheritanceInfo        NOTIFY inheritanceInfoChanged)
-    Q_PROPERTY(QStringList listSetuped          READ listSetuped            NOTIFY listSetupedChanged)
+    Q_PROPERTY(QStringList listInheritantPlans  READ listInheritantPlans    NOTIFY listInheritantPlansChanged)
     Q_PROPERTY(QStringList listLockdown         READ listLockdown           NOTIFY listGroupWChanged)
     Q_PROPERTY(QStringList listLocked           READ listLocked             NOTIFY listLockedChanged)
     Q_PROPERTY(QStringList listPolicy           READ listPolicy             NOTIFY listPolicyChanged)
@@ -125,8 +125,8 @@ public:
     Q_INVOKABLE void additionalGetWalletConfig();
     QVariant inheritanceInfo() const;
 
-    QStringList listSetuped() const;
-    void setListSetuped();
+    QStringList listInheritantPlans() const;
+    void setListInheritantPlans();
 
     QStringList listLockdown() const;
     void setListLockdown();
@@ -187,7 +187,7 @@ signals:
     void thereNoAssistedWalletAlert();
     void inheritanceDiscardChangeAlert();
     void inheritanceInfoChanged();
-    void listSetupedChanged();
+    void listInheritantPlansChanged();
     void listGroupWChanged();
     void listLockedChanged();
     void listPolicyChanged();
@@ -219,7 +219,7 @@ private:
     QString m_untilTime;
 
     inheritance_t mInheritance = {};
-    QStringList m_listSetuped;
+    QStringList m_inheritantPlans;
     QStringList m_listLockdown;
     QStringList m_listLocked;
     QStringList m_listPolicy;

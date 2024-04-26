@@ -161,8 +161,8 @@ QScreen {
                 height: parent.height
                 anchors.centerIn: parent
                 sourceComponent: {
-                    var dashboard = GroupWallet.dashboardInfo ? GroupWallet.dashboardInfo : AppModel.walletInfo.dashboardInfo
-                    var isShowDashBoard = (dashboard && dashboard.groupId !== "") ? dashboard.isShowDashBoard : false
+                    var dashboard = GroupWallet.dashboardInfo
+                    var isShowDashBoard = dashboard ? dashboard.isShowDashBoard : false
                     if (isShowDashBoard) {
                         return pendingWallet
                     }

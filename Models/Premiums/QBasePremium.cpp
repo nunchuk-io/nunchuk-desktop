@@ -19,7 +19,7 @@ QBasePremium::QBasePremium(WalletId wallet_id)
 
 int QBasePremium::mode()
 {
-    if (ClientController::instance()->isByzantine()) {
+    if (ClientController::instance()->isByzantine() || ClientController::instance()->isFinney()) {
         return GROUP_WALLET;
     }
     else if (ClientController::instance()->isHoneyBadger() || ClientController::instance()->isIronHand()) {

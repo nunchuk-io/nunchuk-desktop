@@ -761,9 +761,10 @@ Row {
                         }
                     }
                     Loader {
-                        sourceComponent: RoomWalletData.isIgnoredCollabWallet ? null : (RoomWalletData.roomWalletCreated ? btnCreateTransaction : btnCreateSharedWallet)
+                        sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : (RoomWalletData.isIgnoredCollabWallet ? null :btnCreateSharedWallet)
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: RoomWalletData.isIgnoredCollabWallet ? false : (RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM))
+                        visible: RoomWalletData.roomWalletCreated ? (RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM))
+                                                                  : RoomWalletData.isIgnoredCollabWallet
                     }
                 }
             }

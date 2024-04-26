@@ -632,16 +632,14 @@ void QWalletServicesTag::additionalGetWalletConfig()
     if (m_mode == USER_WALLET) {
         config = Draco::instance()->assistedGetWalletConfig();
         setWalletConfig(config);
-    } else if (m_mode == GROUP_WALLET) {
-        QJsonObject wallet_config = Byzantine::instance()->assistedGetWalletConfig();
-        QString slug = CLIENT_INSTANCE->slug();
-        slug = slug.remove("_testnet");
-        DBG_INFO << slug;
-        DBG_INFO << wallet_config;
-        config = wallet_config;//wallet_config[slug].toObject();
     }
+    else if (m_mode == GROUP_WALLET) {
+        QJsonObject wallet_config = Byzantine::instance()->assistedGetWalletConfig();
+        DBG_INFO << wallet_config;
+        config = wallet_config;
+    }
+    else{}
     setWalletConfig(config);
-    DBG_INFO << config;
 }
 
 QVariant QWalletServicesTag::inheritanceInfo() const
@@ -664,33 +662,27 @@ QVariant QWalletServicesTag::inheritanceInfo() const
     return QVariant::fromValue(maps);
 }
 
-QStringList QWalletServicesTag::listSetuped() const
+QStringList QWalletServicesTag::listInheritantPlans() const
 {
-    return m_listSetuped;
+    return m_inheritantPlans;
 }
 
-void QWalletServicesTag::setListSetuped()
+void QWalletServicesTag::setListInheritantPlans()
 {
-    QStringList setuped {};
+    QStringList inheritantPlans {};
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
             if (auto plan = w->inheritancePlanPtr()) {
-                if (w->isGroupWallet()) {
-                    if (plan->IsActived()) {
-                        setuped << wallet_id;
-                    }
-                }
-                else {
-                    setuped << wallet_id;
+                if (plan->IsActived()) {
+                    inheritantPlans << wallet_id;
                 }
             }
         }
     }
-    if (m_listSetuped == setuped)
+    if (m_inheritantPlans == inheritantPlans)
         return;
-    m_listSetuped = setuped;
-    DBG_INFO << m_mode << setuped;
-    emit listSetupedChanged();
+    m_inheritantPlans = inheritantPlans;
+    emit listInheritantPlansChanged();
 }
 
 QStringList QWalletServicesTag::listLockdown() const
@@ -933,7 +925,7 @@ QString QWalletServicesTag::confirmToken() const
 
 void QWalletServicesTag::ConfigServiceTag()
 {
-    setListSetuped();
+    setListInheritantPlans();
     setListLockdown();
     setListLocked();
     setListPolicy();

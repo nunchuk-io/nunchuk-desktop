@@ -56,15 +56,31 @@ Item {
                 }
             }
             QLabelTextInput {
-                id: _signerSpec
+                id: _signerXfp
                 label: STR.STR_QML_127
                 boxWidth: 350
                 boxHeight: 28
                 readOnly: true
-                textInputted: signerSpec
-                visible: signerSpec !== ""
+                textInputted: signerXfp
+                visible: signerSpec === ""
                 input.font.capitalization: Font.AllUppercase
                 anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QTextAreaBoxTypeA  {
+                id: _signerSpec
+                boxWidth: 350
+                boxHeight: 136
+                label: STR.STR_QML_127
+                textInputted: signerSpec
+                visible: signerSpec !== ""
+                isValid: true
+                input.background: Rectangle {
+                    color: "white"
+                    border.color: "white"
+                }
+                input.leftPadding: 0
+                input.verticalAlignment: Text.AlignTop
+                input.wrapMode: Text.WrapAnywhere
             }
             QLabelTextInput {
                 id: derpath

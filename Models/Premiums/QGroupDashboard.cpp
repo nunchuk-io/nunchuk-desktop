@@ -86,12 +86,14 @@ QString QGroupDashboard::myRole() const
 
 bool QGroupDashboard::accepted() const
 {
-    if (mode() == USER_WALLET) {
-        return true;
+    bool ret {false};
+    if (WalletsMng->isUserWallet(wallet_id())) {
+        ret = true;
     }
     else {
-        return qUtils::strCompare(myInfo()["status"].toString(), "ACTIVE");
+        ret = qUtils::strCompare(myInfo()["status"].toString(), "ACTIVE");
     }
+    return ret;
 }
 
 QString QGroupDashboard::userName() const
@@ -143,7 +145,7 @@ QJsonObject QGroupDashboard::walletJson() const
 
 void QGroupDashboard::GetMemberInfo()
 {
-    if (mode() == USER_WALLET) return;
+    if (WalletsMng->isUserWallet(wallet_id())) return;
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->GetOneGroupWallets(groupId(), output, error_msg);
@@ -157,7 +159,7 @@ void QGroupDashboard::GetAlertsInfo()
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->GetAlerts(wallet_id(), output, error_msg);
     }
     else {
@@ -193,8 +195,8 @@ bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (mode() == USER_WALLET) {
-        ret = Draco::instance()->MarkAlertAsRead(groupId(), alert_id, output, error_msg);
+    if (WalletsMng->isUserWallet(wallet_id())) {
+        ret = Draco::instance()->MarkAlertAsRead(wallet_id(), alert_id, output, error_msg);
     }
     else {
         ret = Byzantine::instance()->MarkGroupAlertAsRead(groupId(), alert_id, output, error_msg);
@@ -214,7 +216,7 @@ bool QGroupDashboard::DismissAlert(const QString &alert_id)
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->DismissAlert(wallet_id(), alert_id, output, error_msg);
     }
     else {
@@ -239,7 +241,7 @@ void QGroupDashboard::GetWalletInfo()
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->assistedWalletGetInfo(wallet_id(), output, error_msg);
     } else {
         ret = Byzantine::instance()->GetCurrentGroupWallet(groupId(), output, error_msg);
@@ -278,7 +280,7 @@ void QGroupDashboard::checkInheritanceWallet()
 
 void QGroupDashboard::GetDraftWalletInfo()
 {
-    if (mode() == USER_WALLET) return;
+    if (WalletsMng->isUserWallet(wallet_id())) return;
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->GetCurrentGroupDraftWallet(groupId(), output, error_msg);
@@ -304,11 +306,34 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
     m_nInfo = n;
     m_mInfo = m;
     m_allow_inheritance = allow_inheritance;
+    bool required_server_key = wallet_config["required_server_key"].toBool();
 
     QJsonArray signers = data["signers"].toArray();
     QJsonObject server;
     server["type"] = "SERVER";
     server["has"]  = false;
+    QJsonArray origin = groupInfo()["members"].toArray();
+    QString our_id = "";
+    for (auto member : origin) {
+        QJsonObject it = member.toObject();
+        QString user_id = it["user"].toObject()["id"].toString();
+        QString email_or_username = it["email_or_username"].toString();
+        if (qUtils::strCompare(ClientController::instance()->getMe().email, email_or_username)) {
+            our_id = user_id;
+            break;
+        }
+    }
+    QJsonArray signers_tmp = signers;
+    signers = {};
+    for (auto signer : signers_tmp) {
+        QJsonObject obj = signer.toObject();
+        QString added_by_user_id = obj["added_by_user_id"].toString();
+        obj["ourAccount"] = false;
+        if (our_id == added_by_user_id) {
+            obj["ourAccount"] = true;
+        }
+        signers.append(obj);
+    }
 
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
@@ -364,9 +389,9 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
 
     bool is_wallet_2_of_4 = (m == 2 && n == 4);
     bool is_wallet_3_of_5 = (m == 3 && n == 5);
-    int  last_index = n-1;
+    int  last_index = required_server_key ? n - 1 : n;
     bool is_premier = CLIENT_INSTANCE->isByzantinePremier() || isPremierGroup();
-
+    bool hasServer = !CLIENT_INSTANCE->isFinney();
     DBG_INFO << is_premier << m_allow_inheritance << m_mInfo << m_nInfo;
 
     if (is_wallet_2_of_4) {
@@ -381,7 +406,10 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
             }
             m_keys.insert(i, QVariant::fromValue(obj));
         }
-        m_keys.insert(last_index, QVariant::fromValue(server));
+        if (required_server_key && hasServer) {
+            m_keys.insert(last_index, QVariant::fromValue(server));
+        }
+
     }
     else if (is_wallet_3_of_5) {
         for(int i = 0; i < last_index; i++) {
@@ -395,7 +423,9 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
             }
             m_keys.insert(i, QVariant::fromValue(obj));
         }
-        m_keys.insert(last_index, QVariant::fromValue(server));
+        if (required_server_key && hasServer) {
+            m_keys.insert(last_index, QVariant::fromValue(server));
+        }
     }
     else {
         for(int i = 0; i < n; i++) {
@@ -632,7 +662,7 @@ bool QGroupDashboard::requestByzantineChat()
 
 void QGroupDashboard::byzantineRoomCreated(QString room_id, bool existed)
 {
-    if (mode() == USER_WALLET) return;
+    if (WalletsMng->isUserWallet(wallet_id())) return;
     DBG_INFO << room_id << existed;
     QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
     if(room_id != "" && !existed){
@@ -647,7 +677,7 @@ void QGroupDashboard::byzantineRoomCreated(QString room_id, bool existed)
 
 void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
 {
-    if (mode() == USER_WALLET) return;
+    if (WalletsMng->isUserWallet(wallet_id())) return;
     DBG_INFO << room_id << group_id;
     if(qUtils::strCompare(group_id, groupId())){
         QJsonObject output;
@@ -755,7 +785,7 @@ void QGroupDashboard::setFlow(int flow)
 
 bool QGroupDashboard::hasWallet() const
 {
-    return !wallet_id().isEmpty() or WalletsMng->hasWallet(groupId());
+    return wallet_id() != "";
 }
 
 bool QGroupDashboard::showDashBoard() const

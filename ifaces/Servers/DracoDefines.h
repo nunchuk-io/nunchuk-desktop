@@ -123,6 +123,9 @@ enum CMD_IDX {
     // USER_SUBSCRIPTION
     USER_SUBCRIPTIONS_CURRENT,
     USER_SUBCRIPTIONS_TESTNET,
+
+    USER_SUBCRIPTIONS_STATUS,
+    USER_SUBCRIPTIONS_STATUS_TESTNET,
     VERIFY_PASSWORD_TOKEN,
     CMD_MAX
 };
@@ -434,6 +437,8 @@ const QMap<int, QString> commands {
     // USER_SUBSCRIPTION
     { Common::CMD_IDX::USER_SUBCRIPTIONS_CURRENT    , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("current")  },
     { Common::CMD_IDX::USER_SUBCRIPTIONS_TESTNET    , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("testnet")  },
+    { Common::CMD_IDX::USER_SUBCRIPTIONS_STATUS             , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("status")  },
+    { Common::CMD_IDX::USER_SUBCRIPTIONS_STATUS_TESTNET     , QString("%1/%2").arg(DRAGON_SUBSCRIPTIONS_URL).arg("status-testnet")  },
 
     // ASSISTED_WALLETS
     { Premium::CMD_IDX::ASSISTED_WALLET_GET          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets")  },

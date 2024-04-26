@@ -37,7 +37,14 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1244
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-    property string email_address: ""
+    property string email_address: {
+        if (ClientController.isNunchukLoggedIn) {
+            return ClientController.user.email
+        } else {
+            return ""
+        }
+    }
+
     property string note: ""
     property string your_country: ""
     content: Item {

@@ -57,6 +57,7 @@ class ClientController final : public QObject
     Q_PROPERTY(QVariant user                        READ user                                       NOTIFY userChanged)
     Q_PROPERTY(bool attachmentEnable                READ attachmentEnable                           NOTIFY attachmentEnableChanged)
     Q_PROPERTY(bool readySupport                    READ readySupport                               NOTIFY readySupportChanged)
+    Q_PROPERTY(bool isMultiSubscriptions            READ isMultiSubscriptions                       NOTIFY subscriptionsChanged)
 
 private:
     ClientController();
@@ -124,9 +125,11 @@ public:
     bool isByzantine() const;
     bool isHoneyBadger() const;
     bool isIronHand() const;
-    QString slug() const;
-    QJsonObject subscription() const;
-    void setSubscription(const QJsonObject &sub);
+
+    QStringList slugs() const;
+    QJsonArray subscriptions() const;
+    void setSubscriptions(const QJsonArray &data);
+    bool isMultiSubscriptions() const;
 
     bool attachmentEnable() const;
     void setAttachmentEnable(bool AttachmentEnable);
@@ -149,7 +152,7 @@ signals:
     void guestModeChanged();
     void attachmentEnableChanged();
     void readySupportChanged();
-    void subscriptionChanged();
+    void subscriptionsChanged();
     void byzantineRoomCreated(QString room_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
 
@@ -163,7 +166,6 @@ public slots:
     void removeContact(const QString& contact_id);
     void onUserAvatarChanged();
     void onUserDisplaynameChanged();
-    void onCheckingOnboarding();
 
     QStringList contactsByStringList();
     void setUserDisplayname(const QString &name);
@@ -198,7 +200,8 @@ private:
     QNunchukImageProvider  *m_imageprovider;
     DracoUser               m_me;
     bool                    m_isNewDevice;
-    QJsonObject             m_subscription;
+    QJsonArray              m_subscriptions;
+    QStringList             m_slugs;
     bool                    m_AttachmentEnable;
     bool                    m_ReadySupport;
     QMap<QString, QByteArray> m_keychainData;

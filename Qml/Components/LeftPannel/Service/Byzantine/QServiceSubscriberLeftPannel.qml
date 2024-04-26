@@ -72,7 +72,7 @@ Item {
     property bool hasEmergency: (role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN")
     property bool hasKeyRecovery: role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN"
     property bool hasInheritancePlaning: hasPro && (role === "KEYHOLDER" || role === "MASTER" || role === "ADMIN")
-    property bool hasViewInheritancePlan: ServiceSetting.servicesTag.listSetuped.length > 0 && hasPro && (role === "KEYHOLDER" || role === "MASTER" || role === "ADMIN")
+    property bool hasViewInheritancePlan: ServiceSetting.servicesTag.listInheritantPlans.length > 0 && hasPro && (role === "KEYHOLDER" || role === "MASTER" || role === "ADMIN")
     property bool hasClaimAnInheritance: hasPro && (role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN")
     property bool hasPlatformKeyCoSign: ServiceSetting.servicesTag.listPolicy.length > 0 && hasPro && (role === "KEYHOLDER" ||  role === "MASTER" || role === "ADMIN")
     property bool hasGetAdditionalWallet: role === "MASTER"

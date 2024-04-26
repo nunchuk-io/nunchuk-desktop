@@ -302,7 +302,6 @@ QScreen {
                     },
                     function() {
                         // Import via QR
-                        AppModel.transactionInfo.setScan_percent(0)
                         qrcodeImport.open()
                     }
                 ]
@@ -539,13 +538,12 @@ QScreen {
     QQrImportScanner {
         id: qrcodeImport
         onTagFound: {
-            if(AppModel.transactionInfo.parseQRSuccess(qrcodeImport.tags)){
+            if(qrcodeImport.complete){
                 AppModel.transactionInfo.parseQRTransaction(qrcodeImport.tags)
                 qrcodeImport.close();
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_IMPORT_QRCODE)
             }
         }
-        percent: AppModel.transactionInfo.scan_percent
     }
     QQrExportResult {
         id: qrcodeExportResult

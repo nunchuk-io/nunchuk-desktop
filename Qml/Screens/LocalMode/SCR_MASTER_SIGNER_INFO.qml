@@ -52,7 +52,7 @@ QScreen {
         id: _keyInfo
         QKeyInfo {
             signerName: AppModel.masterSignerInfo.masterSignername
-            signerSpec: AppModel.masterSignerInfo.fingerPrint
+            signerSpec: ""
             signerXfp: AppModel.masterSignerInfo.fingerPrint
             signerDerivationPath: ""
             signerCardId: AppModel.masterSignerInfo.masterSignerDevice.cardId
@@ -76,6 +76,9 @@ QScreen {
 
             onRequestDeleteKey: {
                 QMLHandle.sendEvent(EVT.EVT_MASTER_SIGNER_INFO_REMOVE_REQUEST, AppModel.masterSignerInfo.masterSignerId)
+            }
+            onCloseClicked: {
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
     }

@@ -216,7 +216,7 @@ bool QServerKey::serverKeyGetCurrentPolicies()
     QJsonObject output;
     QString errormsg = "";
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->ServerKeysGet(QString::fromStdString(ServerKey().get_master_fingerprint()),
                                                QString::fromStdString(ServerKey().get_derivation_path()),
                                                output,
@@ -255,7 +255,7 @@ bool QServerKey::ServerKeyRequiredSignature()
     QJsonObject output;
     DBG_INFO << data;
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->ServerKeysRequiredSignature(QString::fromStdString(ServerKey().get_master_fingerprint()),
                                                              QString::fromStdString(ServerKey().get_derivation_path()),
                                                              data,
@@ -296,7 +296,7 @@ bool QServerKey::ServerKeyUpdate(QJsonObject &output, QString &errormsg, bool is
     data["body"] = serverKeyBody();
     QStringList authorizations;
     bool ret {false};
-    if (mode() == USER_WALLET) {
+    if (WalletsMng->isUserWallet(wallet_id())) {
         ret = Draco::instance()->ServerKeysUpdate(ServiceTag()->passwordToken(),
                                                   ServiceTag()->secQuesToken(),
                                                   QString::fromStdString(ServerKey().get_master_fingerprint()),

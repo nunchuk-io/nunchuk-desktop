@@ -393,6 +393,9 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
                                                                                  retJson->publickey(),
                                                                                  retJson->derivationPath(),
                                                                                  retJson->masterFingerPrint(),
+                                                                                 (nunchuk::SignerType)retJson->signerType(),
+                                                                                 retJson->signerTags(),
+                                                                                 false,
                                                                                  msg);
 
                 if((int)EWARNING::WarningType::NONE_MSG == msg.type()){

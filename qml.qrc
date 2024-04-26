@@ -428,6 +428,8 @@
         <file>Qml/Screens/LocalMode/Onboarding/QConfirmSeedPhrase.qml</file>
         <file>Qml/Components/customizes/QEmptyWelcome.qml</file>
         <file>Qml/Screens/OnlineMode/Healths/QSecurityQuestionsUpdate.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrScannerOverlay.qml</file>
+	<file>Qml/Components/customizes/Signers/QAddKeySelectType.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>

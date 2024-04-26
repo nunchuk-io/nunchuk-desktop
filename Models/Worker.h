@@ -59,6 +59,9 @@ public slots:
                                      const QString &public_key,
                                      const QString &derivation_path,
                                      const QString &master_fingerprint,
+                                     const nunchuk::SignerType type,
+                                     const std::vector<nunchuk::SignerTag> tags,
+                                     const bool replace,
                                      const int event);
 
     void slotStartScanDevices(const int state_id);
@@ -86,7 +89,8 @@ public slots:
 
     void slotStartCreateSoftwareSigner(const QString name,
                                        const QString mnemonic,
-                                       const QString passphrase);
+                                       const QString passphrase,
+                                       bool replace);
 
     void slotStartCreateWallet(bool backup, QString file_path);
 
@@ -108,8 +112,6 @@ public slots:
     void slotStartGetTransactionHistory(const QString wallet_id);
 
     void slotStartGetEstimatedFee();
-
-    void slotStartDeviceClosePin(int device_index);
 
     void slotStartSendPinToDevice(const int state_id,
                                   const int device_idx,
@@ -353,6 +355,9 @@ signals:
                                  const QString &public_key,
                                  const QString &derivation_path,
                                  const QString &master_fingerprint,
+                                 const nunchuk::SignerType type,
+                                 const std::vector<nunchuk::SignerTag> tags,
+                                 const bool replace,
                                  const int event);
 
     void startScanDevices(const int state_id);
@@ -380,7 +385,8 @@ signals:
 
     void startCreateSoftwareSigner(const QString name,
                                    const QString mnemonic,
-                                   const QString passphrase);
+                                   const QString passphrase,
+                                   bool replace = false);
 
     void startCreateWallet(bool backup,
                            QString file_path);
@@ -405,8 +411,6 @@ signals:
     void startNunchukSync();
 
     void startGetEstimatedFee();
-
-    void startDeviceClosePin(int device_index);
 
     void startSendPinToDevice(const int state_id, const int device_index, const QString &pin);
 

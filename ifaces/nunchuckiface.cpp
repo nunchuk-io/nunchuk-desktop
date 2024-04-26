@@ -421,13 +421,22 @@ nunchuk::SingleSigner nunchukiface::CreateSigner(const std::string &name,
                                                  const std::string &public_key,
                                                  const std::string &derivation_path,
                                                  const std::string &master_fingerprint,
-                                                 const std::string& type,
+                                                 const nunchuk::SignerType &type,
+                                                 std::vector<nunchuk::SignerTag> tags,
+                                                 const bool replace,
                                                  QWarningMessage& msg)
 {
     nunchuk::SingleSigner ret("","","","","",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->CreateSigner(name, xpub, public_key, derivation_path, master_fingerprint,SignerTypeFromStr(type));
+            ret = nunchuk_instance_[nunchukMode()]->CreateSigner(name,
+                                                                 xpub,
+                                                                 public_key,
+                                                                 derivation_path,
+                                                                 master_fingerprint,
+                                                                 type,
+                                                                 tags,
+                                                                 replace);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -522,11 +531,11 @@ bool nunchukiface::HasSigner(const nunchuk::SingleSigner &signer,QWarningMessage
     return ret;
 }
 
-void nunchukiface::AddTapsigner(const std::string &card_ident, const std::string &xfp, const std::string &name, const std::string &version, int birth_height, bool is_testnet, QWarningMessage& msg)
+void nunchukiface::AddTapsigner(const std::string &card_ident, const std::string &xfp, const std::string &name, const std::string &version, int birth_height, bool is_testnet, bool replace, QWarningMessage& msg)
 {
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            nunchuk_instance_[nunchukMode()]->AddTapsigner(card_ident,xfp,name,version,birth_height,is_testnet);
+            nunchuk_instance_[nunchukMode()]->AddTapsigner(card_ident,xfp,name,version,birth_height,is_testnet, replace);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1593,12 +1602,14 @@ nunchuk::Wallet nunchukiface::ImportWalletConfigFile(const std::string &file_pat
     return ret;
 }
 
-nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name, const std::string &mnemonic, const std::string &passphrase, QWarningMessage& msg, bool isPrimaryKey)
+nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name, const std::string &mnemonic, const std::string &passphrase, bool isPrimaryKey,
+                                                         bool replace,
+                                                         QWarningMessage& msg)
 {
     nunchuk::MasterSigner ret("", nunchuk::Device(""), 0);
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->CreateSoftwareSigner(name, mnemonic, passphrase, create_software_signer_listener,isPrimaryKey);
+            ret = nunchuk_instance_[nunchukMode()]->CreateSoftwareSigner(name, mnemonic, passphrase, create_software_signer_listener,isPrimaryKey, replace);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -2385,12 +2396,12 @@ std::string nunchukiface::GetHotWalletMnemonic(const std::string &wallet_id, con
     return ret;
 }
 
-nunchuk::Wallet nunchukiface::CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, QWarningMessage &msg)
+nunchuk::Wallet nunchukiface::CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, bool replace, QWarningMessage &msg)
 {
     nunchuk::Wallet ret(false);
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->CreateHotWallet(mnemonic, passphraser, need_backup);
+            ret = nunchuk_instance_[nunchukMode()]->CreateHotWallet(mnemonic, passphraser, need_backup, replace);
         }
     }
     catch (const nunchuk::BaseException &ex) {

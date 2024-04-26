@@ -382,6 +382,7 @@ public:
         wallet_hasOwner_Role,
         wallet_primaryOwner_Role,
         wallet_isHotWallet_Role,
+        wallet_slug_Role
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

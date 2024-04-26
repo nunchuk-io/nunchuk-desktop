@@ -122,7 +122,7 @@ Rectangle {
         Item {
             width: 117
             height: parent.height
-            visible: !RoomWalletData.isIgnoredCollabWallet
+            visible: RoomWalletData.roomWalletCreated ? true : !RoomWalletData.isIgnoredCollabWallet
             Rectangle {
                 width: 48
                 height: 48

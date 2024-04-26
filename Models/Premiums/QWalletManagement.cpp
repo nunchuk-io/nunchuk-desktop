@@ -19,6 +19,7 @@
 #include "Premiums/QUserWalletDummyTx.h"
 #include "Premiums/QGroupWalletHealthCheck.h"
 #include "Premiums/QRecurringPayment.h"
+#include "utils/enumconverter.hpp"
 
 QWalletManagement *QWalletManagement::instance()
 {
@@ -41,7 +42,6 @@ QWalletManagement::~QWalletManagement()
 
 void QWalletManagement::GetListWallet(int mode)
 {
-    DBG_INFO;
     QJsonObject data;
     QString error_msg;
     bool ret {false};
@@ -64,6 +64,7 @@ void QWalletManagement::GetListWallet(int mode)
         }
 #endif
         QJsonArray _wallets = data["wallets"].toArray();
+        walletArray = _wallets;
         QMap<QString, bool> is_newkey;
         for(QJsonValue wallet_json : _wallets){
             QJsonObject wallet_obj = wallet_json.toObject();
@@ -71,12 +72,7 @@ void QWalletManagement::GetListWallet(int mode)
             QString group_id    = wallet_obj["group_id"].toString();
             QString status      = wallet_obj["status"].toString();
             if (status == "ACTIVE") {
-                if (mode == USER_WALLET) {
-                    mWallets.insert(wallet_id, wallet_id);
-                }
-                else {
-                    mWallets.insert(wallet_id, group_id);
-                }
+                mWallets.insert(wallet_id, group_id);
                 mWalletsInfo.insert(wallet_id, wallet_obj);
             }
         }
@@ -98,6 +94,7 @@ void QWalletManagement::GetListWallet(int mode)
             QString group_id    = wallet_obj["group_id"].toString();
             QString status      = wallet_obj["status"].toString();
             QString slug        = wallet_obj["slug"].toString();
+            QString wallet_name = wallet_obj["name"].toString();
             if (status == "ACTIVE") {
                 QString myRole = "";
                 if(mode == GROUP_WALLET && group_id != ""){
@@ -150,7 +147,24 @@ void QWalletManagement::GetListWallet(int mode)
                         }
                         else {
                             if(!has_signer){
-                                bridge::nunchukCreateSigner(signer_name, signer_xpub, signer_pubkey, signer_derivation_path, signer_xfp, signer_type);
+                                nunchuk::SignerType type = nunchuk::SignerType::AIRGAP;
+                                try {
+                                    type = SignerTypeFromStr(signer_type.toStdString());
+                                    bridge::nunchukCreateSigner(signer_name,
+                                                                signer_xpub,
+                                                                signer_pubkey,
+                                                                signer_derivation_path,
+                                                                signer_xfp,
+                                                                type,
+                                                                {},
+                                                                false);
+                                }
+                                catch (const nunchuk::BaseException &ex) {
+                                    DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                                }
+                                catch (std::exception &e) {
+                                    DBG_INFO << "THROW EXCEPTION " << e.what();
+                                }
                             }
                         }
                     }
@@ -244,10 +258,181 @@ void QWalletManagement::GetListWallet(int mode)
             else if (status == "DELETED" && bridge::nunchukHasWallet(wallet_id)){
                 QWarningMessage msgwarning;
                 bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+                AppSetting::instance()->deleteWalletCached(wallet_id);
             }
             else{}
         }
     }
+    UpdateSyncWalletFlows();
+}
+
+void QWalletManagement::UpdateSyncWalletFlows()
+{
+    QMap<QString, QJsonObject> server_signers;
+    for(QJsonValue wallet_json : walletArray){
+        QJsonObject wallet_obj = wallet_json.toObject();
+        QString wallet_id   = wallet_obj["local_id"].toString();
+        QJsonArray signers = wallet_obj["signers"].toArray();
+        for(QJsonValue jv_signer : signers){
+            QJsonObject js_signer = jv_signer.toObject();
+            QString xfp = js_signer["xfp"].toString();
+            server_signers.insert(xfp, js_signer);
+        }
+        //Update sync wallet flows
+        QWarningMessage msg;
+        auto w = bridge::nunchukGetOriginWallet(wallet_id, msg);
+        auto local_signers = w.get_signers();
+        for (auto &&local_signer : local_signers)
+        {
+            if (!local_signer.is_visible() || local_signer.get_type() == nunchuk::SignerType::SERVER) {
+                continue;
+            }
+            auto server_signer = server_signers[QString::fromStdString(local_signer.get_master_fingerprint())];
+            if (local_signer.get_type() != SignerTypeFromStr(server_signer["type"].toString().toStdString()))
+            { // local signer type not match server type
+                if (local_signer.get_type() == nunchuk::SignerType::SOFTWARE)
+                {
+                    // UI: “The software key (local_signer.get_master_fingerprint()) was upgraded to a hardware key from another device. Do you want to remove the software key from this device?”
+                    // UI: “The software key (local_signer.get_master_fingerprint()) will be removed from this device. Please tap ‘Delete key’ to confirm.”
+                    software_signer = server_signer;
+                    m_local_signer = local_signer;
+                    AppModel::instance()->syncingWalletFromServer(QString::fromStdString(m_local_signer.get_master_fingerprint()));
+                }
+                else
+                {
+                    // update local to match server
+                    QJsonObject tapsigner   = server_signer["tapsigner"].toObject();
+                    QString signer_name     = server_signer["name"].toString();
+                    QString signer_xfp      = server_signer["xfp"].toString();
+                    QString signer_xpub     = server_signer["xpub"].toString();
+                    QString signer_pubkey   = server_signer["pubkey"].toString();
+                    QString signer_derivation_path = server_signer["derivation_path"].toString();
+                    QString signer_type     = server_signer["type"].toString();
+
+                    nunchuk::SingleSigner signer(signer_name.toStdString(),
+                                                 signer_xpub.toStdString(),
+                                                 signer_pubkey.toStdString(),
+                                                 signer_derivation_path.toStdString(),
+                                                 signer_xfp.toStdString(),
+                                                 std::time(0));
+                    bool has_signer = bridge::nunchukHasSinger(signer);
+                    if(!tapsigner.isEmpty()){
+                        QString card_id     = tapsigner["card_id"].toString();
+                        QString version     = tapsigner["version"].toString();
+                        int birth_height    = tapsigner["birth_height"].toInt();
+                        bool is_testnet     = tapsigner["is_testnet"].toBool();
+                        bridge::AddTapsigner(card_id, signer_xfp, signer_name, version, birth_height, is_testnet, true);
+                    }
+                    else {
+                        if(!has_signer){
+                            nunchuk::SignerType type = nunchuk::SignerType::AIRGAP;
+                            try {
+                                type = SignerTypeFromStr(signer_type.toStdString());
+                                bridge::nunchukCreateSigner(signer_name,
+                                                            signer_xpub,
+                                                            signer_pubkey,
+                                                            signer_derivation_path,
+                                                            signer_xfp,
+                                                            type,
+                                                            {},
+                                                            true);
+                            }
+                            catch (const nunchuk::BaseException &ex) {
+                                DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                            }
+                            catch (std::exception &e) {
+                                DBG_INFO << "THROW EXCEPTION " << e.what();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no)
+{
+    if (yes) {
+        // update local to match server
+        QJsonObject tapsigner   = software_signer["tapsigner"].toObject();
+        QString signer_name     = software_signer["name"].toString();
+        QString signer_xfp      = software_signer["xfp"].toString();
+        QString signer_xpub     = software_signer["xpub"].toString();
+        QString signer_pubkey   = software_signer["pubkey"].toString();
+        QString signer_derivation_path = software_signer["derivation_path"].toString();
+        QString signer_type     = software_signer["type"].toString();
+
+        nunchuk::SingleSigner signer(signer_name.toStdString(),
+                                     signer_xpub.toStdString(),
+                                     signer_pubkey.toStdString(),
+                                     signer_derivation_path.toStdString(),
+                                     signer_xfp.toStdString(),
+                                     std::time(0));
+        bool has_signer = bridge::nunchukHasSinger(signer);
+        if(!tapsigner.isEmpty()){
+            QString card_id     = tapsigner["card_id"].toString();
+            QString version     = tapsigner["version"].toString();
+            int birth_height    = tapsigner["birth_height"].toInt();
+            bool is_testnet     = tapsigner["is_testnet"].toBool();
+            bridge::AddTapsigner(card_id, signer_xfp, signer_name, version, birth_height, is_testnet, true);
+        }
+        else {
+            if(!has_signer){
+                nunchuk::SignerType type = nunchuk::SignerType::AIRGAP;
+                try {
+                    type = SignerTypeFromStr(signer_type.toStdString());
+                    bridge::nunchukCreateSigner(signer_name,
+                                                signer_xpub,
+                                                signer_pubkey,
+                                                signer_derivation_path,
+                                                signer_xfp,
+                                                type,
+                                                {},
+                                                true);
+                }
+                catch (const nunchuk::BaseException &ex) {
+                    DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                }
+                catch (std::exception &e) {
+                    DBG_INFO << "THROW EXCEPTION " << e.what();
+                }
+            }
+        }
+    }
+    if (no) {
+        // update server to match local
+        SyncSignerToServer(m_local_signer);
+    }
+    return QString::fromStdString(m_local_signer.get_master_fingerprint());
+}
+
+bool QWalletManagement::SyncSignerToServer(const nunchuk::SingleSigner &signer)
+{
+    QJsonObject data;
+    data["name"] = QString::fromStdString(signer.get_name());
+    data["type"] = QString::fromStdString(SignerTypeToStr(signer.get_type()));
+    QJsonArray tags;
+    for (auto tag : signer.get_tags()) {
+        tags.append(QString::fromStdString(SignerTagToStr(tag)));
+    }
+    data["tags"] = tags;
+    if (signer.get_type() == nunchuk::SignerType::NFC) {
+        QWarningMessage msgGetTap;
+        nunchuk::TapsignerStatus tap = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(signer.get_master_fingerprint(), msgGetTap);
+
+        QJsonObject tapsigner;
+        tapsigner["card_id"] = QString::fromStdString(tap.get_card_ident());
+        tapsigner["version"] = QString::fromStdString(tap.get_version());
+        tapsigner["birth_height"] = tap.get_birth_height();
+        tapsigner["is_testnet"] = tap.is_testnet();
+        data["tapsigner"] = tapsigner;
+    } else {
+        data["tapsigner"] = {};
+    }
+    DBG_INFO << QString::fromStdString(signer.get_master_fingerprint()) << tags;
+    bool ret = Draco::instance()->assistedKeyUpdateName(QString::fromStdString(signer.get_master_fingerprint()), "", data);
+    return ret;
 }
 
 WalletIdList QWalletManagement::wallets() const
@@ -289,21 +474,13 @@ QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const
 bool QWalletManagement::isGroupWallet(WalletId wallet_id) const
 {
     GroupId group_id = groupId(wallet_id);
-    if (group_id != "" && group_id == wallet_id) {
-        return false;
-    } else {
-        return mWallets.contains(wallet_id) && !group_id.isEmpty();
-    }
+    return mWallets.contains(wallet_id) && (group_id != "");
 }
 
 bool QWalletManagement::isUserWallet(WalletId wallet_id) const
 {
     GroupId group_id = groupId(wallet_id);
-    if (group_id != "" && group_id == wallet_id) {
-        return true;
-    } else {
-        return mWallets.contains(wallet_id) && group_id.isEmpty();
-    }
+    return mWallets.contains(wallet_id) && (group_id == "");
 }
 
 void QWalletManagement::clear()
@@ -331,12 +508,6 @@ void QWalletManagement::clear()
     mWalletsInfo.clear();
 }
 
-bool QWalletManagement::hasWallet(GroupId group_id) const
-{
-    if (group_id.isEmpty() || group_id.isNull()) return false;
-    return mWallets.values().contains(group_id);
-}
-
 template<>
 bool QWalletManagement::contains<QGroupDashboardPtr>(WalletId wallet_id) {
     for (auto ptr : mActivedWallets) {
@@ -359,14 +530,16 @@ QGroupDashboardPtr QWalletManagement::data<QGroupDashboardPtr>(WalletId wallet_i
 
 template<>
 void QWalletManagement::CreateData<QGroupDashboardPtr>(WalletId wallet_id) {
-    GroupId group_id = groupId(wallet_id);
-    if (group_id.isEmpty()) return;
-    QJsonObject info;
-    info["id"] = group_id;
-    QGroupDashboardPtr dashboard = QGroupDashboardPtr(new QGroupDashboard(wallet_id));
-    if (!contains<QGroupDashboardPtr>(wallet_id)) {
-        mActivedWallets.append(dashboard);
-        dashboard->setGroupInfo(info);
+    QString slug        = slugInfo(wallet_id);
+    if (slug != "") {
+        GroupId group_id = groupId(wallet_id);
+        QJsonObject info;
+        info["id"] = group_id;
+        QGroupDashboardPtr dashboard = QGroupDashboardPtr(new QGroupDashboard(wallet_id));
+        if (!contains<QGroupDashboardPtr>(wallet_id)) {
+            mActivedWallets.append(dashboard);
+            dashboard->setGroupInfo(info);
+        }
     }
 }
 
@@ -520,16 +693,15 @@ void QWalletManagement::CreateData<QRecurringPaymentPtr>(WalletId wallet_id) {
 void QWalletManagement::FactoryWorker(WalletId wallet_id, GroupId group_id)
 {
     DBG_INFO << wallet_id << group_id;
-    if (!group_id.isEmpty()) {
+    if (!wallet_id.isEmpty()) {
         CreateData<QGroupDashboardPtr>(wallet_id);
         CreateData<QRecurringPaymentPtr>(wallet_id);
-    }
-    if (!wallet_id.isEmpty()) {
         CreateData<QServerKeyPtr>(wallet_id);
         CreateData<QInheritancePlanPtr>(wallet_id);
         CreateData<QWalletDummyTxPtr>(wallet_id);
         CreateData<QGroupWalletHealthCheckPtr>(wallet_id);
     }
+    DBG_INFO << mActivedWallets.size();
 }
 
 int QWalletManagement::activeSize() const
@@ -569,6 +741,7 @@ void QWalletManagement::slotGetListWalletFinish()
                 plan->GetInheritancePlan();
             }
         }
+        emit QGroupWallets::instance()->dashboardInfoChanged();
     }
     QGroupWallets::instance()->clearDashBoard();
     ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();

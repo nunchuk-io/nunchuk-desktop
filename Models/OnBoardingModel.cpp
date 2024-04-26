@@ -125,7 +125,7 @@ bool OnBoardingModel::RequestOnboardingNoAdvisor(const QString &country_code, co
 QWalletPtr OnBoardingModel::CreateAHotWallet(const QString &mnemonic, bool need_backup)
 {
     QWarningMessage msg;
-    QWalletPtr newWalletInfo = bridge::nunchukCreateHotWallet(mnemonic, "", need_backup, msg);
+    QWalletPtr newWalletInfo = bridge::nunchukCreateHotWallet(mnemonic, "", need_backup, false, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         AppModel::instance()->startReloadUserDb();
         return newWalletInfo;

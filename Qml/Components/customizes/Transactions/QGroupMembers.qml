@@ -37,7 +37,7 @@ Popup {
     closePolicy: Popup.CloseOnEscape
     background: Item{}
     signal requestSignature(var membership_id)
-
+    property var dashboardInfo: GroupWallet.dashboardInfo
     Rectangle {
         id: qrmask
         width: 600
@@ -71,7 +71,7 @@ Popup {
             }
             font.family: "Montserrat"
             font.pixelSize: 32
-            text: "Select a member"
+            text: STR.STR_QML_1293
         }
         QText {
             anchors {
@@ -82,7 +82,7 @@ Popup {
             }
             font.family: "Lato"
             font.pixelSize: 16
-            text: "Whom do you like to request signature from?"
+            text: STR.STR_QML_1292
         }
         Column {
             anchors {
@@ -96,7 +96,7 @@ Popup {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QListView {
                     anchors.fill: parent
-                    model: GroupWallet.dashboardInfo.memberSignatures
+                    model: dashboardInfo.memberSignatures
                     clip: true
                     ScrollBar.vertical: ScrollBar { active: true }
                     spacing: 16

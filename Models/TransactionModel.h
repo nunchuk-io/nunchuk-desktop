@@ -121,7 +121,6 @@ class Transaction : public QObject {
     Q_PROPERTY(QString                      destination             READ destination            NOTIFY destinationListChanged)
     Q_PROPERTY(bool                         isCpfp                  READ isCpfp                 CONSTANT)
     Q_PROPERTY(bool                         isCosigning             READ isCosigning            NOTIFY serverKeyMessageChanged)
-    Q_PROPERTY(int                          scan_percent            READ scan_percent           NOTIFY scan_percentChanged)
     Q_PROPERTY(bool                         enableRequestSignature  READ enableRequestSignature  CONSTANT)
     Q_PROPERTY(bool                         enableScheduleBroadcast READ enableScheduleBroadcast CONSTANT)
     Q_PROPERTY(bool                         enableCancelTransaction READ enableCancelTransaction CONSTANT)
@@ -206,9 +205,6 @@ public:
 
     bool isCosigning() const;
     void setIsCosigning(bool is_cosigning);
-
-    int scan_percent() const;
-
     void setTxJson(const QJsonObject &txJs);
     void setSignatures(const QMap<QString, QString>& signatures);
     QMap<QString, QString> signatures() const;
@@ -222,10 +218,9 @@ public:
     bool enableRequestSignature();
     bool enableScheduleBroadcast();
     bool enableCancelTransaction();
+
 public slots:
-    void setScan_percent(int scan_percent);
     bool parseQRTransaction(const QStringList& qrtags);
-    bool parseQRSuccess(const QStringList& qrtags);
     void copyTransactionID();
     void requestSignatures(const QString& membership_id);
     void scheduleBroadcast();
@@ -246,10 +241,10 @@ private:
     QString                     m_serverKeyMessage;
     int                         m_packageFeeRate {0};
     bool                        m_is_cosigning {false};
-    int                         m_scan_percent {0};
     QJsonObject                 m_txJson = {};
     QMap<QString, QString>      m_signatures = {};
     bool                        m_hasMoreBtn {true};
+
 signals:
     void txidChanged();
     void memoChanged();

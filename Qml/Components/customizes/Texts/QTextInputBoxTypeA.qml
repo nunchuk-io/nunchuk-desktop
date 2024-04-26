@@ -26,6 +26,7 @@ TextField {
     property var borderColor: "#FFFFFF"
     property var backgroundColor: "#DEDEDE"
     property int borderRadius: 8
+    property bool showEdit: true
     clip: true
     color: "#031F2B"
     font.family: "Lato"
@@ -49,7 +50,7 @@ TextField {
             rightMargin: 12
         }
         source: "qrc:/Images/Images/edit.png"
-        visible: !editbox.activeFocus
+        visible: !editbox.activeFocus && showEdit
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true

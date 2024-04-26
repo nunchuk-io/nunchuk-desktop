@@ -33,9 +33,9 @@ Item {
         anchors.fill: parent
         sourceComponent: {
             var user = ClientController.user
-            if (user.isIronHandUser) { return ih_subscriber }
-            else if (user.isHoneyBadgerUser) { return hb_subscriber }
-            else if (user.isByzantineUser) {
+            if (user.isHoneyBadgerUser) { return hb_subscriber }
+            else if (user.isIronHandUser) { return ih_subscriber }
+            else if (user.isByzantineUser || user.isFinneyUser) {
                 if (hasGroupWallet) { return isObserver ? b_observer_subscriber : b_subscriber }
                 else { return b_empty_state }
             }

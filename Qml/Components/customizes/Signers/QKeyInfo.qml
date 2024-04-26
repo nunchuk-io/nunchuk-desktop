@@ -39,7 +39,6 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_126
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string signerName: ""
     property string signerSpec: ""
     property string signerXfp: ""
@@ -300,6 +299,22 @@ QOnScreenContentTypeA {
             bottomRight: Item {}
         }
     }
+
+    QPopupInfoTwoButtons {
+        id: _syncing_wallet_remove_key
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1290
+        labels: [STR.STR_QML_035, STR.STR_QML_1291]
+        isVertical: false
+        funcs: [
+            function() {
+                AppModel.confirmSyncingWalletFromServer(false, true)
+            },
+            function() {
+                AppModel.confirmSyncingWalletFromServer(true, false)
+            }
+        ]
+    }
     /*=============================Popup=============================*/
 
     Rectangle {
@@ -426,6 +441,10 @@ QOnScreenContentTypeA {
             if (isResult) { 
                 AppModel.showToast(0, STR.STR_QML_155.arg(signerName), EWARNING.SUCCESS_MSG);
             }
+        }
+        onSyncingConfirmWalletRemoveKey: {
+            _syncing_wallet_remove_key.contentText = STR.STR_QML_1290.arg(fingerPrint.toUpperCase())
+            _syncing_wallet_remove_key.open()
         }
     }
 }

@@ -40,7 +40,6 @@ class QDevice : public QObject
     Q_PROPERTY(QString masterSignerId             READ masterSignerId         NOTIFY masterSignerIdChanged       )
     Q_PROPERTY(QString cardId                     READ cardId         CONSTANT)
 public:
-    QDevice();
     QDevice(const nunchuk::Device& device);
     ~QDevice();
     QString name();

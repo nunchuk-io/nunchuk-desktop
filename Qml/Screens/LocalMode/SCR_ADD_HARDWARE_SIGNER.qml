@@ -32,304 +32,320 @@ import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/QRCodes"
+import "../../Components/customizes/Popups"
+import "../../Components/customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: rootAddsignerToWallet
-    QOnScreenContent {
+    readonly property int eHARDWARE_KEY: 1
+    readonly property int eADD_KEY: 2
+    property int selectType: eHARDWARE_KEY
+    property string keySpec: ""
+    Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_101
-        onCloseClicked: {
-            if(NUNCHUCKTYPE.CHAT_TAB === AppModel.tabIndex){
-                QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_NEW_SOFTWARE_SIGNER)
+        sourceComponent: selectType === eHARDWARE_KEY ? addHardwareKey : addKey
+    }
+    property string signerNameInputed: ""
+    Component {
+        id: addHardwareKey
+        QOnScreenContent {
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_101
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            QTextInputBox {
+                id: signerName
+                mode: eEDIT_MODE
+                width: 532
+                heightMin: 56
+                placeholder.text: STR.STR_QML_102
+                maximumLength: 106
+                anchors {
+                    left: parent.left
+                    leftMargin: 40
+                    top: parent.top
+                    topMargin: 100
+                }
+                color: Qt.rgba(255, 255, 255, 0.5)
+                border.color: "#C9DEF1"
+                onTypingFinished: {
+                    signerNameInputed = signerName.textOutput
+                }
             }
-            else{
-                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_HARDWARE_SIGNER)
-            }
-        }
-        QTextInputBox {
-            id: signerName
-            mode: eEDIT_MODE
-            width: 532
-            heightMin: 56
-            placeholder.text: STR.STR_QML_102
-            maximumLength: 106
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 100
-            }
-            color: Qt.rgba(255, 255, 255, 0.5)
-            border.color: "#C9DEF1"
-        }
-        TabView {
-            id: tabselect
-            width: 728
-            height: 505
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                top: parent.top
-                topMargin: 197
-            }
-            Tab {
-                title: STR.STR_QML_103
-                Item {
-                    id: tabmastersigner
-                    QText {
-                        id: text
-                        anchors {
-                            left: parent.left
-                            top: parent.top
-                            topMargin: 16
+            TabView {
+                id: tabselect
+                width: 728
+                height: 505
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    top: parent.top
+                    topMargin: 197
+                }
+                Tab {
+                    title: STR.STR_QML_103
+                    Item {
+                        id: tabmastersigner
+                        QText {
+                            id: text
+                            anchors {
+                                left: parent.left
+                                top: parent.top
+                                topMargin: 16
+                            }
+                            text: STR.STR_QML_676
+                            color: "#031F2B"
+                            font.pixelSize: 16
+                            font.weight: Font.DemiBold
+                            font.family: "Lato"
                         }
-                        text: STR.STR_QML_676
-                        color: "#031F2B"
-                        font.pixelSize: 16
-                        font.weight: Font.DemiBold
-                        font.family: "Lato"
-                    }
-                    QImage {
-                        id: nodevice
-                        visible: !devicelist.visible
-                        anchors {
-                            left: text.left
-                            top: text.bottom
-                            topMargin: 8
+                        QImage {
+                            id: nodevice
+                            visible: !devicelist.visible
+                            anchors {
+                                left: text.left
+                                top: text.bottom
+                                topMargin: 8
+                            }
+                            source: "qrc:/Images/Images/Signer_Level2.png"
                         }
-                        source: "qrc:/Images/Images/Signer_Level2.png"
-                    }
-                    QListView {
-                        id: devicelist
-                        property bool needPin: false
-                        visible: devicelist.count
-                        width: 342
-                        height: Math.min(230, (devicelist.count*44) + ((devicelist.count-1)*8))
-                        model: AppModel.deviceList
-                        anchors {
-                            left: parent.left
-                            top: parent.top
-                            topMargin: 16
-                        }
-                        spacing: 8
-                        currentIndex: -1
-                        clip: true
-                        interactive : devicelist.count > 3
-                        ScrollBar.vertical: ScrollBar { active: true }
-                        delegate: Item {
+                        QListView {
+                            id: devicelist
+                            property bool needPin: false
+                            visible: devicelist.count
                             width: 342
-                            height: 44
-                            Rectangle {
-                                id: rect
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: parent.width - 2
-                                height: 40
-                                color: Qt.rgba(255, 255, 255)
-                                layer.enabled: true
-                                layer.effect: DropShadow {
-                                    source: rect
-                                    verticalOffset: 2
-                                    radius: 8
-                                    samples: 16
-                                    color: Qt.rgba(0, 0, 0, 0.15)
-                                }
+                            height: Math.min(230, (devicelist.count*44) + ((devicelist.count-1)*8))
+                            model: AppModel.deviceList
+                            anchors {
+                                left: parent.left
+                                top: parent.top
+                                topMargin: 16
+                            }
+                            spacing: 8
+                            currentIndex: -1
+                            clip: true
+                            interactive : devicelist.count > 3
+                            ScrollBar.vertical: ScrollBar { active: true }
+                            delegate: Item {
+                                width: 342
+                                height: 44
                                 Rectangle {
-                                    visible: index == devicelist.currentIndex
-                                    width: 8
-                                    height: parent.height
-                                    color: "#F6D65D"
+                                    id: rect
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: parent.width - 2
+                                    height: 40
+                                    color: Qt.rgba(255, 255, 255)
+                                    layer.enabled: true
+                                    layer.effect: DropShadow {
+                                        source: rect
+                                        verticalOffset: 2
+                                        radius: 8
+                                        samples: 16
+                                        color: Qt.rgba(0, 0, 0, 0.15)
+                                    }
+                                    Rectangle {
+                                        visible: index == devicelist.currentIndex
+                                        width: 8
+                                        height: parent.height
+                                        color: "#F6D65D"
+                                    }
+                                    QIcon {
+                                        anchors {
+                                            left: parent.left
+                                            leftMargin: 16
+                                            verticalCenter: parent.verticalCenter
+                                        }
+                                        iconSize: 24
+                                        source: index == devicelist.currentIndex ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                                    }
+                                    Column {
+                                        width: 290
+                                        height: 37
+                                        anchors {
+                                            left: parent.left
+                                            leftMargin: 48
+                                            verticalCenter: parent.verticalCenter
+                                        }
+                                        QText {
+                                            width: parent.width
+                                            height: 21
+                                            font.family: "Montserrat"
+                                            font.pixelSize: 14
+                                            color: "#031F2B"
+                                            font.weight: Font.DemiBold
+                                            text: device_type
+                                        }
+                                        QText {
+                                            width: parent.width
+                                            height: 16
+                                            font.family: "Lato"
+                                            font.pixelSize: 12
+                                            color: "#031F2B"
+                                            text: "XFP: " + device_master_fingerprint
+                                            font.capitalization: Font.AllUppercase
+                                        }
+                                    }
                                 }
-                                QIcon {
-                                    anchors {
-                                        left: parent.left
-                                        leftMargin: 16
-                                        verticalCenter: parent.verticalCenter
-                                    }
-                                    iconSize: 24
-                                    source: index == devicelist.currentIndex ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-                                }
-                                Column {
-                                    width: 290
-                                    height: 37
-                                    anchors {
-                                        left: parent.left
-                                        leftMargin: 48
-                                        verticalCenter: parent.verticalCenter
-                                    }
-                                    QText {
-                                        width: parent.width
-                                        height: 21
-                                        font.family: "Montserrat"
-                                        font.pixelSize: 14
-                                        color: "#031F2B"
-                                        font.weight: Font.DemiBold
-                                        text: device_type
-                                    }
-                                    QText {
-                                        width: parent.width
-                                        height: 16
-                                        font.family: "Lato"
-                                        font.pixelSize: 12
-                                        color: "#031F2B"
-                                        text: "XFP: " + device_master_fingerprint
-                                        font.capitalization: Font.AllUppercase
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        devicelist.currentIndex = index
+                                        if(signerName.textOutput === ""){
+                                            signerName.textOutput = device_type
+                                            signerNameInputed = signerName.textOutput
+                                        }
                                     }
                                 }
                             }
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    devicelist.currentIndex = index
-                                    if(signerName.textOutput === ""){
-                                        signerName.textOutput = device_type
-                                    }
+                        }
+                        QRefreshButton {
+                            width: 160
+                            height: 32
+                            label: STR.STR_QML_105
+                            fontPixelSize: 14
+                            anchors {
+                                left: parent.left
+                                top:  parent.top
+                                topMargin: 32 + text.height + (devicelist.count > 0 ? ( devicelist.height) : nodevice.height)
+                            }
+                            onButtonClicked: {
+                                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_REFRESH_REQUEST)
+                            }
+                        }
+                        QTextButton {
+                            width: 150
+                            height: 48
+                            label.text: STR.STR_QML_106
+                            label.font.pixelSize: 16
+                            label.font.family: "Lato"
+                            type: eTypeE
+                            enabled: (signerName.textOutput !== "") && (devicelist.currentIndex !== -1)
+                            anchors {
+                                right: parent.right
+                                bottom: parent.bottom
+                                bottomMargin: 40
+                            }
+                            onButtonClicked: {
+                                if(devicelist.currentIndex !== -1){
+                                    var masterSignerObj = {
+                                        "key_name"              : signerName.textOutput,
+                                        "deviceIndexSelected"   : devicelist.currentIndex,
+                                        "key_yes_accept"        : false
+                                    };
+                                    QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST, masterSignerObj)
                                 }
                             }
                         }
-                    }
-                    QRefreshButton {
-                        width: 160
-                        height: 32
-                        label: STR.STR_QML_105
-                        fontPixelSize: 14
-                        anchors {
-                            left: parent.left
-                            top:  parent.top
-                            topMargin: 32 + text.height + (devicelist.count > 0 ? ( devicelist.height) : nodevice.height)
+                        Connections {
+                            target: AppModel
+                            onNotifySignerExist: {
+                                showPopupInfo(isSoftware, fingerPrint)
+                            }
                         }
-                        onButtonClicked: {
-                            QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_REFRESH_REQUEST)
-                        }
-                    }
-                    QTextButton {
-                        width: 150
-                        height: 48
-                        label.text: STR.STR_QML_106
-                        label.font.pixelSize: 16
-                        label.font.family: "Lato"
-                        type: eTypeE
-                        enabled: (signerName.textOutput !== "") && (devicelist.currentIndex !== -1)
-                        anchors {
-                            right: parent.right
-                            bottom: parent.bottom
-                            bottomMargin: 40
-                        }
-                        onButtonClicked: {
-                            if(devicelist.currentIndex !== -1){
-                                var masterSignerObj = { "signerNameInputted"    : signerName.textOutput,
-                                                        "deviceIndexSelected"   : devicelist.currentIndex};
-                                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST, masterSignerObj)
+                        Connections {
+                            target: _info
+                            onYesClicked: {
+                                if (tabselect.currentIndex === 0) {
+                                    var masterSignerObj = {
+                                        "key_name"              : signerName.textOutput,
+                                        "deviceIndexSelected"   : devicelist.currentIndex,
+                                        "key_yes_accept"        : true
+                                    };
+                                    QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST, masterSignerObj)
+                                }
                             }
                         }
                     }
                 }
-            }
-            Tab {
-                title: STR.STR_QML_107
-                Item {
-                    id: tabremoteSigner
-                    QText {
-                        anchors {
-                            left: parent.left
-                            top: parent.top
-                            topMargin: 24
-                        }
-                        text: STR.STR_QML_108
-                        color: "#323E4A"
-                        font.pixelSize: 16
-                    }
-                    Flickable {
-                        id: signerinforInput
-                        width: 540
-                        height: Math.min(300, contentHeight)
-                        flickableDirection: Flickable.VerticalFlick
-                        clip: true
-                        interactive: signerinforInput.height < signerinforInput.contentHeight
-                        contentHeight: xpubOrPubl.height + bip32.height + master_key_fgp.height + 80
-                        ScrollBar.vertical: ScrollBar { active: true }
-                        anchors {
-                            left: parent.left
-                            top: parent.top
-                            topMargin: 60
-                        }
-                        QTextInputBox {
-                            id: xpubOrPubl
-                            width: 532
-                            heightMin: 56
-                            mode: eEDIT_MODE
-                            placeholder.text: STR.STR_QML_109
-                            color: Qt.rgba(255, 255, 255, 0.5)
-                            border.color: "#C9DEF1"
-                            validInput: (AppModel.singleSignerInfo.signerXpub !== "false")
-                            errorText.text: STR.STR_QML_110
-                            onTypingFinished: (AppModel.singleSignerInfo.signerXpub = "")
-                        }
-                        QTextInputBox {
-                            id: bip32
-                            width: 532
-                            heightMin: 56
-                            mode: eEDIT_MODE
-                            placeholder.text: STR.STR_QML_111 + (bip32.textOutput !== "" ? "" : !bip32.textActiveFocus ? " (e.g. \"m/48h/0h/1h\")" : "")
-                            anchors {
-                                top: xpubOrPubl.bottom
-                                topMargin: 24
+                Tab {
+                    title: STR.STR_QML_107
+                    Item {
+                        id: tabremoteSigner
+                        // width: 576
+                        // height: _col.childrenRect.height
+                        Column {
+                            id: _col
+                            spacing: 16
+                            Item {
+                                width: 576
+                                height: 1
                             }
-                            color: Qt.rgba(255, 255, 255, 0.5)
-                            border.color: "#C9DEF1"
-                            validInput: (AppModel.singleSignerInfo.signerDerivationPath !== "false")
-                            errorText.text: STR.STR_QML_110
-                            onTypingFinished: AppModel.singleSignerInfo.signerDerivationPath = ""
-                        }
-                        QTextInputBox {
-                            id: master_key_fgp
-                            width: 532
-                            heightMin: 56
-                            mode: eEDIT_MODE
-                            placeholder.text: STR.STR_QML_112
-                            anchors {
-                                top: bip32.bottom
-                                topMargin: 24
+                            QText {
+                                text: STR.STR_QML_108
+                                color: "#323E4A"
+                                font.pixelSize: 16
                             }
-                            color: Qt.rgba(255, 255, 255, 0.5)
-                            border.color: "#C9DEF1"
-                            validInput: (AppModel.singleSignerInfo.signerMasterFingerPrint !== "false")
-                            errorText.text: STR.STR_QML_110
-                            onTypingFinished: AppModel.singleSignerInfo.signerMasterFingerPrint = ""
+
+                            QTextAreaBoxTypeA  {
+                                id: _key_spec
+                                boxWidth: 576
+                                boxHeight: 176
+                                label: STR.STR_QML_127
+                                textInputted: keySpec
+                                onTypingFinished: {
+                                    keySpec = _key_spec.textInputted
+                                }
+                                isValid: true
+                                input.verticalAlignment: Text.AlignTop
+                                input.wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                            }
+                            Item {
+                                width: 576
+                                height: 48
+                                Row {
+                                    spacing: 16
+                                    QIconTextButton {
+                                        width: 280
+                                        height: 36
+                                        iconInRight: true
+                                        label: STR.STR_QML_1288
+                                        icons: ["QR-dark.svg", "QR-dark.svg", "QR-dark.svg","QR-dark.svg"]
+                                        fontPixelSize: 16
+                                        iconSize: 16
+                                        type: eTypeD
+                                        onButtonClicked: {
+                                            qrscaner.open()
+                                        }
+                                    }
+                                    QIconTextButton {
+                                        width: 280
+                                        height: 36
+                                        iconInRight: true
+                                        label: STR.STR_QML_677
+                                        icons: ["importFile.svg", "importFile.svg", "importFile.svg","importFile.svg"]
+                                        fontPixelSize: 16
+                                        iconSize: 16
+                                        type: eTypeD
+                                        onButtonClicked: {
+                                            fileDialog.open()
+                                        }
+                                    }
+                                }
+                            }
                         }
+
+
                         Connections {
                             target: qrscaner
                             onTagFound: {
                                 var jsonstring = "";
                                 jsonstring = AppModel.parseQRSigners(qrscaner.tags)
                                 if(jsonstring !== ""){
-                                    signerinforInput.jsonProcess(jsonstring)
+                                    tabremoteSigner.jsonProcess(jsonstring)
                                     qrscaner.close()
                                 }
                             }
                         }
                         function jsonProcess(jsonstring){
-                            if(jsonstring !== ""){
+                            if(jsonstring !== "") {
                                 var jsonobj = JSON.parse(jsonstring);
-                                var xpub = ('xpub' in jsonobj) ? jsonobj.xpub : ""
-                                var publickey = ('publickey' in jsonobj) ? jsonobj.publickey : ""
-                                var fingerprint = ('fingerprint' in jsonobj) ? jsonobj.fingerprint : ""
-                                var derivationpath = ('derivationpath' in jsonobj) ? jsonobj.derivationpath : ""
                                 var descriptor = ('descriptor' in jsonobj) ? jsonobj.descriptor : ""
-                                if(xpub !== ""){ xpubOrPubl.textOutput = xpub }
-                                else{
-                                    if(publickey !== ""){ xpubOrPubl.textOutput = publickey }
-                                    else{ xpubOrPubl.textOutput = "Invalid QR" }
-                                }
-                                if(fingerprint !== ""){ master_key_fgp.textOutput = fingerprint }
-                                else{master_key_fgp.textOutput = "Invalid QR"}
-                                if(derivationpath !== ""){ bip32.textOutput = derivationpath }
-                                else{bip32.textOutput = "Invalid QR"}
-                                if(descriptor !== ""){ }
-                                else{}
+                                keySpec = descriptor
                             }
                         }
 
@@ -338,206 +354,170 @@ QScreen {
                             onAccepted: {
                                 var jsonstring = "";
                                 jsonstring = AppModel.parseJSONSigners(fileDialog.file)
-                                signerinforInput.jsonProcess(jsonstring)
+                                tabremoteSigner.jsonProcess(jsonstring)
+                            }
+                        }
+
+                        Connections {
+                            target: AppModel
+                            onNotifySignerExist: {
+                                showPopupInfo(isSoftware, fingerPrint)
+                            }
+                        }
+
+                        Connections {
+                            target: _info
+                            onYesClicked: {
+                                if (tabselect.currentIndex === 1) {
+                                    selectType = eADD_KEY
+                                }
+                            }
+                        }
+
+                        QTextButton {
+                            id:btnContinue
+                            width: 99
+                            height: 48
+                            label.text: STR.STR_QML_097
+                            label.font.pixelSize: 16
+                            label.font.family: "Lato"
+                            type: eTypeE
+                            enabled: (signerName.textOutput !== "")
+                            anchors {
+                                right: parent.right
+                                bottom: parent.bottom
+                                bottomMargin: 36
+                            }
+                            onButtonClicked: {
+                                tabremoteSigner.startAddSigner()
+                            }
+                        }
+                        function startAddSigner(){
+                            createRemoteBusyBox.open()
+                            timerRemoteSigner.start()
+                        }
+                        Timer {
+                            id: timerRemoteSigner
+                            interval: 1000
+                            repeat: false
+                            onTriggered: {
+                                var remoteSignerObj = {
+                                    "key_name"       : signerName.textOutput,
+                                    "key_spec"       : keySpec,
+                                    "key_tag"        : "",
+                                    "key_yes_accept" : false,
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST, remoteSignerObj)
+                                timerRemoteSigner.stop()
                             }
                         }
                     }
-                    Column {
-                        id: hozlinespace
-                        spacing: 12
-                        anchors.verticalCenter: signerinforInput.verticalCenter
-                        anchors.left: signerinforInput.right
-                        anchors.leftMargin: 10
-                        Rectangle {
-                            width: 4
-                            height: 110
-                            radius: 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            border.color: "#839096"
-                        }
-                        QText {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "OR"
-                            color: "#595959"
-                            font.pixelSize: 16
-                            font.family: "Lato"
-                            font.weight: Font.ExtraBold
-                        }
-                        Rectangle {
-                            width: 4
-                            height: 110
-                            radius: 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            border.color: "#839096"
-                        }
-                    }
-                    QText {
-                        anchors {
-                            left: hozlinespace.right
-                            leftMargin: 20
-                            top: parent.top
-                            topMargin: 24
-                        }
-                        text: STR.STR_QML_113
-                        color: "#323E4A"
-                        font.pixelSize: 16
-                    }
-                    QQrButton {
-                        width: 100
-                        height: 100
-                        anchors.left: hozlinespace.right
-                        anchors.leftMargin: 20
-                        anchors.verticalCenter: hozlinespace.verticalCenter
-                        onButtonClicked: {
-                            qrscaner.open()
-                        }
-                    }
-                    QIconTextButton {
-                        width: 180
-                        height: 48
-                        anchors {
-                            right: btnAdd.left
-                            rightMargin: 36
-                            bottom: parent.bottom
-                            bottomMargin: 40
-                        }
-                        iconInRight:true
-                        label: STR.STR_QML_677
-                        icons: ["importFile.svg", "importFile.svg", "importFile.svg","importFile.svg"]
-                        fontPixelSize: 16
-                        iconSize: 16
-                        type: eTypeE
-                        onButtonClicked: {
-                            fileDialog.open()
-                        }
-                    }
-                    QTextButton {
-                        id:btnAdd
-                        width: 150
-                        height: 48
-                        label.text: STR.STR_QML_106
-                        label.font.pixelSize: 16
-                        label.font.family: "Lato"
-                        type: eTypeE
-                        enabled: (signerName.textOutput !== "") &&
-                                 (xpubOrPubl.textOutput !== "") &&
-                                 (bip32.textOutput !== "") &&
-                                 (master_key_fgp.textOutput !== "")
-                        anchors {
-                            right: parent.right
-                            bottom: parent.bottom
-                            bottomMargin: 40
-                        }
-                        onButtonClicked: {
-                            tabremoteSigner.startAddSigner()
-                        }
-                    }
-                    function startAddSigner(){
-                        createRemoteBusyBox.open()
-                        timerRemoteSigner.start()
-                    }
-                    Timer {
-                        id: timerRemoteSigner
-                        interval: 1000
-                        repeat: false
-                        onTriggered: {
-                            var remoteSignerObj = { "signerNameInputted"    : signerName.textOutput,
-                                                    "xpubInputted"          : xpubOrPubl.textOutput,
-                                                    "bip32Inputted"         : bip32.textOutput ,
-                                                    "masterFingerPrintInputted" : master_key_fgp.textOutput };
-                            QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST, remoteSignerObj)
-                            timerRemoteSigner.stop()
-                        }
-                    }
                 }
-            }
-            style: TabViewStyle {
-                frameOverlap: 1
-                tab: Rectangle {
-                    implicitWidth: 364
-                    implicitHeight: 48
-                    color: "transparent"
-                    Row{
-                        spacing: 4
-                        anchors.centerIn: parent
-                        QText {
-                            id: txt
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: styleData.title
-                            color: styleData.selected ? "#031F2B" : "#839096"
-                            font.pixelSize: 16
-                            font.weight: Font.DemiBold
-                            font.family: "Lato"
-                        }
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            border.color: "#EAEAEA"
-                            border.width: 1
-                            color: "#FFFFFF"
-                            implicitWidth: 76
-                            implicitHeight: 24
-                            radius: 20
-                            visible: styleData.index === 1
+                style: TabViewStyle {
+                    frameOverlap: 1
+                    tab: Rectangle {
+                        implicitWidth: 364
+                        implicitHeight: 48
+                        color: "transparent"
+                        Row{
+                            spacing: 4
+                            anchors.centerIn: parent
                             QText {
-                                anchors.centerIn: parent
-                                text: "Advanced"
+                                id: txt
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: styleData.title
                                 color: styleData.selected ? "#031F2B" : "#839096"
-                                font.pixelSize: 12
-                                font.weight: Font.Normal
+                                font.pixelSize: 16
+                                font.weight: Font.DemiBold
                                 font.family: "Lato"
                             }
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                border.color: "#EAEAEA"
+                                border.width: 1
+                                color: "#FFFFFF"
+                                implicitWidth: 76
+                                implicitHeight: 24
+                                radius: 20
+                                visible: styleData.index === 1
+                                QText {
+                                    anchors.centerIn: parent
+                                    text: "Advanced"
+                                    color: styleData.selected ? "#031F2B" : "#839096"
+                                    font.pixelSize: 12
+                                    font.weight: Font.Normal
+                                    font.family: "Lato"
+                                }
+                            }
+                        }
+                        Rectangle {
+                            color: "#031F2B"
+                            implicitWidth: 364
+                            height: 2
+                            anchors.bottom: parent.bottom
+                            visible: styleData.selected
                         }
                     }
-                    Rectangle {
-                        color: "#031F2B"
-                        implicitWidth: 364
-                        height: 2
-                        anchors.bottom: parent.bottom
-                        visible: styleData.selected
-                    }
-                }
 
-                frame: Rectangle { color: "transparent" }
+                    frame: Rectangle { color: "transparent" }
+                }
             }
-        }
-        QButtonTextLink {
-            height: 24
-            label: STR.STR_QML_059
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                bottom: parent.bottom
-                bottomMargin: 40
+            QButtonTextLink {
+                height: 24
+                label: STR.STR_QML_059
+                anchors {
+                    left: parent.left
+                    leftMargin: 40
+                    bottom: parent.bottom
+                    bottomMargin: 40
+                }
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_BACK_REQUEST)
+                }
             }
-            onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_BACK_REQUEST)
-            }
-        }
-        Rectangle {
-            id: stateAddSigner
-            visible: AppModel.addSignerStep !== -1
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.9)
-            anchors.bottom: parent.bottom
-            radius: 24
-            MouseArea {
+            Rectangle {
+                id: stateAddSigner
+                visible: AppModel.addSignerStep !== -1
                 anchors.fill: parent
-                onClicked: {}
+                color: Qt.rgba(0, 0, 0, 0.9)
+                anchors.bottom: parent.bottom
+                radius: 24
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {}
+                }
+                Loader {
+                    id: busyIndi
+                    anchors.centerIn: parent
+                    sourceComponent: rootAddsignerToWallet.addSignerComp[AppModel.addSignerStep]
+                }
             }
-            Loader {
-                id: busyIndi
-                anchors.centerIn: parent
-                sourceComponent: rootAddsignerToWallet.addSignerComp[AppModel.addSignerStep]
+            QQrImportScanner {
+                id: qrscaner
             }
-        }
-        QQrImportScanner {
-            id: qrscaner
-        }
-        FileDialog {
-            id: fileDialog
-            fileMode: FileDialog.OpenFile
+            FileDialog {
+                id: fileDialog
+                fileMode: FileDialog.OpenFile
+            }
         }
     }
+
+    Component {
+        id: addKey
+        QAddKeySelectType {
+            onKeyTypeSelected: {
+                var remoteSignerObj = {
+                    "key_name"      : signerNameInputed,
+                    "key_spec"      : keySpec,
+                    "key_tag"       : hardwareTag,
+                    "key_yes_accept": true,
+                }
+                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_REMOTE_SIGNER_REQUEST, remoteSignerObj)
+            }
+        }
+    }
+
+
     property var addSignerComp: [addSignerStep0, addSignerStep1, addSignerStep2]
     Component {
         id: addSignerStep0
@@ -728,7 +708,7 @@ QScreen {
                     font.weight: Font.DemiBold
                     font.family: "Montserrat"
                     wrapMode: Text.WrapAnywhere
-                    text: STR.STR_QML_121 + signerName.textOutput
+                    text: STR.STR_QML_121 + signerNameInputed
                 }
                 QText {
                     width: 328
@@ -744,6 +724,32 @@ QScreen {
             }
         }
     }
+
+
+    QPopupInfoTwoButtons {
+        id: _info
+        signal yesClicked()
+        title: STR.STR_QML_661
+        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        funcs: [
+            function() { yesClicked() },
+            function() {}
+        ]
+    }
+
+    function showPopupInfo(isSoftware, fingerPrint){
+        if (isSoftware) {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = STR.STR_QML_1284
+            _info.open()
+        }
+        else {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = ""
+            _info.open()
+        }
+    }
+
     Connections {
         target: AppModel
         onStartCreateRemoteSigner: { }

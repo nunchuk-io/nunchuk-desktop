@@ -60,9 +60,14 @@ class ENUNCHUCK: public QObject
     Q_ENUMS(ROOM_EVT)
 public:
     enum class AddHardware : int {
-        ADD_LEDGER = (int)nunchuk::SignerTag::LEDGER,
-        ADD_TREZOR = (int)nunchuk::SignerTag::TREZOR,
+        ADD_INHERITANCE = (int)nunchuk::SignerTag::INHERITANCE,
+        ADD_KEYSTONE = (int)nunchuk::SignerTag::KEYSTONE,
+        ADD_JADE = (int)nunchuk::SignerTag::JADE,
+        ADD_PASSPORT = (int)nunchuk::SignerTag::PASSPORT,
+        ADD_SEEDSIGNER = (int)nunchuk::SignerTag::SEEDSIGNER,
         ADD_COLDCARD = (int)nunchuk::SignerTag::COLDCARD,
+        ADD_TREZOR = (int)nunchuk::SignerTag::TREZOR,
+        ADD_LEDGER = (int)nunchuk::SignerTag::LEDGER,
         ADD_BITBOX = (int)nunchuk::SignerTag::BITBOX,
     };
 
@@ -331,13 +336,18 @@ QSingleSignerPtr nunchukCreateSigner(const QString& name,
                                      const QString& public_key,
                                      const QString& derivation_path,
                                      const QString& master_fingerprint,
-                                     const QString& type);
+                                     const nunchuk::SignerType type,
+                                     const std::vector<nunchuk::SignerTag> tags,
+                                     bool replace);
 
 nunchuk::SingleSigner nunchukCreateOriginSigner(const QString& name,
                                                 const QString& xpub,
                                                 const QString& public_key,
                                                 const QString& derivation_path,
                                                 const QString& master_fingerprint,
+                                                const nunchuk::SignerType type,
+                                                const std::vector<nunchuk::SignerTag> tags,
+                                                bool replace,
                                                 QWarningMessage &msg);
 
 QWalletPtr nunchukCreateWallet(const nunchuk::Wallet& wallet,
@@ -560,8 +570,9 @@ void nunchukRescanBlockchain(int start_height, int stop_height = -1);
 QMasterSignerPtr nunchukCreateSoftwareSigner(const QString &name,
                                              const QString &mnemonic,
                                              const QString &passphrase,
-                                             QWarningMessage& msg,
-                                             bool isPrimaryKey);
+                                             bool isPrimaryKey,
+                                             bool replace,
+                                             QWarningMessage& msg);
 
 QString SignLoginMessage(const QString& mastersigner_id,
                          const QString& message);
@@ -599,6 +610,8 @@ QString nunchukParsePassportSigner(const QStringList &qr_data);
 
 QString nunchukParseQRSigners(const QStringList &qr_data);
 
+QString loadJsonFile(const QString &filePathName);
+
 QString nunchukParseJSONSigners(const QString &filePathName);
 
 QSingleSignerPtr nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, QWarningMessage &msg);
@@ -620,7 +633,7 @@ void stopNunchuk();
 
 void AddTapsigner(const QString& card_ident, const QString& xfp,
                   const QString& name, const QString& version,
-                  int birth_height, bool is_testnet);
+                  int birth_height, bool is_testnet, bool replace = false);
 
 bool nunchukUpdateTransactionSchedule(const QString& wallet_id,
                                       const QString& tx_id,
@@ -679,7 +692,7 @@ QString GetSignerAddress(const nunchuk::SingleSigner& signer,
 
 QString GetHotWalletMnemonic(const QString& wallet_id, const QString& passphrase);
 
-QWalletPtr nunchukCreateHotWallet(const QString &mnemonic, const QString& passphrase, bool need_backup, QWarningMessage &msg);
+QWalletPtr nunchukCreateHotWallet(const QString &mnemonic, const QString& passphrase, bool need_backup, bool replace, QWarningMessage &msg);
 }
 
 #endif // BRIDGEINTERFACE_H

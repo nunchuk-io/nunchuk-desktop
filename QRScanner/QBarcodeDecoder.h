@@ -17,39 +17,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-#include "QRGenerator.h"
-#include <QDebug>
-QRGenerator::QRGenerator(){}
+#ifndef QBARCODEDECODER_H
+#define QBARCODEDECODER_H
 
-QRGenerator::~QRGenerator(){}
+#include <QObject>
+#include <QVideoFrame>
 
-QImage QRGenerator::qrImage(QString text, QSize _size, int _border){
-    return generate(text, _size, _border);
-}
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include "BarcodeFormat.h"
 
-QImage QRGenerator::generate(QString text, QSize _size, int _border)
+// Default camera resolution width/height
+#define DEFAULT_RES_W 1080
+#define DEFAULT_RES_H 1920
+
+class QBarcodeDecoder : public QObject
 {
-    QImage img_ret;
-    const int border = _border;
-    const QrCode qr = QrCode::encodeText(text.toStdString().c_str(), QrCode::Ecc::LOW);
-    int size = qr.getSize();
-    QImage img(size, size, QImage::Format_RGB888);
-    img.fill(Qt::white);
-    if(size > 0){
-        for (int _y = 0; _y < size; _y++) {
-            for (int _x = 0; _x < size; _x++) {
-                if(0 != qr.getModule(_x, _y)){
-                    img.setPixelColor(_x, _y, QColor(Qt::black));
-                }
-            }
-        }
-    }
-    img_ret = img.scaled(_size.width() - 2*border, _size.height() - 2*border, Qt::KeepAspectRatioByExpanding);
-    QImage imgResult(_size.width(), _size.height(), QImage::Format_ARGB32);
-    imgResult.fill(Qt::white);
-    QPainter painter(&imgResult);
-    QPoint destPos = QPoint(border, border);
-    painter.drawImage(destPos, img_ret);
-    painter.end();
-    return imgResult;
-}
+    Q_OBJECT
+
+public:
+    explicit QBarcodeDecoder(QObject *parent = nullptr);
+    void clean();
+    bool isDecoding() const;
+    QString captured() const;
+    QImage videoFrameToImage(const QVideoFrame &videoFrame, const QRect &captureRect) const;
+    QImage smoothTransformation(const QImage &image) const;
+
+public slots:
+    void process(const QImage& capturedImage, ZXing::BarcodeFormats formats);
+
+private:
+#ifdef QR_DFS_IMPROVE
+    QImage deepFocusSharpen(const QImage &inputImage) const;
+    QImage applyGaussianBlur(const QImage &image) const;
+    QImage createUnsharpMask(const QImage &original, const QImage &blurred) const;
+    QImage adjustContrast(const QImage &image) const;
+    QImage addMaskToOriginal(const QImage &original, const QImage &mask) const;
+#endif
+
+signals:
+    void isDecodingChanged(bool isDecoding);
+    void errorOccured(const QString& errorString);
+    void tagFound(const QString &tag);
+private:
+    bool m_isDecoding = false;
+    void setIsDecoding(bool isDecoding);
+};
+
+#endif // QBARCODEDECODER_H

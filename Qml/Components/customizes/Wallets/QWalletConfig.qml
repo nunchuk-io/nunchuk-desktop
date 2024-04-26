@@ -95,6 +95,7 @@ QOnScreenContent {
                             font.family: "Montserrat"
                             font.pixelSize: 16
                             anchors.horizontalCenter: parent.horizontalCenter
+                            showEdit: wlname.enabled
                             enabled: {
                                 if (AppModel.walletInfo.isGroupWallet) {
                                     return AppModel.walletInfo.myRole === "MASTER"

@@ -450,11 +450,6 @@ bool QRecurringPayment::ImportWallet(WalletId w_id)
     return false;
 }
 
-int QRecurringPayment::scan_percent() const
-{
-    return m_scan_percent;
-}
-
 bool QRecurringPayment::hasServerKey()
 {
     QWarningMessage msgWallet;
@@ -474,20 +469,6 @@ bool QRecurringPayment::hasServerKey()
         }
     }
     return m_has_server_key;
-}
-
-void QRecurringPayment::setScan_percent(int scan_percent)
-{
-    if (m_scan_percent == scan_percent) return;
-    m_scan_percent = scan_percent;
-    emit scan_percentChanged();
-}
-
-bool QRecurringPayment::parseQRSuccess(const QStringList &qrtags)
-{
-    nunchuk::AnalyzeQRResult progress = qUtils::AnalyzeQR(qrtags);
-    setScan_percent(progress.estimated_percent_complete * 100);
-    return progress.is_complete;
 }
 
 bool QRecurringPayment::ImportFileWallet(const QString &filepath, bool bsms)

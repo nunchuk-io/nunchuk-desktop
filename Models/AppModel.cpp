@@ -31,6 +31,7 @@
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QWalletServicesTag.h"
 #include "ServiceSetting.h"
+#include "OnBoardingModel.h"
 
 AppModel::AppModel(): inititalized_{false},
     walletList_(QWalletListModelPtr(new WalletListModel())),
@@ -55,7 +56,8 @@ AppModel::AppModel(): inititalized_{false},
     warningMessage_(QWarningMessagePtr(new QWarningMessage())),
     exchangeRates_(0), btcRates_(0),lasttime_checkEstimatedFee_(QDateTime::currentDateTime()),
     m_primaryKey(NULL),
-    newKeySignMessage_("")
+    newKeySignMessage_(""),
+    timeLogging_(QDateTime::currentDateTime())
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(&timerRefreshHealthCheck_, &QTimer::timeout, this, &AppModel::timerHealthCheckTimeHandle, Qt::QueuedConnection);
@@ -94,6 +96,23 @@ AppModel::~AppModel(){
     utxoInfo_.clear();
     destinationList_.clear();
     disconnect();
+}
+
+void AppModel::confirmSyncingWalletFromServer(bool yes, bool no)
+{
+    QString fingerPrint = WalletsMng->UpdateSyncWalletFlows(yes, no);
+    if (yes) {
+        int index = masterSignerList()->getIndexNameByFingerPrint(fingerPrint);
+        if (index >= 0) {
+            QEventProcessor::instance()->sendEvent(E::EVT_HOME_MASTER_SIGNER_INFO_REQUEST, index);
+            emit syncingConfirmWalletRemoveKey(fingerPrint);
+        }
+    }
+}
+
+void AppModel::setTimeLogging(const QDateTime &newTimeLogging)
+{
+    timeLogging_ = newTimeLogging;
 }
 
 QString AppModel::newKeySignMessage() const
@@ -150,6 +169,19 @@ void AppModel::setAddSignerWizard(int index)
 int AppModel::addSignerWizard() const
 {
     return m_addSignerWizard;
+}
+
+bool AppModel::checkAutoSignOut()
+{
+    QDateTime now = QDateTime::currentDateTime();
+    qint64 secs = timeLogging_.secsTo(now);
+    qint64 _7days = 7 * 24 * 60 * 60;
+    if(secs > _7days){
+        ClientController::instance()->requestSignout();
+        timeLogging_ = now;
+        return true;
+    }
+    return false;
 }
 
 QString AppModel::lasttimeCheckEstimatedFee() const
@@ -620,13 +652,14 @@ int AppModel::walletListCurrentIndex() const
     return walletListCurrentIndex_;
 }
 
-void AppModel::setWalletListCurrentIndex(int index)
+void AppModel::setWalletListCurrentIndex(int index, bool force)
 {
     if(walletListCurrentIndex_ != index){
         walletListCurrentIndex_ = index;
     }
     emit walletListCurrentIndexChanged();
-    setWalletInfoByIndex(walletListCurrentIndex_);
+    setWalletInfoByIndex(walletListCurrentIndex_, force);
+    emit QGroupWallets::instance()->dashboardInfoChanged();
 }
 
 AppModel *AppModel::instance() {
@@ -653,19 +686,16 @@ void AppModel::requestSyncWalletDb(const QString &wallet_id)
 
 void AppModel::requestCreateUserWallets()
 {
-    if(CLIENT_INSTANCE->subscription().isEmpty()) {
-        QtConcurrent::run([]() {
-            WalletsMng->GetListWallet(GROUP_WALLET);
-            AppModel::instance()->startReloadUserDb();
-        });
-    }
-    else {
-        QtConcurrent::run([]() {
-            WalletsMng->GetListWallet(USER_WALLET);
-            WalletsMng->GetListWallet(GROUP_WALLET);
-            AppModel::instance()->startReloadUserDb();
-        });
-    }
+    QtConcurrent::run([]() {
+        WalletsMng->GetListWallet(USER_WALLET);
+        WalletsMng->GetListWallet(GROUP_WALLET);
+        AppModel::instance()->startReloadUserDb();
+        static bool needCheckOnboarding = true;
+        if(needCheckOnboarding){
+            needCheckOnboarding = false;
+            AppModel::instance()->requestOnboarding();
+        }
+    });
 }
 
 void AppModel::requestSyncSharedWallets()
@@ -716,11 +746,28 @@ void AppModel::requestClearData()
     if(remoteSignerList()){
         remoteSignerList()->cleardata();
     }
+
+    WalletsMng->clear();
     setWalletListCurrentIndex(-1);
     AppSetting::instance()->setSyncPercent(0);
     QUserWallets::instance()->reset();
     QGroupWallets::instance()->reset();
-    WalletsMng->clear();
+}
+
+void AppModel::requestOnboarding()
+{
+    timeoutHandler(1000,[=]{
+        if (CLIENT_INSTANCE->isSubscribed() || !QGroupWallets::instance()->existGroupPending()) {
+            AppSetting::instance()->setIsFirstTimeOnboarding(true);
+        }
+        else {
+            DBG_INFO << "Checking Onboarding " << AppSetting::instance()->isFirstTimeOnboarding();
+            if (!AppSetting::instance()->isFirstTimeOnboarding()) {
+                OnBoardingModel::instance()->setState("onboarding");
+                QEventProcessor::instance()->sendEvent(E::EVT_ONBOARDING_REQUEST);
+            }
+        }
+    });
 }
 
 QWalletListModelPtr AppModel::walletListPtr() const
@@ -912,15 +959,10 @@ QWalletPtr AppModel::walletInfoPtr() const
     return walletInfo_;
 }
 
-void AppModel::setWalletInfo(WalletId wallet_id)
+void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
 {
-    auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id);
-    setWalletInfo(w);
-}
-
-void AppModel::setWalletInfo(const QWalletPtr &d)
-{
-    if(d && 0 != QString::compare(d.data()->id(), walletInfo_->id(), Qt::CaseInsensitive)){
+    bool allow = force || !qUtils::strCompare(d.data()->id(), walletInfo_->id());
+    if(d && allow){
         walletInfo_ = d;
         if(walletInfo_){
             QString wallet_id = walletInfo_.data()->id();
@@ -933,12 +975,15 @@ void AppModel::setWalletInfo(const QWalletPtr &d)
         }
         emit walletInfoChanged();
     }
+    if(walletInfo_){
+        DBG_INFO << "Force set" << allow << "Wallet Role " << walletInfo_.data()->myRole() << walletInfo_.data()->slug();
+    }
 }
 
-void AppModel::setWalletInfoByIndex(const int index)
+void AppModel::setWalletInfoByIndex(const int index, bool force)
 {
     if(index == -1){
-        setWalletInfo(QWalletPtr(new Wallet()));
+        setWalletInfo(QWalletPtr(new Wallet()), force);
     }
     else{
         if(walletList_){
@@ -946,7 +991,7 @@ void AppModel::setWalletInfoByIndex(const int index)
             if(!newWallet){
                 newWallet = QWalletPtr(new Wallet());
             }
-            setWalletInfo(newWallet);
+            setWalletInfo(newWallet, force);
         }
     }
 }
@@ -1047,6 +1092,7 @@ void AppModel::timerFeeRatesHandle()
 
 void AppModel::timerCheckAuthorizedHandle()
 {
+    checkAutoSignOut();
     Draco::instance()->getMe();
     QGroupWallets::instance()->GetAllGroups();
     QUserWallets::instance()->GetListAllRequestAddKey();

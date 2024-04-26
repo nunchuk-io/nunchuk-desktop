@@ -117,4 +117,27 @@ Item {
         toastLoader.model.append(toastItem)
         return true;
     }
+
+    QPopupInfoTwoButtons {
+        id: _syncing_wallet_from_server
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1289
+        labels: [STR.STR_QML_432, STR.STR_QML_433]
+        isVertical: false
+        funcs: [
+            function() {
+                AppModel.confirmSyncingWalletFromServer(false, true)
+            },
+            function() {
+                AppModel.confirmSyncingWalletFromServer(true, false)
+            }
+        ]
+    }
+    Connections {
+        target: AppModel
+        onSyncingWalletFromServer: {
+            _syncing_wallet_from_server.contentText = STR.STR_QML_1289.arg(fingerPrint.toUpperCase())
+            _syncing_wallet_from_server.open()
+        }
+    }
 }

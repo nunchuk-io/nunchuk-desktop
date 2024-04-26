@@ -337,8 +337,8 @@ QScreenAdd {
     Connections {
         target: draftWallet
         onReuseKeyGetSignerResult : {
-            console.log(result)
-            if(result){
+            console.log("onReuseKeyGetSignerResult", result)
+            if(result == 1){
                 eADD_STEP = eREUSE_RESULT
             }
             else{
