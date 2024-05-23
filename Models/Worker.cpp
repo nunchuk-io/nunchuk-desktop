@@ -265,17 +265,24 @@ void Worker::slotStartDisplayAddress(const QString &wallet_id,
     QWarningMessage msg;
     QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        msg.resetWarningMessage();
         if(deviceList && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->singleSignersAssigned()){
             QStringList xfps = deviceList->getXFPList();
             foreach (QString xfp, xfps) {
+                msg.resetWarningMessage();
                 ret = bridge::nunchukDisplayAddressOnDevice(wallet_id,
                                                             address,
-                                                            xfp);
+                                                            xfp,
+                                                            msg);
             }
         }
     }
-    else{
+    if(!ret){
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    else{
+        QString msg = QString("Address successfully verified");
+        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
     }
     emit finishDisplayAddress(ret);
 }
@@ -722,11 +729,13 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
     if(ret && type == (int)EWARNING::WarningType::NONE_MSG){
         QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
         QString selectFingerPrint = "";
+        QString keyName = "";
         if(mastersigners){
             AppModel::instance()->setMasterSignerList(mastersigners);
             QMasterSignerPtr newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(ret.data()->fingerPrint());
             AppModel::instance()->setMasterSignerInfo(newsigner);
             selectFingerPrint = newsigner->fingerPrint();
+            keyName = newsigner->name();
         }
         int last = QEventProcessor::instance()->getCurrentStates().last();
         if(last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER){
@@ -746,7 +755,7 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
         }
 
         if (last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER || last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER_TO_WALLET) {
-            QString msg = QString("<b>%1</b> has been added").arg(selectFingerPrint);
+            QString msg = QString("<b>%1</b> has been added").arg(keyName);
             AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
         }
     }
@@ -774,7 +783,7 @@ void Controller::slotFinishCreateRemoteSigner(const int event,
         else{
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_REMOTE_SIGNER_RESULT);
         }
-        QString msg = QString("<b>%1</b> has been added").arg(signer->masterFingerPrint());
+        QString msg = QString("<b>%1</b> has been added").arg(signer->name());
         AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
     }
     else{
@@ -1240,12 +1249,14 @@ void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
     QWalletListModelPtr ret = bridge::nunchukConvertWallets(wallets);
     if(ret){
         AppModel::instance()->setWalletList(ret);
-        emit WalletsMng->getListWalletFinish();
         QString lastWalletId = bridge::nunchukGetSelectedWallet();
         int lastIndex = lastWalletId == "" ? 0 : AppModel::instance()->walletList()->getWalletIndexById(lastWalletId);
         lastIndex = max(0, lastIndex);
         AppModel::instance()->setWalletListCurrentIndex(lastIndex, true);
         AppModel::instance()->walletListCurrentIndexChanged();
+        if(ONLINE_MODE == bridge::nunchukCurrentMode() && CLIENT_INSTANCE->isNunchukLoggedIn()){
+            emit WalletsMng->getListWalletFinish();
+        }
     }
     if(ONLINE_MODE == bridge::nunchukCurrentMode()){
         if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){

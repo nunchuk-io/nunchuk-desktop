@@ -55,7 +55,8 @@ QNunchukRoom::QNunchukRoom(Room *r):
     m_txs(QRoomTransactionModelPtr(new QRoomTransactionModel())),
     m_downloaded(false),
     m_pinTransaction(nullptr),
-    m_IsEncrypted(false)
+    m_IsEncrypted(false),
+    m_maxLifeTime(-1)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(m_users.data(), QQmlEngine::CppOwnership);
@@ -116,6 +117,13 @@ bool QNunchukRoom::isSupportRoom() const
 bool QNunchukRoom::isDirectChat() const
 {
     return m_room ? m_room->isDirectChat() : false;
+}
+
+bool QNunchukRoom::isByzantineRoom() const
+{
+    bool ret = (m_room ? m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE) : false );
+    DBG_INFO << ret;
+    return ret;
 }
 
 QString QNunchukRoom::byzantineRoomGroupId()
@@ -392,6 +400,7 @@ void QNunchukRoom::sendMessage(const QString &message)
             cons.message = Quotient::prettyPrint(message);
             cons.messageType = (int)ENUNCHUCK::ROOM_EVT::PLAIN_TEXT;
             cons.txnId = txnId;
+            cons.visible = isValidMessageTime(cons);
             conversation()->addMessage(cons);
             conversation()->requestSortByTimeAscending();
             setLastMessage(cons);
@@ -464,7 +473,7 @@ void QNunchukRoom::sendFile(const QString& description, const QString localFile)
             cons.messageType = file_mimeType;
             cons.file_path =  QUrl::fromLocalFile(filepath).toString();
             cons.txnId = txnId;
-
+            cons.visible = isValidMessageTime(cons);
             if(file_mimeType == (int)ENUNCHUCK::ROOM_EVT::FILE_OTHER){
                 if(description != ""){
                     QString messageInput = QString("%1 \n %2").arg(file_caption).arg(description);
@@ -781,6 +790,63 @@ void QNunchukRoom::synchonizesUserData()
 {
     for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
         nunchukConsumeSyncEvent(**e);
+    }
+}
+
+bool QNunchukRoom::isValidMessageTime(const Conversation cons)
+{
+    if(messageMaxLifeTime() <= 0){
+        return true;
+    }
+    else{
+        QDateTime message_time_utc = QDateTime::fromTime_t(cons.timestamp);
+        QDateTime time_now_utc = QDateTime::currentDateTimeUtc(); // FIXME get from server ? worst case is local time incorrect
+        // message age
+        qint64 message_age = time_now_utc.toMSecsSinceEpoch() - message_time_utc.toMSecsSinceEpoch();
+        DBG_INFO << "Retention" << roomName() << cons.message << cons.messageType
+                 << message_time_utc.toString("yyyy-MM-dd hh:mm:ss")
+                 << time_now_utc.toString("yyyy-MM-dd hh:mm:ss")
+                 << message_age
+                 << messageMaxLifeTime();
+        // compare with max life time
+        return message_age <= messageMaxLifeTime();
+    }
+}
+
+qint64 QNunchukRoom::messageMaxLifeTime() const
+{
+    return m_maxLifeTime;
+}
+
+void QNunchukRoom::setMessageMaxLifeTime(qint64 value)
+{
+    DBG_INFO << "Retention" << roomName() << value;
+    m_maxLifeTime = value;
+    if(conversation()){
+        conversation()->setMaxLifeTime(m_maxLifeTime);
+    }
+}
+
+void QNunchukRoom::startCountdown()
+{
+    if(conversation() && isByzantineRoom()){
+        conversation()->startCountdown();
+    }
+}
+
+void QNunchukRoom::stopCountdown()
+{
+    if(conversation()){
+        conversation()->stopCountdown();
+    }
+}
+
+void QNunchukRoom::activateRetention(qint64 max_lifetime)
+{
+    if(m_room){
+        QJsonObject content;
+        content["max_lifetime"] = max_lifetime;
+        m_room->setState(NUNCHUK_ROOM_RETENTION, "", content);
     }
 }
 
@@ -1723,6 +1789,7 @@ Conversation QNunchukRoom::createConversation(const RoomEvent &evt)
     cons.senderId   = evt.senderId();
     cons.evtId = evt.id();
     cons.txnId = evt.transactionId();
+    cons.visible = isValidMessageTime(cons);
     QString matrixType = evt.matrixType();
     cons.matrixType = matrixType;
     if((qUtils::strCompare(matrixType, NUNCHUK_ROOM_MESSAGE))
@@ -2209,6 +2276,7 @@ void QNunchukRoomListModel::setCurrentIndex(int index)
 {
     if(index == -1){
         m_currentIndex = index;
+        stopCountdown();
         setCurrentRoom(NULL);
     }
     else{
@@ -2231,10 +2299,11 @@ QNunchukRoomPtr QNunchukRoomListModel::currentRoomPtr() const
     return m_currentRoom;
 }
 
-void QNunchukRoomListModel::setCurrentRoom(const QNunchukRoomPtr &currentRoom)
+void QNunchukRoomListModel::setCurrentRoom(const QNunchukRoomPtr &newRoom)
 {
-    if(m_currentRoom != currentRoom){
-        m_currentRoom = currentRoom;
+    if(m_currentRoom != newRoom){
+        stopCountdown();
+        m_currentRoom = newRoom;
         if(m_currentRoom){
             m_currentRoom.data()->setDisplayed(true);
             m_currentRoom.data()->startGetPendingTxs();
@@ -2242,11 +2311,14 @@ void QNunchukRoomListModel::setCurrentRoom(const QNunchukRoomPtr &currentRoom)
                 if(m_currentRoom->conversation()->unreadLastIndex() + 10 > m_currentRoom->conversation()->count()){
                     m_currentRoom.data()->conversation()->setCurrentIndex(m_currentRoom.data()->conversation()->rowCount() - 1);
                     m_currentRoom->markAllMessagesAsRead();
-                }else{
+                }
+                else{
                     m_currentRoom.data()->conversation()->setCurrentIndex(m_currentRoom->conversation()->unreadLastIndex());
                 }
             }
-
+            if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
+                startCountdown();
+            }
         }
         emit currentRoomChanged();
     }
@@ -2321,7 +2393,6 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
             beginInsertRows(QModelIndex(), rowCount(), rowCount());
             m_data.append(r);
             endInsertRows();
-            r.data()->connectRoomSignals();
             connect(r.data(),         &QNunchukRoom::roomNameChanged,       this, [this, r] { refresh(r); });
             connect(r.data(),         &QNunchukRoom::lastMessageChanged,    this, [this, r] { refresh(r); });
             connect(r.data(),         &QNunchukRoom::lasttimestampChanged,  this, [this, r] { resort(); });
@@ -2330,6 +2401,18 @@ void QNunchukRoomListModel::doAddRoom(QNunchukRoomPtr r)
             connect(r.data()->room(), &Room::typingChanged,                 this, [this, r] { refresh(r); });
             connect(r.data()->room(), &Room::unreadMessagesChanged,         this, &QNunchukRoomListModel::totalUnreadChanged);
             connect(r.data(),         &QNunchukRoom::pendingTxsChanged,     this, [this, r] { refresh(r); });
+            if(r.data()->room()->currentState().contains(NUNCHUK_ROOM_RETENTION)){
+                DBG_INFO << "room name" << r.data()->roomName() << r.data()->room()->currentState().contentJson(NUNCHUK_ROOM_RETENTION);
+                qint64 max_lifetime = r.data()->room()->currentState().contentJson(NUNCHUK_ROOM_RETENTION)["max_lifetime"].toDouble();
+                r.data()->setMessageMaxLifeTime(max_lifetime);
+            }
+            else{
+                // Set room state event is rentention (byzantine room)
+                if(r.data()->isByzantineRoom()){
+                    r.data()->activateRetention();
+                }
+            }
+            r.data()->connectRoomSignals();
         }
     }
     emit countChanged();
@@ -2447,10 +2530,19 @@ void QNunchukRoomListModel::createRoomChat(const QStringList invitees_id, const 
         const QString   in_presetName = {};
         const QString   in_roomVersion = {};
         bool            in_isDirect = false;
-        CreateRoomJob::StateEvent stateEvt;
-        stateEvt.type = "m.room.encryption";
-        stateEvt.content["algorithm"] = "m.megolm.v1.aes-sha2";
-        const QVector<CreateRoomJob::StateEvent> in_initialState = {stateEvt};
+        CreateRoomJob::StateEvent state_encryption_Evt;
+        state_encryption_Evt.type = "m.room.encryption";
+        state_encryption_Evt.content["algorithm"] = "m.megolm.v1.aes-sha2";
+
+#if 0 // BYZANTINE
+        CreateRoomJob::StateEvent state_retention_Evt;
+        state_retention_Evt.type = NUNCHUK_ROOM_RETENTION;
+        state_retention_Evt.content["max_lifetime"] = NUNCHUK_ROOM_RETENTION_TIME;
+
+        const QVector<CreateRoomJob::StateEvent> in_initialState = {state_encryption_Evt, state_retention_Evt};
+#else
+        const QVector<CreateRoomJob::StateEvent> in_initialState = {state_encryption_Evt};
+#endif
 
         auto createJob = connection()->createRoom(in_visibility,
                                                   in_alias,
@@ -2486,8 +2578,35 @@ void QNunchukRoomListModel::createRoomDirectChat(const QString invitee_id, const
             }
         }
         else{
-            QString topic = "";
-            auto createJob = connection()->createDirectChat(invitee_id, topic, invitee_name);
+            Connection::RoomVisibility in_visibility = Connection::UnpublishRoom;
+            const QString   in_alias = {};
+            const QString   in_name = invitee_name;
+            const QString   in_topic = {};
+            QStringList     in_invites = {invitee_id};
+            const QString   in_presetName = {};
+            const QString   in_roomVersion = {};
+            bool            in_isDirect = true;
+            CreateRoomJob::StateEvent state_encryption_Evt;
+            state_encryption_Evt.type = "m.room.encryption";
+            state_encryption_Evt.content["algorithm"] = "m.megolm.v1.aes-sha2";
+#if 0 // BYZANTINE
+            CreateRoomJob::StateEvent state_retention_Evt;
+            state_retention_Evt.type = NUNCHUK_ROOM_RETENTION;
+            state_retention_Evt.content["max_lifetime"] = NUNCHUK_ROOM_RETENTION_TIME;
+
+            const QVector<CreateRoomJob::StateEvent> in_initialState = {state_encryption_Evt, state_retention_Evt};
+#else
+            const QVector<CreateRoomJob::StateEvent> in_initialState = {state_encryption_Evt};
+#endif
+            auto createJob = connection()->createRoom(in_visibility,
+                                                      in_alias,
+                                                      in_name,
+                                                      in_topic,
+                                                      in_invites,
+                                                      in_presetName,
+                                                      in_roomVersion,
+                                                      in_isDirect,
+                                                      in_initialState);
             connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
                 if(!firstMessage.isNull() && firstMessage.toString() != ""){
                     connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
@@ -2522,10 +2641,15 @@ void QNunchukRoomListModel::createRoomByzantineChat(const QStringList invitees_i
             const QString   in_presetName = {};
             const QString   in_roomVersion = {};
             bool            in_isDirect = in_invites.count() > 1 ? false : true;
-            CreateRoomJob::StateEvent stateEvt;
-            stateEvt.type = NUNCHUK_ROOM_BYZANTINE;
-            stateEvt.content["group_id"] = group_id;
-            const QVector<CreateRoomJob::StateEvent> in_initialState = {stateEvt};
+            CreateRoomJob::StateEvent state_byzantine_Evt;
+            state_byzantine_Evt.type = NUNCHUK_ROOM_BYZANTINE;
+            state_byzantine_Evt.content["group_id"] = group_id;
+
+            CreateRoomJob::StateEvent state_retention_Evt;
+            state_retention_Evt.type = NUNCHUK_ROOM_RETENTION;
+            state_retention_Evt.content["max_lifetime"] = NUNCHUK_ROOM_RETENTION_TIME;
+
+            const QVector<CreateRoomJob::StateEvent> in_initialState = {state_byzantine_Evt, state_retention_Evt};
 
             auto createJob = connection()->createRoom(in_visibility,
                                                       in_alias,
@@ -2609,6 +2733,30 @@ void QNunchukRoomListModel::renameRoomByzantineChat(const QString room_id, const
             if(!qUtils::strCompare(it.data()->roomName(), newname)){
                 it.data()->setRoomName(newname);
             }
+        }
+    }
+}
+
+void QNunchukRoomListModel::stopCountdown()
+{
+    if(m_currentRoom){ // Stop count in old room
+        m_currentRoom->stopCountdown();
+    }
+}
+
+void QNunchukRoomListModel::startCountdown()
+{
+    if(m_currentRoom){ // Start count in new room
+        m_currentRoom->startCountdown();
+    }
+}
+
+void QNunchukRoomListModel::updateMaxLifeTime(QString &roomId, qint64 maxLifeTime)
+{
+    for(QNunchukRoomPtr it : m_data){
+        if(it && qUtils::strCompare(it.data()->id(), roomId)){
+            it.data()->setMessageMaxLifeTime(maxLifeTime);
+            it.data()->activateRetention(maxLifeTime);
         }
     }
 }

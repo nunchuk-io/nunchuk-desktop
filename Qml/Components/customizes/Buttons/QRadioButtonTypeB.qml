@@ -29,9 +29,9 @@ Row {
     property bool selected: false
     property alias text: text
     signal buttonClicked()
-    signal buttonResetClicked()
     signal typingFinished(var textOutput)
-
+    property bool showArrow: false
+    signal buttonArrowClicked()
     QIcon {
         id: icon
         iconSize: 24
@@ -56,19 +56,17 @@ Row {
         enabled: radioRoot.selected && parent.enabled
         onTypingFinished: radioRoot.typingFinished(currentText)
 
-        QTextButton {
-            width: 70
-            height: 24
-            label.text: "RESET"
-            label.font.pixelSize: 10
-            type: eTypeB
-            visible: radioRoot.selected
+        QIconButton {
+            iconSize: 24
             anchors {
                 right: parent.right
                 rightMargin: 6
                 verticalCenter: parent.verticalCenter
             }
-            onButtonClicked: { buttonResetClicked() }
+            visible: showArrow
+            icon: "qrc:/Images/Images/right-arrow-dark.svg"
+            onButtonClicked: { buttonArrowClicked() }
+            bgColor: "transparent"
         }
     }
 }

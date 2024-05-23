@@ -67,7 +67,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
@@ -213,7 +213,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         loadercontent.sourceComponent = maincontent
@@ -402,7 +402,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         loadercontent.sourceComponent = maincontent
@@ -521,7 +521,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
@@ -682,7 +682,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         loadercontentPrimaryKey.sourceComponent = maincontentPrimaryKey
@@ -871,7 +871,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         loadercontentPrimaryKey.sourceComponent = maincontentPrimaryKey

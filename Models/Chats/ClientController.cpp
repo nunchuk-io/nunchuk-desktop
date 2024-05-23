@@ -38,6 +38,7 @@
 #include <database.h>
 #include <QTextDocument>
 #include "OnBoardingModel.h"
+#include "ifaces/Servers/Byzantine.h"
 
 using Quotient::NetworkAccessManager;
 using Quotient::Settings;
@@ -66,7 +67,7 @@ ClientController::ClientController()
 
 ClientController::~ClientController()
 {
-    setSubscriptions(QJsonArray());
+
 }
 
 ClientController *ClientController::instance()
@@ -339,7 +340,6 @@ QStringList ClientController::contactsByStringList()
 
 void ClientController::requestSignout()
 {
-    qApp->setOverrideCursor(Qt::WaitCursor);
     if(m_loginHandler){
         m_loginHandler.data()->requestLogout();
     }
@@ -357,7 +357,6 @@ void ClientController::requestSignout()
     if(contacts()){
         contacts()->removeAll();
     }
-    qApp->restoreOverrideCursor();
 }
 
 void ClientController::forgetRoom(const int index)
@@ -604,6 +603,13 @@ void ClientController::setReadySupport(bool ReadySupport)
     }
 }
 
+void ClientController::updateMessageMaxLifeTime(QString &roomId, qint64 maxLifeTime)
+{
+    if(rooms()){
+        rooms()->updateMaxLifeTime(roomId, maxLifeTime);
+    }
+}
+
 bool ClientController::attachmentEnable() const
 {
     return m_AttachmentEnable;
@@ -684,7 +690,11 @@ void ClientController::setSubscriptions(const QJsonArray &data)
         QDateTime grace_valid_until_utc = QDateTime::fromMSecsSinceEpoch(grace_valid_until_utc_millis);
         bool valid = grace_valid_until_utc.isValid() && grace_valid_until_utc >= QDateTime::currentDateTime();
         DBG_INFO << grace_valid_until_utc.toString("yyyy-MM-dd-hh-mm-ss-zzz") << valid;
-        if(valid){
+        if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::TESTNET){
+            m_slugs.append(subscription["plan"].toObject()["slug"].toString());
+            valid_subcriptions.push_back(subscription);
+        }
+        else if(valid){
             m_slugs.append(subscription["plan"].toObject()["slug"].toString());
             valid_subcriptions.push_back(subscription);
         }

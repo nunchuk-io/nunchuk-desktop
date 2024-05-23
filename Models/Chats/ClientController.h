@@ -137,6 +137,8 @@ public:
     bool readySupport() const;
     void setReadySupport(bool ReadySupport);
 
+    // Retention
+    void updateMessageMaxLifeTime(QString& roomId, qint64 maxLifeTime /*milisec*/);
 signals:
     void isNunchukLoggedInChanged();
     void contactsChanged();

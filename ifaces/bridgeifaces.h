@@ -520,9 +520,10 @@ void nunchukUpdateAppSettings(QWarningMessage &msg);
 
 bool nunchukExportWallet(const QString &wallet_id, const QString &file_path, const nunchuk::ExportFormat format);
 
-bool nunchukDisplayAddressOnDevice( const QString& wallet_id,
-                                    const QString& address,
-                                    const QString& device_fingerprint);
+bool nunchukDisplayAddressOnDevice(const QString& wallet_id,
+                                   const QString& address,
+                                   const QString& device_fingerprint,
+                                   QWarningMessage &msg);
 
 qint64 nunchukGetAddressBalance(const QString &wallet_id,
                                 const QString &address);

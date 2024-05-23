@@ -914,3 +914,52 @@ void AppSetting::setIsFirstTimeOnboarding(bool isFirstTime)
     }
 }
 
+QVariant AppSetting::getMainnetList()
+{
+    return NunchukSettings::commonValue("mainnetList");
+}
+
+void AppSetting::setMainnetList(const QVariant &mainnetList)
+{
+    NunchukSettings::setCommonValue("mainnetList", mainnetList);
+}
+
+QStringList AppSetting::favoriteAddresses()
+{
+    QString key = QString("%1/favoriteAddresses").arg(AppSetting::instance()->primaryServer());
+    if(NunchukSettings::contains(key)){
+        m_favoriteAddresses = NunchukSettings::value("favoriteAddresses").toStringList();
+    }
+    else{
+        NunchukSettings::setValue("favoriteAddresses", m_favoriteAddresses);
+    }
+    return m_favoriteAddresses;
+}
+
+void AppSetting::setFavoriteAddresses(const QStringList &newFavoriteAddresses)
+{
+    if(m_favoriteAddresses != newFavoriteAddresses){
+        m_favoriteAddresses = newFavoriteAddresses;
+        QString key = QString("%1/favoriteAddresses").arg(AppSetting::instance()->primaryServer());
+        NunchukSettings::setValue(key, m_favoriteAddresses);
+        emit favoriteAddressesChanged();
+    }
+}
+
+void AppSetting::removeFavoriteAddress(const QString &address)
+{
+    QStringList addresses = favoriteAddresses();
+    if(addresses.contains(address)){
+        addresses.removeAll(address);
+        setFavoriteAddresses(addresses);
+    }
+}
+
+void AppSetting::addFavoriteAddress(const QString &address)
+{
+    QStringList addresses = favoriteAddresses();
+    if(!addresses.contains(address)){
+        addresses.append(address);
+        setFavoriteAddresses(addresses);
+    }
+}

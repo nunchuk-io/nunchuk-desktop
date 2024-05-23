@@ -108,7 +108,8 @@ Rectangle {
                          modelData.type === AlertType.RECURRING_PAYMENT_REQUEST ||
                          modelData.type === AlertType.RECURRING_PAYMENT_CANCELATION_PENDING||
                          modelData.type === AlertType.TRANSACTION_SIGNATURE_REQUEST ||
-                         modelData.type === AlertType.UPDATE_SECURITY_QUESTIONS
+                         modelData.type === AlertType.UPDATE_SECURITY_QUESTIONS ||
+                         modelData.type === AlertType.CHANGE_EMAIL_REQUEST
 
                 onButtonClicked: {
                     clickView()

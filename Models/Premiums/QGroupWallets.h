@@ -38,6 +38,7 @@ class QGroupWallets : public QAssistedDraftWallets
     Q_PROPERTY(QGroupDashboard* dashboardInfo       READ dashboardInfo                          NOTIFY dashboardInfoChanged)
     Q_PROPERTY(int currentIndex                     READ currentIndex  WRITE setCurrentIndex    NOTIFY currentIndexChanged)
     Q_PROPERTY(QVariant highestPermissionAccount    READ highestPermissionAccount               NOTIFY highestPermissionAccountChanged)
+    Q_PROPERTY(QVariantList historyPeriods          READ historyPeriods                         NOTIFY historyPeriodsChanged)
 private:
     QGroupWallets();
     ~QGroupWallets();
@@ -68,6 +69,10 @@ public:
     QVariant highestPermissionAccount();
 
     bool existGroupPending() const;
+    void GetHistoryPeriods();
+
+    QVariantList historyPeriods() const;
+    void setHistoryPeriods(QJsonArray historyPeriods);
 public:
     bool AddOrUpdateAKeyToDraftWallet() final;
     void updateRequestKey() final;
@@ -85,6 +90,7 @@ public slots:
     void setDashboardInfo(const QWalletPtr &wallet);
     void slotAcceptChanged(const QString& group_id);
     void clearDashBoard();
+    void requestManageGroupChatHistory();
 signals:
     void dashboardList(const QJsonArray& array);
     void dashboardListChanged();
@@ -93,11 +99,13 @@ signals:
     void showDashBoardChanged();
     void highestPermissionAccountChanged();
     void acceptChanged(const QString& group_id);
+    void historyPeriodsChanged();
 private:
     QList<QGroupDashboardPtr>   mPendingWallets {};
     QGroupDashboardPtr          mDashboard {};
     int                         mCurrentIndex {-1};
     QJsonObject                 mHighestPermissionAccount;
+    QJsonArray                  mHistoryPeriods;
 };
 
 #endif // QGROUPWALLETS_H

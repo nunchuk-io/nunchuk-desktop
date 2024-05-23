@@ -106,6 +106,7 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(QString currencySymbol           READ currencySymbol                                                 NOTIFY currencyChanged)
     Q_PROPERTY(bool isFirstTimeOnboarding       READ isFirstTimeOnboarding      WRITE setIsFirstTimeOnboarding      NOTIFY isFirstTimeOnboardingChanged)
     Q_PROPERTY(bool enableColab                 READ enableColab                WRITE setEnableColab                NOTIFY enableColabChanged)
+    Q_PROPERTY(QStringList favoriteAddresses    READ favoriteAddresses                                              NOTIFY favoriteAddressesChanged)
 
 public:
     enum class Chain : int {
@@ -248,6 +249,14 @@ public:
     bool isFirstTimeOnboarding();
     void setIsFirstTimeOnboarding(bool isFirstTime);
 
+    QVariant getMainnetList();
+    void setMainnetList(const QVariant &servers);
+
+    QStringList favoriteAddresses();
+    void setFavoriteAddresses(const QStringList &newFavoriteAddresses);
+    Q_INVOKABLE void removeFavoriteAddress(const QString &address);
+    Q_INVOKABLE void addFavoriteAddress(const QString &address);
+
 private:
     AppSetting();
     ~AppSetting();
@@ -288,6 +297,9 @@ private:
     bool isStarted_;
     bool isFirstTimeOnboarding_;
     bool enableColab_ {false};
+
+    QStringList m_favoriteAddresses{};
+
 signals:
     void unitChanged();
     void mainnetServerChanged();
@@ -327,6 +339,7 @@ signals:
     void currencyChanged();
     void isFirstTimeOnboardingChanged();
     void enableColabChanged();
+    void favoriteAddressesChanged();
 };
 
 #endif // APPSETTING_H

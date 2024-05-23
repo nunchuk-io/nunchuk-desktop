@@ -1406,9 +1406,8 @@ void bridge::nunchukUpdateRemoteSigner(const QSingleSignerPtr &signer, bool sync
     }
 }
 
-bool bridge::nunchukDisplayAddressOnDevice(const QString &wallet_id, const QString &address, const QString &device_fingerprint)
+bool bridge::nunchukDisplayAddressOnDevice(const QString &wallet_id, const QString &address, const QString &device_fingerprint, QWarningMessage &msg)
 {
-    QWarningMessage msg;
     nunchukiface::instance()->DisplayAddressOnDevice(wallet_id.toStdString(),
                                                      address.toStdString(),
                                                      device_fingerprint.toStdString(),

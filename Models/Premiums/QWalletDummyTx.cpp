@@ -53,7 +53,13 @@ int QWalletDummyTx::pending_signatures() const
 {
     if (auto dash = dashBoardPtr()) {
         QJsonObject payload = dash->alertJson()["payload"].toObject();
-        int pending_signatures = payload["pending_signatures"].toInt();
+        int pending_signatures {0};
+        if (!payload.contains("pending_signatures")) {
+            QJsonObject reqiredSignatures = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesJs();
+            pending_signatures = reqiredSignatures["required_signatures"].toInt();
+        } else {
+            pending_signatures = payload["pending_signatures"].toInt();
+        }
         return pending_signatures;
     }
     else {

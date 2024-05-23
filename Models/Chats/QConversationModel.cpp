@@ -34,11 +34,13 @@ QConversationModel::QConversationModel(Room *r):m_room(r),m_currentIndex(0),m_in
     if(m_room){
         QQmlEngine::setObjectOwnership(m_room, QQmlEngine::CppOwnership);
     }
+    connect(&m_RetentionTimer, SIGNAL(timeout()), this, SLOT(processingRetentionMessage()));
 }
 
 QConversationModel::~QConversationModel()
 {
-
+    disconnect();
+    stopCountdown();
 }
 
 int QConversationModel::rowCount(const QModelIndex &parent) const
@@ -603,6 +605,53 @@ bool QConversationModel::isSupportRoom()
 {
     QString tagname = (int)ENUNCHUCK::Chain::MAIN == (int)AppSetting::instance()->primaryServer() ?  NUNCHUK_ROOM_SUPPORT : NUNCHUK_ROOM_SUPPORTTESTNET;
     return m_room ? (m_room->tagNames().contains(tagname)) : false;
+}
+
+qint64 QConversationModel::maxLifeTime() const
+{
+    return m_maxLifeTime;
+}
+
+void QConversationModel::setMaxLifeTime(qint64 value)
+{
+    m_maxLifeTime = value;
+}
+
+void QConversationModel::startCountdown()
+{
+    m_RetentionTimer.stop();
+    m_RetentionTimer.start(2*60*1000); // Every 2 minutes
+    processingRetentionMessage();
+}
+
+void QConversationModel::stopCountdown()
+{
+    m_RetentionTimer.stop();
+}
+
+void QConversationModel::processingRetentionMessage()
+{
+    if(m_room && m_RetentionTimer.isActive()){
+        // Check all coversation, if conversation age > timelife max then remove it
+        QVector<int> indicesToRemove;
+        for (int i = 0; i < m_data.count(); i++) {
+            Conversation cons = m_data.at(i);
+            qint64 timestamp_milisec = QDateTime::fromTime_t(cons.timestamp).toMSecsSinceEpoch();
+            qint64 time_msg_age = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() - timestamp_milisec;
+            if(time_msg_age > m_maxLifeTime){
+                indicesToRemove.append(i);
+            }
+        }
+        if (!indicesToRemove.isEmpty()) {
+            // Remove the items in reverse order to maintain correct indices
+            beginRemoveRows(QModelIndex(), indicesToRemove.first(), indicesToRemove.last());
+            for (int i = indicesToRemove.count() - 1; i >= 0; --i) {
+                m_data.removeAt(indicesToRemove.at(i));
+            }
+            endRemoveRows();
+            emit countChanged();
+        }
+    }
 }
 
 bool sortConversationByTimeAscending(const Conversation &v1, const Conversation &v2)

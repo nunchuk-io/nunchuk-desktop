@@ -52,7 +52,7 @@ Item {
                 top:parent.top
                 topMargin: 24
             }
-            spacing: 1
+            spacing: 24
             QText {
                 anchors{
                     left: parent.left
@@ -63,6 +63,57 @@ Item {
                 font.weight: Font.Bold
                 text: STR.STR_QML_537
             }
+            QLine {
+                width: 627
+                anchors{
+                    left: parent.left
+                    leftMargin: 24
+                }
+                visible: ClientController.user.isSubscribedUser
+            }
+            Item {
+                width: 627
+                height: 48
+                anchors{
+                    left: parent.left
+                    leftMargin: 24
+                }
+                visible: ClientController.user.isSubscribedUser
+                QLato {
+                    anchors {
+                        left: parent.left
+                        verticalCenter: parent.verticalCenter
+                    }
+                    font.pixelSize: 20
+                    font.weight: Font.Bold
+                    text: STR.STR_QML_1303
+                }
+                QTextButton {
+                    anchors {
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: 128
+                    height: 48
+                    label.text: STR.STR_QML_1304
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    onButtonClicked: {
+                        var screenObj = { "state_id" : EVT.STATE_ID_SCR_CHANGE_EMAIL }
+                        QMLHandle.sendEvent(EVT.EVT_REENTER_YOUR_PASSWORD_REQUEST,screenObj)
+                    }
+                }
+            }
+
+            QLine {
+                width: 627
+                anchors{
+                    left: parent.left
+                    leftMargin: 24
+                }
+                visible: ClientController.user.isSubscribedUser
+            }
+
             Item{
                 visible: ClientController.user.isPrimaryKey
                 width: 627

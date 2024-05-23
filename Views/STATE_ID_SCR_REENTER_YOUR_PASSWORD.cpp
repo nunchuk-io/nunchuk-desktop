@@ -107,6 +107,14 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_BACK);
         }
     }break;
+    case E::STATE_ID_SCR_CHANGE_EMAIL: {
+        if (ServiceSetting::instance()->servicesTagPtr()->requestChangeEmailVerifyPassword(password)) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            QTimer::singleShot(100,[=](){
+                QEventProcessor::instance()->sendEvent(E::EVT_CHANGE_EMAIL_REQUEST);
+            });
+        }
+    }break;
     default:
         break;
     }

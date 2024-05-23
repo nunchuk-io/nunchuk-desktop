@@ -1,6 +1,13 @@
 #include "ProfileSetting.h"
+#include "ViewsEnums.h"
 #include "Servers/Draco.h"
 #include "localization/STR_CPP.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QGroupWalletDummyTx.h"
+#include "Chats/ClientController.h"
+#include "Premiums/QGroupDashboard.h"
+#include "Premiums/QGroupWallets.h"
 
 ProfileSetting::ProfileSetting(QObject *parent) : QObject(parent)
 {
@@ -93,3 +100,257 @@ void ProfileSetting::setOptionIndex(int optionIndex)
     emit optionIndexChanged();
 }
 
+void ProfileSetting::GetMainNetServer()
+{
+    QtConcurrent::run([=]() {
+        QJsonObject output;
+        QString errormsg;
+        bool ret = Draco::instance()->GetElectrumServers(output, errormsg);
+        DBG_INFO << errormsg;
+        if (ret) {
+            m_mainnetList = output["mainnet"].toArray();
+            loadMainnetServers();
+        }
+    });
+}
+
+
+QVariantList ProfileSetting::mainnetServers() const
+{
+    return m_mainnetServers.toVariantList();
+}
+
+void ProfileSetting::updateMainnetServers()
+{
+    m_mainnetServers = m_mainnetList;
+    if (m_storeMainnetServers.size() > 0) {
+        for (auto js : m_storeMainnetServers) {
+            m_mainnetServers.append(js);
+        }
+    }
+    QString urlSelected = AppSetting::instance()->mainnetServer();
+    for (int i = 0; i < m_mainnetServers.size(); i++) {
+        QJsonObject item = m_mainnetServers[i].toObject();
+        if (item["url"].toString() == urlSelected) {
+            setMainnetIndex(i);
+        }
+    }
+    emit mainnetServersChanged();
+}
+
+void ProfileSetting::resetDefaultMainnetServers()
+{
+    QString urlSelected = AppSetting::instance()->mainnetServer();
+    bool isSetIndex {false};
+    for (int i = 0; i < m_mainnetServers.size(); i++) {
+        QJsonObject item = m_mainnetServers[i].toObject();
+        if (item["url"].toString() == urlSelected) {
+            setMainnetIndex(i);
+            isSetIndex = true;
+        }
+    }
+    DBG_INFO << isSetIndex;
+    if (!isSetIndex) {
+        setMainnetIndex(0);
+        QJsonObject item = m_mainnetServers[0].toObject();
+        AppSetting::instance()->setMainnetServer(item["url"].toString());
+    }
+}
+
+int ProfileSetting::mainnetIndex() const
+{
+    return m_mainnetIndex;
+}
+
+void ProfileSetting::setMainnetIndex(int mainnetIndex)
+{
+    if (m_mainnetIndex == mainnetIndex)
+        return;
+
+    m_mainnetIndex = mainnetIndex;
+    emit mainnetIndexChanged();
+}
+
+bool ProfileSetting::CalculateRequireSignaturesForChangingEmail()
+{
+    QJsonObject output;
+    QString errormsg;
+    bool ret = Draco::instance()->CalculateRequireSignaturesForChangingEmail(newEmail(), output, errormsg);
+    if (ret) {
+        DBG_INFO << output;
+        QJsonObject resultObj = output["result"].toObject();
+        ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures(resultObj);
+        ReqiredSignaturesInfo required_question = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
+        if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
+            if (ProfileSetting::instance()->ChangeEmail()) {
+                if(auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dashboard->setFlow((int)AlertEnum::E_Alert_t::CHANGE_EMAIL);
+                    QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+                }
+            }
+            return true;
+        }
+        else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
+            ServiceSetting::instance()->servicesTagPtr()->CreateSecurityQuestionsAnswered();
+            return true;
+        }
+        else {
+            ProfileSetting::instance()->ChangeEmailNone();
+        }
+    }
+    return false;
+}
+
+bool ProfileSetting::ChangeEmail()
+{
+    QJsonObject output;
+    QString errormsg;
+    QJsonObject data = ServiceSetting::instance()->servicesTagPtr()->confirmCodeNonceBody();
+    DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->passwordToken() << ServiceSetting::instance()->servicesTagPtr()->confirmToken();
+    bool ret = Draco::instance()->ChangeEmail(data,
+                                              {},
+                                              ServiceSetting::instance()->servicesTagPtr()->passwordToken(),
+                                              {},
+                                              ServiceSetting::instance()->servicesTagPtr()->confirmToken(),
+                                              true,
+                                              output,
+                                              errormsg);
+    if (ret) {
+        DBG_INFO << output;
+        bool success = output["success"].toBool();
+        if (!success) {
+            QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
+            QString wallet_local_id = dummy_transaction["wallet_local_id"].toString();
+            if (auto wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_local_id)) {
+                QGroupWallets::instance()->setDashboardInfo(wallet);
+                if (auto dummy = wallet->groupDummyTxPtr()) {
+                    dummy->setDummyTxData(dummy_transaction);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ProfileSetting::ChangeEmailNone()
+{
+    QJsonObject output;
+    QString errormsg;
+    QJsonObject data = ServiceSetting::instance()->servicesTagPtr()->confirmCodeNonceBody();
+    DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->passwordToken() << ServiceSetting::instance()->servicesTagPtr()->confirmToken();
+    bool ret = Draco::instance()->ChangeEmail(data,
+                                              {},
+                                              ServiceSetting::instance()->servicesTagPtr()->passwordToken(),
+                                              {},
+                                              ServiceSetting::instance()->servicesTagPtr()->confirmToken(),
+                                              false,
+                                              output,
+                                              errormsg);
+    if (ret) {
+        DBG_INFO << output;
+        bool success = output["success"].toBool();
+        if (success) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            ClientController::instance()->requestSignout();
+            QString msg_name = QString("Email has been changed. Please sign in again.");
+            AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ProfileSetting::seccurityQuestion()
+{
+    if (ServiceSetting::instance()->servicesTagPtr()->secQuesAnswer()) {
+        QJsonObject output;
+        QString errormsg;
+        QJsonObject data = ServiceSetting::instance()->servicesTagPtr()->confirmCodeNonceBody();
+        DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->passwordToken()
+                 << ServiceSetting::instance()->servicesTagPtr()->secQuesToken()
+                 << ServiceSetting::instance()->servicesTagPtr()->confirmToken();
+        bool ret = Draco::instance()->ChangeEmail(data,
+                                                  {},
+                                                  ServiceSetting::instance()->servicesTagPtr()->passwordToken(),
+                                                  ServiceSetting::instance()->servicesTagPtr()->secQuesToken(),
+                                                  ServiceSetting::instance()->servicesTagPtr()->confirmToken(),
+                                                  false,
+                                                  output,
+                                                  errormsg);
+        if (ret) {
+            DBG_INFO << output;
+            bool success = output["success"].toBool();
+            if (success) {
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                ClientController::instance()->requestSignout();
+                QString msg_name = QString("Email has been changed. Please sign in again.");
+                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool ProfileSetting::addMainnetServer(const QVariant &server)
+{
+    QVariantMap map = server.toMap();
+    DBG_INFO << map;
+    QString name = map["name"].toString();
+    QString url = map["url"].toString();
+    for (int i = 0; i < m_storeMainnetServers.size(); i++) {
+        QJsonObject item = m_storeMainnetServers[i].toObject();
+        if (item["name"].toString() == name && item["url"].toString() == url) {
+            return false;
+        }
+    }
+    m_storeMainnetServers.append(server.toJsonObject());
+    AppSetting::instance()->setMainnetServer(url);
+    updateMainnetServers();
+    saveMainnetServers();
+    QString msg = QString("Server added");
+    AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+    return true;
+}
+
+void ProfileSetting::removeMainnetServer(const QVariant &server)
+{
+    QVariantMap map = server.toMap();
+    QString name = map["name"].toString();
+    QString url = map["url"].toString();
+    for (int i = 0; i < m_storeMainnetServers.size(); i++) {
+        QJsonObject item = m_storeMainnetServers[i].toObject();
+        if (item["name"].toString() == name && item["url"].toString() == url) {
+            m_storeMainnetServers.removeAt(i);
+        }
+    }
+    updateMainnetServers();
+}
+
+void ProfileSetting::saveMainnetServers()
+{
+    AppSetting::instance()->setMainnetList(m_storeMainnetServers.toVariantList());
+}
+
+void ProfileSetting::loadMainnetServers()
+{
+    QVariantList list = AppSetting::instance()->getMainnetList().toList();
+    m_storeMainnetServers = QJsonArray::fromVariantList(list);
+
+    updateMainnetServers();
+}
+
+QString ProfileSetting::newEmail() const
+{
+    return m_newEmail;
+}
+
+void ProfileSetting::setNewEmail(const QString &newNew_email)
+{
+    if (m_newEmail == newNew_email)
+        return;
+    m_newEmail = newNew_email;
+    emit newEmailChanged();
+}

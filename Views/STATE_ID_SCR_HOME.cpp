@@ -40,6 +40,9 @@ void SCR_HOME_Entry(QVariant msg) {
     ProfileSetting::instance()->createCurrencies();
     QUserWallets::instance()->GetListAllRequestAddKey();
     QGroupWallets::instance()->GetAllGroups();
+    if(CLIENT_INSTANCE->rooms()){
+        CLIENT_INSTANCE->rooms()->stopCountdown();
+    }
 }
 
 void SCR_HOME_Exit(QVariant msg) {

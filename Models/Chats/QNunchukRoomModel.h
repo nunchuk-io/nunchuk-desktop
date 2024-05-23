@@ -119,6 +119,7 @@ public:
     bool isNunchukSyncRoom() const;
     bool isSupportRoom() const;
     bool isDirectChat() const;
+    bool isByzantineRoom() const;
     QString byzantineRoomGroupId();
     QString localUserName() const;
     QString id() const;
@@ -201,6 +202,14 @@ public:
     void setWalletImport(const nunchuk::Wallet &walletImport);
     int roomType();
     void synchonizesUserData();
+
+    // Message retention
+    bool   isValidMessageTime(const Conversation cons);
+    qint64 messageMaxLifeTime() const;
+    void setMessageMaxLifeTime(qint64 value);
+    void startCountdown();
+    void stopCountdown();
+    void activateRetention(qint64 maxLifeTime = NUNCHUK_ROOM_RETENTION_TIME); // Default 30days
 private:
     Quotient::Room          *m_room;
     QConversationModelPtr   m_conversation;
@@ -216,6 +225,7 @@ private:
     QRoomTransaction       *m_pinTransaction;
     nunchuk::Wallet         m_walletImport;
     bool                    m_IsEncrypted;
+    qint64                  m_maxLifeTime;
 private:
     bool validatePendingEvent(const QString& txnId);
     bool extractNunchukEvent(const RoomEvent& evt, Conversation &cons) ;
@@ -308,7 +318,7 @@ public:
     void setCurrentIndex(int index);
     QNunchukRoom *currentRoom() const;
     QNunchukRoomPtr currentRoomPtr() const;
-    void setCurrentRoom(const QNunchukRoomPtr &currentRoom);
+    void setCurrentRoom(const QNunchukRoomPtr &newRoom);
     void sendMessage(const QString& msg);
     int totalUnread();
     void requestSort();
@@ -353,6 +363,10 @@ public:
     void setRoomWallets(const QList<QRoomWalletPtr> &roomWallets);
     void renameRoomByzantineChat(const QString room_id, const QString group_id, const QString newname);
 
+    // Retention
+    void stopCountdown();
+    void startCountdown();
+    void updateMaxLifeTime(QString& roomId, qint64 maxLifeTime /*milisec*/);
 private:
     Quotient::Connection*   m_connection;
     int                     m_currentIndex;

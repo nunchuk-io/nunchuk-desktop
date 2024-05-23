@@ -32,6 +32,9 @@ QGroupDashboard::QGroupDashboard(const QString& wallet_id)
     : QBasePremium(wallet_id)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+
+    connect(CLIENT_INSTANCE, &ClientController::byzantineRoomCreated,   this, &QGroupDashboard::byzantineRoomCreated);
+    connect(CLIENT_INSTANCE, &ClientController::byzantineRoomDeleted,   this, &QGroupDashboard::byzantineRoomDeleted);
 }
 
 QGroupDashboard::~QGroupDashboard()
@@ -563,6 +566,7 @@ bool QGroupDashboard::canEntryClickAlert()
         }
         return true;
     }
+    case AlertEnum::E_Alert_t::CHANGE_EMAIL_REQUEST:
     case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
     case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS:
     case AlertEnum::E_Alert_t::KEY_RECOVERY_REQUEST:
@@ -615,6 +619,59 @@ void QGroupDashboard::setInheritanceCount(int count)
     emit inheritanceCountChanged();
 }
 
+void QGroupDashboard::GetGroupChat()
+{
+    QJsonObject output;
+    QString error_msg = "";
+    bool ret = Byzantine::instance()->GetGroupChat(groupId(), output, error_msg);
+    if (ret) {
+        DBG_INFO << output;
+        QJsonObject chat = output["chat"].toObject();
+        QJsonObject history_period = chat["history_period"].toObject();
+        QString id = history_period["id"].toString();
+        setHistoryPeriodId(id);
+    } else {
+        //Show error
+        DBG_INFO << error_msg;
+    }
+}
+
+void QGroupDashboard::UpdateGroupChat(const QString &history_period_id)
+{
+    QJsonObject output;
+    QString error_msg = "";
+    bool ret = Byzantine::instance()->UpdateGroupChat(groupId(), history_period_id, output, error_msg);
+    if (ret) {
+        DBG_INFO << output;
+        QJsonObject chat = output["chat"].toObject();
+        QJsonObject history_period = chat["history_period"].toObject();
+        QString id = history_period["id"].toString();
+        setHistoryPeriodId(id);
+        QString room_id = chat["room_id"].toString();
+        double duration_in_millis = history_period["duration_in_millis"].toDouble();
+        ClientController::instance()->updateMessageMaxLifeTime(room_id, duration_in_millis);
+        // show toast success
+        AppModel::instance()->showToast(0, "Chat settings updated", EWARNING::WarningType::SUCCESS_MSG);
+    } else {
+        //Show error
+        DBG_INFO << error_msg;
+    }
+}
+
+QString QGroupDashboard::historyPeriodId() const
+{
+    return mHistoryPeriodId;
+}
+
+void QGroupDashboard::setHistoryPeriodId(const QString &newHistoryPeriodId)
+{
+    if (mHistoryPeriodId == newHistoryPeriodId)
+        return;
+
+    mHistoryPeriodId = newHistoryPeriodId;
+    emit historyPeriodIdChanged();
+}
+
 void QGroupDashboard::requestHealthCheck(const QString &xfp){
     if (auto wallet = walletInfoPtr()) {
         setConfigFlow("health-check-procedure");
@@ -641,8 +698,12 @@ bool QGroupDashboard::requestByzantineChat()
             QString chat_id = member["user"].toObject()["chat_id"].toString();
             QString chat_name = member["user"].toObject()["name"].toString();
             if(!qUtils::strCompare(chat_id, me.chat_id)){
-                invitees_id << member["user"].toObject()["chat_id"].toString();
-                invitees_name << member["user"].toObject()["name"].toString();
+                QString chat_id = member["user"].toObject()["chat_id"].toString();
+                QString chat_name = member["user"].toObject()["name"].toString();
+                if(chat_id != ""){
+                    invitees_id << chat_id;
+                    invitees_name << chat_name;
+                }
             }
         }
         if(hasWallet()){
@@ -652,7 +713,7 @@ bool QGroupDashboard::requestByzantineChat()
                 invitees_name.append(wallet_name);
             }
         }
-        DBG_INFO << invitees_id << invitees_name;
+        DBG_INFO << invitees_id << invitees_name << historyPeriodId();
         if(invitees_id.size() > 0){
             CLIENT_INSTANCE->createRoomByzantineChat(invitees_id, invitees_name, group_id, "");
         }
@@ -684,7 +745,7 @@ void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
         QString error_msg = "";
         bool ret = Byzantine::instance()->DeleteGroupChat(group_id, output, error_msg);
         if(!ret){
-            //TBD
+            DBG_INFO << output << error_msg;
         }
     }
 }
@@ -826,6 +887,16 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const
             }
             signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
             signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());
+            auto key = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
+            if (!key.isNull()) {
+                signer["signer_type"] = key->signerType();
+            } else {
+                auto key = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
+                if (!key.isNull()) {
+                    signer["type"] = QString::fromStdString(SignerTypeToStr((nunchuk::SignerType)key->signerType()));
+                    signer["signer_type"] = key->signerType();
+                }
+            }
             signer["signer_is_primary"] = qUtils::isPrimaryKey(xfp);
             return signer;
         }
@@ -862,7 +933,10 @@ void QGroupDashboard::setDummyTxAlert(const QJsonObject &dummy_transaction)
     QJsonObject alert = alertJson();
     QJsonObject payload = alert["payload"].toObject();
     payload["dummy_transaction_id"] = dummy_transaction["id"].toString();
-    payload["pending_signatures"] = dummy_transaction["pending_signatures"].toInt();
+    QJsonObject dummy_payload = dummy_transaction["payload"].toObject();
+    for (auto it = dummy_payload.begin(); it != dummy_payload.end(); ++it) {
+        payload[it.key()] = it.value();
+    }
     alert["payload"] = payload;
     setAlertId(alert);
 }

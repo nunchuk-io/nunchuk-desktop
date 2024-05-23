@@ -429,7 +429,14 @@
         <file>Qml/Components/customizes/QEmptyWelcome.qml</file>
         <file>Qml/Screens/OnlineMode/Healths/QSecurityQuestionsUpdate.qml</file>
         <file>Qml/Components/customizes/QRCodes/QQrScannerOverlay.qml</file>
-	<file>Qml/Components/customizes/Signers/QAddKeySelectType.qml</file>
+        <file>Qml/Components/customizes/Signers/QAddKeySelectType.qml</file>
+        <file>Qml/Screens/LocalMode/SCR_SELECT_SERVER.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupEnterServerAddress.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QManageGroupChatHistory.qml</file>
+        <file>Qml/Screens/LocalMode/SCR_CHANGE_EMAIL.qml</file>
+        <file>Qml/Screens/LocalMode/ChangeEmail/QChangeEmail.qml</file>
+        <file>Qml/Screens/LocalMode/ChangeEmail/QConfirmEmail.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QChangeEmailRequest.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -717,6 +724,7 @@
         <file>Images/unassisted-wallet-description.png</file>
         <file>Images/onboarding-assisted-wallet.png</file>
         <file>Images/onboarding-unassisted-wallet.png</file>
+        <file>Images/accounts-settings-dark.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

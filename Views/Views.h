@@ -110,6 +110,8 @@ static const APPLICATION_STATE STATE_ID_SCR_SETUP_SECURITY_QUESTION             
 static const APPLICATION_STATE STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION       = {E::STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION      , SCR_SETUP_ANSWER_SECURITY_QUESTION_Entry      , SCR_SETUP_ANSWER_SECURITY_QUESTION_Exit      , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_ANSWER_SECURITY_QUESTION       };
 static const APPLICATION_STATE STATE_ID_SCR_RECURRING_PAYMENTS                   = {E::STATE_ID_SCR_RECURRING_PAYMENTS                  , SCR_RECURRING_PAYMENTS_Entry                  , SCR_RECURRING_PAYMENTS_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_RECURRING_PAYMENTS                   };
 static const APPLICATION_STATE STATE_ID_SCR_ONBOARDING                           = {E::STATE_ID_SCR_ONBOARDING                          , SCR_ONBOARDING_Entry                          , SCR_ONBOARDING_Exit                          , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_ONBOARDING                           };
+static const APPLICATION_STATE STATE_ID_SCR_SELECT_SERVER                        = {E::STATE_ID_SCR_SELECT_SERVER                       , SCR_SELECT_SERVER_Entry                       , SCR_SELECT_SERVER_Exit                       , LAYER::LAYER_POPUP   , LIMIT::NONE , SCR_SELECT_SERVER                        };
+static const APPLICATION_STATE STATE_ID_SCR_CHANGE_EMAIL                         = {E::STATE_ID_SCR_CHANGE_EMAIL                        , SCR_CHANGE_EMAIL_Entry                        , SCR_CHANGE_EMAIL_Exit                        , LAYER::LAYER_POPUP   , LIMIT::NONE , SCR_CHANGE_EMAIL                         };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const STATE_TRIGGER STATE_ID_ROOT_trigger[31] = 
@@ -308,7 +310,7 @@ static const STATE_TRIGGER STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION_trigger[
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_APP_SETTINGS_trigger[8] = 
+static const STATE_TRIGGER STATE_ID_SCR_APP_SETTINGS_trigger[10] = 
 {
 	{E::EVT_APP_SETTING_DELETE_ACCOUNT_REQUEST            , EVT_APP_SETTING_DELETE_ACCOUNT_REQUEST_HANDLER            , NULL                              },
 	{E::EVT_APP_SETTING_CHANGE_PASSPHRASE                 , EVT_APP_SETTING_CHANGE_PASSPHRASE_HANDLER                 , NULL                              },
@@ -318,6 +320,8 @@ static const STATE_TRIGGER STATE_ID_SCR_APP_SETTINGS_trigger[8] =
 	{E::EVT_APP_SETTING_BACK_REQUEST                      , EVT_APP_SETTING_BACK_REQUEST_HANDLER                      , &STATE_ID_SCR_HOME                },
 	{E::EVT_APP_SETTING_BACK_TO_ONLINE_MODE               , EVT_APP_SETTING_BACK_TO_ONLINE_MODE_HANDLER               , &STATE_ID_SCR_HOME_ONLINE         },
 	{E::EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST              , EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST_HANDLER              , &STATE_ID_SCR_REPLACE_PRIMARY_KEY },
+	{E::EVT_SELECT_SERVER_REQUEST                         , EVT_SELECT_SERVER_REQUEST_HANDLER                         , &STATE_ID_SCR_SELECT_SERVER       },
+	{E::EVT_CHANGE_EMAIL_REQUEST                          , EVT_CHANGE_EMAIL_REQUEST_HANDLER                          , &STATE_ID_SCR_CHANGE_EMAIL        },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -340,6 +344,14 @@ static const STATE_TRIGGER STATE_ID_SCR_BACKUP_SHARED_WALLET_trigger[5] =
 	{E::EVT_BACKUP_SHARED_WALLET_EXPORT_BSMS , EVT_BACKUP_SHARED_WALLET_EXPORT_BSMS_HANDLER , NULL                                        },
 	{E::EVT_BACKUP_SHARED_WALLET_BACK        , EVT_BACKUP_SHARED_WALLET_BACK_HANDLER        , &STATE_ID_SCR_HOME_ONLINE                   },
 	{E::EVT_BACKUP_WALLET_DEVICE_REGISTRATION, EVT_BACKUP_WALLET_DEVICE_REGISTRATION_HANDLER, &STATE_ID_SCR_SHARED_WL_DEVICE_REGISTRATION },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_CHANGE_EMAIL_trigger[1] = 
+{
+	{E::EVT_CHANGE_EMAIL_ENTER, EVT_CHANGE_EMAIL_ENTER_HANDLER, NULL  },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -807,6 +819,14 @@ static const STATE_TRIGGER STATE_ID_SCR_REVIEW_SHARED_WALLET_trigger[2] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const STATE_TRIGGER STATE_ID_SCR_SELECT_SERVER_trigger[1] = 
+{
+	{E::EVT_SELECT_SERVER_ENTER, EVT_SELECT_SERVER_ENTER_HANDLER, NULL  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const STATE_TRIGGER STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_trigger[1] = 
 {
 	{E::EVT_SELECT_WALLET_REQUEST, EVT_SELECT_WALLET_REQUEST_HANDLER, NULL  },
@@ -1090,7 +1110,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[82] = 
+static const STATE_SYSTEM STATE_ALL[84] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1174,6 +1194,8 @@ static const STATE_SYSTEM STATE_ALL[82] =
 	{E::STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION      , STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger      , ALEN(STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger)      , &STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION       },
 	{E::STATE_ID_SCR_RECURRING_PAYMENTS                  , STATE_ID_SCR_RECURRING_PAYMENTS_trigger                  , ALEN(STATE_ID_SCR_RECURRING_PAYMENTS_trigger)                  , &STATE_ID_SCR_RECURRING_PAYMENTS                   },
 	{E::STATE_ID_SCR_ONBOARDING                          , STATE_ID_SCR_ONBOARDING_trigger                          , ALEN(STATE_ID_SCR_ONBOARDING_trigger)                          , &STATE_ID_SCR_ONBOARDING                           },
+	{E::STATE_ID_SCR_SELECT_SERVER                       , STATE_ID_SCR_SELECT_SERVER_trigger                       , ALEN(STATE_ID_SCR_SELECT_SERVER_trigger)                       , &STATE_ID_SCR_SELECT_SERVER                        },
+	{E::STATE_ID_SCR_CHANGE_EMAIL                        , STATE_ID_SCR_CHANGE_EMAIL_trigger                        , ALEN(STATE_ID_SCR_CHANGE_EMAIL_trigger)                        , &STATE_ID_SCR_CHANGE_EMAIL                         },
 
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

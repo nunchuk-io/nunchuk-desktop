@@ -306,7 +306,9 @@ bool Byzantine::GetGroupAlertsCount(const QString group_id, QJsonObject &output,
         }
         else{
             errormsg = response_msg;
+#if 0 //NO NEED
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
             return false;
         }
     }
@@ -538,7 +540,9 @@ bool Byzantine::GetCurrentGroupDraftWallet(const QString group_id, QJsonObject &
         }
         else{
             errormsg = response_msg;
+#if 0 //NO NEED
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
             return false;
         }
     }
@@ -1698,7 +1702,7 @@ bool Byzantine::GetGroupChat(const QString &group_id, QJsonObject &output, QStri
     return false;
 }
 
-bool Byzantine::UpdateGroupChat(const QString &group_id, QJsonObject &output, QString &errormsg)
+bool Byzantine::UpdateGroupChat(const QString &group_id, const QString &history_period_id, QJsonObject &output, QString &errormsg)
 {
     if (!group_id.isEmpty()) {
         int     reply_code = -1;
@@ -1706,6 +1710,7 @@ bool Byzantine::UpdateGroupChat(const QString &group_id, QJsonObject &output, QS
         QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_CHAT_UPDATE];
         cmd.replace("{group_id}", group_id);
         QJsonObject data;
+        data["history_period_id"] = history_period_id;
         QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
         if (reply_code == DRACO_CODE::SUCCESSFULL) {
             QJsonObject errorObj = jsonObj["error"].toObject();

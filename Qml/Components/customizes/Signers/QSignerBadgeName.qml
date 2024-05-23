@@ -37,7 +37,7 @@ QBadge {
         case NUNCHUCKTYPE.HARDWARE: value = ""; break
         case NUNCHUCKTYPE.AIRGAP:   value = "Airgapped"; break
         case NUNCHUCKTYPE.SOFTWARE: value = "Software"; break
-        case NUNCHUCKTYPE.FOREIGN_SOFTWARE: value = "Software"; break
+        case NUNCHUCKTYPE.FOREIGN_SOFTWARE: value = "Foreign software"; break
         case NUNCHUCKTYPE.NFC: value = "NFC"; break
         case NUNCHUCKTYPE.COLDCARD_NFC: value = "COLDCARD-NFC"; break
         case NUNCHUCKTYPE.SERVER: value = ""; break
@@ -48,7 +48,7 @@ QBadge {
             case "HARDWARE": value = ""; break
             case "AIRGAP":   value = "Airgapped"; break
             case "SOFTWARE": value = "Software"; break
-            case "FOREIGN_SOFTWARE": value = "Software"; break
+            case "FOREIGN_SOFTWARE": value = "Foreign software"; break
             case "NFC": value = "NFC"; break
             case "COLDCARD_NFC": value = "COLDCARD-NFC"; break
             case "SERVER": value = ""; break

@@ -336,6 +336,17 @@ public:
 
     bool GetCountryCodeList(QJsonObject &output, QString &errormsg);
     bool RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note, QString &errormsg);
+
+    bool GetElectrumServers(QJsonObject &output, QString &errormsg);
+    bool ChangeEmail(const QJsonObject& request_body,
+                     const QStringList &signatures,
+                     const QString& passwordToken,
+                     const QString& secQuesToken,
+                     const QString& confirmToken,
+                     bool isDraft,
+                     QJsonObject &output,
+                     QString &errormsg);
+    bool CalculateRequireSignaturesForChangingEmail(const QString &new_email, QJsonObject& output, QString &errormsg);
 private:
     Draco();
     ~Draco();

@@ -14,6 +14,7 @@
 QGroupWalletDummyTx::QGroupWalletDummyTx(WalletId wallet_id)
     : QWalletDummyTx(wallet_id)
 {
+    connect(this, &QGroupWalletDummyTx::requestSignout, ClientController::instance(), &ClientController::requestSignout, Qt::QueuedConnection);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -307,7 +308,13 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
                     AppModel::instance()->showToast(0, msg_approved, EWARNING::WarningType::SUCCESS_MSG);
                 }
             }
-//            case AlertEnum::E_Alert_t::CANCEL_RECURRING_PAYMENT: CancelRecurringPaymentPayload
+            case AlertEnum::E_Alert_t::CHANGE_EMAIL: {
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                emit requestSignout();
+                QString msg_name = QString("Email has been changed. Please sign in again.");
+                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+                break;
+            }
             default:
                 break;
             }

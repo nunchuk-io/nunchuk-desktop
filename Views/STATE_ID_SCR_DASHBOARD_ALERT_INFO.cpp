@@ -184,6 +184,25 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
     else if (type == "continue-security-question-update") {
         QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
     }
+    else if (type == "select-period-history") {
+        QString history_period_id = maps["history_period_id"].toString();
+        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+            dashboard->UpdateGroupChat(history_period_id);
+        }
+    }
+    else if (type == "cancel-change-email") {
+        if (auto dummy = dashboard->groupDummyTxPtr()) {
+            if (dummy->CancelDummyTransaction()) {
+                dashboard->GetAlertsInfo();
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                QString msg_cancel = "Email address change has been canceled.";
+                AppModel::instance()->showToast(0, msg_cancel, EWARNING::WarningType::SUCCESS_MSG);
+            }
+        }
+    }
+    else if (type == "continue-change-email") {
+        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+    }
     else {}
 }
 

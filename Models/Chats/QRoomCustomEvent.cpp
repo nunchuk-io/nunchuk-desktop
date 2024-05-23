@@ -42,3 +42,9 @@ QNunchukExceptionEvent::QNunchukExceptionEvent(const QString &matrixType, const 
 {
 
 }
+
+// QNunchukRentionState::QNunchukRentionState(const QJsonObject &contentJson)
+//     : StateEventBase(typeId(), contentJson)
+// {
+
+// }

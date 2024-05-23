@@ -1,6 +1,11 @@
 cmake_minimum_required( VERSION 3.1 )
 #set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
-project(Nunchuk VERSION 1.9.33)
+if(UNIX AND APPLE)
+    project(Nunchuk VERSION 1.9.34)
+else()
+    project(nunchuk-qt VERSION 1.9.34)
+endif()
+
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON)
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
@@ -164,6 +169,8 @@ set(Views_SRCS
     Views/STATE_ID_SCR_SETUP_SECURITY_QUESTION.cpp
     Views/STATE_ID_SCR_RECURRING_PAYMENTS.cpp
     Views/STATE_ID_SCR_ONBOARDING.cpp
+    Views/STATE_ID_SCR_SELECT_SERVER.cpp
+    Views/STATE_ID_SCR_CHANGE_EMAIL.cpp
     )
 
 set(Views_MOCS

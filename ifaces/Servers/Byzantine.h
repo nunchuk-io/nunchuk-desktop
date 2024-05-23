@@ -154,7 +154,7 @@ public:
 
     // Group chat
     bool GetGroupChat(const QString &group_id, QJsonObject& output, QString &errormsg);
-    bool UpdateGroupChat(const QString &group_id, QJsonObject& output, QString &errormsg);
+    bool UpdateGroupChat(const QString &group_id, const QString &history_period_id, QJsonObject& output, QString &errormsg);
     bool DeleteGroupChat(const QString &group_id, QJsonObject& output, QString &errormsg);
     bool CreateGroupChat(const QString &group_id, const QString &room_id, QJsonObject& output, QString &errormsg);
     bool GetAllGroupChat(QJsonObject& output, QString &errormsg);

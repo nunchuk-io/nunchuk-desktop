@@ -17,49 +17,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
-import QtQuick.Controls 2.1
-import QtQuick.Controls.Styles 1.4
-import QtGraphicalEffects 1.0
+import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
+import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../../Components/origins"
+import "../../Components/customizes"
+import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
+import "../../Components/customizes/Buttons"
+import "../../Components/customizes/services"
+import "./ChangeEmail"
 import "../../../localization/STR_QML.js" as STR
 
-Rectangle {
-    width: 528
-    height: 60
-    color: "#EAEAEA"
-    radius: 12
-    property string icon: ""
-    property alias txt: _txt
-    property int iSize: 24
-    Row {
-        anchors.fill: parent
-        anchors.margins: 12
-        spacing: 12
-        QIcon {
-            iconSize: iSize
-            source: icon
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        QLato {
-            id: _txt
-            width: 700
-            height: 28
-            color: "#031F2B"
-            wrapMode: Text.WrapAnywhere
-            horizontalAlignment: Text.AlignLeft
-            anchors.verticalCenter: parent.verticalCenter
-            onLinkActivated: Qt.openUrlExternally(link)
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: _txt.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                acceptedButtons: Qt.NoButton
+QScreen {
+    id:_screen
+    property var reqiredSignature: ServiceSetting.servicesTag.reqiredSignatures
+    Loader {
+        width: popupWidth
+        height: popupHeight
+        anchors.centerIn: parent
+        sourceComponent: {
+            if (reqiredSignature.type === "SECURITY_QUESTION") {
+                return security_question
+            } else {
+                return ProfileSetting.newEmail !== "" ? _ConfirmEmail : _ChangeEmail
             }
         }
+    }
+    Component {
+        id: security_question
+        QAnswerSecurityQuestion {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+
+            onNextClicked: {
+                ProfileSetting.seccurityQuestion()
+            }
+        }
+    }
+
+    Component {
+        id: _ChangeEmail
+        QChangeEmail {}
+    }
+    Component {
+        id: _ConfirmEmail
+        QConfirmEmail {}
     }
 }

@@ -38,6 +38,7 @@ public:
 
 signals:
     void registerWalletWithDevice();
+    void requestSignout();
 private:
     QJsonObject             m_tx {};
 };

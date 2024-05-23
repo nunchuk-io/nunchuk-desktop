@@ -1354,7 +1354,7 @@ void nunchukiface::DisplayAddressOnDevice(const std::string &wallet_id, const st
 {
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            nunchuk_instance_[nunchukMode()]->DisplayAddressOnDevice(wallet_id, address, device_fingerprint);
+            nunchuk_instance_[nunchukMode()]->DisplayAddressOnDevice(wallet_id, address/*, device_fingerprint*/);
         }
     }
     catch (const nunchuk::BaseException &ex) {

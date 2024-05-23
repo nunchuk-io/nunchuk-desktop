@@ -31,6 +31,9 @@
 
 void SCR_HOME_ONLINE_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::CHAT_TAB);
+    if(CLIENT_INSTANCE->rooms()){
+        CLIENT_INSTANCE->rooms()->startCountdown();
+    }
 }
 
 void SCR_HOME_ONLINE_Exit(QVariant msg) {

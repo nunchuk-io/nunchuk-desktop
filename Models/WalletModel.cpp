@@ -1094,6 +1094,10 @@ void Wallet::SignUserTxs(const QString &tx_id, const QString &psbt, const QStrin
             QWarningMessage _msg;
             bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
         }
+        QJsonObject serverKeyData = GetServerKeyInfo(tx_id);
+        if(!serverKeyData.isEmpty() && AppModel::instance()->transactionInfo()){
+            AppModel::instance()->transactionInfo()->setServerKeyMessage(serverKeyData);
+        }
         else{}
     }
 }

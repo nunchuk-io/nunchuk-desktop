@@ -86,6 +86,7 @@ public:
     bool requestServerKeyVerifyPassword(const QString &password);
     bool requestInheritancePlanVerifyPassword(const QString &password);
     bool requestDeleteWalletVerifyPassword(const QString &password);
+    bool requestChangeEmailVerifyPassword(const QString &password);
 
     Q_INVOKABLE bool verifyConfirmationCode(const QString &code);
     QVariantList securityQuestions();
@@ -170,6 +171,8 @@ public:
     QJsonObject confirmCodeNonceBody() const;
     void setConfirmCodeNonceBody(const QJsonObject& nonceBody);
 
+    // For change Email
+    bool RequestConfirmationChangeEmail(const QString &new_email);
 public slots:
     void clearBufferPeriodCountdown();
     void clearInheritance();

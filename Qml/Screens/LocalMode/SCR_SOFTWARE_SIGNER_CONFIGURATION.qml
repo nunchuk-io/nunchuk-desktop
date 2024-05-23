@@ -234,8 +234,10 @@ QScreen {
                         enabled: rootAddsignerToWallet.signerNameInputted !== ""
                         onButtonClicked: {
                             passphrase.textInputted = ""
-                            var signerObj = { "signername"    : rootAddsignerToWallet.signerNameInputted,
-                                              "passphrase"    : ""};
+                            var signerObj = {
+                                "signername"    : rootAddsignerToWallet.signerNameInputted,
+                                "passphrase"    : ""
+                            };
                             QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
                             stateAddSigner.visible = true
                         }
@@ -473,8 +475,10 @@ QScreen {
             rightBtnLabel: STR.STR_QML_427
             leftBtnLabel: STR.STR_QML_035
             onConfirmYes: {
-                var signerObj = { "signername"    : rootAddsignerToWallet.signerNameInputted,
-                                  "passphrase"    : ""};
+                var signerObj = {
+                    "signername"    : rootAddsignerToWallet.signerNameInputted,
+                    "passphrase"    : ""
+                };
                 QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
             }
             onConfirmNo: close()
@@ -491,16 +495,9 @@ QScreen {
             ]
         }
         function showPopupInfo(isSoftware, fingerPrint){
-            if (isSoftware) {
-                _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
-                _info.contentTextTwo = STR.STR_QML_1284
-                _info.open()
-            }
-            else {
-                _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
-                _info.contentTextTwo = ""
-                _info.open()
-            }
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = ""
+            _info.open()
         }
     }
 }

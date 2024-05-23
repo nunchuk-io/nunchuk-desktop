@@ -169,7 +169,7 @@ Rectangle {
                             QMLHandle.sendEvent(EVT.EVT_RECURRING_PAYMENTS_REQUEST)
                         },
                         function(){//Manage group chat history
-                            console.warn("4")
+                            GroupWallet.requestManageGroupChatHistory()
                         }
                     ]
                     colors: [ "#031F2B", "#031F2B", "#031F2B", "#031F2B", "#031F2B" ]

@@ -65,6 +65,9 @@ QScreen {
         {flow_action: AlertType.CANCEL_RECURRING_PAYMENT,             screen_component: _cancel_recurring_payment},
         {flow_action: AlertType.RECURRING_PAYMENT_CANCELATION_PENDING,screen_component: _cancel_recurring_payment},
         {flow_action: AlertType.SERVICE_TAG_UPDATE_SECURITY_QUESTION, screen_component: _signature_require_one},
+
+        {flow_action: AlertType.CHANGE_EMAIL,                         screen_component: _signature_require_email_change},
+        {flow_action: AlertType.CHANGE_EMAIL_REQUEST,                 screen_component: _signature_require_email_change},
     ]
     readonly property var map_screens: [
         {screen_name: "health-check-procedure",         screen_component: _health_check_procedure},
@@ -98,6 +101,14 @@ QScreen {
         id: _signature_require_three
         QSignaturesRequired {
             description_top: STR.STR_QML_1041
+            description_bottom: STR.STR_QML_1013
+        }
+    }
+
+    Component {
+        id: _signature_require_email_change
+        QSignaturesRequired {
+            description_top: STR.STR_QML_1306
             description_bottom: STR.STR_QML_1013
         }
     }

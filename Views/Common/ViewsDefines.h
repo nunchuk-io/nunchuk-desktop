@@ -48,13 +48,14 @@ namespace LocalMode {
 #define SCR_SOFTWARE_SIGNER_CONFIGURATION   	 "qrc:/Qml/Screens/LocalMode/SCR_SOFTWARE_SIGNER_CONFIGURATION.qml"
 #define SCR_TRANSACTION_HISTORY             	 "qrc:/Qml/Screens/LocalMode/SCR_TRANSACTION_HISTORY.qml"
 #define SCR_TRANSACTION_INFO                	 "qrc:/Qml/Screens/LocalMode/SCR_TRANSACTION_INFO.qml"
-#define SCR_UNLOCK_DB                            "qrc:/Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml"
+#define SCR_UNLOCK_DB                          "qrc:/Qml/Screens/LocalMode/SCR_UNLOCK_DB.qml"
 #define SCR_UTXOS                           	 "qrc:/Qml/Screens/LocalMode/SCR_UTXOS.qml"
 #define SCR_UTXO_OUTPUT                     	 "qrc:/Qml/Screens/LocalMode/SCR_UTXO_INFO.qml"
 #define SCR_WALLET_CHANGE_ADDRESSES         	 "qrc:/Qml/Screens/LocalMode/SCR_CHANGE_ADDRESS.qml"
 #define SCR_WALLET_INFO                     	 "qrc:/Qml/Screens/LocalMode/SCR_WALLET_INFO.qml"
-#define SCR_ONBOARDING                           "qrc:/Qml/Screens/LocalMode/SCR_ONBOARDING.qml"
-
+#define SCR_ONBOARDING                         "qrc:/Qml/Screens/LocalMode/SCR_ONBOARDING.qml"
+#define SCR_SELECT_SERVER                      "qrc:/Qml/Screens/LocalMode/SCR_SELECT_SERVER.qml"
+#define SCR_CHANGE_EMAIL                       "qrc:/Qml/Screens/LocalMode/SCR_CHANGE_EMAIL.qml"
 }
 
 namespace OnlineMode {

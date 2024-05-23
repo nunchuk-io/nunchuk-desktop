@@ -49,6 +49,8 @@ using namespace Quotient;
 #define NUNCHUK_ROOM_ENCRYPTED      "m.room.encrypted"
 #define NUNCHUK_ROOM_ENCRYPTION     "m.room.encryption"
 #define NUNCHUK_ROOM_BYZANTINE      "io.nunchuk.premium"
+#define NUNCHUK_ROOM_RETENTION      "m.room.retention"
+const qint64 NUNCHUK_ROOM_RETENTION_TIME (2592000000);  // 30 days = 30*24*60*60*1000 ms
 
 #define NUNCHUK_EVENT_SYNC          "io.nunchuk.sync"
 #define NUNCHUK_EVENT_WALLET        "io.nunchuk.wallet"
@@ -98,4 +100,14 @@ public:
     DEFINE_EVENT_TYPEID("io.nunchuk.error", QNunchukExceptionEvent)
     explicit QNunchukExceptionEvent(const QString& matrixType, const QJsonObject& contentJson);
 };
+
+// class QNunchukRentionState : public StateEventBase
+// {
+// public:
+//     DEFINE_EVENT_TYPEID("m.room.retention", QNunchukRentionState)
+//     explicit QNunchukRentionState(const QJsonObject& contentJson);
+// };
+
+// DEFINE_SIMPLE_STATE_EVENT(QNunchukRentionState, "m.room.retention", QJsonObject, contentJson)
+
 #endif // QROOMCUSTOMEVENT_H

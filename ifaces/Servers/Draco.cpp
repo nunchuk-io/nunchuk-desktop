@@ -537,7 +537,11 @@ void Draco::getMe()
             }
             AppModel::instance()->startCheckAuthorize();
             CLIENT_INSTANCE->setIsNunchukLoggedIn(true);
-            getUserSubscriptions();
+            if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::TESTNET){
+                getUserSubscriptionsTestnet();
+            } else {
+                getUserSubscriptions();
+            }
         }
         else if(response_code == DRACO_CODE::UNAUTHORIZED){
             CLIENT_INSTANCE->requestSignout();
@@ -3464,6 +3468,96 @@ bool Draco::RequestOnboardingNoAdvisor(const QString &country_code, const QStrin
             return true;
         }
         response_msg = reply_msg;
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetElectrumServers(QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Common::CMD_IDX::GET_ELECTRUM_SERVERS];
+
+    QJsonObject jsonObj = getSync(cmd, {}, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        response_msg = reply_msg;
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::ChangeEmail(const QJsonObject &request_body,
+                        const QStringList &signatures,
+                        const QString &passwordToken,
+                        const QString &secQuesToken,
+                        const QString &confirmToken,
+                        bool isDraft,
+                        QJsonObject &output,
+                        QString &errormsg)
+{
+    QMap<QString, QString> params;
+    for (int i = 0; i < signatures.count(); i++) {
+        params[QString("AuthorizationX-%1").arg(i+1)] = signatures.at(i);
+    }
+    params["Verify-token"] = passwordToken;
+    if (!secQuesToken.isEmpty()) {
+        params["Security-Question-token"] = secQuesToken;
+    }
+    if (!confirmToken.isEmpty()) {
+        params["Confirmation-token"] = confirmToken;
+    }
+    QMap<QString, QString> paramsQuery;
+    paramsQuery["draft"] = isDraft ? "true" : "false";
+    DBG_INFO << confirmToken << request_body;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(commands[Premium::CMD_IDX::CHANGING_EMAIL], paramsQuery, params, request_body, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::CalculateRequireSignaturesForChangingEmail(const QString &new_email, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    data["new_email"] = new_email;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(commands[Premium::CMD_IDX::CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
     }
     errormsg = reply_msg;
     return false;

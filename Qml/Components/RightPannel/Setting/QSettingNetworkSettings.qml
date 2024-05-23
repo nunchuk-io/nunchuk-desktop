@@ -105,8 +105,11 @@ Item {
                     selected: (devselection.primaryServer === NUNCHUCKTYPE.MAIN)
                     text.placeholder.text: STR.STR_QML_173
                     text.textOutput: devselection.mainnetServer
+                    showArrow: true
                     onButtonClicked: { devselection.primaryServer = NUNCHUCKTYPE.MAIN }
-                    onButtonResetClicked: { mainnetsever.text.textOutput = MAINNET_SERVER}
+                    onButtonArrowClicked: {
+                        QMLHandle.sendEvent(EVT.EVT_SELECT_SERVER_REQUEST)
+                    }
                 }
                 QRadioButtonTypeB {
                     id: testnetsever
@@ -115,7 +118,6 @@ Item {
                     text.placeholder.text: STR.STR_QML_174
                     text.textOutput: devselection.testnetServer
                     onButtonClicked: { devselection.primaryServer = NUNCHUCKTYPE.TESTNET }
-                    onButtonResetClicked: { testnetsever.text.textOutput = TESTNET_SERVER}
                 }
                 QRadioButtonTypeB {
                     id: signetsever
@@ -124,7 +126,6 @@ Item {
                     text.placeholder.text: STR.STR_QML_583
                     text.textOutput: devselection.signetServer
                     onButtonClicked: { devselection.primaryServer = NUNCHUCKTYPE.SIGNET }
-                    onButtonResetClicked: { signetsever.text.textOutput = SIGNET_SERVER}
                     visible: SIGNET_SERVER != ""
                 }
                 property bool anyChanged: (AppSetting.primaryServer !== devselection.primaryServer)
@@ -424,47 +425,6 @@ Item {
                     AppSetting.torProxyPassword = torproxypassword.textInputted
                 }
             }
-            Item {
-                width: 627
-                height: 48
-                Row {
-                    height: 48
-                    spacing: 12
-                    anchors.right: parent.right
-                    QTextButton {
-                        width: 268
-                        height: 48
-                        label.text: STR.STR_QML_529
-                        label.font.pixelSize: 16
-                        label.font.family: "Lato"
-                        type: eTypeB
-                        onButtonClicked: {
-                            _netCol.resetNetworkSettings()
-                            _netCol.saveNetworkSettings()
-                        }
-                    }
-                    QTextButton {
-                        width: 189
-                        height: 48
-                        label.text: STR.STR_QML_528
-                        label.font.pixelSize: 16
-                        label.font.family: "Lato"
-                        type: eTypeE
-                        enabled: servernodeselection.anyChanged
-                                 || devselection.anyChanged
-                                 || corerpcinputdata.anyChanged
-                                 || torproxytitle.anyChanged
-                                 || torinputdata.anyChanged
-                                 || setonCert.anyChanged
-                                 || certPath.anyChanged
-                                 || _streamLink.anyChanged
-                                 || _streamEnable.anyChanged
-                        onButtonClicked: {
-                            _netCol.saveNetworkSettings()
-                        }
-                    }
-                }
-            }
 
             function saveNetworkSettings() {
                 if(servernodeselection.anyChanged) { servernodeselection.applySettings() }
@@ -503,6 +463,71 @@ Item {
                 torport.textInputted = "9050"
                 torproxyname.textInputted = ""
                 torproxypassword.textInputted = ""
+            }
+        }
+    }
+
+    QWarningBg {
+        icon: "qrc:/Images/Images/info-60px.png"
+        txt.text: STR.STR_QML_1301.arg("https://github.com/nunchuk-io/resources/tree/main/docs/connection-guide")
+        txt.textFormat: Text.RichText
+        txt.font.weight: Font.Bold
+        anchors{
+            bottom: normalRect.top
+            bottomMargin: 16
+            left: parent.left
+            leftMargin: 26
+            right: parent.right
+            rightMargin: 24
+        }
+    }
+    Rectangle {
+        id: normalRect
+        height: 80
+        anchors{
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        Row {
+            anchors{
+                right: parent.right
+                rightMargin: 24
+                bottom: parent.bottom
+                bottomMargin: 16
+            }
+            spacing: 12
+            QTextButton {
+                width: 268
+                height: 48
+                label.text: STR.STR_QML_529
+                label.font.pixelSize: 16
+                label.font.family: "Lato"
+                type: eTypeB
+                onButtonClicked: {
+                    _netCol.resetNetworkSettings()
+                    _netCol.saveNetworkSettings()
+                }
+            }
+            QTextButton {
+                width: 189
+                height: 48
+                label.text: STR.STR_QML_528
+                label.font.pixelSize: 16
+                label.font.family: "Lato"
+                type: eTypeE
+                enabled: servernodeselection.anyChanged
+                         || devselection.anyChanged
+                         || corerpcinputdata.anyChanged
+                         || torproxytitle.anyChanged
+                         || torinputdata.anyChanged
+                         || setonCert.anyChanged
+                         || certPath.anyChanged
+                         || _streamLink.anyChanged
+                         || _streamEnable.anyChanged
+                onButtonClicked: {
+                    _netCol.saveNetworkSettings()
+                }
             }
         }
     }

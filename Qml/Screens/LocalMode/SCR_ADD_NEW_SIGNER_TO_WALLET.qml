@@ -66,7 +66,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         QMLHandle.sendEvent(EVT.EVT_ADD_SIGNER_TO_WALLET_BACK_REQUEST)
@@ -212,7 +212,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         loadercontent.sourceComponent = maincontent
@@ -401,7 +401,7 @@ QScreen {
                     anchors {
                         verticalCenter: screenname.verticalCenter
                         right: parent.right
-                        rightMargin: 36
+                        rightMargin: 24
                     }
                     onClicked: {
                         loadercontent.sourceComponent = maincontent

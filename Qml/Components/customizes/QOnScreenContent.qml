@@ -40,6 +40,7 @@ Item {
     property bool enableHeader: true
     property int offset: 36
     property bool isShowLine: false
+    property int minWidth: -1
     signal closeClicked()
     MouseArea {
         anchors.fill: parent
@@ -75,13 +76,12 @@ Item {
             spacing: 16
             Item {
                 width: root.width - offset*2 + 12
-                height: Math.max(40, screenname.paintedHeight)
+                height: childrenRect.height
                 Row {
-                    anchors.fill: parent
                     spacing: 8
                     QHeadLine {
                         id: screenname
-                        width: Math.min(656, screenname.paintedWidth)
+                        width: Math.min(656, minWidth === -1 ? screenname.paintedWidth : minWidth)
                         anchors.verticalCenter: parent.verticalCenter
                         visible: enableHeader
                         text: "Screen name"
@@ -92,21 +92,6 @@ Item {
                         id: extraHeaderInfo
                         height: extraHeaderInfo.sourceComponent ? extraHeaderInfo.item.height : 0
                         anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                Row {
-                    anchors.fill: parent
-                    spacing: 12
-                    layoutDirection: Qt.RightToLeft
-                    QCloseButton {
-                        id: closeButton
-                        visible: enableHeader
-                        anchors {
-                            verticalCenter: parent.verticalCenter
-                            verticalCenterOffset: -12
-                        }
-                        enabled: visible
-                        onClicked: { closeClicked()}
                     }
                 }
             }
@@ -129,6 +114,17 @@ Item {
                 anchors.right: parent.right
             }
         }
+    }
+    QCloseButton {
+        id: closeButton
+        visible: enableHeader
+        anchors {
+            right: parent.right
+            rightMargin: 24
+            top: parent.top
+            topMargin: 24
+        }
+        onClicked: { closeClicked()}
     }
     QLine {
         visible: isShowLine

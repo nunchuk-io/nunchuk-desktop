@@ -372,6 +372,16 @@ void QGroupWallets::clearDashBoard()
     }
 }
 
+void QGroupWallets::requestManageGroupChatHistory()
+{
+    if (mDashboard) {
+        mDashboard->GetGroupChat();
+        GetHistoryPeriods();
+        mDashboard->setFlow((int)AlertEnum::E_Alert_t::MANAGE_GROUP_CHAT_HISTORY);
+        QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+    }
+}
+
 void QGroupWallets::reset()
 {
     QAssistedDraftWallets::reset();
@@ -491,6 +501,43 @@ QVariant QGroupWallets::highestPermissionAccount()
 bool QGroupWallets::existGroupPending() const
 {
     return mPendingWallets.size() > 0;
+}
+
+void QGroupWallets::GetHistoryPeriods()
+{
+    QJsonObject output;
+    QString error_msg = "";
+    bool ret = Byzantine::instance()->GetHistoryPeriodsGroupChat(output, error_msg);
+    if (ret) {
+        DBG_INFO << output;
+        QJsonArray history_periods = output["history_periods"].toArray();
+        setHistoryPeriods(history_periods);
+    } else {
+        //Show error
+        DBG_INFO << error_msg;
+    }
+}
+
+QVariantList QGroupWallets::historyPeriods() const
+{
+    return mHistoryPeriods.toVariantList();
+}
+
+void QGroupWallets::setHistoryPeriods(QJsonArray historyPeriods)
+{
+#if 1
+    QJsonArray filteredArray;
+    for (const QJsonValue &value : historyPeriods) {
+        QJsonObject obj = value.toObject();
+        if (obj.contains("enabled") && obj["enabled"].toBool()) {
+            filteredArray.append(obj);
+        }
+    }
+    mHistoryPeriods = filteredArray;
+#else // FIXME - TEST
+    mHistoryPeriods = historyPeriods;
+#endif
+    emit historyPeriodsChanged();
 }
 
 void QGroupWallets::updateRequestKey()

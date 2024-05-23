@@ -39,30 +39,6 @@
 #include "bridgeifaces.h"
 using namespace Quotient;
 
-//enum ROOM_MESSAGE_TYPE {
-//    MSG_INIT_MESSAGE = 0,   //0
-//    MSG_PURE_STRING,        //1
-//    MSG_STATE_EVENT,        //2
-//    MSG_WALLET_PAST,        //3
-//    MSG_WALLET_INIT,        //4
-//    MSG_WALLET_JOIN,        //5
-//    MSG_WALLET_LEAVE,       //6
-//    MSG_WALLET_READY,       //7
-//    MSG_WALLET_CREATE,      //8
-//    MSG_WALLET_CANCEL,      //9
-//    MSG_WALLET_BACKUP,      //10
-//    MSG_TX_CANCELED,        //11
-//    MSG_TX_INIT,            //12
-//    MSG_TX_SIGN,            //13
-//    MSG_TX_BROADCAST,       //14
-//    MSG_TX_READY,           //15
-//    MSG_TX_CANCEL,          //16
-//    MSG_TX_RECEIVE,         //17
-//    MSG_EXCEPTION,          //18
-//    MSG_SEND_FILE,          //20
-//    INVALID_MESSAGE,        //21
-//};
-
 struct Conversation {
     bool isStateEvent = false;
     int  messageType = (int)ENUNCHUCK::ROOM_EVT::INVALID;
@@ -83,6 +59,9 @@ struct Conversation {
 
     // Attachment
     QString file_path = "";
+
+    // Filter
+    bool    visible = true;
 };
 
 class QConversationModel : public QAbstractListModel
@@ -141,8 +120,14 @@ public:
     bool initConsShow() const;
     void setInitConsShow(bool initConsShow);
     void refresh();
+
+    void startCountdown();
+    void stopCountdown();
+    qint64 maxLifeTime() const;
+    void setMaxLifeTime(qint64 value);
+
 private:
-    Quotient::Room  *m_room;
+    Quotient::Room      *m_room;
     QList<Conversation> m_data;
     int m_currentIndex;
     bool containsTxReadyMessage(const Conversation data);
@@ -150,14 +135,20 @@ private:
     bool needIgnoreInSupportRoom(const Conversation data);
     bool isSupportRoom();
     bool m_initConsShow;
-    QRoomTransactionPtr       m_pinTransaction;
-    QList<time_t>             m_firstToday;
+    QRoomTransactionPtr m_pinTransaction;
+    QList<time_t>       m_firstToday;
+    QTimer              m_RetentionTimer;
+    qint64              m_maxLifeTime;
+
 signals:
     void currentIndexChanged();
     void countChanged();
     void initConsShowChanged();
+
+public slots:
+    void processingRetentionMessage();
 };
-typedef QSharedPointer<QConversationModel> QConversationModelPtr;
+typedef OurSharedPointer<QConversationModel> QConversationModelPtr;
 
 bool sortConversationByTimeAscending(const Conversation &v1, const Conversation &v2);
 bool sortConversationByTimeDescending(const Conversation &v1, const Conversation &v2);

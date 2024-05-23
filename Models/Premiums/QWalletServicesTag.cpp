@@ -69,6 +69,11 @@ bool QWalletServicesTag::requestDeleteWalletVerifyPassword(const QString &passwo
     return requestVerifyPassword(password,(int)TARGET_ACTION::DELETE_WALLET);
 }
 
+bool QWalletServicesTag::requestChangeEmailVerifyPassword(const QString &password)
+{
+    return requestVerifyPassword(password,(int)TARGET_ACTION::CHANGE_EMAIL);
+}
+
 bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown()
 {
     QWalletPtr w = ServiceSetting::instance()->walletInfoPtr();
@@ -916,6 +921,25 @@ QJsonObject QWalletServicesTag::confirmCodeNonceBody() const
 void QWalletServicesTag::setConfirmCodeNonceBody(const QJsonObject& nonceBody)
 {
     m_confirmCodeRequestBody = nonceBody;
+}
+
+bool QWalletServicesTag::RequestConfirmationChangeEmail(const QString &new_email)
+{
+    QString errormsg;
+    QJsonObject output;
+
+    QJsonObject body;
+    body["new_email"] = new_email;
+    QJsonObject data;
+    data["nonce"] = Draco::instance()->randomNonce();
+    data["body"] = body;
+    ServiceSetting::instance()->servicesTagPtr()->setConfirmCodeNonceBody(data);
+    bool ret = Draco::instance()->RequestConfirmationCode("CHANGE_EMAIL", data, output, errormsg);
+    if (ret) {
+        DBG_INFO << output;
+        m_code_id = output["code_id"].toString();
+    }
+    return ret;
 }
 
 QString QWalletServicesTag::confirmToken() const

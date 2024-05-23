@@ -127,6 +127,8 @@ enum CMD_IDX {
     USER_SUBCRIPTIONS_STATUS,
     USER_SUBCRIPTIONS_STATUS_TESTNET,
     VERIFY_PASSWORD_TOKEN,
+
+    GET_ELECTRUM_SERVERS,
     CMD_MAX
 };
 }
@@ -238,6 +240,8 @@ enum CMD_IDX {
     VERIFY_CONFIRMATION_CODE,
     COUNTRY_CODE_LIST,
     ONBOARDING_NO_ADVISOR,
+    CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL,
+    CHANGING_EMAIL,
 
     CMD_MAX
 };
@@ -340,7 +344,8 @@ enum class TARGET_ACTION {
     UPDATE_INHERITANCE_PLAN,
     UPDATE_SERVER_KEY,
     DELETE_WALLET,
-    EDIT_GROUP_MEMBERS
+    EDIT_GROUP_MEMBERS,
+    CHANGE_EMAIL
 };
 
 enum class REQUIRED_SIGNATURE_TYPE_INT {
@@ -371,6 +376,7 @@ const QMap<int, QString> target_actions_command {
     { (int)TARGET_ACTION::UPDATE_SERVER_KEY         , "UPDATE_SERVER_KEY"         },
     { (int)TARGET_ACTION::DELETE_WALLET             , "DELETE_WALLET"             },
     { (int)TARGET_ACTION::EDIT_GROUP_MEMBERS        , "EDIT_GROUP_MEMBERS"        },
+    { (int)TARGET_ACTION::CHANGE_EMAIL              , "CHANGE_EMAIL"              },
 };
 
 const QMap<QString, int> required_signatures_type {
@@ -426,6 +432,7 @@ const QMap<int, QString> commands {
     { Common::CMD_IDX::DEVICE_SIGNOUT               , QString("%1/%2").arg(DRAGON_USER_URL).arg("devices/")                  },
     { Common::CMD_IDX::DEVICE_ALL_SIGNOUT           , QString("%1/%2").arg(DRAGON_USER_URL).arg("devices/__all")              },
     { Common::CMD_IDX::VERIFY_DELETE_DEVICES        , QString("%1/%2").arg(DRAGON_USER_URL).arg("devices/verify-delete-devices")},
+    { Common::CMD_IDX::GET_ELECTRUM_SERVERS         , QString("%1/%2").arg(DRAGON_APP_URL).arg("electrum")                  },
     { PrimaryKey::CMD_IDX::PRIMARY_KEY_SIGNUP           , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("pkey/signup") },
     { PrimaryKey::CMD_IDX::PRIMARY_KEY_SIGNIN           , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("pkey/signin") },
     { PrimaryKey::CMD_IDX::PRIMARY_KEY_NONCE            , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("pkey/nonce")  },
@@ -531,6 +538,8 @@ const QMap<int, QString> commands {
 
     { Premium::CMD_IDX::COUNTRY_CODE_LIST             , QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/countries") },
     { Premium::CMD_IDX::ONBOARDING_NO_ADVISOR         , QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/no-advisor") },
+    { Premium::CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/calculate-required-signatures") },
+    { Premium::CHANGING_EMAIL                                   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/change") },
 
 
     //DRAGON_GROUP_WALLETS

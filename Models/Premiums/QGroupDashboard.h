@@ -47,6 +47,8 @@ public:
         // other enum
         CANCEL_RECURRING_PAYMENT,
         CREATE_RECURRING_PAYMENT,
+        CHANGE_EMAIL_REQUEST,
+        CHANGE_EMAIL_SUCCESS,
         // not alert
         HEALTH_CHECK_STATUS,
         // use for service tag
@@ -56,6 +58,9 @@ public:
         SERVICE_TAG_INHERITANCE_PLAN_CANCEL,
         SERVICE_TAG_SHARE_YOUR_SECRET,
         SERVICE_TAG_UPDATE_SECURITY_QUESTION,
+
+        MANAGE_GROUP_CHAT_HISTORY,
+        CHANGE_EMAIL,
     };
 };
 
@@ -91,6 +96,7 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(bool    isPremierGroup             READ isPremierGroup                           NOTIFY groupInfoChanged)
     Q_PROPERTY(bool    allowInheritance           READ allowInheritance                         NOTIFY draftWalletChanged)
     Q_PROPERTY(int inheritanceCount               READ inheritanceCount                         NOTIFY inheritanceCountChanged)
+    Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                        NOTIFY historyPeriodIdChanged)
 public:
     QGroupDashboard(const QString& wallet_id);
     ~QGroupDashboard();
@@ -172,6 +178,11 @@ public:
     int inheritanceCount() const;
     void setInheritanceCount(int count);
 
+    void GetGroupChat();
+    void UpdateGroupChat(const QString &history_period_id);
+
+    QString historyPeriodId() const;
+    void setHistoryPeriodId(const QString &newHistoryPeriodId);
 public slots:
     void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
@@ -190,6 +201,7 @@ signals:
     void configFlowChanged();
     void walletunUsedAddressChanged();
     void inheritanceCountChanged();
+    void historyPeriodIdChanged();
 private:
     QJsonObject m_groupInfo {};
     QJsonObject m_alertInfo {};
@@ -208,5 +220,6 @@ private:
     QJsonObject m_currentAlertInfo {};
     QStringList m_registered_key_xfps {};
     int m_inheritanceCount {0};
+    QString mHistoryPeriodId {};
 };
 #endif // QGROUPDASHBOARD_H

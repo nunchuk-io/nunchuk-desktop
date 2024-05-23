@@ -19,25 +19,35 @@
 **************************************************************************/
 
 
-#ifndef STATE_ID_SCR_APP_SETTINGS_H
-#define STATE_ID_SCR_APP_SETTINGS_H
+#include "STATE_ID_SCR_CHANGE_EMAIL.h"
+#include "QEventProcessor.h"
+#include "ProfileSetting.h"
+#include "ServiceSetting.h"
+#include "Premiums/QWalletServicesTag.h"
 
-#include <QObject>
-#include <QVariant>
-#include "ViewsDefines.h"
-#include "ViewsEnums.h"
+void SCR_CHANGE_EMAIL_Entry(QVariant msg) {
+    ProfileSetting::instance()->setNewEmail("");
+    ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures({});
+}
 
-void SCR_APP_SETTING_Entry(QVariant msg);
-void SCR_APP_SETTING_Exit(QVariant msg);
-void EVT_APP_SETTING_DELETE_ACCOUNT_REQUEST_HANDLER(QVariant msg);
-void EVT_APP_SETTING_CHANGE_PASSPHRASE_HANDLER(QVariant msg);
-void EVT_APP_SETTING_REQUEST_RESTART_HANDLER(QVariant msg);
-void EVT_APP_SETTING_REQUEST_RESCAN_HANDLER(QVariant msg);
-void EVT_APP_SETTING_DELETE_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg);
-void EVT_APP_SETTING_BACK_REQUEST_HANDLER(QVariant msg);
-void EVT_APP_SETTING_BACK_TO_ONLINE_MODE_HANDLER(QVariant msg);
-void EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg);
-void EVT_SELECT_SERVER_REQUEST_HANDLER(QVariant msg);
-void EVT_CHANGE_EMAIL_REQUEST_HANDLER(QVariant msg);
+void SCR_CHANGE_EMAIL_Exit(QVariant msg) {
 
-#endif // STATE_ID_SCR_APP_SETTINGS_H
+}
+
+void EVT_CHANGE_EMAIL_ENTER_HANDLER(QVariant msg) {
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    if (type == "email-name") {
+        QString new_email = maps["new_email"].toString();
+        if(ServiceSetting::instance()->servicesTagPtr()->RequestConfirmationChangeEmail(new_email)) {
+            ProfileSetting::instance()->setNewEmail(new_email);
+        }
+    }
+    else if (type == "email-code") {
+        QString codeEmail = maps["codeEmail"].toString();
+        if (ServiceSetting::instance()->servicesTagPtr()->verifyConfirmationCode(codeEmail)) {
+            ProfileSetting::instance()->CalculateRequireSignaturesForChangingEmail();
+        }
+    }
+}
+

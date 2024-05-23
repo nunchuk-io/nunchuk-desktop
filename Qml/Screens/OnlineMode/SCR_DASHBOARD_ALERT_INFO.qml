@@ -59,6 +59,8 @@ QScreen {
 
         {flow_action: AlertType.KEY_RECOVERY_REQUEST,        screen_component: _request_key_recovery_for},
         {flow_action: AlertType.UPDATE_SECURITY_QUESTIONS,   screen_component: _update_security_questions},
+        {flow_action: AlertType.MANAGE_GROUP_CHAT_HISTORY,   screen_component: _manageGroupChatHistory},
+        {flow_action: AlertType.CHANGE_EMAIL_REQUEST,        screen_component: _change_email_request},
     ]
     readonly property var map_screens: [
         {screen_name: "register-gapped-device",         screen_component: _register_gapped_device},
@@ -190,6 +192,20 @@ QScreen {
     Component {
         id: _update_security_questions
         QSecurityQuestionsUpdate {
+
+        }
+    }
+
+    Component {
+        id: _manageGroupChatHistory
+        QManageGroupChatHistory {
+
+        }
+    }
+
+    Component {
+        id: _change_email_request
+        QChangeEmailRequest {
 
         }
     }
