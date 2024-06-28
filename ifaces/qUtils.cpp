@@ -597,7 +597,6 @@ int qUtils::GetIndexFromPath(const QString &path)
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
-    DBG_INFO << index;
     return index;
 }
 

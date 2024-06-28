@@ -22,7 +22,6 @@
 #include "STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QGroupWalletHealthCheck.h"
-#include "Premiums/QGroupWalletDummyTx.h"
 
 void SCR_KEY_HEALTH_CHECK_STATUS_Entry(QVariant msg) {
 
@@ -32,21 +31,26 @@ void SCR_KEY_HEALTH_CHECK_STATUS_Exit(QVariant msg) {
 
 }
 
+static QStringList xfps = {};
 void EVT_KEY_HEALTH_CHECK_STATUS_ENTER_HANDLER(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
     DBG_INFO << type;
-    if (type == "health-check") {
-        QGroupWallets::instance()->dashboardInfoPtr()->setConfigFlow("health-check-procedure");
-        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
-        QString xfp = maps["xfp"].toString();
-        QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
-    } else if (type == "request-health-check") {
-        QString xfp = maps["xfp"].toString();
-        QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->RequestHealthCheckForKey(xfp);
-    } else if (type == "health-check-request-sent") {
-        QGroupWallets::instance()->dashboardInfoPtr()->setConfigFlow("health-check-request-sent");
-        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (type == "health-check") {
+            dashboard->setConfigFlow("health-check-procedure");
+            QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+            QString xfp = maps["xfp"].toString();
+            dashboard->healthPtr()->HealthCheckForKey(xfp);
+        } else if (type == "request-health-check") {
+            QString xfp = maps["xfp"].toString();
+            dashboard->healthPtr()->RequestHealthCheckForKey(xfp);
+        } else if (type == "health-check-request-sent") {
+            dashboard->setConfigFlow("health-check-request-sent");
+            QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
+        } else {
+            dashboard->healthPtr()->HealthCheckAddReminderClicked(msg);
+        }
     }
 }
 

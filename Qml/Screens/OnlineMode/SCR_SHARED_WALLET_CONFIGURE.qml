@@ -399,6 +399,7 @@ QScreen {
                                 break;
                             case 1:
                             default:
+                                qrcodeExportResult.filename = RoomWalletData.getValidFilename(RoomWalletData.walletName)
                                 qrcodeExportResult.open()
                                 QMLHandle.sendEvent(EVT.EVT_SHARED_WALLET_CONFIGURE_EXPORT_QRCODE, RoomWalletData.walletId)
                                 break;

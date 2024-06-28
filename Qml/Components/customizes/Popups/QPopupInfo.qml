@@ -35,6 +35,7 @@ QPopupInfoVertical {
     id: _infoPopup
     property string btnLabel: STR.STR_QML_341
     signal gotItClicked()
+    property var action
     buttons: QTextButton {
         anchors.horizontalCenter: parent.horizontalCenter
         width: 252
@@ -45,6 +46,8 @@ QPopupInfoVertical {
         onButtonClicked: {
             _infoPopup.close()
             gotItClicked()
+            if(action)
+                action()
         }
     }
 }

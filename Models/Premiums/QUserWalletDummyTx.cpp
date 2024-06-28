@@ -27,13 +27,13 @@ bool QUserWalletDummyTx::CreateDummyTransaction()
             break;
         case AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL:
             bodydata["wallet"] = wallet_id();
-            bodydata["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : w->groupId();
+            bodydata["group_id"] = isUserWallet() ? "" : w->groupId();
             break;
         default:
             break;
         }
     }
-    QJsonObject reqiredSignatures = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesJs();
+    QJsonObject reqiredSignatures = servicesTagPtr()->reqiredSignaturesJs();
     m_required_signatures = reqiredSignatures["required_signatures"].toInt();
     QJsonObject body;
     body["nonce"] = Draco::instance()->randomNonce();
@@ -193,9 +193,9 @@ void QUserWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sign
     if(!signatures.isEmpty()){
         transactionPtr()->setSignatures(signatures);
         emit transactionPtr()->singleSignerAssignedChanged();
-        QJsonObject reqiredSignatures = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesJs();
+        QJsonObject reqiredSignatures = servicesTagPtr()->reqiredSignaturesJs();
         reqiredSignatures["required_signatures"] = (m_required_signatures - signatures.size());
-        ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures(reqiredSignatures);
+        servicesTagPtr()->setReqiredSignatures(reqiredSignatures);
         emit transactionInfoChanged();
         if (auto w = walletInfoPtr()) {
             int flow = w->flow();

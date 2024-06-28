@@ -1371,6 +1371,31 @@ QSingleSignerListModelPtr bridge::nunchukGetRemoteSigners()
     }
 }
 
+
+QSingleSignerPtr bridge::nunchukGetRemoteSigner(const QString &master_fingerprint)
+{
+    QWarningMessage msg;
+    auto signer = nunchukiface::instance()->GetRemoteSigner(master_fingerprint.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return QSingleSignerPtr(new QSingleSigner(signer));
+    }
+    else{
+        return NULL;
+    }
+}
+
+QMasterSignerPtr bridge::nunchukGetMasterSignerFingerprint(const QString &master_fingerprint)
+{
+    QWarningMessage msg;
+    auto signer = nunchukiface::instance()->GetMasterSignerFingerprint(master_fingerprint.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return QMasterSignerPtr(new QMasterSigner(signer));
+    }
+    else{
+        return NULL;
+    }
+}
+
 std::vector<nunchuk::SingleSigner> bridge::nunchukGetOriginRemoteSigners(QWarningMessage& msg)
 {
     std::vector<nunchuk::SingleSigner> singers = nunchukiface::instance()->GetRemoteSigners(msg);

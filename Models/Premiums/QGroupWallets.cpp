@@ -405,6 +405,18 @@ bool QGroupWallets::AddOrUpdateAKeyToDraftWallet()
     return ret;
 }
 
+
+bool QGroupWallets::requestKeyReplacement(QSingleSignerPtr signer)
+{
+    bool ret = QAssistedDraftWallets::requestKeyReplacement(signer);
+    if (ret && mDashboard) {
+        mDashboard->GetAlertsInfo();
+        mDashboard->GetHealthCheckInfo();
+    }
+    return ret;
+}
+
+
 bool QGroupWallets::Contains(const QString &group_id)
 {
     for (auto ptr : mPendingWallets) {

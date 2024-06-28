@@ -36,6 +36,7 @@ Popup {
     background: Item{}
     property alias  model: listQr.model
     property string label: "Export via QR code"
+    property string filename: ""
     signal doneScanning
     Rectangle {
         id: qrmask

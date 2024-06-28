@@ -28,6 +28,8 @@ import "../customizes/Buttons"
 Item {
     property bool isAssisted: false
     property bool isHotWallet: false
+    property bool isLocked: false
+    property bool isReplaced: false
     property real ratio: 0.55
     Item {
         id: area_wldetail
@@ -41,8 +43,8 @@ Item {
                 start: Qt.point(0, 0)
                 end: Qt.point(parent.width * ratio, 0)
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : (isAssisted ? "#2F766D" : "#2F466C") }
-                    GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : (isAssisted ? "#1C4A21" : "#031F2B") }
+                    GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#2F766D" : "#2F466C") }
+                    GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#1C4A21" : "#031F2B") }
                 }
             }
             Rectangle {

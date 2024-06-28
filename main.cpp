@@ -39,6 +39,7 @@
 #include "RegisterTypes/DashRectangle.h"
 #include "QPingThread.h"
 #include "QRScanner/QBarcodeFilter.h"
+#include "QPDFPrinter.h"
 
 QStringList latoFonts = {
     ":/fonts/fonts/Lato/Lato-BlackItalic.ttf",
@@ -123,7 +124,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.34");
+    app.setApplicationVersion("1.9.35");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -202,6 +203,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->registerCtxProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
     QEventProcessor::instance()->registerCtxProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
     QEventProcessor::instance()->registerCtxProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
+    QEventProcessor::instance()->registerCtxProperty("PDFPrinter", QVariant::fromValue(QPDFPrinter::instance()));
     QEventProcessor::instance()->completed();
     QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);

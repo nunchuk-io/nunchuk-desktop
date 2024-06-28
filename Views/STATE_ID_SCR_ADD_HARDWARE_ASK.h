@@ -29,6 +29,6 @@
 
 void SCR_ADD_HARDWARE_ASK_Entry(QVariant msg);
 void SCR_ADD_HARDWARE_ASK_Exit(QVariant msg);
-void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg);
+void EVT_ADD_HARDWARE_ASK_ENTER_HANDLER(QVariant msg);
 
 #endif // STATE_ID_SCR_ADD_HARDWARE_ASK_H

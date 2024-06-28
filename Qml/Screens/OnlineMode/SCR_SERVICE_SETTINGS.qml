@@ -52,8 +52,9 @@ QScreen {
     readonly property int _PLATFORM_KEY_CO_SIGNING_POLICIES: 7
     readonly property int _GET_ADDITIONAL_WALLETS: 8
     readonly property int _ORDER_NEW_HARDWARE: 9
-    readonly property int _MANAGE_SUBSCRIPTION: 10
-    readonly property int _ROLL_OVER_TO_A_NEW_ASSISTED_WALLET: 11
+    readonly property int _REPLACE_KEY_IN_AN_ASSISTED_WALLET: 10
+    readonly property int _MANAGE_SUBSCRIPTION: 11
+    readonly property int _ROLL_OVER_TO_A_NEW_ASSISTED_WALLET: 12
     function closeRequest(to) {
         return true;
     }

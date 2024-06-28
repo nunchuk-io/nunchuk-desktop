@@ -176,30 +176,43 @@ void EVT_WALLET_INFO_EXPORT_COLDCARD_HANDLER(QVariant msg) {
 }
 
 void EVT_WALLET_INFO_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
-    if((msg.toInt() >= 0) && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->singleSignersAssigned() ){
-        QSingleSignerPtr it = AppModel::instance()->walletInfo()->singleSignersAssigned()->getSingleSignerByIndex(msg.toInt());
-        if(it)
-        {
-            AppModel::instance()->setSingleSignerInfo(it);
-            if((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType()){
-                AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
-                QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
-            }
-            else{
-                if(AppModel::instance()->masterSignerList()){
-                    QMasterSignerPtr localsigner = AppModel::instance()->masterSignerList()->getMasterSignerById(it.data()->masterSignerId());
-                    if(localsigner){
-                        AppModel::instance()->setMasterSignerInfo(localsigner);
-                        AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(it.data()->masterSignerId()));
-                        QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_MASTER_SIGNER_INFO_REQUEST);
-                    }
-                    else{
-                        AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
-                        QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
+
+    QString requestType = msg.toMap().value("requestType").toString();
+    if(qUtils::strCompare("signerInfo", requestType)){
+        int index = msg.toMap().value("requestData").toInt();
+        if((index >= 0) && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->singleSignersAssigned() ){
+            QSingleSignerPtr it = AppModel::instance()->walletInfo()->singleSignersAssigned()->getSingleSignerByIndex(index);
+            if(it)
+            {
+                AppModel::instance()->setSingleSignerInfo(it);
+                if((int)ENUNCHUCK::SignerType::AIRGAP == it.data()->signerType()){
+                    AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
+                    QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
+                }
+                else{
+                    if(AppModel::instance()->masterSignerList()){
+                        QMasterSignerPtr localsigner = AppModel::instance()->masterSignerList()->getMasterSignerById(it.data()->masterSignerId());
+                        if(localsigner){
+                            AppModel::instance()->setMasterSignerInfo(localsigner);
+                            AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(it.data()->masterSignerId()));
+                            QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_MASTER_SIGNER_INFO_REQUEST);
+                        }
+                        else{
+                            AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
+                            QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST);
+                        }
                     }
                 }
             }
         }
+    }
+    else if(qUtils::strCompare("viewPolicies", requestType)){
+        QString wallet_id = msg.toMap().value("requestData").toString();
+        DBG_INFO << wallet_id << "REQUEST POLICES";
+        QEventProcessor::instance()->sendEvent(E::EVT_GOTO_SERVICE_SETTING_TAB, 7);
+    }
+    else {
+        DBG_INFO << msg;
     }
 }
 

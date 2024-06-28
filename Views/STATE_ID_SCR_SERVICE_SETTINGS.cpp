@@ -44,7 +44,7 @@ void SCR_SERVICE_SETTINGS_Entry(QVariant msg) {
 }
 
 void SCR_SERVICE_SETTINGS_Exit(QVariant msg) {
-
+    ServiceSetting::instance()->clearWalletInfo();
 }
 
 void EVT_CLAIM_INHERITANCE_CHECK_REQUEST_HANDLER(QVariant msg)

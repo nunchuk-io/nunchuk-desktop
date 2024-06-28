@@ -71,7 +71,7 @@ void QWalletManagement::GetListWallet(int mode)
             QString wallet_id   = wallet_obj["local_id"].toString();
             QString group_id    = wallet_obj["group_id"].toString();
             QString status      = wallet_obj["status"].toString();
-            if (status == "ACTIVE") {
+            if (status == "ACTIVE" || status == "LOCKED" || status == "REPLACED") {
                 mWallets.insert(wallet_id, group_id);
                 mWalletsInfo.insert(wallet_id, wallet_obj);
             }
@@ -94,10 +94,9 @@ void QWalletManagement::GetListWallet(int mode)
             QString group_id    = wallet_obj["group_id"].toString();
             QString status      = wallet_obj["status"].toString();
             QString slug        = wallet_obj["slug"].toString();
-            QString wallet_name = wallet_obj["name"].toString();
-            if (status == "ACTIVE") {
+            if (status == "ACTIVE" || status == "LOCKED" || status == "REPLACED") {
                 QString myRole = "";
-                if(mode == GROUP_WALLET && group_id != ""){
+                if(mode == GROUP_WALLET && group_id != "" && status != "REPLACED"){
                     QJsonObject output;
                     QString error_msg = "";
                     bool ret = Byzantine::instance()->GetOneGroupWallets(group_id, output, error_msg);
@@ -110,11 +109,12 @@ void QWalletManagement::GetListWallet(int mode)
                         }
                     }
                 }
-                QTriple<QString, QString, QString> triple;
-                triple.first  = group_id;
-                triple.second = slug;
-                triple.third  = myRole;
-                AppSetting::instance()->setWalletCached(wallet_id, triple);
+                QWalletCached<QString, QString, QString, QString> cachedData;
+                cachedData.first  = group_id;
+                cachedData.second = slug;
+                cachedData.third  = myRole;
+                cachedData.fourth = status;
+                AppSetting::instance()->setWalletCached(wallet_id, cachedData);
 
                 QString wallet_name = wallet_obj["name"].toString();
                 QString wallet_description = wallet_obj["description"].toString();
@@ -471,18 +471,6 @@ QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const
     return {};
 }
 
-bool QWalletManagement::isGroupWallet(WalletId wallet_id) const
-{
-    GroupId group_id = groupId(wallet_id);
-    return mWallets.contains(wallet_id) && (group_id != "");
-}
-
-bool QWalletManagement::isUserWallet(WalletId wallet_id) const
-{
-    GroupId group_id = groupId(wallet_id);
-    return mWallets.contains(wallet_id) && (group_id == "");
-}
-
 void QWalletManagement::clear()
 {
     if (mActivedWallets.size() > 0) {
@@ -741,6 +729,7 @@ void QWalletManagement::slotGetListWalletFinish()
                 plan->GetInheritancePlan();
             }
         }
+        walletList->updateHealthCheckTime();
         emit QGroupWallets::instance()->dashboardInfoChanged();
     }
     QGroupWallets::instance()->clearDashBoard();

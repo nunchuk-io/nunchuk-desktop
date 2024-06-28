@@ -51,7 +51,7 @@ Item {
                     font.weight: Font.Bold
                     text: qsTr("Question #%1").arg(index + 1)
                 }
-                QComboBox {
+                QComboBoxIndex {
                     width: 539
                     height: 48
                     model: remain_questions
@@ -76,6 +76,7 @@ Item {
             boxWidth: 537
             boxHeight: 48
             isValid: newQuestion !== ""
+            textInputted: newQuestion
             onTextInputtedChanged: {
                 newQuestion = _question.textInputted
             }

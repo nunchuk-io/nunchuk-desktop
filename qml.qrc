@@ -437,6 +437,19 @@
         <file>Qml/Screens/LocalMode/ChangeEmail/QChangeEmail.qml</file>
         <file>Qml/Screens/LocalMode/ChangeEmail/QConfirmEmail.qml</file>
         <file>Qml/Screens/OnlineMode/Healths/QChangeEmailRequest.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckReminder.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckSelectKeyWantToReminder.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckFrequencyRepeat.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckPeriodicReminder.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QKeyReminderDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QKeyPeriodicReminderDelegate.qml</file>
+        <file>Qml/Components/customizes/QSendDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/Healths/QHealthCheckReminderAlert.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QKeyReplacementInProgress.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REPLACE_SELECT_KEY.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrExportResultPDF.qml</file>
+        <file>Qml/Components/customizes/Transactions/QTransactionInvoice.qml</file>
+        <file>Qml/Components/origins/QComboBoxIndex.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -725,6 +738,14 @@
         <file>Images/onboarding-assisted-wallet.png</file>
         <file>Images/onboarding-unassisted-wallet.png</file>
         <file>Images/accounts-settings-dark.svg</file>
+        <file>Images/scheduling-dark.svg</file>
+        <file>Images/QrSendButton.png</file>
+        <file>Images/arrow_drop_down_24px.png</file>
+        <file>Images/fav_wallet-dark.png</file>
+        <file>Images/fav_bookmark_24px.png</file>
+        <file>Images/fav_close-circle-dark.png</file>
+        <file>Images/fav_swapt-24px.png</file>
+        <file>Images/OnlineMode/sticky_note_2.png</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

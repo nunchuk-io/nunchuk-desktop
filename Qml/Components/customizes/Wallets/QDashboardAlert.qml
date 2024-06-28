@@ -109,7 +109,12 @@ Rectangle {
                          modelData.type === AlertType.RECURRING_PAYMENT_CANCELATION_PENDING||
                          modelData.type === AlertType.TRANSACTION_SIGNATURE_REQUEST ||
                          modelData.type === AlertType.UPDATE_SECURITY_QUESTIONS ||
-                         modelData.type === AlertType.CHANGE_EMAIL_REQUEST
+                         modelData.type === AlertType.CHANGE_EMAIL_REQUEST ||
+                         modelData.type === AlertType.HEALTH_CHECK_REMINDER ||
+                         modelData.type === AlertType.KEY_REPLACEMENT_PENDING ||
+                         modelData.type === AlertType.KEY_REPLACEMENT_COMPLETED ||
+                         modelData.type === AlertType.TRANSFER_FUNDS ||
+                         modelData.type === AlertType.SETUP_INHERITANCE_PLAN
 
                 onButtonClicked: {
                     clickView()

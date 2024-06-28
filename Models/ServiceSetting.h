@@ -13,8 +13,8 @@ class ServiceSetting : public QObject
     Q_OBJECT
     Q_PROPERTY(int optionIndex                      READ optionIndex                    WRITE setOptionIndex            NOTIFY optionIndexChanged)
     Q_PROPERTY(int claimInheritanceFlow             READ claimInheritanceFlow           WRITE setClaimInheritanceFlow   NOTIFY claimInheritanceFlowChanged)
-    Q_PROPERTY(QVariant servicesTag                 READ servicesTag                    CONSTANT)
-    Q_PROPERTY(Wallet* walletInfo                   READ walletInfo                     NOTIFY walletInfoChanged)
+    Q_PROPERTY(QVariant servicesTag                 READ servicesTag                                                    CONSTANT)
+    Q_PROPERTY(Wallet* walletInfo                   READ walletInfo                                                     NOTIFY walletInfoChanged)
 
 public:
     Q_ENUMS(CIWithDraw)

@@ -68,8 +68,6 @@ public:
 public slots:
     bool createPeriods();
     void editPlanInfo(const QVariant& info);
-private:
-    QWalletServicesTagPtr servicesTagPtr() const;
 signals:
     void actionPlanChanged();
     void secretChanged();

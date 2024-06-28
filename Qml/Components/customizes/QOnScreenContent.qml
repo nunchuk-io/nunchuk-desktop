@@ -38,9 +38,9 @@ Item {
     readonly property Item contentItem: contentInfo.item
     readonly property Item rightItem: botRight.item
     property bool enableHeader: true
-    property int offset: 36
+    property int  offset: 36
     property bool isShowLine: false
-    property int minWidth: -1
+    property int  minWidth: -1
     signal closeClicked()
     MouseArea {
         anchors.fill: parent

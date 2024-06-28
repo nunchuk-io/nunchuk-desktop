@@ -317,43 +317,6 @@ QStringList QMasterSigner::tags() const
     return list;
 }
 
-
-QVariantList QMasterSigner::healthCheckHistory() const
-{
-    return m_healthCheckHistory.toVariantList();
-}
-
-void QMasterSigner::setHealthCheckHistory(QJsonArray list)
-{
-    if (m_healthCheckHistory == list)
-        return;
-    m_healthCheckHistory = list;
-    emit healthCheckHistoryChanged();
-}
-
-bool QMasterSigner::GetHistorySignerList()
-{
-    QJsonObject output;
-    QString errormsg = "";
-    bool ret {false};
-    ret = Draco::instance()->GetHistorySignerList(fingerPrint(), output, errormsg);
-    DBG_INFO << ret << output;
-    if(ret){
-        QJsonArray histories = output["history"].toArray();
-        QJsonArray v_histories;
-        for (auto js : histories) {
-            QJsonObject history = js.toObject();
-            long int created_time_millis = static_cast<long int>(history.value("created_time_millis").toDouble()/1000);
-            QDateTime date_time = QDateTime::fromTime_t(created_time_millis);
-            history["created_time_millis"] = QString("%1")
-                    .arg(date_time.date().toString("MMM,dd,yyyy"));
-            v_histories.append(history);
-        }
-        setHealthCheckHistory(v_histories);
-    }
-    return ret;
-}
-
 QString QMasterSigner::address() const
 {
     return m_address;
@@ -390,6 +353,17 @@ QSingleSignerPtr QMasterSigner::cloneSingleSigner()
     signer.data()->setMasterFingerPrint(fingerPrint());
     signer.data()->setDerivationPath(device()->path());
     return signer;
+}
+
+bool QMasterSigner::isMine() const
+{
+    QWarningMessage msg;
+    std::vector<nunchuk::MasterSigner> signers = bridge::nunchukGetOriginMasterSigners(msg);
+    auto it = std::find_if(signers.begin(), signers.end(), [this](nunchuk::MasterSigner signer) {
+        return signer.get_device().get_master_fingerprint() == fingerPrint().toStdString()
+            || signer.get_id() == fingerPrint().toStdString();
+    });
+    return it != signers.end();
 }
 
 MasterSignerListModel::MasterSignerListModel() {

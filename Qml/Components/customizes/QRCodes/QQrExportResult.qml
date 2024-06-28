@@ -20,7 +20,9 @@
 import QtQuick 2.4
 import QtGraphicalEffects 1.12
 import QtQuick.Controls 2.5
+import Qt.labs.platform 1.1
 import QRCodeItem 1.0
+import DataPool 1.0
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
@@ -35,6 +37,8 @@ Popup {
     background: Item{}
     property alias  model: listQr.model
     property string label: "Export via QR code"
+    property string filename: ""
+
     Rectangle {
         id: qrmask
         width: 600

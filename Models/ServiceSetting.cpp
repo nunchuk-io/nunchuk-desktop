@@ -71,7 +71,15 @@ QVariant ServiceSetting::servicesTag() const
 
 QWalletServicesTagPtr ServiceSetting::servicesTagPtr() const
 {
-    return QBasePremium::mode() == USER_WALLET ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
+    if (walletInfo()) {
+        return walletInfo()->servicesTagPtr();
+    } else {
+        if (ClientController::instance()->isMultiSubscriptions()) {
+            return QGroupWallets::instance()->servicesTagPtr();
+        } else {
+            return QBasePremium::mode() == USER_WALLET ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
+        }
+    }
 }
 
 Wallet *ServiceSetting::walletInfo() const

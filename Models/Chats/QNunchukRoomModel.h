@@ -390,7 +390,7 @@ signals:
     void noticeService();
     void finishedDownloadRoom();
     void countChanged();
-    void byzantineRoomCreated(QString room_id, bool existed);
+    void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
     void byzantineRoomRenamed(QString room_id, QString group_id);
 public slots:

@@ -18,6 +18,7 @@ class QServerKey : public QBasePremium
     Q_PROPERTY(QVariantList spendingLimitCurrent  READ spendingLimitCurrent  NOTIFY spendingLimitCurrentChanged)
     Q_PROPERTY(QVariant keyCoSigning              READ keyCoSigning          NOTIFY keyCoSigningChanged)
     Q_PROPERTY(QVariant hbSpendingLimitChange  READ hbSpendingLimitChange  NOTIFY spendingLimitCurrentChanged)
+    Q_PROPERTY(bool hasServerKey READ hasServerKey CONSTANT)
 public:
     explicit QServerKey(const QString &wallet_id);
     // Update
@@ -51,9 +52,8 @@ public:
     bool ServerKeyUpdatePoliciesChange();
     bool ServerKeyUpdatePoliciesSucceed();
 
-    QWalletServicesTagPtr ServiceTag() const;
-
     QVariant keyCoSigning() const;
+    bool hasServerKey();
 private:
     QJsonObject ConvertToDisplayQml(QJsonObject data);
 public slots:
@@ -61,8 +61,6 @@ public slots:
     QString  secondsToString (qint64 total_seconds);
     QVariant secondsToTime(qint64 signing_delay_seconds);
     qint64 timeToSeconds(const QVariant& time);
-private:
-    QWalletServicesTagPtr servicesTagPtr() const;
 signals:
     void policiesChanged();
     void policiesOldChanged();

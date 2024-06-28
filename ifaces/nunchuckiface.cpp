@@ -611,6 +611,32 @@ nunchuk::MasterSigner nunchukiface::GetMasterSigner(const std::string &mastersig
     return ret;
 }
 
+nunchuk::MasterSigner nunchukiface::GetMasterSignerFingerprint(const std::string &fingerprint, QWarningMessage &msg)
+{
+    nunchuk::MasterSigner ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            std::vector<nunchuk::MasterSigner> signers = nunchuk_instance_[nunchukMode()]->GetMasterSigners();
+            auto it = std::find_if(signers.begin(), signers.end(), [fingerprint](const nunchuk::MasterSigner &s) {
+                return s.get_device().get_master_fingerprint() == fingerprint || s.get_id() == fingerprint;
+            });
+            if (it != signers.end()) {
+                ret = *it;
+            } else {
+                msg.setWarningMessage(-1, "Not found key", EWARNING::WarningType::EXCEPTION_MSG);
+            }
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
 bool nunchukiface::DeleteMasterSigner(const std::string &mastersigner_id, QWarningMessage &msg)
 {
     bool ret = false;
@@ -704,6 +730,32 @@ std::vector<nunchuk::SingleSigner> nunchukiface::GetRemoteSigners(QWarningMessag
                 else{
                     DBG_INFO << "FIXME" << signer.get_name() << signer.is_visible();
                 }
+            }
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::SingleSigner nunchukiface::GetRemoteSigner(const std::string &master_fingerprint, QWarningMessage &msg)
+{
+    nunchuk::SingleSigner ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            std::vector<nunchuk::SingleSigner> signers = nunchuk_instance_[nunchukMode()]->GetRemoteSigners();
+            auto it = std::find_if(signers.begin(), signers.end(), [master_fingerprint](const nunchuk::SingleSigner &s) {
+                return s.get_master_fingerprint() == master_fingerprint;
+            });
+            if (it != signers.end()) {
+                ret = *it;
+            } else {
+                msg.setWarningMessage(-1, "Not found key", EWARNING::WarningType::EXCEPTION_MSG);
             }
         }
     }

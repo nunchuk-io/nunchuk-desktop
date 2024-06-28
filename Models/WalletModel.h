@@ -27,9 +27,10 @@
 #include "SingleSignerModel.h"
 #include "QOutlog.h"
 #include "TypeDefine.h"
+#include "Commons/Slugs.h"
 #include <QJsonArray>
 
-class Wallet : public QObject
+class Wallet : public QObject, public Slugs
 {
     Q_OBJECT
     Q_PROPERTY(QString      walletId                                READ id                     WRITE setId             NOTIFY idChanged)
@@ -78,7 +79,11 @@ class Wallet : public QObject
     Q_PROPERTY(bool         isGroupWallet                           READ isGroupWallet                                  CONSTANT)
     Q_PROPERTY(QVariantList ownerMembers                            READ ownerMembers                                   CONSTANT)
     Q_PROPERTY(QVariant     ownerPrimary                            READ ownerPrimary                                   CONSTANT)
-    Q_PROPERTY(bool         needBackup                              READ needBackup             WRITE setNeedBackup NOTIFY needBackupChanged)
+    Q_PROPERTY(bool         needBackup                              READ needBackup             WRITE setNeedBackup     NOTIFY needBackupChanged)
+    Q_PROPERTY(QString      slug                                    READ slug                                           CONSTANT)
+    Q_PROPERTY(bool         enableCreateChat                        READ enableCreateChat                               CONSTANT)
+    Q_PROPERTY(bool         isReplaced                              READ isReplaced                                     NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool         isLocked                                READ isLocked                                       NOTIFY groupInfoChanged)
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -160,8 +165,6 @@ public:
     QString initEventId() const;
     void setInitEventId(const QString &initEventId);    
     bool isAssistedWallet() const;
-    bool isUserWallet() const;
-    bool isGroupWallet() const;
     bool containsColdcard();
     int gapLimit() const;
     void setGapLimit(int gap_limit);
@@ -171,10 +174,12 @@ public:
     void syncCollabKeyname();
     QVariant dashboardInfo() const;
     QString groupId() const;
+    QStringList slugs() const final;
     QString slug() const;
     QString myRole() const;
+    QString status() const;
     QGroupDashboardPtr dashboard() const;
-
+    bool enableCreateChat();
     //Assisted
     bool isByzantineWallet();
     void GetAssistedTxs();
@@ -189,6 +194,7 @@ public:
     QJsonObject GetServerKeyInfo(const QString &txid);
     bool DeleteAssistedWallet();
     bool DeleteWalletRequiredSignatures();
+    void getChatInfo();
 
     QVariantList aliasMembers() const;
     QString aliasName() const;
@@ -224,6 +230,9 @@ public:
 
     Q_INVOKABLE void updateSignMessage(const QString &xfp, int wallet_type);
     Q_INVOKABLE void exportBitcoinSignedMessage(const QString &xfp, const QString &file_path, int wallet_type);
+    bool isReplaced() const;
+    bool isLocked() const;
+    QWalletServicesTagPtr servicesTagPtr() const;
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
 protected:
@@ -354,6 +363,7 @@ public:
     void notifyMasterSignerDeleted(const QString& masterSignerId);
     int getWalletIndexById(const QString& walletId);
     void updateHealthCheckTime();
+    void refresh();
     void requestSort(int role, int order);
     bool containsId(const QString& id);
     void updateSharedWalletById(const QString &wallet_id, const QString &room_id, const QString &init_id, const QString &name);
@@ -382,7 +392,9 @@ public:
         wallet_hasOwner_Role,
         wallet_primaryOwner_Role,
         wallet_isHotWallet_Role,
-        wallet_slug_Role
+        wallet_slug_Role,
+        wallet_isLocked_Role,
+        wallet_isReplaced_Role
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

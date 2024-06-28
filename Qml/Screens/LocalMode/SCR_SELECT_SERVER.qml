@@ -87,7 +87,7 @@ QScreen {
                             anchors.fill: parent
                             onClicked: {
                                 ProfileSetting.mainnetIndex = index
-                                AppSetting.mainnetServer = modelData.url
+                                AppSetting.mainnetServerSelected(modelData.url)
                                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
                             }
                         }

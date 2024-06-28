@@ -33,6 +33,7 @@ import "../../Components/customizes/Chats"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
+    id: walletsRoot
     color: "transparent"
     signal askDeny(var deny)
     property int count: walletList.count
@@ -41,7 +42,7 @@ Rectangle {
     height: (parent.height - 215)/2
     clip: true
     Column {
-        anchors.fill: parent
+        width: parent.width
         spacing: 12
         Item {
             width: parent.width
@@ -99,7 +100,7 @@ Rectangle {
         }
         Item {
             width: parent.width
-            height: parent.height - 24
+            height: walletsRoot.height - (40)
             Loader {
                 visible: (walletList.count + pendingList.count) === 0
                 anchors.fill: parent
@@ -111,7 +112,7 @@ Rectangle {
                 clip: true
                 flickableDirection: Flickable.VerticalFlick
                 interactive: true
-                contentHeight: contentDisplay.childrenRect.height + 12
+                contentHeight: contentDisplay.height
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
                     id: contentDisplay
@@ -209,7 +210,8 @@ Rectangle {
                             walletM: model.wallet_M
                             walletN: model.wallet_N
                             isDashboard: model.wallet_slug !== ""
-                            isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
+                            isLocked: model.wallet_dashboard ? (model.wallet_dashboard.isLocked || model.wallet_isLocked || model.wallet_isReplaced) : false
+                            isReplaced: model.wallet_isReplaced
                             walletRole: model.wallet_role
                             hasOwner: model.wallet_hasOwner
                             primaryOwner: model.wallet_primaryOwner

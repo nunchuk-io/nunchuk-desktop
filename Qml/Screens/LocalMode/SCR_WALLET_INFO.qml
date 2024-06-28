@@ -101,7 +101,6 @@ QScreen {
         }
     }
 
-
     QConfirmYesNoPopup {
         id: confirmDeleteWallet
         title: STR.STR_QML_661
@@ -112,7 +111,7 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
         }
     }
-    QQrExportResult {
+    QQrExportResultPDF {
         id: qrcodeExportResult
         model: AppModel.qrExported
     }

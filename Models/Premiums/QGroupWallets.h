@@ -76,6 +76,7 @@ public:
 public:
     bool AddOrUpdateAKeyToDraftWallet() final;
     void updateRequestKey() final;
+    bool requestKeyReplacement(QSingleSignerPtr signer) final;
 
 public slots:
     void MakePendingDashboardList(const QJsonArray& groups);

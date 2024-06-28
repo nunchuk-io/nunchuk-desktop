@@ -32,8 +32,10 @@ Item {
     property bool hasOwner: true
     property bool isDashboard: false
     property bool isLocked: false
-    readonly property string gradientFrom   : isHotWallet ? "#A66800" : (isLocked ? "#595959" : (isAssisted || isDashboard ? "#2F766D" : "#2F466C"))
-    readonly property string gradientTo     : isHotWallet ? "#A66800" : (isLocked ? "#595959" : (isAssisted || isDashboard ? "#1C4A21" : "#1C4A21"))
+    property bool isReplaced: false
+    property string walletRole: ""
+    readonly property string gradientFrom   : isHotWallet ? "#A66800" : (isLocked || (walletRole === "KEYHOLDER_LIMITED") ? "#595959" : (isAssisted || isDashboard ? "#2F766D" : "#2F466C"))
+    readonly property string gradientTo     : isHotWallet ? "#A66800" : (isLocked || (walletRole === "KEYHOLDER_LIMITED") ? "#595959" : (isAssisted || isDashboard ? "#1C4A21" : "#1C4A21"))
     Item {
         id: _detail
         anchors.fill: parent

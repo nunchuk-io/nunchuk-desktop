@@ -56,7 +56,7 @@ Update_security_questions:
 public slots:
     void changeRequiredQuestion(int index, QVariant new_ques);
     void setupSecQuesAnswer(int index, const QString &id, const QString &answer);
-    void createUserCustomizedQuestion(int index, const QString &question);
+    void createUserCustomizedQuestion(const QString &question);
 private:
     QWalletServicesTagPtr servicesTagPtr() const;
 signals:

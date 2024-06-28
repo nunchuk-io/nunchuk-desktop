@@ -184,6 +184,70 @@ public:
                                 const bool isDraft,
                                 QJsonObject& output,
                                 QString &errormsg);
+
+    bool GetKeyHealthReminder(const QString &group_id,
+                              const QString &wallet_id,
+                              QJsonObject& output,
+                              QString &errormsg);
+
+    bool AddOrUpdateKeyHealthReminder(const QString &group_id,
+                                const QString &wallet_id,
+                                const QJsonObject& request_body,
+                                QJsonObject& output,
+                                QString &errormsg);
+
+    bool DeleteKeyHealthReminder(const QString &group_id,
+                                 const QString &wallet_id,
+                                 const QStringList &xfps,
+                                 QJsonObject& output,
+                                 QString &errormsg);
+
+    bool SkipKeyHealthReminder(const QString &group_id,
+                                 const QString &wallet_id,
+                                 const QString &xfp,
+                                 QJsonObject& output,
+                                 QString &errormsg);
+
+    bool ConfigureWalletReplacement(const QString &group_id,
+                                    const QString &wallet_id,
+                                    const QJsonObject& request_body,
+                                    QJsonObject& output,
+                                    QString &errormsg);
+
+    bool InitiateKeyReplacement(const QString &group_id,
+                                const QString &wallet_id,
+                                const QString &xfp,
+                                QJsonObject& output,
+                                QString &errormsg);
+
+    bool CancelKeyReplacement(const QString &group_id,
+                              const QString &wallet_id,
+                              const QString &xfp,
+                              QJsonObject& output,
+                              QString &errormsg);
+
+    bool ReplaceKey(const QString &group_id,
+                    const QString &wallet_id,
+                    const QString &xfp,
+                    const QString& passwordToken,
+                    const QJsonObject& request_body,
+                    QString &errormsg);
+
+    bool FinalizeKeyReplacement(const QString &group_id,
+                                const QString &wallet_id,
+                                QJsonObject& output,
+                                QString &errormsg);
+
+    bool GetKeyReplacementStatus(const QString &group_id,
+                                 const QString &wallet_id,
+                                 QJsonObject& output,
+                                 QString &errormsg);
+
+    bool ResetKeyReplacement(const QString &group_id,
+                             const QString &wallet_id,
+                             QJsonObject& output,
+                             QString &errormsg);
+
 };
 
 #endif // BYZANTINE_H

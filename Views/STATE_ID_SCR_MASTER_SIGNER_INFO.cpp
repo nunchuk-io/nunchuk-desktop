@@ -24,6 +24,8 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
 
 void SCR_MASTER_SIGNER_INFO_Entry(QVariant msg) {
 
@@ -59,9 +61,14 @@ void EVT_MASTER_SIGNER_INFO_EDIT_NAME_HANDLER(QVariant msg) {
 }
 
 void EVT_MASTER_SIGNER_INFO_HEALTH_CHECK_HANDLER(QVariant msg) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (dashboard->healthPtr()->HealthCheckAddReminderClicked(msg)) {
+            return;
+        }
+    }
     if(AppModel::instance()->masterSignerInfo()){
         if(AppModel::instance()->masterSignerInfo()->needPassphraseSent()
-                && (AppModel::instance()->masterSignerInfo()->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE)){
+            && (AppModel::instance()->masterSignerInfo()->signerType() == (int)ENUNCHUCK::SignerType::SOFTWARE)){
             QMap<QString, QVariant> passPhraseData;
             passPhraseData["state_id"] = E::STATE_ID_SCR_MASTER_SIGNER_INFO;
             passPhraseData["master_signer_xfp"] = AppModel::instance()->masterSignerInfo()->fingerPrint();

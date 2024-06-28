@@ -40,7 +40,11 @@ QScreen {
     property int flow: AppModel.walletInfo.flow
     property var walletInfo: AppModel.walletInfo
     readonly property var map_flow: [
-        {flow_action: AlertType.HEALTH_CHECK_STATUS,        screen_component: _saving_account},
+        {flow_action: AlertType.HEALTH_CHECK_STATUS,                        screen_component: _saving_account},
+        {flow_action: AlertType.HEALTH_CHECK_REMINDER_EMPTY_STATE,          screen_component: _health_check_reminder},
+        {flow_action: AlertType.HEALTH_CHECK_SELECT_KEY_WANT_TO_REMINDER,   screen_component: _selectKeyWantToReminder},
+        {flow_action: AlertType.HEALTH_CHECK_FREQUENCY_REPEAT,              screen_component: _checkFrequencyRepeat},
+        {flow_action: AlertType.HEALTH_CHECK_REMINDER_POPULATED,            screen_component: _healthCheckPeriodicReminder}
     ]
 
     Loader {
@@ -52,5 +56,28 @@ QScreen {
     Component {
         id: _saving_account
         QSavingAccount {}
+    }
+    Component {
+        id: _health_check_reminder
+        QHealthCheckReminder {}
+    }
+    Component {
+        id: _selectKeyWantToReminder
+        QHealthCheckSelectKeyWantToReminder {}
+    }
+    Component {
+        id: _checkFrequencyRepeat
+        QHealthCheckFrequencyRepeat {
+            onHealthCheckBack: {
+                QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, obj)
+            }
+            onHealthCheckSave: {
+                QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, obj)
+            }
+        }
+    }
+    Component {
+        id: _healthCheckPeriodicReminder
+        QHealthCheckPeriodicReminder {}
     }
 }

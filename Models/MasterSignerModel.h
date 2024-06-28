@@ -28,8 +28,9 @@
 #include "qUtils.h"
 #include <QJsonArray>
 #include "TypeDefine.h"
+#include "Commons/ISigner.h"
 
-class QMasterSigner : public QObject {
+class QMasterSigner : public QObject, public ISigner {
     Q_OBJECT
     Q_PROPERTY(QString masterSignerId      READ id                                      NOTIFY idChanged)
     Q_PROPERTY(QString masterSignername    READ name            WRITE setName           NOTIFY nameChanged)
@@ -50,6 +51,8 @@ class QMasterSigner : public QObject {
     Q_PROPERTY(bool isPrimaryKey           READ isPrimaryKey    WRITE setIsPrimaryKey   NOTIFY isPrimaryKeyChanged)
     Q_PROPERTY(QVariantList healthCheckHistory READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
     Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
+    Q_PROPERTY(bool isMine                 READ isMine                                  CONSTANT)
+
 public:
     QMasterSigner();
     QMasterSigner(const nunchuk::MasterSigner &signer);
@@ -69,7 +72,7 @@ public:
     int health() const;
     void setHealth(const int d);
 
-    QString fingerPrint() const;
+    QString fingerPrint() const final;
     void setFingerPrint(const QString& d);
 
     QString message();
@@ -115,16 +118,13 @@ public:
     QString tag() const;
     QStringList tags() const;
 
-    QVariantList healthCheckHistory() const;
-    void setHealthCheckHistory(QJsonArray list);
-
-    bool GetHistorySignerList();
-
     QString address() const;
     void setAddress(const QString &address);
 
     Q_INVOKABLE QVariantList getWalletList();
     QSingleSignerPtr cloneSingleSigner();
+
+    bool isMine() const;
 private:
     QString id_ = "";
     QString name_ = "";
@@ -143,7 +143,6 @@ private:
     nunchuk::MasterSigner masterSigner_;
     bool isPrimaryKey_ = false;
     bool isDraft = false;
-    QJsonArray m_healthCheckHistory {};
     QString m_address;
 signals:
     void idChanged();
@@ -163,7 +162,7 @@ signals:
     void signerTypeChanged();
     void passphraseChanged();
     void isPrimaryKeyChanged();
-    void healthCheckHistoryChanged();
+    void healthCheckHistoryChanged() final;
     void addressChanged();
 };
 typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;

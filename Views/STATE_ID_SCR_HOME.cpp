@@ -105,7 +105,10 @@ void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->setMasterSignerInfo(msg.toInt());
+    DBG_INFO << msg;
+    QString masterFingerPrint = msg.toString();
+    QMasterSignerPtr it = bridge::nunchukGetMasterSignerFingerprint(masterFingerPrint);
+    AppModel::instance()->setMasterSignerInfo(it);
     AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByMasterSigner(AppModel::instance()->masterSignerInfo()->id()));
     if (auto signer = AppModel::instance()->masterSignerInfoPtr()) {
         signer->GetHistorySignerList();
@@ -120,8 +123,9 @@ void EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
-    DBG_INFO;
-    QSingleSignerPtr it = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(msg.toInt());
+    DBG_INFO << msg;
+    QString masterFingerPrint = msg.toString();
+    QSingleSignerPtr it = bridge::nunchukGetRemoteSigner(masterFingerPrint);
     if(it) {
         AppModel::instance()->setSingleSignerInfo(it);
         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
@@ -130,11 +134,8 @@ void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
     if (auto signer = AppModel::instance()->singleSignerInfoPtr()) {
         signer->GetHistorySignerList();
         if (auto wallet = AppModel::instance()->walletInfoPtr()) {
-            DBG_INFO;
             if (auto dashboard = wallet->dashboard()) {
-                DBG_INFO;
                 if (auto health = dashboard->healthPtr()) {
-                    DBG_INFO;
                     health->setKeyXfp(signer->masterFingerPrint());
                 }
             }
@@ -251,7 +252,8 @@ void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
-    QSingleSignerPtr it = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(msg.toInt());
+    QString masterFingerPrint = msg.toString();
+    QSingleSignerPtr it = bridge::nunchukGetRemoteSigner(masterFingerPrint);
     if (it) {
         QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner());
         signer.data()->setId(it->masterSignerId());
@@ -314,3 +316,12 @@ void EVT_RECURRING_PAYMENTS_REQUEST_HANDLER(QVariant msg)
         }
     }
 }
+
+void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_ADD_SOFTWARE_SIGNER_RESULT_HANDLER(QVariant msg) {
+
+}
+

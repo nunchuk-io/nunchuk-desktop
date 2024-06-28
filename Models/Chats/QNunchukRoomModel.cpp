@@ -1190,9 +1190,9 @@ void QNunchukRoom::connectRoomSignals()
 void QNunchukRoom::connectRoomServiceSignals()
 {
     if(m_room){
-        connect(this,   &QNunchukRoom::noticeService, ClientController::instance(), &ClientController::refreshContacts);
-        connect(m_room, &Room::addedMessages, ClientController::instance(), &ClientController::refreshContacts);
-        connect(m_room, &Room::addedMessages, this, &QNunchukRoom::addedMessages);
+        connect(this,   &QNunchukRoom::noticeService,   ClientController::instance(),   &ClientController::refreshContacts);
+        connect(m_room, &Room::addedMessages,           ClientController::instance(),   &ClientController::refreshContacts);
+        connect(m_room, &Room::addedMessages,           this,                           &QNunchukRoom::addedMessages);
     }
 }
 
@@ -1460,7 +1460,6 @@ void QNunchukRoom::addedMessages(int fromIndex, int toIndex)
         for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
             if(fromIndex <= e->index() &&  toIndex >= e->index()){
                 const RoomEvent* lastEvent = e->get();
-                DBG_INFO << lastEvent;
                 nunchukNoticeEvent(*lastEvent);
             }
         }
@@ -1476,7 +1475,6 @@ void QNunchukRoom::addedMessages(int fromIndex, int toIndex)
         });
     }
     else{
-        DBG_INFO << fromIndex << toIndex << m_room->maxTimelineIndex() <<  m_room->minTimelineIndex();
         receiveMessage(fromIndex, toIndex);
     }
 }
@@ -1737,6 +1735,8 @@ void QNunchukRoom::receiveMessage(int fromIndex, int toIndex)
         for (auto rit = m_room->messageEvents().rbegin(); rit!= m_room->messageEvents().rend(); ++rit){
             if(fromIndex <= rit->index() &&  toIndex >= rit->index()){
                 const RoomEvent* lastEvent = rit->get();
+                //check null
+                if(!lastEvent){ continue; }
                 User* sender = m_room->user(lastEvent->senderId());
                 QString nameDisplay = sender->displayname(room()) != "" ? sender->displayname(room()) : sender->id();
                 QString avatar = sender->avatarMediaId(room());
@@ -1934,16 +1934,19 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                      || msgtype.contains("io.nunchuk.custom.health_check", Qt::CaseInsensitive)
                      || msgtype.contains("io.nunchuk.custom.server_key", Qt::CaseInsensitive)
                      || msgtype.contains("io.nunchuk.custom.recurring_payment", Qt::CaseInsensitive)
-                     || msgtype.contains("io.nunchuk.custom.key_recovery", Qt::CaseInsensitive))
+                     || msgtype.contains("io.nunchuk.custom.key_recovery", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.health_check_reminder_updated", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.health_check_reminder", Qt::CaseInsensitive)
+                     || msgtype.contains("io.nunchuk.custom.health_check_skipped", Qt::CaseInsensitive))
             {
-
-
                 if (dashboard) {
                     dashboard->GetAlertsInfo();
                     dashboard->GetHealthCheckInfo();
                     if (auto plan = dashboard->inheritancePlanPtr()) {
                         plan->GetInheritancePlan();
-                        ServiceSetting::instance()->servicesTagPtr()->setListInheritantPlans();
+                        if (auto tag = dashboard->servicesTagPtr()) {
+                            tag->setListInheritantPlans();
+                        }
                     }
                 }
                 if (msgtype.contains("io.nunchuk.custom.wallet_inheritance_updated", Qt::CaseInsensitive)
@@ -1971,6 +1974,36 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             }
             else if(msgtype.contains("io.nunchuk.custom.group_wallet_alias", Qt::CaseInsensitive)){
                 // TBD
+            }
+            else if(msgtype.contains("io.nunchuk.custom.saved_address_updated", Qt::CaseInsensitive)){
+                emit AppSetting::instance()->favoriteAddressesChanged();
+            }
+            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_canceled", Qt::CaseInsensitive) ||
+                    msgtype.contains("io.nunchuk.custom.wallet_key_replacement_reset", Qt::CaseInsensitive) ||
+                    msgtype.contains("io.nunchuk.custom.wallet_key_replacement_pending", Qt::CaseInsensitive))
+
+            {
+                if (dashboard) {
+                    dashboard->GetAlertsInfo();
+                }
+            }
+            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_completed", Qt::CaseInsensitive) ||
+                    msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive))
+            {
+                if (msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive)) {
+                    if (dashboard) {
+                        dashboard->GetAlertsInfo();
+                    }
+                }
+                if (dashboard) {
+                    dashboard->GetWalletInfo();
+                    if(dashboard->isReplaced()){
+                        dashboard->setShowDashBoard(false);
+                    }
+                    if (auto walletList = AppModel::instance()->walletListPtr()) {
+                        walletList->refresh();
+                    }
+                }
             }
             else {
                 // for honey badger
@@ -2629,7 +2662,7 @@ void QNunchukRoomListModel::createRoomByzantineChat(const QStringList invitees_i
         if(containsRoomName(room_name, index, room_id)){
             if(index >= 0){
                 setCurrentIndex(index);
-                emit byzantineRoomCreated(room_id, true);
+                emit byzantineRoomCreated(room_id, group_id, true);
             }
         }
         else{
@@ -2660,11 +2693,11 @@ void QNunchukRoomListModel::createRoomByzantineChat(const QStringList invitees_i
                                                       in_roomVersion,
                                                       in_isDirect,
                                                       in_initialState);
-            connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage] {
+            connect(createJob, &BaseJob::success, this, [this, createJob, firstMessage, group_id] {
                 if(!firstMessage.isNull() && firstMessage.toString() != ""){
                     connection()->room(createJob->roomId())->postPlainText(firstMessage.toString());
                 }
-                emit byzantineRoomCreated(createJob->roomId(), false);
+                emit byzantineRoomCreated(createJob->roomId(), group_id, false);
             });
             connect(createJob, &BaseJob::failure, this, [createJob] {
                 DBG_INFO << "//FIXME Failed to create the room";

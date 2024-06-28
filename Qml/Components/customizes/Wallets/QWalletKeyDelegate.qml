@@ -42,6 +42,9 @@ Item {
     property string tagType: ""
     property string card_id: ""
     property int    accountIndex: 0
+
+    signal viewPoliciesRequest()
+
     Row {
         id: roomDelegateContent
         spacing: 8
@@ -123,6 +126,20 @@ Item {
                     }
                 }
             }
+        }
+    }
+    QTextButton {
+        width: 108
+        height: 36
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+        label.text: STR.STR_QML_1348
+        label.font.pixelSize: 12
+        type: eTypeB
+        enabled: !AppModel.walletInfo.isLocked
+        visible: signerType === NUNCHUCKTYPE.SERVER && !AppModel.walletInfo.isReplaced
+        onButtonClicked: {
+            viewPoliciesRequest()
         }
     }
 }

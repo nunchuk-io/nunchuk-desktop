@@ -27,17 +27,37 @@ import DataPool 1.0
 import DRACO_CODE 1.0
 import "../../Components/customizes"
 import "../../Components/customizes/Signers"
+import "../OnlineMode/Healths"
 
 QScreen {
     readonly property int eKEY_INFO: 1
     readonly property int eSIGN_MESSAGE: 2
-    property var action_type: eKEY_INFO
+    property int action_type: eKEY_INFO
+    property int flow: AppModel.walletInfo.flow
 
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        sourceComponent: action_type === eKEY_INFO ? _keyInfo : _signMessage
+        sourceComponent: {
+            if (action_type === eKEY_INFO) {
+                return flow === AlertType.HEALTH_CHECK_FREQUENCY_REPEAT ? _checkFrequencyRepeat : _keyInfo
+            }
+            else {
+                return _signMessage
+            }
+        }
+    }
+    Component {
+        id: _checkFrequencyRepeat
+        QHealthCheckFrequencyRepeat {
+            onHealthCheckBack: {
+                QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK, obj)
+            }
+            onHealthCheckSave: {
+                QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK, obj)
+            }
+        }
     }
     Component {
         id: _signMessage
@@ -77,6 +97,15 @@ QScreen {
                     "derivation_path"       : AppModel.singleSignerInfo.signerDerivationPath };
                 QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_DELETE_REQUEST, remoteSignerObj)
             }
+
+            onHealthReminderClicked: {
+                var check = {
+                    type: "health-check-add-reminders-edit",
+                    xfp: signerXfp
+                }
+                QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_HEALTH_CHECK, check)
+            }
+
             onCloseClicked: {
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }

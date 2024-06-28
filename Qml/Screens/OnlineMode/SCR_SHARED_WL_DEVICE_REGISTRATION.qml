@@ -148,6 +148,7 @@ QScreen {
                         break;
                     case 1:
                     default:
+                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(RoomWalletData.walletName) + "_air-gapped-device-register"
                         qrcodeExportResult.open()
                         QMLHandle.sendEvent(EVT.EVT_SHARED_WALLET_EXPORT_QRCODE, RoomWalletData.walletId)
                         break;

@@ -46,6 +46,7 @@ Item {
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),           enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
         {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: true,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
         {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return rollOverNewAssistedWallet() } },
         {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return manageSubscription() }}
     ]
@@ -59,6 +60,7 @@ Item {
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),           enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
         {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: true,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
         {screen:_ORDER_NEW_HARDWARE,                 visible: hasOrderNewHardware,          enable:true,   title:STR.STR_QML_700, icon: ""                                          ,action: function(){ return orderNewHardware() } },
         {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return rollOverNewAssistedWallet() } },
         {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return manageSubscription() } }
@@ -132,6 +134,13 @@ Item {
         _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
         _InfoVer.open();
         return false;
+    }
+
+    function replace_keys() {
+        _info1.title = STR.STR_QML_339
+        _info1.contentText = STR.STR_QML_1347
+        _info1.open()
+        return true;
     }
 
     function viewInheritancePlan() {

@@ -43,6 +43,7 @@ Item {
             width: 539
             height: modelData.id === "my_question" ? (72 + 48 + 24 + (_box.newQuestion === "" ? 24 : 0)) : 72
             remain_questions: modelData.remain_questions
+            newQuestion: newMyQuestion
             onNewQuestionChanged: {
                 newMyQuestion = _box.newQuestion
                 newQuesIndex = _box.ques_index

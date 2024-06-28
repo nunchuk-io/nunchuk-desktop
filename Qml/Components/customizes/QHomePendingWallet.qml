@@ -54,9 +54,11 @@ Rectangle {
     property bool   isIronHandUser:  ClientController.user.isIronHandUser
     property bool   isHoneyBadgerUser:  ClientController.user.isHoneyBadgerUser
     property bool   isPremierGroup: dashboardInfo.isPremierGroup
+    property bool   enableCreateChat: AppModel.walletInfo.enableCreateChat
     property bool hasPro: AppModel.walletInfo.isPro
+    property bool hasServerKey: AppModel.walletInfo.serverKeyInfo.hasServerKey
     property bool hasViewInheritancePlan: (AppModel.walletInfo.inheritancePlanInfo.isActived && hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")) || myRole === ""
-    property bool hasPlatformKeyCoSign: (hasPro && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN")) || isIronHandUser || isHoneyBadgerUser
+    property bool hasPlatformKeyCoSign: hasServerKey && (myRole === "KEYHOLDER" ||  myRole === "MASTER" || myRole === "ADMIN" || isIronHandUser || isHoneyBadgerUser)
     property bool hasWalletLockdown: (myRole === "MASTER" || myRole === "ADMIN") || isIronHandUser || isHoneyBadgerUser
     Loader {
         anchors.fill: parent
@@ -106,6 +108,7 @@ Rectangle {
                         height: 48
                         bgColor: "#F5F5F5"
                         icon: "qrc:/Images/Images/more-horizontal-dark.svg"
+                        visible: !AppModel.walletInfo.isLocked
                         onClicked: {
                             if("PENDING_WALLET" === pendingDashboard.groupStatus){
                                 pendingOptionMenu.popup()
@@ -130,6 +133,7 @@ Rectangle {
                         height: 48
                         bgColor: "#F5F5F5"
                         icon: "qrc:/Images/Images/message-dark.svg"
+                        visible: enableCreateChat
                         onClicked: {
                             if(dashboardInfo){
                                 dashboardInfo.requestByzantineChat();
@@ -152,9 +156,15 @@ Rectangle {
                         hasPlatformKeyCoSign,
                         hasWalletLockdown,
                         (myRole === "MASTER") || (myRole === "ADMIN") || (myRole === "KEYHOLDER"),
-                        (myRole === "MASTER") || (myRole === "ADMIN")
+                        (((myRole === "MASTER") || (myRole === "ADMIN")) && (dashboardInfo.groupChatExisted))
                     ]
-                    enables: [true, true, true, true, true]
+                    enables: [
+                        true,
+                        true,
+                        true,
+                        true,
+                        dashboardInfo.groupChatExisted
+                    ]
                     functions: [
                         function(){ //View Inheritance plan
                             QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB, 4)
@@ -186,10 +196,13 @@ Rectangle {
                         STR.STR_QML_1049 //Cancel pending wallet
                     ]
                     visibles: [
-                        true,
+                        (dashboardInfo.groupChatExisted),
                         (myRole === "MASTER")
                     ]
-                    enables: [ true, true ]
+                    enables: [
+                        dashboardInfo.groupChatExisted,
+                        true
+                    ]
                     functions: [
                         function(){
                             // Chat history
@@ -260,6 +273,28 @@ Rectangle {
                                         if (modelData.type === AlertType.REQUEST_INHERITANCE_PLANNING_APPROVED) {
                                             _info1.open()
                                             _info1.contentText = STR.STR_QML_1048
+                                        } else if (modelData.type === AlertType.KEY_REPLACEMENT_COMPLETED) {
+                                            var user = ClientController.user
+                                            if (user.isIronHandUser || user.isHoneyBadgerUser) {
+                                                _info1.open()
+                                                _info1.contentText = STR.STR_QML_1342
+                                            } else {
+                                                _info1.open()
+                                                _info1.contentText = STR.STR_QML_1343
+                                            }
+                                        } else if (modelData.type === AlertType.TRANSFER_FUNDS) {
+                                            _info1.open()
+                                            _info1.contentText = STR.STR_QML_1346
+                                        } else if (modelData.type === AlertType.KEY_REPLACEMENT_PENDING) {
+                                            var alert = GroupWallet.dashboardInfo.alert
+                                            var is_inheritance = alert.payload.is_inheritance
+                                            if (is_inheritance) {
+                                                _info1.open()
+                                                _info1.contentText = STR.STR_QML_1353
+                                            }
+                                        } else if (modelData.type === AlertType.SETUP_INHERITANCE_PLAN) {
+                                            _info1.open()
+                                            _info1.contentText = STR.STR_QML_1355
                                         }
                                     }
 

@@ -868,7 +868,7 @@ void AppSetting::setCurrency(QString currency)
     emit currencyChanged();
 }
 
-void AppSetting::setWalletCached(QString id, QTriple<QString, QString, QString> data)
+void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString> data)
 {
     QByteArray dataByteArray;
     QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
@@ -876,13 +876,16 @@ void AppSetting::setWalletCached(QString id, QTriple<QString, QString, QString> 
     NunchukSettings::setValue(id, dataByteArray);
 }
 
-bool AppSetting::getwalletCached(QString id, QTriple<QString, QString, QString> &result)
+bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString> &result)
 {
     if(NunchukSettings::contains(id)){
         QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
         QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
-        stream >> result.first >> result.second >> result.third;
-        DBG_INFO << result.first << result.second << result.third;
+        stream >> result.first >> result.second >> result.third >> result.fourth;
+        DBG_INFO << "first:" << result.first
+                 << "second:" << result.second
+                 << "third:" << result.third
+                 << "fourth:" << result.fourth;
         return true;
     }
     return false;
@@ -924,42 +927,143 @@ void AppSetting::setMainnetList(const QVariant &mainnetList)
     NunchukSettings::setCommonValue("mainnetList", mainnetList);
 }
 
+QVariant AppSetting::getReminderStates()
+{
+    return NunchukSettings::value("reminderStates");
+}
+
+void AppSetting::setReminderStates(const QVariant &states)
+{
+    NunchukSettings::setValue("reminderStates", states);
+}
+
 QStringList AppSetting::favoriteAddresses()
 {
-    QString key = QString("%1/favoriteAddresses").arg(AppSetting::instance()->primaryServer());
-    if(NunchukSettings::contains(key)){
-        m_favoriteAddresses = NunchukSettings::value("favoriteAddresses").toStringList();
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    if(CLIENT_INSTANCE->isSubscribed()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Draco::instance()->GetSavedAddress(output, errormsg);
+        if(ret){
+            QJsonArray addresses = output["addresses"].toArray();
+            QStringList favoriteAddresses;
+            foreach (QJsonValue value, addresses) {
+                QString label = value.toObject()["label"].toString();
+                QString address = value.toObject()["address"].toString();
+                favoriteAddresses.append(QString("%1[split]%2").arg(label).arg(address));
+            }
+            m_favoriteAddresses = favoriteAddresses;
+        }
     }
     else{
-        NunchukSettings::setValue("favoriteAddresses", m_favoriteAddresses);
+        QString key = QString("%1/favoriteAddresses").arg(AppSetting::instance()->primaryServer());
+        if(NunchukSettings::contains(key)){
+            m_favoriteAddresses = NunchukSettings::value(key).toStringList();
+        }
+        else{
+            NunchukSettings::setValue(key, m_favoriteAddresses);
+        }
     }
+    qApp->restoreOverrideCursor();
     return m_favoriteAddresses;
 }
 
 void AppSetting::setFavoriteAddresses(const QStringList &newFavoriteAddresses)
 {
-    if(m_favoriteAddresses != newFavoriteAddresses){
-        m_favoriteAddresses = newFavoriteAddresses;
+    m_favoriteAddresses = newFavoriteAddresses;
+    if(!CLIENT_INSTANCE->isSubscribed()){
         QString key = QString("%1/favoriteAddresses").arg(AppSetting::instance()->primaryServer());
         NunchukSettings::setValue(key, m_favoriteAddresses);
-        emit favoriteAddressesChanged();
     }
+    emit favoriteAddressesChanged();
 }
 
-void AppSetting::removeFavoriteAddress(const QString &address)
+void AppSetting::removeFavoriteAddress(const QString &label, const QString &address)
 {
-    QStringList addresses = favoriteAddresses();
-    if(addresses.contains(address)){
-        addresses.removeAll(address);
-        setFavoriteAddresses(addresses);
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    if(CLIENT_INSTANCE->isSubscribed()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Draco::instance()->DeleteSavedAddress(label, address, output, errormsg);
+        if(ret){
+            QJsonArray addresses = output["addresses"].toArray();
+            QStringList favoriteAddresses;
+            foreach (QJsonValue value, addresses) {
+                QString labelValue = value.toObject()["label"].toString();
+                QString addressValue = value.toObject()["address"].toString();
+                favoriteAddresses.append(QString("%1[split]%2").arg(labelValue).arg(addressValue));
+            }
+            setFavoriteAddresses(favoriteAddresses);
+        }
     }
+    else {
+        QString newaddress = QString("%1[split]%2").arg(label).arg(address);
+        QStringList addresses = favoriteAddresses();
+        if(addresses.contains(newaddress)){
+            addresses.removeAll(newaddress);
+            setFavoriteAddresses(addresses);
+        }
+    }
+    qApp->restoreOverrideCursor();
 }
 
-void AppSetting::addFavoriteAddress(const QString &address)
+void AppSetting::addFavoriteAddress(const QString &label, const QString &address)
 {
-    QStringList addresses = favoriteAddresses();
-    if(!addresses.contains(address)){
-        addresses.append(address);
-        setFavoriteAddresses(addresses);
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    if(CLIENT_INSTANCE->isSubscribed()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Draco::instance()->AddOrUpdateSavedAddress(label, address, output, errormsg);
+        if(ret){
+            emit favoriteAddressesChanged();
+        }
     }
+    else{
+        QString newaddress = QString("%1[split]%2").arg(label).arg(address);
+        QStringList addresses = favoriteAddresses();
+        if(!addresses.contains(newaddress)){
+            addresses.append(newaddress);
+            setFavoriteAddresses(addresses);
+        }
+    }
+    qApp->restoreOverrideCursor();
+}
+
+void AppSetting::updateFavoriteAddress(const QString &label, const QString &address)
+{
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    if(CLIENT_INSTANCE->isSubscribed()){
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Draco::instance()->AddOrUpdateSavedAddress(label, address, output, errormsg);
+        if(ret){
+            emit favoriteAddressesChanged();
+        }
+    }
+    else{
+        QString newaddress = QString("%1[split]%2").arg(label).arg(address);
+        QStringList addresses = favoriteAddresses();
+        QStringList addresses_updated;
+        foreach (QString item, addresses) {
+            QString value = item.split("[split]")[1];
+            if(qUtils::strCompare(value, address)){
+                addresses_updated.append(newaddress);
+            }
+            else{
+                addresses_updated.append(item);
+            }
+        }
+        setFavoriteAddresses(addresses_updated);
+    }
+    qApp->restoreOverrideCursor();
+}
+
+bool AppSetting::validateAddress(const QString &address)
+{
+    bool ret =qUtils::IsValidAddress(address);;
+    // if(!ret){
+    //     QString message = QString("Invalid address: %1").arg(address);
+    //     AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+    // }
+    return ret;
 }

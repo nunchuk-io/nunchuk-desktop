@@ -29,8 +29,9 @@
 #include "Servers/DracoDefines.h"
 #include <QJsonArray>
 #include "TypeDefine.h"
+#include "Commons/ISigner.h"
 
-class QSingleSigner : public QObject {
+class QSingleSigner : public QObject, public ISigner {
     Q_OBJECT
     Q_PROPERTY(QString signerName               READ name               WRITE setName               NOTIFY nameChanged)
     Q_PROPERTY(QString signerXpub               READ xpub               WRITE setXpub               NOTIFY xpubChanged)
@@ -54,6 +55,8 @@ class QSingleSigner : public QObject {
     Q_PROPERTY(QVariantList healthCheckHistory  READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
     Q_PROPERTY(QString address                  READ address            WRITE setAddress            NOTIFY addressChanged)
     Q_PROPERTY(QString descriptor               READ descriptor                                     CONSTANT)
+    Q_PROPERTY(bool isMine                      READ isMine                                         CONSTANT)
+
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
@@ -80,6 +83,7 @@ public:
     QString derivationPath();
     void setDerivationPath(const QString& d);
 
+    QString fingerPrint() const final;
     QString masterFingerPrint() const;
     void setMasterFingerPrint(const QString& d);
 
@@ -120,6 +124,8 @@ public:
 
     bool isLocalSigner();
 
+    bool isMine() const;
+
     bool isPrimaryKey() const;
     void setIsPrimaryKey(bool isPrimaryKey);
 
@@ -139,11 +145,6 @@ public:
     void setHasSignBtn(bool hasSignBtn);
 
     int accountIndex();
-
-    QVariantList healthCheckHistory() const;
-    void setHealthCheckHistory(QJsonArray list);
-
-    bool GetHistorySignerList();
 
     QString address() const;
     void setAddress(const QString &address);
@@ -172,7 +173,7 @@ private:
     bool isPrimaryKey_;
     bool isDraft = true;
     bool m_hasSignBtn {true};
-    QJsonArray m_healthCheckHistory {};
+    // QJsonArray m_healthCheckHistory {};
     QString m_address;
 private:
     QString timeGapCalculation(QDateTime in);
@@ -202,7 +203,7 @@ signals:
     void devicetypeChanged();
     void isPrimaryKeyChanged();
     void emailChanged();
-    void healthCheckHistoryChanged();
+    void healthCheckHistoryChanged() final;
     void addressChanged();
     void notifySignerExist(bool isSoftware);
 };
@@ -259,6 +260,7 @@ public:
     QString getMasterSignerIdByIndex(const int index);
     QString getMasterSignerXfpByIndex(const int index);
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp);
+    int getIndexByFingerPrint(const QString &fingerprint);
     int getnumberSigned();
     bool containsHardwareKey();
     bool containsFingerPrint(const QString& masterFingerPrint);

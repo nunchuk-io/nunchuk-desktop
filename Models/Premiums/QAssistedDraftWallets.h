@@ -36,6 +36,7 @@ struct StructAddHardware
     QString mTextBtn {};
     QString mTitle {};
     int mHeight {};
+    QString mWalletId {};
     QString mGroupId {};
     QString mRequestId {};
     int     mKeyIndex {-1};
@@ -80,6 +81,7 @@ public:
         eError_Back,
     };
     ImportColdcard_t ImportColdcardViaFile(const QString &fileName, int new_index = -1);
+    virtual bool requestKeyReplacement(QSingleSignerPtr signer);
 private:
     bool RequestAddOrUpdateAKeyToDraftWallet(StructAddHardware hardware);
     bool RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHardware hardware, nunchuk::SingleSigner keyresued);
@@ -88,6 +90,7 @@ private:
     bool getSignerFromMasterSigner(const QString &xfp, const int index);
     bool getSigner(const QString &xfp, const int index);
     bool requestAddReuseKey(nunchuk::SingleSigner key, int index);
+    bool canReplaceKey();
 signals:
     void addHardwareAlert();
     void hardwareReqChanged();

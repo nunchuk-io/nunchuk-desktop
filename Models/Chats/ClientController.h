@@ -31,6 +31,7 @@
 #include "QNunchukRoomModel.h"
 #include "QNunchukImageProvider.h"
 #include "QLoggedInDeviceModel.h"
+#include "Commons/Slugs.h"
 // Matrix
 #include <uriresolver.h>
 #ifdef USE_KEYCHAIN
@@ -43,7 +44,7 @@ namespace Quotient {
     class AccountSettings;
 }
 
-class ClientController final : public QObject
+class ClientController final : public QObject, public Slugs
 {
     Q_OBJECT
     Q_PROPERTY(QContactModel*   contacts            READ contacts                                   NOTIFY contactsChanged)
@@ -115,21 +116,9 @@ public:
     bool deleteDataFromKeyChain(const QString &key);
     bool readAllDataFromKeyChain();
 
-    bool isSubscribed() const;
-    bool isByzantineStandard() const;
-    bool isByzantinePremier() const;
-    bool isByzantinePro() const;
-    bool isFinneyPro() const;
-    bool isFinneyStandard() const;
-    bool isFinney() const;
-    bool isByzantine() const;
-    bool isHoneyBadger() const;
-    bool isIronHand() const;
-
-    QStringList slugs() const;
+    QStringList slugs() const final;
     QJsonArray subscriptions() const;
     void setSubscriptions(const QJsonArray &data);
-    bool isMultiSubscriptions() const;
 
     bool attachmentEnable() const;
     void setAttachmentEnable(bool AttachmentEnable);
@@ -155,13 +144,14 @@ signals:
     void attachmentEnableChanged();
     void readySupportChanged();
     void subscriptionsChanged();
-    void byzantineRoomCreated(QString room_id, bool existed);
+    void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
 
 public slots:
     void proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
     void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
     void refreshContacts();
+    void refreshDevices();
     void acceptFriendRequest(const QString& contact_id);
     void ignoreFriendRequest(const QString& contact_id);
     void cancelFriendRequest(const QString& contact_id);

@@ -37,13 +37,14 @@
 #define EXPLORER_SIGNNET "https://mempool.space/signet/tx/"
 #define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
 
-template <typename T1, typename T2, typename T3>
-class QTriple {
+template <typename T1, typename T2, typename T3, typename T4>
+class QWalletCached {
 public:
-    QTriple(){}
+    QWalletCached(){}
     T1 first;
     T2 second;
     T3 third;
+    T4 fourth;
 };
 
 class  NunchukSettings : public QSettings {
@@ -242,8 +243,8 @@ public:
     QString currency();
     void setCurrency(QString currency);
 
-    void setWalletCached(QString id, QTriple<QString /*group id*/, QString /*group slug*/, QString /*group role*/> data);
-    bool getwalletCached(QString id, QTriple<QString /*group id*/, QString /*group slug*/, QString /*group role*/> &result);
+    void setWalletCached(QString id, QWalletCached<QString /*group id*/, QString /*group slug*/, QString /*group role*/, QString /*wallet status*/> data);
+    bool getwalletCached(QString id, QWalletCached<QString /*group id*/, QString /*group slug*/, QString /*group role*/, QString /*wallet status*/> &result);
     void deleteWalletCached(QString id);
 
     bool isFirstTimeOnboarding();
@@ -252,10 +253,15 @@ public:
     QVariant getMainnetList();
     void setMainnetList(const QVariant &servers);
 
+    QVariant getReminderStates();
+    void setReminderStates(const QVariant &states);
+
     QStringList favoriteAddresses();
     void setFavoriteAddresses(const QStringList &newFavoriteAddresses);
-    Q_INVOKABLE void removeFavoriteAddress(const QString &address);
-    Q_INVOKABLE void addFavoriteAddress(const QString &address);
+    Q_INVOKABLE void removeFavoriteAddress(const QString &label, const QString &address);
+    Q_INVOKABLE void addFavoriteAddress(const QString &label, const QString &address);
+    Q_INVOKABLE void updateFavoriteAddress(const QString &label, const QString &address);
+    Q_INVOKABLE bool validateAddress(const QString &address);
 
 private:
     AppSetting();
@@ -340,6 +346,7 @@ signals:
     void isFirstTimeOnboardingChanged();
     void enableColabChanged();
     void favoriteAddressesChanged();
+    void mainnetServerSelected(const QString url);
 };
 
 #endif // APPSETTING_H

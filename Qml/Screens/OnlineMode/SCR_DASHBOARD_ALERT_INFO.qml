@@ -61,6 +61,8 @@ QScreen {
         {flow_action: AlertType.UPDATE_SECURITY_QUESTIONS,   screen_component: _update_security_questions},
         {flow_action: AlertType.MANAGE_GROUP_CHAT_HISTORY,   screen_component: _manageGroupChatHistory},
         {flow_action: AlertType.CHANGE_EMAIL_REQUEST,        screen_component: _change_email_request},
+        {flow_action: AlertType.HEALTH_CHECK_REMINDER,       screen_component: _healthCheckReminderAlert},
+        {flow_action: AlertType.KEY_REPLACEMENT_PENDING,     screen_component: _key_replacement_pending},
     ]
     readonly property var map_screens: [
         {screen_name: "register-gapped-device",         screen_component: _register_gapped_device},
@@ -114,6 +116,10 @@ QScreen {
     Component {
         id: _health_check_request
         QHealthCheckRequested {}
+    }
+    Component {
+        id: _healthCheckReminderAlert
+        QHealthCheckReminderAlert {}
     }
 
     Component {
@@ -206,6 +212,13 @@ QScreen {
     Component {
         id: _change_email_request
         QChangeEmailRequest {
+
+        }
+    }
+
+    Component {
+        id: _key_replacement_pending
+        QKeyReplacementInProgress {
 
         }
     }

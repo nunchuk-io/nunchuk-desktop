@@ -12,6 +12,7 @@
 #include "Premiums/QWalletManagement.h"
 #include "Premiums/QGroupWalletDummyTx.h"
 #include "Premiums/QUserWalletDummyTx.h"
+#include "Premiums/QGroupWallets.h"
 
 const QMap<Key, StructAddHardware> map_keys = {
     {Key::ADD_LEDGER,   {"LEDGER",   "ledger",   STR_CPP_122, STR_CPP_121, 124}},
@@ -332,7 +333,7 @@ bool QAssistedDraftWallets::getSignerFromMasterSigner(const QString &xfp, const 
                                                                     msg);
     if(ret && (int)EWARNING::WarningType::NONE_MSG == msg.type()){
         setSelectFingerPrint(xfp);
-        return AddOrUpdateReuseKeyToDraftWallet(ret.data()->singleSigner());
+        return canReplaceKey() ? requestKeyReplacement(ret) : AddOrUpdateReuseKeyToDraftWallet(ret.data()->singleSigner());
     }
     else if((int)EWARNING::WarningType::EXCEPTION_MSG == msg.type() && nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()){
         AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::WARNING_MSG);
@@ -349,15 +350,91 @@ bool QAssistedDraftWallets::getSigner(const QString &xfp, const int index)
     DBG_INFO << xfp << index;
     QWarningMessage msg;
     nunchuk::SingleSigner ret = bridge::nunchukGetOriginSingleSigner(xfp,
-                                                                    ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                    ENUNCHUCK::AddressType::NATIVE_SEGWIT,
-                                                                    index,
-                                                                    msg);
+                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
+                                                                     ENUNCHUCK::AddressType::NATIVE_SEGWIT,
+                                                                     index,
+                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         setSelectFingerPrint(xfp);
-        return AddOrUpdateReuseKeyToDraftWallet(ret);
+        return canReplaceKey() ? requestKeyReplacement(QSingleSignerPtr(new QSingleSigner(ret))) : AddOrUpdateReuseKeyToDraftWallet(ret);
     }
     //Don't show toast here
+    return false;
+}
+
+bool QAssistedDraftWallets::canReplaceKey()
+{
+    auto dashboard = AppModel::instance()->walletInfoPtr()->dashboard();
+    if (dashboard && dashboard->canReplaceKey()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
+{
+    StructAddHardware hardware = m_request;
+    if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
+        return false;
+    }
+    if (!m_selectFingerPrint.isEmpty()) {
+        QJsonObject data;
+        QWarningMessage warningmsg;
+        QSingleSignerPtr single {NULL};
+        if (signer.isNull()) {
+            single = bridge::nunchukGetRemoteSigner(m_selectFingerPrint);
+        } else {
+            single = signer;
+        }
+
+        if (single.isNull()) {
+            QMasterSignerPtr master = bridge::nunchukGetMasterSignerFingerprint(m_selectFingerPrint);
+            single = bridge::nunchukGetDefaultSignerFromMasterSigner(master->id(),
+                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
+                                                                     ENUNCHUCK::AddressType::NATIVE_SEGWIT ,
+                                                                     warningmsg);
+        }
+        if (single.isNull()){
+            return false;
+        }
+
+        DBG_INFO << single->tag() << "tag:" << single->tag() << m_mode << hardware.mGroupId;
+        if (warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
+            QJsonArray tags;
+            if (!single->tag().isEmpty()) {
+                tags.append(single->tag());
+            }
+
+            data["name"] = single->name() != "" ? single->name() : titleCase(single->tag());
+            data["xfp"] = single->masterFingerPrint();
+            data["derivation_path"] = single->derivationPath();
+            data["xpub"] = single->xpub();
+            data["pubkey"] = single->publickey();
+            data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
+            data["tags"] = tags;
+            data["tapsigner"] = {};
+            if (hardware.mKeyIndex >= 0) {
+                data["key_index"] = hardware.mKeyIndex;
+            }
+            else {
+                data["key_index"] = {};
+            }
+            bool ret {false};
+            if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                ret = dashboard->FinishKeyReplacement(data);
+            }
+            if (ret) {
+                AppModel::instance()->setAddSignerWizard(3);
+                return true;
+            }
+            else {
+                AppModel::instance()->setAddSignerWizard(4);
+                return false;
+            }
+        }
+    }
+    AppModel::instance()->setAddSignerWizard(4);
     return false;
 }
 
@@ -373,7 +450,7 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
         int account_index = qUtils::GetIndexFromPath(retJson->derivationPath());
         if(new_index != -1 && current_index != new_index && new_index == account_index){
             setSelectFingerPrint(retJson->masterFingerPrint());
-            bool ret = AddOrUpdateReuseKeyToDraftWallet(retJson->originSingleSigner());
+            bool ret = canReplaceKey() ? requestKeyReplacement(retJson) : AddOrUpdateReuseKeyToDraftWallet(retJson->originSingleSigner());
             return ret ? Enum::eOK : Enum::eError_Keep_Screen;
         }
         else if (new_index != -1 && current_index != new_index && new_index != account_index) {
@@ -384,7 +461,7 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
         else {
             if (bridge::nunchukHasSinger(retJson->originSingleSigner())) {
                 setSelectFingerPrint(retJson->masterFingerPrint());
-                bool ret = AddOrUpdateReuseKeyToDraftWallet(retJson->originSingleSigner());
+                bool ret = canReplaceKey() ? requestKeyReplacement(retJson) : AddOrUpdateReuseKeyToDraftWallet(retJson->originSingleSigner());
                 return ret ? Enum::eOK : Enum::eError_Keep_Screen;
             }
             else {
@@ -397,7 +474,6 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
                                                                                  retJson->signerTags(),
                                                                                  false,
                                                                                  msg);
-
                 if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
                     create.set_tags({nunchuk::SignerTag::COLDCARD});
                     msg.resetWarningMessage();
@@ -412,13 +488,14 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
                         }
                         if (signer) {
                             setSelectFingerPrint(signer->masterFingerPrint());
-                            bool ret = AddOrUpdateReuseKeyToDraftWallet(create);
+                            bool ret = canReplaceKey() ? requestKeyReplacement(signer) : AddOrUpdateReuseKeyToDraftWallet(create);
                             return ret ? Enum::eOK : Enum::eError_Keep_Screen;
                         }
                     }
                 }
             }
         }
+
     }
     else if (msg.code() == -100){
         AppModel::instance()->showToast(-1, msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -478,7 +555,9 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
         return false;
     };
     for (auto m : masterList->fullList()) {
-        if ((m->tag() == tag && (m->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || m->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) || (qUtils::strCompare(tag, "COLDCARD") && m->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC)) {
+        if ((m->tag() == tag && (m->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || m->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
+            (qUtils::strCompare(tag, "COLDCARD") && m->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) ||
+            qUtils::strCompare(m->tag(), "KEEPKEY")) {
             QJsonObject signer;
             signer["signer_deviceType"] = m->devicePtr()->type();
             signer["signer_type"] = (int)m->signerType();
@@ -494,7 +573,9 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
         }
     }
     for (auto s : remoteList->fullList()) {
-        if ((s->tag() == tag && (s->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || s->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) || (qUtils::strCompare(tag, "COLDCARD") && s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC)) {
+        if ((s->tag() == tag && (s->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || s->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
+            (qUtils::strCompare(tag, "COLDCARD") && s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) ||
+            qUtils::strCompare(s->tag(), "KEEPKEY")) {
             QJsonObject signer;
             signer["signer_deviceType"] = s->devicetype();
             signer["signer_type"] = (int)s->signerType();

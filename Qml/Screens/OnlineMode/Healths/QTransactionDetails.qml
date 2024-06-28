@@ -247,6 +247,7 @@ QOnScreenContentTypeA {
             type: "dummy-tx-export-qr",
         }
         QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _input)
+        qrcodeExportResult.filename = "Transaction_" + transactionInfo.txid
         qrcodeExportResult.open()
     }
 }

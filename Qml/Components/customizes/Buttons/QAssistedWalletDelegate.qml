@@ -35,6 +35,7 @@ QLinearGradient {
     property string walletM: "0"
     property string walletN: "0"
     property bool   isLocked: false
+    property bool   isReplaced: false
     iEnabled: !isLocked
 
     Column{
@@ -74,6 +75,7 @@ QLinearGradient {
             Item {
                 width: parent.width
                 height: 16
+                visible: !isReplaced
                 Rectangle{
                     width: 70
                     height: parent.height
@@ -97,6 +99,25 @@ QLinearGradient {
                             font.weight: Font.Bold
                             anchors.verticalCenter: parent.verticalCenter
                         }
+                    }
+                }
+            }
+            Rectangle {
+                width: parent.width
+                height: 16
+                visible: isReplaced
+                radius: 20
+                color: "#EAEAEA"
+                anchors.right: parent.right
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 4
+                    QText{
+                        font.family: "Lato"
+                        font.pixelSize: 10
+                        color: "#031F2B"
+                        text: STR.STR_QML_1345
+                        font.weight: Font.Bold
                     }
                 }
             }

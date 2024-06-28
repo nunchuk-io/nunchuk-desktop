@@ -4,8 +4,9 @@
 #include <QObject>
 #include "TypeDefine.h"
 #include "QWalletManagement.h"
+#include "Commons/Slugs.h"
 
-class QBasePremium : public QObject
+class QBasePremium : public QObject, public Slugs
 {
     Q_OBJECT
 public:
@@ -25,6 +26,8 @@ public:
 
     virtual QGroupWalletDummyTxPtr groupDummyTxPtr() const;
     virtual QRecurringPaymentPtr recurringPaymentPtr() const;
+    virtual QWalletServicesTagPtr servicesTagPtr() const;
+    QStringList slugs() const final;
 private:
     WalletId m_wallet_id;
 };

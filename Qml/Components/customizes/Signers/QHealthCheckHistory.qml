@@ -21,6 +21,7 @@ import QtQuick 2.4
 import QtQuick.Controls 2.5
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
+import HMIEVENTS 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
@@ -29,13 +30,12 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     width: 350
-    height: 452
-    property var masterSignerInfo: AppModel.masterSignerInfo
-    property var singleSignerInfo: AppModel.singleSignerInfo
+    height: hasReminder ? (452 - 48) : 452
+    property bool hasReminder: false
     property var descriptions: [
         {type: "HEALTH_CHECK",      description: STR.STR_QML_1206 },
         {type: "TRANSACTION",       description: STR.STR_QML_1207 },
-        {type: "DUMMY_TRANSACTION", description: STR.STR_QML_1207 },
+        {type: "DUMMY_TRANSACTION", description: STR.STR_QML_1206 },
     ]
     Column {
         anchors.fill: parent
@@ -48,75 +48,79 @@ Item {
         }
         Rectangle {
             width: 350
-            height: 424
+            height: hasReminder ? (424 - 48) : 424
             border.color: "#DEDEDE"
             border.width: 1
             color: "transparent"
             radius: 12
 
-            Column {
-                spacing: 8
-                Item {
-                    width: 350
-                    height: 52
-                    QLato {
-                        anchors.centerIn: parent
-                        text: STR.STR_QML_1202
-                        font.weight: Font.Bold
-                        verticalAlignment: Text.AlignVCenter
-                        horizontalAlignment: Text.AlignLeft
-                        visible: _history.count === 0
-                    }
+            Item {
+                width: 350
+                height: 52
+                QLato {
+                    anchors.centerIn: parent
+                    text: STR.STR_QML_1202
+                    font.weight: Font.Bold
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignLeft
+                    visible: _history.count === 0
                 }
-                QListView {
-                    id: _history
-                    anchors {
-                        left: parent.left
-                        leftMargin: 12
-                        right: parent.right
-                        rightMargin: 12
-                    }
-                    model: masterSignerInfo.healthCheckHistory
-                    clip: true
-                    ScrollBar.vertical: ScrollBar { active: true }
-                    spacing: 16
-                    delegate: Item {
-                        width: 326
-                        height: 40
-                        Column {
-                            anchors.fill: parent
-                            spacing: 4
-                            QLato {
-                                text: modelData.created_time_millis
-                                width: parent.width
-                                height: 20
-                                font.weight: Font.Bold
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                            }
-                            QLato {
-                                text: descriptions.find(function(e) {if (e.type === modelData.type) return true; else return false}).description
-                                width: parent.width
-                                height: 20
-                                font.weight: Font.Normal
-                                color: "#595959"
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                            }
-                            QTextLink {
-                                width: 56
-                                font.pixelSize: 10
-                                text: STR.STR_QML_947
-                                color: "#FFFFFF"
-                                visible: false
-                                onTextClicked: {
-
+            }
+            QListView {
+                id: _history
+                anchors {
+                    fill: parent
+                    margins: 12
+                }
+                model: signerInfo.healthCheckHistory
+                clip: true
+                ScrollBar.vertical: ScrollBar { active: true }
+                spacing: 16
+                delegate: Item {
+                    width: 326
+                    height: 40
+                    Column {
+                        anchors.fill: parent
+                        spacing: 4
+                        QLato {
+                            text: modelData.created_time_millis
+                            width: parent.width
+                            height: 20
+                            font.weight: Font.Bold
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                        }
+                        QLato {
+                            text: descriptions.find(function(e) {if (e.type === modelData.type) return true; else return false}).description
+                            width: parent.width
+                            height: 20
+                            font.weight: Font.Normal
+                            color: "#595959"
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                            visible: modelData.type === "DUMMY_TRANSACTION" || modelData.type === "HEALTH_CHECK"
+                        }
+                        QTextLink {
+                            width: 56
+                            height: 20
+                            font.weight: Font.Normal
+                            font.pixelSize: 12
+                            font.underline: true
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                            text: descriptions.find(function(e) {if (e.type === modelData.type) return true; else return false}).description
+                            color: "#595959"
+                            visible: modelData.type === "TRANSACTION"
+                            onTextClicked: {
+                                if (modelData.type === "TRANSACTION") {
+                                    GroupWallet.dashboardInfo.health.transactionSignedClicked(modelData.payload)
                                 }
                             }
                         }
                     }
                 }
             }
+
         }
     }
 }

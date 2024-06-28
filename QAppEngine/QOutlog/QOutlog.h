@@ -57,7 +57,7 @@ enum class LOG_LEVEL : int
 #define DBG_WARN     QOutlog().begin(LOG_LEVEL::LOG_WARN)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_QT_MSG   QOutlog().begin(LOG_LEVEL::LOG_ERROR)
-#define DBG_FUNCTION_TIME_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << "[Funtion time]"
+#define DBG_FUNCTION_TIME_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << "[Function time]"
 
 static const QString logfilePath = "logfile_nunchuck-client-qt.log";
 

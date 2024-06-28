@@ -504,10 +504,13 @@ QJsonArray QKeyRecovery::questionsAndChangeAnswers() const
     for(auto js : m_requireQuestions) {
         QJsonObject obj = js.toObject();
         QJsonObject answer;
-        answer["question_id"] = obj["id"];
-        answer["answer"] = obj["answer"];
-        answer["change"] = obj["change"];
-        answers.append(answer);
+        QString str_answer = obj["answer"].toString();
+        if (!str_answer.isEmpty()) {
+            answer["question_id"] = obj["id"];
+            answer["answer"] = obj["answer"];
+            answer["change"] = obj["change"];
+            answers.append(answer);
+        }
     }
     return answers;
 }
@@ -537,9 +540,8 @@ void QKeyRecovery::setupSecQuesAnswer(int index, const QString &id, const QStrin
     setRequireQuestions(require_questions);
 }
 
-void QKeyRecovery::createUserCustomizedQuestion(int index, const QString &question)
+void QKeyRecovery::createUserCustomizedQuestion(const QString &question)
 {
-    if (index >= m_requireQuestions.size()) return;
     QString errormsg;
     QJsonObject output;
     QJsonArray require_questions = m_requireQuestions;
@@ -547,12 +549,18 @@ void QKeyRecovery::createUserCustomizedQuestion(int index, const QString &questi
     if (ret) {
         DBG_INFO << output;
         QJsonObject newQuestion = output["question"].toObject();
-        QJsonObject json = require_questions.at(index).toObject();
-        json["isChanged"] = true;
-        json["id"] = newQuestion["id"];
-        json["question"] = newQuestion["question"];
-        json["is_answered"] = newQuestion["is_answered"];
-        require_questions[index] = json;
+        for(int i = 0; i < require_questions.size(); i++)
+        {
+            QJsonObject json = require_questions.at(i).toObject();
+            if(json["id"].toString() == "my_question") {
+                json["isChanged"] = true;
+                json["id"] = newQuestion["id"];
+                json["question"] = newQuestion["question"];
+                json["is_answered"] = newQuestion["is_answered"];
+                require_questions[i] = json;
+                break;
+            }
+        }
         setRequireQuestions(require_questions);
     }
 }

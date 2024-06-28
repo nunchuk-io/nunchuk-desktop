@@ -61,6 +61,20 @@ public:
 
         MANAGE_GROUP_CHAT_HISTORY,
         CHANGE_EMAIL,
+        HEALTH_CHECK_REMINDER,
+
+        KEY_REPLACEMENT_PENDING,
+        KEY_REPLACEMENT_COMPLETED,
+        TRANSFER_FUNDS,
+        WALLET_LOCKED,
+        SETUP_INHERITANCE_PLAN,
+
+        // Health Check Reminder
+        HEALTH_CHECK_REMINDER_EMPTY_STATE,
+        HEALTH_CHECK_SELECT_KEY_WANT_TO_REMINDER,
+        HEALTH_CHECK_FREQUENCY_REPEAT,
+        HEALTH_CHECK_REMINDER_POPULATED,
+        MAX_ALERT,
     };
 };
 
@@ -96,7 +110,9 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(bool    isPremierGroup             READ isPremierGroup                           NOTIFY groupInfoChanged)
     Q_PROPERTY(bool    allowInheritance           READ allowInheritance                         NOTIFY draftWalletChanged)
     Q_PROPERTY(int inheritanceCount               READ inheritanceCount                         NOTIFY inheritanceCountChanged)
-    Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                        NOTIFY historyPeriodIdChanged)
+    Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                          NOTIFY historyPeriodIdChanged)
+    Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
+
 public:
     QGroupDashboard(const QString& wallet_id);
     ~QGroupDashboard();
@@ -107,6 +123,9 @@ public:
     void setGroupInfo(const QJsonObject &groupInfo);
     QString groupStatus() const;
     QString myRole() const;
+    QString walletname() const;
+    QString walletStatus() const;
+    bool    isReplaced();
     bool    accepted() const;
     QString userName() const;
     QString userEmail() const;
@@ -168,10 +187,12 @@ public:
 
     bool CancelRecoveryKey();
 
-    bool canEntryClickAlert();
+    bool CancelKeyReplacement();
+    bool FinishKeyReplacement(const QJsonObject &requestBody);
 
-    QString slug();
-    bool isPremierGroup();
+    bool canReplaceKey();
+
+    bool canEntryClickAlert();
 
     bool allowInheritance() const;
 
@@ -183,11 +204,17 @@ public:
 
     QString historyPeriodId() const;
     void setHistoryPeriodId(const QString &newHistoryPeriodId);
+
+    void getChatInfo();
+    bool groupChatExisted();
+    void setGroupChatExisted(bool existed);
+
 public slots:
+    bool requestStartKeyReplacement(const QString &tag);
     void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
 
-    void byzantineRoomCreated(QString room_id, bool existed);
+    void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
@@ -202,6 +229,8 @@ signals:
     void walletunUsedAddressChanged();
     void inheritanceCountChanged();
     void historyPeriodIdChanged();
+    void groupChatExistedChanged();
+
 private:
     QJsonObject m_groupInfo {};
     QJsonObject m_alertInfo {};
@@ -221,5 +250,6 @@ private:
     QStringList m_registered_key_xfps {};
     int m_inheritanceCount {0};
     QString mHistoryPeriodId {};
+    bool m_groupChatExisted {false};
 };
 #endif // QGROUPDASHBOARD_H

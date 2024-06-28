@@ -49,7 +49,9 @@ public:
     static QString dracoToken();
     static void setDracoToken(const QString token);
     static QByteArray machineUniqueId();
+
 protected:
+    QNetworkAccessManager *m_networkManager;
     QJsonObject postSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
@@ -58,6 +60,7 @@ protected:
     QJsonObject putSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
+
 private:
     static QString m_dracoToken;
     static QByteArray m_machineUniqueId;

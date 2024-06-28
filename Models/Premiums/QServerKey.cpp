@@ -32,9 +32,6 @@ QVariant QServerKey::policies() const
 
 void QServerKey::setPolicies(QJsonObject policies)
 {
-    if (m_policies == policies)
-        return;
-
     m_policies = policies;
     emit policiesChanged();
 }
@@ -216,7 +213,7 @@ bool QServerKey::serverKeyGetCurrentPolicies()
     QJsonObject output;
     QString errormsg = "";
     bool ret {false};
-    if (WalletsMng->isUserWallet(wallet_id())) {
+    if (isUserWallet()) {
         ret = Draco::instance()->ServerKeysGet(QString::fromStdString(ServerKey().get_master_fingerprint()),
                                                QString::fromStdString(ServerKey().get_derivation_path()),
                                                output,
@@ -255,7 +252,7 @@ bool QServerKey::ServerKeyRequiredSignature()
     QJsonObject output;
     DBG_INFO << data;
     bool ret {false};
-    if (WalletsMng->isUserWallet(wallet_id())) {
+    if (isUserWallet()) {
         ret = Draco::instance()->ServerKeysRequiredSignature(QString::fromStdString(ServerKey().get_master_fingerprint()),
                                                              QString::fromStdString(ServerKey().get_derivation_path()),
                                                              data,
@@ -272,8 +269,8 @@ bool QServerKey::ServerKeyRequiredSignature()
     }
     if (ret) {
         QJsonObject resultObj = output["result"].toObject();
-        ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures(resultObj);
-        ReqiredSignaturesInfo required_question = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
+        servicesTagPtr()->setReqiredSignatures(resultObj);
+        ReqiredSignaturesInfo required_question = servicesTagPtr()->reqiredSignaturesInfo();
         if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
             return true;
@@ -296,9 +293,9 @@ bool QServerKey::ServerKeyUpdate(QJsonObject &output, QString &errormsg, bool is
     data["body"] = serverKeyBody();
     QStringList authorizations;
     bool ret {false};
-    if (WalletsMng->isUserWallet(wallet_id())) {
-        ret = Draco::instance()->ServerKeysUpdate(ServiceTag()->passwordToken(),
-                                                  ServiceTag()->secQuesToken(),
+    if (isUserWallet()) {
+        ret = Draco::instance()->ServerKeysUpdate(servicesTagPtr()->passwordToken(),
+                                                  servicesTagPtr()->secQuesToken(),
                                                   QString::fromStdString(ServerKey().get_master_fingerprint()),
                                                   QString::fromStdString(ServerKey().get_derivation_path()),
                                                   authorizations,
@@ -308,8 +305,8 @@ bool QServerKey::ServerKeyUpdate(QJsonObject &output, QString &errormsg, bool is
     }
     else {
         ret = Byzantine::instance()->ServerKeysUpdate(groupId(),
-                                                      ServiceTag()->passwordToken(),
-                                                      ServiceTag()->secQuesToken(),
+                                                      servicesTagPtr()->passwordToken(),
+                                                      servicesTagPtr()->secQuesToken(),
                                                       QString::fromStdString(ServerKey().get_master_fingerprint()),
                                                       QString::fromStdString(ServerKey().get_derivation_path()),
                                                       authorizations,
@@ -343,22 +340,37 @@ bool QServerKey::ServerKeyUpdatePoliciesSucceed()
 {
     QJsonObject output;
     QString errormsg = "";
+    if (auto dashBoard = dashBoardPtr()) {
+        UpdateFromWallet(dashBoard->walletJson());
+        ServiceSetting::instance()->clearWalletInfo();
+        ServiceSetting::instance()->setWalletInfo(walletInfoPtr());
+    }
     bool ret = ServerKeyUpdate(output, errormsg, false);
     if (ret) {
         emit securityQuestionClosed();
         AppModel::instance()->showToast(0, STR_CPP_117, EWARNING::WarningType::SUCCESS_MSG );
+        timeoutHandler(2 * 60 *1000,[=]{
+            serverKeyGetCurrentPolicies();
+            ServiceSetting::instance()->clearWalletInfo();
+            ServiceSetting::instance()->setWalletInfo(walletInfoPtr());
+        });
     }
     return ret;
-}
-
-QWalletServicesTagPtr QServerKey::ServiceTag() const
-{
-    return ServiceSetting::instance()->servicesTagPtr();
 }
 
 QVariant QServerKey::keyCoSigning() const
 {
     return QVariant::fromValue(m_keyCoSigning);
+}
+
+bool QServerKey::hasServerKey()
+{
+    // if (auto dash = dashBoardPtr()) {
+    //     auto js = dash->walletJson()["server_key"].toObject();
+    //     DBG_INFO << walletInfoPtr()->name() << js;
+    //     return !js.isEmpty();
+    // }
+    return ServerKey().get_master_fingerprint() != "";
 }
 
 void QServerKey::setKeyCoSigning(const QVariant &val)
@@ -456,11 +468,6 @@ qint64 QServerKey::timeToSeconds(const QVariant &time)
 {
     QMap<QString, QVariant> maps = time.toMap();
     return maps["hours"].toInt()*(60*60) + maps["minutes"].toInt()*60;
-}
-
-QWalletServicesTagPtr QServerKey::servicesTagPtr() const
-{
-    return ServiceSetting::instance()->servicesTagPtr();
 }
 
 QJsonObject QServerKey::ConvertToDisplayQml(QJsonObject data)

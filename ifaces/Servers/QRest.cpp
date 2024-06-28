@@ -25,9 +25,9 @@
 QString    QRest::m_dracoToken      = "";
 QByteArray QRest::m_machineUniqueId = QSysInfo::machineUniqueId();
 
-QRest::QRest()
+QRest::QRest() : m_networkManager(new QNetworkAccessManager())
 {
-
+    m_networkManager->setCookieJar(new QNetworkCookieJar(m_networkManager));
 }
 
 QRest::~QRest()
@@ -66,9 +66,7 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, QJsonDocument(data).toJson()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -120,9 +118,7 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, QJsonDocument(data).toJson()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -171,10 +167,7 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
     // Add addional params
-
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -226,9 +219,7 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -267,9 +258,7 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->put(requester_, QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -321,9 +310,7 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->put(requester_, QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -362,9 +349,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -401,7 +386,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     }
     QFunctionTime f(QString("DELETE %1").arg(url.toString()));
     QJsonObject ret;
-    QNetworkRequest requester_(QUrl::fromUserInput(command));
+    QNetworkRequest requester_(url);
     QString headerData = QString("Bearer %1").arg(dracoToken());
     requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -416,9 +401,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
-    std::unique_ptr<QNetworkAccessManager> manager(new QNetworkAccessManager);
-    manager->setCookieJar(new QNetworkCookieJar(manager.get()));
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();

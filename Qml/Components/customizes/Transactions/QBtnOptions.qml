@@ -37,6 +37,7 @@ QButtonLargeTail {
     property bool  enableCancelTransaction: false
     property bool  isAssisedWallet        : false
     property bool  isSharedWallet         : false
+    property bool  enableShowInvoice      : false
 
     width: 160
     height: 48
@@ -56,17 +57,19 @@ QButtonLargeTail {
             "Request signature",
             "Schedule broadcast",
             STR.STR_QML_691,
-            (isAssisedWallet || isSharedWallet) ? "Cancel transaction" : "Remove transaction"
+            (isAssisedWallet || isSharedWallet) ? "Cancel transaction" : "Remove transaction",
+            "Show as an invoice"
         ]
         icons: [
             "qrc:/Images/Images/OnlineMode/signature-dark.png",
             "qrc:/Images/Images/OnlineMode/scheduling-dark.png",
             "qrc:/Images/Images/Copy_031F2B.png",
-            "qrc:/Images/Images/OnlineMode/cancel_red_24dp.png"
+            "qrc:/Images/Images/OnlineMode/cancel_red_24dp.png",
+            "qrc:/Images/Images/OnlineMode/sticky_note_2.png"
         ]
-        colors:   [ "#031F2B", "#031F2B", "#031F2B", "#CF4018" ]
-        enables:  [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction ]
-        visibles: [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction ]
+        colors:   [ "#031F2B", "#031F2B", "#031F2B", "#CF4018", "#031F2B"]
+        enables:  [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction, enableShowInvoice ]
+        visibles: [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction, enableShowInvoice ]
         onItemClicked: {
             functions[index]()
         }

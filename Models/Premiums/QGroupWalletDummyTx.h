@@ -35,7 +35,6 @@ public:
     QString currentXfp() const;
     void setCurrentXfp(const QString &currentXfp);
     QJsonObject tx() const;
-
 signals:
     void registerWalletWithDevice();
     void requestSignout();

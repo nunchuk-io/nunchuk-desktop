@@ -79,6 +79,7 @@ QOnScreenContentTypeB {
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {
+            qrcodeExportResult.filename = RoomWalletData.getValidFilename(RoomWalletData.walletName) + "_air-gapped-device"
             qrcodeExportResult.open()
             var _input = {
                 type: "air-gapped-QR-code"

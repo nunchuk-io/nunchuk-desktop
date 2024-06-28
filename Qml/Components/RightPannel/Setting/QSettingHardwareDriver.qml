@@ -62,6 +62,9 @@ Item {
                 height: 48
                 switchOn: AppSetting.enableCustomizeHWIDriver
                 anchors.verticalCenter: parent.verticalCenter
+                onButtonClicked: {
+                    hwidrivertitle.applySettingImmediately()
+                }
             }
             property bool anyChanged: (AppSetting.enableCustomizeHWIDriver !== hwidriverswitch.switchOn)
             function applySettings(){

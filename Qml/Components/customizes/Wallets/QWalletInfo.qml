@@ -390,7 +390,11 @@ QOnScreenContent {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, index)
+                    var objectRequest = {
+                        "requestType": "signerInfo",
+                        "requestData": index
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
                 }
             }
         }
@@ -467,6 +471,7 @@ QOnScreenContent {
                     exportwalletDialog.open()
                     break;
                 case 4: // "Export as BC-UR2 QR (legacy)"
+                    qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2_Legacy"
                     qrcodeExportResult.open()
                     var datalegacy = {
                         "qrtype": "BC-UR2-QR-Legacy"
@@ -474,6 +479,7 @@ QOnScreenContent {
                     QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
                     break;
                 case 5: // "Export as BC-UR2 QR"
+                    qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2"
                     qrcodeExportResult.open()
                     var data_seedhammer = {
                         "qrtype": "BC-UR2-QR"

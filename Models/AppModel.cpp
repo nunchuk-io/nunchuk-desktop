@@ -971,12 +971,16 @@ void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
                 QtConcurrent::run([wallet_id]() {
                     bridge::nunchukSetSelectedWallet(wallet_id);
                 });
+                walletInfo_.data()->getChatInfo();
             }
         }
         emit walletInfoChanged();
     }
     if(walletInfo_){
-        DBG_INFO << "Force set" << allow << "Wallet Role " << walletInfo_.data()->myRole() << walletInfo_.data()->slug();
+        DBG_INFO << "Force set:" << allow
+                 << "Wallet Role:" << walletInfo_.data()->myRole()
+                 << "Wallet Slug:" << walletInfo_.data()->slug()
+                 << "Wallet Status:" << walletInfo_.data()->status();
     }
 }
 

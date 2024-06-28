@@ -76,7 +76,13 @@ QOnScreenContentTypeA {
                         }
                         QLato {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: STR.STR_QML_1124
+                            text: {
+                                var user = ClientController.user
+                                var wallet = AppModel.walletInfo
+                                var is_wallet_3_of_5 = (user.isByzantineUserPremier || user.isByzantineUserPro || user.isFinneyUserPro)
+                                        && (wallet.walletM === 3 && wallet.walletN === 5)
+                                return is_wallet_3_of_5 ? STR.STR_QML_1124_3_of_5 : STR.STR_QML_1124
+                            }
                             width: 660
                             height: 56
                             wrapMode: Text.WordWrap

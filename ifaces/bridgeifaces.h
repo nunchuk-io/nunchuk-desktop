@@ -327,6 +327,10 @@ bool nunchukHasSinger(const nunchuk::SingleSigner& signer);
 
 QSingleSignerListModelPtr nunchukGetRemoteSigners();
 
+QSingleSignerPtr nunchukGetRemoteSigner(const QString& master_fingerprint);
+
+QMasterSignerPtr nunchukGetMasterSignerFingerprint(const QString& master_fingerprint);
+
 std::vector<nunchuk::SingleSigner> nunchukGetOriginRemoteSigners(QWarningMessage &msg);
 
 QSingleSignerListModelPtr nunchukConvertRemoteSigners(std::vector<nunchuk::SingleSigner> list);

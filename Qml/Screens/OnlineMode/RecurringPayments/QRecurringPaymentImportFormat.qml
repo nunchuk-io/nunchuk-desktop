@@ -148,9 +148,11 @@ QOnScreenContentTypeA {
             content: Flickable {
                 width: parent.width
                 height: parent.height
+                contentHeight: col.childrenRect.height
                 clip: true
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
+                    id: col
                     spacing: 16
                     Repeater {
                         model: AppModel.walletList
@@ -164,6 +166,7 @@ QOnScreenContentTypeA {
                             walletM: model.wallet_M
                             walletN: model.wallet_N
                             isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
+                            visible: model.wallet_dashboard ? !model.wallet_isReplaced : false
                             onButtonClicked: {
                                 var _input = {
                                     type: "select-import-format",

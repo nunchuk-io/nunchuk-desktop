@@ -176,7 +176,7 @@ QScreen {
                 }
 
 
-                QComboBox {
+                QComboBoxIndex {
                     id: signers
                     width: 528
                     height: 48

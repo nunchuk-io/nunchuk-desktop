@@ -40,7 +40,6 @@ QWalletDelegateBackground {
     property string walletCurrency  : "0.0000000"
     property string walletM: "0"
     property string walletN: "0"
-    property string walletRole: ""
     property var    primaryOwner
     MouseArea {
         id: walletmouse
@@ -80,7 +79,7 @@ QWalletDelegateBackground {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: walletBalance + RoomWalletData.unitValue
+                        text: (walletRole === "KEYHOLDER_LIMITED") ? "••••••" : (walletBalance + RoomWalletData.unitValue)
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.weight: Font.DemiBold
@@ -92,10 +91,7 @@ QWalletDelegateBackground {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: qsTr("%1%2 %3")
-                        .arg(AppSetting.currencySymbol)
-                        .arg(walletCurrency)
-                        .arg(AppSetting.currency)
+                        text: (walletRole === "KEYHOLDER_LIMITED") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol).arg(walletCurrency).arg(AppSetting.currency)
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.pixelSize: 12
@@ -120,7 +116,7 @@ QWalletDelegateBackground {
                 Item {
                     width: parent.width
                     height: 16
-                    visible: isDashboard && walletRole !== "OBSERVER"
+                    visible: (isDashboard && walletRole !== "OBSERVER") && !isReplaced
                     QTextLink {
                         width: 56
                         height: 16
@@ -162,7 +158,7 @@ QWalletDelegateBackground {
                 Rectangle {
                     width: parent.width
                     height: 16
-                    visible: isAssisted
+                    visible: isAssisted && !isReplaced
                     radius: 20
                     color: "#EAEAEA"
                     anchors.right: parent.right
@@ -179,6 +175,25 @@ QWalletDelegateBackground {
                             font.pixelSize: 10
                             color: "#031F2B"
                             text: STR.STR_QML_679
+                            font.weight: Font.Bold
+                        }
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 16
+                    visible: isReplaced
+                    radius: 20
+                    color: "#EAEAEA"
+                    anchors.right: parent.right
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 4
+                        QText{
+                            font.family: "Lato"
+                            font.pixelSize: 10
+                            color: "#031F2B"
+                            text: STR.STR_QML_1345
                             font.weight: Font.Bold
                         }
                     }

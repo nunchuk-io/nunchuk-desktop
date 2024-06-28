@@ -25,11 +25,15 @@ import EWARNING 1.0
 import QRCodeItem 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import "../../Popups"
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/QRCodes"
+import "../../Components/customizes/Wallets"
+import "../../Components/customizes/Chats"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -39,7 +43,7 @@ QScreen {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_256
+        label.text: STR.STR_QML_786
         extraHeader: Row {
             spacing: 8
             Rectangle {
@@ -87,330 +91,303 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SEND)
             }
         }
-        QText {
-            id: createtxlabel
+
+        Column {
+            anchors.fill: parent
             anchors {
-                left: parent.left
-                leftMargin: 43
-                top: parent.top
-                topMargin: 92
+                topMargin: 100
+                leftMargin: 36
+                rightMargin: 36
             }
-            text: STR.STR_QML_257
-            color: "#031F2B"
-            font.weight: Font.Bold
-            font.pixelSize: 16
-        }
-        QIcon {
-            iconSize: 24
-            id: checkboxMultiDes
-            property bool checked: false
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 132
-            }
-            source: checkboxMultiDes.checked ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    checkboxMultiDes.checked = !checkboxMultiDes.checked
-                    if(checkboxMultiDes.checked){
-                        destination.itemAt(0).toAmount = ""
-                        requestAddMultiDestinations()
+            spacing: 8
+            Row {
+                id: walletbalanceInfo
+                anchors.left: parent.left
+                Item {
+                    width: 480
+                    height: 28
+                    Row {
+                        anchors.fill: parent
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 6
+                        QText {
+                            height: parent.height
+                            text: STR.STR_QML_259
+                            color: "#031F2B"
+                            font.family: "Lato"
+                            font.weight: Font.DemiBold
+                            font.pixelSize: 16
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        QText {
+                            height: parent.height
+                            text: AppModel.walletInfo.walletBalance
+                            color: "#031F2B"
+                            font.family: "Lato"
+                            font.pixelSize: 16
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        QText {
+                            height: parent.height
+                            text: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? "sat" : "BTC"
+                            color: "#031F2B"
+                            font.family: "Lato"
+                            font.pixelSize: 16
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        QText {
+                            height: parent.height
+                            text: qsTr("(%1%2)").arg(AppSetting.currencySymbol).arg(AppModel.walletInfo.walletBalanceCurrency)
+                            color: "#595959"
+                            font.family: "Lato"
+                            font.pixelSize: 12
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
-                    else{ requestDisableMultiDestinations() }
+                }
+                Item {
+                    width: 250
+                    height: 28
+                    visible: destination.count == 1
+                    QText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        text: STR.STR_QML_262
+                        color: "#031F2B"
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
+                        scale: sendAllMouse.pressed ? 0.95 : 1
+                        transformOrigin: Item.Center
+                        MouseArea {
+                            id: sendAllMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                destination.itemAt(0).toAmount = AppModel.walletInfo.walletBalance
+                            }
+                        }
+                    }
                 }
             }
-        }
-        QText {
-            anchors {
-                left: checkboxMultiDes.right
-                leftMargin: 8
-                verticalCenter: checkboxMultiDes.verticalCenter
-            }
-            text: STR.STR_QML_258
-            color: "#031F2B"
-            font.pixelSize: 14
-        }
-        Row {
-            id: balanceinfo
-            spacing: 10
-            height: 24
-            width: 260
-            anchors {
-                right: parent.right
-                rightMargin: 88
-                verticalCenter: checkboxMultiDes.verticalCenter
-            }
-            QText {
-                height: 21
-                width: 110
-                text: STR.STR_QML_259
-                color: "#000000"
-                font.family: "Montserrat"
-                font.weight: Font.DemiBold
-                font.pixelSize: 14
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            QText {
-                height: 24
-                width: 140
-                text: AppModel.walletInfo.walletBalance + RoomWalletData.unitValue
-                color: "#000000"
-                font.family: "Lato"
-                font.pixelSize: 16
-                horizontalAlignment: Text.AlignRight
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-        Flickable {
-            width: 720
-            height: 350
-            flickableDirection: Flickable.VerticalFlick
-            clip: true
-            contentHeight: destColumn.height
-            ScrollBar.vertical: ScrollBar { active: true }
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                top: parent.top
-                topMargin: 171
-            }
-            Column {
-                id: destColumn
-                spacing: checkboxMultiDes.checked ? 16 : 36
-                Repeater {
-                    id: destination
-                    property int numberDestination: 1
-                    readonly property int destinationMAX: 10
-                    property bool fullfill: false
-                    model: 1
-                    Row {
-                        id: destinationRow
-                        property alias toAddress: toAddr.textOutput
-                        property alias toAmount: amount.textOutput
-                        onToAddressChanged: {
-                            destination.fullfill = destinationRow.toAddress !== "" && destinationRow.toAmount !== ""
-                        }
-                        onToAmountChanged: {
-                            destination.fullfill = destinationRow.toAddress !== "" && destinationRow.toAmount !== ""
-                        }
-                        spacing: 8
-                        Item {
-                            width: 400
-                            height: toAddr.height
-                            QTextInputBox {
-                                id: toAddr
-                                width: parent.width - qricoimport.width
-                                heightMin: 56
-                                mode: eEDIT_MODE
-                                placeholder.text: checkboxMultiDes.checked ? qsTr("%1 %2").arg(STR.STR_QML_260).arg(index + 1) : STR.STR_QML_260
-                                border.color: "#DEDEDE"
-                            }
-                            Rectangle {
-                                width: 56
-                                height: toAddr.height
-                                anchors.left: toAddr.right
-                                anchors.verticalCenter: toAddr.verticalCenter
-                                color: "#C9DEF1"
-                                radius: 8
-                                QImage {
-                                    id: qricoimport
-                                    source: "qrc:/Images/Images/QrIco.png"
-                                    anchors.centerIn: parent
-                                    transformOrigin: Item.Center
-                                    scale: qrMouse.pressed ? 0.95 : 1
-                                    width: 56
-                                    height: 56
-                                    MouseArea {
-                                        id: qrMouse
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            qrscaner.addressRequestIndex = index
-                                            qrscaner.open()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        QTextInputBox {
-                            id: amount
-                            width: !removeRowBtn.visible ? 309 : 269
-                            heightMin: 56
-                            mode: !checkboxSendAll.checked ? eEDIT_MODE : eREADONLY_MODE
-                            placeholder.text: STR.STR_QML_261
-                            rightPading: 40
-                            validator: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? intvalidator : doubleValidator
-                            border.color: "#DEDEDE"
-//                            onTypingFinished: { if(AppSetting.unit === NUNCHUCKTYPE.SATOSHI){ amount.textOutput = Number(amount.textOutput).toLocaleString(Qt.locale("en-US")) } }
 
-                            QText {
-                                color: "#839096"
-                                width: 23
-                                height: 16
-                                anchors {
-                                    top: parent.top
-                                    topMargin: (amount.textActiveFocus) || (amount.textOutput !== "") ? 28: 20
-                                    right: parent.right
-                                    rightMargin: 16
+            Item {
+                width: parent.width
+                height: 458
+                Flickable {
+                    anchors.fill: parent
+                    flickableDirection: Flickable.VerticalFlick
+                    clip: true
+                    contentHeight: destColumn.height
+                    ScrollBar.vertical: ScrollBar { active: true }
+                    interactive: contentHeight > height
+                    Column {
+                        id: destColumn
+                        width: parent.width
+                        spacing: 16
+                        Repeater {
+                            id: destination
+                            property int numberDestination: 1
+                            readonly property int destinationMAX: 10
+                            property bool fullfill: false
+                            model: 1
+                            QSendDelegate {
+                                id: destinationRow
+                                width: parent.width
+                                height: 192
+                                recipientLabel: destination.count > 1 ? STR.STR_QML_1339.arg(index+1): STR.STR_QML_787
+                                itemCount: destination.count
+                                onToAddressChanged: {
+                                    destination.fullfill = destinationRow.toAddress !== "" && destinationRow.toAmount !== ""
                                 }
-                                text: RoomWalletData.unitValue
-                                font.pixelSize: 16
-                                font.family: "Lato"
+                                onToAmountChanged: {
+                                    destination.fullfill = destinationRow.toAddress !== "" && destinationRow.toAmount !== ""
+                                }
+                                onQrCodeRequest: {
+                                    qrscaner.addressRequestIndex = index
+                                    qrscaner.open()
+                                }
+                                onRemoveItemRequest: {
+                                    requestRemoveDestination(index)
+                                }
+                                onFavoriteRequest: {
+                                    favoritesPopup.open()
+                                    favoritesPopup.addressRequestIndex = index
+                                }
+
+                                Component.onCompleted: {
+                                    if(index < destinations.length){
+                                        destinationRow.setFavorite(destinations[index])
+                                    }
+                                    destination.fullfill = destination.fullfill & destinationRow.toAddress !== "" & destinationRow.toAmount !== ""
+                                }
                             }
+                        }
+
+                        Item {
+                            width: childrenRect.width
+                            height: 48
                             Row {
-                                id: sendAll
-                                width: 90
-                                height: 24
-                                spacing: 8
-                                visible: !checkboxMultiDes.checked
-                                enabled: visible
-                                anchors {
-                                    right: parent.right
-                                    top: parent.bottom
-                                    topMargin: 6
-                                }
-                                QIcon {
-                                    iconSize: 24
-                                    id: checkboxSendAll
-                                    property bool checked: false
+                                spacing: 6
+                                anchors.verticalCenter: parent.verticalCenter
+                                Item {
+                                    id: plus
+                                    width: 24
+                                    height: 24
                                     anchors.verticalCenter: parent.verticalCenter
-                                    source: checkboxSendAll.checked && visible ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            checkboxSendAll.checked = !checkboxSendAll.checked
-                                            if(checkboxSendAll.checked){ destination.itemAt(0).toAmount = AppModel.walletInfo.walletBalance }
-                                            else{ destination.itemAt(0).toAmount = "" }
-                                        }
+                                    Rectangle {
+                                        width: 14
+                                        height: 2
+                                        color: "#031F2B"
+                                        anchors.centerIn: parent
+                                    }
+                                    Rectangle {
+                                        width: 2
+                                        height: 14
+                                        color: "#031F2B"
+                                        anchors.centerIn: parent
                                     }
                                 }
                                 QText {
-                                    anchors.verticalCenter: checkboxSendAll.verticalCenter
-                                    text: STR.STR_QML_262
+                                    height: parent.height
+                                    text: STR.STR_QML_263
                                     color: "#031F2B"
-                                    font.pixelSize: 14
+                                    font.family: "Lato"
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 16
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
-                        }
-                        QImage {
-                            id: removeRowBtn
-                            width: 32
-                            height: 32
-                            source: "qrc:/Images/Images/Delete.png"
+                            scale: addDestinationMouse.pressed ? 0.95 : 1
                             transformOrigin: Item.Center
-                            scale: removeRow.pressed ? 0.95 : 1
-                            visible: checkboxMultiDes.checked && destination.count > 1
-                            enabled: visible
                             MouseArea {
-                                id: removeRow
+                                id: addDestinationMouse
+                                anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                anchors.fill: parent
                                 onClicked: {
-                                    requestRemoveDestination(index)
+                                    requestAddMultiDestinations()
                                 }
                             }
                         }
-                        Component.onCompleted: {
-                            if(index < destinations.length){
-                                destinationRow.toAddress = destinations[index]["toAddress"]
-                                destinationRow.toAmount = destinations[index]["toAmount"]
-                            }
-                            destination.fullfill = destination.fullfill & destinationRow.toAddress !== "" & destinationRow.toAmount !== ""
-                        }
-                    }
-                }
-                QButtonMedium {
-                    width: 185
-                    height: 40
-                    type: eOUTLINE_NORMAL
-                    label: STR.STR_QML_263
-                    visible: checkboxMultiDes.checked
-                    enabled: checkboxMultiDes.checked
-                    onButtonClicked: {
-                        requestAddMultiDestinations()
-                    }
-                }
-                QTextInputBox {
-                    id: memo
-                    width: 720
-                    heightMin: 96
-                    mode: eEDIT_MODE
-                    placeholder.text: STR.STR_QML_264
-                    texOutputValignment: memo.heightMin === 56 ? Text.AlignVCenter : Text.AlignTop
-                    border.color: "#DEDEDE"
-                }
-            }
-        }
-        Row {
-            spacing: 16
-            anchors {
-                right: parent.right
-                rightMargin: 40
-                bottom: parent.bottom
-                bottomMargin: 44
-            }
-            QTextButton {
-                width: 120
-                height: 48
-                label.text: STR.STR_QML_245
-                label.font.pixelSize: 16
-                type: eTypeB
-                onButtonClicked: {
-                    if(AppModel.walletInfo.isSharedWallet){
-                        QMLHandle.sendEvent(EVT.EVT_SEND_BACK_HOME_SHARED_WL)
-                    }
-                    else{
-                        QMLHandle.sendEvent(EVT.EVT_SEND_BACK_REQUEST)
-                    }
-                }
-            }
-            QTextButton {
-                width: 260
-                height: 48
-                enabled: destination.fullfill
-                label.text: STR.STR_QML_265
-                label.font.pixelSize: 16
-                type: eTypeE
-                onButtonClicked: {
-                    var saved = [];
-                    for(var i = 0; i < destination.model; i++){
-                        if(destination.itemAt(i).toAddress !== "" && destination.itemAt(i).toAmount !== ""){
-                            var savedObj = { "toAddress": destination.itemAt(i).toAddress,
-                                             "toAmount" : destination.itemAt(i).toAmount};
-                            saved[i] = savedObj
-                        }
-                    }
 
-                    var destinationObj = { "destinationList"    : saved,
-                                           "destinationMemo"    : memo.textOutput};
-                    createTxBusyBox.open()
-                    timerCreateTx.destinationData = destinationObj
-                    timerCreateTx.restart()
+                        Item {
+                            width: parent.width
+                            height: childrenRect.height
+                            QTextInputBoxTypeB {
+                                id: memo
+                                label: STR.STR_QML_264
+                                boxWidth: parent.width - 1
+                                boxHeight: 100
+                                isValid: true
+                                maxLength: 280
+                                input.verticalAlignment: TextInput.AlignTop
+                            }
+                            QText {
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                text: qsTr("%1 / %2").arg(memo.length).arg(memo.maxLength)
+                                color: "#595959"
+                                font.family: "Lato"
+                                font.pixelSize: 12
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item {
+                width: parent.width
+                height: 92
+                Rectangle {
+                    width: parent.width + 36*2
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    height: 1
+                    color: "#DEDEDE"
+                }
+
+                QButtonTextLink {
+                    width: 80
+                    height: 48
+                    label: STR.STR_QML_245
+                    displayIcon: false
+                    anchors.verticalCenter: parent.verticalCenter
+                    onButtonClicked: {
+                        if(AppModel.walletInfo.isSharedWallet){
+                            QMLHandle.sendEvent(EVT.EVT_SEND_BACK_HOME_SHARED_WL)
+                        }
+                        else{
+                            QMLHandle.sendEvent(EVT.EVT_SEND_BACK_REQUEST)
+                        }
+                    }
+                }
+                QTextButton {
+                    width: 100
+                    height: 48
+                    enabled: destination.fullfill
+                    label.text: STR.STR_QML_265
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    onButtonClicked: {
+                        var saved = [];
+                        for(var i = 0; i < destination.model; i++){
+                            var toType = destination.itemAt(i).inputObject.toType
+                            var toAddress = ""
+                            var toAmount = ""
+                            if(toType === "Input" || toType === ""){
+                                toAddress = destination.itemAt(i).toAddress
+                                toAmount = destination.itemAt(i).toAmount
+                            }
+                            else {
+                                toAddress = destination.itemAt(i).inputObject.toAddress
+                                toAmount = destination.itemAt(i).toAmount
+                            }
+                            if(toAmount !== "" && toAddress !== ""){
+                                var savedObj = {
+                                    "toAddress": toAddress,
+                                    "toAmount" : toAmount
+                                };
+                                saved[i] = savedObj
+                            }
+                        }
+                        var destinationObj = {
+                            "destinationList"    : saved,
+                            "destinationMemo"    : memo.textInputted
+                        };
+                        createTxBusyBox.open()
+                        timerCreateTx.destinationData = destinationObj
+                        timerCreateTx.restart()
+                    }
                 }
             }
         }
     }
+
     QQrImportScanner {
         id: qrscaner
         property int addressRequestIndex: -1
         onTagFound: {
-            if(qrscaner.addressRequestIndex !== -1 && qrscaner.addressRequestIndex < destination.model){
-                destination.itemAt(qrscaner.addressRequestIndex).toAddress = tag
-                qrscaner.addressRequestIndex = -1
+            if(qrscaner.addressRequestIndex === -2){
+                favValueEdit.textInputted = tag
             }
+            else {
+                if(qrscaner.addressRequestIndex >= 0 || qrscaner.addressRequestIndex < destination.model){
+                    var inputObject = ({
+                                           "toType": "Input",
+                                           "toAddress": tag,
+                                           "toAddressDisplay": tag,
+                                           "toAmount": ""
+                                       })
+                    destination.itemAt(qrscaner.addressRequestIndex).setFavoriteInput(inputObject)
+
+                }
+            }
+            qrscaner.addressRequestIndex = -1
             qrscaner.close()
         }
     }
-    RegExpValidator { id: intvalidator;      regExp: /^[1-9][0-9]*$/ }
-    RegExpValidator { id: doubleValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
     Popup {
         id: createTxBusyBox
         width: parent.width
@@ -479,32 +456,664 @@ QScreen {
             createTxBusyBox.close()
         }
     }
+    Popup {
+        id: favoritesPopup
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        background: Item{}
+
+        property int addressRequestIndex: -1
+        Rectangle {
+            id: mask
+            width: 600
+            height: 500
+            color: "#FFFFFF"
+            radius: 24
+            layer.enabled: true
+            anchors.centerIn: parent
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: mask.width
+                    height: mask.height
+                    radius: 24
+                }
+            }
+            QMontserrat {
+                font.weight: Font.Medium
+                font.pixelSize: 32
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 40
+                wrapMode: Text.WordWrap
+                text: STR.STR_QML_1337
+                anchors {
+                    left: parent.left
+                    leftMargin: 24
+                    top: parent.top
+                    topMargin: 24
+                }
+            }
+            QCloseButton {
+                anchors {
+                    right: parent.right
+                    rightMargin: 24
+                    top: parent.top
+                    topMargin: 24
+                }
+                onClicked: {
+                    favoritesPopup.close()
+                }
+            }
+        }
+        DropShadow {
+            anchors.fill: mask
+            horizontalOffset: 3
+            verticalOffset: 3
+            radius: 8.0
+            samples: 17
+            color: "#80000000"
+            source: mask
+        }
+
+        Column {
+            anchors.fill: mask
+            anchors {
+                topMargin: 100
+                leftMargin: 36
+                rightMargin: 36
+            }
+            spacing: 8
+            Flickable {
+                width: parent.width
+                height: parent.height - 100
+                flickableDirection: Flickable.VerticalFlick
+                clip: true
+                contentHeight: favColumn.height
+                ScrollBar.vertical: ScrollBar { active: true }
+                interactive: contentHeight > height
+                Column {
+                    id: favColumn
+                    width: parent.width
+                    spacing: 16
+                    Item {
+                        width: parent.width
+                        height: 24
+                        Row {
+                            height: parent.height
+                            spacing: 8
+                            QImage {
+                                source: "qrc:/Images/Images/fav_bookmark_24px.png"
+                                width: 24
+                                height: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QText {
+                                text: STR.STR_QML_1328
+                                color: "#031F2B"
+                                font.family: "Lato"
+                                font.weight: Font.DemiBold
+                                font.pixelSize: 16
+                                verticalAlignment: Text.AlignVCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        QButtonTextLink {
+                            height: 24
+                            label: savedAddressList.count > 0 ? STR.STR_QML_849 : STR.STR_QML_941
+                            displayIcon: false
+                            btnText.font.underline: true
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                            onButtonClicked: {
+                                if(savedAddressList.count > 0){
+                                    savedAddress.open()
+                                }
+                                else{
+                                    addNewAddress.open()
+                                }
+                            }
+                        }
+                    }
+                    QListView {
+                        id: savedAddressList
+                        width: parent.width
+                        height: contentHeight
+                        model: AppSetting.favoriteAddresses
+                        spacing: 16
+                        interactive: false
+                        visible: savedAddressList.count > 0
+                        delegate: Rectangle {
+                            id: savedAddressItem
+                            width: savedAddressList.width
+                            height: 56
+                            radius: 8
+                            color: "#F5F5F5"
+                            property string dataObject: model.modelData
+                            property string dataLabel: savedAddressItem.dataObject.split("[split]")[0]
+                            property string dataValue: savedAddressItem.dataObject.split("[split]")[1]
+                            QText {
+                                text: savedAddressItem.dataLabel
+                                color: "#031F2B"
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                verticalAlignment: Text.AlignVCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                wrapMode: Text.WrapAnywhere
+                            }
+                            MouseArea {
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                anchors.fill: parent
+                                onClicked: {
+                                    if(favoritesPopup.addressRequestIndex !== -1 && favoritesPopup.addressRequestIndex < destination.model){
+                                        var inputObject = ({
+                                                              "toType": "Address",
+                                                              "toAddress": savedAddressItem.dataValue,
+                                                              "toAddressDisplay": savedAddressItem.dataLabel,
+                                                              "toAmount": ""
+                                                          })
+                                        destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
+                                    }
+                                    favoritesPopup.addressRequestIndex = -1
+                                    favoritesPopup.close()
+                                }
+                            }
+                        }
+                    }
+                    Item {
+                        width: parent.width
+                        height: 24
+                        visible: walletList.count > 1
+                        Row {
+                            height: parent.height
+                            spacing: 8
+                            QImage {
+                                source: "qrc:/Images/Images/fav_wallet-dark.png"
+                                width: 24
+                                height: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QText {
+                                text: STR.STR_QML_1329
+                                color: "#031F2B"
+                                font.family: "Lato"
+                                font.weight: Font.DemiBold
+                                font.pixelSize: 16
+                                verticalAlignment: Text.AlignVCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+                    Column {
+                        spacing: 16
+                        width: parent.width
+                        visible: walletList.count > 1
+                        Repeater {
+                            id: walletList
+                            width: parent.width
+                            model: AppModel.walletList
+                            QWalletManagerDelegate {
+                                id: walletListdelegate
+                                width: walletList.width
+                                isCurrentIndex: false
+                                isEscrow: model.wallet_Escrow
+                                isShared: model.wallet_isSharedWallet
+                                isAssisted: model.wallet_isAssistedWallet
+                                walletCurrency: model.wallet_Balance_Currency
+                                walletName :model.wallet_name
+                                walletBalance: model.wallet_Balance
+                                walletM: model.wallet_M
+                                walletN: model.wallet_N
+                                isDashboard: false
+                                isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
+                                walletRole: model.wallet_role
+                                hasOwner: model.wallet_hasOwner
+                                primaryOwner: model.wallet_primaryOwner
+                                isHotWallet: model.wallet_isHotWallet
+                                visible: model.wallet_id !== AppModel.walletInfo.walletId
+                                enabled: visible
+                                layer.enabled: true
+                                layer.effect: OpacityMask {
+                                    maskSource: Rectangle {
+                                        width: walletListdelegate.width
+                                        height: walletListdelegate.height
+                                        radius: 8
+                                    }
+                                }
+                                onButtonClicked: {
+                                    if(favoritesPopup.addressRequestIndex !== -1 && favoritesPopup.addressRequestIndex < destination.model){
+                                        var inputObject= ({
+                                                              "toType": "Wallet",
+                                                              "toAddress": model.wallet_Address,
+                                                              "toAddressDisplay": model.wallet_name,
+                                                              "toAmount": ""
+                                                          })
+                                        destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
+                                    }
+                                    favoritesPopup.addressRequestIndex = -1
+                                    favoritesPopup.close()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Item {
+                width: parent.width
+                height: 92
+                QLine {
+                    width: parent.width + 36*2
+                    anchors {
+                        bottom: parent.bottom
+                        bottomMargin: 100
+                        horizontalCenter: parent.horizontalCenter
+                    }
+                }
+                QButtonTextLink {
+                    width: 80
+                    height: 48
+                    label: STR.STR_QML_245
+                    displayIcon: false
+                    anchors.verticalCenter: parent.verticalCenter
+                    onButtonClicked: {
+                        favoritesPopup.close()
+                        favoritesPopup.addressRequestIndex = -1
+                    }
+                }
+            }
+        }
+    }
+    Popup {
+        id: savedAddress
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        background: Item{}
+
+        QOnScreenContent {
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_1332
+            extraHeader:Item {}
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 764
+                    height: 700
+                    radius: 24
+                }
+            }
+            bottomLeft:  QButtonTextLink {
+                height: 48
+                label: STR.STR_QML_059
+                onButtonClicked: {
+                    savedAddress.close()
+                }
+            }
+            bottomRight: QTextButton {
+                width: 166
+                height: 48
+                label.text: STR.STR_QML_1333
+                label.font.pixelSize: 16
+                type: eTypeE
+                onButtonClicked: {
+                    addNewAddress.dataLabel = ""
+                    addNewAddress.dataValue = ""
+                    addNewAddress.open()
+                }
+            }
+            onCloseClicked: {
+                savedAddress.close()
+            }
+
+            Rectangle {
+                width: 539
+                height: 420
+                color: "#FFFFFF"
+                border.color: "#EAEAEA"
+                anchors.top: parent.top
+                anchors.topMargin: 112
+                anchors.left: parent.left
+                anchors.leftMargin: 36
+                radius: 12
+                QListView {
+                    id: savedAddresses
+                    anchors.fill: parent
+                    model: AppSetting.favoriteAddresses
+                    visible: savedAddresses.count > 0
+                    delegate: Item {
+                        id: savedAddressesItem
+                        width: savedAddresses.width
+                        height: 48
+                        property string dataObject: model.modelData
+                        property string dataLabel: savedAddressesItem.dataObject.split("[split]")[0]
+                        property string dataValue: savedAddressesItem.dataObject.split("[split]")[1]
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 8
+                            QImage {
+                                source: "qrc:/Images/Images/fav_bookmark_24px.png"
+                                width: 24
+                                height: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QText {
+                                text: savedAddressesItem.dataLabel
+                                color: "#031F2B"
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                verticalAlignment: Text.AlignVCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                wrapMode: Text.WrapAnywhere
+                                width: parent.width - 64
+                            }
+                            QImage {
+                                source: "qrc:/Images/Images/Arrow-Right.png"
+                                width: 24
+                                height: 24
+                                anchors.verticalCenter: parent.verticalCenter
+                                scale: mouseedit.pressed ? 0.95 : 1
+                                transformOrigin: Item.Center
+                                MouseArea {
+                                    id: mouseedit
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        addNewAddress.dataLabel = savedAddressesItem.dataLabel
+                                        addNewAddress.dataValue = savedAddressesItem.dataValue
+                                        addNewAddress.open()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 102
+                width: 728
+                height: 60
+                radius: 8
+                color: "#FDEBD2"
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    QImage {
+                        width: 36
+                        height: 36
+                        source: "qrc:/Images/Images/warning-dark.svg"
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QText {
+                        width: 660
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.weight: Font.DemiBold
+                        font.family: "Lato"
+                        font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                        color: "#031F2B"
+                        text: STR.STR_QML_1338
+                    }
+                }
+            }
+        }
+    }
+    Popup {
+        id: addNewAddress
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        background: Item{}
+        property string dataLabel: ""
+        property string dataValue: ""
+        onOpened: {
+            favLabelEdit.textInputted = addNewAddress.dataLabel
+            favValueEdit.textInputted = addNewAddress.dataValue
+        }
+        onClosed: {
+            addNewAddress.dataLabel = ""
+            addNewAddress.dataValue = ""
+        }
+
+        QOnScreenContent {
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_1333
+            extraHeader:Item {}
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: 764
+                    height: 700
+                    radius: 24
+                }
+            }
+            bottomLeft:  QButtonTextLink {
+                height: 48
+                label: STR.STR_QML_059
+                onButtonClicked: {
+                    addNewAddress.close()
+                }
+            }
+            bottomRight: Row {
+                spacing: 12
+                QTextButton {
+                    width: 250
+                    height: 48
+                    label.text: STR.STR_QML_1335
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    visible: addNewAddress.dataValue !== ""
+                    enabled: visible
+                    onButtonClicked: {
+                        confirmRemove.open()
+                    }
+                }
+                QTextButton {
+                    width: 66
+                    height: 48
+                    label.text: STR.STR_QML_835
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    enabled: favLabelEdit.textInputted !== "" && favValueEdit.textInputted !== "" && favValueEdit.isValid
+                    onButtonClicked: {
+                        if(addNewAddress.dataLabel !== "" && addNewAddress.dataValue !== ""){
+                            AppSetting.updateFavoriteAddress(favLabelEdit.textInputted, favValueEdit.textInputted)
+                        }
+                        else{
+                            var valid = AppSetting.validateAddress(favValueEdit.textInputted)
+                            if(!valid){
+                                favValueEdit.isValid = false
+                                favValueEdit.errorText = "Invalid address"
+                            }
+                            else{
+                                favValueEdit.isValid = true
+                                favValueEdit.errorText = ""
+                                AppSetting.addFavoriteAddress(favLabelEdit.textInputted, favValueEdit.textInputted)
+                                addNewAddress.close()
+                            }
+                        }
+                    }
+                }
+            }
+            onCloseClicked: {
+                addNewAddress.close()
+            }
+            Column {
+                width: 540
+                anchors.top: parent.top
+                anchors.topMargin: 92
+                anchors.left: parent.left
+                anchors.leftMargin: 36
+                spacing: 24
+                QText {
+                    text: STR.STR_QML_1334
+                    color: "#031F2B"
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                }
+                Item {
+                    width: parent.width
+                    height: childrenRect.height
+                    QTextInputBoxTypeB {
+                        id: favLabelEdit
+                        label: "Label"
+                        boxWidth: parent.width - 72
+                        boxHeight: 48
+                        isValid: true
+                        maxLength: 40
+                        input.placeholderText: "Enter a label"
+                    }
+                    Row {
+                        anchors.top: favLabelEdit.bottom
+                        anchors.topMargin: 4
+                        anchors.left: parent.left
+                        spacing: 4
+                        visible: favLabelEdit.length > 0
+                        QImage {
+                            source: "qrc:/Images/Images/info-60px.png"
+                            width: 16
+                            height: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QText {
+                            text: qsTr("%1 / %2").arg(favLabelEdit.length).arg(favLabelEdit.maxLength)
+                            color: "#595959"
+                            font.family: "Lato"
+                            font.pixelSize: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                Item {
+                    width: parent.width
+                    height: childrenRect.height
+                    QTextInputBoxTypeB {
+                        id: favValueEdit
+                        label: "Address"
+                        boxWidth: parent.width - 72
+                        boxHeight: 48
+                        isValid: (textInputted === "") ? true : AppSetting.validateAddress(textInputted)
+                        showError: true
+                        errorText: "Invalid address"
+                        enabled: addNewAddress.dataValue === ""
+                        input.text: addNewAddress.dataValue
+                        input.placeholderText: "Enter an address"
+                        input.rightPadding: 48
+                    }
+                    QImage {
+                        id: qricoimport
+                        source: "qrc:/Images/Images/QrSendButton.png"
+                        anchors.bottom: favValueEdit.bottom
+                        anchors.bottomMargin: favValueEdit.isValid ? 6 : 38
+                        anchors.right: favValueEdit.right
+                        anchors.rightMargin: 6
+                        transformOrigin: Item.Center
+                        scale: qrMouse.pressed ? 0.95 : 1
+                        width: 36
+                        height: 36
+                        visible: addNewAddress.dataValue === ""
+                        MouseArea {
+                            id: qrMouse
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            anchors.fill: parent
+                            onClicked: {
+                                qrscaner.addressRequestIndex = -2
+                                qrscaner.open()
+                            }
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 102
+                width: 728
+                height: 60
+                radius: 8
+                color: "#FDEBD2"
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    QImage {
+                        width: 36
+                        height: 36
+                        source: "qrc:/Images/Images/warning-dark.svg"
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QText {
+                        width: 660
+                        anchors.verticalCenter: parent.verticalCenter
+                        wrapMode: Text.WordWrap
+                        color: "#031F2B"
+                        text: STR.STR_QML_1338
+                        font.weight: Font.DemiBold
+                        font.family: "Lato"
+                        font.pixelSize: 12
+                    }
+                }
+            }
+        }
+    }
+    QConfirmYesNoPopup{
+        id: confirmRemove
+        property var data
+        contentText:STR.STR_QML_1336.arg(addNewAddress.dataLabel)
+        contentWrapMode: Text.WrapAnywhere
+        onConfirmNo: close()
+        onConfirmYes: {
+            AppSetting.removeFavoriteAddress(addNewAddress.dataLabel, addNewAddress.dataValue)
+            addNewAddress.close()
+            savedAddress.close()
+            close()
+        }
+    }
     property var destinations: []
     function requestAddMultiDestinations(){
         destinations = []
         for(var i = 0; i < destination.count; i++){
-            var savedObj = { "toAddress": destination.itemAt(i).toAddress,
-                             "toAmount" : destination.itemAt(i).toAmount};
-            destinations[i] = savedObj
+            if(destination.itemAt(i).inputObject.toType === "Input" || destination.itemAt(i).inputObject.toType === ""){
+                destination.itemAt(i).inputObject.toType = "Input"
+                destination.itemAt(i).inputObject.toAddress = destination.itemAt(i).toAddress
+                destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
+            }
+            destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destinations[i] = destination.itemAt(i).inputObject
         }
-        if(destination.count < destination.destinationMAX) {destination.model++}
+        if(destination.count < destination.destinationMAX) {
+            destination.model++
+        }
     }
     function requestRemoveDestination(index){
         var idx = 0
         destinations = []
         for(var i = 0; i < destination.count; i++){
             if(i === index){ continue }
-            var savedObj = { "toAddress": destination.itemAt(i).toAddress,
-                             "toAmount" : destination.itemAt(i).toAmount};
-            destinations[idx] = savedObj
+            if(destination.itemAt(i).inputObject.toType === "Input" || destination.itemAt(i).inputObject.toType === ""){
+                destination.itemAt(i).inputObject.toType = "Input"
+                destination.itemAt(i).inputObject.toAddress = destination.itemAt(i).toAddress
+                destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
+            }
+            destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destinations[idx] = destination.itemAt(i).inputObject
             idx++
         }
-        if(destination.count > 1){destination.model--}
-    }
-    function requestDisableMultiDestinations(){
-        var savedObj = { "toAddress": destination.itemAt(0).toAddress,
-                         "toAmount" : destination.itemAt(0).toAmount};
-        destination.model = 1
-        destinations[0] = savedObj
+        if(destination.count > 1){
+            destination.model--
+        }
     }
 }

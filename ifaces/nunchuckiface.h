@@ -154,6 +154,9 @@ public:
     nunchuk::MasterSigner GetMasterSigner(const std::string& mastersigner_id,
                                           QWarningMessage& msg);
 
+    nunchuk::MasterSigner GetMasterSignerFingerprint(const std::string& fingerprint,
+                                          QWarningMessage& msg);
+
     bool DeleteMasterSigner(const std::string& mastersigner_id,
                             QWarningMessage& msg);
 
@@ -169,6 +172,9 @@ public:
                             QWarningMessage& msg);
 
     std::vector<nunchuk::SingleSigner> GetRemoteSigners(QWarningMessage& msg);
+
+    nunchuk::SingleSigner GetRemoteSigner(const std::string& master_fingerprint,
+                                         QWarningMessage& msg);
 
     std::string GetHealthCheckPath();
 

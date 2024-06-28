@@ -87,6 +87,7 @@ public:
     bool requestInheritancePlanVerifyPassword(const QString &password);
     bool requestDeleteWalletVerifyPassword(const QString &password);
     bool requestChangeEmailVerifyPassword(const QString &password);
+    bool requestReplaceKeysVerifyPassword(const QString &password);
 
     Q_INVOKABLE bool verifyConfirmationCode(const QString &code);
     QVariantList securityQuestions();

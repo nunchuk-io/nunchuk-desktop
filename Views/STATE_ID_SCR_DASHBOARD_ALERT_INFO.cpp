@@ -203,6 +203,28 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
     else if (type == "continue-change-email") {
         QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
     }
+    else if (type == "skip-health-check") {
+        if (dashboard->healthPtr()) {
+            if (dashboard->healthPtr()->SkipKeyHealthReminder()) {
+                dashboard->GetAlertsInfo();
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+            }
+        }
+    }
+    else if (type == "cancel-key-replacement") {
+        if (dashboard->CancelKeyReplacement()) {
+            dashboard->GetAlertsInfo();
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+        }
+    }
+    else if (type == "continue-key-replacement") {
+        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+        if (dashboard->canReplaceKey()) {
+            QMap<QString, QVariant> data;
+            data["state_id"] = E::STATE_ID_SCR_DASHBOARD_ALERT_INFO;
+            QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
+        }
+    }
     else {}
 }
 

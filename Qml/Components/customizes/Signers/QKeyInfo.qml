@@ -56,6 +56,8 @@ QOnScreenContentTypeA {
     signal requestGetExpubs()
     signal requestHealthCheck()
     signal requestDeleteKey()
+    signal healthReminderClicked()
+    signal healthReminderEditClicked(var edit)
     extraHeader: Row {
         spacing: 8
         QBadge {
@@ -78,6 +80,10 @@ QOnScreenContentTypeA {
             }
             QRemiderAndHistory {
                 id: _remider
+                onReminderClicked: {
+                    healthReminderClicked()
+                }
+                visible: ClientController.user.isSubscribedUser
             }
         }
     }

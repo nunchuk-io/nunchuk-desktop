@@ -33,6 +33,7 @@ Rectangle {
     radius: 12
     signal healthCheck
     signal requestHealthCheck
+    signal viewHistoryClicked
     Item {
         anchors {
             fill: parent
@@ -64,6 +65,7 @@ Rectangle {
                     label: STR.STR_QML_973
                     icon: ["qrc:/Images/Images/history-24px.svg", "qrc:/Images/Images/history-24px.svg", "qrc:/Images/Images/history-24px.svg"]
                     onButtonClicked: {
+                        viewHistoryClicked()
                     }
                 }
             }

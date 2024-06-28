@@ -203,7 +203,7 @@ Item {
         bottomRight: Item{}
     }
 
-    property var hardware: ""
+    property string hardware: ""
     QPopupEmpty {
         id: _Security
         onOpened: {

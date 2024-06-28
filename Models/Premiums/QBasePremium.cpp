@@ -10,6 +10,7 @@
 #include "Premiums/QServerKey.h"
 #include "Premiums/QInheritancePlan.h"
 #include "Premiums/QRecurringPayment.h"
+#include "Premiums/QWalletServicesTag.h"
 
 QBasePremium::QBasePremium(WalletId wallet_id)
     :m_wallet_id(wallet_id)
@@ -19,11 +20,11 @@ QBasePremium::QBasePremium(WalletId wallet_id)
 
 int QBasePremium::mode()
 {
-    if (ClientController::instance()->isByzantine() || ClientController::instance()->isFinney()) {
-        return GROUP_WALLET;
-    }
-    else if (ClientController::instance()->isHoneyBadger() || ClientController::instance()->isIronHand()) {
+    if (ClientController::instance()->isHoneyBadger() || ClientController::instance()->isIronHand()) {
         return USER_WALLET;
+    }
+    else if (ClientController::instance()->isByzantine() || ClientController::instance()->isFinney()) {
+        return GROUP_WALLET;
     }
     else {
         return FREE_USER;
@@ -97,4 +98,18 @@ QRecurringPaymentPtr QBasePremium::recurringPaymentPtr() const
         return w->recurringPaymentPtr();
     }
     return {};
+}
+
+QWalletServicesTagPtr QBasePremium::servicesTagPtr() const
+{
+    if (auto w = walletInfoPtr())
+    {
+        return w->servicesTagPtr();
+    }
+    return {};
+}
+
+QStringList QBasePremium::slugs() const
+{
+    return walletInfoPtr() ? walletInfoPtr()->slugs() : QStringList();
 }

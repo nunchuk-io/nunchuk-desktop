@@ -47,6 +47,7 @@ public:
     Draco(Draco const &other) = delete;
     void operator=(const Draco &other) = delete;
     void connectDragonServer(QUrl url);
+    Q_INVOKABLE void refreshDevices();
     Q_INVOKABLE void refreshContacts();
     Q_INVOKABLE void createAccount(const QString& name, const QString& email);
     Q_INVOKABLE void singin(const QString &email, const QString &password);
@@ -347,6 +348,63 @@ public:
                      QJsonObject &output,
                      QString &errormsg);
     bool CalculateRequireSignaturesForChangingEmail(const QString &new_email, QJsonObject& output, QString &errormsg);
+
+    bool GetKeyHealthReminder(const QString &wallet_id,
+                              QJsonObject& output,
+                              QString &errormsg);
+
+    bool AddOrUpdateKeyHealthReminder(const QString &wallet_id,
+                                      const QJsonObject& request_body,
+                                      QJsonObject& output,
+                                      QString &errormsg);
+
+    bool DeleteKeyHealthReminder(const QString &wallet_id,
+                                 const QStringList &xfps,
+                                 QJsonObject& output,
+                                 QString &errormsg);
+
+    bool SkipKeyHealthReminder(const QString &wallet_id,
+                                 const QString &xfp,
+                                 QJsonObject& output,
+                                 QString &errormsg);
+
+    bool ConfigureWalletReplacement(const QString &wallet_id,
+                                    QJsonObject& output,
+                                    QString &errormsg);
+
+    bool InitiateKeyReplacement(const QString &wallet_id,
+                                const QString &xfp,
+                                QJsonObject& output,
+                                QString &errormsg);
+
+    bool CancelKeyReplacement(const QString &wallet_id,
+                              const QString &xfp,
+                              QJsonObject& output,
+                              QString &errormsg);
+
+    bool ReplaceKey(const QString &wallet_id,
+                    const QString &xfp,
+                    const QString& passwordToken,
+                    const QJsonObject& request_body,
+                    QString &errormsg);
+
+    bool FinalizeKeyReplacement(const QString &wallet_id,
+                                QJsonObject& output,
+                                QString &errormsg);
+
+    bool GetKeyReplacementStatus(const QString &wallet_id,
+                                QJsonObject& output,
+                                QString &errormsg);
+
+    bool ResetKeyReplacement(const QString &wallet_id,
+                            QJsonObject& output,
+                            QString &errormsg);
+
+    //Saved address
+    bool GetSavedAddress(QJsonObject &output, QString &errormsg);
+    bool AddOrUpdateSavedAddress(const QString &label, const QString &address, QJsonObject &output, QString &errormsg);
+    bool DeleteSavedAddress(const QString &label, const QString &address, QJsonObject &output, QString &errormsg);
+
 private:
     Draco();
     ~Draco();

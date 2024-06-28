@@ -95,6 +95,8 @@ Item {
             height: _item.height * 0.49
             isAssisted: AppModel.walletInfo.isAssistedWallet
             isHotWallet: AppModel.walletInfo.needBackup
+            isLocked: AppModel.walletInfo.isLocked
+            isReplaced: AppModel.walletInfo.isReplaced
             Row{
                 anchors.fill: parent
                 Item {
@@ -102,7 +104,7 @@ Item {
                     width: parent.width * _walletDes.ratio
                     QText {
                         id: displayWalletname
-                        width: 460
+                        width: 380
                         height: 36
                         text: AppModel.walletInfo.walletName
                         font.weight: Font.Bold
@@ -199,7 +201,7 @@ Item {
                             width: 70
                             height: parent.height
                             radius: 20
-                            visible: AppModel.walletInfo.isAssistedWallet
+                            visible: _walletDes.isAssisted && !_walletDes.isReplaced
                             color: "#EAEAEA"
                             Row {
                                 anchors.centerIn: parent
@@ -216,6 +218,24 @@ Item {
                                     text: STR.STR_QML_679
                                     font.weight: Font.Bold
                                     anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+                        Rectangle {
+                            width: 70
+                            height: parent.height
+                            visible: _walletDes.isReplaced
+                            radius: 20
+                            color: "#EAEAEA"
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 4
+                                QText{
+                                    font.family: "Lato"
+                                    font.pixelSize: 10
+                                    color: "#031F2B"
+                                    text: STR.STR_QML_1345
+                                    font.weight: Font.Bold
                                 }
                             }
                         }
@@ -290,7 +310,7 @@ Item {
                             label.text: STR.STR_QML_002
                             width: 204
                             type: eTypeF
-                            enabled: existWallet && (myRole !== "OBSERVER")
+                            enabled: (existWallet && (myRole !== "OBSERVER")) && !AppModel.walletInfo.isLocked
                             onButtonClicked: {
                                 if(AppModel.walletInfo.isSharedWallet){
                                     QMLHandle.sendEvent(EVT.EVT_GOTO_HOME_CHAT_TAB)

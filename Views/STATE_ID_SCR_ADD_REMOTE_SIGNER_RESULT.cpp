@@ -23,6 +23,8 @@
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
 
 void SCR_REMOTE_SIGNER_RESULT_Entry(QVariant msg) {
 
@@ -33,6 +35,11 @@ void SCR_REMOTE_SIGNER_RESULT_Exit(QVariant msg) {
 }
 
 void EVT_REMOTE_SIGNER_RESULT_HEALTH_CHECK_HANDLER(QVariant msg) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (dashboard->healthPtr()->HealthCheckAddReminderClicked(msg)) {
+            return;
+        }
+    }
     if(AppModel::instance()->singleSignerInfo()){
         AppModel::instance()->startHealthCheckRemoteSigner(E::STATE_ID_SCR_ADD_REMOTE_SIGNER_RESULT,
                                                            AppModel::instance()->singleSignerInfo()->masterFingerPrint(),

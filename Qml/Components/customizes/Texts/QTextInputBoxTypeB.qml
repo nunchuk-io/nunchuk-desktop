@@ -45,6 +45,7 @@ Column {
     property alias input: _input
     property bool isPassword: false
     property int titleFontSize: 16
+    property var disabledColor: "#EAEAEA"
     spacing: 4
 
     signal downKeyRequest()
@@ -101,7 +102,7 @@ Column {
                 width: boxWidth
                 height: boxHeight
                 radius: 8
-                color: textipboxType.enabled ? (isValid ? "#FFFFFF" : "#FFD7D9") : "#EAEAEA"
+                color: textipboxType.enabled ? (isValid ? "#FFFFFF" : "#FFD7D9") : disabledColor
                 border.color:  isValid ? "#DEDEDE" : "#CF4018"
             }
         }

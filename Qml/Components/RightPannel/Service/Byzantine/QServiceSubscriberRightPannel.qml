@@ -28,6 +28,7 @@ Item {
         {screen:_CLAIM_AN_INHERITANCE,                  screen_component: _claim_an_inheritance     },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,      screen_component: _platform_key_co_signing_policies },
         {screen:_GET_ADDITIONAL_WALLETS,                screen_component: "" },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,     screen_component: "" },
         {screen:_ORDER_NEW_HARDWARE,                    screen_component: "" },
         {screen:_MANAGE_SUBSCRIPTION,                   screen_component: "" },
     ]

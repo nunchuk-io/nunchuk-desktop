@@ -226,6 +226,11 @@ enum CMD_IDX {
     ASSISTED_WALLET_ALERTS_READ,
     ASSISTED_WALLET_ALERTS_DISMISS,
 
+    // Wallet health check
+    ASSISTED_WALLET_GET_KEY_HEALTH_REMINDER,
+    ASSISTED_WALLET_ADD_OR_UPDATE_KEY_HEALTH_REMINDER,
+    ASSISTED_WALLET_DELETE_KEY_HEALTH_REMINDER,
+    ASSISTED_WALLET_SKIP_KEY_HEALTH_REMINDER,
     ASSISTED_WALLET_HEALTHCHECK,
     ASSISTED_WALLET_GET_HEALTH,
 
@@ -242,6 +247,20 @@ enum CMD_IDX {
     ONBOARDING_NO_ADVISOR,
     CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL,
     CHANGING_EMAIL,
+
+    // Replace Wallet
+    ASSISTED_WALLET_CONFIGURE_WALLET_REPLACEMENT,
+    ASSISTED_WALLET_INITIATE_KEY_REPLACEMENT,
+    ASSISTED_WALLET_CANCEL_KEY_REPLACEMENT,
+    ASSISTED_WALLET_REPLACE_KEY,
+    ASSISTED_WALLET_FINALIZE_KEY_REPLACEMENT,
+    ASSISTED_WALLET_GET_STATUS_KEY_REPLACEMENT,
+    ASSISTED_WALLET_RESET_KEY_REPLACEMENT,
+
+    // Saved addresses
+    ASSISTED_WALLET_GET_SAVED_ADDRESSES,
+    ASSISTED_WALLET_ADD_SAVED_ADDRESS,
+    ASSISTED_WALLET_DELETE_SAVED_ADDRESS,
 
     CMD_MAX
 };
@@ -282,6 +301,10 @@ enum CMD_IDX {
     GROUP_DRAFT_WALLETS_DELETE_REQUEST_ADD_KEY,
 
     // Group wallet health check
+    GROUP_WALLETS_GET_KEY_HEALTH_REMINDER,
+    GROUP_WALLETS_ADD_OR_UPDATE_KEY_HEALTH_REMINDER,
+    GROUP_WALLETS_DELETE_KEY_HEALTH_REMINDER,
+    GROUP_WALLETS_SKIP_KEY_HEALTH_REMINDER,
     GROUP_WALLETS_REQUEST_HEALTHCHECK,
     GROUP_WALLETS_HEALTHCHECK,
     GROUP_WALLETS_GET_HEALTH,
@@ -329,6 +352,15 @@ enum CMD_IDX {
     GROUP_WALLET_RECURRING_PAYMENT_CREATE,
     GROUP_WALLET_RECURRING_PAYMENT_GET,
     GROUP_WALLET_RECURRING_PAYMENT_CANCEL,
+
+    // Replace Wallet
+    GROUP_WALLET_CONFIGURE_WALLET_REPLACEMENT,
+    GROUP_WALLET_INITIATE_KEY_REPLACEMENT,
+    GROUP_WALLET_CANCEL_KEY_REPLACEMENT,
+    GROUP_WALLET_REPLACE_KEY,
+    GROUP_WALLET_FINALIZE_KEY_REPLACEMENT,
+    GROUP_WALLET_GET_STATUS_KEY_REPLACEMENT,
+    GROUP_WALLET_RESET_KEY_REPLACEMENT,
     CMD_MAX
 };
 }
@@ -345,7 +377,8 @@ enum class TARGET_ACTION {
     UPDATE_SERVER_KEY,
     DELETE_WALLET,
     EDIT_GROUP_MEMBERS,
-    CHANGE_EMAIL
+    CHANGE_EMAIL,
+    REPLACE_KEYS
 };
 
 enum class REQUIRED_SIGNATURE_TYPE_INT {
@@ -377,6 +410,7 @@ const QMap<int, QString> target_actions_command {
     { (int)TARGET_ACTION::DELETE_WALLET             , "DELETE_WALLET"             },
     { (int)TARGET_ACTION::EDIT_GROUP_MEMBERS        , "EDIT_GROUP_MEMBERS"        },
     { (int)TARGET_ACTION::CHANGE_EMAIL              , "CHANGE_EMAIL"              },
+    { (int)TARGET_ACTION::REPLACE_KEYS              , "REPLACE_KEYS"              },
 };
 
 const QMap<QString, int> required_signatures_type {
@@ -525,6 +559,11 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_READ          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/alerts/{alert_id}/mark-as-read") },
     { Premium::CMD_IDX::ASSISTED_WALLET_ALERTS_DISMISS       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/alerts/{alert_id}/dismiss") },
 
+    // Wallet health check
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_KEY_HEALTH_REMINDER             , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health/reminder") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_ADD_OR_UPDATE_KEY_HEALTH_REMINDER   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health/reminder") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_DELETE_KEY_HEALTH_REMINDER          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health/reminder") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_SKIP_KEY_HEALTH_REMINDER            , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health/reminder/{xfp}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_HEALTHCHECK        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health/{xfp}/health-check") },
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_HEALTH         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/health") },
 
@@ -540,6 +579,15 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ONBOARDING_NO_ADVISOR         , QString("%1/%2").arg(DRAGON_BANNERS_URL).arg("onboarding/no-advisor") },
     { Premium::CALCULATE_REQUIRED_SIGNATURES_FOR_CHANGING_EMAIL , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/calculate-required-signatures") },
     { Premium::CHANGING_EMAIL                                   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("email-change/change") },
+
+    // Replace Wallet
+    { Premium::CMD_IDX::ASSISTED_WALLET_CONFIGURE_WALLET_REPLACEMENT    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/configs") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_INITIATE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_CANCEL_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_REPLACE_KEY                     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/replace") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_FINALIZE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/finalize") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_STATUS_KEY_REPLACEMENT      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/status") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_RESET_KEY_REPLACEMENT           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/reset") },
 
 
     //DRAGON_GROUP_WALLETS
@@ -571,6 +619,10 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLET_UPDATE_WALLET                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}") },
 
     // Group wallet health check
+    { Group::CMD_IDX::GROUP_WALLETS_GET_KEY_HEALTH_REMINDER             , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health/reminder") },
+    { Group::CMD_IDX::GROUP_WALLETS_ADD_OR_UPDATE_KEY_HEALTH_REMINDER   , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health/reminder") },
+    { Group::CMD_IDX::GROUP_WALLETS_DELETE_KEY_HEALTH_REMINDER          , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health/reminder") },
+    { Group::CMD_IDX::GROUP_WALLETS_SKIP_KEY_HEALTH_REMINDER            , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health/reminder/{xfp}") },
     { Group::CMD_IDX::GROUP_WALLETS_REQUEST_HEALTHCHECK, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health/{xfp}/request-health-check") },
     { Group::CMD_IDX::GROUP_WALLETS_HEALTHCHECK        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health/{xfp}/health-check") },
     { Group::CMD_IDX::GROUP_WALLETS_GET_HEALTH         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/health") },
@@ -623,6 +675,20 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLET_RECURRING_PAYMENT_CREATE  , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/recurring-payment") },
     { Group::CMD_IDX::GROUP_WALLET_RECURRING_PAYMENT_GET     , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/recurring-payment/{recurring_payment_id}") },
     { Group::CMD_IDX::GROUP_WALLET_RECURRING_PAYMENT_CANCEL  , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/recurring-payment/{recurring_payment_id}") },
+
+    // Replace Wallet
+    { Group::CMD_IDX::GROUP_WALLET_CONFIGURE_WALLET_REPLACEMENT    , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/configs") },
+    { Group::CMD_IDX::GROUP_WALLET_INITIATE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
+    { Group::CMD_IDX::GROUP_WALLET_CANCEL_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
+    { Group::CMD_IDX::GROUP_WALLET_REPLACE_KEY                     , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/replace") },
+    { Group::CMD_IDX::GROUP_WALLET_FINALIZE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/finalize") },
+    { Group::CMD_IDX::GROUP_WALLET_GET_STATUS_KEY_REPLACEMENT      , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/status") },
+    { Group::CMD_IDX::GROUP_WALLET_RESET_KEY_REPLACEMENT           , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/reset") },
+
+    // Saved addresses
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_SAVED_ADDRESSES        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_ADD_SAVED_ADDRESS          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_DELETE_SAVED_ADDRESS       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address/{address}") },
 };
 
 class DRACO_CODE: public QObject

@@ -200,7 +200,7 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
 bool QInheritancePlan::GetInheritancePlan()
 {
     QWalletPtr w = walletInfoPtr();
-    if (w.isNull()) return false;
+    if (w.isNull() || (w.data()->status() == "REPLACED")) return false;
     QJsonObject response;
     QString errormsg;
     bool ret = Draco::instance()->inheritanceGetPlan(w->id(), w->groupId(), response, errormsg);
@@ -217,7 +217,7 @@ QJsonObject QInheritancePlan::JsBody()
 {
     QJsonObject body;
     body["wallet"] = wallet_id();
-    body["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : walletInfoPtr()->groupId();
+    body["group_id"] = isUserWallet() ? "" : walletInfoPtr()->groupId();
     body["note"] = m_planInfo["note"].toString();
     body["buffer_period_id"] = m_planInfo["buffer_period"].toObject()["id"].toString();
     QString email = m_planInfo["display_emails"].toString();
@@ -335,7 +335,7 @@ bool QInheritancePlan::RequestInheritancePlanCancel()
 
             QJsonObject body;
             body["wallet"] = wallet_id();
-            body["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : wallet->groupId();
+            body["group_id"] = isUserWallet() ? "" : wallet->groupId();
             data["body"]  = body;
 
             QStringList authorizations;
@@ -376,7 +376,7 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     }
     QJsonObject bodyCancel;
     bodyCancel["wallet"] = wallet_id();
-    bodyCancel["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : wallet->groupId();
+    bodyCancel["group_id"] = isUserWallet() ? "" : wallet->groupId();
 
     QJsonObject body_data = isCancel ? bodyCancel : JsBody();
     QString errormsg = "";
@@ -385,8 +385,8 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     if (ret) {
         DBG_INFO << output;
         QJsonObject resultObj = output["result"].toObject();
-        ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures(resultObj);
-        info = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
+        servicesTagPtr()->setReqiredSignatures(resultObj);
+        info = servicesTagPtr()->reqiredSignaturesInfo();
     }
     return ret;
 }
@@ -435,7 +435,7 @@ bool QInheritancePlan::InheritancePlanCancelSucceed()
         data["nonce"] = Draco::instance()->randomNonce();
         QJsonObject body;
         body["wallet"] = wallet_id();
-        body["group_id"] = WalletsMng->isUserWallet(wallet_id()) ? "" : w->groupId();
+        body["group_id"] = isUserWallet() ? "" : w->groupId();
         data["body"]  = body;
 
         QJsonObject output;
@@ -559,9 +559,4 @@ void QInheritancePlan::editPlanInfo(const QVariant &info)
     }
     DBG_INFO << change;
     setPlanInfo(change);
-}
-
-QWalletServicesTagPtr QInheritancePlan::servicesTagPtr() const
-{
-    return ServiceSetting::instance()->servicesTagPtr();
 }

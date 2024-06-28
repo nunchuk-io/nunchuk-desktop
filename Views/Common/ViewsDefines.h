@@ -59,6 +59,7 @@ namespace LocalMode {
 }
 
 namespace OnlineMode {
+#define SCR_REPLACE_SELECT_KEY                   "qrc:/Qml/Screens/OnlineMode/SCR_REPLACE_SELECT_KEY.qml"
 #define SCR_ADD_HARDWARE                         "qrc:/Qml/Screens/OnlineMode/SCR_ADD_HARDWARE.qml"
 #define SCR_ADD_HARDWARE_ASK                     "qrc:/Qml/Screens/OnlineMode/SCR_ADD_HARDWARE_ASK.qml"
 #define SCR_ADD_HARDWARE_EXIST                   "qrc:/Qml/Screens/OnlineMode/SCR_ADD_HARDWARE_EXIST.qml"

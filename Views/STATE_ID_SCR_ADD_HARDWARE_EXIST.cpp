@@ -56,12 +56,23 @@ void EVT_ADD_EXIST_HARDWARE_REQUEST_HANDLER(QVariant msg) {
         }
     }
     else {
-        if (QAssistedDraftWallets::IsByzantine()) {
-            QGroupWallets::instance()->setSelectFingerPrint(msg.toString());
-            QGroupWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+        auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+        if (dashboard && dashboard->canReplaceKey()) {
+            if (QAssistedDraftWallets::IsByzantine()) {
+                QGroupWallets::instance()->setSelectFingerPrint(msg.toString());
+                QGroupWallets::instance()->requestKeyReplacement(NULL);
+            } else {
+                QUserWallets::instance()->setSelectFingerPrint(msg.toString());
+                QUserWallets::instance()->requestKeyReplacement(NULL);
+            }
         } else {
-            QUserWallets::instance()->setSelectFingerPrint(msg.toString());
-            QUserWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+            if (QAssistedDraftWallets::IsByzantine()) {
+                QGroupWallets::instance()->setSelectFingerPrint(msg.toString());
+                QGroupWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+            } else {
+                QUserWallets::instance()->setSelectFingerPrint(msg.toString());
+                QUserWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+            }
         }
     }
 }

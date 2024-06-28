@@ -48,7 +48,7 @@ Item {
         Item {
             width: 627
             height: 750
-            QComboBox {
+            QComboBoxIndex {
                 id: currencies
                 currentIndex: ProfileSetting.currencyIndex
                 width: 627

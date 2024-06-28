@@ -44,6 +44,8 @@ Popup {
     property string contentText: STR.STR_QML_466
     property string leftBtnLabel: STR.STR_QML_432
     property string rightBtnLabel: STR.STR_QML_433
+    property var    contentWrapMode: Text.WordWrap
+
     signal confirmYes()
     signal confirmNo()
     Rectangle {
@@ -81,7 +83,7 @@ Popup {
                 font.pixelSize: 16
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
-                wrapMode: Text.WordWrap
+                wrapMode: contentWrapMode
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: contentText

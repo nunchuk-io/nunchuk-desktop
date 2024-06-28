@@ -62,7 +62,7 @@ Item {
                 boxHeight: 28
                 readOnly: true
                 textInputted: signerXfp
-                visible: signerSpec === ""
+                visible: signerSpec === "" && signerInfo.isMine
                 input.font.capitalization: Font.AllUppercase
                 anchors.horizontalCenter: parent.horizontalCenter
             }
@@ -72,7 +72,7 @@ Item {
                 boxHeight: 136
                 label: STR.STR_QML_127
                 textInputted: signerSpec
-                visible: signerSpec !== ""
+                visible: signerSpec !== "" && signerInfo.isMine
                 isValid: true
                 input.background: Rectangle {
                     color: "white"
@@ -89,7 +89,7 @@ Item {
                 boxHeight: 28
                 readOnly: true
                 textInputted: singleSignerInfo.signerDerivationPath
-                visible: singleSignerInfo.signerDerivationPath !== ""
+                visible: singleSignerInfo.signerDerivationPath !== "" && signerInfo.isMine
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QLabelTextInput {
@@ -99,13 +99,14 @@ Item {
                 boxHeight: 28
                 readOnly: true
                 textInputted: signerCardId
-                visible: signerCardId !== ""
+                visible: signerCardId !== "" && signerInfo.isMine
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }
 
         QUsedInWallets {
             listHeight: _signInfo.height + 4 - _col.childrenRect.height
+            visible: signerInfo.isMine
         }
     }
 }

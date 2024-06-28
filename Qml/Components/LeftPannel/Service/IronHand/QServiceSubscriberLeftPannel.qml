@@ -60,9 +60,18 @@ Item {
             _InfoVer.open();
             return false;
         } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET, visible: true, enable:true,  title:STR.STR_QML_1352,icon: ""   ,action: function(){ return replace_keys() } },
         {screen:_ORDER_NEW_HARDWARE,                visible: true, enable:true,  title:STR.STR_QML_700, icon: ""   ,action: function(){_InfoVer.link = "https://nunchuk.io/hardware-replacement";_InfoVer.contentText = STR.STR_QML_735;_InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];_InfoVer.open(); return false;} },
         {screen:_MANAGE_SUBSCRIPTION,               visible: true, enable:true,  title:STR.STR_QML_682, icon: ""   ,action: function(){_InfoVer.link = "https://nunchuk.io/my-plan";_InfoVer.contentText = STR.STR_QML_684;_InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];_InfoVer.open(); return false;}}
     ]
+
+    function replace_keys() {
+        _info1.title = STR.STR_QML_339
+        _info1.contentText = STR.STR_QML_1347
+        _info1.open()
+        return true;
+    }
+
     property var itemOption: option_map.find(function(e) {if (e.screen === ServiceSetting.optionIndex) return true; else return false})
     Component.onCompleted: {
         var access = option_map.find(function(e) { if (e.screen === ServiceSetting.optionIndex) return true; else return false } )

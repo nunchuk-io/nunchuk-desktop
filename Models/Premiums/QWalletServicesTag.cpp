@@ -6,6 +6,7 @@
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QKeyRecovery.h"
 #include "Premiums/QInheritancePlan.h"
+#include "Premiums/QServerKey.h"
 
 QWalletServicesTag::QWalletServicesTag(int mode) : QSwitchAPI(mode)
   , m_keyRecovery(QKeyRecoveryPtr(new QKeyRecovery()))
@@ -72,6 +73,11 @@ bool QWalletServicesTag::requestDeleteWalletVerifyPassword(const QString &passwo
 bool QWalletServicesTag::requestChangeEmailVerifyPassword(const QString &password)
 {
     return requestVerifyPassword(password,(int)TARGET_ACTION::CHANGE_EMAIL);
+}
+
+bool QWalletServicesTag::requestReplaceKeysVerifyPassword(const QString &password)
+{
+    return requestVerifyPassword(password,(int)TARGET_ACTION::REPLACE_KEYS);
 }
 
 bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown()
@@ -257,7 +263,7 @@ bool QWalletServicesTag::lockdownRequired(const QString &period_id)
     else{}
     if (ret) {
         QJsonObject resultObj = output["result"].toObject();
-        ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures(resultObj);
+        setReqiredSignatures(resultObj);
     }
     return ret;
 }
@@ -634,16 +640,18 @@ bool QWalletServicesTag::inheritanceSignTransaction()
 void QWalletServicesTag::additionalGetWalletConfig()
 {
     QJsonObject config;
-    if (m_mode == USER_WALLET) {
-        config = Draco::instance()->assistedGetWalletConfig();
-        setWalletConfig(config);
+    if (ClientController::instance()->isMultiSubscriptions()) {
+        config = Byzantine::instance()->assistedGetWalletConfig();
+    } else {
+        if (m_mode == USER_WALLET) {
+            config = Draco::instance()->assistedGetWalletConfig();
+        }
+        else if (m_mode == GROUP_WALLET) {
+            config = Byzantine::instance()->assistedGetWalletConfig();
+        }
+        else{}
     }
-    else if (m_mode == GROUP_WALLET) {
-        QJsonObject wallet_config = Byzantine::instance()->assistedGetWalletConfig();
-        DBG_INFO << wallet_config;
-        config = wallet_config;
-    }
-    else{}
+    DBG_INFO << config;
     setWalletConfig(config);
 }
 
@@ -677,6 +685,7 @@ void QWalletServicesTag::setListInheritantPlans()
     QStringList inheritantPlans {};
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
+            if (w->isReplaced()) continue;
             if (auto plan = w->inheritancePlanPtr()) {
                 if (plan->IsActived()) {
                     inheritantPlans << wallet_id;
@@ -700,6 +709,7 @@ void QWalletServicesTag::setListLockdown()
     QStringList setuped {};
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
+            if (w->isReplaced()) continue;
             if (auto dash = w->dashboard()) {
                 if (m_mode == GROUP_WALLET) {
                     auto hasPermission = dash->role() == "MASTER" || dash->role() == "ADMIN";
@@ -732,6 +742,7 @@ void QWalletServicesTag::setListLocked()
     QStringList setuped {};
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
+            if (w->isReplaced()) continue;
             if (auto dash = w->dashboard()) {
                 auto hasPermission = dash->role() == "MASTER" || dash->role() == "ADMIN";
                 if (dash->isLocked() && hasPermission) {
@@ -756,9 +767,13 @@ void QWalletServicesTag::setListPolicy()
     QStringList setuped {};
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
+            if (w->isReplaced()) continue;
+            if (auto server = w->serverKeyPtr()) {
+                if (!server->hasServerKey()) continue;
+            }
             if (auto dash = w->dashboard()) {
                 auto hasPermission = dash->role() == "KEYHOLDER" || dash->role() == "MASTER" || dash->role() == "ADMIN";
-                if (w->isPro() && hasPermission) {
+                if (hasPermission) {
                     setuped << wallet_id;
                 }
                 else if (w->isUserWallet()) {
@@ -785,6 +800,7 @@ void QWalletServicesTag::setList2FA()
     QStringList setuped {};
     for(auto wallet_id : WalletsMng->wallets()) {
         if (auto w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
+            if (w->isReplaced()) continue;
             if (auto dash = w->dashboard()) {
                 if (w->isGroupWallet()) {
                     auto hasPermission = dash->role() == "MASTER";
@@ -864,7 +880,9 @@ void QWalletServicesTag::setWalletConfig(const QJsonObject &config)
             total_remaining += subObj["remaining_wallet_count"].toInt();
         }
     }
-    m_walletConfig["remaining_wallet_count"] = total_remaining;
+    if (total_remaining != 0) {
+        m_walletConfig["remaining_wallet_count"] = total_remaining;
+    }
     emit walletConfigChanged();
 }
 
@@ -927,13 +945,12 @@ bool QWalletServicesTag::RequestConfirmationChangeEmail(const QString &new_email
 {
     QString errormsg;
     QJsonObject output;
-
     QJsonObject body;
     body["new_email"] = new_email;
     QJsonObject data;
     data["nonce"] = Draco::instance()->randomNonce();
     data["body"] = body;
-    ServiceSetting::instance()->servicesTagPtr()->setConfirmCodeNonceBody(data);
+    setConfirmCodeNonceBody(data);
     bool ret = Draco::instance()->RequestConfirmationCode("CHANGE_EMAIL", data, output, errormsg);
     if (ret) {
         DBG_INFO << output;

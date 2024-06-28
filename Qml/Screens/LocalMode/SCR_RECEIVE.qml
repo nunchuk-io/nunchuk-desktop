@@ -395,45 +395,30 @@ QScreen {
                 }
             }
         }
-        Rectangle {
+        Popup {
             id: displayAddressBusybox
-            anchors.fill: parent
-            color: Qt.rgba(255, 255, 255, 0.7)
-            radius: 8
-            MouseArea {anchors.fill: parent; onClicked: {}}
-            visible: false
+            width: parent.width
+            height: parent.height
+            modal: true
+            focus: true
+            closePolicy: Popup.CloseOnEscape
+            background: Item{}
+            property string addrToVerify: ""
             Rectangle {
-                id: busymask
+                id: displayAddressMask
                 width: 500
                 height: 250
                 radius: 8
-                visible: false
-            }
-            Rectangle {
-                id: busyboxbg
-                width: 500
-                height: 250
-                color: "#F1FAFE"
-                radius: 8
+                color: "#FFFFFF"
                 anchors.centerIn: parent
-                visible: false
-                Rectangle {
-                    height: 4
-                    width: parent.width
-                    color: "#F6D65D"
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: Rectangle {
+                        width: 500
+                        height: 250
+                        radius: 8
+                    }
                 }
-            }
-            Rectangle {
-                width: 500
-                height: 250
-                radius: 8
-                anchors.centerIn: parent
-            }
-            OpacityMask {
-                id: busyboxmask
-                anchors.fill: busyboxbg
-                source: busyboxbg
-                maskSource: busymask
                 QCloseButton {
                     anchors {
                         right: parent.right
@@ -441,7 +426,7 @@ QScreen {
                         top: parent.top
                         topMargin: 16
                     }
-                    onClicked: { displayAddressBusybox.visible = false }
+                    onClicked: {displayAddressBusybox.close()}
                 }
                 Column {
                     spacing: 16
@@ -454,7 +439,7 @@ QScreen {
                     QText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         font.family: "Lato"
-                        font.pixelSize: 15
+                        font.pixelSize: 14
                         font.weight: Font.Bold
                         text: STR.STR_QML_008
                     }
@@ -480,13 +465,14 @@ QScreen {
                 }
             }
             DropShadow {
-                anchors.fill: busyboxmask
+                anchors.fill: displayAddressMask
                 horizontalOffset: 3
-                verticalOffset: 3
-                radius: 8.0
-                samples: 17
-                color: "#80000000"
-                source: busyboxmask
+                verticalOffset: 5
+                spread: 0
+                radius: 8
+                samples: 30
+                color: "#aa000000"
+                source: displayAddressMask
             }
         }
         Connections {

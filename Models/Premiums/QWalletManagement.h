@@ -25,8 +25,6 @@ public:
     WalletId walletId(GroupId group_id) const;
     QString slugInfo(WalletId wallet_id) const;
     QJsonObject walletInfo(WalletId wallet_id) const;
-    bool isGroupWallet(WalletId wallet_id) const;
-    bool isUserWallet(WalletId wallet_id) const;
     void clear();
 
     template<typename T>

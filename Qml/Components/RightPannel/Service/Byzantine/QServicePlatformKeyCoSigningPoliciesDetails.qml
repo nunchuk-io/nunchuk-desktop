@@ -82,7 +82,7 @@ Item {
         font.pixelSize: 28
         color: "#031F2B"
         font.weight: Font.Bold
-        text: STR.STR_QML_803
+        text: STR.STR_QML_803.arg(ServiceSetting.walletInfo.walletName)
     }
 
     Flickable {
@@ -184,8 +184,21 @@ Item {
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {
-                    serverKeyInfo.setKeyCoSigning(get_policies())
-                    QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST)
+                    var broadcast = autoBroadcast.policies_broadcast()
+                    var signing_delay_seconds_new = broadcast.signing_delay_seconds
+                    var signing_delay_seconds_old = serverKeyInfo.policies.signing_delay_seconds
+                    if (signing_delay_seconds_new < signing_delay_seconds_old) {
+                        _info1.contentText = STR.STR_QML_1344
+                        _info1.title = STR.STR_QML_339
+                        _info1.open()
+                        _info1.action = function() {
+                            serverKeyInfo.setKeyCoSigning(get_policies())
+                            QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST)
+                        }
+                    } else {
+                        serverKeyInfo.setKeyCoSigning(get_policies())
+                        QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST)
+                    }
                 }
             }
             QTextButton {

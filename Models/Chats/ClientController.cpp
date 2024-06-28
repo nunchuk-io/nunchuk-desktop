@@ -109,6 +109,7 @@ void ClientController::setConnection(Connection *c)
             connection()->syncLoop();
         });
         refreshContacts();
+        refreshDevices();
         AppSetting::instance()->setIsStarted(true,true);
         emit userChanged();
     }, Qt::QueuedConnection);
@@ -275,6 +276,11 @@ void ClientController::sslErrors(QNetworkReply *reply, const QList<QSslError> &e
 void ClientController::refreshContacts()
 {
     Draco::instance()->refreshContacts();
+}
+
+void ClientController::refreshDevices()
+{
+    Draco::instance()->refreshDevices();
 }
 
 void ClientController::acceptFriendRequest(const QString &contact_id)
@@ -623,57 +629,6 @@ void ClientController::setAttachmentEnable(bool AttachmentEnable)
     }
 }
 
-bool ClientController::isSubscribed() const
-{
-    DBG_INFO << m_slugs.count();
-    return m_slugs.count() > 0;
-}
-
-bool ClientController::isByzantine() const
-{
-    return isByzantineStandard() || isByzantinePro() || isByzantinePremier();
-}
-
-bool ClientController::isByzantineStandard() const
-{
-    return slugs().contains("byzantine") || slugs().contains("byzantine_testnet");
-}
-
-bool ClientController::isByzantinePro() const
-{
-    return slugs().contains("byzantine_pro_testnet") || slugs().contains("byzantine_pro");
-}
-
-bool ClientController::isFinneyPro() const
-{
-    return slugs().contains("finney_pro_testnet") || slugs().contains("finney_pro");
-}
-
-bool ClientController::isFinneyStandard() const
-{
-    return slugs().contains("finney_testnet") || slugs().contains("finney");
-}
-
-bool ClientController::isFinney() const
-{
-    return isFinneyPro() || isFinneyStandard();
-}
-
-bool ClientController::isByzantinePremier() const
-{
-    return slugs().contains("byzantine_premier_testnet") || slugs().contains("byzantine_premier");
-}
-
-bool ClientController::isHoneyBadger() const
-{
-    return slugs().contains("honey_badger_testnet") || slugs().contains("honey_badger");
-}
-
-bool ClientController::isIronHand() const
-{
-    return slugs().contains("iron_hand_testnet") || slugs().contains("iron_hand");
-}
-
 QJsonArray ClientController::subscriptions() const
 {
     return m_subscriptions;
@@ -710,15 +665,14 @@ void ClientController::setSubscriptions(const QJsonArray &data)
     emit subscriptionsChanged();
 }
 
-bool ClientController::isMultiSubscriptions() const
-{
-    DBG_INFO << m_slugs.count();
-    return m_slugs.count() > 1;
-}
-
 QStringList ClientController::slugs() const
 {
-    return m_slugs;
+    if(isNunchukLoggedIn()){
+        return m_slugs;
+    }
+    else {
+        return {};
+    }
 }
 
 void ClientController::saveStayLoggedInData()

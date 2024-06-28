@@ -89,6 +89,9 @@ QOnScreenContentTypeB {
                         }
                         QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, check)
                     }
+                    onViewHistoryClicked: {
+                        dashboardInfo.health.viewHistoryClicked(modelData.xfp)
+                    }
                 }
             }
         }
@@ -108,8 +111,13 @@ QOnScreenContentTypeB {
         label.text: STR.STR_QML_971
         label.font.pixelSize: 16
         type: eTypeB
+        enabled: !AppModel.walletInfo.isLocked
         onButtonClicked: {
-            QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER)
+            dashboardInfo.health.editReminder = ""
+            var check = {
+                type: "health-check-reminders"
+            }
+            QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, check)
         }
     }
     Connections {

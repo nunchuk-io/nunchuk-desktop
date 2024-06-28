@@ -139,6 +139,11 @@ void QSingleSigner::setDerivationPath(const QString &d) {
     }
 }
 
+QString QSingleSigner::fingerPrint() const
+{
+    return masterFingerPrint();
+}
+
 QString QSingleSigner::masterFingerPrint() const {
     if(isDraft){
         return  master_fingerprint_;
@@ -343,6 +348,16 @@ bool QSingleSigner::isLocalSigner()
     return isLocal;
 }
 
+bool QSingleSigner::isMine() const
+{
+    QWarningMessage msg;
+    std::vector<nunchuk::SingleSigner> signers = bridge::nunchukGetOriginRemoteSigners(msg);
+    auto it = std::find_if(signers.begin(), signers.end(), [this](const nunchuk::SingleSigner& signer) {
+        return signer.get_master_fingerprint() == masterFingerPrint().toStdString();
+    });
+    return it != signers.end();
+}
+
 bool QSingleSigner::isPrimaryKey() const
 {
     return isPrimaryKey_;
@@ -433,33 +448,6 @@ void QSingleSigner::setHasSignBtn(bool hasSignBtn)
 int QSingleSigner::accountIndex()
 {
     return qUtils::GetIndexFromPath(derivationPath());
-}
-
-QVariantList QSingleSigner::healthCheckHistory() const
-{
-    return m_healthCheckHistory.toVariantList();
-}
-
-void QSingleSigner::setHealthCheckHistory(QJsonArray list)
-{
-    if (m_healthCheckHistory == list)
-        return;
-    m_healthCheckHistory = list;
-    emit healthCheckHistoryChanged();
-}
-
-bool QSingleSigner::GetHistorySignerList()
-{
-    QJsonObject output;
-    QString errormsg = "";
-    bool ret {false};
-    ret = Draco::instance()->GetHistorySignerList(masterFingerPrint(), output, errormsg);
-    DBG_INFO << ret << output;
-    if(ret){
-        QJsonArray histories = output["history"].toArray();
-        setHealthCheckHistory(histories);
-    }
-    return ret;
 }
 
 QString QSingleSigner::address() const
@@ -791,6 +779,16 @@ QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QStri
         }
     }
     return NULL;
+}
+
+int SingleSignerListModel::getIndexByFingerPrint(const QString &fingerprint)
+{
+    for (int i = 0; i < d_.count(); i++) {
+        if(0 == QString::compare(fingerprint, d_[i].data()->masterFingerPrint(), Qt::CaseInsensitive)){
+            return i;
+        }
+    }
+    return -1;
 }
 
 int SingleSignerListModel::getnumberSigned() {

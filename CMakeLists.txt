@@ -1,9 +1,9 @@
 cmake_minimum_required( VERSION 3.1 )
 #set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.34)
+    project(Nunchuk VERSION 1.9.35)
 else()
-    project(nunchuk-qt VERSION 1.9.34)
+    project(nunchuk-qt VERSION 1.9.35)
 endif()
 
 set( CMAKE_CXX_STANDARD 20 )
@@ -51,11 +51,12 @@ if(DQLIMIT_ONE)
     add_definitions ( -DENABLE_LIMIT )
 endif(DQLIMIT_ONE)
 
-find_package(Qt5 REQUIRED Qml Quick Core Gui Multimedia Sql Concurrent Svg)
+find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Sql Concurrent Svg PrintSupport REQUIRED)
 
 set(QAppEngine_SRCS
     QAppEngine/QOutlog/QOutlog.cpp
     QAppEngine/QOutlog/QPingThread.cpp
+    QAppEngine/QOutlog/QPDFPrinter.cpp
     QAppEngine/QEventProcessor/QEventProcessor.cpp
     QAppEngine/QEventProcessor/QPopupDelegate/QPopupDelegate.cpp
     QAppEngine/QEventProcessor/QScreenDelegate/QScreenDelegate.cpp
@@ -65,6 +66,7 @@ set(QAppEngine_SRCS
 set(QAppEngine_MOCS
     QAppEngine/QOutlog/QOutlog.h
     QAppEngine/QOutlog/QPingThread.h
+    QAppEngine/QOutlog/QPDFPrinter.h
     QAppEngine/QEventProcessor/QEventProcessor.h
     QAppEngine/QEventProcessor/QPopupDelegate/QPopupDelegate.h
     QAppEngine/QEventProcessor/QScreenDelegate/QScreenQueue.h
@@ -171,6 +173,7 @@ set(Views_SRCS
     Views/STATE_ID_SCR_ONBOARDING.cpp
     Views/STATE_ID_SCR_SELECT_SERVER.cpp
     Views/STATE_ID_SCR_CHANGE_EMAIL.cpp
+    Views/STATE_ID_SCR_REPLACE_SELECT_KEY.cpp
     )
 
 set(Views_MOCS
@@ -235,6 +238,8 @@ set(${PROJECT_NAME}_SRCS
     Models/Premiums/QUserWalletDummyTx.cpp
     Models/Premiums/QBasePremium.cpp
     Models/Premiums/QRecurringPayment.cpp
+    Models/Commons/ISigner.cpp
+    Models/Commons/Slugs.cpp
     )
 
 set(${PROJECT_NAME}_RSCS
@@ -322,7 +327,7 @@ if (NOT WIN32)
     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=return-type)
 endif()
 
-target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg )
+target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg Qt5::PrintSupport)
 
 if(UNIX AND NOT APPLE)
     target_link_libraries("${PROJECT_NAME}" PUBLIC -Wl,--start-group nunchuk)

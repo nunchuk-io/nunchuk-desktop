@@ -278,7 +278,8 @@ void Worker::slotStartDisplayAddress(const QString &wallet_id,
         }
     }
     if(!ret){
-        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+        QString msg = QString("Address verification failed");
+        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
     else{
         QString msg = QString("Address successfully verified");
@@ -745,12 +746,23 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_RESULT);
         }
         else if (last == E::STATE_ID_SCR_ADD_HARDWARE) {
-            if (QAssistedDraftWallets::IsByzantine()) {
-                QGroupWallets::instance()->setSelectFingerPrint(selectFingerPrint);
-                QGroupWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+            if (dashboard && dashboard->canReplaceKey()) {
+                if (QAssistedDraftWallets::IsByzantine()) {
+                    QGroupWallets::instance()->setSelectFingerPrint(selectFingerPrint);
+                    QGroupWallets::instance()->requestKeyReplacement(NULL);
+                } else {
+                    QUserWallets::instance()->setSelectFingerPrint(selectFingerPrint);
+                    QUserWallets::instance()->requestKeyReplacement(NULL);
+                }
             } else {
-                QUserWallets::instance()->setSelectFingerPrint(selectFingerPrint);
-                QUserWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+                if (QAssistedDraftWallets::IsByzantine()) {
+                    QGroupWallets::instance()->setSelectFingerPrint(selectFingerPrint);
+                    QGroupWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+                } else {
+                    QUserWallets::instance()->setSelectFingerPrint(selectFingerPrint);
+                    QUserWallets::instance()->AddOrUpdateAKeyToDraftWallet();
+                }
             }
         }
 

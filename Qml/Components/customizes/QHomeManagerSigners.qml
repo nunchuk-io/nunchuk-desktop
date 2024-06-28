@@ -147,7 +147,7 @@ Rectangle {
                             signerTag: model.master_signer_tag
                             isPrimaryKey: model.master_signer_primary_key
                             onButtonClicked: {
-                                QMLHandle.sendEvent(EVT.EVT_HOME_MASTER_SIGNER_INFO_REQUEST, index)
+                                QMLHandle.sendEvent(EVT.EVT_HOME_MASTER_SIGNER_INFO_REQUEST, model.master_signer_fingerPrint)
                             }
                         }
                     }
@@ -169,23 +169,15 @@ Rectangle {
                             accountIndex: model.single_signer_account_index
                             onButtonClicked: {
                                 if (model.single_signer_type === NUNCHUCKTYPE.COLDCARD_NFC) {
-                                    QMLHandle.sendEvent(EVT.EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, index)
+                                    QMLHandle.sendEvent(EVT.EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, model.singleSigner_masterFingerPrint)
                                 } else {
-                                    QMLHandle.sendEvent(EVT.EVT_HOME_REMOTE_SIGNER_INFO_REQUEST, index)
+                                    QMLHandle.sendEvent(EVT.EVT_HOME_REMOTE_SIGNER_INFO_REQUEST, model.singleSigner_masterFingerPrint)
                                 }
                             }
                         }
                     }
                 }
             }
-            // QImage {
-            //     width: flickerSignerList.width
-            //     height: 36
-            //     anchors.bottom: flickerSignerList.bottom
-            //     anchors.bottomMargin: -1
-            //     anchors.horizontalCenter: flickerSignerList.horizontalCenter
-            //     source: "qrc:/Images/Images/OnlineMode/Cover.png"
-            // }
         }
     }
     readonly property int _LIMIT_WAITING_BUSY: 5000

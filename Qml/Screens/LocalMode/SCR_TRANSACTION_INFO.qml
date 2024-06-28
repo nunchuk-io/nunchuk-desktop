@@ -183,9 +183,8 @@ QScreen {
                 id: optionsBtn
                 enableRequestSignature : false
                 enableScheduleBroadcast: false
-                enableCancelTransaction: (AppModel.transactionInfo.status === NUNCHUCKTYPE.REPLACED) || (AppModel.transactionInfo.status === NUNCHUCKTYPE.NETWORK_REJECTED)
-                isAssisedWallet: AppModel.walletInfo.isAssistedWallet
-                isSharedWallet:  AppModel.walletInfo.isSharedWallet
+                enableCancelTransaction: false
+                enableShowInvoice: true
                 funcs: [
                     function(){ // Request signature
 
@@ -197,7 +196,10 @@ QScreen {
                         AppModel.transactionInfo.copyTransactionID()
                     },
                     function(){ // Cancel tx
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+
+                    },
+                    function(){ // show invoice
+                        invoice.open()
                     },
                 ]
             }
@@ -242,7 +244,6 @@ QScreen {
             }
         }
     }
-
     // Buttons
     Component {
         id: btnPendingSignatures
@@ -278,6 +279,9 @@ QScreen {
                         else{
                             QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
                         }
+                    },
+                    function(){ // show invoice
+                        invoice.open()
                     },
                 ]
             }
@@ -338,6 +342,9 @@ QScreen {
                             QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
                         }
                     },
+                    function(){ // show invoice
+                        invoice.open()
+                    },
                 ]
             }
             QButtonLargeTail {
@@ -393,7 +400,6 @@ QScreen {
             }
         }
     }
-
     Component {
         id: btnPendingConfirmationLeft
         Row {
@@ -412,7 +418,6 @@ QScreen {
             }
         }
     }
-
     Component {
         id: btnPendingConfirmationRight
         Row {
@@ -448,6 +453,30 @@ QScreen {
         Row {
             height: 48
             spacing: 16
+            QBtnOptions {
+                id: optionsBtn
+                enableRequestSignature : false
+                enableScheduleBroadcast: false
+                enableCancelTransaction: false
+                enableShowInvoice: true
+                funcs: [
+                    function(){ // Request signature
+
+                    },
+                    function(){ // Schedule broadcast
+
+                    },
+                    function(){ // Copy id
+                        AppModel.transactionInfo.copyTransactionID()
+                    },
+                    function(){ // Cancel tx
+
+                    },
+                    function(){ // show invoice
+                        invoice.open()
+                    },
+                ]
+            }
             QTextButton {
                 id: viewBlockstreamBtn
                 width: 247
@@ -485,6 +514,9 @@ QScreen {
                     },
                     function(){ // Cancel tx
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                    },
+                    function(){ // show invoice
+                        invoice.open()
                     },
                 ]
             }
@@ -613,8 +645,15 @@ QScreen {
         }
     }
 
+    QTransactionInvoice {
+        id: invoice
+        width: parent.width
+        height: parent.height
+    }
+
     function requestExportViaQR(){
         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE)
+        qrcodeExportResult.filename = "Transaction_" + AppModel.transactionInfo.txid
         qrcodeExportResult.open()
     }
     function urlActiveLink(){

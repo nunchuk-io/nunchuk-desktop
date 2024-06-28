@@ -29,6 +29,7 @@ import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
+import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
@@ -65,7 +66,7 @@ QOnScreenContentTypeB {
             target: _content
             onNextClicked: {
                 if (email_name == ClientController.user.email) {
-                    AppModel.showToast(-1, STR.STR_QML_1310, EWARNING.ERROR_MSG);
+                    _info1.open()
                 }
                 else if (validateEmail(email_name)) {
                     var _input = {
@@ -92,5 +93,10 @@ QOnScreenContentTypeB {
             var re = /\S+@\S+\.\S+/;
             return re.test(email);
         }
+    }
+    QPopupInfo{
+        id:_info1
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1310
     }
 }

@@ -90,7 +90,7 @@ QOnScreenContentTypeB {
             enabled: firstQuestion.isChanged
             onButtonClicked: {
                 if (newMyQuestion !== "") {
-                    keyRecovery.createUserCustomizedQuestion(newQuesIndex, newMyQuestion)
+                    keyRecovery.createUserCustomizedQuestion(newMyQuestion)
                 }
                 QMLHandle.sendEvent(EVT.EVT_INPUT_SECURITY_QUESTION_REQUEST)
             }

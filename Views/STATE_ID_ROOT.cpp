@@ -190,7 +190,9 @@ void EVT_LOGIN_MATRIX_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_GOTO_APP_SETTINGS_TAB_HANDLER(QVariant msg) {
-
+    QtConcurrent::run([]() {
+        CLIENT_INSTANCE->refreshDevices();
+    });
 }
 
 void EVT_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
@@ -248,6 +250,17 @@ void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
             });
         }
     }
+    else if (option == 7) { // View policies
+        if (auto w = AppModel::instance()->walletInfoPtr()) {
+            QMap<QString, QVariant> maps;
+            maps["type"] = "platform-key-co-signing-policies";
+            maps["wallet_id"] = w->id();
+            DBG_INFO << maps;
+            timeoutHandler(500,[maps](){
+                QEventProcessor::instance()->sendEvent(E::EVT_SERVICE_SELECT_WALLET_REQUEST, QVariant::fromValue(maps));
+            });
+        }
+    }
 }
 
 void EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER(QVariant msg)
@@ -286,5 +299,9 @@ void EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ONBOARDING_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_REPLACE_SELECT_KEY_REQUEST_HANDLER(QVariant msg) {
 
 }

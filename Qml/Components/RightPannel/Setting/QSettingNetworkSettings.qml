@@ -97,6 +97,12 @@ Item {
                 property string mainnetServer: AppSetting.mainnetServer
                 property string testnetServer: AppSetting.testnetServer
                 property string signetServer: AppSetting.signetServer
+                Connections {
+                    target: AppSetting
+                    onMainnetServerSelected: {
+                        mainnetsever.text.textOutput = url
+                    }
+                }
 
                 spacing: 10
                 QRadioButtonTypeB {

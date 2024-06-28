@@ -153,7 +153,7 @@ void ProfileSetting::resetDefaultMainnetServers()
     if (!isSetIndex) {
         setMainnetIndex(0);
         QJsonObject item = m_mainnetServers[0].toObject();
-        AppSetting::instance()->setMainnetServer(item["url"].toString());
+        emit AppSetting::instance()->mainnetServerSelected(item["url"].toString());
     }
 }
 
@@ -173,14 +173,15 @@ void ProfileSetting::setMainnetIndex(int mainnetIndex)
 
 bool ProfileSetting::CalculateRequireSignaturesForChangingEmail()
 {
+    auto tag = ServiceSetting::instance()->servicesTagPtr();
     QJsonObject output;
     QString errormsg;
     bool ret = Draco::instance()->CalculateRequireSignaturesForChangingEmail(newEmail(), output, errormsg);
     if (ret) {
         DBG_INFO << output;
         QJsonObject resultObj = output["result"].toObject();
-        ServiceSetting::instance()->servicesTagPtr()->setReqiredSignatures(resultObj);
-        ReqiredSignaturesInfo required_question = ServiceSetting::instance()->servicesTagPtr()->reqiredSignaturesInfo();
+        tag->setReqiredSignatures(resultObj);
+        ReqiredSignaturesInfo required_question = tag->reqiredSignaturesInfo();
         if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
             if (ProfileSetting::instance()->ChangeEmail()) {
                 if(auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
@@ -191,7 +192,7 @@ bool ProfileSetting::CalculateRequireSignaturesForChangingEmail()
             return true;
         }
         else if (required_question.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
-            ServiceSetting::instance()->servicesTagPtr()->CreateSecurityQuestionsAnswered();
+            tag->CreateSecurityQuestionsAnswered();
             return true;
         }
         else {
@@ -203,15 +204,16 @@ bool ProfileSetting::CalculateRequireSignaturesForChangingEmail()
 
 bool ProfileSetting::ChangeEmail()
 {
+    auto tag = ServiceSetting::instance()->servicesTagPtr();
     QJsonObject output;
     QString errormsg;
-    QJsonObject data = ServiceSetting::instance()->servicesTagPtr()->confirmCodeNonceBody();
-    DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->passwordToken() << ServiceSetting::instance()->servicesTagPtr()->confirmToken();
+    QJsonObject data = tag->confirmCodeNonceBody();
+    DBG_INFO << tag->passwordToken() << tag->confirmToken();
     bool ret = Draco::instance()->ChangeEmail(data,
                                               {},
-                                              ServiceSetting::instance()->servicesTagPtr()->passwordToken(),
+                                              tag->passwordToken(),
                                               {},
-                                              ServiceSetting::instance()->servicesTagPtr()->confirmToken(),
+                                              tag->confirmToken(),
                                               true,
                                               output,
                                               errormsg);
@@ -235,15 +237,16 @@ bool ProfileSetting::ChangeEmail()
 
 bool ProfileSetting::ChangeEmailNone()
 {
+    auto tag = ServiceSetting::instance()->servicesTagPtr();
     QJsonObject output;
     QString errormsg;
-    QJsonObject data = ServiceSetting::instance()->servicesTagPtr()->confirmCodeNonceBody();
-    DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->passwordToken() << ServiceSetting::instance()->servicesTagPtr()->confirmToken();
+    QJsonObject data = tag->confirmCodeNonceBody();
+    DBG_INFO << tag->passwordToken() << tag->confirmToken();
     bool ret = Draco::instance()->ChangeEmail(data,
                                               {},
-                                              ServiceSetting::instance()->servicesTagPtr()->passwordToken(),
+                                              tag->passwordToken(),
                                               {},
-                                              ServiceSetting::instance()->servicesTagPtr()->confirmToken(),
+                                              tag->confirmToken(),
                                               false,
                                               output,
                                               errormsg);
@@ -263,18 +266,19 @@ bool ProfileSetting::ChangeEmailNone()
 
 bool ProfileSetting::seccurityQuestion()
 {
-    if (ServiceSetting::instance()->servicesTagPtr()->secQuesAnswer()) {
+    auto tag = ServiceSetting::instance()->servicesTagPtr();
+    if (tag->secQuesAnswer()) {
         QJsonObject output;
         QString errormsg;
-        QJsonObject data = ServiceSetting::instance()->servicesTagPtr()->confirmCodeNonceBody();
-        DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->passwordToken()
-                 << ServiceSetting::instance()->servicesTagPtr()->secQuesToken()
-                 << ServiceSetting::instance()->servicesTagPtr()->confirmToken();
+        QJsonObject data = tag->confirmCodeNonceBody();
+        DBG_INFO << tag->passwordToken()
+                 << tag->secQuesToken()
+                 << tag->confirmToken();
         bool ret = Draco::instance()->ChangeEmail(data,
                                                   {},
-                                                  ServiceSetting::instance()->servicesTagPtr()->passwordToken(),
-                                                  ServiceSetting::instance()->servicesTagPtr()->secQuesToken(),
-                                                  ServiceSetting::instance()->servicesTagPtr()->confirmToken(),
+                                                  tag->passwordToken(),
+                                                  tag->secQuesToken(),
+                                                  tag->confirmToken(),
                                                   false,
                                                   output,
                                                   errormsg);
@@ -307,7 +311,7 @@ bool ProfileSetting::addMainnetServer(const QVariant &server)
         }
     }
     m_storeMainnetServers.append(server.toJsonObject());
-    AppSetting::instance()->setMainnetServer(url);
+    emit AppSetting::instance()->mainnetServerSelected(url);
     updateMainnetServers();
     saveMainnetServers();
     QString msg = QString("Server added");

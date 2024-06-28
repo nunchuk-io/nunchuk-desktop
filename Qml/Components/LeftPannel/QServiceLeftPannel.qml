@@ -33,7 +33,11 @@ Item {
         anchors.fill: parent
         sourceComponent: {
             var user = ClientController.user
-            if (user.isHoneyBadgerUser) { return hb_subscriber }
+            if (user.isMultiSubscriptions) {
+                if (hasGroupWallet) { return isObserver ? b_observer_subscriber : b_subscriber }
+                else { return b_empty_state }
+            }
+            else if (user.isHoneyBadgerUser) { return hb_subscriber }
             else if (user.isIronHandUser) { return ih_subscriber }
             else if (user.isByzantineUser || user.isFinneyUser) {
                 if (hasGroupWallet) { return isObserver ? b_observer_subscriber : b_subscriber }
