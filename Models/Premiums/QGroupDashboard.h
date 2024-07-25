@@ -74,6 +74,8 @@ public:
         HEALTH_CHECK_SELECT_KEY_WANT_TO_REMINDER,
         HEALTH_CHECK_FREQUENCY_REPEAT,
         HEALTH_CHECK_REMINDER_POPULATED,
+
+        WELCOME_SIGN_IN_SIGNATURE_XPUB,
         MAX_ALERT,
     };
 };
@@ -216,6 +218,8 @@ public slots:
 
     void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
+
+    void requestShowLetAddYourKeys();
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);

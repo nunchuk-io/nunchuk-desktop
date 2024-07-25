@@ -50,21 +50,23 @@ Item {
     VideoOutput {
         id: videoOutput
         source: camera
-        width: camera.viewfinder.resolution.width
-        height: camera.viewfinder.resolution.height
+        width: 1280//camera.viewfinder.resolution.width
+        height: 720//camera.viewfinder.resolution.height
         anchors.centerIn: parent
         filters: [ barcodeFilter ]
         transform:  Rotation {
-            origin.x: camera.viewfinder.resolution.width / 2
+            origin.x: videoOutput.width / 2
             axis { x: 0; y: 1; z: 0 }
             angle: 180
         }
         onSourceRectChanged: {
             var res = camera.viewfinder.resolution
-            videoOutput.width = res.width
-            videoOutput.height = res.height
-            var width = res.width
-            var height = res.height
+            var expectedWidth = Math.max(1280, res.width)
+            var expectedHeight = Math.max(720, res.height)
+            videoOutput.width = expectedWidth
+            videoOutput.height = expectedHeight
+            var width = expectedWidth
+            var height = expectedHeight
             var capturedWidth = 380
             var capturedHeight = 380
             var captureRectX = ((width - capturedWidth) / 2)/width
@@ -76,11 +78,11 @@ Item {
                                                                                                                 captureRectWidth,
                                                                                                                 captureRectHeight)))
         }
-        QQrScannerOverlay {
-            id: scanOverlay
-            anchors.fill: parent
-            areaRect: videoOutput.mapRectToItem(barcodeFilter.captureRect)
-        }
+        // QQrScannerOverlay {
+        //     id: scanOverlay
+        //     anchors.fill: parent
+        //     areaRect: videoOutput.mapRectToItem(barcodeFilter.captureRect)
+        // }
     }
 
     QBarcodeFilter {
@@ -88,15 +90,15 @@ Item {
         // you can adjust capture rect (scan area) ne changing these Qt.rect() parameters
         // captureRect: videoOutput.mapRectToSource(videoOutput.mapNormalizedRectToItem(Qt.rect(0.125, 0.125, 0.75, 0.75)))
         onTagFound: {
-            console.log("tag found: " + tag)
+            // console.log("tag found: " + tag)
             qrscannerRoot.tagFound(tag)
         }
         onScanPercentChanged: {
-            console.log("Percent", barcodeFilter.scanPercent)
+            // console.log("Percent", barcodeFilter.scanPercent)
             qrscannerRoot.percent = barcodeFilter.scanPercent
         }
         onScanCompleteChanged: {
-            console.log("Completed", barcodeFilter.scanComplete)
+            // console.log("Completed", barcodeFilter.scanComplete)
             qrscannerRoot.complete = barcodeFilter.scanComplete
         }
     }

@@ -405,6 +405,9 @@ public:
     bool AddOrUpdateSavedAddress(const QString &label, const QString &address, QJsonObject &output, QString &errormsg);
     bool DeleteSavedAddress(const QString &label, const QString &address, QJsonObject &output, QString &errormsg);
 
+    bool SignDummyTransactionToSignIn(const QString &dummy_transaction_id, const QStringList& signatures, QJsonObject &output, QString &errormsg);
+    bool SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QString &errormsg);
+
 private:
     Draco();
     ~Draco();

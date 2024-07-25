@@ -21,9 +21,11 @@ import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
 import NUNCHUCKTYPE 1.0
+import EWARNING 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../OnlineMode/AddHardwareKeys"
+import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     readonly property int hardwareType: GroupWallet.qIsByzantine ? GroupWallet.qAddHardware : UserWallet.qAddHardware
@@ -56,5 +58,9 @@ QScreen {
     Component {
         id: _BitBox
         QScreenAddBitBoxExist {}
+    }
+    function doneAddHardwareKey() {
+        AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+        closeTo(NUNCHUCKTYPE.WALLET_TAB)
     }
 }

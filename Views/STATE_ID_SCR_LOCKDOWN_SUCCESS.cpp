@@ -35,27 +35,26 @@ void SCR_LOCKDOWN_SUCCESS_Exit(QVariant msg) {
 }
 
 void EVT_LOCKDOWN_SUCCESS_CLOSE_REQUEST_HANDLER(QVariant msg) {
-    if (QBasePremium::mode() == USER_WALLET) {
-        timeoutHandler(0,[=]{
-            ClientController::instance()->requestSignout();
-        });
-        AppModel::instance()->showToast(0, STR_CPP_114, EWARNING::WarningType::SUCCESS_MSG);
-    }
-    else {
-        if (auto w = ServiceSetting::instance()->walletInfoPtr()) {
-            if (auto dash = w->dashboard()) {
+    if (auto w = ServiceSetting::instance()->walletInfoPtr()) {
+        if (w->isUserWallet()) { // Lockdown account
+            timeoutHandler(0,[=]{
+                ClientController::instance()->requestSignout();
+            });
+            AppModel::instance()->showToast(0, STR_CPP_114, EWARNING::WarningType::SUCCESS_MSG);
+        }
+        else {
+            if (auto dash = w->dashboard()) { // Lock wallet
                 dash->GetMemberInfo();
                 AppModel::instance()->requestSyncWalletDb(dash->wallet_id());
                 QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_LOCKDOWN_SUCCESS);
                 ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
             }
-            else {
-                timeoutHandler(0,[=]{
-                    ClientController::instance()->requestSignout();
-                });
-                AppModel::instance()->showToast(0, STR_CPP_114, EWARNING::WarningType::SUCCESS_MSG);
-            }
         }
+    } else { // Lockdown account
+        timeoutHandler(0,[=]{
+            ClientController::instance()->requestSignout();
+        });
+        AppModel::instance()->showToast(0, STR_CPP_114, EWARNING::WarningType::SUCCESS_MSG);
     }
 }
 

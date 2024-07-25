@@ -408,14 +408,7 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
     setting.set_signet_servers(signetServer);
 
     // hwi path
-    QString hwiPath = "";
-    if(AppSetting::instance()->enableCustomizeHWIDriver()){
-        hwiPath = AppSetting::instance()->hwiPath();
-    }
-    else{
-        hwiPath = AppSetting::instance()->executePath() + "/hwi";
-    }
-    setting.set_hwi_path(hwiPath.toStdString());
+    setting.set_hwi_path(bridge::hwiPath().toStdString());
 
     //  certificate file
     QString certPath = "";

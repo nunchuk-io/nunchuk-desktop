@@ -362,6 +362,12 @@ public:
                                                bool replace,
                                                QWarningMessage& msg);
 
+    nunchuk::MasterSigner CreateSoftwareSignerFromMasterXprv(const std::string &name,
+                                                             const std::string &master_xprv,
+                                                             bool is_primary,
+                                                             bool replace,
+                                                             QWarningMessage &msg);
+
     bool DeletePrimaryKey();
 
     std::string SignLoginMessage(const std::string& mastersigner_id,

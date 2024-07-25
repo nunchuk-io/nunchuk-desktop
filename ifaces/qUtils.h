@@ -159,6 +159,16 @@ QStringList ExportBBQRWallet(const nunchuk::Wallet& wallet, QWarningMessage& msg
 nunchuk::SingleSigner ParseSignerString(const QString key_spec, QWarningMessage& msg);
 
 nunchuk::SingleSigner SanitizeSingleSigner(const nunchuk::SingleSigner& signer, QWarningMessage& msg);
+
+std::vector<nunchuk::Device> GetDevices(const QString& hwi_path, QWarningMessage &msg);
+
+QString SignPsbt(const QString& hwi_path, const nunchuk::Device& device, const QString& psbt, QWarningMessage &msg);
+
+QString ImportPsbtViaFile(const QString &filepath);
+
+void ExportPsbtViaFile(const QString &filepath, const QString &psbt);
+
+bool isValidXPRV(const QString& xprv, QWarningMessage& msg);
 }
 
 #endif // QUTILS_H

@@ -30,27 +30,28 @@ Item {
     property bool isHotWallet: false
     property bool isLocked: false
     property bool isReplaced: false
+    property bool isFacilitatorAdmin: false
     property real ratio: 0.55
     Item {
         id: area_wldetail
         anchors.fill: parent
         visible: false
-        Row{
-            anchors.fill: parent
-            LinearGradient {
-                height: parent.height
-                width: parent.width * ratio
-                start: Qt.point(0, 0)
-                end: Qt.point(parent.width * ratio, 0)
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#2F766D" : "#2F466C") }
-                    GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#1C4A21" : "#031F2B") }
-                }
+
+        LinearGradient {
+            height: parent.height
+            width: parent.width
+            start: Qt.point(0, 0)
+            end: Qt.point(parent.width, 0)
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#2F766D" : "#2F466C") }
+                GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#1C4A21" : "#031F2B") }
             }
             Rectangle {
                 width: parent.width * (1.0 - ratio)
                 height: parent.height
+                anchors.right: parent.right
                 color: "#F5F5F5"
+                visible: !isFacilitatorAdmin
             }
         }
     }

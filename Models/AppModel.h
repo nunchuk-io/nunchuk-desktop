@@ -34,8 +34,10 @@
 #include "Worker.h"
 #include "Premiums/QWalletManagement.h"
 #include "TypeDefine.h"
+#include "Commons/SignInViaDummy.h"
 
-class AppModel final : public Controller
+class AppModel final : public Controller,
+                       public SignInViaDummy
 {
     Q_OBJECT
     Q_PROPERTY(int                      chainTip            READ chainTip           NOTIFY chainTipChanged)
@@ -347,17 +349,19 @@ signals:
     void notifySignerExist(bool isSoftware, const QString fingerPrint);
     void syncingWalletFromServer(const QString fingerPrint);
     void syncingConfirmWalletRemoveKey(const QString fingerPrint);
+    void signViaSingature();
 public slots:
     void confirmSyncingWalletFromServer(bool yes, bool no);
     void timerHealthCheckTimeHandle();
     void timerFeeRatesHandle();
     void timerCheckAuthorizedHandle();
+    void slotSignViaSingature();
 
     bool    parseQRWallet(const QString name, const QString desc, const QStringList qrtags);
     bool    parseQRCollabWallet(const QStringList qrtags);
     QString parseQRSigners(QStringList qrtags);
     QString parseJSONSigners(QString fileName);
-
+    bool    isValidXPRV(const QString& xprv);
     bool    updateSettingRestartRequired();
     QString getFilePath(const QString in);
     bool    enableDatabaseEncryption(const QString in);

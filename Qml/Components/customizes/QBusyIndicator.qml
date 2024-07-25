@@ -23,20 +23,11 @@ import "../origins"
 Item {
     id: rootBusy
     QImage {
-        id: ico
-        width: 28
-        height: 28
-        anchors.centerIn: parent
-        rotation: 45
-        source: "qrc:/Images/Images/logo-light.svg"
-        transformOrigin: Item.Center
-    }
-    QImage {
         id: circular
         width: 64
         height: 64
         anchors.centerIn: parent
-        source: "qrc:/Images/Images/Circular.png"
+        source: "qrc:/Images/Images/Circular.svg"
         transformOrigin: Item.Center
     }
     RotationAnimator {

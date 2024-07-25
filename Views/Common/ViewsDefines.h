@@ -109,6 +109,8 @@ namespace OnlineMode {
 #define SCR_INHERITANCE_TRANSACTION_DETAILS      "qrc:/Qml/Screens/OnlineMode/SCR_INHERITANCE_TRANSACTION_DETAILS.qml"
 #define SCR_INHERITANCE_WITHDRAW_BALANCE         "qrc:/Qml/Screens/OnlineMode/SCR_INHERITANCE_WITHDRAW_BALANCE.qml"
 #define SCR_RECURRING_PAYMENTS                   "qrc:/Qml/Screens/OnlineMode/SCR_RECURRING_PAYMENTS.qml"
+#define SCR_REPLACE_KEYS                   	     "qrc:/Qml/Screens/OnlineMode/SCR_REPLACE_KEYS.qml"
+#define SCR_SIGN_IN_VIA_XPUB                      "qrc:/Qml/Screens/OnlineMode/SCR_SIGN_IN_VIA_XPUB.qml"
 }
 
 namespace Popups {

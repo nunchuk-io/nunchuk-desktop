@@ -3977,5 +3977,64 @@ bool Draco::DeleteSavedAddress(const QString &label, const QString &address, QJs
     return false;
 }
 
+bool Draco::SignDummyTransactionToSignIn(const QString &dummy_transaction_id, const QStringList& signatures, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+
+    QMap<QString, QString> params;
+    for (int i = 0; i < signatures.count(); i++) {
+        params[QString("AuthorizationX-%1").arg(i+1)] = signatures.at(i);
+    }
+
+    QString cmd = commands[Premium::CMD_IDX::SIGN_DUMMY_TRANSACTION_TO_SIGN_IN];
+    cmd.replace("{dummy_transaction_id}", dummy_transaction_id);
+
+    QJsonObject jsonObj = putSync(cmd, {}, params, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    data["data"] = bsms;
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(commands[Premium::CMD_IDX::SIGN_IN_USING_XPUB_WALLET], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        emit createAccountResult(reply_code, response_code, response_msg);
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
 
 

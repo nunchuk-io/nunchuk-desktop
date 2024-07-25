@@ -376,6 +376,7 @@
                             <UML:Transition xmi.idref="41um-31eb0fb7962fc96bd7d6e6642514d201"/>
                             <UML:Transition xmi.idref="k9e-21717f73047651056e788f992f61efb0"/>
                             <UML:Transition xmi.idref="h8e-6adc96a618485f4e60fce76a389f1bd6"/>
+                            <UML:Transition xmi.idref="3ift-4ccc540fc382c2cf6e9c32c73d49e279"/>
                           </UML:StateVertex.outgoing>
                           <UML:StateVertex.incoming>
                             <UML:Transition xmi.idref="6p3wt-7abe990174f0ad293315f57584c87114"/>
@@ -5567,6 +5568,40 @@
                             </UML:Transition>
                           </UML:State.internalTransition>
                         </UML:CompositeState>
+                        <UML:CompositeState xmi.id="ue9-4ccc540fc382c2cf6e9c32c73d49e279" name="SCR_REPLACE_KEYS%5BLAYER%3A%3ALAYER_ONSCREEN%5D" version="0" unSolvedFlag="false" isConcurrent="true" isOrthogonal="false" isRegion="true">
+                          <UML:StateVertex.container>
+                            <UML:CompositeState xmi.idref="3r974-591e79a94a652a5d94517ec076c2b3d9"/>
+                          </UML:StateVertex.container>
+                          <UML:StateVertex.outgoing>
+                            <UML:Transition xmi.idref="uff-4ccc540fc382c2cf6e9c32c73d49e279"/>
+                          </UML:StateVertex.outgoing>
+                          <UML:StateVertex.incoming>
+                            <UML:Transition xmi.idref="uff-4ccc540fc382c2cf6e9c32c73d49e279"/>
+                            <UML:Transition xmi.idref="3ift-4ccc540fc382c2cf6e9c32c73d49e279"/>
+                          </UML:StateVertex.incoming>
+                          <UML:State.entry>
+                            <UML:Action xmi.id="n0m6-4ccc540fc382c2cf6e9c32c73d49e279" name="SCR_REPLACE_KEYS_Entry" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                          </UML:State.entry>
+                          <UML:State.exit>
+                            <UML:Action xmi.id="n0m7-4ccc540fc382c2cf6e9c32c73d49e279" name="SCR_REPLACE_KEYS_Exit" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                          </UML:State.exit>
+                          <UML:State.internalTransition>
+                            <UML:Transition xmi.id="uff-4ccc540fc382c2cf6e9c32c73d49e279" name="EVT_REPLACE_KEYS_ENTER+%2F+EVT_REPLACE_KEYS_ENTER_HANDLER" version="0" unSolvedFlag="false">
+                              <UML:Transition.effect>
+                                <UML:Action xmi.id="jawz-4ccc540fc382c2cf6e9c32c73d49e279" name="EVT_REPLACE_KEYS_ENTER_HANDLER" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                              </UML:Transition.effect>
+                              <UML:Transition.trigger>
+                                <UML:Event xmi.id="jawy-4ccc540fc382c2cf6e9c32c73d49e279" name="EVT_REPLACE_KEYS_ENTER" version="0" unSolvedFlag="false"></UML:Event>
+                              </UML:Transition.trigger>
+                              <UML:Transition.source>
+                                <UML:StateVertex xmi.idref="ue9-4ccc540fc382c2cf6e9c32c73d49e279"/>
+                              </UML:Transition.source>
+                              <UML:Transition.target>
+                                <UML:StateVertex xmi.idref="ue9-4ccc540fc382c2cf6e9c32c73d49e279"/>
+                              </UML:Transition.target>
+                            </UML:Transition>
+                          </UML:State.internalTransition>
+                        </UML:CompositeState>
                       </UML:CompositeState.subvertex>
                     </UML:CompositeState>
                     <UML:CompositeState xmi.id="3r975-591e79a94a652a5d94517ec076c2b3d9" name="" version="0" unSolvedFlag="false" isConcurrent="true" isOrthogonal="false" isRegion="true">
@@ -9051,6 +9086,23 @@
                 <UML:StateMachine xmi.idref="7-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
               </UML:Transition.stateMachine>
             </UML:Transition>
+            <UML:Transition xmi.id="3ift-4ccc540fc382c2cf6e9c32c73d49e279" name="EVT_REPLACE_KEYS_REQUEST+%2F+EVT_REPLACE_KEYS_REQUEST_HANDLER" version="0" unSolvedFlag="false">
+              <UML:Transition.effect>
+                <UML:Action xmi.id="p0jj-4ccc540fc382c2cf6e9c32c73d49e279" name="EVT_REPLACE_KEYS_REQUEST_HANDLER" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+              </UML:Transition.effect>
+              <UML:Transition.trigger>
+                <UML:Event xmi.id="p0ji-4ccc540fc382c2cf6e9c32c73d49e279" name="EVT_REPLACE_KEYS_REQUEST" version="0" unSolvedFlag="false"></UML:Event>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:StateVertex xmi.idref="23-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:StateVertex xmi.idref="ue9-4ccc540fc382c2cf6e9c32c73d49e279"/>
+              </UML:Transition.target>
+              <UML:Transition.stateMachine>
+                <UML:StateMachine xmi.idref="7-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              </UML:Transition.stateMachine>
+            </UML:Transition>
           </UML:StateMachine.transitions>
         </UML:StateMachine>
       </UML:Namespace.ownedElement>
@@ -9113,6 +9165,7 @@
               <JUDE:TransitionPresentation xmi.idref="41ul-31eb0fb7962fc96bd7d6e6642514d201"/>
               <JUDE:TransitionPresentation xmi.idref="k9d-21717f73047651056e788f992f61efb0"/>
               <JUDE:TransitionPresentation xmi.idref="h8d-6adc96a618485f4e60fce76a389f1bd6"/>
+              <JUDE:TransitionPresentation xmi.idref="3ifs-4ccc540fc382c2cf6e9c32c73d49e279"/>
             </JUDE:UPresentation.clients>
             <JUDE:UPresentation.customStyleMap>
               <JUDE:UPresentation.styleProperty key="fill.color.alpha" value="FF"/>
@@ -11021,6 +11074,25 @@
             <JUDE:JomtPresentation.location>
               <XMI.field>-3243.870891723405</XMI.field>
               <XMI.field>4265.560683963324</XMI.field>
+            </JUDE:JomtPresentation.location>
+          </JUDE:CompositeStatePresentation>
+          <JUDE:CompositeStatePresentation xmi.id="ue8-4ccc540fc382c2cf6e9c32c73d49e279" version="0" depth="2147483631" stereotypeVisibility="true" constraintVisibility="true" notationType="0" width="712.51129346066" height="126.50125878810582" doAutoResize="false" visibility="true" label="SCR_REPLACE_KEYS%5BLAYER%3A%3ALAYER_ONSCREEN%5D" allActionVisibility="true" horizontalOffsetString="" verticalOffsetString="">
+            <JUDE:UPresentation.semanticModel>
+              <UML:CompositeState xmi.idref="ue9-4ccc540fc382c2cf6e9c32c73d49e279"/>
+            </JUDE:UPresentation.semanticModel>
+            <JUDE:UPresentation.diagram>
+              <JUDE:Diagram xmi.idref="6-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+            </JUDE:UPresentation.diagram>
+            <JUDE:UPresentation.clients>
+              <JUDE:TransitionPresentation xmi.idref="3ifs-4ccc540fc382c2cf6e9c32c73d49e279"/>
+            </JUDE:UPresentation.clients>
+            <JUDE:UPresentation.customStyleMap>
+              <JUDE:UPresentation.styleProperty key="fill.color.alpha" value="FF"/>
+              <JUDE:UPresentation.styleProperty key="fill.color" value="#FFFFCC"/>
+            </JUDE:UPresentation.customStyleMap>
+            <JUDE:JomtPresentation.location>
+              <XMI.field>-2655.628466224642</XMI.field>
+              <XMI.field>2192.0087014603932</XMI.field>
             </JUDE:JomtPresentation.location>
           </JUDE:CompositeStatePresentation>
           <JUDE:TransitionPresentation xmi.id="36qjg-7abe990174f0ad293315f57584c87114" version="0" depth="2147483587" stereotypeVisibility="true" constraintVisibility="true" notationType="0" rightAngle="true" visibility="true">
@@ -21189,6 +21261,56 @@
               <XMI.field>341.6965269747552</XMI.field>
               <XMI.field>-2163.8511894308203</XMI.field>
               <XMI.field>341.6965269747552</XMI.field>
+            </JUDE:PathPresentation.points>
+          </JUDE:TransitionPresentation>
+          <JUDE:TransitionPresentation xmi.id="3ifs-4ccc540fc382c2cf6e9c32c73d49e279" version="0" depth="2147483051" stereotypeVisibility="true" constraintVisibility="true" notationType="0" rightAngle="true" visibility="true">
+            <JUDE:UPresentation.semanticModel>
+              <UML:Transition xmi.idref="3ift-4ccc540fc382c2cf6e9c32c73d49e279"/>
+            </JUDE:UPresentation.semanticModel>
+            <JUDE:UPresentation.diagram>
+              <JUDE:Diagram xmi.idref="6-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+            </JUDE:UPresentation.diagram>
+            <JUDE:UPresentation.servers>
+              <JUDE:CompositeStatePresentation xmi.idref="22-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              <JUDE:CompositeStatePresentation xmi.idref="ue8-4ccc540fc382c2cf6e9c32c73d49e279"/>
+            </JUDE:UPresentation.servers>
+            <JUDE:UPresentation.customStyleMap>
+              <JUDE:UPresentation.styleProperty key="line.shape" value="line_right_angle"/>
+            </JUDE:UPresentation.customStyleMap>
+            <JUDE:JomtPresentation.location>
+              <XMI.field>0.0</XMI.field>
+              <XMI.field>0.0</XMI.field>
+            </JUDE:JomtPresentation.location>
+            <JUDE:PathPresentation.namePresentation>
+              <JUDE:LabelPresentation xmi.id="3inl-4ccc540fc382c2cf6e9c32c73d49e279" version="0" depth="0" stereotypeVisibility="true" constraintVisibility="true" notationType="0" width="450.0" height="15.09375" doAutoResize="true" visibility="true" label="EVT_REPLACE_KEYS_REQUEST+%2F+EVT_REPLACE_KEYS_REQUEST_HANDLER">
+                <JUDE:JomtPresentation.location>
+                  <XMI.field>-3280.842845189627</XMI.field>
+                  <XMI.field>1089.5065747798235</XMI.field>
+                </JUDE:JomtPresentation.location>
+                <JUDE:JomtPresentation.compositeParent>
+                  <JUDE:UPresentation xmi.idref="3ifs-4ccc540fc382c2cf6e9c32c73d49e279"/>
+                </JUDE:JomtPresentation.compositeParent>
+              </JUDE:LabelPresentation>
+            </JUDE:PathPresentation.namePresentation>
+            <JUDE:PathPresentation.points>
+              <XMI.field>-3055.842845189627</XMI.field>
+              <XMI.field>-227.20841163912303</XMI.field>
+              <XMI.field>-3055.842845189627</XMI.field>
+              <XMI.field>2255.259330854446</XMI.field>
+            </JUDE:PathPresentation.points>
+            <JUDE:BinaryRelationPresentation.sourceEnd>
+              <XMI.field>0.5</XMI.field>
+              <XMI.field>0.5</XMI.field>
+            </JUDE:BinaryRelationPresentation.sourceEnd>
+            <JUDE:BinaryRelationPresentation.targetEnd>
+              <XMI.field>0.5</XMI.field>
+              <XMI.field>0.5</XMI.field>
+            </JUDE:BinaryRelationPresentation.targetEnd>
+            <JUDE:PathPresentation.points>
+              <XMI.field>-3055.842845189627</XMI.field>
+              <XMI.field>-227.20841163912303</XMI.field>
+              <XMI.field>-3055.842845189627</XMI.field>
+              <XMI.field>2255.259330854446</XMI.field>
             </JUDE:PathPresentation.points>
           </JUDE:TransitionPresentation>
         </JUDE:Diagram.presentations>

@@ -29,9 +29,9 @@
 #include "Servers/DracoDefines.h"
 #include <QJsonArray>
 #include "TypeDefine.h"
-#include "Commons/ISigner.h"
+#include "Commons/WalletKeys.h"
 
-class QSingleSigner : public QObject, public ISigner {
+class QSingleSigner : public QObject, public WalletKeys {
     Q_OBJECT
     Q_PROPERTY(QString signerName               READ name               WRITE setName               NOTIFY nameChanged)
     Q_PROPERTY(QString signerXpub               READ xpub               WRITE setXpub               NOTIFY xpubChanged)
@@ -56,7 +56,7 @@ class QSingleSigner : public QObject, public ISigner {
     Q_PROPERTY(QString address                  READ address            WRITE setAddress            NOTIFY addressChanged)
     Q_PROPERTY(QString descriptor               READ descriptor                                     CONSTANT)
     Q_PROPERTY(bool isMine                      READ isMine                                         CONSTANT)
-
+    Q_PROPERTY(QString cardId                   READ cardId                                         CONSTANT)
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
@@ -152,6 +152,11 @@ public:
     QString descriptor() const;
 
     Q_INVOKABLE QVariantList getWalletList();
+    bool isReplaced() const;
+    void setIsReplaced(bool newIsReplaced);
+
+    QSingleSignerPtr keyReplaced() const;
+    void setKeyReplaced(const QSingleSignerPtr &keyReplaced);
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -175,6 +180,8 @@ private:
     bool m_hasSignBtn {true};
     // QJsonArray m_healthCheckHistory {};
     QString m_address;
+    bool m_isReplaced {false};
+    QSingleSignerPtr m_keyReplaced;
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -243,7 +250,9 @@ public:
         single_signer_device_cardid_Role,
         single_signer_tag_Role,
         single_signer_has_sign_btn_Role,
-        single_signer_account_index_Role
+        single_signer_account_index_Role,
+        single_signer_isReplaced_Role,
+        single_signer_keyReplaced_Role
     };
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
@@ -283,6 +292,7 @@ public:
     QSharedPointer<SingleSignerListModel> clone() const;
     void cleardata();
     QStringList getKeyNames();
+    void setCardIDList(const QMap<QString, QString> &card_ids);
 public slots:
     int signerCount() const;
     int signerSelectedCount() const;

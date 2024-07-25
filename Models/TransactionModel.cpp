@@ -433,6 +433,11 @@ bool Transaction::isDummyTx() const
     return false;
 }
 
+QStringList Transaction::hideSignBtns() const
+{
+    return {};
+}
+
 bool Transaction::enableRequestSignature()
 {
     if(AppModel::instance()->walletInfo()){
@@ -517,28 +522,35 @@ void Transaction::setWalletId(const QString &walletId)
 }
 
 SingleSignerListModel *Transaction::singleSignersAssigned() {
-    if(m_signers){
-        QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId());
-        if(wallet && wallet->singleSignersAssigned()){
-            setRoomId(wallet->roomId());
-            if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
-                wallet->syncCollabKeyname();
-            }
-            if(m_signers.data()->rowCount() == 0){
+    QWalletPtr wallet = QWalletPtr(NULL);
+    if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
+        wallet = AppModel::instance()->walletInfoPtr();
+    }
+    else {
+        wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
+    }
+
+    if(wallet && wallet->singleSignersAssigned()){
+        setRoomId(wallet->roomId());
+        if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
+            wallet->syncCollabKeyname();
+        }
+        if(m_signers.data()->rowCount() == 0){
+            m_signers = wallet->singleSignersAssigned()->clone();
+        }
+        else{
+            if(m_signers->needSyncNunchukEmail()){
                 m_signers = wallet->singleSignersAssigned()->clone();
             }
-            else{
-                if(m_signers->needSyncNunchukEmail()){
-                    m_signers = wallet->singleSignersAssigned()->clone();
-                }
-            }
         }
+    }
+    if(m_signers){
         m_signers.data()->initSignatures();
         std::map<std::string, bool> signers = m_transaction.get_signers();
         for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
             m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second, "");
         }
-        DBG_INFO << isDummyTx() << m_txJson;
+        DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
         if (!m_txJson.isEmpty() || isDummyTx()) {// Use for dummy transaction
             if (!m_txJson.isEmpty()) {
                 QJsonArray signatures = m_txJson["signatures"].toArray();
@@ -565,11 +577,17 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
                         signer->setHasSignBtn(false);
                     }
                 }
+                if (hideSignBtns().contains(signer->masterFingerPrint())) {
+                    signer->setHasSignBtn(false);
+                }
             }
         }
         m_signers.data()->requestSort();
+        return m_signers.data();
     }
-    return m_signers.data();
+    else {
+        return (new SingleSignerListModel());
+    }
 }
 
 int Transaction::numberSigned()

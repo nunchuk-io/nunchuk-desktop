@@ -245,8 +245,11 @@ void Wallet::setDescriptior(const QString &descriptior)
 }
 
 SingleSignerListModel* Wallet::singleSignersAssigned() {
-    m_signers->requestSort();
-    return m_signers.data();
+    if(m_signers){
+        m_signers->requestSort();
+        return m_signers.data();
+    }
+    return NULL;
 }
 
 QString Wallet::address() const {
@@ -661,7 +664,9 @@ void Wallet::UpdateWallet(const QString &name, const QString &description)
         UpdateUserWallet(name, description);
     }
     else{
-        //TBD
+        QWarningMessage msg;
+        m_wallet.set_name(name.toStdString());
+        bridge::UpdateWallet(m_wallet, msg);
     }
 }
 
@@ -769,7 +774,6 @@ QString Wallet::aliasName() const
         QString alias = dash->walletJson()["alias"].toString();
         QRegularExpression re("\\p{So}");
         alias.remove(re);
-        DBG_INFO << dash->walletJson()["alias"].toString() << alias;
         return alias;
     }
     return "";
@@ -924,10 +928,7 @@ bool Wallet::isContainKey(const QString &xfp)
 
 QVariant Wallet::dummyTx() const
 {
-    if (auto dummy = dummyTxPtr()) {
-        return QVariant::fromValue(dummy->get<QGroupWalletDummyTxPtr>().data());
-    }
-    return {};
+    return QVariant::fromValue(groupDummyTxPtr().data());
 }
 
 bool Wallet::isPro()
@@ -1040,8 +1041,11 @@ QTransactionPtr Wallet::SyncUserTxs(const nunchuk::Transaction &tx)
                 // honey badger feature: schedule broadcast
                 long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
 
-                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
+                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis &&
+                    broadcast_time_milis / 1000 != tx.get_schedule_time()) {
                     bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), broadcast_time_milis/1000,msg);
+                } else if (type != "SCHEDULED" && tx.get_schedule_time() != -1) {
+                    bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), -1,msg);
                 }
 
                 if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED" || status == "NETWORK_REJECTED") {
@@ -1254,9 +1258,13 @@ QTransactionPtr Wallet::SyncGroupTxs(const nunchuk::Transaction &tx)
                 long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
                 // honey badger feature: schedule broadcast
                 long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
-                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis) {
+                if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis &&
+                    broadcast_time_milis / 1000 != tx.get_schedule_time()) {
                     bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), broadcast_time_milis/1000,msg);
+                } else if (type != "SCHEDULED" && tx.get_schedule_time() != -1) {
+                    bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), -1,msg);
                 }
+
                 if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED" || status == "NETWORK_REJECTED") {
                     bridge::nunchukImportPsbt(wallet_id, psbt, msg);
                     msg.resetWarningMessage();
@@ -1503,6 +1511,11 @@ QWalletServicesTagPtr Wallet::servicesTagPtr() const
     return isUserWallet() ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
 }
 
+QWalletPtr Wallet::clone() const
+{
+    return bridge::convertWallet(wallet());
+}
+
 QWalletDummyTxPtr Wallet::dummyTxPtr() const
 {
     return QWalletDummyTx::information<QWalletDummyTxPtr>(id());
@@ -1539,6 +1552,19 @@ bool Wallet::isValidAddress(const QString &address)
     return qUtils::IsValidAddress(address);
 }
 
+int Wallet::reuseKeyGetCurrentIndex(const QString &xfp) {
+    return ReplaceKeyFreeUser::reuseKeyGetCurrentIndex(xfp);
+}
+
+QString Wallet::bip32path(const QString &xfp, int index) {
+    return ReplaceKeyFreeUser::bip32path(xfp, index);
+}
+
+bool Wallet::updateKeyReplace(const QString &xfp, const int index)
+{
+    return ReplaceKeyFreeUser::updateKeyReplace(xfp, index);
+}
+
 QString Wallet::groupId() const
 {
     QString group_id = WalletsMng->groupId(m_id);
@@ -1567,12 +1593,13 @@ QString Wallet::slug() const
             slug = data.second;
         }
     }
-    DBG_INFO << slug;
     return slug;
 }
 
 QString Wallet::myRole() const
 {
+    // return "FACILITATOR_ADMIN"; //FIXME TBD
+
     QString role = "";
     if(dashboard()){
         role = dashboard().data()->myRole();

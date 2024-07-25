@@ -26,6 +26,7 @@
 #include "localization/STR_CPP.h"
 
 void SCR_RECOVER_SOFTWARE_SIGNER_Entry(QVariant msg) {
+    AppModel::instance()->setAddSignerPercentage(0);
     AppModel::instance()->setMnemonic("");
     AppModel::instance()->setSuggestMnemonics(bridge::nunchuckGetBIP39WordList());
 }
@@ -35,15 +36,26 @@ void SCR_RECOVER_SOFTWARE_SIGNER_Exit(QVariant msg) {
 }
 
 void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    QString mnemonicinput = msg.toString();
-    bool checkmnemonic = qUtils::CheckMnemonic(mnemonicinput);
-    if(checkmnemonic){
-        QEventProcessor::instance()->sendEvent(E::EVT_RECOVER_SOFTWARE_SIGNER_SUCCEED);
-        AppModel::instance()->setMnemonic(mnemonicinput);
+    QString recover_type = msg.toMap().value("recover_type").toString();
+    QString recover_data = msg.toMap().value("recover_data").toString();
+    if(recover_type == "seed"){
+        bool checkmnemonic = qUtils::CheckMnemonic(recover_data);
+        if(checkmnemonic){
+            QEventProcessor::instance()->sendEvent(E::EVT_RECOVER_SOFTWARE_SIGNER_SUCCEED);
+            AppModel::instance()->setMnemonic(recover_data);
+        }
+        else{
+            AppModel::instance()->setMnemonic("-101");
+            AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    else if(recover_type == "xprv"){
+        DBG_INFO << msg;
+        QString recover_name = msg.toMap().value("recover_name").toString();
+        AppModel::instance()->startCreateSoftwareSignerXprv(recover_name, recover_data);
     }
     else{
-        AppModel::instance()->setMnemonic("-101");
-        AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
+        DBG_INFO << msg;
     }
 }
 

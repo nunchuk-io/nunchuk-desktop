@@ -553,6 +553,26 @@ QVariantList QSingleSigner::getWalletList()
     return ret;
 }
 
+bool QSingleSigner::isReplaced() const
+{
+    return m_isReplaced;
+}
+
+void QSingleSigner::setIsReplaced(bool newIsReplaced)
+{
+    m_isReplaced = newIsReplaced;
+}
+
+QSingleSignerPtr QSingleSigner::keyReplaced() const
+{
+    return m_keyReplaced;
+}
+
+void QSingleSigner::setKeyReplaced(const QSingleSignerPtr &keyReplaced)
+{
+    m_keyReplaced = keyReplaced;
+}
+
 SingleSignerListModel::SingleSignerListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -613,6 +633,10 @@ QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
         return d_[index.row()]->hasSignBtn();
     case single_signer_account_index_Role:
         return d_[index.row()]->accountIndex();
+    case single_signer_isReplaced_Role:
+        return d_[index.row()]->isReplaced();
+    case single_signer_keyReplaced_Role:
+        return QVariant::fromValue(d_[index.row()]->keyReplaced().data());
     default:
         return QVariant();
     }
@@ -661,6 +685,8 @@ QHash<int, QByteArray> SingleSignerListModel::roleNames() const
     roles[single_signer_tag_Role]                 = "single_signer_tag";
     roles[single_signer_has_sign_btn_Role]        = "single_signer_has_sign_btn";
     roles[single_signer_account_index_Role]       = "single_signer_account_index";
+    roles[single_signer_isReplaced_Role]          = "single_signer_isReplaced";
+    roles[single_signer_keyReplaced_Role]         = "single_signer_keyReplaced";
     return roles;
 }
 
@@ -988,6 +1014,7 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
         if(ret){
             ret.data()->setEmail(signer.data()->email());
+            ret.data()->setCardId(signer.data()->cardId());
             clone.data()->addSingleSigner(ret);
         }
     }
@@ -1010,6 +1037,16 @@ QStringList SingleSignerListModel::getKeyNames()
         }
     }
     return ret;
+}
+
+void SingleSignerListModel::setCardIDList(const QMap<QString, QString> &card_ids)
+{
+    foreach (QSingleSignerPtr it, d_) {
+        if(it) {
+            QString card_id = card_ids.value(it.data()->masterFingerPrint());
+            it.data()->setCardId(card_id);
+        }
+    }
 }
 
 int SingleSignerListModel::signerCount() const

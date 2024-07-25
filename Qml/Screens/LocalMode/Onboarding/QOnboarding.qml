@@ -43,7 +43,11 @@ QOnScreenContentTypeB {
     }
     content: Item {
         Column {
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                verticalCenter: parent.verticalCenter
+                verticalCenterOffset: 24
+            }
             spacing: 24
             QLato {
                 id: title

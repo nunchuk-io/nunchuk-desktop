@@ -36,12 +36,13 @@ Rectangle {
     property string transactionDate: "--/--/---- ##:## ##"
     property bool transactionIsRbf: false
     property int confirmation: 1
-
+    property bool isFacilitatorAdmin: false
     property int timeWidth: 123
     property int statusWidth: 166
     property int memoWidth: 178
     property int amountWidth: 178
     property int addressWidth: 160
+    enabled: !isFacilitatorAdmin
 
     color: btnMouse.containsMouse ?"#C9DEF1" : "transparent"
     Rectangle {
@@ -69,7 +70,7 @@ Rectangle {
                 }
                 QText {
                     width: addressWidth
-                    text: transactiondestinationList
+                    text: isFacilitatorAdmin ? "••••••" : transactiondestinationList
                     font.family: "Lato"
                     font.pixelSize: 16
                     color: "#031F2B"
@@ -138,7 +139,7 @@ Rectangle {
                     bottomMargin: 3
                 }
                 font.family: "Lato"
-                font.pixelSize: 12
+                font.pixelSize: 16
                 color: (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8" : "#323E4A"
                 text: transactionDate
                 wrapMode: Text.WordWrap
@@ -153,7 +154,7 @@ Rectangle {
                 spacing: 4
                 QText {
                     font.family: "Lato"
-                    font.pixelSize: 14
+                    font.pixelSize: 12
                     color:  "#595959"
                     text: "Memo"
                     verticalAlignment: Text.AlignVCenter
@@ -162,7 +163,7 @@ Rectangle {
                     id: memo
                     width: memoWidth
                     font.family: "Lato"
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED)  ? "#9CAEB8" : "#031F2B"
                     text: transactionMemo
                     verticalAlignment: Text.AlignVCenter
@@ -180,11 +181,18 @@ Rectangle {
                     id: amountBTC
                     width: amountWidth
                     font.family: "Lato"
-                    font.pixelSize: 14
-                    color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8" : "#031F2B"
+                    font.pixelSize: 16
+                    color:  (transactionstatus === NUNCHUCKTYPE.REPLACED)
+                            || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8"
+                                                                                     : (transactionstatus === NUNCHUCKTYPE.CONFIRMED) ? "#1C652D" : "#031F2B"
                     text: {
-                        var sign = (transactionisReceiveTx ? "" : "-")
-                        return qsTr("%1 %2 %3").arg(sign).arg(transactionAmount).arg(RoomWalletData.unitValue)
+                        if(isFacilitatorAdmin){
+                            return "••••••"
+                        }
+                        else {
+                            var sign = (transactionisReceiveTx ? "" : "-")
+                            return qsTr("%1 %2 %3").arg(sign).arg(transactionAmount).arg(RoomWalletData.unitValue)
+                        }
                     }
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignRight
@@ -194,9 +202,9 @@ Rectangle {
                     id: amountCurrency
                     width: amountWidth
                     font.family: "Lato"
-                    font.pixelSize: 14
+                    font.pixelSize: 12
                     color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8" : "#031F2B"
-                    text: transactiontotalCurrency + " " + AppSetting.currency
+                    text: isFacilitatorAdmin ? "••••••" : (transactiontotalCurrency + " " + AppSetting.currency)
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight

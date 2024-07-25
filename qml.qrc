@@ -449,7 +449,19 @@
         <file>Qml/Screens/OnlineMode/SCR_REPLACE_SELECT_KEY.qml</file>
         <file>Qml/Components/customizes/QRCodes/QQrExportResultPDF.qml</file>
         <file>Qml/Components/customizes/Transactions/QTransactionInvoice.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_REPLACE_KEYS.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_VIA_XPUB.qml</file>
         <file>Qml/Components/origins/QComboBoxIndex.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceKeysInfo.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceSelectKeys.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceExistingKey.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceCustomizeKeyAccount.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceCongratulationANewWalletCreated.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceKeyDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceTransferFunds.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceBeforeYouBegin.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceAddSigner.qml</file>
+        <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceAddSignerLoading.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -468,7 +480,6 @@
         <file>Images/SignerChecked.png</file>
         <file>Images/SignerUnChecked.png</file>
         <file>Images/Delete.png</file>
-        <file>Images/Circular.png</file>
         <file>Images/cached_24px.png</file>
         <file>Images/Signer_Level2.png</file>
         <file>Images/backup.png</file>
@@ -746,6 +757,14 @@
         <file>Images/fav_close-circle-dark.png</file>
         <file>Images/fav_swapt-24px.png</file>
         <file>Images/OnlineMode/sticky_note_2.png</file>
+        <file>Images/key-dark.svg</file>
+        <file>Images/roll-over-illustrations.svg</file>
+        <file>Images/emergency-lockdown-dark.png</file>
+        <file>Images/replace-primary-key-dark.png</file>
+        <file>Images/wallet-done.svg</file>
+        <file>Images/replace.svg</file>
+        <file>Images/add-to-collection-dark.svg</file>
+        <file>Images/Circular.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

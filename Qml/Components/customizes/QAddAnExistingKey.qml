@@ -40,6 +40,7 @@ Item {
     property string tag: ""
     property string device_type: ""
     property string bip32_path: ""
+    property var existList: draftWallet.signerExistList
 
     onVisibleChanged: {
         if(!visible){
@@ -58,6 +59,7 @@ Item {
             text: notice
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
+            visible: notice != ""
         }
         Rectangle {
             width: 539
@@ -65,92 +67,99 @@ Item {
             border.width: 1
             border.color: "#EAEAEA"
             radius: 8
-            Column
-            {
+            QListView {
+                model: existList
+                clip: true
+                ScrollBar.vertical: ScrollBar { active: true }
                 anchors.fill: parent
-                Repeater {
-                    model: draftWallet.signerExistList
-                    Item {
-                        width: 539 - 12
-                        height: visible ? 92 : 0
+                delegate: Item {
+                    width: 539 - 12
+                    height: visible ? 92 : 0
+                    anchors{
+                        left: parent.left
+                        leftMargin: 12
+                    }
+                    Row{
+                        anchors.fill: parent
+                        spacing: 8
+                        Rectangle {
+                            width: 48
+                            height: 48
+                            radius: width
+                            color: "#F5F5F5"
+                            anchors.verticalCenter: parent.verticalCenter
+                            QSignerDarkIcon {
+                                iconSize: 24
+                                anchors.centerIn: parent
+                                device_type: modelData.signer_deviceType
+                                type: modelData.signer_type
+                                tag: modelData.signer_tag
+                            }
+                        }
+                        Item{
+                            width: 146
+                            height: 60
+                            anchors.verticalCenter: parent.verticalCenter
+                            Column{
+                                spacing: 4
+                                QText {
+                                    width: 146
+                                    height: 20
+                                    text: modelData.signer_name
+                                    color: "#031F2B"
+                                    font.weight: Font.Normal
+                                    font.family: "Lato"
+                                    font.pixelSize: 16
+                                }
+                                QRowSingleSignerType {
+                                    isPrimaryKey: modelData.signer_is_primary
+                                    signerType: modelData.signer_type
+                                    accountIndex: modelData.signer_account_index
+                                    accountVisible: false
+                                }
+                                QText {
+                                    width: 146
+                                    height: 20
+                                    text: {
+                                        if (modelData.signer_type === NUNCHUCKTYPE.NFC) {
+                                            var card_id_or_xfp = modelData.signer_card_id
+                                            var textR = card_id_or_xfp.substring(card_id_or_xfp.length - 5, card_id_or_xfp.length).toUpperCase()
+                                            return "Card ID: ••" + textR
+                                        } else {
+                                            return "XFP: " + modelData.signer_fingerPrint.toUpperCase()
+                                        }
+                                    }
+                                    color: "#595959"
+                                    font.weight: Font.Normal
+                                    font.capitalization: Font.AllUppercase
+                                    font.family: "Lato"
+                                    font.pixelSize: 12
+                                }
+                            }
+                        }
+                    }
+                    QIcon {
+                        iconSize: 24
+                        source: fingerPrint === modelData.signer_fingerPrint ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                        scale: primaryKeyMouse.pressed ? 0.9 : 1.0
                         anchors{
-                            left: parent.left
-                            leftMargin: 12
+                            right: parent.right
+                            rightMargin: 12
+                            verticalCenter: parent.verticalCenter
                         }
-                        Row{
-                            anchors.fill: parent
-                            spacing: 8
-                            Rectangle {
-                                width: 48
-                                height: 48
-                                radius: width
-                                color: "#F5F5F5"
-                                anchors.verticalCenter: parent.verticalCenter
-                                QSignerDarkIcon {
-                                    iconSize: 24
-                                    anchors.centerIn: parent
-                                    device_type: modelData.signer_deviceType
-                                    type: modelData.signer_type
-                                    tag: modelData.signer_tag
-                                }
-                            }
-                            Item{
-                                width: 146
-                                height: 60
-                                anchors.verticalCenter: parent.verticalCenter
-                                Column{
-                                    spacing: 4
-                                    QText {
-                                        width: 146
-                                        height: 20
-                                        text: modelData.signer_name
-                                        color: "#031F2B"
-                                        font.weight: Font.Normal
-                                        font.family: "Lato"
-                                        font.pixelSize: 16
-                                    }
-                                    QRowSingleSignerType {
-                                        isPrimaryKey: modelData.signer_is_primary
-                                        signerType: modelData.signer_type
-                                        accountIndex: modelData.signer_account_index
-                                        accountVisible: false
-                                    }
-                                    QText {
-                                        width: 146
-                                        height: 20
-                                        text: "XFP: " + modelData.signer_fingerPrint
-                                        color: "#595959"
-                                        font.weight: Font.Normal
-                                        font.capitalization: Font.AllUppercase
-                                        font.family: "Lato"
-                                        font.pixelSize: 12
-                                    }
-                                }
-                            }
-                        }
-                        QIcon {
-                            iconSize: 24
-                            source: fingerPrint === modelData.signer_fingerPrint ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-                            scale: primaryKeyMouse.pressed ? 0.9 : 1.0
-                            anchors{
-                                right: parent.right
-                                rightMargin: 12
-                                verticalCenter: parent.verticalCenter
-                            }
-                        }
-                        MouseArea {
-                            id: primaryKeyMouse
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            anchors.fill: parent
-                            onClicked: {
-                                fingerPrint = modelData.signer_fingerPrint
-                                type = modelData.signer_type
-                                tag = modelData.signer_tag
-                                device_type = modelData.signer_deviceType
-                                key_name = modelData.signer_name
-                                bip32_path = modelData.signer_bip32_path
-                            }
+                    }
+                    MouseArea {
+                        id: primaryKeyMouse
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        anchors.fill: parent
+                        onClicked: {
+                            fingerPrint = modelData.signer_fingerPrint
+                            type = modelData.signer_type
+                            tag = modelData.signer_tag
+                            device_type = modelData.signer_deviceType
+                            key_name = modelData.signer_name
+                            bip32_path = modelData.signer_bip32_path
                         }
                     }
                 }

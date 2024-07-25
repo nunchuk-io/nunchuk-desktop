@@ -349,7 +349,7 @@ Rectangle {
                             spacing: 4
                             Repeater {
                                 id: _healthy
-                                model: dashboardInfo.health.healthStatuses
+                                model: dashboardInfo.health ? dashboardInfo.health.healthStatuses : 0
                                 QCircleIcon {
                                     bgSize: 36
                                     icon.iconSize: 18

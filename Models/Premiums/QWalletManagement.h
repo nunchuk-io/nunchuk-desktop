@@ -18,7 +18,6 @@ public:
     void GetListWallet(int mode);
     void UpdateSyncWalletFlows();
     QString UpdateSyncWalletFlows(bool yes, bool no);
-    bool SyncSignerToServer(const nunchuk::SingleSigner &signer);
     WalletIdList wallets() const;
     GroupIdList groupIds() const;
     GroupId groupId(WalletId wallet_id) const;
@@ -34,6 +33,7 @@ public:
     template<typename T>
     void CreateData(WalletId wallet_id);
 
+    void initSignInWallet(WalletId wallet_id);
     void FactoryWorker(WalletId wallet_id, GroupId group_id);
     int activeSize() const;
 public slots:

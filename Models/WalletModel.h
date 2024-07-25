@@ -29,8 +29,9 @@
 #include "TypeDefine.h"
 #include "Commons/Slugs.h"
 #include <QJsonArray>
+#include "Commons/ReplaceKeyFreeUser.h"
 
-class Wallet : public QObject, public Slugs
+class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser
 {
     Q_OBJECT
     Q_PROPERTY(QString      walletId                                READ id                     WRITE setId             NOTIFY idChanged)
@@ -84,6 +85,10 @@ class Wallet : public QObject, public Slugs
     Q_PROPERTY(bool         enableCreateChat                        READ enableCreateChat                               CONSTANT)
     Q_PROPERTY(bool         isReplaced                              READ isReplaced                                     NOTIFY groupInfoChanged)
     Q_PROPERTY(bool         isLocked                                READ isLocked                                       NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariantList signerExistList                         READ signerExistList                                NOTIFY signerExistListChanged)
+    Q_PROPERTY(QString replaceFlow                                  READ replaceFlow                                    NOTIFY replaceFlowChanged)
+    Q_PROPERTY(DeviceListModel*         deviceList                  READ deviceList                                     NOTIFY deviceListChanged)
+    Q_PROPERTY(QString deviceType                                   READ deviceType                                     NOTIFY deviceTypeChanged)
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -233,6 +238,7 @@ public:
     bool isReplaced() const;
     bool isLocked() const;
     QWalletServicesTagPtr servicesTagPtr() const;
+    QWalletPtr clone() const;
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
 protected:
@@ -324,9 +330,17 @@ signals:
     void aliasNameChanged();
     void signMessageChanged();
     void needBackupChanged();
+    void signerExistListChanged() override;
+    void replaceFlowChanged() override;
+    void deviceListChanged() override;
+    void deviceTypeChanged() override;
+    void rollOverProcess(const QString& address);
 public slots:
     void slotSyncCollabKeyname(QList<DracoUser> users);
     bool isValidAddress(const QString& address);
+    int  reuseKeyGetCurrentIndex(const QString &xfp) override;
+    QString bip32path(const QString &xfp, int index) override;
+    bool updateKeyReplace(const QString &xfp, const int index) override;
 };
 typedef OurSharedPointer<Wallet> QWalletPtr;
 

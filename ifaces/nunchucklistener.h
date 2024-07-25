@@ -32,6 +32,7 @@ bool cache_master_signer_XPub(int progress);
 bool create_master_signer_listener(int progress);
 void blockchain_connection_listener(nunchuk::ConnectionStatus status, int percent);
 bool create_software_signer_listener(int progress);
+bool create_software_signer_xprv_listener(int progress);
 
 bool CacheTapsignerMasterSignerXPubProgress(int percent);
 bool CacheDefaultTapsignerMasterSignerXPubProgress(int percent);

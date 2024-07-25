@@ -540,7 +540,7 @@ QScreen {
                 horizontalAlignment: Text.AlignHCenter
                 color: "#F6D65D"
                 font.pixelSize: 24
-                font.weight: Font.DemiBold
+                font.weight: Font.Medium
                 font.family: "Montserrat"
                 text: STR.STR_QML_083
             }

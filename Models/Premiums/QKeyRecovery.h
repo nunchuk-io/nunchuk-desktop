@@ -17,7 +17,6 @@ class QKeyRecovery : public QObject
     Q_PROPERTY(QVariant firstQuestion           READ firstQuestion          NOTIFY requireQuestionsChanged)
 public:
     explicit QKeyRecovery();
-    static int mode();
 
     QVariant signer() const;
     void setSigner(const QString& xfp);

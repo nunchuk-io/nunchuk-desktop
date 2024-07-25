@@ -25,6 +25,7 @@
 #include "bridgeifaces.h"
 
 void SCR_ADD_NEW_SIGNER_Entry(QVariant msg) {
+
 }
 
 void SCR_ADD_NEW_SIGNER_Exit(QVariant msg) {

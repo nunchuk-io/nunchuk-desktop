@@ -97,6 +97,7 @@ Item {
             isHotWallet: AppModel.walletInfo.needBackup
             isLocked: AppModel.walletInfo.isLocked
             isReplaced: AppModel.walletInfo.isReplaced
+            isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
             Row{
                 anchors.fill: parent
                 Item {
@@ -129,7 +130,7 @@ Item {
                             top: parent.top
                             topMargin: 30*QAPP_DEVICE_HEIGHT_RATIO
                         }
-                        visible: myRole !== "OBSERVER"
+                        visible: (myRole !== "OBSERVER") && (myRole !== "FACILITATOR_ADMIN")
                         icon: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
                         onClicked: {
                             optionMenu.popup(_more,mouse.x - 250 + 24,24)
@@ -167,7 +168,9 @@ Item {
                             QText {
                                 id:_txt
                                 anchors.centerIn: parent
-                                text: AppModel.walletInfo.walletN === 1 ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(AppModel.walletInfo.walletM).arg(AppModel.walletInfo.walletN).arg(STR.STR_QML_069);
+                                text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : (AppModel.walletInfo.walletN === 1) ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(AppModel.walletInfo.walletM)
+                                                                                                                                                            .arg(AppModel.walletInfo.walletN)
+                                                                                                                                                            .arg(STR.STR_QML_069);
                                 color: "#031F2B"
                                 font.weight: Font.Bold
                                 font.pixelSize: 10
@@ -215,7 +218,7 @@ Item {
                                     font.family: "Lato"
                                     font.pixelSize: 10
                                     color: "#031F2B"
-                                    text: STR.STR_QML_679
+                                    text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : STR.STR_QML_679
                                     font.weight: Font.Bold
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -257,7 +260,8 @@ Item {
                             font.pixelSize: 28
                             font.family: "Lato"
                             font.weight: Font.Bold
-                            text: qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance).arg(RoomWalletData.unitValue)
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance)
+                                                                                             .arg(RoomWalletData.unitValue)
                         }
                         QText {
                             id: wlBalanceCurrency
@@ -266,10 +270,9 @@ Item {
                             font.pixelSize: 16
                             font.family: "Lato"
                             font.weight: Font.Medium
-                            text: qsTr("%1%2 %3")
-                            .arg(AppSetting.currencySymbol)
-                            .arg(AppModel.walletInfo.walletBalanceCurrency)
-                            .arg(AppSetting.currency)
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol)
+                                                                                               .arg(AppModel.walletInfo.walletBalanceCurrency)
+                                                                                               .arg(AppSetting.currency)
                         }
                     }
                     QButtonTextLink {
@@ -364,6 +367,7 @@ Item {
                     id: area_quickrecevied
                     width: parent.width * (1.0 - _walletDes.ratio)
                     height: parent.height
+                    visible: (myRole !== "FACILITATOR_ADMIN")
                     Column {
                         width: parent.width
                         anchors.centerIn: parent
@@ -550,13 +554,13 @@ Item {
                     delegate: QTransactionDelegate {
                         width: transaction_lst.width
                         height: 64
-                        transactionisReceiveTx:transaction_isReceiveTx
+                        transactionisReceiveTx: transaction_isReceiveTx
                         transactiontxid: transaction_txid
                         transactiondestinationList: transaction_destinationDisp_role
                         transactionstatus: transaction_status
                         transactionMemo: transaction_memo
-                        transactionAmount: transaction_isReceiveTx ? transaction_subtotal : transaction_total
-                        transactiontotalCurrency: transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency
+                        transactionAmount: (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
+                        transactiontotalCurrency: (transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency)
                         confirmation: Math.max(0, (AppModel.chainTip - transaction_height)+1)
                         transactionDate: transaction_blocktime
                         addressWidth: width*0.20
@@ -565,6 +569,7 @@ Item {
                         memoWidth: width*0.20
                         amountWidth: width*0.25
                         transactionIsRbf: transaction_isRbf
+                        isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
                         onButtonClicked: {
                             QMLHandle.signalNotifySendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transactiontxid)
                         }

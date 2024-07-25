@@ -325,7 +325,6 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
 void QGroupWalletDummyTx::finishScanDevices()
 {
     if (!transactionPtr()) return;
-    DBG_INFO << transactionPtr()->singleSignersAssigned()->rowCount();
     emit transactionPtr()->singleSignerAssignedChanged();
 }
 

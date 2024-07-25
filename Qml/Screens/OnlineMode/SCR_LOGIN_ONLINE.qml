@@ -40,6 +40,7 @@ QScreen {
     readonly property int eVERIFY_NEWDEVICE : 5
     readonly property int eONBOARDING_CREATE_ACCOUNT: 6
     readonly property int eONBOARDING_SIGN_IN: 7
+    readonly property int eSELECT_YOUR_ACCOUNT_TYPE: 8
     property int whereAmI: {
         if (OnBoarding.state === "create-account") {
             return eONBOARDING_CREATE_ACCOUNT
@@ -57,7 +58,9 @@ QScreen {
         changePassword, // 4: Change password
         verifyNewDevice, // 5: Verify new device
         onboardingCreateAccount, // 6: Onboarding create account
-        onboardingSignIn] // 7: Onboarding sign in
+        onboardingSignIn, // 7: Onboarding sign in
+        select_your_account_type // 8: Select your account type
+    ]
 
     Row {
         id: getStarted
@@ -879,12 +882,12 @@ QScreen {
                     id: btnSigninPrimaryKey
                     width: 338
                     height: 48
-                    label.text: STR.STR_QML_643
+                    label.text: STR.STR_QML_1356
                     label.font.pixelSize: 16
                     type: eTypeB
                     onButtonClicked: {
                         processing = true
-                        QMLHandle.sendEvent(EVT.EVT_ROOT_SIGN_IN_PRIMARY_KEY_REQUEST)
+                        whereAmI = eSELECT_YOUR_ACCOUNT_TYPE
                         processing = false
                     }
                 }
@@ -1449,6 +1452,86 @@ QScreen {
                     } else {
                         passwd.isValid = false
                         passwd.errorText = error_msg
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: select_your_account_type
+        Item {
+            id: _item
+            width: 338
+            height: 612
+            property string type: ""
+            readonly property string ePAID: "PAID"
+            readonly property string ePRIMARY_KEY: "PRIMARY_KEY"
+
+            Column {
+                spacing: 44
+                anchors.centerIn: parent
+                QText {
+                    id: title
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: STR.STR_QML_1357
+                    font.family: "Lato"
+                    font.weight: Font.Bold
+                    font.pixelSize: 20
+                    horizontalAlignment: Text.AlignHCenter
+                    color: "#031F2B"
+                }
+                Column {
+                    spacing: 16
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QRadioButtonTypeA {
+                        width: 338
+                        height: 24
+                        label: STR.STR_QML_1358
+                        fontPixelSize: 16
+                        selected: _item.type === _item.ePAID
+                        onButtonClicked: {
+                            _item.type = _item.ePAID
+                        }
+                    }
+                    QRadioButtonTypeA {
+                        width: 338
+                        height: 24
+                        label: STR.STR_QML_1359
+                        fontPixelSize: 16
+                        selected: _item.type === _item.ePRIMARY_KEY
+                        onButtonClicked: {
+                            _item.type = _item.ePRIMARY_KEY
+                        }
+                    }
+                }
+                Column {
+                    spacing: 16
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QTextButton {
+                        width: 338
+                        height: 48
+                        label.text: STR.STR_QML_097
+                        label.font.pixelSize: 16
+                        type: eTypeE
+                        enabled: _item.type !== "" && !processing
+                        onButtonClicked: {
+                            processing = true
+                            if (_item.type === _item.ePRIMARY_KEY) {
+                                QMLHandle.sendEvent(EVT.EVT_ROOT_SIGN_IN_PRIMARY_KEY_REQUEST)
+                            } else if (_item.type === _item.ePAID) {
+                                QMLHandle.sendEvent(EVT.EVT_SIGN_IN_VIA_XPUB_REQUEST)
+                            }
+                            processing = false
+                        }
+                    }
+                    QButtonTextLink {
+                        height: 48
+                        label: STR.STR_QML_397
+                        fontPixelSize: 16
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onButtonClicked: {
+                            whereAmI = eSIGN_IN
+                        }
                     }
                 }
             }

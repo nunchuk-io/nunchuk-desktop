@@ -172,7 +172,8 @@ public:
         FLOW_ONLINE_ADD_SIGNER,
         FLOW_ONLINE_ADD_WALLET,
         FLOW_ONLINE_SEND_TX,
-        FLOW_ONLINE_RECIEVE_TX
+        FLOW_ONLINE_RECIEVE_TX,
+        FLOW_REPLACE_USER_FREE
     };
 
     enum PASSPHRASE_TRIGER {
@@ -222,6 +223,9 @@ typedef void (*NunchukType1)(const QString &str);
 Q_DECLARE_METATYPE(NunchukType1)
 
 namespace bridge {
+
+QString hwiPath();
+
 int nunchukCurrentMode();
 
 void nunchukSetCurrentMode(int mode);
@@ -578,6 +582,12 @@ QMasterSignerPtr nunchukCreateSoftwareSigner(const QString &name,
                                              bool isPrimaryKey,
                                              bool replace,
                                              QWarningMessage& msg);
+
+nunchuk::MasterSigner CreateSoftwareSignerFromMasterXprv(const QString &name,
+                                                         const QString &xprv,
+                                                         bool isPrimaryKey,
+                                                         bool replace,
+                                                         QWarningMessage& msg);
 
 QString SignLoginMessage(const QString& mastersigner_id,
                          const QString& message);

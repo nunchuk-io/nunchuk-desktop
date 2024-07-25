@@ -327,13 +327,37 @@ QOnScreenContentTypeA {
         id: busyOverlay
         visible: false
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.9)
         anchors.bottom: parent.bottom
         radius: 24
         MouseArea {
             anchors.fill: parent
             onClicked: {}
         }
+        QCloseButton {
+            anchors {
+                right: parent.right
+                rightMargin: 24
+                top: parent.top
+                topMargin: 24
+            }
+            onClicked: {
+                busyOverlay.visible = false
+            }
+        }
+        QButtonTextLink {
+            height: 24
+            label: STR.STR_QML_059
+            anchors {
+                left: parent.left
+                leftMargin: 36
+                bottom: parent.bottom
+                bottomMargin: 36
+            }
+            onButtonClicked: {
+                busyOverlay.visible = false
+            }
+        }
+
         Loader {
             id: busyIndi
             anchors.centerIn: parent
@@ -342,84 +366,43 @@ QOnScreenContentTypeA {
         Component {
             id: createBusy
             Column {
-                spacing: 8
+                spacing: 16
                 Item {
-                    width: 52
-                    height: 52
+                    width: 48
+                    height: 48
                     QBusyIndicator {
-                        width: 44
-                        height: 44
+                        width: 48
+                        height: 48
                         anchors.centerIn: parent
                     }
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-                QText {
-                    width: 700
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    color: "#F6D65D"
-                    font.pixelSize: 24
-                    font.weight: Font.DemiBold
-                    font.family: "Montserrat"
-                    wrapMode: Text.WrapAnywhere
-                    text: STR.STR_QML_140 + signerName
-                }
-                QText {
-                    width: 328
-                    height: 42
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    color: "#F6D65D"
-                    font.pixelSize: 14
-                    wrapMode: Text.WordWrap
-                    font.family: "Lato"
-                    text: STR.STR_QML_141
-                }
-                Rectangle {
-                    width: 500
-                    height: 50
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: Qt.rgba(255, 255, 255, 0.2)
-                    radius: 4
-                    QText {
-                        width: parent.width - 50
-                        anchors.centerIn: parent
+                Column {
+                    spacing: 24
+                    QLato {
+                        width: 376
+                        height: 28
+                        anchors.horizontalCenter: parent.horizontalCenter
                         horizontalAlignment: Text.AlignHCenter
-                        color: "#F1FAFE"
-                        font.pixelSize: 14
-                        wrapMode: Text.WrapAnywhere
-                        font.family: "Lato"
-                        text: messageToSign
+                        font.pixelSize: 16
+                        font.weight: Font.Normal
+                        text: STR.STR_QML_140
                     }
-                }
-                QText {
-                    width: 328
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    color: "#F6D65D"
-                    font.pixelSize: 14
-                    wrapMode: Text.WordWrap
-                    font.family: "Lato"
-                    text: "Hash"
-                    visible: isHardwareSigner
-                }
-                Rectangle {
-                    width: 500
-                    height: 50
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: Qt.rgba(255, 255, 255, 0.2)
-                    radius: 4
-                    visible: isHardwareSigner
-                    QText {
-                        width: parent.width - 50
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        color: "#F1FAFE"
-                        font.pixelSize: 14
-                        wrapMode: Text.WrapAnywhere
-                        font.family: "Lato"
-                        text: messageToSignSHA256
-                        font.capitalization: Font.AllUppercase
+
+                    Rectangle {
+                        width: 222
+                        height: 60
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color: "#EAEAEA"
+                        radius: 12
+                        QLato {
+                            width: parent.width - 50
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            font.pixelSize: 14
+                            wrapMode: Text.WrapAnywhere
+                            text: messageToSign
+                        }
                     }
                 }
             }

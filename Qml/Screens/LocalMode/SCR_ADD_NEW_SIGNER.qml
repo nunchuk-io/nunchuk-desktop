@@ -25,10 +25,12 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Chats"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -47,10 +49,8 @@ QScreen {
         Component {
             id: maincontent
             Item {
-                QText {
+                QMontserrat {
                     id: screenname
-                    width: 163
-                    height: 27
                     anchors {
                         left: parent.left
                         leftMargin: 36
@@ -58,10 +58,8 @@ QScreen {
                         topMargin: 36
                     }
                     text: STR.STR_QML_083
-                    color: "#031F2B"
-                    font.family: "Montserrat"
-                    font.weight: Font.ExtraBold
-                    font.pixelSize: 24
+                    font.weight: Font.Medium
+                    font.pixelSize: 32
                 }
                 QCloseButton {
                     anchors {
@@ -75,14 +73,16 @@ QScreen {
                 }
                 Row {
                     spacing: 48
-                    anchors.top: parent.top
-                    anchors.topMargin: 122
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors {
+                        top: parent.top
+                        topMargin: 184
+                        horizontalCenter: parent.horizontalCenter
+                    }
                     Item {
                         width: 246
-                        height: 396
+                        height: 268
                         Column {
-                            spacing: 4
+                            spacing: 24
                             Rectangle {
                                 width: 96
                                 height: 96
@@ -96,47 +96,50 @@ QScreen {
                                     source: "qrc:/Images/Images/hardware_add-60px.png"
                                 }
                             }
-                            QText {
-                                width: 210
-                                height: 56
-                                text: STR.STR_QML_084
-                                horizontalAlignment: Text.AlignHCenter
-                                font.family: "Lato"
-                                font.pixelSize: 20
-                                font.weight: Font.Bold
-                                wrapMode: Text.WordWrap
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                            QText {
-                                width: 210
-                                height: 112
-                                text: STR.STR_QML_085
-                                font.family: "Lato"
-                                font.pixelSize: 16
-                                font.weight: Font.Light
-                                wrapMode: Text.WordWrap
-                                horizontalAlignment: Text.AlignHCenter
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                            QTextButton {
-                                width: 180
-                                height: 48
-                                label.text: STR.STR_QML_086
-                                label.font.pixelSize: 16
-                                label.font.family: "Lato"
-                                type: eTypeB
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                onButtonClicked: {
-                                    loadercontent.sourceComponent = beforeStartHardware
+                            Column {
+                                spacing: 12
+                                Column {
+                                    spacing: 4
+                                    QLato {
+                                        width: 210
+                                        height: 28
+                                        text: STR.STR_QML_084
+                                        horizontalAlignment: Text.AlignHCenter
+                                        font.pixelSize: 20
+                                        font.weight: Font.Bold
+                                        wrapMode: Text.WordWrap
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                    }
+                                    QLato {
+                                        width: 210
+                                        height: 56
+                                        text: STR.STR_QML_085
+                                        font.pixelSize: 16
+                                        font.weight: Font.Normal
+                                        wrapMode: Text.WordWrap
+                                        horizontalAlignment: Text.AlignHCenter
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                    }
+                                }
+                                QTextButton {
+                                    width: 180
+                                    height: 48
+                                    label.text: STR.STR_QML_086
+                                    label.font.pixelSize: 16
+                                    type: eTypeB
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    onButtonClicked: {
+                                        loadercontent.sourceComponent = beforeStartHardware
+                                    }
                                 }
                             }
                         }
                     }
                     Item {
                         width: 246
-                        height: 450
+                        height: 268
                         Column {
-                            spacing: 4
+                            spacing: 24
                             Rectangle {
                                 width: 96
                                 height: 96
@@ -147,42 +150,45 @@ QScreen {
                                     width: 60
                                     height: 60
                                     anchors.centerIn: parent
-                                    source: "qrc:/Images/Images/software_add-60px.svg"
+                                    source: "qrc:/Images/Images/logo-dark.svg"
                                 }
                             }
-                            QText {
-                                width: 210
-                                height: 56
-                                text: STR.STR_QML_087
-                                horizontalAlignment: Text.AlignHCenter
-                                font.family: "Lato"
-                                font.pixelSize: 20
-                                font.weight: Font.Bold
-                                wrapMode: Text.WordWrap
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                            QText {
-                                width: 210
-                                height: 112
-                                text: STR.STR_QML_088
-                                font.family: "Lato"
-                                font.pixelSize: 16
-                                font.weight: Font.Light
-                                wrapMode: Text.WordWrap
-                                horizontalAlignment: Text.AlignHCenter
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                            QTextButton {
-                                width: 180
-                                height: 48
-                                label.text: enabled ? STR.STR_QML_089 : STR.STR_QML_090
-                                label.font.pixelSize: 16
-                                label.font.family: "Lato"
-                                type: eTypeB
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                enabled: AppModel.limitSoftwareSigner ? (AppModel.softwareSignerDeviceList.count === 0) : true
-                                onButtonClicked: {
-                                    loadercontent.sourceComponent = beforeStartSoftware
+                            Column {
+                                spacing: 12
+                                Column {
+                                    spacing: 4
+                                    QLato {
+                                        width: 210
+                                        height: 28
+                                        text: STR.STR_QML_087
+                                        horizontalAlignment: Text.AlignHCenter
+                                        font.pixelSize: 20
+                                        font.weight: Font.Bold
+                                        wrapMode: Text.WordWrap
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                    }
+                                    QLato {
+                                        width: 210
+                                        height: 56
+                                        text: STR.STR_QML_088
+                                        font.pixelSize: 16
+                                        font.weight: Font.Normal
+                                        wrapMode: Text.WordWrap
+                                        horizontalAlignment: Text.AlignHCenter
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                    }
+                                }
+                                QTextButton {
+                                    width: 180
+                                    height: 48
+                                    label.text: enabled ? STR.STR_QML_089 : STR.STR_QML_090
+                                    label.font.pixelSize: 16
+                                    type: eTypeB
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    enabled: AppModel.limitSoftwareSigner ? (AppModel.softwareSignerDeviceList.count === 0) : true
+                                    onButtonClicked: {
+                                        loadercontent.sourceComponent = beforeStartSoftware
+                                    }
                                 }
                             }
                         }
@@ -195,8 +201,6 @@ QScreen {
             Item {
                 QText {
                     id: screenname
-                    width: 163
-                    height: 27
                     anchors {
                         left: parent.left
                         leftMargin: 36
@@ -206,8 +210,8 @@ QScreen {
                     text: STR.STR_QML_091
                     color: "#031F2B"
                     font.family: "Montserrat"
-                    font.weight: Font.ExtraBold
-                    font.pixelSize: 24
+                    font.weight: Font.Medium
+                    font.pixelSize: 32
                 }
                 QCloseButton {
                     anchors {
@@ -395,8 +399,8 @@ QScreen {
                     text: STR.STR_QML_091
                     color: "#031F2B"
                     font.family: "Montserrat"
-                    font.weight: Font.ExtraBold
-                    font.pixelSize: 24
+                    font.weight: Font.Medium
+                    font.pixelSize: 32
                 }
                 QCloseButton {
                     anchors {
@@ -410,17 +414,15 @@ QScreen {
                 }
                 Column {
                     spacing: 24
-                    width: 536
-                    height: 336
                     anchors.top: parent.top
-                    anchors.topMargin: 144
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.topMargin: 104
+                    anchors.left: parent.left
+                    anchors.leftMargin: 36
                     Rectangle {
                         width: 96
                         height: 96
                         radius: width
                         color: "#F5F5F5"
-                        anchors.horizontalCenter: parent.horizontalCenter
                         QImage {
                             width: 60
                             height: 60
@@ -429,16 +431,115 @@ QScreen {
                         }
                     }
                     QText {
-                        width: 500
-                        height: 28
+                        width: 536
+                        lineHeight: 28
+                        lineHeightMode: Text.FixedHeight
                         text: STR.STR_QML_098
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.family: "Lato"
                         font.pixelSize: 16
                         color: "#031F2B"
                         wrapMode: Text.WordWrap
+                    }
+                    Row {
+                        spacing: 12
+                        QImage {
+                            width: 24
+                            height: 24
+                            source: "qrc:/Images/Images/replace-primary-key-dark.png"
+                        }
+                        Column {
+                            spacing: 8
+                            QText {
+                                width: 500
+                                lineHeight: 20
+                                lineHeightMode: Text.FixedHeight
+                                text: STR.STR_QML_1370
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                color: "#031F2B"
+                                wrapMode: Text.WordWrap
+                                font.bold: true
+                            }
+                            QText {
+                                width: 500
+                                lineHeight: 28
+                                lineHeightMode: Text.FixedHeight
+                                text: STR.STR_QML_1371
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                color: "#031F2B"
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+                    Row {
+                        spacing: 12
+                        QImage {
+                            width: 24
+                            height: 24
+                            source: "qrc:/Images/Images/emergency-lockdown-dark.png"
+                        }
+                        Column {
+                            spacing: 8
+                            QText {
+                                width: 500
+                                lineHeight: 20
+                                lineHeightMode: Text.FixedHeight
+                                text: STR.STR_QML_1372
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                color: "#031F2B"
+                                wrapMode: Text.WordWrap
+                                font.bold: true
+                            }
+                            QText {
+                                width: 500
+                                lineHeight: 28
+                                lineHeightMode: Text.FixedHeight
+                                text: STR.STR_QML_1373
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                color: "#031F2B"
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+                    Item {
+                        width: parent.width
+                        height: 16
+                    }
+                    Rectangle {
+                        width: 728
+                        height: 60
+                        radius: 8
+                        color: "#EAEAEA"
+                        Row {
+                            width: 704
+                            spacing: 8
+                            anchors.centerIn: parent
+                            QImage {
+                                width: 30
+                                height: 30
+                                source: "qrc:/Images/Images/info-60px.png"
+                            }
+                            QText {
+                                width: 500
+                                lineHeight: 28
+                                lineHeightMode: Text.FixedHeight
+                                text: STR.STR_QML_1374
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "Lato"
+                                font.pixelSize: 16
+                                color: "#031F2B"
+                                wrapMode: Text.WordWrap
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
                     }
                 }
                 QButtonTextLink {
@@ -463,20 +564,49 @@ QScreen {
                         bottom: parent.bottom
                         bottomMargin: 32
                     }
-                    QTextButton {
-                        width: 280
+                    QButtonLargeTail {
+                        width: 200
                         height: 48
-                        label.text: STR.STR_QML_099
-                        label.font.pixelSize: 16
-                        type: eTypeB
+                        type: eSECONDARY
+                        label: STR.STR_QML_099
+                        optionVisible: recoverSoftwareContextMenu.visible
+                        layoutDirection: Qt.RightToLeft
                         onButtonClicked: {
-                            QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)
+                            GlobalData.recoverSoftwareType = ""
+                            recoverSoftwareContextMenu.x = 20
+                            recoverSoftwareContextMenu.y = 20 - recoverSoftwareContextMenu.height
+                            recoverSoftwareContextMenu.open()
+                        }
+                        QContextMenu {
+                            id: recoverSoftwareContextMenu
+                            menuWidth: 250
+                            labels: [
+                                STR.STR_QML_250,
+                                STR.STR_QML_1350,
+                            ]
+                            icons:    ["", ""]
+                            colors:   [ "#031F2B", "#031F2B"]
+                            enables:  [ true, true ]
+                            visibles: [ true, true ]
+                            functions: [
+                                function(){ // Request seed
+                                    GlobalData.recoverSoftwareType = "seed"
+                                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)
+                                },
+                                function(){ // Request xprv
+                                    GlobalData.recoverSoftwareType = "xprv"
+                                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)
+                                },
+                            ]
+                            onItemClicked: {
+                                functions[index]()
+                            }
                         }
                     }
                     QTextButton {
                         width: 200
                         height: 48
-                        label.text: STR.STR_QML_100
+                        label.text: STR.STR_QML_1378
                         label.font.pixelSize: 16
                         type: eTypeE
                         onButtonClicked: {
@@ -664,8 +794,6 @@ QScreen {
             Item {
                 QText {
                     id: screenname
-                    width: 163
-                    height: 27
                     anchors {
                         left: parent.left
                         leftMargin: 36
@@ -675,8 +803,8 @@ QScreen {
                     text: STR.STR_QML_091
                     color: "#031F2B"
                     font.family: "Montserrat"
-                    font.weight: Font.ExtraBold
-                    font.pixelSize: 24
+                    font.weight: Font.Medium
+                    font.pixelSize: 32
                 }
                 QCloseButton {
                     anchors {
@@ -853,8 +981,6 @@ QScreen {
             Item {
                 QText {
                     id: screenname
-                    width: 163
-                    height: 27
                     anchors {
                         left: parent.left
                         leftMargin: 36
@@ -864,8 +990,8 @@ QScreen {
                     text: STR.STR_QML_091
                     color: "#031F2B"
                     font.family: "Montserrat"
-                    font.weight: Font.ExtraBold
-                    font.pixelSize: 24
+                    font.weight: Font.Medium
+                    font.pixelSize: 32
                 }
                 QCloseButton {
                     anchors {
@@ -932,20 +1058,49 @@ QScreen {
                         bottom: parent.bottom
                         bottomMargin: 32
                     }
-                    QTextButton {
-                        width: 280
+                    QButtonLargeTail {
+                        width: 200
                         height: 48
-                        label.text: STR.STR_QML_099
-                        label.font.pixelSize: 16
-                        type: eTypeB
+                        type: eSECONDARY
+                        label: STR.STR_QML_099
+                        optionVisible: recoverSoftwareContextMenu.visible
+                        layoutDirection: Qt.RightToLeft
                         onButtonClicked: {
-                            QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)
+                            GlobalData.recoverSoftwareType = ""
+                            recoverSoftwareContextMenu.x = 20
+                            recoverSoftwareContextMenu.y = 20 - recoverSoftwareContextMenu.height
+                            recoverSoftwareContextMenu.open()
+                        }
+                        QContextMenu {
+                            id: recoverSoftwareContextMenu
+                            menuWidth: 250
+                            labels: [
+                                STR.STR_QML_250,
+                                STR.STR_QML_1350,
+                            ]
+                            icons:    ["", ""]
+                            colors:   [ "#031F2B", "#031F2B"]
+                            enables:  [ true, true ]
+                            visibles: [ true, true ]
+                            functions: [
+                                function(){ // Request seed
+                                    GlobalData.recoverSoftwareType = "seed"
+                                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)
+                                },
+                                function(){ // Request xprv
+                                    GlobalData.recoverSoftwareType = "xprv"
+                                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)
+                                },
+                            ]
+                            onItemClicked: {
+                                functions[index]()
+                            }
                         }
                     }
                     QTextButton {
                         width: 200
                         height: 48
-                        label.text: STR.STR_QML_100
+                        label.text: STR.STR_QML_1378
                         label.font.pixelSize: 16
                         type: eTypeE
                         onButtonClicked: {

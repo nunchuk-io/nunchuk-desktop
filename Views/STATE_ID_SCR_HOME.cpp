@@ -145,9 +145,17 @@ void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_HOME_SEND_REQUEST_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(AppModel::instance()->walletInfo()->id());
-        if(utxos){
-            AppModel::instance()->setUtxoList(utxos);
+        QString rollover_address = msg.toString();
+        if(rollover_address != ""){
+            timeoutHandler(1000, [=](){
+                emit AppModel::instance()->walletInfo()->rollOverProcess(rollover_address);
+            });
+        }
+        else {
+            QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(AppModel::instance()->walletInfo()->id());
+            if(utxos){
+                AppModel::instance()->setUtxoList(utxos);
+            }
         }
     }
 }
@@ -324,4 +332,12 @@ void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg) {
 void EVT_ADD_SOFTWARE_SIGNER_RESULT_HANDLER(QVariant msg) {
 
 }
+
+void EVT_REPLACE_KEYS_REQUEST_HANDLER(QVariant msg) {
+    bool isFirst = msg.toMap()["isFirst"].toBool();
+    if(isFirst){
+        AppModel::instance()->setNewWalletInfo(AppModel::instance()->walletInfoPtr()->clone());
+    }
+}
+
 

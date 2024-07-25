@@ -552,6 +552,11 @@ void QGroupWallets::setHistoryPeriods(QJsonArray historyPeriods)
     emit historyPeriodsChanged();
 }
 
+void QGroupWallets::SignInDashBoard(QGroupDashboardPtr dashboard)
+{
+    mDashboard = dashboard;
+}
+
 void QGroupWallets::updateRequestKey()
 {
     GetAllGroups();

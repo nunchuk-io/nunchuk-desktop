@@ -79,7 +79,7 @@ QWalletDelegateBackground {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: (walletRole === "KEYHOLDER_LIMITED") ? "••••••" : (walletBalance + RoomWalletData.unitValue)
+                        text: (walletRole === "KEYHOLDER_LIMITED" || walletRole === "FACILITATOR_ADMIN") ? "••••••" : (walletBalance + RoomWalletData.unitValue)
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.weight: Font.DemiBold
@@ -91,7 +91,7 @@ QWalletDelegateBackground {
                     height: 16
                     QText {
                         anchors.fill: parent
-                        text: (walletRole === "KEYHOLDER_LIMITED") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol).arg(walletCurrency).arg(AppSetting.currency)
+                        text: (walletRole === "KEYHOLDER_LIMITED" || walletRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol).arg(walletCurrency).arg(AppSetting.currency)
                         color: "#FFFFFF"
                         elide: Text.ElideRight
                         font.pixelSize: 12
@@ -253,8 +253,8 @@ QWalletDelegateBackground {
                     width: 24
                     height: 24
                     maxChar: 2
-                    username: primaryOwner.name
-                    avatarUrl: primaryOwner.avatar
+                    username: primaryOwner === undefined ? "" : primaryOwner.name
+                    avatarUrl: primaryOwner === undefined ? "" : primaryOwner.avatar
                     anchors.verticalCenter: parent.verticalCenter
                     displayStatus: false
                 }
@@ -262,7 +262,7 @@ QWalletDelegateBackground {
                     height: 16
                     font.pixelSize: 12
                     color: "#595959"
-                    text: primaryOwner.name
+                    text: primaryOwner === undefined ? "" : primaryOwner.name
                     font.weight: Font.Bold
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignHCenter

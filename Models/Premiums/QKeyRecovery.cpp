@@ -13,16 +13,6 @@ QKeyRecovery::QKeyRecovery()
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-int QKeyRecovery::mode()
-{
-    if (ClientController::instance()->isByzantine()) {
-        return GROUP_WALLET;
-    } else if (ClientController::instance()->isHoneyBadger() || ClientController::instance()->isIronHand()) {
-        return USER_WALLET;
-    } else {}
-    return -1;
-}
-
 QVariant QKeyRecovery::signer() const
 {
     return QVariant::fromValue(m_signer);
@@ -116,7 +106,7 @@ bool QKeyRecovery::UserKeysCalculateRequiredSignatures(const QString &xfp)
     setSigner(xfp);
     if (m_signer.isEmpty()) return false;
     DBG_INFO << m_signer;
-    if (mode() == USER_WALLET) {
+    if (ClientController::instance()->isUserWallet()) {
         QJsonObject resultObj;
         resultObj["type"] = "SECURITY_QUESTION";
         servicesTagPtr()->setReqiredSignatures(resultObj);

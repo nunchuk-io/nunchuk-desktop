@@ -34,7 +34,7 @@ Rectangle {
     id: signermanagerdlg
     property alias  nameWidth: text.width
     property alias  signername: id_signername.text
-    property alias  signerXFP: id_xfp.text
+    property string  card_id_or_xfp: ""
     property string devicetype: ""
     property int    signerType : 0
     property bool   isPrimaryKey: false
@@ -77,12 +77,19 @@ Rectangle {
             font.weight: Font.DemiBold
             horizontalAlignment: Text.AlignLeft
         }
-        QText {
+        QLato {
             id: id_xfp
             width: parent.width
             height: 16
             color: "#F1FAFE"
-            font.family: "Lato"
+            text: {
+                if (signerTag == "NFC" || signerType === NUNCHUCKTYPE.NFC) {
+                    var textR = card_id_or_xfp.substring(card_id_or_xfp.length - 5, card_id_or_xfp.length).toUpperCase()
+                    return "Card ID: ••" + textR
+                } else {
+                    return "XFP: " + card_id_or_xfp.toUpperCase()
+                }
+            }
             elide: Text.ElideRight
             font.pixelSize: 12
             horizontalAlignment: Text.AlignLeft

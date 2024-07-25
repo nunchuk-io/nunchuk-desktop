@@ -77,7 +77,7 @@ QWalletServicesTagPtr ServiceSetting::servicesTagPtr() const
         if (ClientController::instance()->isMultiSubscriptions()) {
             return QGroupWallets::instance()->servicesTagPtr();
         } else {
-            return QBasePremium::mode() == USER_WALLET ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
+            return ClientController::instance()->isUserWallet() ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
         }
     }
 }

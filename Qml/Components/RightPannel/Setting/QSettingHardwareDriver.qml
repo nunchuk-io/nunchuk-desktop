@@ -102,7 +102,7 @@ Item {
                 label.font.pixelSize: 16
                 label.font.family: "Lato"
                 type: eTypeE
-                enabled: hwidrivertitle.anyChanged
+                enabled: hwidrivertitle.anyChanged || hwipath.anyChanged
                 onButtonClicked: {
                     if(hwidrivertitle.anyChanged) { hwidrivertitle.applySettings() }
                     if(hwipath.anyChanged) { hwipath.applySettings() }

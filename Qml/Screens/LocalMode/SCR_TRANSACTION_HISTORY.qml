@@ -32,6 +32,7 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
 
+    property string myRole: AppModel.walletInfo.myRole
     QOnScreenContent {
         id: contenCenter
         width: popupWidth
@@ -186,15 +187,16 @@ QScreen {
                     timeWidth: width*0.15
                     memoWidth: width*0.20
                     amountWidth: width*0.25
-                    transactionisReceiveTx:transaction_isReceiveTx
-                    transactiontxid:transaction_txid
+                    transactionisReceiveTx: transaction_isReceiveTx
+                    transactiontxid: transaction_txid
                     transactiondestinationList: transaction_destinationDisp_role
                     transactionstatus: transaction_status
                     transactionMemo:   transaction_memo
-                    transactionAmount:   transaction_isReceiveTx ? transaction_subtotal : transaction_total
-                    transactiontotalCurrency: transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency
+                    transactionAmount: (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
+                    transactiontotalCurrency: (transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency)
                     confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
                     transactionDate: transaction_blocktime
+                    isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
                     onButtonClicked: {
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_INFO_ITEM_SELECTED, transaction_txid)
                     }

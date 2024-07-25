@@ -38,6 +38,7 @@ Item {
     readonly property Item contentItem: contentInfo.item
     readonly property Item rightItem: botRight.item
     property bool enableHeader: true
+    property bool hasClose: true
     property int  offset: 36
     property bool isShowLine: false
     property int  minWidth: -1
@@ -117,7 +118,7 @@ Item {
     }
     QCloseButton {
         id: closeButton
-        visible: enableHeader
+        visible: enableHeader && hasClose
         anchors {
             right: parent.right
             rightMargin: 24

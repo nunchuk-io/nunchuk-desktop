@@ -30,6 +30,16 @@ bool QDummyTransaction::isDummyTx() const
     return true;
 }
 
+QStringList QDummyTransaction::hideSignBtns() const
+{
+    return m_hideSignBtns;
+}
+
+void QDummyTransaction::setHideSignBtns(const QStringList &newHideSignBtns)
+{
+    m_hideSignBtns = newHideSignBtns;
+}
+
 QWalletDummyTx::QWalletDummyTx(WalletId wallet_id)
     : QBasePremium(wallet_id)
     , m_transaction(QDummyTransactionPtr(new QDummyTransaction()))

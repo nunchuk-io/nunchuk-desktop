@@ -402,37 +402,9 @@ QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no)
     }
     if (no) {
         // update server to match local
-        SyncSignerToServer(m_local_signer);
+        WalletKeys::SyncSignerToServer(m_local_signer);
     }
     return QString::fromStdString(m_local_signer.get_master_fingerprint());
-}
-
-bool QWalletManagement::SyncSignerToServer(const nunchuk::SingleSigner &signer)
-{
-    QJsonObject data;
-    data["name"] = QString::fromStdString(signer.get_name());
-    data["type"] = QString::fromStdString(SignerTypeToStr(signer.get_type()));
-    QJsonArray tags;
-    for (auto tag : signer.get_tags()) {
-        tags.append(QString::fromStdString(SignerTagToStr(tag)));
-    }
-    data["tags"] = tags;
-    if (signer.get_type() == nunchuk::SignerType::NFC) {
-        QWarningMessage msgGetTap;
-        nunchuk::TapsignerStatus tap = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(signer.get_master_fingerprint(), msgGetTap);
-
-        QJsonObject tapsigner;
-        tapsigner["card_id"] = QString::fromStdString(tap.get_card_ident());
-        tapsigner["version"] = QString::fromStdString(tap.get_version());
-        tapsigner["birth_height"] = tap.get_birth_height();
-        tapsigner["is_testnet"] = tap.is_testnet();
-        data["tapsigner"] = tapsigner;
-    } else {
-        data["tapsigner"] = {};
-    }
-    DBG_INFO << QString::fromStdString(signer.get_master_fingerprint()) << tags;
-    bool ret = Draco::instance()->assistedKeyUpdateName(QString::fromStdString(signer.get_master_fingerprint()), "", data);
-    return ret;
 }
 
 WalletIdList QWalletManagement::wallets() const
@@ -675,6 +647,16 @@ void QWalletManagement::CreateData<QRecurringPaymentPtr>(WalletId wallet_id) {
     QRecurringPaymentPtr payment = QRecurringPaymentPtr(new QRecurringPayment(wallet_id));
     if (!contains<QRecurringPaymentPtr>(wallet_id)) {
         mRecurringPayments.append(payment);
+    }
+}
+
+void QWalletManagement::initSignInWallet(WalletId wallet_id) {
+    QJsonObject info;
+    info["id"] = "";
+    QGroupDashboardPtr dashboard = QGroupDashboardPtr(new QGroupDashboard(wallet_id));
+    if (!contains<QGroupDashboardPtr>(wallet_id)) {
+        mActivedWallets.append(dashboard);
+        dashboard->setGroupInfo(info);
     }
 }
 

@@ -1877,37 +1877,41 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             {
                 QJsonObject content = evt.fullJson()["content"].toObject();
                 QString wallet_id = content["wallet_local_id"].toString();
-                QString tx_id     = content["transaction_id"].toString();
-
-                if (wallet_id != "" && tx_id != "") {                    
-                    QWarningMessage msg;
-                    nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(wallet_id, tx_id, msg);
-                    if(    (int)EWARNING::WarningType::NONE_MSG == msg.type()
-                        && !msgtype.contains("io.nunchuk.custom.transaction_canceled"))
-                    {
-                        if(AppModel::instance()->walletList()){
-                            QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
-                            if(wallet && wallet.data()->isAssistedWallet()){
-                                QTransactionPtr trans = wallet.data()->SyncAssistedTxs(tx);
-                                if (trans) {
-                                    QJsonObject data = wallet.data()->GetServerKeyInfo(trans->txid());
-                                    if(!data.isEmpty()){
-                                        trans->setServerKeyMessage(data);
-                                    }
-                                    wallet.data()->transactionHistory()->updateTransaction(trans->txid(), trans);
-                                    if(AppModel::instance()->transactionInfo()){
-                                        QString current_tx_wallet_id = AppModel::instance()->transactionInfo()->walletId();
-                                        QString current_tx_id        = AppModel::instance()->transactionInfo()->txid();
-                                        if(qUtils::strCompare(wallet_id, current_tx_wallet_id) && qUtils::strCompare(tx_id, current_tx_id)){
-                                            AppModel::instance()->setTransactionInfo(trans);
+                if (wallet_id != "") {
+                    if(msgtype.contains("io.nunchuk.custom.transaction_canceled") || msgtype.contains("io.nunchuk.custom.transaction_batch_created")){
+                        DBG_INFO << content;
+                        AppModel::instance()->startSyncWalletDb(wallet_id);
+                    }
+                    else {
+                        QString tx_id = content["transaction_id"].toString();
+                        QWarningMessage msg;
+                        nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(wallet_id, tx_id, msg);
+                        if((int)EWARNING::WarningType::NONE_MSG == msg.type())
+                        {
+                            if(AppModel::instance()->walletList()){
+                                QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
+                                if(wallet && wallet.data()->isAssistedWallet()){
+                                    QTransactionPtr trans = wallet.data()->SyncAssistedTxs(tx);
+                                    if (trans) {
+                                        QJsonObject data = wallet.data()->GetServerKeyInfo(trans->txid());
+                                        if(!data.isEmpty()){
+                                            trans->setServerKeyMessage(data);
+                                        }
+                                        wallet.data()->transactionHistory()->updateTransaction(trans->txid(), trans);
+                                        if(AppModel::instance()->transactionInfo()){
+                                            QString current_tx_wallet_id = AppModel::instance()->transactionInfo()->walletId();
+                                            QString current_tx_id        = AppModel::instance()->transactionInfo()->txid();
+                                            if(qUtils::strCompare(wallet_id, current_tx_wallet_id) && qUtils::strCompare(tx_id, current_tx_id)){
+                                                AppModel::instance()->setTransactionInfo(trans);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    else {
-                        AppModel::instance()->startSyncWalletDb(wallet_id);
+                        else {
+                            AppModel::instance()->startSyncWalletDb(wallet_id);
+                        }
                     }
                 }
                 if (dashboard) {

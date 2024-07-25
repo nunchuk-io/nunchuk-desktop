@@ -215,6 +215,8 @@ public:
     virtual QString dummyXfp() const;
     virtual bool isDummyTx() const;
 
+    virtual QStringList hideSignBtns() const;
+
     bool enableRequestSignature();
     bool enableScheduleBroadcast();
     bool enableCancelTransaction();

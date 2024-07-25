@@ -53,7 +53,6 @@ QScreen {
         anchors.centerIn: parent
         sourceComponent: _SCREENS[whereIn]
     }
-
     Component{
         id:recoverKeyWithSeed
         QOnScreenContent {
@@ -69,7 +68,7 @@ QScreen {
                     left: parent.left
                     leftMargin: 36
                     top: parent.top
-                    topMargin: 70
+                    topMargin: 84
                 }
                 color: "#031F2B"
                 font.family: "Lato"
@@ -142,6 +141,7 @@ QScreen {
                 }
             }
             QButtonTextLink {
+                height: 48
                 label: STR.STR_QML_035
                 displayIcon: false
                 anchors {
@@ -151,7 +151,7 @@ QScreen {
                     bottomMargin: 36
                 }
                 onButtonClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_ONLINE_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY)
+                    QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
                 }
             }
             QTextButton {
@@ -306,7 +306,6 @@ QScreen {
                     }
                 }
             }
-
         }
     }
     Component{
@@ -453,6 +452,5 @@ QScreen {
             }
         }
     }
-
 }
 

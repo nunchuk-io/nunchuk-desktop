@@ -64,6 +64,7 @@ AppModel::AppModel(): inititalized_{false},
     connect(&timerFeeRates_, &QTimer::timeout, this, &AppModel::timerFeeRatesHandle, Qt::QueuedConnection);
     connect(&timerCheckAuthorized_, &QTimer::timeout, this, &AppModel::timerCheckAuthorizedHandle, Qt::QueuedConnection);
     connect(this, &AppModel::forwardToast, this, &AppModel::recieveToast, Qt::QueuedConnection);
+    connect(this, &AppModel::signViaSingature, this, &AppModel::slotSignViaSingature, Qt::QueuedConnection);
 
     timerRefreshHealthCheck_.start(60000);  // Every 1'
     timerFeeRates_.start(300000);           // Every 5'
@@ -113,6 +114,14 @@ void AppModel::confirmSyncingWalletFromServer(bool yes, bool no)
 void AppModel::setTimeLogging(const QDateTime &newTimeLogging)
 {
     timeLogging_ = newTimeLogging;
+}
+
+void AppModel::slotSignViaSingature()
+{
+    AppModel::instance()->requestClearData();
+    timeoutHandler(100, [this](){
+        makeInstanceForAccount({}, "");
+    });
 }
 
 QString AppModel::newKeySignMessage() const
@@ -978,6 +987,7 @@ void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
     }
     if(walletInfo_){
         DBG_INFO << "Force set:" << allow
+                 << "Wallet Id:" << walletInfo_.data()->id()
                  << "Wallet Role:" << walletInfo_.data()->myRole()
                  << "Wallet Slug:" << walletInfo_.data()->slug()
                  << "Wallet Status:" << walletInfo_.data()->status();
@@ -1167,6 +1177,22 @@ QString AppModel::parseJSONSigners(QString fileName)
 {
     QString file_path = qUtils::QGetFilePath(fileName);
     return bridge::nunchukParseJSONSigners(file_path);
+}
+
+bool AppModel::isValidXPRV(const QString &xprv)
+{
+    QWarningMessage msg;
+    bool ret =  qUtils::isValidXPRV(xprv, msg);
+    if(!ret) {
+        if((int)EWARNING::WarningType::EXCEPTION_MSG == msg.type()){
+            showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+        }
+        // else {
+        //     QString what = "Invalid XPRV";
+        //     showToast(0, what, EWARNING::WarningType::EXCEPTION_MSG);
+        // }
+    }
+    return ret;
 }
 
 bool AppModel::updateSettingRestartRequired()

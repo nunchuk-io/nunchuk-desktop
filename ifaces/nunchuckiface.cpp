@@ -1654,7 +1654,10 @@ nunchuk::Wallet nunchukiface::ImportWalletConfigFile(const std::string &file_pat
     return ret;
 }
 
-nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name, const std::string &mnemonic, const std::string &passphrase, bool isPrimaryKey,
+nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name,
+                                                         const std::string &mnemonic,
+                                                         const std::string &passphrase,
+                                                         bool isPrimaryKey,
                                                          bool replace,
                                                          QWarningMessage& msg)
 {
@@ -1662,6 +1665,28 @@ nunchuk::MasterSigner nunchukiface::CreateSoftwareSigner(const std::string &name
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->CreateSoftwareSigner(name, mnemonic, passphrase, create_software_signer_listener,isPrimaryKey, replace);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::MasterSigner nunchukiface::CreateSoftwareSignerFromMasterXprv(const std::string &name,
+                                                                       const std::string &master_xprv,
+                                                                       bool is_primary,
+                                                                       bool replace,
+                                                                       QWarningMessage &msg)
+{
+    nunchuk::MasterSigner ret("", nunchuk::Device(""), 0);
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->CreateSoftwareSignerFromMasterXprv(name, master_xprv, create_software_signer_listener, is_primary, replace);
         }
     }
     catch (const nunchuk::BaseException &ex) {

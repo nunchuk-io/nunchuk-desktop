@@ -73,6 +73,7 @@ public:
 
     QVariantList historyPeriods() const;
     void setHistoryPeriods(QJsonArray historyPeriods);
+    void SignInDashBoard(QGroupDashboardPtr dashboard);
 public:
     bool AddOrUpdateAKeyToDraftWallet() final;
     void updateRequestKey() final;

@@ -31,6 +31,7 @@ QtObject {
     property int    settingIndex: 0
     property bool   customMsgHealthcheck: false
     property int    listFocusing: 0
+    property string recoverSoftwareType: "seed"
 
     property var backgroundColor: [
         ["#F6D65D", "#96833B", "#9CAEB8", "#B8A048"],

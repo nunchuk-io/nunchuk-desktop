@@ -11,7 +11,6 @@ class QBasePremium : public QObject, public Slugs
     Q_OBJECT
 public:
     explicit QBasePremium(WalletId wallet_id);
-    static int mode();
     template<typename T>
     static T information(const QString &wallet_id) {
         return WalletsMng->data<T>(wallet_id);

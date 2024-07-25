@@ -44,6 +44,8 @@ Item {
     property string title: ""
     property int    state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
     property string selected_xfp: ""
+    property var refreshDeviceList: draftWallet.refreshDeviceList
+    property alias mDevicelist: devicelist
     Item {
         width: 539
         height: 500
@@ -124,7 +126,7 @@ Item {
                     visible: devicelist.count
                     width: parent.width
                     height: Math.min(230, (devicelist.count*44) + ((devicelist.count-1)*8))
-                    model: draftWallet.refreshDeviceList
+                    model: refreshDeviceList
                     anchors {
                         left: parent.left
                         leftMargin: 12

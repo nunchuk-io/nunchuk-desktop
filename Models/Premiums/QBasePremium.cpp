@@ -18,19 +18,6 @@ QBasePremium::QBasePremium(WalletId wallet_id)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-int QBasePremium::mode()
-{
-    if (ClientController::instance()->isHoneyBadger() || ClientController::instance()->isIronHand()) {
-        return USER_WALLET;
-    }
-    else if (ClientController::instance()->isByzantine() || ClientController::instance()->isFinney()) {
-        return GROUP_WALLET;
-    }
-    else {
-        return FREE_USER;
-    }
-}
-
 QString QBasePremium::wallet_id() const
 {
     return m_wallet_id;
@@ -48,56 +35,35 @@ QWalletPtr QBasePremium::walletInfoPtr() const
 
 QGroupDashboardPtr QBasePremium::dashBoardPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->dashboard();
-    }
-    return {};
+    return QGroupDashboard::information<QGroupDashboardPtr>(wallet_id());
 }
 
 QServerKeyPtr QBasePremium::serverKeyPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->serverKeyPtr();
-    }
-    return {};
+    return QServerKey::information<QServerKeyPtr>(wallet_id());
 }
 
 QInheritancePlanPtr QBasePremium::inheritancePlanPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->inheritancePlanPtr();
-    }
-    return {};
+    return QInheritancePlan::information<QInheritancePlanPtr>(wallet_id());
 }
 
 QGroupWalletHealthCheckPtr QBasePremium::healthPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->healthPtr();
-    }
-    return {};
+    return QGroupWalletHealthCheck::information<QGroupWalletHealthCheckPtr>(wallet_id());
 }
 
 QGroupWalletDummyTxPtr QBasePremium::groupDummyTxPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->groupDummyTxPtr();
+    if (auto dummy = QWalletDummyTx::information<QWalletDummyTxPtr>(wallet_id())) {
+        return dummy->get<QGroupWalletDummyTxPtr>();
     }
     return {};
 }
 
 QRecurringPaymentPtr QBasePremium::recurringPaymentPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->recurringPaymentPtr();
-    }
-    return {};
+    return QRecurringPayment::information<QRecurringPaymentPtr>(wallet_id());
 }
 
 QWalletServicesTagPtr QBasePremium::servicesTagPtr() const

@@ -57,16 +57,26 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
         else if (type == "dummy-tx-sign") {
             QtConcurrent::run([maps, w]() {
                 QString xfp = maps["xfp"].toString();
-                if (auto dummy = w->groupDummyTxPtr()) {
-                    dummy->requestSignTx(xfp);
+                if (AppModel::instance()->isSignIn()) {
+                    AppModel::instance()->SignInRequestSignTx(xfp);
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->requestSignTx(xfp);
+                    }
                 }
             });
         }
         else if (type == "dummy-tx-import-qr") {
             QStringList tags = maps["tags"].toStringList();
             if (!tags.isEmpty()) {
-                if (auto dummy = w->groupDummyTxPtr()) {
-                    dummy->requestSignTxViaQR(tags);
+                if (AppModel::instance()->isSignIn()) {
+                    AppModel::instance()->SignInRequestSignTxViaQR(tags);
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->requestSignTxViaQR(tags);
+                    }
                 }
             }
         }
@@ -74,8 +84,13 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
             QString file = maps["file"].toString();
             QString file_path = qUtils::QGetFilePath(file);
             if(file_path != ""){
-                if (auto dummy = w->groupDummyTxPtr()) {
-                    dummy->requestSignTxViaFile(file_path);
+                if (AppModel::instance()->isSignIn()) {
+                    AppModel::instance()->SignInRequestSignTxViaFile(file_path);
+                }
+                else {
+                    if (auto dummy = w->groupDummyTxPtr()) {
+                        dummy->requestSignTxViaFile(file_path);
+                    }
                 }
             }
         }
@@ -99,7 +114,12 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
             QWarningMessage msgwarning;
             QStringList qrtags {};
             if (auto dummy = w->groupDummyTxPtr()) {
-                qrtags = dummy->ExportPsbtViaQR(msgwarning);
+                if (AppModel::instance()->isSignIn()) {
+                    qrtags = AppModel::instance()->ExportPsbtViaQR();
+                }
+                else {
+                    qrtags = dummy->ExportPsbtViaQR(msgwarning);
+                }
             }
             if(!qrtags.isEmpty()){
                 AppModel::instance()->setQrExported(qrtags);

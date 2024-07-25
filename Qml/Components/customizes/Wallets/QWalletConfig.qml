@@ -318,6 +318,7 @@ QOnScreenContent {
                     if (isPrimaryOwner) {
                         ls.push(STR.STR_QML_1193)
                     }
+                    ls.push(STR.STR_QML_1363)
                     if(isCanDeleted){
                         ls.push(STR.STR_QML_332)
                     }
@@ -333,6 +334,7 @@ QOnScreenContent {
                     if (isPrimaryOwner) {
                         ls.push("qrc:/Images/Images/account-member-dark.svg")
                     }
+                    ls.push("qrc:/Images/Images/key-dark.svg")
                     if(isCanDeleted){
                         ls.push("qrc:/Images/Images/Delete.svg")
                     }
@@ -349,7 +351,14 @@ QOnScreenContent {
                     if (isPrimaryOwner) {
                         ls.push(function(){ eFlow = eWALLET_PRIMARY_OWNER })
                     }
-                    if(isCanDeleted){
+                    ls.push(function(){
+                        if (!AppModel.walletInfo.isAssistedWallet) { // free acount
+                            QMLHandle.sendEvent(EVT.EVT_REPLACE_KEYS_REQUEST, {isFirst: true})
+                        } else {
+                            _info.open()
+                        }
+                    })
+                    if(isCanDeleted) {
                         ls.push(function(){
                             if (isAssisted) {
                                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
@@ -367,6 +376,10 @@ QOnScreenContent {
                     ls.push("#031F2B")
                     ls.push("#031F2B")
                     ls.push("#031F2B")
+                    ls.push("#031F2B")
+                    if (isPrimaryOwner) {
+                        ls.push("#031F2B")
+                    }
                     ls.push("#031F2B")
                     if(isCanDeleted){
                         ls.push("#CF4018")
@@ -498,5 +511,11 @@ QOnScreenContent {
                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
             }
         }
+    }
+    QPopupInfo{
+        id:_info
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1391
+        usingMin: true
     }
 }

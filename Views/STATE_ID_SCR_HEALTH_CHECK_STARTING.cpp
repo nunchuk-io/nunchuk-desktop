@@ -38,32 +38,46 @@ void EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST_HANDLER(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
     DBG_INFO << type;
-    auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
-    QJsonObject payload = dashboard->alertJson()["payload"].toObject();
-    DBG_INFO << payload;
-    if (type == "Ill-do-this-later") {
-        QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
-        if (!dummy_transaction_id.isEmpty()) {
-            if (auto health = dashboard->healthPtr()) {
-                if (health->HealthCheckPendingForTx(dummy_transaction_id)) {
-                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
-                    dashboard->GetAlertsInfo();
+    if (AppModel::instance()->isSignIn()) {
+        if (type == "Ill-do-this-later") {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            for(auto obj : QEventProcessor::instance()->getQmlObj()) {
+                if (obj) {
+                    obj->setProperty("whereAmI", 1);
+                }
+            }
+        }
+        else if (type == "Sign-dummy-transaction") {
+            AppModel::instance()->SignInCreateDummyTransaction();
+            QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
+        }
+    } else {
+        auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+        QJsonObject payload = dashboard->alertJson()["payload"].toObject();
+        DBG_INFO << payload;
+        if (type == "Ill-do-this-later") {
+            QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
+            if (!dummy_transaction_id.isEmpty()) {
+                if (auto health = dashboard->healthPtr()) {
+                    if (health->HealthCheckPendingForTx(dummy_transaction_id)) {
+                        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                        dashboard->GetAlertsInfo();
+                    }
+                }
+            }
+        }
+        else if (type == "Sign-dummy-transaction") {
+            QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
+            if (!dummy_transaction_id.isEmpty()) {
+                if (auto health = dashboard->healthPtr()) {
+                    if (health->HealthCheckPendingForTx(dummy_transaction_id)) {
+                        QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
+                        dashboard->GetAlertsInfo();
+                    }
                 }
             }
         }
     }
-    else if (type == "Sign-dummy-transaction") {
-        QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
-        if (!dummy_transaction_id.isEmpty()) {
-            if (auto health = dashboard->healthPtr()) {
-                if (health->HealthCheckPendingForTx(dummy_transaction_id)) {
-                    QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_REQUEST);
-                    dashboard->GetAlertsInfo();
-                }
-            }
-        }
-    }
-    else {}
 }
 
 void EVT_HEALTH_CHECK_STARTING_CLOSE_HANDLER(QVariant msg) {

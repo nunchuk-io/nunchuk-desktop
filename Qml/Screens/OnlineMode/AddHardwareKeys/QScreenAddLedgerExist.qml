@@ -330,7 +330,7 @@ QScreenAdd {
                 label.text: STR.STR_QML_777
                 label.font.pixelSize: 16
                 type: eTypeE
-                onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                onButtonClicked: doneAddHardwareKey()
             }
         }
     }

@@ -262,6 +262,9 @@ enum CMD_IDX {
     ASSISTED_WALLET_ADD_SAVED_ADDRESS,
     ASSISTED_WALLET_DELETE_SAVED_ADDRESS,
 
+    SIGN_DUMMY_TRANSACTION_TO_SIGN_IN,
+    SIGN_IN_USING_XPUB_WALLET,
+
     CMD_MAX
 };
 }
@@ -689,6 +692,9 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_SAVED_ADDRESSES        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address") },
     { Premium::CMD_IDX::ASSISTED_WALLET_ADD_SAVED_ADDRESS          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address") },
     { Premium::CMD_IDX::ASSISTED_WALLET_DELETE_SAVED_ADDRESS       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("saved-address/{address}") },
+
+    { Premium::CMD_IDX::SIGN_DUMMY_TRANSACTION_TO_SIGN_IN          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("signin-dummy/{dummy_transaction_id}") },
+    { Premium::CMD_IDX::SIGN_IN_USING_XPUB_WALLET                  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("signin-dummy") },
 };
 
 class DRACO_CODE: public QObject

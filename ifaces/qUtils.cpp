@@ -806,3 +806,80 @@ nunchuk::SingleSigner qUtils::SanitizeSingleSigner(const nunchuk::SingleSigner &
     }
     return ret;
 }
+
+std::vector<nunchuk::Device> qUtils::GetDevices(const QString &hwi_path, QWarningMessage &msg)
+{
+    std::vector<nunchuk::Device> ret {};
+    try {
+        ret = nunchuk::Utils::GetDevices(hwi_path.toStdString());
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QString qUtils::SignPsbt(const QString &hwi_path, const nunchuk::Device &device, const QString &psbt, QWarningMessage &msg)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::SignPsbt(hwi_path.toStdString(), device, psbt.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+QString qUtils::ImportPsbtViaFile(const QString &filepath)
+{
+    if (QFile::exists(filepath)) {
+        QFile file(filepath);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            QString fileContent = in.readAll();
+            file.close();
+            return fileContent;
+        }
+    }
+    return "";
+}
+
+void qUtils::ExportPsbtViaFile(const QString &filepath, const QString &psbt)
+{
+    QFile file(filepath);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream st(&file);
+        st.setCodec("UTF-8");
+        st << psbt << endl;
+        st.flush();
+        file.close();
+    }
+}
+
+bool qUtils::isValidXPRV(const QString &xprv, QWarningMessage &msg)
+{
+    bool ret = false;
+    try {
+        ret = nunchuk::Utils::IsValidXPrv(xprv.toStdString());
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}

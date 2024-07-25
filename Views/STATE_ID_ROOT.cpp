@@ -265,14 +265,16 @@ void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
 
 void EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER(QVariant msg)
 {
-    DBG_INFO << QBasePremium::mode();
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         if (dashboard->flow() == (int)AlertEnum::E_Alert_t::GROUP_WALLET_SETUP) {
             QMap<QString, QVariant> maps = msg.toMap();
             QString xfp = maps["xfp"].toString();
             QGroupWallets::instance()->dashboardInfoPtr()->healthPtr()->HealthCheckForKey(xfp);
+        } else if (dashboard->flow() == (int)AlertEnum::E_Alert_t::WELCOME_SIGN_IN_SIGNATURE_XPUB) {
+            // For sign dummy, so not implement in here
+        } else {
+            AppModel::instance()->setWalletInfo(dashboard->walletInfoPtr());
         }
-        AppModel::instance()->setWalletInfo(dashboard->walletInfoPtr());
     }
 }
 
@@ -303,5 +305,9 @@ void EVT_ONBOARDING_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_REPLACE_SELECT_KEY_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_SIGN_IN_VIA_XPUB_REQUEST_HANDLER(QVariant msg) {
 
 }

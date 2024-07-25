@@ -141,7 +141,7 @@ Rectangle {
                             width: masterList.width
                             height: 48
                             signername : model.master_signer_name
-                            signerXFP: "XFP: " + model.master_signer_fingerPrint
+                            card_id_or_xfp: model.master_signer_fingerPrint
                             devicetype: model.master_signer_deviceType
                             signerType: model.master_signer_type
                             signerTag: model.master_signer_tag
@@ -163,7 +163,7 @@ Rectangle {
                             nameWidth: 170
                             signername : model.singleSigner_name
                             devicetype: model.single_signer_devicetype
-                            signerXFP: "XFP: " + model.singleSigner_masterFingerPrint
+                            card_id_or_xfp: model.single_signer_type === NUNCHUCKTYPE.NFC ? model.single_signer_device_cardid : model.singleSigner_masterFingerPrint
                             signerType: model.single_signer_type
                             signerTag: model.single_signer_tag
                             accountIndex: model.single_signer_account_index
@@ -191,7 +191,7 @@ Rectangle {
                 enabled: false
                 visible: !busyIdct.running
                 signername : STR.STR_QML_016
-                signerXFP: "XFP: DEADBEEF"
+                card_id_or_xfp: "XFP: DEADBEEF"
                 Rectangle {
                     anchors.fill: parent
                     color: "#031F2B"

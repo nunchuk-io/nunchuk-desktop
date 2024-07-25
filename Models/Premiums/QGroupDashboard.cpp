@@ -185,6 +185,7 @@ void QGroupDashboard::GetAlertsInfo()
     else {
         ret = Byzantine::instance()->GetGroupAlerts(groupId(), output, error_msg);
     }
+    DBG_INFO << ret << output;
     if(ret){
         // Handle preparing model here.
         QJsonArray   alerts  = output["alerts"].toArray();
@@ -806,6 +807,12 @@ void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
             DBG_INFO << output << error_msg;
         }
     }
+}
+
+void QGroupDashboard::requestShowLetAddYourKeys()
+{
+    setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_PENDING);
+    QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }
 
 bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type)

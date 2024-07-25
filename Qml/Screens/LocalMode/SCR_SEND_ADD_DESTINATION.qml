@@ -1116,4 +1116,20 @@ QScreen {
             destination.model--
         }
     }
+    function requestRollOverProcess(address) {
+        var inputObject = ({
+                               "toType": "Input",
+                               "toAddress": address,
+                               "toAddressDisplay": address,
+                               "toAmount": AppModel.walletInfo.walletBalance
+                          })
+        destination.itemAt(0).setFavoriteInput(inputObject)
+    }
+
+    Connections {
+        target: AppModel.walletInfo
+        onRollOverProcess: {
+            requestRollOverProcess(address)
+        }
+    }
 }

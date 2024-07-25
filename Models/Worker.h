@@ -51,7 +51,7 @@ public:
 private:
     static Worker *mInstance;
 public slots:
-    void slotStartCreateMasterSigner(const QString &id,
+    void slotStartCreateMasterSigner(const QString &name,
                                      const int deviceIndex);
 
     void slotStartCreateRemoteSigner(const QString &name,
@@ -91,6 +91,10 @@ public slots:
                                        const QString mnemonic,
                                        const QString passphrase,
                                        bool replace);
+
+    void slotStartCreateSoftwareSignerXprv(const QString name,
+                                           const QString xprv,
+                                           bool replace);
 
     void slotStartCreateWallet(bool backup, QString file_path);
 
@@ -182,10 +186,15 @@ signals:
 
     void finishRescanBlockchain();
 
-    void finishCreateSoftwareSigner(const QMasterSignerPtr ret,
+    void finishCreateSoftwareSigner(nunchuk::MasterSigner ret,
                                     QString what,
                                     int type,
                                     int code);
+
+    void finishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret,
+                                        QString what,
+                                        int type,
+                                        int code);
 
     void finishCreateWallet(nunchuk::Wallet ret,
                             QString what,
@@ -290,10 +299,11 @@ public slots:
                                            int code);
     void slotFinishDisplayAddress(bool result);
     void slotFinishRescanBlockchain();
-    void slotFinishCreateSoftwareSigner(const QMasterSignerPtr ret,
+    void slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
                                         QString what,
                                         int type,
                                         int code);
+
     void slotFinishCreateWallet(nunchuk::Wallet ret,
                                 QString what,
                                 int type,
@@ -387,6 +397,10 @@ signals:
                                    const QString mnemonic,
                                    const QString passphrase,
                                    bool replace = false);
+
+    void startCreateSoftwareSignerXprv(const QString name,
+                                       const QString xprv,
+                                       bool replace = false);
 
     void startCreateWallet(bool backup,
                            QString file_path);

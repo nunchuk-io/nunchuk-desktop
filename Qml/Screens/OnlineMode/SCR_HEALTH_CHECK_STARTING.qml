@@ -68,6 +68,7 @@ QScreen {
 
         {flow_action: AlertType.CHANGE_EMAIL,                         screen_component: _signature_require_email_change},
         {flow_action: AlertType.CHANGE_EMAIL_REQUEST,                 screen_component: _signature_require_email_change},
+        {flow_action: AlertType.WELCOME_SIGN_IN_SIGNATURE_XPUB,       screen_component: _welcome_sign_in_signature_xpub},
     ]
     readonly property var map_screens: [
         {screen_name: "health-check-procedure",         screen_component: _health_check_procedure},
@@ -109,6 +110,14 @@ QScreen {
         id: _signature_require_email_change
         QSignaturesRequired {
             description_top: STR.STR_QML_1306
+            description_bottom: STR.STR_QML_1013
+        }
+    }
+
+    Component {
+        id: _welcome_sign_in_signature_xpub
+        QSignaturesRequired {
+            description_top: STR.STR_QML_1362
             description_bottom: STR.STR_QML_1013
         }
     }

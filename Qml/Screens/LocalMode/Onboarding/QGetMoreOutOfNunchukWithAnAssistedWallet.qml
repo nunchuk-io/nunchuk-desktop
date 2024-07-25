@@ -40,6 +40,7 @@ QOnScreenContentTypeA {
     readonly property var option_map: [
         {visible: true,        height: 164, headline:STR.STR_QML_1230, content: STR.STR_QML_1231, icon: "qrc:/Images/Images/mulitsig-dark.svg"             },
         {visible: true,        height: 136, headline:STR.STR_QML_1232, content: STR.STR_QML_1233, icon: "qrc:/Images/Images/inheritance-dark.svg"          },
+        {visible: true,        height: 136, headline:STR.STR_QML_1393, content: STR.STR_QML_1394, icon: "qrc:/Images/Images/groups-24px.svg"               },
         {visible: true,        height: 108, headline:STR.STR_QML_1234, content: STR.STR_QML_1235, icon: "qrc:/Images/Images/emergency-lockdown-dark.svg"   },
         {visible: true,        height: 108, headline:STR.STR_QML_1236, content: STR.STR_QML_1237, icon: "qrc:/Images/Images/signing-policy-dark.svg"       },
         {visible: true,        height: 136, headline:STR.STR_QML_1238, content: STR.STR_QML_1239, icon: "qrc:/Images/Images/key-recovery-dark.svg"         },

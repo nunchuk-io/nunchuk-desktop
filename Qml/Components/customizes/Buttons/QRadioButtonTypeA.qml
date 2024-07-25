@@ -30,7 +30,7 @@ Row {
     property int fontPixelSize: 14
     property int fontWeight: Font.Normal
     signal buttonClicked()
-    QText {
+    QLato {
         id: text
         text: label
         font.family: fontFamily

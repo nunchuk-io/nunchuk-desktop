@@ -567,6 +567,7 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
             signer["signer_id"] = m->id();
             signer["signer_bip32_path"] = m->path();
             signer["signer_is_primary"] = m->isPrimaryKey();
+            signer["signer_card_id"] = m->device()->cardId();
             if (!contains(m->fingerPrint())) {
                 arrays.append(signer);
             }
@@ -586,6 +587,7 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
             signer["signer_bip32_path"] = s->derivationPath();
             signer["signer_is_primary"] = s->isPrimaryKey();
             signer["signer_account_index"] = s->accountIndex();
+            signer["signer_card_id"] = s->cardId();
             if (!contains(s->masterFingerPrint())) {
                 arrays.append(signer);
             }

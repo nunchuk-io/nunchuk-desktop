@@ -28,9 +28,9 @@
 #include "qUtils.h"
 #include <QJsonArray>
 #include "TypeDefine.h"
-#include "Commons/ISigner.h"
+#include "Commons/WalletKeys.h"
 
-class QMasterSigner : public QObject, public ISigner {
+class QMasterSigner : public QObject, public WalletKeys {
     Q_OBJECT
     Q_PROPERTY(QString masterSignerId      READ id                                      NOTIFY idChanged)
     Q_PROPERTY(QString masterSignername    READ name            WRITE setName           NOTIFY nameChanged)

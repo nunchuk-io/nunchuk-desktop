@@ -37,11 +37,13 @@ Row {
     property string card_id_or_xfp: ""
     property string key_color: ""
     property int    accountIndex: 0
+    property int typeInt: -1
     spacing: 12
     QCircleIcon {
         bgSize: 48
         icon.iconSize: 24
         icon.typeStr: typeStr
+        icon.type: typeInt
         icon.tag: tag
         anchors.verticalCenter: parent.verticalCenter
         color: key_color
@@ -64,6 +66,7 @@ Row {
             spacing: 4
             QSignerBadgeName {
                 typeStr: del.typeStr
+                type: del.typeInt
                 tag: del.tag
                 color: "#DEDEDE"
                 height: 16
@@ -91,7 +94,7 @@ Row {
             width: 146
             height: 20
             text: {
-                if (typeStr === "NFC") {
+                if (typeStr === "NFC" || typeInt === NUNCHUCKTYPE.NFC) {
                     var textR = card_id_or_xfp.substring(card_id_or_xfp.length - 5, card_id_or_xfp.length).toUpperCase()
                     return "Card ID: ••" + textR
                 } else {

@@ -13,8 +13,12 @@ public:
     QString dummyXfp() const final;
     void setDummyXfp(const QString& xfp);
     bool isDummyTx() const final;
+    QStringList hideSignBtns() const final;
+    void setHideSignBtns(const QStringList &newHideSignBtns);
+
 private:
-    QString mDummyXfp {};
+    QString     mDummyXfp {};
+    QStringList m_hideSignBtns;
 };
 typedef OurSharedPointer<QDummyTransaction> QDummyTransactionPtr;
 

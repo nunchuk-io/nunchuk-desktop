@@ -59,14 +59,7 @@ void bridge::nunchukMakeInstance(const QString& passphrase,
     setting.set_signet_servers(signetServer);
 
     // hwi path
-    QString hwiPath = "";
-    if(AppSetting::instance()->enableCustomizeHWIDriver()){
-        hwiPath = AppSetting::instance()->hwiPath();
-    }
-    else{
-        hwiPath = AppSetting::instance()->executePath() + "/hwi";
-    }
-    setting.set_hwi_path(hwiPath.toStdString());
+    setting.set_hwi_path(bridge::hwiPath().toStdString());
 
     //  certificate file
     QString certPath = "";
@@ -143,15 +136,8 @@ void bridge::nunchukMakeInstanceForAccount(const QString &account,
     signetServer.push_back(AppSetting::instance()->secondaryServer().toStdString());
     setting.set_signet_servers(signetServer);
 
-    // hwi path
-    QString hwiPath = "";
-    if(AppSetting::instance()->enableCustomizeHWIDriver()){
-        hwiPath = AppSetting::instance()->hwiPath();
-    }
-    else{
-        hwiPath = AppSetting::instance()->executePath() + "/hwi";
-    }
-    setting.set_hwi_path(hwiPath.toStdString());
+    // hwi path 
+    setting.set_hwi_path(bridge::hwiPath().toStdString());
 
     //  certificate file
     QString certPath = "";
@@ -1256,14 +1242,7 @@ void bridge::nunchukUpdateAppSettings(QWarningMessage &msg)
     ret.set_signet_servers(signetServer);
 
     // hwi path
-    QString hwiPath = "";
-    if(AppSetting::instance()->enableCustomizeHWIDriver()){
-        hwiPath = AppSetting::instance()->hwiPath();
-    }
-    else{
-        hwiPath = AppSetting::instance()->executePath() + "/hwi";
-    }
-    ret.set_hwi_path(hwiPath.toStdString());
+    ret.set_hwi_path(bridge::hwiPath().toStdString());
 
     // Storage path
     ret.set_storage_path(AppSetting::instance()->storagePath().toStdString());
@@ -1586,7 +1565,10 @@ void bridge::nunchukRescanBlockchain(int start_height, int stop_height)
     nunchukiface::instance()->RescanBlockchain(start_height, stop_height, msg);
 }
 
-QMasterSignerPtr bridge::nunchukCreateSoftwareSigner(const QString &name, const QString &mnemonic, const QString &passphrase, bool isPrimaryKey,
+QMasterSignerPtr bridge::nunchukCreateSoftwareSigner(const QString &name,
+                                                     const QString &mnemonic,
+                                                     const QString &passphrase,
+                                                     bool isPrimaryKey,
                                                      bool replace,
                                                      QWarningMessage& msg)
 {
@@ -1630,6 +1612,20 @@ void bridge::nunchukClearSignerPassphrase(const QString &mastersigner_id, QWarni
         AppModel::instance()->masterSignerList()->reloadOriginMasterSignerById(mastersigner_id);
     }
 }
+
+QString bridge::hwiPath()
+{
+    // hwi path
+    QString hwiPath = "";
+    if(AppSetting::instance()->enableCustomizeHWIDriver()){
+        hwiPath = AppSetting::instance()->hwiPath();
+    }
+    else{
+        hwiPath = AppSetting::instance()->executePath() + "/hwi";
+    }
+    return hwiPath;
+}
+
 
 int bridge::nunchukCurrentMode()
 {
@@ -2150,4 +2146,17 @@ QStringList bridge::nunchukExportBCR2020010Wallet(const QString &wallet_id, QWar
         }
     }
     return result;
+}
+
+nunchuk::MasterSigner bridge::CreateSoftwareSignerFromMasterXprv(const QString &name,
+                                                                 const QString &xprv,
+                                                                 bool isPrimaryKey,
+                                                                 bool replace,
+                                                                 QWarningMessage &msg)
+{
+    return nunchukiface::instance()->CreateSoftwareSignerFromMasterXprv(name.toStdString(),
+                                                                        xprv.toStdString(),
+                                                                        isPrimaryKey,
+                                                                        replace,
+                                                                        msg);
 }
