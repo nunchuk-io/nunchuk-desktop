@@ -397,23 +397,13 @@ void QGroupWallets::reset()
 
 bool QGroupWallets::AddOrUpdateAKeyToDraftWallet()
 {
-    bool ret = QAssistedDraftWallets::AddOrUpdateAKeyToDraftWallet();
-    if (ret && mDashboard) {
-        mDashboard->GetAlertsInfo();
-        mDashboard->GetHealthCheckInfo();
-    }
-    return ret;
+    return QAssistedDraftWallets::AddOrUpdateAKeyToDraftWallet();
 }
 
 
 bool QGroupWallets::requestKeyReplacement(QSingleSignerPtr signer)
 {
-    bool ret = QAssistedDraftWallets::requestKeyReplacement(signer);
-    if (ret && mDashboard) {
-        mDashboard->GetAlertsInfo();
-        mDashboard->GetHealthCheckInfo();
-    }
-    return ret;
+    return QAssistedDraftWallets::requestKeyReplacement(signer);
 }
 
 
@@ -459,6 +449,8 @@ void QGroupWallets::findPermissionAccount()
                 currentMember = new_role == "KEYHOLDER" ? dash->myInfo() : currentMember;
             } else if (new_role == "KEYHOLDER_LIMITED" || cur_role == "KEYHOLDER_LIMITED") {
                 currentMember = new_role == "KEYHOLDER_LIMITED" ? dash->myInfo() : currentMember;
+            } else if (new_role == "FACILITATOR_ADMIN" || cur_role == "FACILITATOR_ADMIN") {
+                currentMember = new_role == "FACILITATOR_ADMIN" ? dash->myInfo() : currentMember;
             } else if (new_role == "OBSERVER" || cur_role == "OBSERVER") {
                 currentMember = new_role == "OBSERVER" ? dash->myInfo() : currentMember;
             } else if (new_role == "CUSTOMIZE" || cur_role == "CUSTOMIZE") {

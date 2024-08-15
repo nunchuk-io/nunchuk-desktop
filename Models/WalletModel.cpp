@@ -788,7 +788,7 @@ QVariantList Wallet::ownerMembers() const
             QJsonObject it = member.toObject();
             QJsonObject user = it["user"].toObject();
             QString role = it["role"].toString();
-            if (role == "KEYHOLDER" || role == "MASTER" || role == "ADMIN") {
+            if (role == "KEYHOLDER" || role == "MASTER" || role == "ADMIN" || role == "FACILITATOR_ADMIN") {
                 if (!user.isEmpty()) {
                     arrs.append(member);
                 }
@@ -960,24 +960,23 @@ void Wallet::GetUserTxs()
     if(isUserWallet()){
         QString wallet_id = id();
         QJsonObject data = Draco::instance()->assistedWalletGetListTx(wallet_id);
-        QJsonArray transactions = data.value("transactions").toArray();
+        QJsonArray transactions = data["transactions"].toArray();
         for(QJsonValue js_value : transactions){
             QJsonObject transaction = js_value.toObject();
             QString status = transaction.value("status").toString();
             QString psbt = transaction.value("psbt").toString();
-            QString note = transaction.value("note").toString();
-            QString memo = note;
+            QString memo = transaction.value("note").toString();;
             QString type = transaction.value("type").toString();
             QString transaction_id = transaction.value("transaction_id").toString();
             if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
                 QWarningMessage _msg;
                 QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, _msg);
                 if(tran && (int)EWARNING::WarningType::NONE_MSG == _msg.type()){
-                    if(transactionHistory()){
-                        QTransactionPtr tx = transactionHistory()->getTransactionByTxid(transaction_id);
-                        if(tx && 0 != QString::compare(memo, tx.data()->memo(), Qt::CaseInsensitive)){
-                            bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
-                        }
+                    if(transactionHistory() && transactionHistory()->contains(transaction_id)){
+                        transactionHistory()->updateTransactionMemo(transaction_id, memo);
+                    }
+                    else {
+                        bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
                     }
                     long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
                     // honey badger feature: schedule broadcast
@@ -990,6 +989,7 @@ void Wallet::GetUserTxs()
         }
         //Remove cancelled txs
         GetUserCancelledTxs();
+        GetUserTxNotes();
     }
 }
 
@@ -1018,6 +1018,43 @@ void Wallet::GetUserCancelledTxs()
     }
 }
 
+void Wallet::GetUserTxNotes()
+{
+    if(isUserWallet()){
+        QString wallet_id = id();
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Draco::instance()->assistedWalletGetTxNotes(wallet_id, output, errormsg);
+        if(ret && transactionHistory() && output.contains("notes")){
+            QJsonArray notes = output["notes"].toArray();
+            for (auto i : notes) {
+                QJsonObject note = i.toObject();
+                transactionHistory()->updateTransactionMemo(note["transaction_id"].toString(), note["note"].toString());
+            }
+        }
+    }
+}
+
+QString Wallet::GetUserTxNote(const QString &txid)
+{
+    if(isUserWallet()){
+        QString wallet_id = id();
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Draco::instance()->assistedWalletGetTxNotes(wallet_id, output, errormsg);
+        if(ret && transactionHistory() && output.contains("notes")){
+            QJsonArray notes = output["notes"].toArray();
+            for (auto i : notes) {
+                QJsonObject note = i.toObject();
+                if(qUtils::strCompare(note["transaction_id"].toString(), txid)){
+                    return note["note"].toString();
+                }
+            }
+        }
+    }
+    return "";
+}
+
 QTransactionPtr Wallet::SyncUserTxs(const nunchuk::Transaction &tx)
 {
     QString wallet_id = id();
@@ -1036,18 +1073,17 @@ QTransactionPtr Wallet::SyncUserTxs(const nunchuk::Transaction &tx)
                 QString reject_msg = transaction.value("reject_msg").toString();
                 QString note = transaction.value("note").toString();
                 QString replace_txid = transaction.value("replace_txid").toString();
-
                 long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
                 // honey badger feature: schedule broadcast
                 long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
-
                 if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis &&
                     broadcast_time_milis / 1000 != tx.get_schedule_time()) {
                     bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), broadcast_time_milis/1000,msg);
-                } else if (type != "SCHEDULED" && tx.get_schedule_time() != -1) {
+                }
+                else if (type != "SCHEDULED" && tx.get_schedule_time() != -1) {
                     bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), -1,msg);
                 }
-
+                else{}
                 if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED" || status == "NETWORK_REJECTED") {
                     msg.resetWarningMessage();
                     bridge::nunchukImportPsbt(wallet_id, psbt,msg);
@@ -1067,8 +1103,22 @@ QTransactionPtr Wallet::SyncUserTxs(const nunchuk::Transaction &tx)
                     }
                 }
                 else{}
-                return bridge::nunchukGetTransaction(wallet_id, transaction_id);
+                QTransactionPtr trans = bridge::nunchukGetTransaction(wallet_id, transaction_id);
+                if(trans){
+                    if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
+                        trans.data()->setMemo(note);
+                    }
+                }
+                return trans;
             }
+        }
+        else {
+            QString note = GetUserTxNote(QString::fromStdString(tx.get_txid()));
+            QTransactionPtr trans = bridge::convertTransaction(tx, wallet_id);
+            if(trans){
+                trans.data()->setMemo(note);
+            }
+            return trans;
         }
     }
     return bridge::convertTransaction(tx, wallet_id);
@@ -1162,27 +1212,18 @@ void Wallet::GetGroupTxs()
                 QJsonObject transaction = i.toObject();
                 QString status = transaction.value("status").toString();
                 QString psbt = transaction.value("psbt").toString();
-                QString note = transaction.value("note").toString();
-                QString memo = note;
+                QString memo = transaction.value("note").toString();;
                 QString type = transaction.value("type").toString();
                 QString transaction_id = transaction.value("transaction_id").toString();
                 if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
                     QWarningMessage warningmsg;
                     QTransactionPtr tran = bridge::nunchukImportPsbt(wallet_id, psbt, warningmsg);
                     if(tran && (int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-                        DBG_INFO << ">>>>>>>>>>>" << name() << transaction_id << status << memo << tran.data()->txid();
-                        QString old_memo = "";
-                        if(transactionHistory()){
-                            QTransactionPtr tx = transactionHistory()->getTransactionByTxid(transaction_id);
-                            if(tx){
-                                old_memo = tx.data()->memo();
-                            }
-                            else {
-                                old_memo = tran.data()->memo();
-                            }
-                            if(!qUtils::strCompare(memo, old_memo)){
-                                bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
-                            }
+                        if(transactionHistory() && transactionHistory()->contains(transaction_id)){
+                            transactionHistory()->updateTransactionMemo(transaction_id, memo);
+                        }
+                        else {
+                            bridge::nunchukUpdateTransactionMemo(wallet_id, transaction_id, memo);
                         }
                         long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
                         // honey badger feature: schedule broadcast
@@ -1198,6 +1239,7 @@ void Wallet::GetGroupTxs()
         }
         //Remove cancelled txs
         GetGroupCancelledTxs();
+        GetGroupTxNotes();
     }
 }
 
@@ -1234,6 +1276,44 @@ void Wallet::GetGroupCancelledTxs()
     }
 }
 
+void Wallet::GetGroupTxNotes()
+{
+    if(isGroupWallet()){
+        QString wallet_id = id();
+        QString group_id = groupId();
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Byzantine::instance()->GetAllTransactionNotes(group_id, wallet_id, output, errormsg);
+        if(ret && transactionHistory() && output.contains("notes")){
+            QJsonArray notes = output["notes"].toArray();
+            for (auto i : notes) {
+                QJsonObject note = i.toObject();
+                transactionHistory()->updateTransactionMemo(note["transaction_id"].toString(), note["note"].toString());
+            }
+        }
+    }
+}
+
+QString Wallet::GetGroupTxNote(const QString &txid) {
+    if(isGroupWallet()){
+        QString wallet_id = id();
+        QString group_id = groupId();
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret = Byzantine::instance()->GetAllTransactionNotes(group_id, wallet_id, output, errormsg);
+        if(ret && transactionHistory() && output.contains("notes")){
+            QJsonArray notes = output["notes"].toArray();
+            for (auto i : notes) {
+                QJsonObject note = i.toObject();
+                if(qUtils::strCompare(note["transaction_id"].toString(), txid)){
+                    return note["note"].toString();
+                }
+            }
+        }
+    }
+    return "";
+}
+
 QTransactionPtr Wallet::SyncGroupTxs(const nunchuk::Transaction &tx)
 {
     QString wallet_id = id();
@@ -1254,16 +1334,17 @@ QTransactionPtr Wallet::SyncGroupTxs(const nunchuk::Transaction &tx)
                 QString hex = transaction.value("hex").toString();
                 QString reject_msg = transaction.value("reject_msg").toString();
                 QString note = transaction.value("note").toString();
-
                 long int broadcast_time_milis = static_cast<long int>(transaction.value("broadcast_time_milis").toDouble());
                 // honey badger feature: schedule broadcast
                 long int current_time_stamp_milis = static_cast<long int>(std::time(nullptr)) * 1000;
                 if(type == "SCHEDULED" && broadcast_time_milis > current_time_stamp_milis &&
                     broadcast_time_milis / 1000 != tx.get_schedule_time()) {
                     bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), broadcast_time_milis/1000,msg);
-                } else if (type != "SCHEDULED" && tx.get_schedule_time() != -1) {
+                }
+                else if (type != "SCHEDULED" && tx.get_schedule_time() != -1) {
                     bridge::nunchukUpdateTransactionSchedule(wallet_id, QString::fromStdString(tx.get_txid()), -1,msg);
                 }
+                else{}
 
                 if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED" || status == "NETWORK_REJECTED") {
                     bridge::nunchukImportPsbt(wallet_id, psbt, msg);
@@ -1283,8 +1364,22 @@ QTransactionPtr Wallet::SyncGroupTxs(const nunchuk::Transaction &tx)
                     }
                 }
                 else{}
-                return bridge::nunchukGetTransaction(wallet_id, transaction_id);
+                QTransactionPtr trans = bridge::nunchukGetTransaction(wallet_id, transaction_id);
+                if(trans ){
+                    if (status == "READY_TO_BROADCAST" || status == "PENDING_SIGNATURES" ) {
+                        trans.data()->setMemo(note);
+                    }
+                }
+                return trans;
             }
+        }
+        else {
+            QString note = GetGroupTxNote(QString::fromStdString(tx.get_txid()));
+            QTransactionPtr trans = bridge::convertTransaction(tx, wallet_id);
+            if(trans){
+                trans.data()->setMemo(note);
+            }
+            return trans;
         }
     }
     return bridge::convertTransaction(tx, wallet_id);
@@ -1598,8 +1693,6 @@ QString Wallet::slug() const
 
 QString Wallet::myRole() const
 {
-    // return "FACILITATOR_ADMIN"; //FIXME TBD
-
     QString role = "";
     if(dashboard()){
         role = dashboard().data()->myRole();

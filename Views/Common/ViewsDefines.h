@@ -111,6 +111,7 @@ namespace OnlineMode {
 #define SCR_RECURRING_PAYMENTS                   "qrc:/Qml/Screens/OnlineMode/SCR_RECURRING_PAYMENTS.qml"
 #define SCR_REPLACE_KEYS                   	     "qrc:/Qml/Screens/OnlineMode/SCR_REPLACE_KEYS.qml"
 #define SCR_SIGN_IN_VIA_XPUB                      "qrc:/Qml/Screens/OnlineMode/SCR_SIGN_IN_VIA_XPUB.qml"
+#define SCR_EDIT_MEMBERS                          "qrc:/Qml/Screens/OnlineMode/SCR_EDIT_MEMBERS.qml"
 }
 
 namespace Popups {

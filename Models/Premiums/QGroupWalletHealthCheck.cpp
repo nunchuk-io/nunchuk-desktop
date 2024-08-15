@@ -317,6 +317,11 @@ bool QGroupWalletHealthCheck::SkipKeyHealthReminder()
             ret = Byzantine::instance()->SkipKeyHealthReminder(dashboard->groupId(), wallet_id(), xfp, output, errormsg);
         }
         DBG_INFO << ret << output;
+        if (ret) {
+            if (auto dash = dashBoardPtr()) {
+                dash->GetAlertsInfo();
+            }
+        }
         return ret;
     }
     return false;
@@ -343,7 +348,18 @@ bool QGroupWalletHealthCheck::CancelHealthCheckPending()
 
 QVariantList QGroupWalletHealthCheck::healthStatuses() const
 {
-    return m_healthStatuses.toVariantList();
+    if (qUtils::strCompare(dashBoardPtr()->myRole(), "FACILITATOR_ADMIN")) {
+        return m_healthStatuses.toVariantList();
+    } else {
+        QJsonArray list;
+        for (auto js : m_healthStatuses) {
+            auto key = js.toObject()["keyinfo"].toObject();
+            if (key["ourAccount"].toBool()) {
+                list.append(js);
+            }
+        }
+        return list.toVariantList();
+    }
 }
 
 QVariant QGroupWalletHealthCheck::aKeyStatus() const

@@ -114,10 +114,11 @@ static const APPLICATION_STATE STATE_ID_SCR_SELECT_SERVER                       
 static const APPLICATION_STATE STATE_ID_SCR_CHANGE_EMAIL                         = {E::STATE_ID_SCR_CHANGE_EMAIL                        , SCR_CHANGE_EMAIL_Entry                        , SCR_CHANGE_EMAIL_Exit                        , LAYER::LAYER_POPUP   , LIMIT::NONE , SCR_CHANGE_EMAIL                         };
 static const APPLICATION_STATE STATE_ID_SCR_REPLACE_SELECT_KEY                   = {E::STATE_ID_SCR_REPLACE_SELECT_KEY                  , SCR_REPLACE_SELECT_KEY_Entry                  , SCR_REPLACE_SELECT_KEY_Exit                  , LAYER::LAYER_POPUP   , LIMIT::NONE , SCR_REPLACE_SELECT_KEY                   };
 static const APPLICATION_STATE STATE_ID_SCR_REPLACE_KEYS                         = {E::STATE_ID_SCR_REPLACE_KEYS                        , SCR_REPLACE_KEYS_Entry                        , SCR_REPLACE_KEYS_Exit                        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_REPLACE_KEYS                         };
+static const APPLICATION_STATE STATE_ID_SCR_EDIT_MEMBERS                         = {E::STATE_ID_SCR_EDIT_MEMBERS                        , SCR_EDIT_MEMBERS_Entry                        , SCR_EDIT_MEMBERS_Exit                        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_EDIT_MEMBERS                         };
 static const APPLICATION_STATE STATE_ID_SCR_SIGN_IN_VIA_XPUB                     = {E::STATE_ID_SCR_SIGN_IN_VIA_XPUB                    , SCR_SIGN_IN_VIA_XPUB_Entry                    , SCR_SIGN_IN_VIA_XPUB_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SIGN_IN_VIA_XPUB                     };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_ROOT_trigger[33] = 
+static const STATE_TRIGGER STATE_ID_ROOT_trigger[34] = 
 {
 	{E::EVT_STARTING_APPLICATION_LOCALMODE   , EVT_STARTING_APPLICATION_LOCALMODE_HANDLER   , NULL                                  },
 	{E::EVT_STARTING_APPLICATION_ONLINEMODE  , EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER  , NULL                                  },
@@ -151,6 +152,7 @@ static const STATE_TRIGGER STATE_ID_ROOT_trigger[33] =
 	{E::EVT_REENTER_YOUR_PASSWORD_REQUEST    , EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER    , &STATE_ID_SCR_REENTER_YOUR_PASSWORD   },
 	{E::EVT_ONBOARDING_REQUEST               , EVT_ONBOARDING_REQUEST_HANDLER               , &STATE_ID_SCR_ONBOARDING              },
 	{E::EVT_REPLACE_SELECT_KEY_REQUEST       , EVT_REPLACE_SELECT_KEY_REQUEST_HANDLER       , &STATE_ID_SCR_REPLACE_SELECT_KEY      },
+	{E::EVT_EDIT_MEMBERS_REQUEST             , EVT_EDIT_MEMBERS_REQUEST_HANDLER             , &STATE_ID_SCR_EDIT_MEMBERS            },
 	{E::EVT_SIGN_IN_VIA_XPUB_REQUEST         , EVT_SIGN_IN_VIA_XPUB_REQUEST_HANDLER         , &STATE_ID_SCR_SIGN_IN_VIA_XPUB        },
 };
 
@@ -462,6 +464,15 @@ static const STATE_TRIGGER STATE_ID_SCR_DUMMY_TRANSACTION_INFO_trigger[2] =
 {
 	{E::EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER, NULL           },
 	{E::EVT_DUMMY_TRANSACTION_INFO_BACK           , EVT_DUMMY_TRANSACTION_INFO_BACK_HANDLER           , &STATE_ID_ROOT },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const STATE_TRIGGER STATE_ID_SCR_EDIT_MEMBERS_trigger[2] = 
+{
+	{E::EVT_EDIT_MEMBERS_ENTER_REQUEST, EVT_EDIT_MEMBERS_ENTER_REQUEST_HANDLER, NULL           },
+	{E::EVT_EDIT_MEMBERS_CLOSE        , EVT_EDIT_MEMBERS_CLOSE_HANDLER        , &STATE_ID_ROOT },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -987,9 +998,10 @@ static const STATE_TRIGGER STATE_ID_SCR_SIGN_IN_MANUALLY_trigger[4] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_SIGN_IN_VIA_XPUB_trigger[1] = 
+static const STATE_TRIGGER STATE_ID_SCR_SIGN_IN_VIA_XPUB_trigger[2] = 
 {
-	{E::EVT_SIGN_IN_VIA_XPUB_ENTER, EVT_SIGN_IN_VIA_XPUB_ENTER_HANDLER, NULL  },
+	{E::EVT_SIGN_IN_VIA_XPUB_ENTER, EVT_SIGN_IN_VIA_XPUB_ENTER_HANDLER, NULL           },
+	{E::EVT_SIGN_IN_VIA_XPUB_CLOSE, EVT_SIGN_IN_VIA_XPUB_CLOSE_HANDLER, &STATE_ID_ROOT },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1141,7 +1153,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[87] = 
+static const STATE_SYSTEM STATE_ALL[88] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1229,6 +1241,7 @@ static const STATE_SYSTEM STATE_ALL[87] =
 	{E::STATE_ID_SCR_CHANGE_EMAIL                        , STATE_ID_SCR_CHANGE_EMAIL_trigger                        , ALEN(STATE_ID_SCR_CHANGE_EMAIL_trigger)                        , &STATE_ID_SCR_CHANGE_EMAIL                         },
 	{E::STATE_ID_SCR_REPLACE_SELECT_KEY                  , STATE_ID_SCR_REPLACE_SELECT_KEY_trigger                  , ALEN(STATE_ID_SCR_REPLACE_SELECT_KEY_trigger)                  , &STATE_ID_SCR_REPLACE_SELECT_KEY                   },
 	{E::STATE_ID_SCR_REPLACE_KEYS                        , STATE_ID_SCR_REPLACE_KEYS_trigger                        , ALEN(STATE_ID_SCR_REPLACE_KEYS_trigger)                        , &STATE_ID_SCR_REPLACE_KEYS                         },
+	{E::STATE_ID_SCR_EDIT_MEMBERS                        , STATE_ID_SCR_EDIT_MEMBERS_trigger                        , ALEN(STATE_ID_SCR_EDIT_MEMBERS_trigger)                        , &STATE_ID_SCR_EDIT_MEMBERS                         },
 	{E::STATE_ID_SCR_SIGN_IN_VIA_XPUB                    , STATE_ID_SCR_SIGN_IN_VIA_XPUB_trigger                    , ALEN(STATE_ID_SCR_SIGN_IN_VIA_XPUB_trigger)                    , &STATE_ID_SCR_SIGN_IN_VIA_XPUB                     },
 
 };

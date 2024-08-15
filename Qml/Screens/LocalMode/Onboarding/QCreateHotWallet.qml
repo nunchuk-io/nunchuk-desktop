@@ -51,26 +51,26 @@ QBoxShadow {
     }
     Row {
         anchors {
-            fill: parent
+            left: parent.left
             leftMargin: 28
-            topMargin: 24
-            bottomMargin: 24
-            rightMargin: 28
+            verticalCenter: parent.verticalCenter
         }
-        spacing: 16
+        spacing: 24
+        QImage {
+            source: desImg
+            width: 48
+            height: 48
+            anchors.verticalCenter: parent.verticalCenter
+        }
         Item {
-            anchors {
-                left: parent.left
-                bottom: parent.bottom
-            }
-            width: 308
+            width: 363
             height: _col.childrenRect.height
-
+            anchors.verticalCenter: parent.verticalCenter
             Column {
                 id: _col
                 spacing: 8
                 QLato {
-                    width: 308
+                    width: 363
                     height: 28
                     text: title
                     font.bold: true
@@ -80,7 +80,7 @@ QBoxShadow {
                     horizontalAlignment: Text.AlignLeft
                 }
                 QLato {
-                    width: 308
+                    width: 363
                     height: paintedHeight
                     text: description
                     font.pixelSize: 16
@@ -92,15 +92,11 @@ QBoxShadow {
                 }
             }
         }
-
         QImage {
-            anchors {
-                right: parent.right
-                verticalCenter: parent.verticalCenter
-            }
-            source: desImg
-            width: 96
-            height: 96
+            source: "qrc:/Images/Images/right-arrow-dark.svg"
+            width: 24
+            height: 24
+            anchors.verticalCenter: parent.verticalCenter
         }
     }
 }

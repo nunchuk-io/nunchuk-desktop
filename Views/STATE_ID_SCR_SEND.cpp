@@ -31,6 +31,7 @@ void SCR_SEND_Entry(QVariant msg) {
     if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->escrow()){
         AppModel::instance()->showToast(0, STR_CPP_083, EWARNING::WarningType::WARNING_MSG);
     }
+    AppModel::instance()->startGetEstimatedFee();
 }
 
 void SCR_SEND_Exit(QVariant msg) {
@@ -49,6 +50,7 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
     QString memo = msg.toMap().value("destinationMemo").toString();
     QList<QVariant> destinationInputed = msg.toMap().value("destinationList").toList();
     QDestinationListModelPtr destinationList = QDestinationListModelPtr(new DestinationListModel());
+    qint64 totalAmountTotal = 0;
     for(QVariant var: destinationInputed){
         qint64 toAmount = 0;
         QMap<QString, QVariant> destination = var.toMap();
@@ -61,6 +63,7 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
             toAmount = qUtils::QAmountFromValue(destination["toAmount"].toString());
         }
         destinationList.data()->addDestination(destination["toAddress"].toString(), toAmount);
+        totalAmountTotal += toAmount;
     }
     AppModel::instance()->setDestinationList(destinationList);
 
@@ -69,7 +72,7 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
     bool subtractFromAmount = false;
     if(AppModel::instance()->walletInfo()){
         wallet_id = AppModel::instance()->walletInfo()->id();
-        if(AppModel::instance()->walletInfo()->escrow()){
+        if(AppModel::instance()->walletInfo()->escrow() || (totalAmountTotal == AppModel::instance()->walletInfo()->balanceSats())){
             subtractFromAmount = true;
         }
     }
@@ -77,10 +80,13 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
         outputs = AppModel::instance()->destinationList()->getOutputs();
         DBG_INFO << "Destination : " << outputs;
     }
+    qint64 feerate = AppModel::instance()->hourFeeOrigin();
+    DBG_INFO << "Fee rate" << feerate;
     QWarningMessage msgwarning;
     QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
                                                             outputs,
-                                                            NULL, -1,
+                                                            NULL,
+                                                            feerate,
                                                             subtractFromAmount,
                                                             "",
                                                             msgwarning);
@@ -101,7 +107,7 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
             QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
                                                                     outputs,
                                                                     NULL,
-                                                                    -1,
+                                                                    feerate,
                                                                     true,
                                                                     "",
                                                                     msgwarning);

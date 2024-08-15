@@ -29,23 +29,25 @@ Item {
     property bool hasGroupPending: highestPermissionAccount.hasGroupPending
     property bool isObserver: highestPermissionAccount.role === "OBSERVER"
     property bool hasWalletLockdown: ServiceSetting.servicesTag.listLockdown.length > 0
+    property bool isFacilitatorAdmin: highestPermissionAccount.role === "FACILITATOR_ADMIN"
+
     Loader {
         anchors.fill: parent
         sourceComponent: {
             var user = ClientController.user
             if (user.isMultiSubscriptions) {
-                if (hasGroupWallet) { return isObserver ? b_observer_subscriber : b_subscriber }
+                if (hasGroupWallet) { return isFacilitatorAdmin ? b_facilitator_admin_subscriber : isObserver ? b_observer_subscriber : b_subscriber }
                 else { return b_empty_state }
             }
             else if (user.isHoneyBadgerUser) { return hb_subscriber }
             else if (user.isIronHandUser) { return ih_subscriber }
             else if (user.isByzantineUser || user.isFinneyUser) {
-                if (hasGroupWallet) { return isObserver ? b_observer_subscriber : b_subscriber }
+                if (hasGroupWallet) { return isFacilitatorAdmin ? b_facilitator_admin_subscriber : isObserver ? b_observer_subscriber : b_subscriber }
                 else { return b_empty_state }
             }
             else {
                 if (!hasGroupWallet && hasGroupPending) { return b_empty_state }
-                if (hasGroupWallet) { return isObserver ? b_observer_subscriber : b_subscriber }
+                if (hasGroupWallet) { return isFacilitatorAdmin ? b_facilitator_admin_subscriber : isObserver ? b_observer_subscriber : b_subscriber }
                 else { return notSubscriber }
             }
         }
@@ -69,6 +71,10 @@ Item {
     Component {
         id: b_observer_subscriber
         B.QServiceObserverIterationLeftPannel { }
+    }
+    Component {
+        id: b_facilitator_admin_subscriber
+        B.QServiceFacilitatorAdminSubscriberLeftPannel { }
     }
     Component {
         id: b_empty_state

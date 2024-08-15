@@ -30,5 +30,6 @@
 void SCR_SIGN_IN_VIA_XPUB_Entry(QVariant msg);
 void SCR_SIGN_IN_VIA_XPUB_Exit(QVariant msg);
 void EVT_SIGN_IN_VIA_XPUB_ENTER_HANDLER(QVariant msg);
+void EVT_SIGN_IN_VIA_XPUB_CLOSE_HANDLER(QVariant msg);
 
 #endif // STATE_ID_SCR_SIGN_IN_VIA_XPUB_H

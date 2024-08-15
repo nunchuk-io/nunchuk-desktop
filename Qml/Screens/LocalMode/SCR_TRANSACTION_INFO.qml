@@ -45,7 +45,7 @@ QScreen {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_282
+        label.text: STR.STR_QML_785
         label.font.pixelSize: 32
         label.font.weight: Font.Medium
         extraHeader: Row {
@@ -109,8 +109,7 @@ QScreen {
                 return receiveTxBtnLeft
             }
             else {
-                if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return btnPendingConfirmationLeft }
-                else { return null }
+                return btnPendingConfirmationLeft
             }
         }
         bottomRight: {
@@ -261,7 +260,7 @@ QScreen {
                 enableCancelTransaction: AppModel.walletInfo.isGroupWallet ? allowMoreOption : true
                 isAssisedWallet: AppModel.walletInfo.isAssistedWallet
                 isSharedWallet:  AppModel.walletInfo.isSharedWallet
-                visible: myRole !== "OBSERVER"
+                visible: myRole !== "OBSERVER" && !AppModel.walletInfo.tranReplace
                 funcs: [
                     function(){ // Request signature
                         groupMembers.open()
@@ -324,6 +323,7 @@ QScreen {
                 enableCancelTransaction: true
                 isAssisedWallet: AppModel.walletInfo.isAssistedWallet
                 isSharedWallet:  AppModel.walletInfo.isSharedWallet
+                visible: false
                 funcs: [
                     function(){ // Request signature
 
@@ -354,6 +354,7 @@ QScreen {
                 type: eSECONDARY
                 label: STR.STR_QML_294
                 optionVisible: imExContextMenu.visible
+                visible: false
                 onButtonClicked: {
                     imExContextMenu.x = 20
                     imExContextMenu.y = 20 - imExContextMenu.height
@@ -391,7 +392,7 @@ QScreen {
                 id: startbroatcast
                 width: 180
                 height: 48
-                label.text: STR.STR_QML_295
+                label.text: STR.STR_QML_497
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {

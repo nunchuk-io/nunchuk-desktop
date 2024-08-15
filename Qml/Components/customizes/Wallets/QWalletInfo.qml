@@ -526,7 +526,7 @@ QOnScreenContent {
         }
         QContextMenu {
             id: othersContextMenu
-            property string myRole: AppModel.walletInfo.groupId !== "" ? AppModel.walletInfo.myRole : ""
+            property string myRole: AppModel.walletInfo.myRole
             property bool isAssisted: {
                 if (AppModel.walletInfo.isAssistedWallet && parseFloat(AppModel.walletInfo.walletBalance) === 0) {
                     if (AppModel.walletInfo.isAssistedWallet) {
@@ -565,7 +565,23 @@ QOnScreenContent {
                 }
                 return ls
             }
-            enables: [true, true, true , true, true, true]
+            enables: [
+                (myRole !== "FACILITATOR_ADMIN"),
+                (myRole !== "FACILITATOR_ADMIN"),
+                (myRole !== "FACILITATOR_ADMIN"),
+                true,
+                (myRole !== "FACILITATOR_ADMIN"),
+                (myRole !== "FACILITATOR_ADMIN")
+            ]
+            visibles: [
+                (myRole !== "FACILITATOR_ADMIN"),
+                (myRole !== "FACILITATOR_ADMIN"),
+                (myRole !== "FACILITATOR_ADMIN"),
+                true,
+                (myRole !== "FACILITATOR_ADMIN"),
+                (myRole !== "FACILITATOR_ADMIN")
+            ]
+
             functions: {
                 var ls = [];
                 ls.push(function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST); })

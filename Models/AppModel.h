@@ -175,18 +175,22 @@ public:
     QString getTxidReplacing() const;
     void setTxidReplacing(const QString &txidReplacing);
 
+    qint64  fastestFeeOrigin() const;
     QString fastestFeeCurrency() const;
     QString fastestFee() const;
     void setFastestFee(qint64 fee);
 
+    qint64  halfHourFeeOrigin() const;
     QString halfHourFeeCurrency() const;
     QString halfHourFee() const;
     void setHalfHourFee(qint64 fee);
 
+    qint64  hourFeeOrigin() const;
     QString hourFeeCurrency() const;
     QString hourFee() const;
     void setHourFee(qint64 fee);
 
+    qint64  minFeeOrigin() const;
     QString minFeeCurrency() const;
     QString minFee() const;
     void setMinFee(qint64 fee);

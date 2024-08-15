@@ -19,6 +19,8 @@
  **************************************************************************/
 import QtQuick 2.12
 import "../Common"
+import "../Byzantine" as B
+import "../HoneyBadger-IronHand" as HBIR
 
 Item {
     readonly property var option_map: [
@@ -26,16 +28,30 @@ Item {
         {screen:_KEY_RECOVERY,                          screen_component: _key_recovery             },
         {screen:_VIEW_INHERITANCE_PLANING,              screen_component: _view_inheritance_planing },
         {screen:_CLAIM_AN_INHERITANCE,                  screen_component: _claim_an_inheritance     },
-        {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,      screen_component: _platform_key_co_signing_policies },
+        {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,      screen_component: _platform_key_co_signing_policies_B },
         {screen:_GET_ADDITIONAL_WALLETS,                screen_component: "" },
         {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,     screen_component: "" },
         {screen:_ORDER_NEW_HARDWARE,                    screen_component: "" },
         {screen:_MANAGE_SUBSCRIPTION,                   screen_component: "" },
     ]
     property var itemOption: option_map.find(function(e) {if (e.screen === ServiceSetting.optionIndex) return true; else return false})
+
+    function platform_key_co_signing_policies() {
+        if (ServiceSetting.walletInfo === null) {
+            return _platform_key_co_signing_policies_B
+        } else {
+            return (ServiceSetting.walletInfo.isHoneyBadger || ServiceSetting.walletInfo.isIronHand) ? _platform_key_co_signing_policies_HBIR : _platform_key_co_signing_policies_B
+        }
+    }
+
     Loader {
         anchors.fill: parent
-        sourceComponent: itemOption.screen_component
+        sourceComponent: if(ServiceSetting.optionIndex !== _PLATFORM_KEY_CO_SIGNING_POLICIES) {
+                             itemOption.screen_component
+                         }
+                         else {
+                             platform_key_co_signing_policies()
+                         }
     }
     Component {
         id: _claim_an_inheritance
@@ -58,8 +74,13 @@ Item {
         }
     }
     Component {
-        id: _platform_key_co_signing_policies
-        QServicePlatformKeyCoSigningPolicies {
+        id: _platform_key_co_signing_policies_B
+        B.QServicePlatformKeyCoSigningPolicies {
+        }
+    }
+    Component {
+        id: _platform_key_co_signing_policies_HBIR
+        HBIR.QServicePlatformKeyCoSigningPolicies {
         }
     }
 }

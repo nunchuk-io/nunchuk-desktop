@@ -94,6 +94,7 @@ public:
     // Transaction operation
     bool GetAllTransaction(const QString &group_id, const QString &wallet_id, QJsonObject& output, QString &errormsg);
     bool GetAllCancelledTransaction(const QString &group_id, const QString &wallet_id, const int offset, const int limit, QJsonObject& output, QString &errormsg);
+    bool GetAllTransactionNotes(const QString &group_id, const QString &wallet_id, QJsonObject& output, QString &errormsg);
     bool GetOneTransaction(const QString &group_id, const QString &wallet_id, const QString &txid, QJsonObject& output, QString &errormsg);
     bool UpdateTransaction(const QString &group_id, const QString &wallet_id, const QString &txid, const QString &note, QJsonObject& output, QString &errormsg);
     bool CancelTransaction(const QString &group_id, const QString &wallet_id, const QString &txid, QJsonObject& output, QString &errormsg);
@@ -247,6 +248,20 @@ public:
                              const QString &wallet_id,
                              QJsonObject& output,
                              QString &errormsg);
+
+    bool EditGroupMembers(const QString &group_id,
+                          const QJsonObject& request_body,
+                          const QStringList &signatures,
+                          const QString& passwordToken,
+                          const QString& secQuesToken,
+                          const QString& confirmToken,
+                          QJsonObject &output,
+                          QString &errormsg);
+
+    bool CalculateRequireSignaturesForEditingMembers(const QString &group_id,
+                                                     const QJsonObject& request_body,
+                                                     QJsonObject& output,
+                                                     QString &errormsg);
 
 };
 

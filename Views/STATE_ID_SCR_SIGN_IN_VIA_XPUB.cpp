@@ -40,3 +40,6 @@ void EVT_SIGN_IN_VIA_XPUB_ENTER_HANDLER(QVariant msg) {
     }
 }
 
+void EVT_SIGN_IN_VIA_XPUB_CLOSE_HANDLER(QVariant msg) {
+
+}

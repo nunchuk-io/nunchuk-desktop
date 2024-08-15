@@ -114,6 +114,7 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(int inheritanceCount               READ inheritanceCount                         NOTIFY inheritanceCountChanged)
     Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                          NOTIFY historyPeriodIdChanged)
     Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
+    Q_PROPERTY(QVariantList editMembers           READ editMembers                              NOTIFY editMembersChanged)
 
 public:
     QGroupDashboard(const QString& wallet_id);
@@ -211,6 +212,16 @@ public:
     bool groupChatExisted();
     void setGroupChatExisted(bool existed);
 
+    bool EditGroupMembers();
+    bool CalculateRequireSignaturesForEditingMembers();
+    QVariantList editMembers() const;
+    void initMembers();
+    bool addMember(const QJsonObject &aEditMember);
+    bool removeMember(const QJsonObject &aEditMember);
+    bool editMembers(const QJsonObject &aEditMember, int index);
+    bool containEditMeber(const QJsonObject &aEditMember);
+    bool RequestConfirmationCodeEditMembers();
+    QJsonObject bodyEditMembers();
 public slots:
     bool requestStartKeyReplacement(const QString &tag);
     void requestHealthCheck(const QString &xfp);
@@ -220,6 +231,7 @@ public slots:
     void byzantineRoomDeleted(QString room_id, QString group_id);
 
     void requestShowLetAddYourKeys();
+    bool isDowngrade(QString email_or_username, QString roleNew);
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);
@@ -235,6 +247,8 @@ signals:
     void historyPeriodIdChanged();
     void groupChatExistedChanged();
 
+    void editMembersChanged();
+    void editMembersSuccessChanged();
 private:
     QJsonObject m_groupInfo {};
     QJsonObject m_alertInfo {};
@@ -255,5 +269,6 @@ private:
     int m_inheritanceCount {0};
     QString mHistoryPeriodId {};
     bool m_groupChatExisted {false};
+    QJsonArray m_editMembers;
 };
 #endif // QGROUPDASHBOARD_H

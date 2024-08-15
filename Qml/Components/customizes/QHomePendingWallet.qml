@@ -108,7 +108,7 @@ Rectangle {
                         height: 48
                         bgColor: "#F5F5F5"
                         icon: "qrc:/Images/Images/more-horizontal-dark.svg"
-                        visible: !AppModel.walletInfo.isLocked
+                        visible: !AppModel.walletInfo.isLocked && myRole !== "FACILITATOR_ADMIN"
                         onClicked: {
                             if("PENDING_WALLET" === pendingDashboard.groupStatus){
                                 pendingOptionMenu.popup()
@@ -224,6 +224,7 @@ Rectangle {
                 }
             }
             Item {
+                id: alertGroup
                 width: parent.width
                 height: Math.min(224, 24 + 12 + 12 + 88*_alert.count)
                 visible: _alert.count > 0
@@ -308,6 +309,7 @@ Rectangle {
                 }
             }
             Item {
+                id: healthyGroup
                 width: parent.width
                 height: 104
                 visible: (_healthy.count > 0)
@@ -377,9 +379,10 @@ Rectangle {
                 width: parent.width
                 height: 1
                 color: "#EAEAEA"
-                visible:  (myRole !== "KEYHOLDER_LIMITED")
+                visible:  memberGroup.visible && (alertGroup.visible || healthyGroup.visible)
             }
             Column {
+                id: memberGroup
                 width: parent.width
                 height: childrenRect.height
                 spacing: 12
@@ -387,7 +390,7 @@ Rectangle {
                 Item {
                     width: parent.width
                     height: 24
-                    visible: dashboardInfo.members.count > 0
+                    visible: _members.count > 0
                     Row {
                         anchors.fill: parent
                         spacing: 8
@@ -403,6 +406,21 @@ Rectangle {
                             font.weight: Font.Bold
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignLeft
+                        }
+                    }
+                    QTextLink {
+                        id: _edit
+                        width: _edit.paintedWidth
+                        height: 20
+                        text: STR.STR_QML_849
+                        visible: (myRole === "MASTER" || myRole === "ADMIN" || myRole === "FACILITATOR_ADMIN")
+                        anchors {
+                            verticalCenter: parent.verticalCenter
+                            right: parent.right
+                            rightMargin: 12
+                        }
+                        onTextClicked: {
+                            QMLHandle.sendEvent(EVT.EVT_EDIT_MEMBERS_REQUEST)
                         }
                     }
                 }

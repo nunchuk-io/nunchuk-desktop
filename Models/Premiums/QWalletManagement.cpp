@@ -258,7 +258,11 @@ void QWalletManagement::GetListWallet(int mode)
             else if (status == "DELETED" && bridge::nunchukHasWallet(wallet_id)){
                 QWarningMessage msgwarning;
                 bridge::nunchukDeleteWallet(wallet_id, msgwarning);
-                AppSetting::instance()->deleteWalletCached(wallet_id);
+                if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
+                    AppModel::instance()->removeWallet(wallet_id);
+                    AppModel::instance()->setWalletListCurrentIndex(0);
+                    AppSetting::instance()->deleteWalletCached(wallet_id);
+                }
             }
             else{}
         }

@@ -1149,6 +1149,42 @@ bool Byzantine::GetAllCancelledTransaction(const QString &group_id, const QStrin
     return false;
 }
 
+bool Byzantine::GetAllTransactionNotes(const QString &group_id, const QString &wallet_id, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_GET_ALL_TX_NOTES];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject data;
+    data["offset"] = "0";
+    data["limit"] = "10000";
+    data["statuses"] = "PENDING_CONFIRMATION,CONFIRMED,NETWORK_REJECTED";
+
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
 bool Byzantine::GetOneTransaction(const QString &group_id, const QString &wallet_id, const QString &txid, QJsonObject &output, QString &errormsg)
 {
     if (group_id.isEmpty()) return false;
@@ -2363,6 +2399,69 @@ bool Byzantine::ResetKeyReplacement(const QString &group_id, const QString &wall
 #if 0 //NO NEED
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
 #endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+
+bool Byzantine::EditGroupMembers(const QString &group_id, const QJsonObject &request_body, const QStringList &signatures, const QString &passwordToken, const QString &secQuesToken, const QString &confirmToken, QJsonObject &output, QString &errormsg)
+{
+    QMap<QString, QString> params;
+    for (int i = 0; i < signatures.count(); i++) {
+        params[QString("AuthorizationX-%1").arg(i+1)] = signatures.at(i);
+    }
+    params["Verify-token"] = passwordToken;
+    if (!secQuesToken.isEmpty()) {
+        params["Security-Question-token"] = secQuesToken;
+    }
+    if (!confirmToken.isEmpty()) {
+        params["Confirmation-token"] = confirmToken;
+    }
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS];
+    cmd.replace("{group_id}", group_id);
+    QJsonObject jsonObj = putSync(cmd, {}, params, request_body, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Byzantine::CalculateRequireSignaturesForEditingMembers(const QString &group_id, const QJsonObject &request_body, QJsonObject &output, QString &errormsg)
+{
+    DBG_INFO << request_body;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS_REQUIRED_SIGNATURES];
+    cmd.replace("{group_id}", group_id);
+    QJsonObject jsonObj = postSync(cmd, request_body, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }

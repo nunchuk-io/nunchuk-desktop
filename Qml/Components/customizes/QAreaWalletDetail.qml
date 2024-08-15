@@ -30,8 +30,8 @@ Item {
     property bool isHotWallet: false
     property bool isLocked: false
     property bool isReplaced: false
-    property bool isFacilitatorAdmin: false
     property real ratio: 0.55
+    property string myRole: AppModel.walletInfo.myRole
     Item {
         id: area_wldetail
         anchors.fill: parent
@@ -45,13 +45,6 @@ Item {
             gradient: Gradient {
                 GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#2F766D" : "#2F466C") }
                 GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#1C4A21" : "#031F2B") }
-            }
-            Rectangle {
-                width: parent.width * (1.0 - ratio)
-                height: parent.height
-                anchors.right: parent.right
-                color: "#F5F5F5"
-                visible: !isFacilitatorAdmin
             }
         }
     }
@@ -75,5 +68,19 @@ Item {
         samples: 32
         color: "#80000000"
         source: realBalanceCard
+    }
+    Rectangle {
+        width: parent.width * (1.0 - ratio)
+        height: parent.height
+        anchors.right: parent.right
+        color: "#F5F5F5"
+        visible: (myRole !== "FACILITATOR_ADMIN")
+        radius: 24
+        Rectangle {
+            width: 24
+            height: parent.height
+            anchors.left: parent.left
+            color: "#F5F5F5"
+        }
     }
 }

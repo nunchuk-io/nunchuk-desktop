@@ -42,7 +42,7 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
         }
         QText {
-            width: 540
+            width: 646
             height: 56
             text: STR.STR_QML_143
             anchors {

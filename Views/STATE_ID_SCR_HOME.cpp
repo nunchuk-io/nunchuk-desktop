@@ -144,14 +144,16 @@ void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_SEND_REQUEST_HANDLER(QVariant msg) {
-    if(AppModel::instance()->walletInfo()){
+    if(auto w = AppModel::instance()->walletInfo()){
         QString rollover_address = msg.toString();
         if(rollover_address != ""){
+            w->setTranReplace(true);
             timeoutHandler(1000, [=](){
                 emit AppModel::instance()->walletInfo()->rollOverProcess(rollover_address);
             });
         }
         else {
+            w->setTranReplace(false);
             QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(AppModel::instance()->walletInfo()->id());
             if(utxos){
                 AppModel::instance()->setUtxoList(utxos);

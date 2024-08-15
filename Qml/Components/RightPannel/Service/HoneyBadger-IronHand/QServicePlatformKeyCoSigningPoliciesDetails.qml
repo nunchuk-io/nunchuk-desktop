@@ -82,7 +82,7 @@ Item {
         }
         Column {
             id: honey_badger
-            visible: ClientController.user.isHoneyBadgerUser
+            visible: ServiceSetting.walletInfo.isHoneyBadger
             spacing: 16
             Item {
                 width: 627

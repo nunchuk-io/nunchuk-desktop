@@ -91,6 +91,7 @@ Rectangle {
                 label.font.pixelSize: 16
                 type: eTypeB
                 onButtonClicked: healthCheck()
+                enabled: AppModel.walletInfo.myRole !== "FACILITATOR_ADMIN"
             }
             QTextButton {
                 width: 200

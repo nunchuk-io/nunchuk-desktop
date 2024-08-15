@@ -1368,7 +1368,22 @@ void Draco::setStayLoggedIn(bool value)
     }
 }
 
-void Draco::getUserSubscriptions()
+bool Draco::getUserSubscriptions()
+{
+    if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::TESTNET)
+    {
+        if (!getUserSubscriptionsTestnet()) {
+            return getUserSubscriptionsMainnet();
+        }
+    } else if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::MAIN) {
+        if (!getUserSubscriptionsMainnet()) {
+            return getUserSubscriptionsTestnet();
+        }
+    }
+    return false;
+}
+
+bool Draco::getUserSubscriptionsMainnet()
 {
     int     reply_code = -1;
     QString reply_msg  = "";
@@ -1381,16 +1396,10 @@ void Draco::getUserSubscriptions()
             QJsonObject data = jsonObj["data"].toObject();
             QJsonArray subs = data["subscriptions"].toArray();
             CLIENT_INSTANCE->setSubscriptions(subs);
-        }
-        else {
-
+            return CLIENT_INSTANCE->subscriptions().size() > 0;
         }
     }
-    if (AppSetting::instance()->primaryServer() == (int)nunchuk::Chain::TESTNET){
-        if (CLIENT_INSTANCE->subscriptions().size() == 0) {
-            getUserSubscriptionsTestnet();
-        }
-    }
+    return false;
 }
 
 bool Draco::getUserSubscriptionsTestnet()
@@ -1406,9 +1415,7 @@ bool Draco::getUserSubscriptionsTestnet()
             QJsonObject data = jsonObj["data"].toObject();
             QJsonArray subs = data["subscriptions"].toArray();
             CLIENT_INSTANCE->setSubscriptions(subs);
-            return true;
-        }
-        else {
+            return CLIENT_INSTANCE->subscriptions().size() > 0;
         }
     }
     return false;
@@ -1861,6 +1868,38 @@ bool Draco::assistedKeyUpdateName(const QString &fingerPrint, const QString &nam
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
+    return false;
+}
+
+bool Draco::assistedWalletGetTxNotes(const QString &wallet_id, QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    data["offset"] = "0";
+    data["limit"] = "10000";
+    data["greater_than_time_millis"] = 0,
+    data["statuses"] = "PENDING_CONFIRMATION,CONFIRMED,NETWORK_REJECTED";
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_GET_LIST_TX_NOTES];
+    cmd.replace("{wallet_id_or_local_id}",wallet_id);
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj.value("data").toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
     return false;
 }
 

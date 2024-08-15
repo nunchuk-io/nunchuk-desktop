@@ -89,6 +89,9 @@ class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser
     Q_PROPERTY(QString replaceFlow                                  READ replaceFlow                                    NOTIFY replaceFlowChanged)
     Q_PROPERTY(DeviceListModel*         deviceList                  READ deviceList                                     NOTIFY deviceListChanged)
     Q_PROPERTY(QString deviceType                                   READ deviceType                                     NOTIFY deviceTypeChanged)
+    Q_PROPERTY(bool tranReplace                                     READ tranReplace                                    NOTIFY tranReplaceChanged)
+    Q_PROPERTY(bool isHoneyBadger                                   READ isHoneyBadger                                  CONSTANT)
+    Q_PROPERTY(bool isIronHand                                      READ isIronHand                                     CONSTANT)
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -245,6 +248,8 @@ protected:
     //User wallet
     void GetUserTxs();
     void GetUserCancelledTxs();
+    void GetUserTxNotes();
+    QString GetUserTxNote(const QString &txid);
     QTransactionPtr SyncUserTxs(const nunchuk::Transaction &tx);
     void UpdateUserTxs(const QString &txid, const QString &memo);
     void CancelUserTxs(const QString &txid);
@@ -255,6 +260,8 @@ protected:
     //Group wallet
     void GetGroupTxs();
     void GetGroupCancelledTxs();
+    void GetGroupTxNotes();
+    QString GetGroupTxNote(const QString &txid);
     QTransactionPtr SyncGroupTxs(const nunchuk::Transaction &tx);
     void UpdateGroupTxs(const QString &txid, const QString &memo);
     void CancelGroupTxs(const QString &txid);
@@ -334,6 +341,7 @@ signals:
     void replaceFlowChanged() override;
     void deviceListChanged() override;
     void deviceTypeChanged() override;
+    void tranReplaceChanged() override;
     void rollOverProcess(const QString& address);
 public slots:
     void slotSyncCollabKeyname(QList<DracoUser> users);

@@ -162,6 +162,12 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
                 } else {
                     ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
                     DBG_INFO << data << ret << error_msg << isDuplicateKey;
+                    if (ret) {
+                        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                            dashboard->GetAlertsInfo();
+                            dashboard->GetHealthCheckInfo();
+                        }
+                    }
                 }
                 if (ret) {
                     AppModel::instance()->setAddSignerWizard(3);
@@ -218,6 +224,12 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
         else {
             ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
             DBG_INFO << data << ret << error_msg << isDuplicateKey;
+            if (ret) {
+                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dashboard->GetAlertsInfo();
+                    dashboard->GetHealthCheckInfo();
+                }
+            }
         }
         if (ret) {
             return true;

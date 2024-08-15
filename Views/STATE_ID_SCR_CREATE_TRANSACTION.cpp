@@ -38,10 +38,6 @@ void SCR_CREATE_TRANSACTION_Exit(QVariant msg) {
 void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
     bool subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
     qint64 feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    bool manualFee = msg.toMap().value("manualFee").toBool();
-    bool manualOutput = msg.toMap().value("manualOutput").toBool();
-    if(!manualFee) feeRate = -1;
-
     QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
     if(transaction){
         QString wallet_id = transaction.data()->walletId();
@@ -84,6 +80,11 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
         }
         else
         {
+            bool manualFee = msg.toMap().value("manualFee").toBool();
+            bool manualOutput = msg.toMap().value("manualOutput").toBool();
+            if(!manualFee){ // Auto fee = hourFee by recommendation from API
+                feeRate = AppModel::instance()->hourFeeOrigin();
+            }
             DBG_INFO << "CREATE NEW TRANSACTION"
                      << "subtract:" << subtractFromFeeAmout
                      << "| manual Output:" << manualOutput
@@ -157,7 +158,6 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     }
                     else {
                         QString unUseAddress = msg.toMap().value("unUseAddress").toString();
-
                         trans = bridge::nunchukCancelCreateTransaction(wallet_id,
                                                                        transaction->nunchukTransaction(),
                                                                        unUseAddress,
@@ -166,7 +166,6 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                        transaction->txid(),
                                                                        msgwarning);
                     }
-
                     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                         if(trans){
                             AppModel::instance()->setTransactionInfo(trans);

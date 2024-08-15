@@ -176,9 +176,9 @@ var STR_QML_140 = qsTr("Please sign this message on your device")
 var STR_QML_141 = qsTr("Please Confirm on the Key Device")
 
 //SCR_ADD_NEW_SOFTWARE_SIGNER.qml
-var STR_QML_142 = qsTr("New seed")
-var STR_QML_143 = qsTr("Please take a moment to write down this seed phrase. <b>It is the backup for your key.</b>")
-var STR_QML_144 = qsTr("Never share the seed phrase with anyone. Avoid having a digital copy.")
+var STR_QML_142 = qsTr("Seed phrase")
+var STR_QML_143 = qsTr("Please take a moment to write down this seed phrase. It’s the backup for your key. <b>This app will only show the seed phrase once.</b>")
+var STR_QML_144 = qsTr("Never share the recovery phrase with anyone. Avoid having a digital copy.")
 
 //SCR_ADD_REMOTE_SIGNER_RESULT.qml
 var STR_QML_145 = qsTr("Key Info (Air-Gapped)")
@@ -1282,7 +1282,7 @@ var STR_QML_1036 = qsTr("<b>%1</b> (%2) is requesting to make the following chan
 var STR_QML_1012 = qsTr("To authorize the changes, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
 var STR_QML_1013 = qsTr("The dummy transaction uses a fake input and does not move any of your real bitcoins. It will not be broadcast and will be immediately removed afterwards.")
 var STR_QML_1037 = qsTr("To authorize the changes, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
-var STR_QML_1038 = qsTr("To authorize the inheritance planning request, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders will also be notified.")
+var STR_QML_1038 = qsTr("To authorize the inheritance planning request, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
 
 var STR_QML_1039 = qsTr("Two signatures are required to cancel the inheritance plan. \n \
 \n \
@@ -1290,7 +1290,7 @@ In order to cancel the plan, you will be asked to sign a dummy transaction that 
 
 var STR_QML_1040 = qsTr("The dummy transaction will not be broadcast and will be immediately removed afterwards.")
 
-var STR_QML_1041 = qsTr("To authorize this recurring payment, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders will also be notified.")
+var STR_QML_1041 = qsTr("To authorize this recurring payment, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
 
 var STR_QML_1042 = qsTr("<b>%1</b> (%2) is requesting to set up the inheritance plan for <b>%3</b>.")
 
@@ -1539,8 +1539,8 @@ var STR_QML_1247 = qsTr("Get more out of Nunchuk with an assisted wallet")
 var STR_QML_1248 = qsTr("Visit our website")
 var STR_QML_1249 = qsTr("Add a wallet")
 var STR_QML_1250 = qsTr("Use a multisig wallet for maximum safety. A multisig wallet has multiple keys—if one is compromised, your fund is still safe.")
-var STR_QML_1251 = qsTr("Create hot wallet")
-var STR_QML_1252 = qsTr("Quickly create a hot wallet for immediate use and back it up later.")
+var STR_QML_1251 = qsTr("Create a hot wallet")
+var STR_QML_1252 = qsTr("Quickly create a hot wallet for immediate use and back it up later. No existing keys required.")
 var STR_QML_1253 = qsTr("Recover existing wallet")
 var STR_QML_1254 = qsTr("Recover hot wallet")
 var STR_QML_1255 = qsTr("Create now")
@@ -1550,7 +1550,7 @@ var STR_QML_1258 = qsTr("Learn more about Nunchuk assisted services")
 var STR_QML_1259 = qsTr("Send query")
 var STR_QML_1260 = qsTr("If you are looking for a white-glove, personalized service offered by a Bitcoin Advisor, enter your country and email address below, and we’ll send you the best Bitcoin Advisors in your area. \n \n Alternatively, check out the assisted services offered by our platform.")
 var STR_QML_1261 = qsTr("Create new assisted wallet (%1 remaining)")
-var STR_QML_1262 = qsTr("Create new wallet")
+var STR_QML_1262 = qsTr("Create a new wallet")
 var STR_QML_1263 = qsTr("Your email address")
 var STR_QML_1264 = qsTr("Your country")
 
@@ -1685,3 +1685,33 @@ var STR_QML_1391 = qsTr("Please replace key(s) using the mobile app.")
 var STR_QML_1392 = qsTr("Key added to wallet")
 var STR_QML_1393 = qsTr("Family or group wallets")
 var STR_QML_1394 = qsTr("Collaboratively create family or group wallets. Manage keys distributedly, control member access and chat privately.")
+var STR_QML_1395 = qsTr("Role")
+var STR_QML_1396 = qsTr("Facilitator admin")
+var STR_QML_1397 = qsTr("Can add or remove group members. \nCan make changes to inheritance planning.
+Can make changes to wallet policies.
+Can activate emergency lockdown.
+Can view key health status.
+Can perform key health check.
+Can perform key recovery.
+Can create coin tags or collections.
+Can edit transaction notes.
+Can participate in group chat.
+Can view transactions.
+Can create transactions.
+Can sign transactions.")
+var STR_QML_1398 = qsTr("Can view key health status. \nCan perform key health check.
+Can perform key recovery.
+Can participate in group chat.
+Can view transactions.
+Can create transactions.
+Can sign transactions.")
+var STR_QML_1399 = qsTr("Can perform key health check. \nCan perform key recovery.
+Can sign transactions.")
+var STR_QML_1400 = qsTr("Can add group members. \nCan request key health check.
+Can participate in group chat.")
+var STR_QML_1401 = qsTr("Can view transactions.")
+var STR_QML_1402 = qsTr("Only applicable for members who own a TAPSIGNER, Ledger or Trezor device.")
+var STR_QML_1403 = qsTr("Select a role")
+var STR_QML_1404 = qsTr("Only an admin can downgrade a member’s role.")
+var STR_QML_1405 = qsTr("Create a new wallet using existing keys.")
+var STR_QML_1406 = qsTr("<b>You won’t be able to view the seed phrase again in the app.</b> Please make sure that you have it backed up, or risk losing your funds.")

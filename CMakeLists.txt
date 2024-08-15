@@ -1,9 +1,9 @@
 cmake_minimum_required( VERSION 3.1 )
 #set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.36)
+    project(Nunchuk VERSION 1.9.37)
 else()
-    project(nunchuk-qt VERSION 1.9.36)
+    project(nunchuk-qt VERSION 1.9.37)
 endif()
 
 set( CMAKE_CXX_STANDARD 20 )
@@ -176,6 +176,7 @@ set(Views_SRCS
     Views/STATE_ID_SCR_REPLACE_SELECT_KEY.cpp
     Views/STATE_ID_SCR_REPLACE_KEYS.cpp
     Views/STATE_ID_SCR_SIGN_IN_VIA_XPUB.cpp
+    Views/STATE_ID_SCR_EDIT_MEMBERS.cpp
     )
 
 set(Views_MOCS

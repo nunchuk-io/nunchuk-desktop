@@ -473,9 +473,7 @@ void Worker::slotStartGetTransactionHistory(const QString wallet_id)
 
 void Worker::slotStartGetEstimatedFee()
 {
-    if(AppSetting::instance()->primaryServer() == (int)AppSetting::Chain::MAIN){
-        Draco::instance()->feeRates();
-    }
+    Draco::instance()->feeRates();
 }
 
 void Worker::slotStartSendPinToDevice(const int state_id, const int device_idx, const QString &pin)

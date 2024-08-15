@@ -80,6 +80,11 @@ bool QWalletServicesTag::requestReplaceKeysVerifyPassword(const QString &passwor
     return requestVerifyPassword(password,(int)TARGET_ACTION::REPLACE_KEYS);
 }
 
+bool QWalletServicesTag::requestEditMemberVerifyPassword(const QString &password)
+{
+    return requestVerifyPassword(password,(int)TARGET_ACTION::EDIT_GROUP_MEMBERS);
+}
+
 bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown()
 {
     QWalletPtr w = ServiceSetting::instance()->walletInfoPtr();
@@ -105,7 +110,7 @@ bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown()
 
 bool QWalletServicesTag::verifyConfirmationCode(const QString &code)
 {
-    DBG_INFO << code;
+    DBG_INFO << "id: " << m_code_id << "code: " << code;
     QString errormsg;
     QJsonObject output;
     bool ret = Draco::instance()->VerifyConfirmationCode(m_code_id, code, output, errormsg);
@@ -772,7 +777,7 @@ void QWalletServicesTag::setListPolicy()
                 if (!server->hasServerKey()) continue;
             }
             if (auto dash = w->dashboard()) {
-                auto hasPermission = dash->role() == "KEYHOLDER" || dash->role() == "MASTER" || dash->role() == "ADMIN";
+                auto hasPermission = dash->role() == "KEYHOLDER" || dash->role() == "MASTER" || dash->role() == "ADMIN" || dash->role() == "FACILITATOR_ADMIN";
                 if (hasPermission) {
                     setuped << wallet_id;
                 }

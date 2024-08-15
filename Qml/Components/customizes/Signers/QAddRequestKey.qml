@@ -33,11 +33,10 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     width: 322
-    height: 84
+    height: 72
     signal tapsignerClicked()
     signal serkeyClicked()
     signal hardwareClicked()
-    property bool ourAccount: modelData.added_by_user_id === ClientController.user.email
     Loader {
         id: _source
         anchors.fill: parent
@@ -97,7 +96,7 @@ Item {
                     rightMargin: 12
                 }
                 width: label.paintedWidth + 2*20
-                height: 48
+                height: 36
                 type: eTypeB
                 label.text: STR.STR_QML_941
                 label.font.pixelSize: 16
@@ -237,7 +236,7 @@ Item {
                     rightMargin: 12
                 }
                 width: label.paintedWidth + 2*20
-                height: 48
+                height: 36
                 type: eTypeB
                 label.text: STR.STR_QML_941
                 label.font.pixelSize: 16
@@ -375,7 +374,7 @@ Item {
                     rightMargin: 12
                 }
                 width: label.paintedWidth + 2*20
-                height: 48
+                height: 36
                 type: eTypeB
                 label.text: STR.STR_QML_958
                 label.font.pixelSize: 16

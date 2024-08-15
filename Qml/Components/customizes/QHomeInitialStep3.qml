@@ -97,12 +97,11 @@ Item {
             isHotWallet: AppModel.walletInfo.needBackup
             isLocked: AppModel.walletInfo.isLocked
             isReplaced: AppModel.walletInfo.isReplaced
-            isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
             Row{
                 anchors.fill: parent
                 Item {
                     height: parent.height
-                    width: parent.width * _walletDes.ratio
+                    width: parent.width * (myRole === "FACILITATOR_ADMIN" ? 1 : _walletDes.ratio)
                     QText {
                         id: displayWalletname
                         width: 380
@@ -120,22 +119,36 @@ Item {
                             topMargin: 24
                         }
                     }
-                    QIconButton{
-                        id:_more
-                        width: 24
-                        height: 24
+                    Row {
+                        spacing: 8
                         anchors{
                             right: parent.right
                             rightMargin: 36
                             top: parent.top
                             topMargin: 30*QAPP_DEVICE_HEIGHT_RATIO
                         }
-                        visible: (myRole !== "OBSERVER") && (myRole !== "FACILITATOR_ADMIN")
-                        icon: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
-                        onClicked: {
-                            optionMenu.popup(_more,mouse.x - 250 + 24,24)
+                        QIconButton{
+                            id: _group
+                            width: 24
+                            height: 24
+                            visible: (myRole !== "OBSERVER") && (myRole !== "")
+                            icon: (AppModel.walletInfo.isHoneyBadger || AppModel.walletInfo.isIronHand) ? "qrc:/Images/Images/health-check-light.svg" : "qrc:/Images/Images/groups-dark.svg"
+                            onClicked: {
+                                GroupWallet.dashboardInfo.isShowDashBoard = true
+                            }
+                        }
+                        QIconButton{
+                            id:_more
+                            width: 24
+                            height: 24
+                            visible: (myRole !== "OBSERVER") && (myRole !== "FACILITATOR_ADMIN")
+                            icon: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
+                            onClicked: {
+                                optionMenu.popup(_more,mouse.x - 250 + 24,24)
+                            }
                         }
                     }
+
                     QText {
                         id: displayDescription
                         text: AppModel.walletInfo.walletDescription
@@ -303,9 +316,10 @@ Item {
                     }
                     Row {
                         id: buttongHandles
-                        spacing: parent.width - 204 *2 - 24*2
+                        spacing: 12
                         anchors {
-                            horizontalCenter: parent.horizontalCenter
+                            left: parent.left
+                            leftMargin: 24
                             bottom: parent.bottom
                             bottomMargin: 24*QAPP_DEVICE_HEIGHT_RATIO
                         }

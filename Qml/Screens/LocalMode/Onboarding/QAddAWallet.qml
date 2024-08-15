@@ -41,57 +41,42 @@ QOnScreenContentTypeA {
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     content: Item {
         Column {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: 500
+            anchors.left: parent.left
+            width: 539
             spacing: 24
-            QImage {
-                width: 96
-                height: 96
-                anchors.horizontalCenter: parent.horizontalCenter
-                source: "qrc:/Images/Images/wallet.svg"
-            }
             QLato {
+                anchors.left: parent.left
                 width: parent.width
                 text: STR.STR_QML_1250
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
                 wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
+                horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
             }
-            Column {
-                width: 500
-                spacing: 16
-                QTextButton {
-                    width: 343
-                    height: 48
-                    label.text: STR.STR_QML_1262
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    onButtonClicked: {
-                        var _input = {
-                            type: "create-new-wallet"
-                        }
-                        QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
+            QCreateHotWallet {
+                width: 539
+                height: 92
+                anchors.left: parent.left
+                color: "#FFFFFF"
+                title: STR.STR_QML_1262
+                description: STR.STR_QML_1405
+                desImg: "qrc:/Images/Images/wallet.svg"
+                onItemclicked: {
+                    var _input = {
+                        type: "create-new-wallet"
                     }
-                }
-                QLato {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width
-                    text: "Or"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
                 }
             }
             QCreateHotWallet {
-                width: 500
-                height: 128
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: 539
+                height: 120
+                anchors.left: parent.left
                 color: "#FFFFFF"
                 title: STR.STR_QML_1251
                 description: STR.STR_QML_1252
-                desImg: "qrc:/Images/Images/create-hot-wallet.png"
+                desImg: "qrc:/Images/Images/person-add-24px.svg"
                 onItemclicked: {
                     OnBoarding.state = "hotWallet"
                 }
@@ -99,7 +84,7 @@ QOnScreenContentTypeA {
         }
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    bottomLeft: Item {}
     bottomRight: Row {
         spacing: 12
         QTextButton {

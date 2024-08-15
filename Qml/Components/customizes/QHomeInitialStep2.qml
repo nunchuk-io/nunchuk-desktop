@@ -45,7 +45,7 @@ Rectangle {
             titleSuggest: STR.STR_QML_1251
             content: STR.STR_QML_1252
             height: 180
-            icon:"qrc:/Images/Images/create-hot-wallet.png"
+            icon:"qrc:/Images/Images/person-add-24px.svg"
             onBtnClicked: {
                 OnBoarding.state = "hotWallet"
                 QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)

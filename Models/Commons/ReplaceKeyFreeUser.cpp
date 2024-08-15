@@ -8,6 +8,7 @@
 #include "Premiums/QAssistedDraftWallets.h"
 #include "Premiums/QWalletServicesTag.h"
 
+bool ReplaceKeyFreeUser::m_tranReplace = false;
 void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
 {
     m_replaceFree = true;
@@ -171,6 +172,19 @@ bool ReplaceKeyFreeUser::updateKeyReplace(const QString &xfp, const int index)
         AppModel::instance()->startScanDevices(E::STATE_ID_SCR_ADD_HARDWARE_SIGNER);
     }
     return false;
+}
+
+bool ReplaceKeyFreeUser::tranReplace() const
+{
+    return m_tranReplace;
+}
+
+void ReplaceKeyFreeUser::setTranReplace(bool newTranReplace)
+{
+    if (m_tranReplace == newTranReplace)
+        return;
+    m_tranReplace = newTranReplace;
+    emit tranReplaceChanged();
 }
 
 bool ReplaceKeyFreeUser::replaceFree() const

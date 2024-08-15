@@ -84,7 +84,8 @@ QString QGroupDashboard::groupStatus() const
 
 QString QGroupDashboard::myRole() const
 {
-    DBG_INFO << myInfo()["role"].toString();
+    // return "FACILITATOR_ADMIN"; //FIXME TBD
+    // DBG_INFO << myInfo()["role"].toString();
     return myInfo()["role"].toString();
 }
 
@@ -720,6 +721,50 @@ void QGroupDashboard::setGroupChatExisted(bool existed)
     }
 }
 
+bool QGroupDashboard::EditGroupMembers()
+{
+    QJsonObject output;
+    QString error_msg = "";
+    bool ret = Byzantine::instance()->EditGroupMembers(groupId(),
+                                                       servicesTagPtr()->confirmCodeNonceBody(),
+                                                        {},
+                                                       servicesTagPtr()->passwordToken(),
+                                                       servicesTagPtr()->secQuesToken(),
+                                                       servicesTagPtr()->confirmToken(),
+                                                       output,
+                                                       error_msg);
+    if(ret){
+        DBG_INFO << output;
+        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+        GetMemberInfo();
+    }
+    return ret;
+}
+
+bool QGroupDashboard::CalculateRequireSignaturesForEditingMembers()
+{
+    QJsonObject output;
+    QString error_msg = "";
+    bool ret = Byzantine::instance()->CalculateRequireSignaturesForEditingMembers(groupId(), bodyEditMembers(), output, error_msg);
+    if(ret){
+        DBG_INFO << output;
+        QJsonObject resultObj = output["result"].toObject();
+        servicesTagPtr()->setReqiredSignatures(resultObj);
+        auto info = servicesTagPtr()->reqiredSignaturesInfo();
+        if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::CONFIRMATION_CODE) {
+            if (RequestConfirmationCodeEditMembers()) {
+                emit editMembersSuccessChanged();
+            }
+        } else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
+            emit editMembersSuccessChanged();
+        } else {
+            QString message = QString("Not Support Dummy Transaction");
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    return ret;
+}
+
 bool QGroupDashboard::requestStartKeyReplacement(const QString &tag)
 {
     if (ServiceSetting::instance()->existHardware(tag)) {
@@ -813,6 +858,33 @@ void QGroupDashboard::requestShowLetAddYourKeys()
 {
     setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_PENDING);
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+}
+
+bool QGroupDashboard::isDowngrade(QString email_or_username, QString roleNew)
+{
+    QString roleOld = "";
+    for (auto js : groupInfo()["members"].toArray()) {
+        auto email_or_username_tmp = js.toObject()["email_or_username"].toString();
+        if (qUtils::strCompare(email_or_username, email_or_username_tmp)) {
+            roleOld = js.toObject()["role"].toString();
+        }
+    }
+    DBG_INFO << email_or_username << roleOld << roleNew;
+    if (roleOld.isEmpty()) return false;
+
+    static QMap<QString, int> maps = {
+        {"MASTER", 1},
+        {"ADMIN", 2},
+        {"KEYHOLDER", 3},
+        {"KEYHOLDER_LIMITED", 4},
+        {"FACILITATOR_ADMIN", 5},
+        {"OBSERVER", 6},
+        {"CUSTOMIZE", 7}
+    };
+    if (qUtils::strCompare(roleOld, "FACILITATOR_ADMIN") && qUtils::strCompare(myRole(), "FACILITATOR_ADMIN")) {
+        return false;
+    }
+    return maps[roleOld] < maps[roleNew] && qUtils::strCompare(myRole(), "FACILITATOR_ADMIN");
 }
 
 bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type)
@@ -942,6 +1014,17 @@ int QGroupDashboard::nInfo() const
 
 QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const
 {
+    QJsonArray origin = groupInfo()["members"].toArray();
+    QString our_id = "";
+    for (auto member : origin) {
+        QJsonObject it = member.toObject();
+        QString user_id = it["user"].toObject()["id"].toString();
+        QString email_or_username = it["email_or_username"].toString();
+        if (qUtils::strCompare(ClientController::instance()->getMe().email, email_or_username)) {
+            our_id = user_id;
+            break;
+        }
+    }
     for (QJsonValue js : m_signerInfo) {
         QJsonObject signer = js.toObject();
         if (signer["xfp"].toString() == xfp) {
@@ -963,6 +1046,11 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const
                 }
             }
             signer["signer_is_primary"] = qUtils::isPrimaryKey(xfp);
+            QString added_by_user_id = signer["added_by_user_id"].toString();
+            signer["ourAccount"] = false;
+            if (our_id == added_by_user_id) {
+                signer["ourAccount"] = true;
+            }
             return signer;
         }
     }
@@ -1057,6 +1145,8 @@ bool QGroupDashboard::FinishKeyReplacement(const QJsonObject &requestBody)
     if(ret){
         DBG_INFO << ret << error_msg;
         // Handle preparing model here.
+        GetAlertsInfo();
+        GetHealthCheckInfo();
     }
     else{
         //Show error
@@ -1095,4 +1185,107 @@ QJsonObject QGroupDashboard::alertJson() const
     return m_currentAlertInfo;
 }
 
+QVariantList QGroupDashboard::editMembers() const
+{
+    return m_editMembers.toVariantList();
+}
 
+void QGroupDashboard::initMembers()
+{
+    m_editMembers = groupInfo()["members"].toArray();
+    emit editMembersChanged();
+}
+
+bool QGroupDashboard::addMember(const QJsonObject &aEditMember)
+{
+    QJsonObject obj = aEditMember;
+    obj["isNew"] = true;
+    DBG_INFO << obj;
+    m_editMembers.append(obj);
+    emit editMembersChanged();
+    return true;
+}
+
+bool QGroupDashboard::removeMember(const QJsonObject &aEditMember)
+{
+    QString email_or_username = aEditMember["email_or_username"].toString();
+    for (int i = 0; i < m_editMembers.size(); i++) {
+        auto js = m_editMembers.at(i);
+        auto email_or_username_tmp = js.toObject()["email_or_username"].toString();
+        if (qUtils::strCompare(email_or_username, email_or_username_tmp)) {
+            m_editMembers.removeAt(i);
+            emit editMembersChanged();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QGroupDashboard::editMembers(const QJsonObject &aEditMember, int index)
+{
+    QString email_or_username = aEditMember["email_or_username"].toString();
+    auto old = m_editMembers.at(index).toObject();
+    QString email_or_username_old = old["email_or_username"].toString();
+    DBG_INFO << aEditMember << index;
+    QJsonObject replace = old;
+    for (auto it = aEditMember.begin(); it != aEditMember.end(); ++it) {
+        replace[it.key()] = aEditMember[it.key()];
+    }
+    if (qUtils::strCompare(email_or_username, email_or_username_old)) {
+        m_editMembers.replace(index, replace);
+        emit editMembersChanged();
+        return true;
+    } else {
+        if (containEditMeber(replace)) {
+            return false;
+        } else {
+            m_editMembers.replace(index, replace);
+            emit editMembersChanged();
+            return true;
+        }
+    }
+}
+
+bool QGroupDashboard::containEditMeber(const QJsonObject &aEditMember)
+{
+    QString email_or_username = aEditMember["email_or_username"].toString();
+    for (auto js : m_editMembers) {
+        auto email_or_username_tmp = js.toObject()["email_or_username"].toString();
+        if (qUtils::strCompare(email_or_username, email_or_username_tmp)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QGroupDashboard::RequestConfirmationCodeEditMembers()
+{
+    QJsonObject data;
+    data["nonce"] = Draco::instance()->randomNonce();
+    data["body"] = bodyEditMembers();
+    servicesTagPtr()->setConfirmCodeNonceBody(data);
+    QString errormsg;
+    QJsonObject output;
+    bool ret = Draco::instance()->RequestConfirmationCode("EDIT_GROUP_MEMBERS", data, output, errormsg);
+    if (ret) {
+        QString code_id = output["code_id"].toString();
+        servicesTagPtr()->setCode_id(code_id);
+    }
+    return ret;
+}
+
+QJsonObject QGroupDashboard::bodyEditMembers()
+{
+    QJsonArray arrays;
+    for (auto js : m_editMembers) {
+        auto member = js.toObject();
+        QJsonObject newMember;
+        newMember["email_or_username"] = member["email_or_username"];
+        newMember["role"] = member["role"];
+        newMember["permissions"] = member["permissions"];
+        arrays.append(newMember);
+    }
+    QJsonObject requestBody;
+    requestBody["members"] = arrays;
+    return requestBody;
+}

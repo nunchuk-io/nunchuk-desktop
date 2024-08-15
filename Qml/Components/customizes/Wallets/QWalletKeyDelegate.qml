@@ -137,7 +137,7 @@ Item {
         label.font.pixelSize: 12
         type: eTypeB
         enabled: !AppModel.walletInfo.isLocked
-        visible: signerType === NUNCHUCKTYPE.SERVER && !AppModel.walletInfo.isReplaced
+        visible: signerType === NUNCHUCKTYPE.SERVER && !AppModel.walletInfo.isReplaced && myRole !== "FACILITATOR_ADMIN"
         onButtonClicked: {
             viewPoliciesRequest()
         }

@@ -157,6 +157,7 @@ enum CMD_IDX {
     ASSISTED_WALLET_CANCEL_TX,
     ASSISTED_WALLET_GET_TX,
     ASSISTED_WALLET_GET_LIST_TX,
+    ASSISTED_WALLET_GET_LIST_TX_NOTES,
     ASSISTED_WALLET_DELETE_LIST_TX,
     ASSISTED_WALLET_SYNC_TX,
     ASSISTED_WALLET_RBF_TX,
@@ -283,6 +284,8 @@ enum CMD_IDX {
     GROUP_WALLET_UPDATE_ALIAS,
     GROUP_WALLET_DELETE_ALIAS,
     GROUP_WALLET_UPDATE_PRIMARY_OWNER,
+    GROUP_WALLET_EDIT_GROUP_MEMBERS,
+    GROUP_WALLET_EDIT_GROUP_MEMBERS_REQUIRED_SIGNATURES,
 
     //Group Alert Management
     GROUP_WALLET_ALERTS,
@@ -320,6 +323,7 @@ enum CMD_IDX {
 
     // Group transactions
     GROUP_WALLETS_GET_ALL_TX,
+    GROUP_WALLETS_GET_ALL_TX_NOTES,
     GROUP_WALLETS_GET_ONE_TX,
     GROUP_WALLETS_UPDATE_TX,
     GROUP_WALLETS_CANCEL_TX,
@@ -489,7 +493,8 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_CREATE_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
     { Premium::CMD_IDX::ASSISTED_WALLET_UPDATE_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}")  },
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_LIST_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
-    { Premium::CMD_IDX::ASSISTED_WALLET_DELETE_LIST_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
+    { Premium::CMD_IDX::ASSISTED_WALLET_GET_LIST_TX_NOTES  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/notes")  },
+    { Premium::CMD_IDX::ASSISTED_WALLET_DELETE_LIST_TX     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions")  },
     { Premium::CMD_IDX::ASSISTED_WALLET_SIGN_TX      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}/sign") },
     { Premium::CMD_IDX::ASSISTED_WALLET_CANCEL_TX    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_TX       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
@@ -599,6 +604,10 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLETS_LIST                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups") },
     { Group::CMD_IDX::GROUP_WALLETS_ACCEPT              , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members/accept") },
     { Group::CMD_IDX::GROUP_WALLETS_DENY                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members/deny") },
+    { Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS                       , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members") },
+    { Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS_REQUIRED_SIGNATURES   , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members/calculate-requires-signatures") },
+
+
     { Group::CMD_IDX::GROUP_WALLET_ALERTS               , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/alerts") },
     { Group::CMD_IDX::GROUP_WALLET_ALERTS_COUNT         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/alerts/total") },
     { Group::CMD_IDX::GROUP_WALLET_ALERTS_READ          , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/alerts/{alert_id}/mark-as-read") },
@@ -638,6 +647,7 @@ const QMap<int, QString> commands {
 
     // Group transactions
     { Group::CMD_IDX::GROUP_WALLETS_GET_ALL_TX           , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/transactions") },
+    { Group::CMD_IDX::GROUP_WALLETS_GET_ALL_TX_NOTES     , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/transactions/notes") },
     { Group::CMD_IDX::GROUP_WALLETS_GET_ONE_TX           , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
     { Group::CMD_IDX::GROUP_WALLETS_UPDATE_TX            , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },
     { Group::CMD_IDX::GROUP_WALLETS_CANCEL_TX            , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/transactions/{transaction_id}") },

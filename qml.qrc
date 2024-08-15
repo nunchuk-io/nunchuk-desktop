@@ -462,6 +462,16 @@
         <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceBeforeYouBegin.qml</file>
         <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceAddSigner.qml</file>
         <file>Qml/Screens/OnlineMode/ReplaceKeyFrees/QReplaceAddSignerLoading.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_EDIT_MEMBERS.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMembers.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberRole.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QPopupEditMemberSelectARole.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberSelectRoleDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberNewMemberDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberSuccess.qml</file>
+        <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberConfirmEmail.qml</file>
+        <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceFacilitatorAdminSubscriberLeftPannel.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -742,9 +752,7 @@
         <file>Images/unassisted-wallet-description.svg</file>
         <file>Images/hot-wallet-description.svg</file>
         <file>Images/circle-assisted-wallet.svg</file>
-        <file>Images/create-hot-wallet.svg</file>
         <file>Images/chevron-right-dark.svg</file>
-        <file>Images/create-hot-wallet.png</file>
         <file>Images/unassisted-wallet-description.png</file>
         <file>Images/onboarding-assisted-wallet.png</file>
         <file>Images/onboarding-unassisted-wallet.png</file>
@@ -765,6 +773,9 @@
         <file>Images/replace.svg</file>
         <file>Images/add-to-collection-dark.svg</file>
         <file>Images/Circular.svg</file>
+        <file>Images/groups-dark.svg</file>
+        <file>Images/health-check-light.svg</file>
+        <file>Images/person-add-24px.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

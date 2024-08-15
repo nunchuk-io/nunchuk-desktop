@@ -30,6 +30,7 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -121,13 +122,7 @@ QScreen {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
-                var valid = random1.correct && random2.correct && random3.correct
-                if(valid){
-                    QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED_SUCCEED)
-                }
-                else{
-                    AppModel.showToast(-1, STR.STR_QML_207, EWARNING.EXCEPTION_MSG);
-                }
+                _InfoReview.open()
             }
         }
     }
@@ -167,5 +162,25 @@ QScreen {
 
         console.log(randomValues)
         return randomValues;
+    }
+    QPopupInfoTwoButtons {
+        id: _InfoReview
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1406
+        labels: [STR.STR_QML_1274,STR.STR_QML_1275]
+        funcs: [
+            function() {
+                QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED_BACK)
+            },
+            function() {
+                var valid = random1.correct && random2.correct && random3.correct
+                if(valid){
+                    QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED_SUCCEED)
+                }
+                else{
+                    AppModel.showToast(-1, STR.STR_QML_207, EWARNING.EXCEPTION_MSG);
+                }
+            }
+        ]
     }
 }

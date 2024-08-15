@@ -836,14 +836,19 @@ QTransactionPtr bridge::nunchukImportTransaction(const QString &wallet_id, const
     }
 }
 
-QTransactionPtr bridge::nunchukUpdateTransaction(const QString &wallet_id, const QString &tx_id, const QString &new_txid, const QString &raw_tx, const QString &reject_msg, QWarningMessage &msg)
+QTransactionPtr bridge::nunchukUpdateTransaction(const QString &wallet_id,
+                                                 const QString &tx_id,
+                                                 const QString &new_txid,
+                                                 const QString &raw_tx,
+                                                 const QString &reject_msg,
+                                                 QWarningMessage &msg)
 {
     nunchuk::Transaction trans_result = nunchukiface::instance()->UpdateTransaction(wallet_id.toStdString(),
-                                                                             tx_id.toStdString(),
-                                                                             new_txid.toStdString(),
-                                                                             raw_tx.toStdString(),
-                                                                             reject_msg.toStdString(),
-                                                                             msg);
+                                                                                    tx_id.toStdString(),
+                                                                                    new_txid.toStdString(),
+                                                                                    raw_tx.toStdString(),
+                                                                                    reject_msg.toStdString(),
+                                                                                    msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
         return final;

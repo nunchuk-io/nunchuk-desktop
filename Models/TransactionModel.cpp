@@ -225,8 +225,12 @@ QString Transaction::memo() const {
 
 void Transaction::setMemo(const QString &memo)
 {
-    m_transaction.set_memo(memo.toStdString());
-    emit memoChanged();
+    DBG_INFO << memo;
+    if(!qUtils::strCompare(memo, QString::fromStdString(m_transaction.get_memo()))){
+        m_transaction.set_memo(memo.toStdString());
+        bridge::nunchukUpdateTransactionMemo(walletId(), txid(), memo);
+        emit memoChanged();
+    }
 }
 
 int Transaction::status() const {
@@ -935,7 +939,7 @@ void TransactionListModel::addTransaction(const QTransactionPtr &d){
 void TransactionListModel::updateTransactionMemo(const QString &tx_id, const QString &memo)
 {
     for (int i = 0; i < m_data.count(); i++) {
-        if(m_data.at(i) && (0 == QString::compare(tx_id, m_data.at(i).data()->txid(), Qt::CaseInsensitive))){
+        if(m_data.at(i) && qUtils::strCompare(tx_id, m_data.at(i).data()->txid())){
             m_data.at(i)->setMemo(memo);
             emit dataChanged(index(i),index(i));
         }
@@ -947,7 +951,7 @@ void TransactionListModel::updateTransaction(const QString &tx_id, const QTransa
     if(tx){
         bool existed = false;
         for (int i = 0; i < m_data.count(); i++) {
-            if(m_data.at(i) && (0 == QString::compare(tx_id, m_data.at(i).data()->txid(), Qt::CaseInsensitive))){
+            if(m_data.at(i) && qUtils::strCompare(tx_id, m_data.at(i).data()->txid())){
                 m_data.at(i)->setNunchukTransaction(tx.data()->nunchukTransaction());
                 emit dataChanged(index(i),index(i));
                 existed = true;

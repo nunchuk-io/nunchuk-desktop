@@ -1871,15 +1871,18 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                      msgtype.contains("io.nunchuk.custom.key_name_changed", Qt::CaseInsensitive) ||
                      msgtype.contains("io.nunchuk.custom.key_updated", Qt::CaseInsensitive))
             {
+                if (dashboard) {
+                    dashboard->GetAlertsInfo();
+                }
                 AppModel::instance()->requestCreateUserWallets();
             }
             else if(msgtype.contains("io.nunchuk.custom.transaction", Qt::CaseInsensitive))
             {
                 QJsonObject content = evt.fullJson()["content"].toObject();
+                DBG_INFO << content;
                 QString wallet_id = content["wallet_local_id"].toString();
                 if (wallet_id != "") {
                     if(msgtype.contains("io.nunchuk.custom.transaction_canceled") || msgtype.contains("io.nunchuk.custom.transaction_batch_created")){
-                        DBG_INFO << content;
                         AppModel::instance()->startSyncWalletDb(wallet_id);
                     }
                     else {
@@ -1897,6 +1900,7 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                                         if(!data.isEmpty()){
                                             trans->setServerKeyMessage(data);
                                         }
+                                        DBG_INFO << trans.data()->memo();
                                         wallet.data()->transactionHistory()->updateTransaction(trans->txid(), trans);
                                         if(AppModel::instance()->transactionInfo()){
                                             QString current_tx_wallet_id = AppModel::instance()->transactionInfo()->walletId();
@@ -2003,6 +2007,7 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     dashboard->GetWalletInfo();
                     if(dashboard->isReplaced()){
                         dashboard->setShowDashBoard(false);
+                        AppModel::instance()->requestCreateUserWallets();
                     }
                     if (auto walletList = AppModel::instance()->walletListPtr()) {
                         walletList->refresh();

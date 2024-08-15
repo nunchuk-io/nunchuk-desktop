@@ -474,6 +474,11 @@ void AppModel::setSoftwareSignerDeviceList(const QDeviceListModelPtr &value)
     emit softwareSignerDeviceListChanged();
 }
 
+qint64 AppModel::hourFeeOrigin() const
+{
+    return hourFee_;
+}
+
 QString AppModel::hourFeeCurrency() const
 {
     double fee = (double)hourFee_/1000;
@@ -496,6 +501,11 @@ void AppModel::setHourFee(qint64 fee)
         hourFee_ = fee;
         emit hourFeeChanged();
     }
+}
+
+qint64 AppModel::minFeeOrigin() const
+{
+    return minFee_;
 }
 
 QString AppModel::minFeeCurrency() const
@@ -532,6 +542,11 @@ void AppModel::resetSignersChecked()
     }
 }
 
+qint64 AppModel::halfHourFeeOrigin() const
+{
+    return halfHourFee_;
+}
+
 QString AppModel::halfHourFeeCurrency() const
 {
     double btcRate = btcRates()/100000000;
@@ -554,6 +569,11 @@ void AppModel::setHalfHourFee(qint64 fee)
         halfHourFee_ = fee;
         emit halfHourFeeChanged();
     }
+}
+
+qint64 AppModel::fastestFeeOrigin() const
+{
+    return fastestFee_;
 }
 
 QString AppModel::fastestFeeCurrency() const
@@ -699,12 +719,8 @@ void AppModel::requestCreateUserWallets()
         WalletsMng->GetListWallet(USER_WALLET);
         WalletsMng->GetListWallet(GROUP_WALLET);
         AppModel::instance()->startReloadUserDb();
-        static bool needCheckOnboarding = true;
-        if(needCheckOnboarding){
-            needCheckOnboarding = false;
-            AppModel::instance()->requestOnboarding();
-        }
     });
+    AppModel::instance()->requestOnboarding();
 }
 
 void AppModel::requestSyncSharedWallets()
@@ -765,11 +781,10 @@ void AppModel::requestClearData()
 
 void AppModel::requestOnboarding()
 {
-    timeoutHandler(1000,[=]{
-        if (CLIENT_INSTANCE->isSubscribed() || !QGroupWallets::instance()->existGroupPending()) {
+    timeoutHandler(1000,[=, this]{
+        if (CLIENT_INSTANCE->isSubscribed() || QGroupWallets::instance()->existGroupPending() || AppModel::instance()->walletListPtr()->existGroupWallet()) {
             AppSetting::instance()->setIsFirstTimeOnboarding(true);
-        }
-        else {
+        } else {
             DBG_INFO << "Checking Onboarding " << AppSetting::instance()->isFirstTimeOnboarding();
             if (!AppSetting::instance()->isFirstTimeOnboarding()) {
                 OnBoardingModel::instance()->setState("onboarding");
@@ -991,6 +1006,7 @@ void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
                  << "Wallet Role:" << walletInfo_.data()->myRole()
                  << "Wallet Slug:" << walletInfo_.data()->slug()
                  << "Wallet Status:" << walletInfo_.data()->status();
+        QGroupWallets::instance()->setDashboardInfo(walletInfo_);
     }
 }
 

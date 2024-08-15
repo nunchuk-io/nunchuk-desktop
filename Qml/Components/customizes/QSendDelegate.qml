@@ -53,7 +53,6 @@ Rectangle {
     signal qrCodeRequest()
     signal removeItemRequest()
     signal favoriteRequest()
-    signal monneyRequest()
 
     function setFavorite(fav) {
         if ((fav.toType === "Address") || (fav.toType === "Wallet")){
@@ -166,7 +165,7 @@ Rectangle {
             QTextInputBoxTypeB {
                 id: amountInput
                 label: STR.STR_QML_214
-                boxWidth: parent.width - 1
+                boxWidth: 620
                 boxHeight: 48
                 isValid: true
                 validator: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? intvalidator : doubleValidator
@@ -201,17 +200,14 @@ Rectangle {
                     source: "qrc:/Images/Images/fav_swapt-24px.png"
                     transformOrigin: Item.Center
                     scale: moneyMouse.pressed ? 0.95 : 1
-                    visible: false
                     MouseArea {
                         id: moneyMouse
                         property bool onCurrency: false
-                        enabled: false
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         anchors.fill: parent
                         onClicked: {
                             onCurrency = !onCurrency
-                            monneyRequest()
                         }
                     }
                 }

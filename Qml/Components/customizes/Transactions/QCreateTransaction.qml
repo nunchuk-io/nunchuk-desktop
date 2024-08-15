@@ -926,7 +926,7 @@ QOnScreenContent {
     QTextButton {
         width: 265
         height: 48
-        label.text: STR.STR_QML_235
+        label.text: AppModel.walletInfo.tranReplace ? STR.STR_QML_784 : STR.STR_QML_235
         label.font.pixelSize: 16
         label.font.family: "Lato"
         type: eTypeE

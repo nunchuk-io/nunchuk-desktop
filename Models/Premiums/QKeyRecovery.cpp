@@ -347,7 +347,7 @@ bool QKeyRecovery::UpdateSecurityQuestions()
                                                 output,
                                                 errormsg);
     if (ret) {
-        UpdateRequiredQuestion();
+        AutomaticGenerateSecurityQuestions();
     }
     return ret;
 }

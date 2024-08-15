@@ -311,3 +311,10 @@ void EVT_REPLACE_SELECT_KEY_REQUEST_HANDLER(QVariant msg) {
 void EVT_SIGN_IN_VIA_XPUB_REQUEST_HANDLER(QVariant msg) {
 
 }
+
+void EVT_EDIT_MEMBERS_REQUEST_HANDLER(QVariant msg) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        dashboard->initMembers();
+    }
+}
+

@@ -29,6 +29,10 @@ public:
 
     QString deviceType(const QString &xfp);
     bool ImportColdcardViaFile(const QString &fileName, int new_index);
+
+    bool tranReplace() const;
+    void setTranReplace(bool newTranReplace);
+
 public slots:
     virtual int  reuseKeyGetCurrentIndex(const QString &xfp);
     virtual QString bip32path(const QString &xfp, int index);
@@ -38,6 +42,7 @@ signals:
     virtual void replaceFlowChanged() = 0;
     virtual void deviceListChanged() = 0;
     virtual void deviceTypeChanged() = 0;
+    virtual void tranReplaceChanged() = 0;
 private:
     QJsonArray m_signerExistList {};
     QString m_replaceFlow {"replace-key-info"};
@@ -49,6 +54,7 @@ private:
     bool m_replaceFree {false};
     QDeviceListModelPtr deviceList_;
     QString m_deviceType;
+    static bool m_tranReplace;
 };
 
 #endif // REPLACEKEYFREEUSER_H
