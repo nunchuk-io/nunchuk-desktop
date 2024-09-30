@@ -94,6 +94,7 @@ enum CMD_IDX {
     RECOVER_PASSWORD,
     FORGOT_PASSWORD,
     CHANGE_PASSWORD,
+    RESEND_PASSWORD,
     GET_ME,
     SEARCH_FRIEND,
     SEARCH_FRIEND_LIST,
@@ -129,6 +130,10 @@ enum CMD_IDX {
     VERIFY_PASSWORD_TOKEN,
 
     GET_ELECTRUM_SERVERS,
+
+    // Check account availability
+    ACCOUNT_AVAILABILITY,
+
     CMD_MAX
 };
 }
@@ -443,11 +448,13 @@ const QMap<QString, int> group_alerts_status {
 using namespace Command;
 const QMap<int, QString> commands {
     { Common::CMD_IDX::CREATE_ACCOUNT               , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("register")             },
+    { Common::CMD_IDX::ACCOUNT_AVAILABILITY         , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("username-availability")},
     { Common::CMD_IDX::SIGNIN                       , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("sign-in")              },
     { Common::CMD_IDX::SIGNOUT                      , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("log-out")              },
     { Common::CMD_IDX::RECOVER_PASSWORD             , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("recover-password")     },
     { Common::CMD_IDX::FORGOT_PASSWORD              , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("forgot-password")      },
     { Common::CMD_IDX::CHANGE_PASSWORD              , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("change-password")      },
+    { Common::CMD_IDX::RESEND_PASSWORD              , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("resend-password")      },
     { Common::CMD_IDX::VERIFY_NEW_DEVICE            , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("sign-in/verify-new-device")},
     { Common::CMD_IDX::RESEND_VERIFY_NEW_DEVICE_CODE, QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("sign-in/resend-verify-new-device-code")},
     { Common::CMD_IDX::INVITE_FRIEND                , QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("invite")               },
@@ -728,6 +735,7 @@ public:
         INHERITANCE_802 = 802,
         INHERITANCE_803 = 803,
         LOGIN_NEW_DEVICE = 841,
+        ACCOUNT_NOT_ACTIVATED = 1000,
         RESPONSE_OK  = 0,
     };
 

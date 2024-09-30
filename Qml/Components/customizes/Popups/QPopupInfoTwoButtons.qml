@@ -25,6 +25,8 @@ QPopupInfoVertical {
     property var labels: []
     property var funcs: []
     property bool isVertical: true
+    readonly property QBaseButton _btnBase: QBaseButton{}
+    property var types: isVertical ? [_btnBase.eTypeE, _btnBase.eTypeB] : [_btnBase.eTypeB, _btnBase.eTypeE]
     buttons: isVertical ? _vertical : _horizontal
     Component {
         id: _vertical
@@ -36,7 +38,7 @@ QPopupInfoVertical {
                 height: 48
                 label.text: labels[0]
                 label.font.pixelSize: 16
-                type: eTypeE
+                type: types[0]
                 onButtonClicked: {
                     _infoPopup.close()
                     funcs[0]()
@@ -48,7 +50,7 @@ QPopupInfoVertical {
                 height: 48
                 label.text: labels[1]
                 label.font.pixelSize: 16
-                type: eTypeB
+                type: types[1]
                 onButtonClicked: {
                     _infoPopup.close()
                     funcs[1]()
@@ -66,7 +68,7 @@ QPopupInfoVertical {
                 height: 48
                 label.text: labels[0]
                 label.font.pixelSize: 16
-                type: eTypeB
+                type: types[0]
                 onButtonClicked: {
                     _infoPopup.close()
                     funcs[0]()
@@ -77,7 +79,7 @@ QPopupInfoVertical {
                 height: 48
                 label.text: labels[1]
                 label.font.pixelSize: 16
-                type: eTypeE
+                type: types[1]
                 onButtonClicked: {
                     _infoPopup.close()
                     funcs[1]()

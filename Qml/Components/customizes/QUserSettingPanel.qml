@@ -138,6 +138,9 @@ Column {
                             else if (user.isHoneyBadgerUser) {
                                 return STR.STR_QML_681
                             }
+                            else if (user.isHoneyBadgerPlusUser) {
+                                return STR.STR_QML_1503
+                            }
                             else if (user.isByzantineUserStandard) {
                                 return STR.STR_QML_1003
                             }

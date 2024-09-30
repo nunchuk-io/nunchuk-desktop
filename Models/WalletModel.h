@@ -358,8 +358,9 @@ bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2);
 class WalletListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(bool isContainsPremier   READ isContainsPremier  NOTIFY checkContainsGroup)
-    Q_PROPERTY(bool isContainsGroup     READ existGroupWallet   NOTIFY checkContainsGroup)
+    Q_PROPERTY(bool isContainsPremier   READ isContainsPremier  NOTIFY containsGroupChanged)
+    Q_PROPERTY(bool isContainsGroup     READ existGroupWallet   NOTIFY containsGroupChanged)
+    Q_PROPERTY(int count                READ count              NOTIFY containsGroupChanged)
 public:
     WalletListModel();
     ~WalletListModel();
@@ -367,6 +368,8 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     QHash<int,QByteArray> roleNames() const;
+    int count() const;
+    Q_INVOKABLE  QVariant get(int row);
     void addWallet(const QWalletPtr &wallet);
     void replaceWallet(const QWalletPtr &wallet);
     void addSharedWallet(const QWalletPtr &wallet);

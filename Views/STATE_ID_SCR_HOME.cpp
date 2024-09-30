@@ -304,8 +304,10 @@ void EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER(QVariant msg)
     if (dash) {
         dash->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS);
         QtConcurrent::run([dash]() {
-            dash->GetWalletInfo();
-            dash->GetHealthCheckInfo();
+            if(dash){
+                dash->GetWalletInfo();
+                dash->GetHealthCheckInfo();
+            }
         });
     }
 }

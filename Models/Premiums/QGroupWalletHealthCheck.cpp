@@ -134,11 +134,12 @@ bool QGroupWalletHealthCheck::HealthCheckPendingForTx(const QString &dummy_trans
             QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
             bool is_draft = dummy_transaction["is_draft"].toBool();
             if (is_draft) {
+                QJsonObject tmp;
                 if (isUserWallet()) {
-                    Draco::instance()->FinalizeDummyTransaction(dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+                    Draco::instance()->FinalizeDummyTransaction(dashboard->wallet_id(), dummy_transaction_id, tmp, errormsg);
                 }
                 else {
-                    Byzantine::instance()->FinalizeDummyTransaction(dashboard->groupId(), dashboard->wallet_id(), dummy_transaction_id, output, errormsg);
+                    Byzantine::instance()->FinalizeDummyTransaction(dashboard->groupId(), dashboard->wallet_id(), dummy_transaction_id, tmp, errormsg);
                 }
             }
             else {

@@ -87,6 +87,9 @@ QScreen {
                     onServiceRequest: {
                         QMLHandle.sendEvent(EVT.EVT_GOTO_SERVICE_SETTING_TAB)
                     }
+                    onCreateAccountRequest: {
+                        QMLHandle.sendEvent(EVT.EVT_STARTING_APPLICATION_ONLINEMODE, "CreateAccount")
+                    }
                 }
                 Rectangle {
                     width: 314

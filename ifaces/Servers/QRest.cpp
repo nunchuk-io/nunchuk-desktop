@@ -73,9 +73,6 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -85,6 +82,9 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }
@@ -98,8 +98,9 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     if(!paramsQuery.isEmpty()){
         QUrlQuery params;
         foreach(const QString& key, paramsQuery.keys()) {
-            QString value = paramsQuery.value(key);
-            params.addQueryItem(key, value);
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
         }
         url.setQuery(params);
     }
@@ -125,9 +126,6 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -137,6 +135,11 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
+    reply.release()->deleteLater();
+    DBG_INFO << QString(response_data);
     reply.release()->deleteLater();
     return ret;
 }
@@ -150,8 +153,9 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
     if(!data.isEmpty()){
         QUrlQuery params;
         foreach(const QString& key, data.keys()) {
-            QJsonValue value = data.value(key);
-            params.addQueryItem(key, value.toString());
+            QJsonValue value        = data.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value.toString());
+            params.addQueryItem(key, encodedValue);
         }
         url.setQuery(params);
     }
@@ -171,12 +175,10 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -186,6 +188,9 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }
@@ -199,8 +204,9 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     if(!data.isEmpty()){
         QUrlQuery params;
         foreach(const QString& key, data.keys()) {
-            QJsonValue value = data.value(key);
-            params.addQueryItem(key, value.toString());
+            QJsonValue value        = data.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value.toString());
+            params.addQueryItem(key, encodedValue);
         }
         url.setQuery(params);
     }
@@ -223,12 +229,10 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -238,6 +242,9 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }
@@ -262,12 +269,10 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
+    DBG_INFO << QString(reply->readAll());
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -277,6 +282,9 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }
@@ -289,8 +297,9 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     if(!paramsQuery.isEmpty()){
         QUrlQuery params;
         foreach(const QString& key, paramsQuery.keys()) {
-            QString value = paramsQuery.value(key);
-            params.addQueryItem(key, value);
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
         }
         url.setQuery(params);
     }
@@ -314,12 +323,10 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -329,6 +336,9 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }
@@ -353,12 +363,10 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -368,6 +376,9 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }
@@ -379,8 +390,9 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     if(!paramsQuery.isEmpty()){
         QUrlQuery params;
         foreach(const QString& key, paramsQuery.keys()) {
-            QString value = paramsQuery.value(key);
-            params.addQueryItem(key, value);
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
         }
         url.setQuery(params);
     }
@@ -405,12 +417,10 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        ret = json.object();
     }
     else{
         reply_code = reply->error();
@@ -420,6 +430,9 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
         }
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
     reply.release()->deleteLater();
     return ret;
 }

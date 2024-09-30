@@ -39,7 +39,8 @@ Draco::Draco() :
     m_ChatId(""),
     m_loginHalfToken(""),
     m_deviceId(""),
-    m_stayLoggedIn(false)
+    m_stayLoggedIn(false),
+    m_isSubscribed(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -72,6 +73,39 @@ void Draco::refreshContacts()
             CLIENT_INSTANCE->syncContactsSent(getContactsSent());
             CLIENT_INSTANCE->syncContactsReceived(getContactsReceived());
         });
+    }
+}
+
+void Draco::checkAccountAvailability(const QString &email)
+{
+    DBG_INFO << email;
+    QJsonObject data;
+    data["username"] = email;
+    data["type"] = "Email";
+    int     reply_code      = -1;
+    QString reply_msg    = "";
+
+    QJsonObject jsonObj = getSync(commands[Common::CMD_IDX::ACCOUNT_AVAILABILITY], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code    = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            QJsonObject data = jsonObj.value("data").toObject();
+            bool activated = data.value("activated").toBool();
+            if(!activated){
+                response_code = DRACO_CODE::ACCOUNT_NOT_ACTIVATED;
+            }
+            bool has_subscription = data.value("has_subscription").toBool();
+            setIsSubscribed(has_subscription);
+        }
+        // FIXME
+        // else {
+        //     AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        // }
+        DBG_INFO << jsonObj;
+        setEmailRequested(email);
+        emit accountAvailabilityResult(reply_code, response_code, response_msg);
     }
 }
 
@@ -316,6 +350,7 @@ void Draco::reset()
     setChatId("");
     setDracoToken("");
     setDeviceId("");
+    setIsSubscribed(false);
 }
 
 int Draco::expireSec() const
@@ -427,7 +462,7 @@ void Draco::singin(const QString& email, const QString& password)
         else{
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
-        emit singinResult(reply_code, response_code, response_msg);
+        emit signinResult(reply_code, response_code, response_msg);
     }
 }
 
@@ -453,13 +488,12 @@ void Draco::recoverPassword(const QString& email, const QString& forgotToken, co
     data["email"] = email;
     data["forgotPasswordToken"] = forgotToken;
     data["newPassword"] = newpassword;
-
     int     reply_code = -1;
     QString reply_msg  = "";
     QJsonObject jsonObj = postSync(commands[Common::CMD_IDX::RECOVER_PASSWORD], data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
-        int response_code = errorObj["code"].toInt();
+        int response_code    = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
         emit recoverPasswordResult(reply_code, response_code, response_msg);
         if(response_code != DRACO_CODE::RESPONSE_OK){
@@ -484,6 +518,23 @@ void Draco::forgotPassword(const QString& email)
             setEmailRequested(email);
         }
         else {
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+}
+
+void Draco::resendPassword(const QString &email)
+{
+    QJsonObject data;
+    data["email"] = email;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = postSync(commands[Common::CMD_IDX::RESEND_PASSWORD], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code != DRACO_CODE::RESPONSE_OK){
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
@@ -1018,10 +1069,15 @@ void Draco::setUserProfile(const QString &name, const QString &avartaPath)
 {
     DracoUser user = CLIENT_INSTANCE->getMe();
     QJsonObject data;
-    data["name"] = name;
+    if(name != "" && name != user.name){
+        data["name"] = name;
+    }
+    if(avartaPath != "" && avartaPath != user.avatar){
+        data["avatar_url"] = avartaPath;
+    }
     data["gender"] = user.gender;
     data["status_text"] = user.status_text;
-    data["avatar_url"] = avartaPath;
+
     int     reply_code = -1;
     QString reply_msg  = "";
     QJsonObject jsonObj = postSync(commands[Common::CMD_IDX::USER_PROFILE], data, reply_code, reply_msg);
@@ -4075,5 +4131,17 @@ bool Draco::SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QS
     return false;
 }
 
+bool Draco::isSubscribed() const
+{
+    return m_isSubscribed;
+}
+
+void Draco::setIsSubscribed(bool newIsSubscribed)
+{
+    if (m_isSubscribed == newIsSubscribed)
+        return;
+    m_isSubscribed = newIsSubscribed;
+    emit isSubscribedChanged();
+}
 
 

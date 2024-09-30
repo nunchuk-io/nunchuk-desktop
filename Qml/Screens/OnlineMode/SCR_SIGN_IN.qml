@@ -162,7 +162,7 @@ QScreen {
     }
     Connections {
         target: Draco
-        onSinginResult: {
+        onSigninResult: {
             processingSigninResult(https_code, error_code, error_msg)
         }
     }

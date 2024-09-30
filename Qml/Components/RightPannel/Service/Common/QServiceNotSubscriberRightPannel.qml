@@ -38,7 +38,7 @@ Item {
     readonly property var option_map: [
         {visible: true,        height: 136, headline:STR.STR_QML_756, content: STR.STR_QML_757 , icon: "qrc:/Images/Images/mulitsig-dark.svg"             },
         {visible: true,        height: 136, headline:STR.STR_QML_736, content: STR.STR_QML_759 , icon: "qrc:/Images/Images/inheritance-dark.svg"          },
-        {visible: isByzantine, height: 108, headline:STR.STR_QML_1020,content: STR.STR_QML_1021, icon: "qrc:/Images/Images/groups-24px.svg"               },
+        {visible: true,        height: 108, headline:STR.STR_QML_1393,content: STR.STR_QML_1394, icon: "qrc:/Images/Images/groups-24px.svg"               },
         {visible: true,        height: 108, headline:STR.STR_QML_697, content: STR.STR_QML_762 , icon: "qrc:/Images/Images/emergency-lockdown-dark.svg"   },
         {visible: true,        height: 108, headline:STR.STR_QML_763, content: STR.STR_QML_764 , icon: "qrc:/Images/Images/signing-policy-dark.svg"       },
         {visible: true,        height: 108, headline:STR.STR_QML_765, content: STR.STR_QML_766 , icon: "qrc:/Images/Images/key-recovery-dark.svg"         },

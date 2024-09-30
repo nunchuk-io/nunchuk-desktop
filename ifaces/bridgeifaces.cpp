@@ -832,6 +832,9 @@ QTransactionPtr bridge::nunchukImportTransaction(const QString &wallet_id, const
         return final;
     }
     else{
+        if (msg.code() == nunchuk::NunchukException::INVALID_PSBT) {
+            AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+        }
         return NULL;
     }
 }

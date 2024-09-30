@@ -244,6 +244,8 @@ public:
     bool makeNunchukInstance(const QVariant makeInstanceData, const QString &dbPassphrase);
     void loginNunchuk(QVariant msg);
     void create_account(QVariant msg);
+    void checkAccountAvailability(QVariant msg);
+    void resendTempoPassword(QVariant msg);
     QString newKeySignMessage() const;
     QString newKeySignMessageSHA256() const;
     void setNewKeySignMessage(const QString &value);

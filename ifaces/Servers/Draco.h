@@ -41,6 +41,8 @@ class Draco : public QRest
     Q_PROPERTY(QString Uid              READ Uid                    WRITE setUid                    NOTIFY uidChanged)
     Q_PROPERTY(QString emailRequested   READ emailRequested         WRITE setEmailRequested         NOTIFY emailRequestedChanged)
     Q_PROPERTY(bool stayLoggedIn        READ stayLoggedIn           WRITE setStayLoggedIn           NOTIFY stayLoggedInChanged)
+    Q_PROPERTY(bool isSubscribed        READ isSubscribed           WRITE setIsSubscribed           NOTIFY isSubscribedChanged)
+
 public:
     static Draco *instance();
     Draco(Draco &other) = delete;
@@ -49,6 +51,7 @@ public:
     void connectDragonServer(QUrl url);
     Q_INVOKABLE void refreshDevices();
     Q_INVOKABLE void refreshContacts();
+    Q_INVOKABLE void checkAccountAvailability(const QString &email);
     Q_INVOKABLE void createAccount(const QString& name, const QString& email);
     Q_INVOKABLE void singin(const QString &email, const QString &password);
     Q_INVOKABLE bool signout();
@@ -80,6 +83,7 @@ public:
     bool pkey_change_pkey(const QString &new_key, const QString &old_signed_message, const QString &new_signed_message);
     void recoverPassword(const QString& email, const QString& forgotToken, const QString& newpassword);
     void forgotPassword(const QString &email);
+    void resendPassword(const QString &email);
     void getMe();
     void getMepKey(const QString &public_address);
     //Frriend/Contacts
@@ -409,6 +413,9 @@ public:
     bool SignDummyTransactionToSignIn(const QString &dummy_transaction_id, const QStringList& signatures, QJsonObject &output, QString &errormsg);
     bool SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QString &errormsg);
 
+    bool isSubscribed() const;
+    void setIsSubscribed(bool newIsSubscribed);
+
 private:
     Draco();
     ~Draco();
@@ -421,6 +428,7 @@ private:
     QString m_loginHalfToken;
     QString m_deviceId;
     bool m_stayLoggedIn;
+    bool m_isSubscribed;
 
 signals:
     void uidChanged();
@@ -431,8 +439,10 @@ signals:
     void chatIdChanged();
     void deviceIdChanged();
     void loginHalfTokenChanged();
+    void accountAvailabilityResult(int https_code, int error_code, QString error_msg);
+    void requestCreateAccount();
     void createAccountResult(int https_code, int error_code, QString error_msg);
-    void singinResult(int https_code, int error_code, QString error_msg);
+    void signinResult(int https_code, int error_code, QString error_msg);
     void recoverPasswordResult(int https_code, int error_code, QString error_msg);
     void forgotPasswordResult(int https_code, int error_code, QString error_msg);
     void changePasswordResult(int https_code, int error_code, QString error_msg);
@@ -444,6 +454,7 @@ signals:
     void signalpkey_signup(int https_code, int error_code, QString error_msg);
     void signalpkey_signin(int https_code, int error_code, QString error_msg);
     void stayLoggedInChanged();
+    void isSubscribedChanged();
 };
 
 #endif // DRACO_H

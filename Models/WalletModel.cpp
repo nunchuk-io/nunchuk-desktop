@@ -92,9 +92,11 @@ void Wallet::convert(const nunchuk::Wallet &w)
     if (dash && dash->myInfo().isEmpty()) {
         dash->GetMemberInfo();
         QtConcurrent::run([dash]() {
-            dash->GetAlertsInfo();
-            dash->GetWalletInfo();
-            dash->GetHealthCheckInfo();
+            if (dash) {
+                dash->GetAlertsInfo();
+                dash->GetWalletInfo();
+                dash->GetHealthCheckInfo();
+            }
         });
     }
 
@@ -1871,6 +1873,25 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_isLocked_Role]             = "wallet_isLocked";
     roles[wallet_isReplaced_Role]           = "wallet_isReplaced";
     return roles;
+}
+
+int WalletListModel::count() const
+{
+    return d_.count();
+}
+
+QVariant WalletListModel::get(int row)
+{
+    QHash<int,QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap res;
+    while (i.hasNext()) {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        res[i.value()] = data;
+    }
+    return QVariant::fromValue(res);
 }
 
 void WalletListModel::addWallet(const QWalletPtr &wallet)

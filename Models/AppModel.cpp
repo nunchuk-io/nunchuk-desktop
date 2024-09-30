@@ -378,9 +378,14 @@ void AppModel::loginNunchuk(QVariant msg)
 {
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     QMap<QString,QVariant> maps = msg.toMap();
-    QString emailInput = maps.value("email").toString();
-    QString passwordInput = maps.value("password").toString();
+    QString emailInput      = maps.value("email").toString();
+    QString passwordInput   = maps.value("password").toString();
     Draco::instance()->singin(emailInput, passwordInput);
+
+    if(maps.contains("username")){
+        QString username   = maps.value("username").toString();
+        Draco::instance()->setUserProfile(username, "");
+    }
     qApp->restoreOverrideCursor();
 }
 
@@ -390,6 +395,24 @@ void AppModel::create_account(QVariant msg)
     QString nameInput = maps.value("name").toString();
     QString emailInput =  maps.value("email").toString();
     Draco::instance()->createAccount(nameInput, emailInput);
+}
+
+void AppModel::checkAccountAvailability(QVariant msg)
+{
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    QMap<QString,QVariant> maps = msg.toMap();
+    QString emailInput = maps.value("email").toString();
+    Draco::instance()->checkAccountAvailability(emailInput);
+    qApp->restoreOverrideCursor();
+}
+
+void AppModel::resendTempoPassword(QVariant msg)
+{
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    QMap<QString,QVariant> maps = msg.toMap();
+    QString emailInput = maps.value("email").toString();
+    Draco::instance()->resendPassword(emailInput);
+    qApp->restoreOverrideCursor();
 }
 
 int AppModel::tabIndex() const
@@ -720,7 +743,6 @@ void AppModel::requestCreateUserWallets()
         WalletsMng->GetListWallet(GROUP_WALLET);
         AppModel::instance()->startReloadUserDb();
     });
-    AppModel::instance()->requestOnboarding();
 }
 
 void AppModel::requestSyncSharedWallets()

@@ -1088,7 +1088,8 @@ nunchuk::Transaction nunchukiface::ImportTransaction(const std::string &wallet_i
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::exception &e) {
-        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return ret;
 }

@@ -168,6 +168,7 @@ QScreen {
         title: STR.STR_QML_339
         contentText: STR.STR_QML_1406
         labels: [STR.STR_QML_1274,STR.STR_QML_1275]
+        types: [_btnBase.eTypeE, _btnBase.eTypeF]
         funcs: [
             function() {
                 QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED_BACK)

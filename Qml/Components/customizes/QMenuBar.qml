@@ -52,6 +52,7 @@ Rectangle {
     signal signoutRequest()
     signal signinRequest()
     signal updateProfileRequest()
+    signal createAccountRequest()
     Rectangle {
         width: 2
         height: menubarroot.height
@@ -139,21 +140,37 @@ Rectangle {
     QContextMenu {
         id: psContextMenu
         labels: [
-            STR.STR_QML_460,
+            STR.STR_QML_460, // Update profile
             STR.STR_QML_461,
-            ClientController.isNunchukLoggedIn ? STR.STR_QML_462 : STR.STR_QML_533
+            ClientController.isNunchukLoggedIn ? STR.STR_QML_462 : STR.STR_QML_533,
+            STR.STR_QML_412
         ]
-        enables: [true, true, true]
+        enables: [
+            true,
+            true,
+            true,
+            !ClientController.isNunchukLoggedIn,
+        ]
+        visibles:  [
+            true,
+            true,
+            true,
+            !ClientController.isNunchukLoggedIn,
+        ]
+
         onItemClicked: {
             switch(index){
-            case 0:
+            case 0:// Update profile
                 updateProfileRequest()
                 break;
-            case 1:
+            case 1:// Setting
                 openSettingRequest()
                 break;
-            case 2:
+            case 2:// Signin/Signout
                 ClientController.isNunchukLoggedIn ? signoutRequest() : signinRequest()
+                break;
+            case 3:// Create an account
+                createAccountRequest()
                 break;
             default:
                 break;

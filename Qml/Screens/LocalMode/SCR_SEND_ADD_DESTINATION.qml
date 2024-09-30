@@ -213,6 +213,8 @@ QScreen {
                                 onFavoriteRequest: {
                                     favoritesPopup.open()
                                     favoritesPopup.addressRequestIndex = index
+                                    requestFilterOutAddress()
+                                    requestFilterOutWallet()
                                 }
 
                                 Component.onCompleted: {
@@ -579,7 +581,6 @@ QScreen {
                         id: savedAddressList
                         width: parent.width
                         height: contentHeight
-                        model: AppSetting.favoriteAddresses
                         spacing: 16
                         interactive: false
                         visible: savedAddressList.count > 0
@@ -647,55 +648,54 @@ QScreen {
                             }
                         }
                     }
-                    Column {
-                        spacing: 16
+                    QListView {
+                        id: walletList
                         width: parent.width
-                        visible: walletList.count > 1
-                        Repeater {
-                            id: walletList
-                            width: parent.width
-                            model: AppModel.walletList
-                            QWalletManagerDelegate {
-                                id: walletListdelegate
-                                width: walletList.width
-                                isCurrentIndex: false
-                                isEscrow: model.wallet_Escrow
-                                isShared: model.wallet_isSharedWallet
-                                isAssisted: model.wallet_isAssistedWallet
-                                walletCurrency: model.wallet_Balance_Currency
-                                walletName :model.wallet_name
-                                walletBalance: model.wallet_Balance
-                                walletM: model.wallet_M
-                                walletN: model.wallet_N
-                                isDashboard: false
-                                isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
-                                walletRole: model.wallet_role
-                                hasOwner: model.wallet_hasOwner
-                                primaryOwner: model.wallet_primaryOwner
-                                isHotWallet: model.wallet_isHotWallet
-                                visible: model.wallet_id !== AppModel.walletInfo.walletId
-                                enabled: visible
-                                layer.enabled: true
-                                layer.effect: OpacityMask {
-                                    maskSource: Rectangle {
-                                        width: walletListdelegate.width
-                                        height: walletListdelegate.height
-                                        radius: 8
-                                    }
+                        height: contentHeight
+                        spacing: 16
+                        interactive: false
+                        model: filterOutWallet
+                        visible: walletList.count > 0
+                        delegate: QWalletManagerDelegate {
+                            id: walletListdelegate
+                            width: walletList.width
+                            isCurrentIndex: false
+                            isEscrow: modelData.wallet_Escrow
+                            isShared: modelData.wallet_isSharedWallet
+                            isAssisted: modelData.wallet_isAssistedWallet
+                            walletCurrency: modelData.wallet_Balance_Currency
+                            walletName :modelData.wallet_name
+                            walletBalance: modelData.wallet_Balance
+                            walletM: modelData.wallet_M
+                            walletN: modelData.wallet_N
+                            isDashboard: false
+                            isLocked: modelData.wallet_dashboard ? modelData.wallet_dashboard.isLocked : false
+                            walletRole: modelData.wallet_role
+                            hasOwner: modelData.wallet_hasOwner
+                            primaryOwner: modelData.wallet_primaryOwner
+                            isHotWallet: modelData.wallet_isHotWallet
+                            visible: modelData.wallet_id !== AppModel.walletInfo.walletId
+                            enabled: visible
+                            layer.enabled: true
+                            layer.effect: OpacityMask {
+                                maskSource: Rectangle {
+                                    width: walletListdelegate.width
+                                    height: walletListdelegate.height
+                                    radius: 8
                                 }
-                                onButtonClicked: {
-                                    if(favoritesPopup.addressRequestIndex !== -1 && favoritesPopup.addressRequestIndex < destination.model){
-                                        var inputObject= ({
-                                                              "toType": "Wallet",
-                                                              "toAddress": model.wallet_Address,
-                                                              "toAddressDisplay": model.wallet_name,
-                                                              "toAmount": ""
-                                                          })
-                                        destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
-                                    }
-                                    favoritesPopup.addressRequestIndex = -1
-                                    favoritesPopup.close()
+                            }
+                            onButtonClicked: {
+                                if(favoritesPopup.addressRequestIndex !== -1 && favoritesPopup.addressRequestIndex < walletList.count){
+                                    var inputObject= ({
+                                                          "toType": "Wallet",
+                                                          "toAddress": modelData.wallet_Address,
+                                                          "toAddressDisplay": modelData.wallet_name,
+                                                          "toAmount": ""
+                                                      })
+                                    destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                 }
+                                favoritesPopup.addressRequestIndex = -1
+                                favoritesPopup.close()
                             }
                         }
                     }
@@ -726,6 +726,8 @@ QScreen {
             }
         }
     }
+    property var filterOutAddress: AppSetting.favoriteAddresses
+    property var filterOutWallet: AppModel.walletList
     Popup {
         id: savedAddress
         width: parent.width
@@ -1124,6 +1126,43 @@ QScreen {
                                "toAmount": AppModel.walletInfo.walletBalance
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
+    }
+
+    function containAddress(address) {
+        for(var i = 0; i < destination.count; i++){
+            var current = destination.itemAt(i).inputObject.toAddress
+            if (current === address) {
+                return true
+            }
+        }
+        return false
+    }
+
+    function requestFilterOutAddress() {
+        filterOutAddress = []
+        for(var i = 0; i < AppSetting.favoriteAddresses.length; i++) {
+            var _address = AppSetting.favoriteAddresses[i]
+            var dataLabel = _address.split("[split]")[0]
+            var dataValue = _address.split("[split]")[1]
+            if (!containAddress(dataValue)) {
+                filterOutAddress.push(_address)
+            }
+        }
+        savedAddressList.model = filterOutAddress
+    }
+
+    function requestFilterOutWallet() {
+        filterOutWallet = []
+        for(var i = 0; i < AppModel.walletList.count; i++) {
+            var wallet = AppModel.walletList.get(i)
+            if (wallet.wallet_id !== AppModel.walletInfo.walletId) {
+                var wallet_Address = wallet.wallet_Address
+                if (!containAddress(wallet_Address)) {
+                    filterOutWallet.push(wallet)
+                }
+            }
+        }
+        walletList.model = filterOutWallet
     }
 
     Connections {

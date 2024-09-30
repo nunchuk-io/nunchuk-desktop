@@ -52,6 +52,7 @@ void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_REQUEST_HANDLER(QVariant msg){
 void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SIGN_IN_REQUEST_HANDLER(QVariant msg){
     QString signername = msg.toMap().value("signername").toString();
     QString passphrase = msg.toMap().value("passphrase").toString();
+    bool    replace    = msg.toMap().contains("replace") ?msg.toMap().value("replace").toBool() : false;
     QString mnemonic = AppModel::instance()->getMnemonic();
     QMap<QString, QVariant> makeInstanceData;
     makeInstanceData["state_id"] = E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY;
@@ -61,7 +62,7 @@ void EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SIGN_IN_REQUEST_HANDLER(QVariant msg){
 
     bool ret = AppModel::instance()->makeNunchukInstanceForAccount(makeInstanceData,"");
     if(ret){
-        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase, replace);
     }
 }
 

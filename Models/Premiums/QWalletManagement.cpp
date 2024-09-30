@@ -721,4 +721,5 @@ void QWalletManagement::slotGetListWalletFinish()
     QGroupWallets::instance()->clearDashBoard();
     ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
     QGroupWallets::instance()->findPermissionAccount();
+    AppModel::instance()->requestOnboarding();
 }

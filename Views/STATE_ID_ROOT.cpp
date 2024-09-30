@@ -125,6 +125,9 @@ void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
         }
         else{
             QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+            if("CreateAccount" == msg.toString()){
+                Draco::instance()->requestCreateAccount();
+            }
         }
     }
     timeoutHandler(1000, []() {

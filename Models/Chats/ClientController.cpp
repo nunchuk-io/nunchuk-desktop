@@ -519,6 +519,7 @@ QVariant ClientController::user() const
         maps["isByzantineUserStandard"] = isByzantineStandard();
         maps["isByzantineUserPremier"]  = isByzantinePremier();
         maps["isHoneyBadgerUser"]    = isHoneyBadger();
+        maps["isHoneyBadgerPlusUser"]= isHoneyBadgerPlus();
         maps["isIronHandUser"]       = isIronHand();
         maps["isFinneyUserPro"]      = isFinneyPro();
         maps["isFinneyUserStandard"] = isFinneyStandard();
@@ -532,6 +533,7 @@ QVariant ClientController::user() const
         maps["isByzantineUserStandard"] = false;
         maps["isByzantineUserPremier"]  = false;
         maps["isHoneyBadgerUser"]    = false;
+        maps["isHoneyBadgerPlusUser"]= false;
         maps["isIronHandUser"]       = false;
         maps["isFinneyUserPro"]      = false;
         maps["isFinneyUserStandard"] = false;

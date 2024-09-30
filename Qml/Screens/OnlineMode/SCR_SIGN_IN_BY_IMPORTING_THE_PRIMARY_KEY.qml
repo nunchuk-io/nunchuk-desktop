@@ -397,6 +397,7 @@ QScreen {
     Component{
         id:keyName
         QOnScreenContent {
+            id: _content
             label.text: STR.STR_QML_266
             onCloseClicked: {
                 QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
@@ -445,10 +446,44 @@ QScreen {
                 onButtonClicked: {
                     var getKeyName = {
                         "passphrase": passphrase,
-                        "signername": signername.textInputted
+                        "signername": signername.textInputted,
+                        "replace": false
                     }
-                    QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SIGN_IN_REQUEST,getKeyName)
+                    QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SIGN_IN_REQUEST, getKeyName)
                 }
+            }
+
+            Connections {
+                target: AppModel
+                onNotifySignerExist: {
+                    _content.showPopupInfo(isSoftware, fingerPrint)
+                }
+            }
+
+            QPopupInfoTwoButtons {
+                id: _info
+                signal yesClicked()
+                title: STR.STR_QML_661
+                labels: [
+                    STR.STR_QML_433,
+                    STR.STR_QML_432
+                ]
+                funcs: [
+                    function() {
+                        var getKeyName = {
+                            "passphrase": passphrase,
+                            "signername": signername.textInputted,
+                            "replace": true
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SIGN_IN_REQUEST, getKeyName)
+                    },
+                    function() {}
+                ]
+            }
+            function showPopupInfo(isSoftware, fingerPrint){
+                _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+                _info.contentTextTwo = ""
+                _info.open()
             }
         }
     }

@@ -142,6 +142,7 @@ QOnScreenContentTypeA {
         contentText: STR.STR_QML_1273
         labels: [STR.STR_QML_1274,STR.STR_QML_1275]
         isVertical: true
+        types: [_btnBase.eTypeE, _btnBase.eTypeF]
         funcs: [
             function() {
                 OnBoarding.state = "seedPhrase"

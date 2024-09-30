@@ -197,14 +197,17 @@ void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
 {
     setDashboardInfo(group_id, wallet_id);
     DBG_INFO << mDashboard;
-    if (!mDashboard) return;
-    mDashboard->setShowDashBoard(true);
-    QtConcurrent::run([this]() {
-        mDashboard->GetAlertsInfo();
-        mDashboard->GetMemberInfo();
-        mDashboard->GetWalletInfo();
-        mDashboard->GetHealthCheckInfo();
-    });
+    if (mDashboard) {
+        mDashboard->setShowDashBoard(true);
+        QtConcurrent::run([this]() {
+            if(mDashboard){
+                mDashboard->GetAlertsInfo();
+                mDashboard->GetMemberInfo();
+                mDashboard->GetWalletInfo();
+                mDashboard->GetHealthCheckInfo();
+            }
+        });
+    }
 }
 
 void QGroupWallets::accept(const QString &group_id)
@@ -345,7 +348,9 @@ void QGroupWallets::setDashboardInfo(const QWalletPtr &wallet)
         else {
             if (mDashboard) {
                 mDashboard->setShowDashBoard(false);
-                mDashboard.clear();
+                if (!wallet->id().isEmpty()) {
+                    mDashboard.clear();
+                }
                 emit dashboardInfoChanged();
             }
         }

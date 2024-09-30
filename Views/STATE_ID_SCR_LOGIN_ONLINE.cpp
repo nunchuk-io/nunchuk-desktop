@@ -43,7 +43,26 @@ void EVT_LOGIN_ONLINE_CREATE_ACCOUNT_HANDLER(QVariant msg) {
 }
 
 void EVT_LOGIN_ONLINE_SIGN_IN_HANDLER(QVariant msg) {
-    AppModel::instance()->loginNunchuk(msg);
+
+    QMap<QString,QVariant> maps = msg.toMap();
+    QString action = maps.value("action").toString();
+    if(action == "login"){
+        AppModel::instance()->loginNunchuk(msg);
+    }
+    else if(action == "account-availability"){
+        AppModel::instance()->checkAccountAvailability(msg);
+    }
+    else if(action == "resend-password"){
+        AppModel::instance()->resendTempoPassword(msg);
+    }
+    else if(action == "recover-password"){
+        qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+        QMap<QString,QVariant> maps = msg.toMap();
+        QString emailInput = maps.value("email").toString();
+        Draco::instance()->forgotPassword(emailInput);
+        qApp->restoreOverrideCursor();
+    }
+    else {}
 }
 
 void EVT_LOGIN_ONLINE_SWITCH_LOCAL_MODE_HANDLER(QVariant msg) {
@@ -51,9 +70,23 @@ void EVT_LOGIN_ONLINE_SWITCH_LOCAL_MODE_HANDLER(QVariant msg) {
 }
 
 void EVT_LOGIN_ONLINE_CHANGE_PASSWORD_HANDLER(QVariant msg) {
-    QString oldPasswordInput = msg.toMap().value("oldPassword").toString();
-    QString newPasswordInput = msg.toMap().value("newPassword").toString();
-    Draco::instance()->changePassword(oldPasswordInput, newPasswordInput);
+    QMap<QString,QVariant> maps = msg.toMap();
+    QString action = maps.value("action").toString();
+    QString oldPassword = maps.value("oldPassword").toString();
+    QString newPassword = maps.value("newPassword").toString();
+
+    if(action == "login-tempo"){
+        QString email = maps.value("email").toString();
+        Draco::instance()->singin(email, oldPassword);
+    }
+    else if(action == "logout-tempo"){
+        Draco::instance()->signout();
+        QString email = maps.value("email").toString();
+        Draco::instance()->setEmailRequested(email);
+    }
+    else{
+        Draco::instance()->changePassword(oldPassword, newPassword);
+    }
 }
 
 void EVT_LOGIN_ONLINE_FORGOT_PASSWORD_HANDLER(QVariant msg) {
@@ -69,6 +102,9 @@ void EVT_LOGIN_ONLINE_RECOVER_PASSWORD_HANDLER(QVariant msg) {
     QString email = Draco::instance()->emailRequested();
     QString token = msg.toMap().value("token").toString();
     QString passw = msg.toMap().value("passw").toString();
+
+    DBG_INFO << "email: " << email << " token: " << token << " passw: " << passw;
+
     Draco::instance()->recoverPassword(email, token, passw);
 }
 
