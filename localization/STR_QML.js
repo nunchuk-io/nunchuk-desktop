@@ -114,7 +114,7 @@ var STR_QML_081 = qsTr("Your wallet is almost ready")
 var STR_QML_082 = qsTr("Wrapping up...")
 
 //SCR_ADD_NEW_SIGNER.qml
-var STR_QML_083 = qsTr("Add a key")
+var STR_QML_083 = qsTr("Add key")
 var STR_QML_084 = qsTr("Hardware key")
 var STR_QML_085 = qsTr("Wired and air-gapped keys supported.")
 var STR_QML_086 = qsTr("Add hardware key")
@@ -1510,7 +1510,7 @@ var STR_QML_1223 = qsTr("I’ll explore on my own")
 var STR_QML_1224 = qsTr("Freely create hot wallets, watch-only wallets, or state-of-the-art multisig wallets that work with a plethora of hardware signing devices. Choose one that fits your need. \n \
 \n \
 To quickly create a hot wallet for immediate use, click the button below. You can back it up later.")
-var STR_QML_1225 = qsTr("Create a hot wallet now")
+var STR_QML_1225 = qsTr("Create hot wallet now")
 var STR_QML_1226 = qsTr("Hot wallet")
 var STR_QML_1227 = qsTr("A hot wallet is a wallet that is frequently connected to the Internet. \n \
 \n \
@@ -1537,9 +1537,9 @@ var STR_QML_1245 = qsTr("I have an advisor")
 var STR_QML_1246 = qsTr("Here are some of the things that you can do with an assisted wallet:")
 var STR_QML_1247 = qsTr("Get more out of Nunchuk with an assisted wallet")
 var STR_QML_1248 = qsTr("Visit our website")
-var STR_QML_1249 = qsTr("Add a wallet")
+var STR_QML_1249 = qsTr("Add wallet")
 var STR_QML_1250 = qsTr("Use a multisig wallet for maximum safety. A multisig wallet has multiple keys—if one is compromised, your fund is still safe.")
-var STR_QML_1251 = qsTr("Create a hot wallet")
+var STR_QML_1251 = qsTr("Create hot wallet")
 var STR_QML_1252 = qsTr("Quickly create a hot wallet for immediate use and back it up later. No existing keys required.")
 var STR_QML_1253 = qsTr("Recover existing wallet")
 var STR_QML_1254 = qsTr("Recover hot wallet")
@@ -1550,7 +1550,7 @@ var STR_QML_1258 = qsTr("Learn more about Nunchuk assisted services")
 var STR_QML_1259 = qsTr("Send query")
 var STR_QML_1260 = qsTr("If you are looking for a white-glove, personalized service offered by a Bitcoin Advisor, enter your country and email address below, and we’ll send you the best Bitcoin Advisors in your area. \n \n Alternatively, check out the assisted services offered by our platform.")
 var STR_QML_1261 = qsTr("Create new assisted wallet (%1 remaining)")
-var STR_QML_1262 = qsTr("Create a new wallet")
+var STR_QML_1262 = qsTr("Create new wallet")
 var STR_QML_1263 = qsTr("Your email address")
 var STR_QML_1264 = qsTr("Your country")
 

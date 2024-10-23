@@ -416,6 +416,18 @@ public:
     bool isSubscribed() const;
     void setIsSubscribed(bool newIsSubscribed);
 
+    // Draft Wallet
+    bool DraftWalletMarkAnAlertAsRead(const QString alert_id, QJsonObject &output, QString &errormsg);
+    bool DraftWalletDismissAnAlert(const QString alert_id, QJsonObject &output, QString &errormsg);
+    bool DraftWalletGetAlerts(QJsonObject &output, QString &errormsg);
+    bool DraftWalletGetAlertsCount(QJsonObject &output, QString &errormsg);
+    bool DraftWalletSetServerKey(const QString &server_key_id, QJsonObject &output, QString &errormsg);
+    bool DraftWalletRequestAddKey(QJsonObject &output, QString &errormsg);
+    bool DraftWalletPushRequestAddKey(const QString &request_id, QJsonObject &output, QString &errormsg);
+    bool DraftWalletInit(int m, int n, bool required_server_key, bool allow_inheritance, QJsonObject &output, QString &errormsg);
+    bool DraftWalletGetStatusOfARequestAddKey(const QString &request_id, QJsonObject &output, QString &errormsg);
+    bool DraftWalletGetCurrent(QJsonObject &output, QString &errormsg);
+    bool DraftWalletResetCurrent(QJsonObject &output, QString &errormsg);
 private:
     Draco();
     ~Draco();

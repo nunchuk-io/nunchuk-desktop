@@ -411,7 +411,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: 12
+                    font.pixelSize: 16
                 }
             }
             QBadge {

@@ -93,6 +93,7 @@ Rectangle {
                     verticalCenter: parent.verticalCenter
                 }
                 enabled: modelData.type === AlertType.GROUP_WALLET_PENDING ||
+                         modelData.type === AlertType.WALLET_PENDING ||
                          modelData.type === AlertType.GROUP_WALLET_SETUP ||
                          modelData.type === AlertType.HEALTH_CHECK_REQUEST ||
                          modelData.type === AlertType.HEALTH_CHECK_PENDING ||

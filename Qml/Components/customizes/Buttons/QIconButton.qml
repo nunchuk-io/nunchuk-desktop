@@ -41,7 +41,7 @@ QBaseButton {
         id: idIcon
         width: iconSize
         height: iconSize
-        icons: icon !== "" ? [icon, icon, icon, icon] : icons
+        icons: icon !== "" ? [icon, icon, icon, icon] : idBtn.icons
         anchors.centerIn: parent
         scale: btnMouse.pressed ? 0.9 : 1
         transformOrigin: Item.Center

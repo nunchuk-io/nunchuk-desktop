@@ -44,6 +44,7 @@ QScreen {
     property string config_flow: GroupWallet.dashboardInfo.configFlow
     readonly property var map_flow: [
         {flow_action: AlertType.GROUP_WALLET_PENDING,        screen_component: _wallet_creation_pending},
+        {flow_action: AlertType.WALLET_PENDING,              screen_component: _wallet_creation_pending},
         {flow_action: AlertType.GROUP_WALLET_SETUP,          screen_component: _wallet_setup},
         {flow_action: AlertType.UPDATE_SERVER_KEY,           screen_component: _platform_key_policy_change},
         {flow_action: AlertType.HEALTH_CHECK_PENDING,        screen_component: _health_check_pending},

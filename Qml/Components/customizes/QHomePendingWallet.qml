@@ -118,11 +118,13 @@ Rectangle {
                             }
                         }
                     }
+
                     QIconButton {
                         width: 48
                         height: 48
                         bgColor: "#F5F5F5"
-                        icon: "qrc:/Images/Images/OnlineMode/wallet-dark.png"
+                        enabled: !("PENDING_WALLET" === pendingDashboard.groupStatus)
+                        icons: ["wallet-dark.svg", "wallet-dark.svg", "wallet-dark-disabled.svg", "wallet-dark.svg"]
                         onClicked: {
                             // FIXME GOTO WALLET INFO
                             dashboardInfo.isShowDashBoard = false

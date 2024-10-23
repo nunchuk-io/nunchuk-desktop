@@ -22,6 +22,8 @@ public:
     virtual bool isPremierGroup() const;
     virtual bool isGroupWallet() const;
     virtual bool isUserWallet() const;
+
+    virtual bool isDraftWallet() const;
 };
 
 #endif // SLUGS_H

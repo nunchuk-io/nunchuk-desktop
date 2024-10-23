@@ -27,6 +27,7 @@
 #include "TypeDefine.h"
 #include "Servers/Draco.h"
 #include "Premiums/QAssistedDraftWallets.h"
+#include "Premiums/QGroupDashboard.h"
 
 class QUserWallets : public QAssistedDraftWallets
 {
@@ -35,9 +36,12 @@ public:
     QUserWallets();
     ~QUserWallets();
     static QUserWallets *instance();
+    void GetDraftWallet();
+
+    QGroupDashboardPtr dashboardInfoPtr();
+    bool hasDraftWallet(const QString& group_id);
 private:
-
-
+    QGroupDashboardPtr          mDashboard {};
 };
 
 #endif // QUSERWALLETS_H

@@ -160,8 +160,13 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
                     ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
                     DBG_INFO << data << ret << isDuplicateKey;
                 } else {
-                    ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
-                    DBG_INFO << data << ret << error_msg << isDuplicateKey;
+                    auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
+                    if (dash && dash->isDraftWallet()) {
+                        ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
+                    } else {
+                        ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
+                        DBG_INFO << data << ret << error_msg << isDuplicateKey;
+                    }
                     if (ret) {
                         if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
                             dashboard->GetAlertsInfo();
@@ -222,8 +227,13 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
             DBG_INFO << data << ret << isDuplicateKey;
         }
         else {
-            ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
-            DBG_INFO << data << ret << error_msg << isDuplicateKey;
+            auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
+            if (dash && dash->isDraftWallet()) {
+                ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
+            } else {
+                ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
+                DBG_INFO << data << ret << error_msg << isDuplicateKey;
+            }
             if (ret) {
                 if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
                     dashboard->GetAlertsInfo();
@@ -329,7 +339,7 @@ int QAssistedDraftWallets::reuseKeyGetCurrentIndex(const QString &xfp)
                                                     ENUNCHUCK::AddressType::NATIVE_SEGWIT,
                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG != msg.type()){
-        AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        DBG_INFO << msg.code() << msg.what();
     }
     return ret;
 }

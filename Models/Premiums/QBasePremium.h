@@ -27,6 +27,7 @@ public:
     virtual QRecurringPaymentPtr recurringPaymentPtr() const;
     virtual QWalletServicesTagPtr servicesTagPtr() const;
     QStringList slugs() const final;
+    bool isDraftWallet() const final;
 private:
     WalletId m_wallet_id;
 };

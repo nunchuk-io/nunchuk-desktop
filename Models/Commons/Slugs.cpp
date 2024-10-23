@@ -74,3 +74,8 @@ bool Slugs::isHoneyBadgerPlus() const
 {
     return slugs().contains("honey_badger_plus_testnet") || slugs().contains("honey_badger_plus");
 }
+
+bool Slugs::isDraftWallet() const
+{
+    return false;
+}

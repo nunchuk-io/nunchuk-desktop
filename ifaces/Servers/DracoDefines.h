@@ -271,6 +271,19 @@ enum CMD_IDX {
     SIGN_DUMMY_TRANSACTION_TO_SIGN_IN,
     SIGN_IN_USING_XPUB_WALLET,
 
+    // Draft Wallet
+    DRAFT_WALLET_MARK_ALERT_AS_READ,
+    DRAFT_WALLET_DISMISS_ALERT,
+    DRAFT_WALLET_GET_ALERTS,
+    DRAFT_WALLET_GET_TOTAL_ALERTS,
+    DRAFT_WALLET_SET_SERVER_KEY,
+    DRAFT_WALLET_REQUEST_ADD_KEY,
+    DRAFT_WALLET_PUSH_REQUEST_ADD_KEY,
+    DRAFT_WALLET_INIT,
+    DRAFT_WALLET_GET_REQUEST_ADD_KEY,
+    DRAFT_WALLET_GET_CURRENT,
+    DRAFT_WALLET_RESET_CURRENT,
+
     CMD_MAX
 };
 }
@@ -604,6 +617,18 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_STATUS_KEY_REPLACEMENT      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/status") },
     { Premium::CMD_IDX::ASSISTED_WALLET_RESET_KEY_REPLACEMENT           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/reset") },
 
+    // Draft Wallet
+    { Premium::CMD_IDX::DRAFT_WALLET_MARK_ALERT_AS_READ            , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current/alerts/{alert_id}/mark-as-read") },
+    { Premium::CMD_IDX::DRAFT_WALLET_DISMISS_ALERT                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current/alerts/{alert_id}/dismiss") },
+    { Premium::CMD_IDX::DRAFT_WALLET_GET_ALERTS                    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current/alerts") },
+    { Premium::CMD_IDX::DRAFT_WALLET_GET_TOTAL_ALERTS              , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current/alerts/total") },
+    { Premium::CMD_IDX::DRAFT_WALLET_SET_SERVER_KEY                , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/set-server-key") },
+    { Premium::CMD_IDX::DRAFT_WALLET_REQUEST_ADD_KEY               , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/request-add-key") },
+    { Premium::CMD_IDX::DRAFT_WALLET_PUSH_REQUEST_ADD_KEY          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/request-add-key/{request_id}/push") },
+    { Premium::CMD_IDX::DRAFT_WALLET_INIT                          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/init") },
+    { Premium::CMD_IDX::DRAFT_WALLET_GET_REQUEST_ADD_KEY           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/request-add-key/{request_id}") },
+    { Premium::CMD_IDX::DRAFT_WALLET_GET_CURRENT                   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current") },
+    { Premium::CMD_IDX::DRAFT_WALLET_RESET_CURRENT                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current") },
 
     //DRAGON_GROUP_WALLETS
     { Group::CMD_IDX::GROUP_WALLET_LIST_WALLETS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("wallets") },

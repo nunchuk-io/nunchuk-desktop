@@ -47,7 +47,7 @@ Item {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_936
+        label.text: alert.title
         extraHeader: Item {}
         onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         content: Item {

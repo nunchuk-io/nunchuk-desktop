@@ -2,6 +2,7 @@
 #include "Chats/ClientController.h"
 #include "QEventProcessor.h"
 #include "ViewsEnums.h"
+#include "Premiums/QUserWallets.h"
 
 QGroupWallets::QGroupWallets()
     : QAssistedDraftWallets(GROUP_WALLET)
@@ -57,18 +58,25 @@ void QGroupWallets::GetAllGroups()
     if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
         return;
     }
+    QUserWallets::instance()->GetDraftWallet();
     QtConcurrent::run([=, this]() {
         QJsonObject output;
         QString error_msg = "";
         bool ret = Byzantine::instance()->GetAllGroupWallets(output, error_msg);
+        QJsonArray groupList;
+        auto draft = QUserWallets::instance()->dashboardInfoPtr();
+        if (draft) {
+            groupList.append(draft->groupInfo());
+        }
         if (ret) {
             QJsonArray groups = output["groups"].toArray();
             for (auto v : groups) {
                 QJsonObject group = v.toObject();
+                groupList.append(group);
                 DBG_INFO << group["id"].toString() << group["status"].toString();
             }
             GetListAllRequestAddKey(groups);
-            emit dashboardList(groups);
+            emit dashboardList(groupList);
         } else {
             //Show error
             DBG_INFO << error_msg;
@@ -110,7 +118,12 @@ void QGroupWallets::ResetGroupWallet()
     if (!mDashboard) return;
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->ResetGroupWallet(mDashboard->groupId(), output, error_msg);
+    bool ret {false};
+    if (mDashboard->isDraftWallet()) {
+        ret = Draco::instance()->DraftWalletResetCurrent(output, error_msg);
+    } else {
+        ret = Byzantine::instance()->ResetGroupWallet(mDashboard->groupId(), output, error_msg);
+    }
     if(ret){
         GetAllGroups();
         QString msg_name = QString("Wallet has been canceled");
@@ -138,6 +151,10 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
         }
         else{ // status = "DELETED"
             continue;
+        }
+        auto draft = QUserWallets::instance()->dashboardInfoPtr();
+        if (draft && draft->groupId() == group_id) {
+            dashboard = draft;
         }
         if(group_id != ""){
             groupids.append(group_id);

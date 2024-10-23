@@ -776,6 +776,7 @@
         <file>Images/groups-dark.svg</file>
         <file>Images/health-check-light.svg</file>
         <file>Images/person-add-24px.svg</file>
+        <file>Images/wallet-dark-disabled.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

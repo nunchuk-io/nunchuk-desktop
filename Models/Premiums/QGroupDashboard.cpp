@@ -128,6 +128,9 @@ QString QGroupDashboard::userEmail() const
 
 QVariantList QGroupDashboard::members() const
 {
+    if (isDraftWallet()) {
+        return {};
+    }
     return groupInfo()["members"].toArray().toVariantList();
 }
 
@@ -165,7 +168,7 @@ QJsonObject QGroupDashboard::walletJson() const
 
 void QGroupDashboard::GetMemberInfo()
 {
-    if (isUserWallet() || isReplaced()) return;
+    if (isUserWallet() || isReplaced() || isDraftWallet()) return;
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->GetOneGroupWallets(groupId(), output, error_msg);
@@ -180,7 +183,10 @@ void QGroupDashboard::GetAlertsInfo()
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (isUserWallet()) {
+    if (isDraftWallet()) {
+        ret = Draco::instance()->DraftWalletGetAlerts(output, error_msg);
+    }
+    else if (isUserWallet()) {
         ret = Draco::instance()->GetAlerts(wallet_id(), output, error_msg);
     }
     else {
@@ -216,7 +222,10 @@ bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (isUserWallet()) {
+    if (isDraftWallet()) {
+        ret = Draco::instance()->DraftWalletMarkAnAlertAsRead(alert_id, output, error_msg);
+    }
+    else if (isUserWallet()) {
         ret = Draco::instance()->MarkAlertAsRead(wallet_id(), alert_id, output, error_msg);
     }
     else {
@@ -237,7 +246,10 @@ bool QGroupDashboard::DismissAlert(const QString &alert_id)
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (isUserWallet()) {
+    if (isDraftWallet()) {
+        ret = Draco::instance()->DraftWalletDismissAnAlert(alert_id, output, error_msg);
+    }
+    else if (isUserWallet()) {
         ret = Draco::instance()->DismissAlert(wallet_id(), alert_id, output, error_msg);
     }
     else {
@@ -262,7 +274,9 @@ void QGroupDashboard::GetWalletInfo()
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (isUserWallet()) {
+    if (isDraftWallet()) {
+
+    } else if (isUserWallet()) {
         ret = Draco::instance()->assistedWalletGetInfo(wallet_id(), output, error_msg);
     } else {
         ret = Byzantine::instance()->GetCurrentGroupWallet(groupId(), output, error_msg);
@@ -301,10 +315,14 @@ void QGroupDashboard::checkInheritanceWallet()
 
 void QGroupDashboard::GetDraftWalletInfo()
 {
-    if (isUserWallet()) return;
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->GetCurrentGroupDraftWallet(groupId(), output, error_msg);
+    bool ret {false};
+    if (isDraftWallet()) {
+        ret = Draco::instance()->DraftWalletGetCurrent(output, error_msg);
+    } else if (!isUserWallet()){
+        ret = Byzantine::instance()->GetCurrentGroupDraftWallet(groupId(), output, error_msg);
+    }
     if (ret) {
         QJsonObject draft_wallet = output["draft_wallet"].toObject();
         UpdateKeys(draft_wallet);
@@ -560,6 +578,7 @@ bool QGroupDashboard::canEntryClickAlert()
             return true;
         }
     }
+    case AlertEnum::E_Alert_t::WALLET_PENDING:
     case AlertEnum::E_Alert_t::GROUP_WALLET_PENDING:{
         QtConcurrent::run([this]() {
             GetDraftWalletInfo();
@@ -856,7 +875,12 @@ void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
 
 void QGroupDashboard::requestShowLetAddYourKeys()
 {
-    setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_PENDING);
+    if (isDraftWallet()) {
+        setFlow((int)AlertEnum::E_Alert_t::WALLET_PENDING);
+    }
+    else {
+        setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_PENDING);
+    }
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }
 
