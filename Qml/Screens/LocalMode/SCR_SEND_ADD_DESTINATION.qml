@@ -216,6 +216,15 @@ QScreen {
                                     requestFilterOutAddress()
                                     requestFilterOutWallet()
                                 }
+                                onSendAllRemainingRequest: {
+                                    var remaining = AppModel.walletInfo.walletBalance
+                                    for(var i = 0; i < destination.model; i++){
+                                        if(i !== index){
+                                            remaining -= destination.itemAt(i).toAmount
+                                        }
+                                    }
+                                    destination.itemAt(index).toAmount = remaining
+                                }
 
                                 Component.onCompleted: {
                                     if(index < destinations.length){
@@ -614,7 +623,7 @@ QScreen {
                                                               "toType": "Address",
                                                               "toAddress": savedAddressItem.dataValue,
                                                               "toAddressDisplay": savedAddressItem.dataLabel,
-                                                              "toAmount": ""
+                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
                                                           })
                                         destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                     }
@@ -690,7 +699,7 @@ QScreen {
                                                           "toType": "Wallet",
                                                           "toAddress": modelData.wallet_Address,
                                                           "toAddressDisplay": modelData.wallet_name,
-                                                          "toAmount": ""
+                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
                                                       })
                                     destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                 }
@@ -907,6 +916,7 @@ QScreen {
                 label: STR.STR_QML_059
                 onButtonClicked: {
                     addNewAddress.close()
+                    requestFilterOutAddress()
                 }
             }
             bottomRight: Row {
@@ -944,6 +954,7 @@ QScreen {
                                 favValueEdit.isValid = true
                                 favValueEdit.errorText = ""
                                 AppSetting.addFavoriteAddress(favLabelEdit.textInputted, favValueEdit.textInputted)
+                                requestFilterOutAddress()
                                 addNewAddress.close()
                             }
                         }
@@ -952,6 +963,7 @@ QScreen {
             }
             onCloseClicked: {
                 addNewAddress.close()
+                requestFilterOutAddress()
             }
             Column {
                 width: 540
@@ -1079,6 +1091,7 @@ QScreen {
         onConfirmNo: close()
         onConfirmYes: {
             AppSetting.removeFavoriteAddress(addNewAddress.dataLabel, addNewAddress.dataValue)
+            requestFilterOutAddress()
             addNewAddress.close()
             savedAddress.close()
             close()

@@ -69,6 +69,7 @@ public:
         ADD_TREZOR = (int)nunchuk::SignerTag::TREZOR,
         ADD_LEDGER = (int)nunchuk::SignerTag::LEDGER,
         ADD_BITBOX = (int)nunchuk::SignerTag::BITBOX,
+        ADD_TAPSIGNER,
     };
 
     enum class TabSelection {
@@ -708,6 +709,12 @@ QString GetSignerAddress(const nunchuk::SingleSigner& signer,
 QString GetHotWalletMnemonic(const QString& wallet_id, const QString& passphrase);
 
 QWalletPtr nunchukCreateHotWallet(const QString &mnemonic, const QString& passphrase, bool need_backup, bool replace, QWarningMessage &msg);
+
+QMasterSignerPtr ImportBackupKey( const std::vector<unsigned char>& data,
+                                 const QString& backup_key,
+                                 const QString& name,
+                                 bool is_primary,
+                                 QWarningMessage& msg);
 }
 
 #endif // BRIDGEINTERFACE_H

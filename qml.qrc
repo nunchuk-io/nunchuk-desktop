@@ -472,6 +472,10 @@
         <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberSuccess.qml</file>
         <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberConfirmEmail.qml</file>
         <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceFacilitatorAdminSubscriberLeftPannel.qml</file>
+        <file>Qml/Components/customizes/QWarningBgMulti.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QSelectPassPhraseQuestion.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QImportantNoticeAboutPassphrase.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QPassphraseBackupReminder.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>

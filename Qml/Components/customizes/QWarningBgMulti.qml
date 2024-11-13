@@ -17,47 +17,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
+import QtQuick 2.12
+import QtQuick.Controls 2.1
+import QtQuick.Controls.Styles 1.4
 import QtGraphicalEffects 1.0
-import QtQuick.Controls 2.0
-import "../../origins"
-import "../../customizes/Texts"
+import HMIEVENTS 1.0
+import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
+import DataPool 1.0
+import "../../Components/origins"
+import "../../Components/customizes/Texts"
+import "../../../localization/STR_QML.js" as STR
 
-Row {
-    id: radioRoot
-    spacing: 8
-    property bool selected: false
-    property string label: ""
-    property string fontFamily: "Lato"
-    property int fontPixelSize: 14
-    property int fontWeight: Font.Normal
-    signal buttonClicked()
-    QLato {
-        id: text
-        text: label
-        font.family: fontFamily
-        font.pixelSize: fontPixelSize
-        font.weight: fontWeight
-        color: radioRoot.enabled ? "#031F2B" : "#666666"
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.width - icon.width - 8
-    }
-    ColorOverlay {
-        anchors.verticalCenter: parent.verticalCenter
-        width: 24
-        height: 24
-        source: QIcon {
-            id: icon
-            iconSize: 24
-            source: radioRoot.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+Rectangle {
+    id: _root
+    width: 528
+    height: 60
+    color: "#EAEAEA"
+    radius: 12
+    property string icon: ""
+    property alias txt: _txt
+    property int iSize: 24
+
+    Row {
+        anchors.fill: parent
+        anchors.margins: 12
+        spacing: 12
+        QIcon {
+            iconSize: iSize
+            source: icon
+            anchors.verticalCenter: parent.verticalCenter
         }
-        color: radioRoot.enabled ? "#031F2B" : "#666666"
-        MouseArea {
-            id: mouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: { buttonClicked() }
+        QLato {
+            id: _txt
+            width: _root.width - 2*12 - iSize - 12
+            height: 60 - 2*12
+            wrapMode: Text.WordWrap
+            lineHeight: 28
+            lineHeightMode: Text.FixedHeight
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
+            anchors.verticalCenter: parent.verticalCenter
+            onLinkActivated: Qt.openUrlExternally(link)
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: _txt.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                acceptedButtons: Qt.NoButton
+            }
         }
     }
 }

@@ -40,6 +40,7 @@ struct StructAddHardware
     QString mGroupId {};
     QString mRequestId {};
     int     mKeyIndex {-1};
+    QStringList mTags {};
 };
 class QAssistedDraftWallets : public QSwitchAPI
 {

@@ -31,6 +31,7 @@ QWalletManagement::QWalletManagement()
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(this, &QWalletManagement::getListWalletFinish, this, &QWalletManagement::slotGetListWalletFinish, Qt::QueuedConnection);
+    connect(this, &QWalletManagement::signalUpdateSigner, this, &QWalletManagement::slotUpdateSigner, Qt::QueuedConnection);
 }
 
 QWalletManagement::~QWalletManagement()
@@ -268,6 +269,30 @@ void QWalletManagement::GetListWallet(int mode)
         }
     }
     UpdateSyncWalletFlows();
+}
+
+void QWalletManagement::UpdateSigner(const QJsonObject &signer)
+{
+    QJsonObject js_signer = signer;
+    QString xfp = js_signer["xfp"].toString();
+    QString name = js_signer["name"].toString();
+    bool is_visible = js_signer["is_visible"].toBool();
+    QJsonArray wtags = js_signer["tags"].toArray();
+    QWarningMessage msgIn;
+    nunchuk::MasterSigner master_signer = bridge::nunchukGetOriginMasterSigner(xfp, msgIn);
+    if (msgIn.type() == (int)EWARNING::WarningType::NONE_MSG) {
+        std::vector<nunchuk::SignerTag> tags; // get tags from api signer.tags
+        for (QJsonValue tag : wtags) {
+            QString js_tag = tag.toString();
+            tags.push_back(SignerTagFromStr(js_tag.toStdString()));
+        }
+        // Do update
+        master_signer.set_name(name.toStdString());
+        master_signer.set_tags(tags);
+        master_signer.set_visible(is_visible);
+        msgIn.resetWarningMessage();
+        bridge::UpdateMasterSigner(master_signer, msgIn);
+    }
 }
 
 void QWalletManagement::UpdateSyncWalletFlows()
@@ -722,4 +747,12 @@ void QWalletManagement::slotGetListWalletFinish()
     ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
     QGroupWallets::instance()->findPermissionAccount();
     AppModel::instance()->requestOnboarding();
+}
+
+void QWalletManagement::slotUpdateSigner()
+{
+    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+    if(mastersigners){
+        AppModel::instance()->setMasterSignerList(mastersigners);
+    }
 }

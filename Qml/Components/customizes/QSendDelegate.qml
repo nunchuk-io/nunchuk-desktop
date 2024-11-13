@@ -53,6 +53,7 @@ Rectangle {
     signal qrCodeRequest()
     signal removeItemRequest()
     signal favoriteRequest()
+    signal sendAllRemainingRequest()
 
     function setFavorite(fav) {
         if ((fav.toType === "Address") || (fav.toType === "Wallet")){
@@ -212,6 +213,17 @@ Rectangle {
                     }
                 }
             }
+            QButtonTextLink {
+                height: 24
+                label: "Send all remaining"
+                displayIcon: false
+                btnText.font.underline: true
+                anchors.top: amountInput.top
+                anchors.right: amountInput.right
+                onButtonClicked: {
+                    sendAllRemainingRequest()
+                }
+            }
         }
     }
     RegExpValidator { id: intvalidator;      regExp: /^[1-9][0-9]*$/ }
@@ -253,7 +265,7 @@ Rectangle {
                                            "toType": "Input",
                                            "toAddress": "",
                                            "toAddressDisplay": "",
-                                           "toAmount": ""
+                                           "toAmount": toAmount
                                        })
                     setFavoriteInput(inputObject)
                 }

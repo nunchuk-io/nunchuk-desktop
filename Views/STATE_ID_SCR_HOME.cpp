@@ -288,6 +288,7 @@ void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ASK_HARDWARE_REQ_HANDLER(QVariant msg) {
+    QGroupWallets::instance()->setDashboardInfo("");
 }
 
 void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {

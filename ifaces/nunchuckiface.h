@@ -527,6 +527,24 @@ public:
     std::string GetHotWalletMnemonic(const std::string& wallet_id, const std::string& passphrase, QWarningMessage& msg);
 
     nunchuk::Wallet CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, bool replace, QWarningMessage &msg);
+
+    void VerifyColdcardBackup(const std::vector<unsigned char>& data,
+                              const std::string& backup_key,
+                              const std::string& xfp,
+                              QWarningMessage &msg);
+
+    nunchuk::MasterSigner ImportColdcardBackup(const std::vector<unsigned char>& data,
+                                               const std::string& backup_key,
+                                               const std::string& name,
+                                               std::function<bool(int)> progress,
+                                               bool is_primary,
+                                               QWarningMessage &msg);
+
+    nunchuk::MasterSigner ImportBackupKey(const std::vector<unsigned char>& data,
+                                          const std::string& backup_key,
+                                          const std::string& name,
+                                          bool is_primary,
+                                          QWarningMessage &msg);
 private:
     nunchukiface();
     ~nunchukiface();

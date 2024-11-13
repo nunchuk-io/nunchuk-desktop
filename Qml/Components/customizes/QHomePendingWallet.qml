@@ -288,13 +288,6 @@ Rectangle {
                                         } else if (modelData.type === AlertType.TRANSFER_FUNDS) {
                                             _info1.open()
                                             _info1.contentText = STR.STR_QML_1346
-                                        } else if (modelData.type === AlertType.KEY_REPLACEMENT_PENDING) {
-                                            var alert = GroupWallet.dashboardInfo.alert
-                                            var is_inheritance = alert.payload.is_inheritance
-                                            if (is_inheritance) {
-                                                _info1.open()
-                                                _info1.contentText = STR.STR_QML_1353
-                                            }
                                         } else if (modelData.type === AlertType.SETUP_INHERITANCE_PLAN) {
                                             _info1.open()
                                             _info1.contentText = STR.STR_QML_1355

@@ -1181,7 +1181,12 @@ void Controller::slotFinishBackupWallet(QString what,
 void Controller::slotFinishBalanceChanged(const QString &id,
                                           const qint64 balance)
 {
-    startSyncWalletDb(id);
+    if(AppModel::instance()->walletInfo() && qUtils::strCompare(id, AppModel::instance()->walletInfo()->id())){
+        startGetTransactionHistory(id);
+    }
+    if(AppModel::instance()->walletList()){
+        AppModel::instance()->walletList()->updateBalance(id, balance);
+    }
 }
 
 void Controller::slotFinishTransactionChanged(const QString &tx_id,

@@ -98,8 +98,12 @@ void ClientController::setConnection(Connection *c)
     }
     emit connectionChanged();
     connectSingleShot(m_connection.data(), &Connection::connected, this, [this]{
-        connection()->loadState();
-        connection()->sync();
+        try {
+            connection()->loadState();
+            connection()->sync();
+        } catch (const std::exception& e) {
+            DBG_INFO << "ClientController::setConnection::connected" << e.what();
+        }
         connect(m_connection->user(), &User::defaultAvatarChanged, this, &ClientController::onUserAvatarChanged );
         connect(m_connection->user(), &User::defaultNameChanged, this, &ClientController::onUserDisplaynameChanged );
         connectSingleShot(m_connection.data(), &Connection::syncDone, this, [this] {

@@ -42,7 +42,7 @@ Item {
         anchors.fill: parent
         sourceComponent: {
             if(modelData.type === "NFC") {
-                return modelData.has ? tapsignerAdded : tapsignerAdd
+                return modelData.has ? inheritanceAdded : inheritanceAdd
             }
             else if (modelData.type === "SERVER") {
                 return modelData.has ? serverAdded : serverAdd
@@ -61,12 +61,13 @@ Item {
     }
 
     Component {
-        id: tapsignerAdd
+        id: inheritanceAdd
         QDashRectangle {
             anchors.fill: parent
             radius: 8
             borderWitdh: 2
             borderColor: "#031F2B"
+
             Row {
                 anchors {
                     fill: parent
@@ -81,12 +82,25 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#F5F5F5"
                 }
-                QLato {
+                Column {
+                    height: childrenRect.height
                     width: 150
-                    text: STR.STR_QML_956
                     anchors.verticalCenter: parent.verticalCenter
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignVCenter
+                    spacing: 4
+                    QLato {
+                        width: 150
+                        height: 28
+                        text: STR.STR_QML_954.arg(modelData.key_index + 1)
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QBadge {
+                        width: 77
+                        height: 16
+                        fontSize: 10
+                        text: STR.STR_QML_1600
+                        color: "#EAEAEA"
+                    }
                 }
             }
             QTextButton {
@@ -107,7 +121,7 @@ Item {
         }
     }
     Component {
-        id: tapsignerAdded
+        id: inheritanceAdded
         Rectangle {
             anchors.fill: parent
             color: "#A7F0BA"

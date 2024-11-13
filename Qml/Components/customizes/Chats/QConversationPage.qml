@@ -576,137 +576,121 @@ Row {
             id: conversationfooter
             width: parent.width
             height: 80
-            Rectangle {
-                id: bgfooter
-                width: parent.width - 4
-                height: parent.height - 4
-                anchors.centerIn: parent
-                color: "#FFFFFF"
-                visible: false
-            }
-            DropShadow {
-                anchors.fill: bgfooter
-                verticalOffset: 2
-                cached: true
-                radius: 8
-                samples: 16
-                color: Qt.rgba(0, 0, 0, 0.15)
-                source: bgfooter
-                QTextField {
-                    id: messageField
-                    width: parent.width - (!RoomWalletData.isIgnoredCollabWallet ? 108 : 48)
-                    height: 48
-                    anchors.left: parent.left
-                    anchors.leftMargin: 24
-                    anchors.verticalCenter: parent.verticalCenter
-                    placeholderText: "Type your message..."
-                    Keys.onReturnPressed: { conversationfooter.sendMessage() }
-                    Keys.onEnterPressed:  { conversationfooter.sendMessage() }
-                    clip: true
-                    color: "#031F2B"
-                    font.pixelSize: 16
-                    selectByMouse: true
-                    background: Rectangle {
-                        anchors.fill: parent
-                        radius: 8
-                        border.color: attachedFile.containsDrag ? "red" : "#DEDEDE"
-                        color: "#FFFFFF"
-                    }
-                    onActiveFocusChanged:{ if(activeFocus){RoomWalletData.currentRoom.markFiveMessagesAsRead()}}
-                    DropArea {
-                        id: attachedFile
-                        property string fileLocalPath: ""
-                        property int    file_mimType: filePlaceHolder._FILE_OTHER
-                        enabled: attachmentSupported
-                        anchors.fill: parent
-                        onDropped: {
-                            attachedFile.fileLocalPath = ""
-                            if(drop.urls.length > 1){ AppModel.showToast(-696, STR.STR_QML_696, EWARNING.EXCEPTION_MSG); }
-                            else{
-                                var fileDropped = drop.urls[0]
-                                attachedFile.validateFileExtension(fileDropped)
-                                attachedFile.fileLocalPath = fileDropped
+            Item {
+                anchors.fill: parent
+                anchors.margins: 15
+                Row {
+                    anchors.fill: parent
+                    spacing: 12
+                    Item {
+                        width: parent.width - (selectFileBtn.visible ? (selectFileBtn.width+12) : 0) - (collabWalletBtn.visible ? (collabWalletBtn.width+12) : 0)
+                        height: parent.height
+                        QTextField {
+                            id: messageField
+                            anchors.fill: parent
+                            placeholderText: "Type your message..."
+                            Keys.onReturnPressed: { conversationfooter.sendMessage() }
+                            Keys.onEnterPressed:  { conversationfooter.sendMessage() }
+                            clip: true
+                            color: "#031F2B"
+                            font.pixelSize: 16
+                            selectByMouse: true
+                            background: Rectangle {
+                                anchors.fill: parent
+                                radius: 8
+                                border.color: attachedFile.containsDrag ? "red" : "#DEDEDE"
+                                color: "#FFFFFF"
                             }
-                        }
-
-                        function validateFileExtension(filePath) {
-                            const filters_image = ['png', 'jpg', 'jpeg'];
-                            const filters_video = ['mp4'];
-                            const filters_other = ['mp4'];
-                            var extension = filePath.split('.').pop();
-                            if(filters_image.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_IMAGE}
-                            else if(filters_video.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_VIDEO}
-                            else{ attachedFile.file_mimType = filePlaceHolder._FILE_OTHER }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    width: 60
-                    height: 60
-                    radius: 4
-                    anchors.right: messageField.right
-                    anchors.rightMargin: messageField.leftPadding
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: -height/2
-                    visible: attachmentSupported && (attachedFile.fileLocalPath !== "")
-                    QAttachment {
-                        id: filePlaceHolder
-                        width: 60
-                        height: 60
-                        sourceSize.width: filePlaceHolder.width
-                        sourceSize.height: filePlaceHolder.height
-                        fillMode: Image.PreserveAspectCrop
-                        file_mimeType: attachedFile.file_mimType
-                        file_path: attachedFile.fileLocalPath
-                        layer.enabled: true
-                        layer.effect: OpacityMask {
-                            maskSource: Rectangle {
-                                width: 60
-                                height: 60
-                                radius: 4
+                            onActiveFocusChanged:{ if(activeFocus){RoomWalletData.currentRoom.markFiveMessagesAsRead()}}
+                            DropArea {
+                                id: attachedFile
+                                property string fileLocalPath: ""
+                                property int    file_mimType: filePlaceHolder._FILE_OTHER
+                                enabled: attachmentSupported
+                                anchors.fill: parent
+                                onDropped: {
+                                    attachedFile.fileLocalPath = ""
+                                    if(drop.urls.length > 1){ AppModel.showToast(-696, STR.STR_QML_696, EWARNING.EXCEPTION_MSG); }
+                                    else{
+                                        var fileDropped = drop.urls[0]
+                                        attachedFile.validateFileExtension(fileDropped)
+                                        attachedFile.fileLocalPath = fileDropped
+                                    }
+                                }
+                                function validateFileExtension(filePath) {
+                                    const filters_image = ['png', 'jpg', 'jpeg'];
+                                    const filters_video = ['mp4'];
+                                    const filters_other = ['mp4'];
+                                    var extension = filePath.split('.').pop();
+                                    if(filters_image.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_IMAGE}
+                                    else if(filters_video.includes(extension.toLowerCase())) { attachedFile.file_mimType = filePlaceHolder._FILE_VIDEO}
+                                    else{ attachedFile.file_mimType = filePlaceHolder._FILE_OTHER }
+                                }
                             }
                         }
                         Rectangle {
-                            anchors.fill: parent
+                            width: 60
+                            height: 60
                             radius: 4
-                            opacity: 0.6
-                            visible: attachMouse.containsMouse || removeAttachMouse.containsMouse
+                            anchors.right: messageField.right
+                            anchors.rightMargin: messageField.leftPadding
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: -height/2
+                            visible: attachmentSupported && (attachedFile.fileLocalPath !== "")
+                            z: 200
+                            QAttachment {
+                                id: filePlaceHolder
+                                width: 60
+                                height: 60
+                                sourceSize.width: filePlaceHolder.width
+                                sourceSize.height: filePlaceHolder.height
+                                fillMode: Image.PreserveAspectCrop
+                                file_mimeType: attachedFile.file_mimType
+                                file_path: attachedFile.fileLocalPath
+                                layer.enabled: true
+                                layer.effect: OpacityMask {
+                                    maskSource: Rectangle {
+                                        width: 60
+                                        height: 60
+                                        radius: 4
+                                    }
+                                }
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 4
+                                    color: "transparent"
+                                    border.color: "#000000"
+                                }
+                                opacity: (attachMouse.containsMouse || removeAttachMouse.containsMouse) ? 0.6 : 1
+                            }
+                            MouseArea {
+                                id: attachMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                            QImage {
+                                width: 32
+                                height: 32
+                                sourceSize.width: width
+                                sourceSize.height: height
+                                source: "qrc:/Images/Images/OnlineMode/remove-button.png"
+                                anchors.left: parent.right
+                                anchors.leftMargin: -16
+                                anchors.bottom: parent.top
+                                anchors.bottomMargin: -16
+                                visible: attachMouse.containsMouse || removeAttachMouse.containsMouse
+                                MouseArea {
+                                    id: removeAttachMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked:{
+                                        attachedFile.fileLocalPath = ""
+                                    }
+                                }
+                            }
                         }
-                    }
-                    MouseArea {
-                        id: attachMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                    QImage {
-                        width: 32
-                        height: 32
-                        sourceSize.width: width
-                        sourceSize.height: height
-                        source: "qrc:/Images/Images/OnlineMode/remove-button.png"
-                        anchors.left: parent.right
-                        anchors.leftMargin: -16
-                        anchors.bottom: parent.top
-                        anchors.bottomMargin: -16
-                        visible: attachMouse.containsMouse || removeAttachMouse.containsMouse
-                        MouseArea {
-                            id: removeAttachMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked:{ attachedFile.fileLocalPath = ""}
-                        }
-                    }
-                }
-
-                Row {
-                    spacing: 4
-                    anchors {
-                        left: messageField.right
-                        leftMargin: 12
-                        verticalCenter: messageField.verticalCenter
                     }
                     MouseArea {
                         id: selectFileBtn
@@ -761,10 +745,12 @@ Row {
                         }
                     }
                     Loader {
-                        sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : (RoomWalletData.isIgnoredCollabWallet ? null :btnCreateSharedWallet)
+                        id: collabWalletBtn
+                        width: childrenRect.width
+                        height: childrenRect.height
+                        sourceComponent: RoomWalletData.roomWalletCreated ? btnCreateTransaction : (AppSetting.enableColab ? btnCreateSharedWallet : null)
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: RoomWalletData.roomWalletCreated ? (RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM))
-                                                                  : RoomWalletData.isIgnoredCollabWallet
+                        visible: RoomWalletData.roomWalletCreated ? (RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType !== NUNCHUCKTYPE.SUPPORT_ROOM)) : AppSetting.enableColab
                     }
                 }
             }

@@ -411,7 +411,7 @@ int QWalletServicesTag::inheritanceDownloadBackup(const QString &magic, const QS
             std::vector<unsigned char> base64vec(base64bin.begin(), base64bin.end());
             QString key_name = key["key_name"].toString();
             QString derivation_path = key["derivation_path"].toString();
-            auto master_signer_ptr = bridge::ImportTapsignerMasterSigner(base64vec, backup_key, key_name, false, msg);
+            auto master_signer_ptr = bridge::ImportBackupKey(base64vec, backup_key, key_name, false, msg);
             if (master_signer_ptr) {
                 msg.resetWarningMessage();
                 auto master_signer = master_signer_ptr->originMasterSigner();

@@ -180,12 +180,16 @@ Item {
                                     model: GroupWallet.dashboardInfo.keys
                                     QAddRequestKey {
                                         onTapsignerClicked: {
-                                            _info.contentText = STR.STR_QML_961
-                                            _info.open()
+                                            // _info.contentText = STR.STR_QML_961
+                                            // _info.open()
+                                            key_index = modelData.key_index
+                                            _hardwareAddKey.isInheritance = true
+                                            _hardwareAddKey.open()
                                         }
                                         onHardwareClicked: {
                                             key_index = modelData.key_index
-                                            _Security.open()
+                                            _hardwareAddKey.isInheritance = false
+                                            _hardwareAddKey.open()
                                         }
                                         onSerkeyClicked: {
                                             _info.contentText = STR.STR_QML_962
@@ -205,19 +209,20 @@ Item {
 
     property string hardware: ""
     QPopupEmpty {
-        id: _Security
+        id: _hardwareAddKey
+        property bool isInheritance: false
         onOpened: {
             GroupWallet.addHardwareFromConfig(-1, "", -1)
             hardware = ""
         }
-
         content: QOnScreenContentTypeB {
             width: 600
             height: 516
             anchors.centerIn: parent
-            label.text: STR.STR_QML_106
+            label.text: _hardwareAddKey.isInheritance ? STR.STR_QML_1601 : STR.STR_QML_1602
+            label.width: 600
             extraHeader: Item {}
-            onCloseClicked: { _Security.close() }
+            onCloseClicked: { _hardwareAddKey.close() }
             content: Item {
                 Column {
                     anchors.fill: parent
@@ -249,11 +254,18 @@ Item {
                             model: {
                                 var ls = []
                                 if (!isKeyHolderLimited) {
-                                    ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                                    if (!_hardwareAddKey.isInheritance) {
+                                        ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                                    }
                                     ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
                                 }
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
+                                if (!_hardwareAddKey.isInheritance) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
+                                }
+                                if (_hardwareAddKey.isInheritance) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
+                                }
                                 return ls
                             }
                             QRadioButtonTypeA {
@@ -265,6 +277,7 @@ Item {
                                 fontFamily: "Lato"
                                 fontPixelSize: 16
                                 fontWeight: Font.Normal
+                                enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
                                 selected: GroupWallet.qAddHardware === modelData.add_type
                                 onButtonClicked: {
                                     GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index)
@@ -274,7 +287,19 @@ Item {
                         }
                     }
                 }
+                QWarningBgMulti {
+                    width: 528
+                    visible: _hardwareAddKey.isInheritance
+                    height: 108
+                    icon: "qrc:/Images/Images/info-60px.png"
+                    txt.text: STR.STR_QML_1603
+                    anchors.bottom: parent.bottom
+                }
+
                 QWarningBg {
+                    width: 528
+                    visible: !_hardwareAddKey.isInheritance
+                    height: 60
                     icon: "qrc:/Images/Images/info-60px.png"
                     txt.text: STR.STR_QML_943
                     anchors.bottom: parent.bottom

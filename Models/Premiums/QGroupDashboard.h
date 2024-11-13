@@ -194,6 +194,7 @@ public:
     bool FinishKeyReplacement(const QJsonObject &requestBody);
 
     bool canReplaceKey();
+    bool isInheritance();
 
     bool canEntryClickAlert();
 
@@ -231,6 +232,7 @@ public slots:
     void byzantineRoomDeleted(QString room_id, QString group_id);
 
     void requestShowLetAddYourKeys();
+    void requestShowReplacementKey();
     bool isDowngrade(QString email_or_username, QString roleNew);
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);

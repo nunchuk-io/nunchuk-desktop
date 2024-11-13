@@ -145,6 +145,21 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
                 data["xpub"] = single->xpub();
                 data["pubkey"] = single->publickey();
                 data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
+                auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
+                if (dash) {
+                    if (dash->allowInheritance()) { // Request from Alert DashBoard
+                        if (dash->nInfo() == 4 && hardware.mKeyIndex == 0) {
+                            tags.append("INHERITANCE");
+                        }
+                        else if (dash->nInfo() == 5 && (hardware.mKeyIndex == 0 || hardware.mKeyIndex == 1)) {
+                            tags.append("INHERITANCE");
+                        }
+                    }
+                }
+                if (hardware.mTags.contains("INHERITANCE") && !tags.contains("INHERITANCE")) { // Request receive from Mobile Banner
+                    tags.append("INHERITANCE");
+                }
+                data["name"] = tags.contains("INHERITANCE") ? data["name"].toString() + "(inh.)" : data["name"].toString();
                 data["tags"] = tags;
                 data["tapsigner"] = {};
                 if (hardware.mKeyIndex >= 0) {
@@ -153,19 +168,19 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
                 else {
                     data["key_index"] = {};
                 }
+                DBG_INFO << data;
                 bool isDuplicateKey {false};
                 bool ret {false};
                 QString error_msg;
                 if (hardware.mGroupId.isEmpty()) {
                     ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
-                    DBG_INFO << data << ret << isDuplicateKey;
+                    DBG_INFO << ret << isDuplicateKey;
                 } else {
-                    auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
                     if (dash && dash->isDraftWallet()) {
                         ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
                     } else {
                         ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
-                        DBG_INFO << data << ret << error_msg << isDuplicateKey;
+                        DBG_INFO << ret << error_msg << isDuplicateKey;
                     }
                     if (ret) {
                         if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
@@ -211,6 +226,21 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
         data["xpub"]            = QString::fromStdString(keyresued.get_xpub());
         data["pubkey"]          = QString::fromStdString(keyresued.get_public_key());
         data["type"]            = qUtils::GetSignerTypeString(keyresued.get_type());
+        auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
+        if (dash) {
+            if (dash->allowInheritance()) { // Request from Alert Dasboard
+                if (dash->nInfo() == 4 && hardware.mKeyIndex == 0) {
+                    tags.append("INHERITANCE");
+                }
+                else if (dash->nInfo() == 5 && (hardware.mKeyIndex == 0 || hardware.mKeyIndex == 1)) {
+                    tags.append("INHERITANCE");
+                }
+            }
+        }
+        if (hardware.mTags.contains("INHERITANCE") && !tags.contains("INHERITANCE")) { // Request receive from Mobile Banner
+            tags.append("INHERITANCE");
+        }
+        data["name"] = tags.contains("INHERITANCE") ? data["name"].toString() + "(inh.)" : data["name"].toString();
         data["tags"] = tags;
         data["tapsigner"] = {};
         if (hardware.mKeyIndex >= 0) {
@@ -219,20 +249,21 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
         else {
             data["key_index"] = {};
         }
+        DBG_INFO << data;
         bool isDuplicateKey {false};
         bool ret {false};
         QString error_msg;
         if (hardware.mGroupId.isEmpty()) {
             ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
-            DBG_INFO << data << ret << isDuplicateKey;
+            DBG_INFO << ret << isDuplicateKey << "Honybadger/IronHand";
         }
         else {
-            auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
             if (dash && dash->isDraftWallet()) {
                 ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
+                DBG_INFO << ret << isDuplicateKey << "Honybadger/IronHand";
             } else {
                 ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
-                DBG_INFO << data << ret << error_msg << isDuplicateKey;
+                DBG_INFO << ret << error_msg << isDuplicateKey << "Not Honybadger/IronHand";
             }
             if (ret) {
                 if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
@@ -270,6 +301,10 @@ void QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString
                     hardware.mGroupId = group_id;
                     hardware.mRequestId = request_id;
                     hardware.mKeyIndex = key_index;
+                    hardware.mTags.clear();
+                    for (auto tag: tags) {
+                        hardware.mTags.append(tag.toString());
+                    }
                     m_requests.insert(key, hardware);
                 }
             }
@@ -424,16 +459,25 @@ bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
         DBG_INFO << single->tag() << "tag:" << single->tag() << m_mode << hardware.mGroupId;
         if (warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
             QJsonArray tags;
-            if (!single->tag().isEmpty()) {
-                tags.append(single->tag());
+            if (!single->tags().isEmpty()) {
+                QStringList list = single->tags();
+                list.removeAll("INHERITANCE");
+                for (auto tag : list) {
+                    tags.append(tag);
+                }
             }
-
             data["name"] = single->name() != "" ? single->name() : titleCase(single->tag());
             data["xfp"] = single->masterFingerPrint();
             data["derivation_path"] = single->derivationPath();
             data["xpub"] = single->xpub();
             data["pubkey"] = single->publickey();
             data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
+            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+            if (dashboard.isNull()) return false;
+            if (dashboard->isInheritance() || hardware.mTags.contains("INHERITANCE")) { // Request receive from Mobile Banner
+                tags.append("INHERITANCE");
+            }
+            data["name"] = tags.contains("INHERITANCE") ? data["name"].toString() + "(inh.)" : data["name"].toString();
             data["tags"] = tags;
             data["tapsigner"] = {};
             if (hardware.mKeyIndex >= 0) {
@@ -442,10 +486,7 @@ bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
             else {
                 data["key_index"] = {};
             }
-            bool ret {false};
-            if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-                ret = dashboard->FinishKeyReplacement(data);
-            }
+            bool ret = dashboard->FinishKeyReplacement(data);
             if (ret) {
                 AppModel::instance()->setAddSignerWizard(3);
                 return true;

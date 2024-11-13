@@ -29,6 +29,11 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     readonly property int hardwareType: GroupWallet.qIsByzantine ? GroupWallet.qAddHardware : UserWallet.qAddHardware
+    readonly property int _ASK_PASSPHRASE: 1
+    readonly property int _IMPORTANT_NOTICE: 2
+    readonly property int _BACKUP_PASSPHRASE: 3
+    readonly property int _PASSPHRASE_DONE: 4
+    property int _passPhrase: _ASK_PASSPHRASE
     Loader {
         width: popupWidth
         height: popupHeight
@@ -37,7 +42,15 @@ QScreen {
             switch(hardwareType) {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
-            case NUNCHUCKTYPE.ADD_COLDCARD: return _Coldcard
+            case NUNCHUCKTYPE.ADD_COLDCARD: return function() {
+                switch(_passPhrase) {
+                    case _ASK_PASSPHRASE: return _passPhraseSelect
+                    case _IMPORTANT_NOTICE: return _importantNotice
+                    case _BACKUP_PASSPHRASE: return _passPhraseBackup
+                    case _PASSPHRASE_DONE: return _Coldcard
+                    default: return null
+                }
+            }()
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
             default: return null
             }
@@ -59,6 +72,53 @@ QScreen {
         id: _BitBox
         QScreenAddBitBox {}
     }
+    Component {
+        id: _passPhraseSelect
+        QSelectPassPhraseQuestion {
+            onRequestBack: {
+                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            }
+            onRequestNext: {
+                if (option === "not-have-a-passphrase") {
+                    _passPhrase = _PASSPHRASE_DONE
+                } else {
+                    _passPhrase = _IMPORTANT_NOTICE
+                }
+            }
+        }
+    }
+    Component {
+        id: _importantNotice
+        QImportantNoticeAboutPassphrase {
+            onRequestBack: {
+                _passPhrase = _ASK_PASSPHRASE
+            }
+            onRequestNext: {
+                _passPhrase = _BACKUP_PASSPHRASE
+            }
+            onRequestWithout: {
+                var alert = GroupWallet.dashboardInfo.alert
+                var can_replace = alert.payload.can_replace
+                if (can_replace) {
+                    GroupWallet.dashboardInfo.requestShowReplacementKey();
+                } else {
+                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                }
+            }
+        }
+    }
+    Component {
+        id: _passPhraseBackup
+        QPassphraseBackupReminder {
+            onRequestBack: {
+                _passPhrase = _IMPORTANT_NOTICE
+            }
+            onRequestNext: {
+                _passPhrase = _PASSPHRASE_DONE
+            }
+        }
+    }
+
     function doneOrTryAgainAddHardwareKey(isSuccess) {
         if (isSuccess) {
             AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);

@@ -58,6 +58,12 @@ void QUserWallets::GetDraftWallet()
             dashboard->setGroupInfo(info);
             DBG_INFO << info;
             mDashboard = dashboard;
+            QJsonArray signers = draft_wallet["signers"].toArray();
+            for (auto js : signers) {
+                QJsonObject signer = js.toObject();
+                WalletsMng->UpdateSigner(signer);
+            }
+            emit WalletsMng->signalUpdateSigner();
         }
     }
 }

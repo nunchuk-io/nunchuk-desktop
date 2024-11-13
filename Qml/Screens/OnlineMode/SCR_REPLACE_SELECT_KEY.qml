@@ -33,7 +33,7 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     property var dashInfo: GroupWallet.dashboardInfo
-    property int key_index: -1
+    property var alert: dashInfo.alert
     property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
     property string hardware: ""
     QOnScreenContentTypeB {
@@ -76,12 +76,20 @@ QScreen {
                     Repeater {
                         model: {
                             var ls = []
+                            var is_inheritance = alert.payload.is_inheritance
                             if (!isKeyHolderLimited) {
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                                if (!is_inheritance) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                                }
                                 ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
                             }
-                            ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
-                            ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
+                            if (!is_inheritance) {
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
+                            }
+                            if (is_inheritance) {
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
+                            }
                             return ls
                         }
                         QRadioButtonTypeA {
@@ -93,8 +101,10 @@ QScreen {
                             fontFamily: "Lato"
                             fontPixelSize: 16
                             fontWeight: Font.Normal
+                            enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
                             selected: GroupWallet.qAddHardware === modelData.add_type && hardware === modelData.tag
                             onButtonClicked: {
+                                var key_index = alert.payload.key_index
                                 GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index)
                                 hardware = modelData.tag
                             }
@@ -102,7 +112,19 @@ QScreen {
                     }
                 }
             }
+            QWarningBgMulti {
+                width: 528
+                visible: alert.payload.is_inheritance
+                height: 108
+                icon: "qrc:/Images/Images/info-60px.png"
+                txt.text: STR.STR_QML_1603
+                anchors.bottom: parent.bottom
+            }
+
             QWarningBg {
+                width: 528
+                visible: !alert.payload.is_inheritance
+                height: 60
                 icon: "qrc:/Images/Images/info-60px.png"
                 txt.text: STR.STR_QML_943
                 anchors.bottom: parent.bottom

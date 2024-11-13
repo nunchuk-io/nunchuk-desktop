@@ -16,6 +16,7 @@ public:
     explicit QWalletManagement();
     virtual ~QWalletManagement();
     void GetListWallet(int mode);
+    void UpdateSigner(const QJsonObject &signer);
     void UpdateSyncWalletFlows();
     QString UpdateSyncWalletFlows(bool yes, bool no);
     WalletIdList wallets() const;
@@ -38,8 +39,10 @@ public:
     int activeSize() const;
 public slots:
     void slotGetListWalletFinish();
+    void slotUpdateSigner();
 signals:
     void getListWalletFinish();
+    void signalUpdateSigner();
 private:
     QMap<QString, QString>      mWallets;
     QMap<QString, QJsonObject>  mWalletsInfo;

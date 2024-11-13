@@ -2491,3 +2491,55 @@ nunchuk::Wallet nunchukiface::CreateHotWallet(const std::string& mnemonic, const
     }
     return ret;
 }
+
+void nunchukiface::VerifyColdcardBackup(const std::vector<unsigned char> &data, const std::string &backup_key, const std::string &xfp, QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->VerifyColdcardBackup(data, backup_key, xfp);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+nunchuk::MasterSigner nunchukiface::ImportColdcardBackup(const std::vector<unsigned char> &data, const std::string &backup_key, const std::string &name, std::function<bool (int)> progress, bool is_primary, QWarningMessage &msg)
+{
+    nunchuk::MasterSigner ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportColdcardBackup(data, backup_key, name, progress, is_primary);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::MasterSigner nunchukiface::ImportBackupKey(const std::vector<unsigned char> &data, const std::string &backup_key, const std::string &name, bool is_primary, QWarningMessage &msg)
+{
+    nunchuk::MasterSigner ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->ImportBackupKey(data, backup_key, name, ImportTapsignerMasterSignerProgress, is_primary);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}

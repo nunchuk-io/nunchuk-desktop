@@ -346,14 +346,14 @@ void QNunchukRoom::slotFinishedDownloadTransaction(nunchuk::RoomTransaction room
             rawtx.data()->setRoomId(id());
             rawtx.data()->setInitEventId(QString::fromStdString(room_tx.get_init_event_id()));
             target.data()->setTransaction(rawtx);
+            if(conversation()){
+                conversation()->updateTransaction(cons, target);
+                setPinTransaction(conversation()->pinTransaction());
+            }
         }
     }
     if(!isDownloaded()){
         startGetPendingTxs();
-    }
-    if(conversation()){
-        conversation()->updateTransaction(cons, target);
-        setPinTransaction(conversation()->pinTransaction());
     }
     if(AppModel::instance()->transactionInfo() && target.data()->transaction() && (qUtils::strCompare(QString::fromStdString(room_tx.get_init_event_id()), target.data()->transaction()->initEventId())))
     {
@@ -889,7 +889,9 @@ void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &r
                         nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(QString::fromStdString(room_tx.get_wallet_id()),
                                                                                       QString::fromStdString(room_tx.get_tx_id()),
                                                                                       txWarning);
-                        emit signalFinishedDownloadTransaction(room_tx, tx, cons);
+                        if((int)EWARNING::WarningType::NONE_MSG == txWarning.type() && tx.get_txid() != ""){
+                            emit signalFinishedDownloadTransaction(room_tx, tx, cons);
+                        }
                     }
                 }
             });

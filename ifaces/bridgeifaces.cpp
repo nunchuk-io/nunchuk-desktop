@@ -2168,3 +2168,22 @@ nunchuk::MasterSigner bridge::CreateSoftwareSignerFromMasterXprv(const QString &
                                                                         replace,
                                                                         msg);
 }
+
+QMasterSignerPtr bridge::ImportBackupKey(const std::vector<unsigned char> &data, const QString &backup_key, const QString &name, bool is_primary, QWarningMessage &msg)
+{
+    nunchuk::MasterSigner it = nunchukiface::instance()->ImportBackupKey(data,
+                                                                         backup_key.toStdString(),
+                                                                         name.toStdString(),
+                                                                         is_primary,
+                                                                         msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner(it));
+        QWarningMessage msgGetTap;
+        nunchuk::TapsignerStatus tapsigner = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(it.get_device().get_master_fingerprint(), msgGetTap);
+        if((int)EWARNING::WarningType::NONE_MSG == msgGetTap.type()){
+            signer.data()->device()->setCardId(QString::fromStdString(tapsigner.get_card_ident()));
+        }
+        return signer;
+    }
+    return NULL;
+}

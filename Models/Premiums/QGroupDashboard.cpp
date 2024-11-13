@@ -371,9 +371,11 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
         obj["ourAccount"] = false;
         if (our_id == added_by_user_id) {
             obj["ourAccount"] = true;
+            WalletsMng->UpdateSigner(obj);
         }
         signers.append(obj);
     }
+    emit WalletsMng->signalUpdateSigner();
 
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
@@ -626,10 +628,11 @@ bool QGroupDashboard::canEntryClickAlert()
         payload["keyname"] = signer["name"].toString();
         bool is_inheritance = signer["tapsigner"].toObject()["is_inheritance"].toBool();
         payload["is_inheritance"] = is_inheritance;
+        payload["key_index"] = signer["key_index"].toInt();
         auto alert = alertJson();
         alert["payload"] = payload;
         setAlertId(alert);
-        return !is_inheritance;
+        return true;
     }
     default:
         break;
@@ -881,6 +884,12 @@ void QGroupDashboard::requestShowLetAddYourKeys()
     else {
         setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_PENDING);
     }
+    QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+}
+
+void QGroupDashboard::requestShowReplacementKey()
+{
+    setFlow((int)AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING);
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }
 
@@ -1166,8 +1175,8 @@ bool QGroupDashboard::FinishKeyReplacement(const QJsonObject &requestBody)
     else {
         ret = Byzantine::instance()->ReplaceKey(groupId(), wallet_id(), xfp, verifyToken, requestBody, error_msg);
     }
+    DBG_INFO << ret << error_msg << requestBody;
     if(ret){
-        DBG_INFO << ret << error_msg;
         // Handle preparing model here.
         GetAlertsInfo();
         GetHealthCheckInfo();
@@ -1181,10 +1190,19 @@ bool QGroupDashboard::FinishKeyReplacement(const QJsonObject &requestBody)
 bool QGroupDashboard::canReplaceKey()
 {
     auto type = static_cast<AlertEnum::E_Alert_t>(alertJson()["type"].toInt());
-    DBG_INFO << alertJson();
     if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING) {
         QJsonObject payload = alertJson()["payload"].toObject();
         return payload["can_replace"].toBool();
+    }
+    return false;
+}
+
+bool QGroupDashboard::isInheritance()
+{
+    auto type = static_cast<AlertEnum::E_Alert_t>(alertJson()["type"].toInt());
+    if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING) {
+        QJsonObject payload = alertJson()["payload"].toObject();
+        return payload["is_inheritance"].toBool();
     }
     return false;
 }
