@@ -715,6 +715,8 @@ QMasterSignerPtr ImportBackupKey( const std::vector<unsigned char>& data,
                                  const QString& name,
                                  bool is_primary,
                                  QWarningMessage& msg);
+
+std::vector<nunchuk::SingleSigner> GetSignersFromMasterSigner(const QString& mastersigner_id);
 }
 
 #endif // BRIDGEINTERFACE_H

@@ -36,7 +36,7 @@ QString encryptXOR(const QString data, const QString key);
 
 QString decryptXOR(const QString encryptedData, const QString key);
 
-qint64 QAmountFromValue(const QString &value, const bool allow_negative = false);
+qint64 QAmountFromValue(const QString &btcValue, const bool allow_negative = false);
 
 QString QValueFromAmount(const qint64 &amount);
 
@@ -120,6 +120,7 @@ QString CreateRequestToken(const QString& signature,
                            QWarningMessage& msg);
 
 QString currencyLocale(qint64 amountSats);
+qint64 QAmountFromCurrency(const QString &currency);
 
 bool verifyCheckSum(const QByteArray& data, const QByteArray& expectedCheckSum);
 

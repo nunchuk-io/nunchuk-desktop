@@ -54,13 +54,19 @@ void EVT_SEND_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
     for(QVariant var: destinationInputed){
         qint64 toAmount = 0;
         QMap<QString, QVariant> destination = var.toMap();
-        if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
-            QString amountStr = destination["toAmount"].toString();
-            amountStr.remove(",");
-            toAmount = amountStr.toLongLong();
-        }
-        else{
-            toAmount = qUtils::QAmountFromValue(destination["toAmount"].toString());
+        bool isCurrency = destination["onCurrency"].toBool();
+        DBG_INFO << destination;
+        if (isCurrency) {
+            toAmount = qUtils::QAmountFromCurrency(destination["toAmount"].toString());
+        } else {
+            if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+                QString amountStr = destination["toAmount"].toString();
+                amountStr.remove(",");
+                toAmount = amountStr.toLongLong();
+            }
+            else{
+                toAmount = qUtils::QAmountFromValue(destination["toAmount"].toString());
+            }
         }
         destinationList.data()->addDestination(destination["toAddress"].toString(), toAmount);
         totalAmountTotal += toAmount;

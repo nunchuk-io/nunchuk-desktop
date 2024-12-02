@@ -118,6 +118,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
     }
     break;
     case E::STATE_ID_SCR_DASHBOARD_ALERT_INFO: {
+        ServiceSetting::instance()->setWalletInfo(wallet);
         if (ServiceSetting::instance()->servicesTagPtr()->requestReplaceKeysVerifyPassword(password)) {
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             QEventProcessor::instance()->sendEvent(E::EVT_REPLACE_SELECT_KEY_REQUEST);

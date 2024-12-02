@@ -1346,3 +1346,23 @@ void AppModel::recieveToast(int code, const QString &what, EWARNING::WarningType
         QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(data));
     });
 }
+
+qint64 AppModel::qAmountFromBTC(const QString &btcValue)
+{
+    return qUtils::QAmountFromValue(btcValue);
+}
+
+QString AppModel::qBTCFromAmount(const qint64 &amount)
+{
+    return qUtils::QValueFromAmount(amount);
+}
+
+QString AppModel::qCurrencyFromAmount(qint64 amountSats)
+{
+    return qUtils::currencyLocale(amountSats);
+}
+
+qint64 AppModel::qAmountFromCurrency(const QString &currency)
+{
+    return qUtils::QAmountFromCurrency(currency);
+}

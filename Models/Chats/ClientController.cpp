@@ -97,29 +97,6 @@ void ClientController::setConnection(Connection *c)
         m_imageprovider->setConnection(m_connection.data());
     }
     emit connectionChanged();
-    connectSingleShot(m_connection.data(), &Connection::connected, this, [this]{
-        try {
-            connection()->loadState();
-            connection()->sync();
-        } catch (const std::exception& e) {
-            DBG_INFO << "ClientController::setConnection::connected" << e.what();
-        }
-        connect(m_connection->user(), &User::defaultAvatarChanged, this, &ClientController::onUserAvatarChanged );
-        connect(m_connection->user(), &User::defaultNameChanged, this, &ClientController::onUserDisplaynameChanged );
-        connectSingleShot(m_connection.data(), &Connection::syncDone, this, [this] {
-            if(rooms()){
-                rooms()->downloadRooms();
-            }
-            connection()->syncLoop();
-        });
-        refreshContacts();
-        refreshDevices();
-        AppSetting::instance()->setIsStarted(true,true);
-        emit userChanged();
-    }, Qt::QueuedConnection);
-    connectSingleShot(m_connection.data(), &Connection::loggedOut, this, []{
-        DBG_INFO << "MATRIX HAS BEEN LOGGEDOUT";
-    }, Qt::QueuedConnection);
 }
 
 bool ClientController::isNunchukLoggedIn() const

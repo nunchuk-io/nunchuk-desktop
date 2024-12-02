@@ -83,7 +83,6 @@ QOnScreenContentTypeA {
                 onReminderClicked: {
                     healthReminderClicked()
                 }
-                visible: ClientController.user.isSubscribedUser
             }
         }
     }

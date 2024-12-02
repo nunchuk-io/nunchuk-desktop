@@ -43,12 +43,17 @@ QScreen {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
             case NUNCHUCKTYPE.ADD_COLDCARD: return function() {
-                switch(_passPhrase) {
-                    case _ASK_PASSPHRASE: return _passPhraseSelect
-                    case _IMPORTANT_NOTICE: return _importantNotice
-                    case _BACKUP_PASSPHRASE: return _passPhraseBackup
-                    case _PASSPHRASE_DONE: return _Coldcard
-                    default: return null
+                var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
+                if (is_inheritance) {
+                    switch(_passPhrase) {
+                        case _ASK_PASSPHRASE: return _passPhraseSelect
+                        case _IMPORTANT_NOTICE: return _importantNotice
+                        case _BACKUP_PASSPHRASE: return _passPhraseBackup
+                        case _PASSPHRASE_DONE: return _Coldcard
+                        default: return null
+                    }
+                } else {
+                    return _Coldcard
                 }
             }()
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox

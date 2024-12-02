@@ -41,10 +41,10 @@ QString qUtils::decryptXOR(const QString encryptedData, const QString key) {
     return qUtils::encryptXOR(encryptedData, key);
 }
 
-qint64 qUtils::QAmountFromValue(const QString &value, const bool allow_negative) {
+qint64 qUtils::QAmountFromValue(const QString &btcValue, const bool allow_negative) {
     qint64 ret = -1;
     try {
-        ret = nunchuk::Utils::AmountFromValue(value.toStdString(), allow_negative);
+        ret = nunchuk::Utils::AmountFromValue(btcValue.toStdString(), allow_negative);
     }
     catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
@@ -448,6 +448,15 @@ QString qUtils::currencyLocale(qint64 amountSats)
         output = output.chopped(1);
     }
     return output;
+}
+
+qint64 qUtils::QAmountFromCurrency(const QString &currency)
+{
+    double btcRates = AppModel::instance()->btcRates()/100000000;
+    double exRates = AppModel::instance()->exchangeRates();
+    double rate = btcRates*exRates;
+    double amountSats = currency.toDouble() / rate;
+    return static_cast<qint64>(amountSats);
 }
 
 bool qUtils::verifyCheckSum(const QByteArray &data, const QByteArray &expectedCheckSum)

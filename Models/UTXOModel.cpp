@@ -354,15 +354,20 @@ QString UTXOListModel::amountBTC()
     return qUtils::QValueFromAmount(amountSats());
 }
 
-int UTXOListModel::amountSats()
+qint64 UTXOListModel::amountSats()
 {
-    int total = 0;
+    qint64 total = 0;
     foreach (QUTXOPtr it, d_) {
         if(it.data()->selected()){
             total += it.data()->amountSats();
         }
     }
     return total;
+}
+
+QString UTXOListModel::amountCurrency()
+{
+    return qUtils::currencyLocale(amountSats());
 }
 
 bool sortbyAmountAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)

@@ -101,6 +101,9 @@ class UTXOListModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QString  amountDisplay  READ amountDisplay  NOTIFY amountChanged)
+    Q_PROPERTY(QString  amountCurrency READ amountCurrency NOTIFY amountChanged)
+    Q_PROPERTY(qint64  amountSats         READ amountSats     NOTIFY amountChanged)
+
 public:
     UTXOListModel();
     ~UTXOListModel();
@@ -134,7 +137,8 @@ public:
 
     QString amountDisplay();
     QString amountBTC();
-    int amountSats();
+    qint64 amountSats();
+    QString amountCurrency();
 private:
     QList<QUTXOPtr> d_;
 

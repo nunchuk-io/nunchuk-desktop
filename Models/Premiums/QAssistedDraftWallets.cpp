@@ -344,11 +344,14 @@ DeviceListModel* QAssistedDraftWallets::refreshDeviceList() const
     return mRefreshDeviceList.data();
 }
 
-void QAssistedDraftWallets::addHardwareFromConfig(int hardwareType, const QString& group_id, int key_index)
+void QAssistedDraftWallets::addHardwareFromConfig(int hardwareType, const QString& group_id, int key_index, bool is_inheritance)
 {
     DBG_INFO << hardwareType << group_id << key_index;
     QSwitchAPI::setAddHardware(hardwareType);
     m_request = map_keys.value((Key)hardwareType);
+    if (is_inheritance) {
+        m_request.mTags.append("INHERITANCE");
+    }
     m_request.mGroupId = group_id;
     m_request.mRequestId = "";
     m_request.mKeyIndex = key_index;
@@ -742,4 +745,9 @@ QString QAssistedDraftWallets::reuseKeyXfp(const QString &fileName)
         return retJson->masterFingerPrint();
     }
     return "";
+}
+
+StructAddHardware QAssistedDraftWallets::request() const
+{
+    return m_request;
 }

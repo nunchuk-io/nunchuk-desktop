@@ -174,6 +174,7 @@ bool QWalletServicesTag::CreateSecurityQuestionsAnswered()
             m_quesAnswers.append(answer);
             DBG_INFO << ques;
         }
+        DBG_INFO << questions_required;
         setQuestions(questions_required);
     }
     return ret;

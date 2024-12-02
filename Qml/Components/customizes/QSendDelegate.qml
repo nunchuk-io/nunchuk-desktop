@@ -33,6 +33,7 @@ import "../customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
+    id: sendDelegateRoot
     width: parent.width
     height: 192
     color: "#F5F5F5"
@@ -44,11 +45,14 @@ Rectangle {
                                    "toAddressDisplay": "",
                                    "toAmount": ""
                                })
-    property int itemCount: 0
+
+    property int   itemCount: 0
     property alias recipientLabel: addressInput.label
     property alias toAmount: amountInput.textInputted
     property alias toAddress: addressInput.textInputted
     property alias enableInput: addressInput.enabled
+    property bool  enableInputAmount: true
+    property bool  onCurrency: false
 
     signal qrCodeRequest()
     signal removeItemRequest()
@@ -163,6 +167,7 @@ Rectangle {
         Item {
             width: parent.width
             height: childrenRect.height
+            enabled: enableInputAmount
             QTextInputBoxTypeB {
                 id: amountInput
                 label: STR.STR_QML_214
@@ -181,7 +186,7 @@ Rectangle {
                     height: 24
                     anchors.verticalCenter: parent.verticalCenter
                     text: {
-                        if(moneyMouse.onCurrency) {
+                        if(sendDelegateRoot.onCurrency) {
                             return qsTr("%1").arg(AppSetting.currency)
                         }
                         else{
@@ -203,12 +208,11 @@ Rectangle {
                     scale: moneyMouse.pressed ? 0.95 : 1
                     MouseArea {
                         id: moneyMouse
-                        property bool onCurrency: false
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         anchors.fill: parent
                         onClicked: {
-                            onCurrency = !onCurrency
+                            sendDelegateRoot.onCurrency = !sendDelegateRoot.onCurrency
                         }
                     }
                 }

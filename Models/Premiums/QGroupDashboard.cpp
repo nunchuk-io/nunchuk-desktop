@@ -1203,8 +1203,35 @@ bool QGroupDashboard::isInheritance()
     if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING) {
         QJsonObject payload = alertJson()["payload"].toObject();
         return payload["is_inheritance"].toBool();
+    } else if (type == AlertEnum::E_Alert_t::WALLET_PENDING) {
+        auto request = QGroupWallets::instance()->request();
+        return request.mTags.contains("INHERITANCE");
+    } else {
+        auto request = DraftWallet()->request();
+        return request.mTags.contains("INHERITANCE");
     }
-    return false;
+}
+
+QString QGroupDashboard::generateName(const QStringList &tags, bool isReplace)
+{
+    // for (QJsonValue js : m_signerInfo) {
+    //     QJsonObject signer = js.toObject();
+    //     if (tag == "COLDCARD" && signer["type"].toString() == "COLDCARD") {
+    //         QString name = signer["name"].toString();
+    //         if (isReplace) {
+    //             return name + " (Replaced)";
+    //         }
+    //         return name;
+    //     }
+    //     else if (tag == "BITBOX" && signer["type"].toString() == "BITBOX") {
+    //         QString name = signer["name"].toString();
+    //         if (isReplace) {
+    //             return name + " (Replaced)";
+    //         }
+    //         return name;
+    //     }
+    // }
+    return "";
 }
 
 QVariantList QGroupDashboard::keys() const

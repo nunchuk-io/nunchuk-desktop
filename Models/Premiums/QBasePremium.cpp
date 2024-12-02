@@ -12,6 +12,7 @@
 #include "Premiums/QRecurringPayment.h"
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QUserWallets.h"
+#include "Premiums/QGroupWallets.h"
 
 QBasePremium::QBasePremium(WalletId wallet_id)
     :m_wallet_id(wallet_id)
@@ -74,6 +75,24 @@ QWalletServicesTagPtr QBasePremium::servicesTagPtr() const
         return w->servicesTagPtr();
     }
     return {};
+}
+
+QWalletServicesTagPtr QBasePremium::accountServicesTagPtr() const
+{
+    if (ClientController::instance()->isMultiSubscriptions()) {
+        return QGroupWallets::instance()->servicesTagPtr();
+    } else {
+        return ClientController::instance()->isUserWallet() ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
+    }
+}
+
+QAssistedDraftWallets* QBasePremium::DraftWallet() const
+{
+    if (ClientController::instance()->isMultiSubscriptions()) {
+        return dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance());
+    } else {
+        return ClientController::instance()->isUserWallet() ? dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance());
+    }
 }
 
 QStringList QBasePremium::slugs() const

@@ -194,7 +194,9 @@ public:
     bool FinishKeyReplacement(const QJsonObject &requestBody);
 
     bool canReplaceKey();
-    bool isInheritance();
+    Q_INVOKABLE bool isInheritance();
+
+    QString generateName(const QStringList &tags, bool isReplace = false);
 
     bool canEntryClickAlert();
 

@@ -49,7 +49,6 @@ Item {
         Item {
             width: _item.width
             height: 24
-            visible: keyHealth ? true : false
             QBadge {
                 text: GlobalData.getHealthStatusLabel(keyHealth.lastState)
                 color: GlobalData.getHealthStatusColor(keyHealth.lastState)

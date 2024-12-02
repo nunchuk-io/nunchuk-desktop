@@ -214,11 +214,14 @@ Item {
                             width: 387
                             height: 104
                             icon: "qrc:/Images/Images/change-password-dark.svg"
-                            edit.visible: false
+                            edit.text: STR.STR_QML_339
                             label.text: STR.STR_QML_727
                             input.text: STR.STR_QML_917
                             input.verticalAlignment: Text.AlignTop
                             input.height: 68
+                            onTextEditClicked: {
+                                _BackupPassword.open()
+                            }
                         }
                     }
                 }

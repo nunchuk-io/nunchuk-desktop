@@ -476,6 +476,7 @@
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QSelectPassPhraseQuestion.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QImportantNoticeAboutPassphrase.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QPassphraseBackupReminder.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QPopupTheBackupPassword.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>

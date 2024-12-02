@@ -2187,3 +2187,9 @@ QMasterSignerPtr bridge::ImportBackupKey(const std::vector<unsigned char> &data,
     }
     return NULL;
 }
+
+std::vector<nunchuk::SingleSigner> bridge::GetSignersFromMasterSigner(const QString &mastersigner_id)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetSignersFromMasterSigner(mastersigner_id.toStdString(), msg);
+}

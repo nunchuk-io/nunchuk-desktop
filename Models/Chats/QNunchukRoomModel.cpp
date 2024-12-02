@@ -692,6 +692,8 @@ bool QNunchukRoom::extractNunchukEvent(const QString &matrixType, const QString 
         }
     }
     else if(qUtils::strCompare(matrixType, NUNCHUK_EVENT_TRANSACTION)){
+        DBG_INFO << "FIXME TRANSACTON" << msgtype << json;
+
         QJsonObject body = json["body"].toObject();
         cons.matrixType = NUNCHUK_EVENT_TRANSACTION;
         if(qUtils::strCompare(msgtype, NUNCHUK_MSG_TX_INIT)){
@@ -871,6 +873,8 @@ void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &r
                     emit signalFinishedDownloadTransaction(room_tx, tx, cons);
                 }
                 else{
+
+                    DBG_INFO << "FIXME TRANSACTON: init_event:>" << cons.init_event_id;
                     QWarningMessage roomTxWarning;
                     nunchuk::RoomTransaction room_tx = matrixbrigde::GetOriginRoomTransaction(roomid,
                                                                                               cons.init_event_id,
@@ -884,6 +888,8 @@ void QNunchukRoom::downloadTransactionThread(Conversation cons, const QString &r
                     }
 #endif
                     if((int)EWARNING::WarningType::NONE_MSG == roomTxWarning.type() && room_tx.get_wallet_id() != ""){
+
+                        DBG_INFO << "FIXME TRANSACTON: get_wallet_id:>" << room_tx.get_wallet_id() << "get_tx_id:" << room_tx.get_tx_id();
                         QWarningMessage txWarning;
                         room_tx.set_room_id(id().toStdString());
                         nunchuk::Transaction tx = bridge::nunchukGetOriginTransaction(QString::fromStdString(room_tx.get_wallet_id()),

@@ -372,6 +372,11 @@ public slots:
     QString getFilePath(const QString in);
     bool    enableDatabaseEncryption(const QString in);
     void    recieveToast(int code, const QString &what, EWARNING::WarningType type);
+
+    qint64 qAmountFromBTC(const QString &btcValue);
+    QString qBTCFromAmount(const qint64 &amount);
+    QString qCurrencyFromAmount(qint64 amountSats);
+    qint64 qAmountFromCurrency(const QString &currency);
 };
 
 #endif // APPMODEL_H

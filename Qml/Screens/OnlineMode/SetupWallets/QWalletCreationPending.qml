@@ -280,7 +280,7 @@ Item {
                                 enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
                                 selected: GroupWallet.qAddHardware === modelData.add_type
                                 onButtonClicked: {
-                                    GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index)
+                                    GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index, _hardwareAddKey.isInheritance)
                                     hardware = modelData.tag
                                 }
                             }

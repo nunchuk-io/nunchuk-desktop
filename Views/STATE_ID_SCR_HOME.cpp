@@ -129,7 +129,6 @@ void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
     if(it) {
         AppModel::instance()->setSingleSignerInfo(it);
         AppModel::instance()->setWalletsUsingSigner(AppModel::instance()->walletList()->walletListByFingerPrint(it.data()->masterFingerPrint()));
-
     }
     if (auto signer = AppModel::instance()->singleSignerInfoPtr()) {
         signer->GetHistorySignerList();

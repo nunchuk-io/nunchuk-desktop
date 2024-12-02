@@ -83,6 +83,8 @@ public:
     };
     ImportColdcard_t ImportColdcardViaFile(const QString &fileName, int new_index = -1);
     virtual bool requestKeyReplacement(QSingleSignerPtr signer);
+    StructAddHardware request() const;
+
 private:
     bool RequestAddOrUpdateAKeyToDraftWallet(StructAddHardware hardware);
     bool RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHardware hardware, nunchuk::SingleSigner keyresued);
@@ -101,7 +103,7 @@ signals:
 
 public slots:
     void cancelRequestKey(const QString& request_id, const QString& group_id = "");
-    void addHardwareFromConfig(int hardwareType, const QString& group_id, int key_index = -1);
+    void addHardwareFromConfig(int hardwareType, const QString& group_id, int key_index = -1, bool is_inheritance = false);
     void addHardwareFromBanner(const QString& request_id);
     int  reuseKeyGetCurrentIndex(const QString &xfp);
     void reuseKeyFromMasterSigner(const QString &xfp, const int index);

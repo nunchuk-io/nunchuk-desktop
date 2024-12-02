@@ -26,6 +26,8 @@ public:
     virtual QGroupWalletDummyTxPtr groupDummyTxPtr() const;
     virtual QRecurringPaymentPtr recurringPaymentPtr() const;
     virtual QWalletServicesTagPtr servicesTagPtr() const;
+    virtual QWalletServicesTagPtr accountServicesTagPtr() const;
+    virtual QAssistedDraftWallets* DraftWallet() const;
     QStringList slugs() const final;
     bool isDraftWallet() const final;
 private:

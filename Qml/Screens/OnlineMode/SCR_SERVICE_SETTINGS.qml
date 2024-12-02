@@ -106,4 +106,8 @@ QScreen {
     QPopupAnswerSecurityQuestion {
         id: _Security
     }
+
+    QPopupTheBackupPassword {
+        id: _BackupPassword
+    }
 }

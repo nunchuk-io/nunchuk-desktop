@@ -37,7 +37,13 @@ import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
+    id: sendRoot
+    property var    walletInfo: AppModel.walletInfo
+    property bool   sendCoinSelected: false
+    property var    totalAmount: sendRoot.sendCoinSelected ? walletInfo.utxoList.amountDisplay : walletInfo.walletBalance
+    property var    totalAmountSats: sendRoot.sendCoinSelected ? walletInfo.utxoList.amountSats : walletInfo.walletBalanceSats
 
+    Component.onCompleted: requestFilterOutWallet()
     QOnScreenContent {
         id: contenCenter
         width: popupWidth
@@ -51,7 +57,7 @@ QScreen {
                 height: visible ? 24 : 0
                 color: "#031F2B"
                 radius: 4
-                visible: AppModel.walletInfo.walletEscrow
+                visible: walletInfo.walletEscrow
                 anchors.verticalCenter: parent.verticalCenter
                 Row {
                     anchors.centerIn: parent
@@ -75,7 +81,7 @@ QScreen {
             }
 
             QText {
-                text: "(" + AppModel.walletInfo.walletName + ")"
+                text: "(" + walletInfo.walletName + ")"
                 color: "#031F2B"
                 font.weight: Font.DemiBold
                 font.family: "Montserrat"
@@ -112,7 +118,7 @@ QScreen {
                         spacing: 6
                         QText {
                             height: parent.height
-                            text: STR.STR_QML_259
+                            text: sendRoot.sendCoinSelected ? STR.STR_QML_1488 : STR.STR_QML_259
                             color: "#031F2B"
                             font.family: "Lato"
                             font.weight: Font.DemiBold
@@ -121,7 +127,7 @@ QScreen {
                         }
                         QText {
                             height: parent.height
-                            text: AppModel.walletInfo.walletBalance
+                            text: sendRoot.totalAmount
                             color: "#031F2B"
                             font.family: "Lato"
                             font.pixelSize: 16
@@ -129,7 +135,7 @@ QScreen {
                         }
                         QText {
                             height: parent.height
-                            text: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? "sat" : "BTC"
+                            text: RoomWalletData.unitValue
                             color: "#031F2B"
                             font.family: "Lato"
                             font.pixelSize: 16
@@ -137,7 +143,7 @@ QScreen {
                         }
                         QText {
                             height: parent.height
-                            text: qsTr("(%1%2)").arg(AppSetting.currencySymbol).arg(AppModel.walletInfo.walletBalanceCurrency)
+                            text: qsTr("(%1%2)").arg(AppSetting.currencySymbol).arg(sendRoot.sendCoinSelected ? walletInfo.utxoList.amountCurrency : walletInfo.walletBalanceCurrency)
                             color: "#595959"
                             font.family: "Lato"
                             font.pixelSize: 12
@@ -152,7 +158,7 @@ QScreen {
                     QText {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
-                        text: STR.STR_QML_262
+                        text: sendRoot.sendCoinSelected ? STR.STR_QML_1487 : STR.STR_QML_262
                         color: "#031F2B"
                         font.pixelSize: 16
                         font.weight: Font.DemiBold
@@ -164,7 +170,7 @@ QScreen {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                destination.itemAt(0).toAmount = AppModel.walletInfo.walletBalance
+                                destination.itemAt(0).toAmount = sendRoot.totalAmount
                             }
                         }
                     }
@@ -211,17 +217,23 @@ QScreen {
                                     requestRemoveDestination(index)
                                 }
                                 onFavoriteRequest: {
-                                    favoritesPopup.open()
-                                    favoritesPopup.addressRequestIndex = index
                                     requestFilterOutAddress()
                                     requestFilterOutWallet()
+                                    favoritesPopup.addressRequestIndex = index
+                                    favoritesPopup.open()
                                 }
                                 onSendAllRemainingRequest: {
-                                    var remaining = AppModel.walletInfo.walletBalance
-                                    for(var i = 0; i < destination.model; i++){
-                                        if(i !== index){
-                                            remaining -= destination.itemAt(i).toAmount
+                                    var remaining = sendRoot.totalAmountSats
+                                    if(remaining > 0){
+                                        var places = remaining
+                                        for(var i = 0; i < destination.model; i++){
+                                            if(i !== index){
+                                                var itemAt = destination.itemAt(i)
+                                                var satSend = destinationRow.convertToSatoshi(itemAt.onCurrency, itemAt.toAmount)
+                                                remaining -= satSend
+                                            }
                                         }
+                                        remaining = destinationRow.convertFromSatoshi(destination.itemAt(index).onCurrency, remaining)
                                     }
                                     destination.itemAt(index).toAmount = remaining
                                 }
@@ -231,6 +243,26 @@ QScreen {
                                         destinationRow.setFavorite(destinations[index])
                                     }
                                     destination.fullfill = destination.fullfill & destinationRow.toAddress !== "" & destinationRow.toAmount !== ""
+                                }
+                                function convertToSatoshi(isCurrency, amount) {
+                                    if(isCurrency) {
+                                        return AppModel.qAmountFromCurrency(amount)
+                                    }
+                                    else if (AppSetting.unit === NUNCHUCKTYPE.BTC){
+                                        return AppModel.qAmountFromBTC(amount)
+                                    } else {
+                                        return amount
+                                    }
+                                }
+                                function convertFromSatoshi(isCurrency, amount) {
+                                    if(isCurrency) {
+                                        return AppModel.qCurrencyFromAmount(amount)
+                                    }
+                                    else if (AppSetting.unit === NUNCHUCKTYPE.BTC){
+                                        return AppModel.qBTCFromAmount(amount)
+                                    } else {
+                                        return amount
+                                    }
                                 }
                             }
                         }
@@ -324,7 +356,7 @@ QScreen {
                     displayIcon: false
                     anchors.verticalCenter: parent.verticalCenter
                     onButtonClicked: {
-                        if(AppModel.walletInfo.isSharedWallet){
+                        if(walletInfo.isSharedWallet){
                             QMLHandle.sendEvent(EVT.EVT_SEND_BACK_HOME_SHARED_WL)
                         }
                         else{
@@ -347,18 +379,22 @@ QScreen {
                             var toType = destination.itemAt(i).inputObject.toType
                             var toAddress = ""
                             var toAmount = ""
+                            var onCurrency = false
                             if(toType === "Input" || toType === ""){
                                 toAddress = destination.itemAt(i).toAddress
                                 toAmount = destination.itemAt(i).toAmount
+                                onCurrency = destination.itemAt(i).onCurrency
                             }
                             else {
                                 toAddress = destination.itemAt(i).inputObject.toAddress
                                 toAmount = destination.itemAt(i).toAmount
+                                onCurrency = destination.itemAt(i).onCurrency
                             }
                             if(toAmount !== "" && toAddress !== ""){
                                 var savedObj = {
                                     "toAddress": toAddress,
-                                    "toAmount" : toAmount
+                                    "toAmount" : toAmount,
+                                    "onCurrency" : onCurrency
                                 };
                                 saved[i] = savedObj
                             }
@@ -474,7 +510,6 @@ QScreen {
         modal: true
         focus: true
         background: Item{}
-
         property int addressRequestIndex: -1
         Rectangle {
             id: mask
@@ -526,7 +561,6 @@ QScreen {
             color: "#80000000"
             source: mask
         }
-
         Column {
             anchors.fill: mask
             anchors {
@@ -683,7 +717,7 @@ QScreen {
                             hasOwner: modelData.wallet_hasOwner
                             primaryOwner: modelData.wallet_primaryOwner
                             isHotWallet: modelData.wallet_isHotWallet
-                            visible: modelData.wallet_id !== AppModel.walletInfo.walletId
+                            visible: modelData.wallet_id !== walletInfo.walletId
                             enabled: visible
                             layer.enabled: true
                             layer.effect: OpacityMask {
@@ -736,7 +770,7 @@ QScreen {
         }
     }
     property var filterOutAddress: AppSetting.favoriteAddresses
-    property var filterOutWallet: AppModel.walletList
+    property var filterOutWallet: []//AppModel.walletList
     Popup {
         id: savedAddress
         width: parent.width
@@ -1136,11 +1170,21 @@ QScreen {
                                "toType": "Input",
                                "toAddress": address,
                                "toAddressDisplay": address,
-                               "toAmount": AppModel.walletInfo.walletBalance
+                               "toAmount": walletInfo.walletBalance
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
+        sendRoot.sendCoinSelected = false
     }
-
+    function requestSelectedCoin(address) {
+        var inputObject = ({
+                               "toType": "Input",
+                               "toAddress": address,
+                               "toAddressDisplay": address,
+                               "toAmount": walletInfo.utxoList.amountDisplay
+                          })
+        destination.itemAt(0).setFavoriteInput(inputObject)
+        sendRoot.sendCoinSelected = true
+    }
     function containAddress(address) {
         for(var i = 0; i < destination.count; i++){
             var current = destination.itemAt(i).inputObject.toAddress
@@ -1168,7 +1212,7 @@ QScreen {
         filterOutWallet = []
         for(var i = 0; i < AppModel.walletList.count; i++) {
             var wallet = AppModel.walletList.get(i)
-            if (wallet.wallet_id !== AppModel.walletInfo.walletId) {
+            if (wallet.wallet_id !== walletInfo.walletId) {
                 var wallet_Address = wallet.wallet_Address
                 if (!containAddress(wallet_Address)) {
                     filterOutWallet.push(wallet)
@@ -1179,9 +1223,12 @@ QScreen {
     }
 
     Connections {
-        target: AppModel.walletInfo
+        target: walletInfo
         onRollOverProcess: {
             requestRollOverProcess(address)
+        }
+        onRequestCreateTransaction: {
+            requestSelectedCoin(address)
         }
     }
 }

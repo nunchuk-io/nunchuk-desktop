@@ -44,6 +44,7 @@ class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser
     Q_PROPERTY(QString      walletBalance                           READ balanceDisplay                                 NOTIFY balanceChanged)
     Q_PROPERTY(QString      walletBalanceBTC                        READ balanceBTC                                     NOTIFY balanceChanged)
     Q_PROPERTY(QString      walletBalanceCurrency                   READ balanceCurrency                                NOTIFY balanceChanged)
+    Q_PROPERTY(qint64      walletBalanceSats                        READ balanceSats                                    NOTIFY balanceChanged)
     Q_PROPERTY(QString      walletCreateDate                        READ createDate                                     NOTIFY createDateChanged)
     Q_PROPERTY(bool         walletEscrow                            READ escrow                 WRITE setEscrow         NOTIFY escrowChanged)
     Q_PROPERTY(SingleSignerListModel* walletSingleSignerAssigned    READ singleSignersAssigned                          NOTIFY singleSignersAssignedChanged)
@@ -428,7 +429,7 @@ public:
     bool isContainsPremier();
     void checkContainsGroup();
 public slots:
-    QVariant removeOrNot(const QString& masterFingerPrint, const QString& derivation_path = "");
+    QVariant removeOrNot(const QString& masterFingerPrint);
     bool hasAssistedWallet() const;
 private:
     QList<QWalletPtr> d_;

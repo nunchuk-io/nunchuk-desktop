@@ -321,9 +321,14 @@ bool QKeyRecovery::AutomaticGenerateSecurityQuestions()
     {
         const int required_max = qMin(3, m_allQuestion.size());
         QJsonArray require_questions;
-        for (int i = 0; i < required_max; i++) {
+        int index = 0;
+        for (int i = 0; i < m_allQuestion.size(); i++) {
             QJsonObject json = m_allQuestion.at(i).toObject();
-            require_questions.append(json);
+            bool is_answered = json["is_answered"].toBool();
+            if (is_answered && index < required_max) {
+                require_questions.append(json);
+                index++;
+            }
         }
         setRequireQuestions(require_questions);
         UpdateRequiredQuestion();

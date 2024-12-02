@@ -222,6 +222,7 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
         if (dashboard->canReplaceKey()) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_DASHBOARD_ALERT_INFO;
+            data["wallet_id"] = dashboard->wallet_id();
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     }

@@ -45,6 +45,11 @@ QScreenAdd {
     readonly property int eREUSE_VIA_FILE: 5
     readonly property int eREUSE_REVIEW_KEY_ADDED: 6
     property int eADD_STEP: eREUSE_LIST_KEYS
+    readonly property int _ASK_PASSPHRASE: 1
+    readonly property int _IMPORTANT_NOTICE: 2
+    readonly property int _BACKUP_PASSPHRASE: 3
+    readonly property int _PASSPHRASE_DONE: 4
+    property int _passPhrase: _ASK_PASSPHRASE
 
     Component.onCompleted: {
         inputtingIndex.device_name = ""
@@ -52,6 +57,73 @@ QScreenAdd {
         inputtingIndex.device_tag = ""
         inputtingIndex.device_xfp = ""
         inputtingIndex.device_bip32_path = ""
+    }
+
+    Loader {
+        width: popupWidth
+        height: popupHeight
+        visible: {
+            var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
+            if (is_inheritance) {
+                return eADD_STEP === eREUSE_INPUT_INDEX && _passPhrase != _PASSPHRASE_DONE
+            } else {
+                return false
+            }
+        }
+        anchors.centerIn: parent
+        sourceComponent: switch(_passPhrase) {
+                         case _ASK_PASSPHRASE: return _passPhraseSelect
+                         case _IMPORTANT_NOTICE: return _importantNotice
+                         case _BACKUP_PASSPHRASE: return _passPhraseBackup
+                         default: return null
+                         }
+    }
+
+    Component {
+        id: _passPhraseSelect
+        QSelectPassPhraseQuestion {
+            onRequestBack: {
+                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            }
+            onRequestNext: {
+                if (option === "not-have-a-passphrase") {
+                    _passPhrase = _PASSPHRASE_DONE
+                } else {
+                    _passPhrase = _IMPORTANT_NOTICE
+                }
+            }
+        }
+    }
+    Component {
+        id: _importantNotice
+        QImportantNoticeAboutPassphrase {
+            onRequestBack: {
+                _passPhrase = _ASK_PASSPHRASE
+            }
+            onRequestNext: {
+                _passPhrase = _BACKUP_PASSPHRASE
+            }
+            onRequestWithout: {
+                var alert = GroupWallet.dashboardInfo.alert
+                var can_replace = alert.payload.can_replace
+                if (can_replace) {
+                    GroupWallet.dashboardInfo.requestShowReplacementKey();
+                } else {
+                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                }
+            }
+        }
+    }
+    Component {
+        id: _passPhraseBackup
+        QPassphraseBackupReminder {
+            onRequestBack: {
+                _passPhrase = _IMPORTANT_NOTICE
+            }
+            onRequestNext: {
+                _passPhrase = _PASSPHRASE_DONE
+            }
+        }
     }
 
     QOnScreenContentTypeB {
@@ -109,7 +181,14 @@ QScreenAdd {
         property string device_bip32_path : ""
         property int    current_index: -1
         property int    new_index: -1
-        visible: eADD_STEP == eREUSE_INPUT_INDEX
+        visible: {
+            var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
+            if (is_inheritance) {
+                return eADD_STEP == eREUSE_INPUT_INDEX && _passPhrase == _PASSPHRASE_DONE
+            } else {
+                return eADD_STEP == eREUSE_INPUT_INDEX
+            }
+        }
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent

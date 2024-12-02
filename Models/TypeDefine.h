@@ -31,3 +31,4 @@ class QMasterSigner;
 typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;
 class QSingleSigner;
 typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;
+class QAssistedDraftWallets;

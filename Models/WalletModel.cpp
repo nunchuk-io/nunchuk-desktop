@@ -2206,17 +2206,36 @@ void WalletListModel::checkContainsGroup()
     emit containsGroupChanged();
 }
 
-QVariant WalletListModel::removeOrNot(const QString &masterFingerPrint, const QString& derivation_path)
+QVariant WalletListModel::removeOrNot(const QString &masterFingerPrint)
 {
+    auto checkIsAssisted = [this](const QString &masterFingerPrint, const QString& derivation_path) -> bool{
+        foreach (QWalletPtr i , d_ ){
+            if(NULL != i.data()->singleSignersAssigned()){
+                bool exist = i.data()->singleSignersAssigned()->containsSigner(masterFingerPrint, derivation_path);
+                if (exist && i->isAssistedWallet()) return true;
+            }
+        }
+        return false;
+    };
     bool used_in_assisted_wallet {false};
     bool used_in_free_wallet {false};
-    foreach (QWalletPtr i , d_ ){
-        if(NULL != i.data()->singleSignersAssigned()){
-            bool exist = i.data()->singleSignersAssigned()->containsSigner(masterFingerPrint, derivation_path);
-            if (exist && i->isAssistedWallet()) used_in_assisted_wallet = true;
-            else if (exist && !i->isAssistedWallet()) used_in_free_wallet = true;
+    QMasterSignerPtr master = bridge::nunchukGetMasterSignerFingerprint(masterFingerPrint);
+    if (!master.isNull()) {
+        std::vector<nunchuk::SingleSigner> signers = bridge::GetSignersFromMasterSigner(masterFingerPrint);
+        for(auto signer: signers) {
+            if (checkIsAssisted(masterFingerPrint, QString::fromStdString(signer.get_derivation_path()))) {
+                used_in_assisted_wallet = true;
+            }
+        }
+        used_in_free_wallet = !used_in_assisted_wallet;
+    } else {
+        QSingleSignerPtr single = bridge::nunchukGetRemoteSigner(masterFingerPrint);
+        if (!single.isNull()) {
+            used_in_assisted_wallet = checkIsAssisted(single->fingerPrint(), single->derivationPath());
+            used_in_free_wallet = !used_in_assisted_wallet;
         }
     }
+
     QJsonObject ret {
        {"used_in_assisted_wallet", used_in_assisted_wallet},
        {"used_in_free_wallet", used_in_free_wallet}

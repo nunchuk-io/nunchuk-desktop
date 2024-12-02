@@ -20,6 +20,7 @@
 #include "QLogginManager.h"
 #include <QQmlEngine>
 #include <QHostInfo>
+#include "qt_connection_util.h"
 #include "room.h"
 #include <connection.h>
 #include <ssosession.h>
@@ -95,11 +96,23 @@ void QLogginManager::requestLogin()
         connection()->setCacheState(false); // FIXME
         connectSingleShot(connection(), &Connection::connected, this, [this]{
             connection()->loadState();
+            connection()->sync();
             if (!CLIENT_INSTANCE->saveDataToKeyChain(userid(), connection()->accessToken())){
                 DBG_INFO << "Couldn't save access token";
             }
+            connect(connection()->user(), &User::defaultAvatarChanged, CLIENT_INSTANCE, &ClientController::onUserAvatarChanged );
+            connect(connection()->user(), &User::defaultNameChanged, CLIENT_INSTANCE, &ClientController::onUserDisplaynameChanged );
+            connectSingleShot(connection(), &Connection::syncDone, this, [this] {
+                if(CLIENT_INSTANCE->rooms()){
+                    CLIENT_INSTANCE->rooms()->downloadRooms();
+                }
+                connection()->syncLoop();
+            });
+            CLIENT_INSTANCE->refreshContacts();
+            CLIENT_INSTANCE->refreshDevices();
+            AppSetting::instance()->setIsStarted(true,true);
+            emit CLIENT_INSTANCE->userChanged();
         });
-
         QByteArray actk = CLIENT_INSTANCE->readDataFromKeyChain(userid());
         if(actk.isNull() || actk.isEmpty()){
             loginWithPassword();
