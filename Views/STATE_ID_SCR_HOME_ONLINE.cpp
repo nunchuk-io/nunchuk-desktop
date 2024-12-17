@@ -130,10 +130,7 @@ void EVT_HOME_SHARED_WL_SEND_REQUEST_HANDLER(QVariant msg) {
     }
 
     if(AppModel::instance()->walletInfo()){
-        QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(AppModel::instance()->walletInfo()->id());
-        if(utxos){
-            AppModel::instance()->setUtxoList(utxos);
-        }
+        AppModel::instance()->walletInfo()->RequestGetCoins();
     }
 }
 

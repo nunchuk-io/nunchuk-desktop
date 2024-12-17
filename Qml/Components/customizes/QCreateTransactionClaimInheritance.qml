@@ -448,7 +448,7 @@ Item {
                         height: 36
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
-                        enabled: !AppModel.walletInfo.walletEscrow
+                        enabled: false
                     }
                 }
                 Rectangle {
@@ -539,7 +539,7 @@ Item {
                                 height: 132
                                 spacing: 12
                                 clip: true
-                                model: AppModel.utxoList
+                                model: AppModel.walletInfo.utxoList
                                 ScrollBar.vertical: ScrollBar { active: utxos.enabled }
                                 delegate: Row {
                                     spacing: 0
@@ -654,8 +654,8 @@ Item {
                         width: parent.width
                         height: 28
                         z: manualfee.z + 1
-                        property bool selected: (AppModel.walletInfo.walletEscrow) ?
-                                                    true : transactionInfo.subtractFromFeeAmount
+                        property bool selected: transactionInfo.subtractFromFeeAmount
+                        enabled: false
                         QLato {
                             z:1
                             anchors.left: parent.left
@@ -740,11 +740,11 @@ Item {
                             border.color: "#C9DEF1"
                             mode: eEDIT_MODE
                             placeholder.text: "FEE RATE"
-                            errorText.text: STR.STR_QML_230.arg(STR.STR_QML_231.arg(transactionInfo.feeRate))
+                            errorText.text: STR.STR_QML_230.arg(STR.STR_QML_231.arg(AppModel.fastestFee))
                             validInput: {
                                 if(feeinput.textOutput === "") {return true}
                                 else{
-                                    return (parseFloat(feeinput.textOutput) >= parseFloat(transactionInfo.feeRate))
+                                    return (parseFloat(feeinput.textOutput) >= parseFloat(AppModel.fastestFee))
                                 }
                             }
                             onTypingFinished: {

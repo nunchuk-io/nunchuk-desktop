@@ -3962,6 +3962,7 @@ bool Draco::GetKeyReplacementStatus(const QString &wallet_id, QJsonObject &outpu
             return true;
         }
         response_msg = reply_msg;
+        errormsg = reply_msg;
     }
     return false;
 }
@@ -4007,12 +4008,10 @@ bool Draco::GetSavedAddress(QJsonObject &output, QString &errormsg)
         QString response_msg = errorObj["message"].toString();
         if(response_code == DRACO_CODE::RESPONSE_OK){
             output = jsonObj["data"].toObject();
-            DBG_INFO << output;
             return true;
         }
         else {
             errormsg = response_msg;
-            DBG_INFO << errormsg;
             return false;
         }
     }
@@ -4124,6 +4123,63 @@ bool Draco::SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QS
         else{
             errormsg = response_msg;
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::GetCoinControl(const QString &wallet_id, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_COINCONTROL_GET];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    QJsonObject data;
+    QJsonObject jsonObj = getSync(cmd, {}, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            DBG_INFO << output;
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << errormsg;
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::UpdateCoinControl(const QString &wallet_id, const QString &data, QJsonObject &output, QString &errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_COINCONTROL_UPDATE];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    // Post with data
+    QJsonObject body;
+    body["data"] = data;
+    QJsonObject jsonObj = postSync(cmd, body, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            DBG_INFO << output;
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << errormsg;
             return false;
         }
     }
@@ -4448,6 +4504,116 @@ bool Draco::DraftWalletResetCurrent(QJsonObject &output, QString &errormsg)
     QString reply_msg  = "";
     QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_RESET_CURRENT];
     QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::ReplacementDownloadBackupFile(const QString& wallet_id, const QString& xfp, const QString& passwordToken, QJsonObject& output, QString& errormsg)
+{
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_DOWNLOAD_BACKUP_KEY_REPLACEMENT];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = postSync(cmd,{}, params, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::ReplacementUploadBackupFile(const QString& wallet_id, const QString& passwordToken, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg)
+{
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT];
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject jsonObj = postMultiPartSync(cmd,{}, params, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::DraftWalletDownloadBackupFile(const QString& xfp, QJsonObject& output, QString& errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_DOWNLOAD_BACKUP];
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = postSync(cmd, {}, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Draco::DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_UPLOAD_BACKUP];
+
+    QJsonObject jsonObj = postMultiPartSync(cmd, requestBody, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();

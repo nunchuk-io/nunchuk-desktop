@@ -133,4 +133,5 @@ const static QString STR_CPP_127 = QString("Add BitBox to your assisted wallet")
 const static QString STR_CPP_128 = QString("Add BitBox");
 const static QString STR_CPP_129 = QString("Lost connection to device");
 const static QString STR_CPP_130 = QString("Wallet invitation has been denied");
+const static QString STR_CPP_131 = QString("Address marked as used.");
 #endif // STR_CPP_H

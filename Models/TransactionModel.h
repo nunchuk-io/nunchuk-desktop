@@ -27,6 +27,7 @@
 #include "QOutlog.h"
 #include <nunchuk.h>
 #include <QTimer>
+#include "UTXOModel.h"
 
 class Wallet;
 
@@ -125,7 +126,10 @@ class Transaction : public QObject {
     Q_PROPERTY(bool                         enableScheduleBroadcast READ enableScheduleBroadcast CONSTANT)
     Q_PROPERTY(bool                         enableCancelTransaction READ enableCancelTransaction CONSTANT)
     Q_PROPERTY(bool                         hasMoreBtn              READ hasMoreBtn             NOTIFY hasMoreBtnChanged)
-
+    Q_PROPERTY(QCoinTagsModel*              changeCoinsTag          READ changeCoinsTag          CONSTANT)
+    Q_PROPERTY(QUTXOListModel*              manualCoins             READ manualCoins             NOTIFY manualCoinsChanged)
+    Q_PROPERTY(QUTXOListModel*              inputCoins              READ inputCoins              CONSTANT)
+    Q_PROPERTY(QCoinTagsModel*              parentCoinsTag          READ parentCoinsTag          NOTIFY parentCoinsTagChanged)
 public:
     Transaction();
     ~Transaction();
@@ -221,12 +225,25 @@ public:
     bool enableScheduleBroadcast();
     bool enableCancelTransaction();
 
+    nunchuk::TxInput changeInfo();
+
+    QCoinTagsModel* changeCoinsTag();
+    QCoinTagsModel* parentCoinsTag();
+
+    QUTXOListModel* inputCoins();
+    QUTXOListModel* manualCoins();
+    void createFilteringCoinInCoinSelection();
+
+    QUTXOListModelPtr GetUtxoListSelected();
+
 public slots:
     bool parseQRTransaction(const QStringList& qrtags);
     void copyTransactionID();
     void requestSignatures(const QString& membership_id);
     void scheduleBroadcast();
     void cancelTransaction();
+    bool hasDraftCoinChange();
+    void createParentCoinTag();
 protected:
     bool ImportQRTransaction(const QStringList& qrtags);
 
@@ -234,6 +251,10 @@ private:
     QDestinationListModelPtr    m_destinations;
     QSingleSignerListModelPtr   m_signers;
     QDestinationPtr             m_change;
+    QUTXOListModelPtr           m_inputCoins;
+    QUTXOListModelPtr           m_manualCoins;
+    QCoinTagsModelPtr           m_changeCoinsTag;
+    QCoinTagsModelPtr           m_parentCoinsTag;
 
     nunchuk::Transaction        m_transaction;
     QString                     m_walletId;
@@ -276,6 +297,8 @@ signals:
     void packageFeeRateChanged();
     void scan_percentChanged();
     void hasMoreBtnChanged();
+    void manualCoinsChanged();
+    void parentCoinsTagChanged();
 };
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 

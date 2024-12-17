@@ -23,12 +23,14 @@ import DataPool 1.0
 import "../origins"
 import "../customizes/Texts"
 import "../customizes/Buttons"
+import "../customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
+    id: rootDelegate
     property bool transactionisReceiveTx: true
     property string transactiondestinationList: ""
-    property var transactiontxid: ""
+    property string transactiontxid: ""
     property int transactionstatus: 0
     property string transactionMemo: ""
     property string transactionAmount: "0"
@@ -42,16 +44,26 @@ Rectangle {
     property int memoWidth: 178
     property int amountWidth: 178
     property int addressWidth: 160
-    enabled: !isFacilitatorAdmin
 
+    property var parentList
+
+    enabled: !isFacilitatorAdmin
     color: btnMouse.containsMouse ?"#C9DEF1" : "transparent"
+
+    signal buttonClicked()
+
     Rectangle {
         width: parent.width
         height: 1
         color: "#EAEAEA"
         anchors.bottom: parent.bottom
     }
-
+    MouseArea {
+        id: btnMouse
+        hoverEnabled: true
+        anchors.fill: parent
+        onClicked: buttonClicked()
+    }
     Row {
         height: parent.height
         Item{
@@ -76,6 +88,12 @@ Rectangle {
                     color: "#031F2B"
                     elide: Text.ElideMiddle
                     font.weight: Font.DemiBold
+                }
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    buttonClicked()
                 }
             }
         }
@@ -118,12 +136,17 @@ Rectangle {
                     }
                 }
             }
-
             QImage {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 source: "qrc:/Images/Images/Signed.png"
                 visible: (transactionstatus === NUNCHUCKTYPE.PENDING_SIGNATURES)
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    buttonClicked()
+                }
             }
         }
         Item{
@@ -145,10 +168,44 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 verticalAlignment: Text.AlignVCenter
             }
-        }        
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    buttonClicked()
+                }
+            }
+        }
         Item{
             width: memoWidth
             height: parent.height
+            MouseArea {
+                id: mouseMemoMove
+                anchors.fill: parent
+                hoverEnabled: memo.text !== "" && memo.truncated
+                enabled: memo.text !== "" && memo.truncated
+                onEntered: {
+                    calloutMemo.visible = true
+                    var delegateHeight = rootDelegate.height
+                    var mouseOnList     = mouseMemoMove.mapToItem(parentList, mouseX, mouseY)
+                    var mouseOnDelegate = mouseMemoMove.mapToItem(rootDelegate, mouseX, mouseY)
+                    var mousePositionY = mouseOnList.y
+                    calloutMemo.setCalloutPosition(mouseOnDelegate.x, mouseOnDelegate.y, mousePositionY)
+                }
+                onPositionChanged: {
+                    calloutMemo.visible = true
+                    var delegateHeight = rootDelegate.height
+                    var mouseOnList     = mouseMemoMove.mapToItem(parentList, mouseX, mouseY)
+                    var mouseOnDelegate = mouseMemoMove.mapToItem(rootDelegate, mouseX, mouseY)
+                    var mousePositionY = mouseOnList.y
+                    calloutMemo.setCalloutPosition(mouseOnDelegate.x, mouseOnDelegate.y, mousePositionY)
+                }
+                onExited: {
+                    calloutMemo.visible = false
+                }
+                onClicked : {
+                    buttonClicked()
+                }
+            }
             Column{
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
@@ -162,12 +219,22 @@ Rectangle {
                 QText {
                     id: memo
                     width: memoWidth
+                    height: paintedHeight
                     font.family: "Lato"
                     font.pixelSize: 16
                     color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED)  ? "#9CAEB8" : "#031F2B"
-                    text: transactionMemo
+                    text: memo.convertToClickableLinks(transactionMemo)
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
+                    onLinkActivated: {
+                        Qt.openUrlExternally(link)
+                    }
+                    function convertToClickableLinks(text) {
+                        // Regular expression to match URLs (simplified)
+                        var urlRegex = /(https?:\/\/[^\s]+)/g;
+                        // Replace URLs in the text with clickable <a> tags
+                        return text.replace(urlRegex, "<a href='$1'>$1</a>");
+                    }
                 }
             }
         }
@@ -210,14 +277,18 @@ Rectangle {
                     elide: Text.ElideRight
                 }
             }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    buttonClicked()
+                }
+            }
         }
     }
-
-    signal buttonClicked()
-    MouseArea {
-        id: btnMouse
-        hoverEnabled: true
-        anchors.fill: parent
-        onClicked: buttonClicked()
+    QCalloutShape {
+        id: calloutMemo
+        width: 340
+        visible: false
+        contentText: transactionMemo
     }
 }

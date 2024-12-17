@@ -29,6 +29,7 @@ import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
+import "../../../Screens/OnlineMode/Coins"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
@@ -63,5 +64,8 @@ Item {
             onKeyExportRequest: _send.keyExportRequest()
             onKeyImportRequest: _send.keyImportRequest()
         }
+    }
+    QChangeTagsInTransaction {
+        id: changeTags
     }
 }

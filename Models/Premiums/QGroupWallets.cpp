@@ -119,7 +119,7 @@ void QGroupWallets::ResetGroupWallet()
     QJsonObject output;
     QString error_msg = "";
     bool ret {false};
-    if (mDashboard->isDraftWallet()) {
+    if (mDashboard->isUserDraftWallet()) {
         ret = Draco::instance()->DraftWalletResetCurrent(output, error_msg);
     } else {
         ret = Byzantine::instance()->ResetGroupWallet(mDashboard->groupId(), output, error_msg);

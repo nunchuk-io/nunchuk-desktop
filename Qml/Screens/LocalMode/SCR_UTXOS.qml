@@ -220,7 +220,7 @@ QScreen {
                 width: 720
                 height: (pagecontrol.currentPage !== pagecontrol.totalPage) ? utxo_lst.pageHeight :
                                                                               utxo_lst.count % utxo_lst.rowsOnPage == 0 ? utxo_lst.pageHeight :((utxo_lst.count % utxo_lst.rowsOnPage) * utxo_lst.rowHeight)
-                model: AppModel.utxoList
+                model: AppModel.walletInfo.utxoList
                 anchors {
                     top: parent.top
                     topMargin: 32

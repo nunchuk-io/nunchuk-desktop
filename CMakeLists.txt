@@ -1,9 +1,9 @@
 cmake_minimum_required( VERSION 3.1 )
 #set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.41)
+    project(Nunchuk VERSION 1.9.42)
 else()
-    project(nunchuk-qt VERSION 1.9.41)
+    project(nunchuk-qt VERSION 1.9.42)
 endif()
 
 set( CMAKE_CXX_STANDARD 20 )
@@ -44,6 +44,8 @@ endif()
 
 add_definitions ( -DSIGNET_SUPPORT )
 add_definitions ( -Wall )
+add_compile_definitions(_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION)
+add_compile_options(-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION)
 
 set( DQLIMIT_ONE OFF )
 
@@ -56,7 +58,6 @@ find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Sql Concurrent Svg Pri
 set(QAppEngine_SRCS
     QAppEngine/QOutlog/QOutlog.cpp
     QAppEngine/QOutlog/QPingThread.cpp
-    QAppEngine/QOutlog/QPDFPrinter.cpp
     QAppEngine/QEventProcessor/QEventProcessor.cpp
     QAppEngine/QEventProcessor/QPopupDelegate/QPopupDelegate.cpp
     QAppEngine/QEventProcessor/QScreenDelegate/QScreenDelegate.cpp
@@ -66,7 +67,6 @@ set(QAppEngine_SRCS
 set(QAppEngine_MOCS
     QAppEngine/QOutlog/QOutlog.h
     QAppEngine/QOutlog/QPingThread.h
-    QAppEngine/QOutlog/QPDFPrinter.h
     QAppEngine/QEventProcessor/QEventProcessor.h
     QAppEngine/QEventProcessor/QPopupDelegate/QPopupDelegate.h
     QAppEngine/QEventProcessor/QScreenDelegate/QScreenQueue.h
@@ -177,6 +177,7 @@ set(Views_SRCS
     Views/STATE_ID_SCR_REPLACE_KEYS.cpp
     Views/STATE_ID_SCR_SIGN_IN_VIA_XPUB.cpp
     Views/STATE_ID_SCR_EDIT_MEMBERS.cpp
+    Views/STATE_ID_SCR_COIN_DETAILS_CONTROL.cpp
     )
 
 set(Views_MOCS
@@ -210,6 +211,7 @@ set(${PROJECT_NAME}_SRCS
     ifaces/Servers/Draco.cpp
     ifaces/Servers/QRest.cpp
     ifaces/Servers/Byzantine.cpp
+    ifaces/Servers/QTimerTask.cpp
     main.cpp
     Models/Chats/QConversationModel.cpp
     Models/Chats/QContactModel.cpp
@@ -245,6 +247,8 @@ set(${PROJECT_NAME}_SRCS
     Models/Commons/Slugs.cpp
     Models/Commons/SignInViaDummy.cpp
     Models/Commons/ReplaceKeyFreeUser.cpp
+    Models/Commons/CoinsControl.cpp
+    Models/Printer/QPDFPrinter.cpp
     )
 
 set(${PROJECT_NAME}_RSCS
@@ -266,6 +270,7 @@ set(${PROJECT_NAME}_INC_PATH
     Views
     ifaces
     Models
+    Models/Printer
     RegisterTypes
     QRScanner
     QRScanner/private
@@ -283,6 +288,7 @@ set(${PROJECT_NAME}_MOCS
     Models/WalletModel.h
     Models/Worker.h
     Models/OnBoardingModel.h
+    Models/Printer/QPDFPrinter.h
     ifaces/bridgeifaces.h
     RegisterTypes/DashRectangle.h
     ifaces/Servers/DracoDefines.h

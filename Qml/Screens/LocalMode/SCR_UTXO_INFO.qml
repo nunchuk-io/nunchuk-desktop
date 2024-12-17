@@ -94,7 +94,7 @@ QScreen {
                         color: "transparent"
                         placeholder.text: STR.STR_QML_214
                         mode: eREADONLY_MODE
-                        textOutput: AppModel.utxoInfo.amount + RoomWalletData.unitValue
+                        textOutput: AppModel.walletInfo.utxoInfo.amount + RoomWalletData.unitValue
                     }
                     QTextInputBox {
                         width: 150
@@ -102,7 +102,7 @@ QScreen {
                         color: "transparent"
                         placeholder.text: STR.STR_QML_287
                         mode: eREADONLY_MODE
-                        textOutput: Math.max(0, (AppModel.chainTip - AppModel.utxoInfo.height)+1)
+                        textOutput: Math.max(0, (AppModel.chainTip - AppModel.walletInfo.utxoInfo.height)+1)
                     }
                     QTextInputBox {
                         width: 150
@@ -110,7 +110,7 @@ QScreen {
                         color: "transparent"
                         placeholder.text: STR.STR_QML_307
                         mode: eREADONLY_MODE
-                        textOutput: AppModel.utxoInfo.vout
+                        textOutput: AppModel.walletInfo.utxoInfo.vout
                     }
                 }
 
@@ -120,7 +120,7 @@ QScreen {
                     color: "transparent"
                     placeholder.text: STR.STR_QML_308
                     mode: eREADONLY_MODE
-                    textOutput: AppModel.utxoInfo.txid
+                    textOutput: AppModel.walletInfo.utxoInfo.txid
                 }
                 QTextInputBox {
                     width: parent.width
@@ -128,7 +128,7 @@ QScreen {
                     color: "transparent"
                     placeholder.text: STR.STR_QML_309
                     mode: eREADONLY_MODE
-                    textOutput: AppModel.utxoInfo.address
+                    textOutput: AppModel.walletInfo.utxoInfo.address
                 }
                 QTextInputBox {
                     width: parent.width
@@ -136,7 +136,7 @@ QScreen {
                     color: "transparent"
                     placeholder.text: STR.STR_QML_310
                     mode: eREADONLY_MODE
-                    textOutput: AppModel.utxoInfo.scriptPublickey
+                    textOutput: AppModel.walletInfo.utxoInfo.scriptPublickey
                 }
             }
         }
@@ -151,7 +151,7 @@ QScreen {
                 topMargin: 48
             }
             onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_UTXO_INFO_CHECKOUT_TX_RELATED, AppModel.utxoInfo.txid)
+                QMLHandle.sendEvent(EVT.EVT_UTXO_INFO_CHECKOUT_TX_RELATED, AppModel.walletInfo.utxoInfo.txid)
             }
         }
     }

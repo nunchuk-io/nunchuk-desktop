@@ -182,6 +182,7 @@ QScreen {
                 delegate: QTransactionDelegate {
                     width: transaction_lst.width
                     height: 40
+                    parentList: transaction_lst
                     addressWidth: width*0.15
                     statusWidth: width*0.25
                     timeWidth: width*0.15

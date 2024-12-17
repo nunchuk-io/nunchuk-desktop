@@ -1,4 +1,5 @@
 #include "Slugs.h"
+#include "QOutlog.h"
 
 bool Slugs::isSubscribed() const
 {
@@ -75,7 +76,7 @@ bool Slugs::isHoneyBadgerPlus() const
     return slugs().contains("honey_badger_plus_testnet") || slugs().contains("honey_badger_plus");
 }
 
-bool Slugs::isDraftWallet() const
+bool Slugs::isUserDraftWallet() const
 {
     return false;
 }

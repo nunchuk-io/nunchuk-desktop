@@ -413,6 +413,9 @@ public:
     bool SignDummyTransactionToSignIn(const QString &dummy_transaction_id, const QStringList& signatures, QJsonObject &output, QString &errormsg);
     bool SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QString &errormsg);
 
+    //Coin control
+    bool GetCoinControl(const QString &wallet_id, QJsonObject &output, QString &errormsg);
+    bool UpdateCoinControl(const QString &wallet_id, const QString& data, QJsonObject &output, QString &errormsg);
     bool isSubscribed() const;
     void setIsSubscribed(bool newIsSubscribed);
 
@@ -428,6 +431,11 @@ public:
     bool DraftWalletGetStatusOfARequestAddKey(const QString &request_id, QJsonObject &output, QString &errormsg);
     bool DraftWalletGetCurrent(QJsonObject &output, QString &errormsg);
     bool DraftWalletResetCurrent(QJsonObject &output, QString &errormsg);
+
+    bool ReplacementDownloadBackupFile(const QString& wallet_id, const QString& xfp, const QString& passwordToken, QJsonObject& output, QString& errormsg);
+    bool ReplacementUploadBackupFile(const QString& wallet_id, const QString& passwordToken, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
+    bool DraftWalletDownloadBackupFile(const QString& xfp, QJsonObject& output, QString& errormsg);
+    bool DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
 private:
     Draco();
     ~Draco();

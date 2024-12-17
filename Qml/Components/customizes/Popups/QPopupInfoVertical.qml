@@ -37,6 +37,7 @@ QPopup {
     property string title: STR.STR_QML_024
     property string contentText: STR.STR_QML_466
     property string contentTextTwo: ""
+    property var contentWrapMode: Text.WordWrap
     property Component buttons
     readonly property int mWidth: 252
     readonly property int mHeight: usingMin ? Math.min(206, itemInfo.height) : Math.max(206, itemInfo.height)
@@ -63,7 +64,7 @@ QPopup {
                     width: mWidth
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 28
-                    wrapMode: Text.WordWrap
+                    wrapMode: contentWrapMode
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     text: contentText

@@ -43,7 +43,8 @@ QScreen {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
             case NUNCHUCKTYPE.ADD_COLDCARD: return function() {
-                var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
+                var dashboard = GroupWallet.qIsByzantine ? GroupWallet.dashboardInfo : UserWallet.dashboardInfo
+                var is_inheritance = dashboard.isInheritance()
                 if (is_inheritance) {
                     switch(_passPhrase) {
                         case _ASK_PASSPHRASE: return _passPhraseSelect

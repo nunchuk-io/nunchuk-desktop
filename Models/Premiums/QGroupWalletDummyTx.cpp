@@ -356,6 +356,11 @@ QStringList QGroupWalletDummyTx::ExportPsbtViaQR(QWarningMessage &msg)
     return QWalletDummyTx::ExportPsbtViaQR(m_tx["request_body"].toString(), msg);
 }
 
+QStringList QGroupWalletDummyTx::ExportPsbtViaBBQR(QWarningMessage &msg)
+{
+    return QWalletDummyTx::ExportPsbtViaBBQR(m_tx["request_body"].toString(), msg);
+}
+
 QVariant QGroupWalletDummyTx::requester_user()
 {
     if(auto dash = dashBoardPtr()){

@@ -29,7 +29,7 @@ public:
     virtual QWalletServicesTagPtr accountServicesTagPtr() const;
     virtual QAssistedDraftWallets* DraftWallet() const;
     QStringList slugs() const final;
-    bool isDraftWallet() const final;
+    bool isUserDraftWallet() const final;
 private:
     WalletId m_wallet_id;
 };

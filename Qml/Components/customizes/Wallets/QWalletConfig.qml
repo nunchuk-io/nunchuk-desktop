@@ -37,6 +37,7 @@ import "../../../Components/customizes/QRCodes"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContent {
+    id: configWindow
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
@@ -292,7 +293,7 @@ QOnScreenContent {
                 othersContextMenu.y = 20 - othersContextMenu.height
                 othersContextMenu.open()
             }
-            QContextMenu {
+            QMultiContextMenu {
                 id: othersContextMenu
                 property string myRole: AppModel.walletInfo.myRole
                 property bool isAssisted: {
@@ -307,104 +308,207 @@ QOnScreenContent {
                 property bool isCanDeleted: !AppModel.walletInfo.isAssistedWallet || isAssisted
                 property bool isPrimaryOwner: (myRole === "MASTER" || myRole === "ADMIN") && (walletInfo.ownerMembers.length > 0)
                 menuWidth: 300
-                labels: {
-                    var ls = [];
-                    ls.push(STR.STR_QML_312)
-                    ls.push(STR.STR_QML_198)
-                    ls.push(STR.STR_QML_532)
-                    ls.push(STR.STR_QML_686)
-                    ls.push(STR.STR_QML_825)
-                    if (isPrimaryOwner) {
-                        ls.push(STR.STR_QML_1193)
-                    }
-                    ls.push(STR.STR_QML_1363)
-                    if(isCanDeleted){
-                        ls.push(STR.STR_QML_332)
-                    }
-                    return ls
-                }
-                icons:{
-                    var ls = [];
-                    ls.push("qrc:/Images/Images/settings-dark.svg")
-                    ls.push("qrc:/Images/Images/download.png")
-                    ls.push("qrc:/Images/Images/import_031F2B.png")
-                    ls.push("qrc:/Images/Images/cached_24px.png")
-                    ls.push("qrc:/Images/Images/settings-dark.svg")
-                    if (isPrimaryOwner) {
-                        ls.push("qrc:/Images/Images/account-member-dark.svg")
-                    }
-                    ls.push("qrc:/Images/Images/key-dark.svg")
-                    if(isCanDeleted){
-                        ls.push("qrc:/Images/Images/Delete.svg")
-                    }
-                    return ls
-                }
-                enables: [
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    true,
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN")
-                ]
-                visibles: [
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    true,
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN"),
-                    (myRole !== "FACILITATOR_ADMIN")
-                ]
-                functions: {
-                    var ls = [];
-                    ls.push(function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST); })
-                    ls.push(function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST); })
-                    ls.push(function(){ openfileDialog.open(); })
-                    ls.push(function(){ forceRefresh.open(); })
-                    ls.push(function(){ gaplimit.open(); })
-                    if (isPrimaryOwner) {
-                        ls.push(function(){ eFlow = eWALLET_PRIMARY_OWNER })
-                    }
-                    ls.push(function(){
-                        if (!AppModel.walletInfo.isAssistedWallet) { // free acount
-                            QMLHandle.sendEvent(EVT.EVT_REPLACE_KEYS_REQUEST, {isFirst: true})
-                        } else {
-                            _info.open()
+                property var exportMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1483,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            exportDialog.action = function(){
+                                walletInfo.requestExportCoinControlData(exportDialog.currentFile)
+                            }
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                    + "_labels.json"
+                            exportDialog.open()
+                            othersContextMenu.close()
                         }
-                    })
-                    if(isCanDeleted) {
-                        ls.push(function(){
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1484,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            _confirm.action = function(){
+                                exportDialog.action = function(){
+                                    walletInfo.requestExportBIP329(exportDialog.currentFile)
+                                }
+                                exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                        + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                        + "_BIP329labels.json"
+                                exportDialog.open()
+                                othersContextMenu.close()
+                            }
+                            _confirm.contentText = STR.STR_QML_1485
+                            _confirm.open()
+                        }
+                    },
+                ]
+                property var importMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1483,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            _confirm.action = function(){
+                                importDialog.action = function(){
+                                    walletInfo.requestImportCoinControlData(importDialog.currentFile)
+                                }
+                                importDialog.open()
+                                othersContextMenu.close()
+                            }
+                            _confirm.contentText = STR.STR_QML_1515
+                            _confirm.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1484,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            _confirm.action = function(){
+                                importDialog.action = function(){
+                                    walletInfo.requestImportBIP329(importDialog.currentFile)
+                                }
+                                importDialog.open()
+                                othersContextMenu.close()
+                            }
+                            _confirm.contentText = STR.STR_QML_1515
+                            _confirm.open()
+                        }
+                    },
+                ]
+                mapMenu: [
+                    {
+                        visible: myRole !== "FACILITATOR_ADMIN",
+                        label: STR.STR_QML_198,
+                        icon: "qrc:/Images/Images/download.png",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: myRole !== "FACILITATOR_ADMIN",
+                        subMenu: null,
+                        action: function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST); }
+                    },
+                    {
+                        visible: myRole !== "FACILITATOR_ADMIN",
+                        label: STR.STR_QML_532,
+                        icon: "qrc:/Images/Images/importFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: myRole !== "FACILITATOR_ADMIN",
+                        subMenu: null,
+                        action: function(){ openfileDialog.open(); }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1481,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: exportMenu,
+                        action: function(){ console.warn("export") }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1482,
+                        icon: "qrc:/Images/Images/importFile.svg",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: importMenu,
+                        action: function(){ console.warn("import") }
+                    },
+                    {
+                        visible: myRole !== "FACILITATOR_ADMIN",
+                        label: STR.STR_QML_312,
+                        icon: "qrc:/Images/Images/settings-dark.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: myRole !== "FACILITATOR_ADMIN",
+                        subMenu: null,
+                        action: function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST); }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_686,
+                        icon: "qrc:/Images/Images/cached_24px.png",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){ forceRefresh.open(); }
+                    },
+                    {
+                        visible: myRole !== "FACILITATOR_ADMIN",
+                        label: STR.STR_QML_825,
+                        icon: "qrc:/Images/Images/settings-dark.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: myRole !== "FACILITATOR_ADMIN",
+                        subMenu: null,
+                        action: function(){ gaplimit.open(); }
+                    },
+                    {
+                        visible: isPrimaryOwner,
+                        label: STR.STR_QML_1193,
+                        icon: "qrc:/Images/Images/account-member-dark.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){ eFlow = eWALLET_PRIMARY_OWNER }
+                    },
+                    {
+                        visible: myRole !== "FACILITATOR_ADMIN",
+                        label: STR.STR_QML_1363,
+                        icon: "qrc:/Images/Images/key-dark.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: myRole !== "FACILITATOR_ADMIN",
+                        subMenu: null,
+                        action: function(){
+                            if (!AppModel.walletInfo.isAssistedWallet) { // free acount
+                                QMLHandle.sendEvent(EVT.EVT_REPLACE_KEYS_REQUEST, {isFirst: true})
+                            } else {
+                                _info.open()
+                            }
+                        }
+                    },
+                    {
+                        visible: isCanDeleted,
+                        label: STR.STR_QML_332,
+                        icon: "qrc:/Images/Images/Delete.svg",
+                        iconRight: "",
+                        color: "#CF4018",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
                             if (isAssisted) {
                                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
                             }
                             else {
                                 modelConfirmDelete.open();
                             }
-                        })
-                    }
-                    return ls
-                }
-                colors:{
-                    var ls = [];
-                    ls.push("#031F2B")
-                    ls.push("#031F2B")
-                    ls.push("#031F2B")
-                    ls.push("#031F2B")
-                    ls.push("#031F2B")
-                    if (isPrimaryOwner) {
-                        ls.push("#031F2B")
-                    }
-                    ls.push("#031F2B")
-                    if(isCanDeleted){
-                        ls.push("#CF4018")
-                    }
-                    return ls
-                }
-                onItemClicked: {
-                    functions[index]()
-                }
+                        }
+                    },
+                ]
             }
         }
         QButtonLargeTail {
@@ -429,6 +533,7 @@ QOnScreenContent {
                     STR.STR_QML_326,
                     STR.STR_QML_327,
                     STR.STR_QML_328,
+                    STR.STR_QML_1531,
                     STR.STR_QML_1279,
                     STR.STR_QML_1280,
                     STR.STR_QML_674
@@ -441,72 +546,88 @@ QOnScreenContent {
                     "qrc:/Images/Images/fileDownload.png",
                     "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/exportqr.png",
+                    "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/fileDownload.png"
                 ]
-                onItemClicked: {
-                    switch(index){
-                    case 0: // Export Wallet BSMS File
+                functions: [
+                    function() {
+                        // Export Wallet BSMS File
                         exportwalletDialog.exportFormat = NUNCHUCKTYPE.DESCRIPTOR
                         exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                 + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                 + ".bsms"
                         exportwalletDialog.open()
-                        break;
-                    case 1: // Export Wallet Database
+                    },
+                    function() {
+                        // Export Wallet Database
                         exportwalletDialog.exportFormat = NUNCHUCKTYPE.DB
                         exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                 + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                 + "-database.dat"
                         exportwalletDialog.open()
-                        break;
-                    case 2: // "Export Transaction History (CSV)"
+                    },
+                    function() {
+                        // "Export Transaction History (CSV)"
                         exportwalletDialog.exportFormat = NUNCHUCKTYPE.TRANSACTION_CSV
                         exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                 + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                 + "-tx-history.csv"
                         exportwalletDialog.open()
-                        break;
-                    case 3: // "Export UTXOs (CSV)"
+                    },
+                    function() {
+                        // "Export UTXOs (CSV)"
                         exportwalletDialog.exportFormat = NUNCHUCKTYPE.UTXO_CSV
                         exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                 + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                 + "-utxos.csv"
                         exportwalletDialog.open()
-                        break;
-                    case 4: // "Export To Coldcard"
+                    },
+                    function() {
+                        // "Export To Coldcard"
                         exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD
                         exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                 + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                 + "-Coldcard-Config.txt"
                         exportwalletDialog.open()
-                        break;
-                    case 5: // "Export as BC-UR2 QR (legacy)"
+                    },
+                    function() {
+                        // "Export via BBQR"
+                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BBQR"
+                        qrcodeExportResult.open()
+                        var datalegacy = {
+                            "qrtype": "BBQR-Coldcard"
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
+                    },
+                    function() {
+                        // "Export as BC-UR2 QR (legacy)"
                         qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2_Legacy"
                         qrcodeExportResult.open()
                         var datalegacy = {
                             "qrtype": "BC-UR2-QR-Legacy"
                         }
                         QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
-                        break;
-                    case 6: // "Export as BC-UR2 QR"
+                    },
+                    function() {
+                        // "Export as BC-UR2 QR"
                         qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2"
                         qrcodeExportResult.open()
                         var data_seedhammer = {
                             "qrtype": "BC-UR2-QR"
                         }
                         QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, data_seedhammer)
-                        break;
-
-                    case 7: //"Export wallet to Bitbox"
+                    },
+                    function() {
+                        //"Export wallet to Bitbox"
                         var addrs = AppModel.walletInfo.walletunUsedAddressList;
                         if(addrs.length > 0){
                             displayAddressBusybox.addrToVerify = addrs[0]
                             AppModel.startDisplayAddress(AppModel.walletInfo.walletId, addrs[0])
                         }
-                        break;
-                    default:
-                        break;
-                    }
+                    },
+                ]
+                onItemClicked: {
+                    functions[index]()
                 }
             }
         }
@@ -533,5 +654,39 @@ QOnScreenContent {
         title: STR.STR_QML_339
         contentText: STR.STR_QML_1391
         usingMin: true
+    }
+
+    QConfirmYesNoPopup {
+        id: _confirm
+        title: STR.STR_QML_334
+        property var action
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            if(action) {
+                action()
+            }
+        }
+    }
+
+    FileDialog {
+        id: importDialog
+        property var action
+        fileMode: FileDialog.OpenFile
+        onAccepted: {
+            if (action) {
+                action()
+            }
+        }
+    }
+    FileDialog {
+        id: exportDialog
+        property var action
+        fileMode: FileDialog.SaveFile
+        onAccepted: {
+            if (action) {
+                action()
+            }
+        }
     }
 }

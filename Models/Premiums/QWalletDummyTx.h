@@ -49,6 +49,7 @@ public:
     QString tx_id() const;
 
     QStringList ExportPsbtViaQR(const QString& request_body, QWarningMessage &msg);
+    QStringList ExportPsbtViaBBQR(const QString& request_body, QWarningMessage &msg);
     QString ImportPsbtViaFile(const QString &filepath);
     void ExportPsbtViaFile(const QString &filepath);
     QJsonObject nonceBody() const;

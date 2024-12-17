@@ -61,6 +61,12 @@ QScreen {
             anchors.fill: parent
         }
     }
+    Component {
+        id: viewCoinsWallet
+        QHomeViewCoinsWallet {
+            anchors.fill: parent
+        }
+    }
 
     Row {
         Item {
@@ -166,7 +172,12 @@ QScreen {
                 sourceComponent: {
                     var dashboard = GroupWallet.dashboardInfo
                     var isShowDashBoard = dashboard ? dashboard.isShowDashBoard : false
-                    if (isShowDashBoard) {
+                    var wallet = AppModel.walletInfo
+                    var isViewCoinsWallet = wallet ? wallet.isViewCoinShow : false
+                    if (isViewCoinsWallet) {
+                        return viewCoinsWallet
+                    }
+                    else if (isShowDashBoard) {
                         return pendingWallet
                     }
                     else {

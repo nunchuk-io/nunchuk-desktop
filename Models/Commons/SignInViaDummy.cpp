@@ -264,7 +264,7 @@ bool SignInViaDummy::SignInRequestSignTxViaFile(const QString &filepath)
         if(auto trans = dummy->transactionPtr()){
             QJsonObject dummy_transaction = m_dummy_SignIn["dummy_transaction"].toObject();
             QMap<QString, QString> signatures;
-            QString psbt = qUtils::ImportPsbtViaFile(filepath);
+            QString psbt = qUtils::ImportDataViaFile(filepath);
             if(psbt != ""){
                 // Convert tx
                 QWarningMessage warningmsg;
@@ -303,6 +303,17 @@ QStringList SignInViaDummy::ExportPsbtViaQR()
         if(auto trans = dummy->transactionPtr()){
             QWarningMessage msg;
             return qUtils::ExportQRTransaction(trans->psbt(), msg);
+        }
+    }
+    return {};
+}
+
+QStringList SignInViaDummy::ExportPsbtViaBBQR()
+{
+    if(auto dummy = dashboard()->groupDummyTxPtr()){
+        if(auto trans = dummy->transactionPtr()){
+            QWarningMessage msg;
+            return qUtils::ExportBBQRTransaction(trans->psbt(), msg);
         }
     }
     return {};

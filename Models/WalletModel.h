@@ -30,8 +30,10 @@
 #include "Commons/Slugs.h"
 #include <QJsonArray>
 #include "Commons/ReplaceKeyFreeUser.h"
+#include "Commons/CoinsControl.h"
+#include "UTXOModel.h"
 
-class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser
+class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser, public CoinsControl
 {
     Q_OBJECT
     Q_PROPERTY(QString      walletId                                READ id                     WRITE setId             NOTIFY idChanged)
@@ -43,6 +45,7 @@ class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser
     Q_PROPERTY(QString      walletAddressType                       READ addressType            WRITE setAddressType    NOTIFY addressTypeChanged)
     Q_PROPERTY(QString      walletBalance                           READ balanceDisplay                                 NOTIFY balanceChanged)
     Q_PROPERTY(QString      walletBalanceBTC                        READ balanceBTC                                     NOTIFY balanceChanged)
+    Q_PROPERTY(QString      walletBalanceSats                       READ balanceSats                                    NOTIFY balanceChanged)
     Q_PROPERTY(QString      walletBalanceCurrency                   READ balanceCurrency                                NOTIFY balanceChanged)
     Q_PROPERTY(qint64      walletBalanceSats                        READ balanceSats                                    NOTIFY balanceChanged)
     Q_PROPERTY(QString      walletCreateDate                        READ createDate                                     NOTIFY createDateChanged)
@@ -87,12 +90,25 @@ class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser
     Q_PROPERTY(bool         isReplaced                              READ isReplaced                                     NOTIFY groupInfoChanged)
     Q_PROPERTY(bool         isLocked                                READ isLocked                                       NOTIFY groupInfoChanged)
     Q_PROPERTY(QVariantList signerExistList                         READ signerExistList                                NOTIFY signerExistListChanged)
-    Q_PROPERTY(QString replaceFlow                                  READ replaceFlow                                    NOTIFY replaceFlowChanged)
+    Q_PROPERTY(QString      replaceFlow                             READ replaceFlow                                    NOTIFY replaceFlowChanged)
     Q_PROPERTY(DeviceListModel*         deviceList                  READ deviceList                                     NOTIFY deviceListChanged)
-    Q_PROPERTY(QString deviceType                                   READ deviceType                                     NOTIFY deviceTypeChanged)
-    Q_PROPERTY(bool tranReplace                                     READ tranReplace                                    NOTIFY tranReplaceChanged)
-    Q_PROPERTY(bool isHoneyBadger                                   READ isHoneyBadger                                  CONSTANT)
-    Q_PROPERTY(bool isIronHand                                      READ isIronHand                                     CONSTANT)
+    Q_PROPERTY(QString      deviceType                              READ deviceType                                     NOTIFY deviceTypeChanged)
+    Q_PROPERTY(bool         tranReplace                             READ tranReplace                                    NOTIFY tranReplaceChanged)
+    Q_PROPERTY(bool         isHoneyBadger                           READ isHoneyBadger                                  CONSTANT)
+    Q_PROPERTY(bool         isIronHand                              READ isIronHand                                     CONSTANT)
+    Q_PROPERTY(bool         isViewCoinShow                          READ isViewCoinShow         WRITE setIsViewCoinShow NOTIFY isViewCoinShowChanged)
+    Q_PROPERTY(QString      coinFlow                                READ coinFlow               WRITE setCoinFlow       NOTIFY coinFlowChanged)
+    Q_PROPERTY(QUTXOListModel* utxoList                             READ utxoList                                       NOTIFY utxoListChanged)
+    Q_PROPERTY(UTXO*        utxoInfo                                READ utxoInfo                                       NOTIFY utxoInfoChanged)
+    Q_PROPERTY(QUTXOListModel* utxoFilterTag                        READ utxoFilterTag                                  NOTIFY utxoFilterTagChanged)
+    Q_PROPERTY(QUTXOListModel* utxoFilterCollection                 READ utxoFilterCollection                           NOTIFY utxoFilterCollectionChanged)
+    Q_PROPERTY(QCoinCollectionsModel* coinCollections               READ coinCollections                                NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(QCoinTagsModel* coinTags                             READ coinTags                                       NOTIFY coinTagsChanged)
+    Q_PROPERTY(QString      searchText                              READ searchText            WRITE setSearchText      NOTIFY searchTextChanged)
+    Q_PROPERTY(QUTXOListModel* utxoListLocked                       READ utxoListLocked                                 NOTIFY utxoListChanged)
+    Q_PROPERTY(QList<QUTXOListModel *> ancestryList                 READ ancestryList                                   NOTIFY ancestryListChanged)
+    Q_PROPERTY(QCoinTagsModel* coinTagsFilter                       READ coinTagsFilter                                 NOTIFY coinTagsFilterChanged)
+
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -226,15 +242,11 @@ public:
 
     QVariant serverKeyInfo() const;
     QServerKeyPtr serverKeyPtr() const;
-
     QVariant inheritancePlanInfo() const;
     QInheritancePlanPtr inheritancePlanPtr() const;
-
     QVariant recurringPayment() const;
     QRecurringPaymentPtr recurringPaymentPtr() const;
-
     QGroupWalletDummyTxPtr groupDummyTxPtr() const;
-
     QGroupWalletHealthCheckPtr healthPtr() const;
 
     Q_INVOKABLE void updateSignMessage(const QString &xfp, int wallet_type);
@@ -245,6 +257,7 @@ public:
     QWalletPtr clone() const;
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
+
 protected:
     //User wallet
     void GetUserTxs();
@@ -343,13 +356,38 @@ signals:
     void deviceListChanged() override;
     void deviceTypeChanged() override;
     void tranReplaceChanged() override;
+    void isViewCoinShowChanged() override;
+    void coinFlowChanged() override;
     void rollOverProcess(const QString& address);
+    void utxoListChanged() override;
+    void utxoInfoChanged() override;
+    void utxoFilterTagChanged() override;
+    void utxoFilterCollectionChanged() override;
+    void coinCollectionsChanged() override;
+    void coinTagsChanged() override;
+    void searchTextChanged() override;
+    void updateCollectionNameChanged(bool isError) override;
+    void ancestryListChanged() override;
+    void requestCreateTransaction(const QString& address) override;
+    void updateTagNameChanged(bool isError) override;
+    void coinTagsFilterChanged() override;
 public slots:
     void slotSyncCollabKeyname(QList<DracoUser> users);
     bool isValidAddress(const QString& address);
     int  reuseKeyGetCurrentIndex(const QString &xfp) override;
     QString bip32path(const QString &xfp, int index) override;
     bool updateKeyReplace(const QString &xfp, const int index) override;
+    void requestForAllCoins(const QVariant &act);
+    void requestForLockedAllCoins(const QVariant &act);
+    void requestImportCoinControlData(const QString& filePath);
+    void requestExportCoinControlData(const QString& filePath);
+    void requestExportBIP329(const QString& filePath);
+    void requestImportBIP329(const QString& filePath);
+    void requestConsolidateMakeTransaction(const QVariant &msg);
+    void requestSyncSelectCoinForMakeTransaction(const QVariant &msg);
+    QString addressPath(const QString &address);
+    QString addressBalance(const QString &address);
+    bool    markAddressUsed(const QString &address);
 };
 typedef OurSharedPointer<Wallet> QWalletPtr;
 
@@ -428,9 +466,11 @@ public:
     bool existGroupWallet();
     bool isContainsPremier();
     void checkContainsGroup();
+
 public slots:
     QVariant removeOrNot(const QString& masterFingerPrint);
     bool hasAssistedWallet() const;
+
 private:
     QList<QWalletPtr> d_;
 

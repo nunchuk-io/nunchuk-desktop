@@ -193,9 +193,9 @@ void AppSetting::updateUnit()
         if(AppModel::instance()->walletInfo()->transactionHistory()){
             AppModel::instance()->walletInfo()->transactionHistory()->notifyUnitChanged();
         }
-    }
-    if(AppModel::instance()->utxoList()){
-        AppModel::instance()->utxoList()->notifyUnitChanged();
+        if(AppModel::instance()->walletInfo()->utxoList()){
+            AppModel::instance()->walletInfo()->utxoList()->notifyUnitChanged();
+        }
     }
     emit currencyChanged();
 }
@@ -939,11 +939,17 @@ void AppSetting::setReminderStates(const QVariant &states)
 
 QStringList AppSetting::favoriteAddresses()
 {
+    return m_favoriteAddresses;
+}
+
+void AppSetting::loadFavoriteAddresses()
+{
     qApp->setOverrideCursor(Qt::WaitCursor);
     if(CLIENT_INSTANCE->isSubscribed()){
         QJsonObject output;
         QString errormsg = "";
         bool ret = Draco::instance()->GetSavedAddress(output, errormsg);
+        DBG_INFO << "Load favorite addresses from server" << output << errormsg;
         if(ret){
             QJsonArray addresses = output["addresses"].toArray();
             QStringList favoriteAddresses;
@@ -965,7 +971,7 @@ QStringList AppSetting::favoriteAddresses()
         }
     }
     qApp->restoreOverrideCursor();
-    return m_favoriteAddresses;
+    emit favoriteAddressesChanged();
 }
 
 void AppSetting::setFavoriteAddresses(const QStringList &newFavoriteAddresses)
@@ -998,6 +1004,7 @@ void AppSetting::removeFavoriteAddress(const QString &label, const QString &addr
     }
     else {
         QString newaddress = QString("%1[split]%2").arg(label).arg(address);
+        loadFavoriteAddresses();
         QStringList addresses = favoriteAddresses();
         if(addresses.contains(newaddress)){
             addresses.removeAll(newaddress);
@@ -1020,6 +1027,7 @@ void AppSetting::addFavoriteAddress(const QString &label, const QString &address
     }
     else{
         QString newaddress = QString("%1[split]%2").arg(label).arg(address);
+        loadFavoriteAddresses();
         QStringList addresses = favoriteAddresses();
         if(!addresses.contains(newaddress)){
             addresses.append(newaddress);
@@ -1042,6 +1050,7 @@ void AppSetting::updateFavoriteAddress(const QString &label, const QString &addr
     }
     else{
         QString newaddress = QString("%1[split]%2").arg(label).arg(address);
+        loadFavoriteAddresses();
         QStringList addresses = favoriteAddresses();
         QStringList addresses_updated;
         foreach (QString item, addresses) {

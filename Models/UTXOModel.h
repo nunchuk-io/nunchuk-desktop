@@ -25,26 +25,174 @@
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
 #include "QOutlog.h"
+#include "nunchuk.h"
+#include "TypeDefine.h"
+#include <QMutex>
+
+class QCoinTagsModel : public QAbstractListModel {
+    Q_OBJECT
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(QVariant tag READ tag NOTIFY tagChanged)
+    Q_PROPERTY(bool existChecked        READ existChecked       NOTIFY existCheckedChanged)
+    Q_PROPERTY(bool isChecked           READ isChecked          NOTIFY existCheckedChanged)
+    Q_PROPERTY(bool isPartiallyChecked  READ isPartiallyChecked NOTIFY existCheckedChanged)
+    Q_PROPERTY(int selectedCount        READ selectedCount      NOTIFY existCheckedChanged)
+public:
+    QCoinTagsModel();
+    ~QCoinTagsModel();
+    int rowCount(const QModelIndex& parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
+    QHash<int,QByteArray> roleNames() const;
+    enum TagRoles {
+        tag_id_role,
+        tag_name_role,
+        tag_color_role,
+        tag_count_role,
+        tag_checked_role
+    };
+    Q_INVOKABLE QVariant get(int row);
+    void addTag(const nunchuk::CoinTag data);
+    void refreshTags(const QList<int> tags, const QString &wallet_id, bool isUtxo);
+    int count() const;
+    void clear();
+    QVariant tag();
+    void setTag(const int &tag_id);
+    nunchuk::CoinTag getCoinTagById(const int tag_id);
+    Q_INVOKABLE bool containColor(const QString &color);
+
+    void increase(const int &tag_id, QString wallet_id);
+    int get_count(const int &tag_id) const;
+
+    bool isChecked();
+    bool isPartiallyChecked();
+    bool isChecked(const int tag_id) const;
+    void setChecked(const QList<int> tags);
+    void setChecked(const int tag_id, bool checked);
+    void refresh();
+    QList<int> tagsSelected() const;
+    bool existChecked() const;
+    QList<nunchuk::CoinTag> fullList() const;
+    QStringList fullTags() const;
+
+    bool hasTag(const QString &tag);
+    int selectedCount() const;
+signals:
+    void countChanged();
+    void tagChanged();
+    void existCheckedChanged();
+public slots:
+    void cancelSelected();
+    void storeSelected();
+    void selectAll(bool select = true);
+private:
+    typedef struct tag_t {
+        int m_id {0};
+        int m_count {0};
+    } tag_t;
+    QList<int> m_tags_checked;
+    QList<int> m_store_filter_tags_checked;
+    QMap<int, tag_t> m_tags_count;
+    int m_tag_id {-1};
+    QList<nunchuk::CoinTag> m_data {};
+};
+typedef OurSharedPointer<QCoinTagsModel> QCoinTagsModelPtr;
+
+// Coin collections
+class QCoinCollectionsModel : public QAbstractListModel {
+    Q_OBJECT
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(QVariant collection READ collection NOTIFY collectionChanged)
+    Q_PROPERTY(bool existChecked        READ existChecked           NOTIFY existCheckedChanged)
+    Q_PROPERTY(bool isChecked           READ isChecked              NOTIFY existCheckedChanged)
+    Q_PROPERTY(bool isPartiallyChecked  READ isPartiallyChecked     NOTIFY existCheckedChanged)
+    Q_PROPERTY(int selectedCount        READ selectedCount          NOTIFY existCheckedChanged)
+public:
+    QCoinCollectionsModel();
+    ~QCoinCollectionsModel();
+    int rowCount(const QModelIndex& parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
+    QHash<int,QByteArray> roleNames() const;
+    enum CollectionRoles {
+        collection_id_role,
+        collection_name_role,
+        collection_add_new_coin_role,
+        collection_auto_lock_role,
+        collection_add_tags_role,
+        collection_count_role,
+        collection_checked_role
+    };
+    Q_INVOKABLE QVariant get(int row);
+    void addCollection(const nunchuk::CoinCollection data);
+    void refreshCollections(const QList<int> collections, const QString &wallet_id, bool isUtxo);
+    int count() const;
+    void clear();
+    QVariant collection();
+    void setCollection(const int &collection_id);
+
+    void increase(const int &collection_id, QString wallet_id);
+    int get_count(const int &collection_id) const;
+    nunchuk::CoinCollection getCoinCollectionById(const int collection_id);
+
+    bool isChecked();
+    bool isPartiallyChecked();
+    bool isChecked(const int collection_id) const;
+    void setChecked(const QList<int> collections);
+    void setChecked(const int collection_id, bool checked);
+    void refresh();
+    bool existChecked() const;
+    QList<nunchuk::CoinCollection> fullList() const;
+
+    bool hasCollection(const QString &searchText);
+    int selectedCount() const;
+signals:
+    void countChanged();
+    void collectionChanged();
+    void existCheckedChanged();
+public slots:
+    void cancelSelected();
+    void storeSelected();
+    void selectAll(bool select = true);
+private:
+    typedef struct collection_t {
+        int m_id {0};
+        int m_count {0};
+    } collection_t;
+    QList<int> m_collections_checked;
+    QList<int> m_store_filter_collections_checked;
+    QMap<int, collection_t> m_collections_count;
+    int m_collection_id {-1};
+    QList<nunchuk::CoinCollection> m_data;
+};
+typedef OurSharedPointer<QCoinCollectionsModel> QCoinCollectionsModelPtr;
 
 class UTXO  : public QObject{
+
     Q_OBJECT
-    Q_PROPERTY(QString  txid    READ txid NOTIFY txidChanged)
-    Q_PROPERTY(int      vout    READ vout NOTIFY voutChanged)
-    Q_PROPERTY(QString  address READ address        NOTIFY addressChanged)
-    Q_PROPERTY(QString  amount  READ amountDisplay  NOTIFY amountChanged)
-    Q_PROPERTY(QString  scriptPublickey  READ scriptPublickey  NOTIFY scriptPublickeyChanged)
-    Q_PROPERTY(int      height  READ height         NOTIFY heightChanged)
-    Q_PROPERTY(QString  memo    READ memo           NOTIFY memoChanged)
-    Q_PROPERTY(QString  status  READ status         NOTIFY statusChanged)
+    Q_PROPERTY(QString  txid                            READ txid                                   NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int      vout                            READ vout                                   NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  address                         READ address                                NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  amount                          READ amountDisplay                          NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  amountCurrency                  READ amountCurrency                         NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  scriptPublickey                 READ scriptPublickey                        NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int      height                          READ height                                 NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  memo                            READ memo                                   NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int      status                          READ status                                 NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool     isChange                        READ isChange                               NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool     isLocked                        READ isLocked                               NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  blocktimeDisplay                READ blocktimeDisplayTwo                    NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString  scheduleTimeDisplay             READ scheduleTimeDisplay                    NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool     selected                        READ selected           WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(QCoinTagsModel*          coinTags        READ coinTags                               NOTIFY coinTagsChanged)
+    Q_PROPERTY(QCoinCollectionsModel*   coinCollections READ coinCollections                        NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(Transaction* transaction                 READ transaction                            NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(QString outpoint                         READ outpoint                               CONSTANT)
+    Q_PROPERTY(QVariant outgoing                        READ outgoing                               CONSTANT)
+
 public:
-    UTXO(const QString &txid,
-         const int vout,
-         const QString &address,
-         const qint64 amount,
-         const int height,
-         const QString &memo,
-         const int status);
-    UTXO();
+    UTXO(QString wallet_id, nunchuk::UnspentOutput data);
+    UTXO(QString wallet_id);
     ~UTXO();
 
     QString txid() const;
@@ -58,9 +206,11 @@ public:
 
     QString amountDisplay() const;
     QString amountBTC() const;
-    qint64 amountSats() const;
+    qint64  amountSats() const;
+    QString amountCurrency() const;
     void setAmount(const qint64 amount);
 
+    int confirmedCount();
     int height() const;
     void setHeight(int height);
 
@@ -72,58 +222,119 @@ public:
     QString memo() const;
     void setMemo(const QString &memo);
 
+    QString outpoint() const;
+    QVariant outgoing() const;
+
     int status() const;
     void setStatus(int status);
 
-private:
-    QString txid_;
-    int vout_;
-    QString address_;
-    qint64 amount_;
-    int height_;
-    QString memo_;
-    bool selected_;
-    int  status_;
-signals:
-    void txidChanged();
-    void voutChanged();
-    void addressChanged();
-    void amountChanged();
-    void heightChanged();
-    void selectedChanged();
-    void scriptPublickeyChanged();
-    void memoChanged();
-    void statusChanged();
-};
-typedef QSharedPointer<UTXO> QUTXOPtr;
+    bool isChange() const;
+    void setIsChange(bool change);
 
-class UTXOListModel : public QAbstractListModel
+    bool isLocked() const;
+    void setIsLocked(bool locked);
+
+    QList<int /*id*/> const getTags() const;
+    void setTags(const QList<int /*id*/> &tags);
+
+    QList<int /*id*/> const getCollections() const;
+    void setCollections(const QList<int /*id*/> &collections);
+
+    time_t blocktime() const;
+    QString blocktimeDisplay();
+    QString blocktimeDisplayTwo();
+    void setBlocktime(const time_t blocktime);
+
+    time_t scheduleTime() const;
+    QString scheduleTimeDisplay();
+    void setScheduleTime(const time_t scheduleTime);
+
+    nunchuk::UnspentOutput getUnspentOutput() const;
+    void setUnspentOutput(const nunchuk::UnspentOutput &data);
+
+    QCoinTagsModel* coinTags() const;
+    QCoinTagsModelPtr coinTagsPtr() const;
+    void setCoinTags(QCoinTagsModelPtr coinTags);
+
+    QCoinCollectionsModel* coinCollections() const;
+    QCoinCollectionsModelPtr coinCollectionsPtr() const;
+    void setCoinCollections(QCoinCollectionsModelPtr coinCollections);
+
+    Transaction* transaction();
+    QTransactionPtr transactionPtr();
+
+    bool hasTag(const QString &searchText);
+    bool hasCollection(const QString &searchText);
+    bool hasAmount(const QString &searchText);
+    bool hasAddress(const QString &searchText);
+    bool hasMemo(const QString &searchText);
+    bool hasBlocktime(const QString &searchText);
+    bool hasTransactionID(const QString &searchText);
+
+    bool hasResultSearching(const QString &searchText);
+private:
+    bool m_selected;
+    nunchuk::UnspentOutput mUnspentOutputOrigin;
+    QCoinTagsModelPtr m_coinTags;
+    QCoinCollectionsModelPtr m_coinCollections;
+    QTransactionPtr m_trans;
+    QString m_wallet_id;
+signals:
+    void selectedChanged();
+    void unspentOutputChanged();
+    void coinTagsChanged();
+    void coinCollectionsChanged();
+};
+typedef OurSharedPointer<UTXO> QUTXOPtr;
+
+class QUTXOListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(QString  amountDisplay  READ amountDisplay  NOTIFY amountChanged)
-    Q_PROPERTY(QString  amountCurrency READ amountCurrency NOTIFY amountChanged)
-    Q_PROPERTY(qint64  amountSats         READ amountSats     NOTIFY amountChanged)
+    Q_PROPERTY(int selectedCount        READ selectedCount      NOTIFY selectedCountChanged)
+    Q_PROPERTY(int count                READ count              NOTIFY countChanged)
+    Q_PROPERTY(qint64  amountSats       READ amountSats         NOTIFY amountChanged)
+    Q_PROPERTY(QString  amountDisplay   READ amountDisplay      NOTIFY amountChanged)
+    Q_PROPERTY(QString  amountCurrency  READ amountCurrency     NOTIFY amountChanged)
+    Q_PROPERTY(bool isChecked           READ isChecked          NOTIFY selectedCountChanged)
+    Q_PROPERTY(bool isPartiallyChecked  READ isPartiallyChecked NOTIFY selectedCountChanged)
+    Q_PROPERTY(bool isUnChecked         READ isUnChecked        NOTIFY selectedCountChanged)
+    Q_PROPERTY(int countVisible         READ countVisible       NOTIFY countVisibleChanged)
+    Q_PROPERTY(int lockedCount          READ lockedCount        NOTIFY selectedCountChanged)
+    Q_PROPERTY(int selectedLockedCount  READ selectedLockedCount     NOTIFY selectedCountChanged)
+    Q_PROPERTY(bool isFiltered          READ isFiltered         NOTIFY countVisibleChanged)
+    Q_PROPERTY(QVariant filter          READ filter             NOTIFY countVisibleChanged)
+    Q_PROPERTY(QString  totalDisplay    READ totalDisplay       CONSTANT)
+    Q_PROPERTY(QString  totalCurrency   READ totalCurrency      CONSTANT)
 
 public:
-    UTXOListModel();
-    ~UTXOListModel();
+    QUTXOListModel(QString wallet_id);
+    ~QUTXOListModel();
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role);
     QHash<int,QByteArray> roleNames() const;
-    void addUTXO(const QString& txid,
-                 const int vout,
-                 const QString& address,
-                 const qint64 amount,
-                 const int height,
-                 const QString &memo,
-                 const int status);
+    void setWalletId(const QString &wallet_id);
+    void addUTXO(const nunchuk::UnspentOutput data);
     QUTXOPtr getUTXOByIndex(const int index);
+    QUTXOPtr getUTXOByTxid(const QString &txid);
     void updateSelected(const QString &txid, const int vout);
     qint64 getAmount(const QString &txid, const int vout);
     void requestSort(int role, int order);
     void notifyUnitChanged();
-
+    int selectedCount();
+    int lockedCount();
+    int selectedLockedCount();
+    bool isChecked();
+    bool isUnChecked();
+    bool isPartiallyChecked();
+    void searchByString(const QString &searchText);
+    void searchByFilter(const QVariant &filter);
+    bool hasResultFiltering(int row) const;
+    void clearAllFilter();
+    void refresh();
+    int countVisible();
+    bool isFiltered();
+    QVariant filter();
     enum UTXORoles {
         utxo_txid_role,
         utxo_vout_role,
@@ -132,20 +343,59 @@ public:
         utxo_height_role,
         utxo_selected_role,
         utxo_confirmed_role,
-        utxo_memo_role
+        utxo_memo_role,
+        utxo_tags_role,
+        utxo_collections_role,
+        utxo_amount_currency_role,
+        utxo_coin_is_locked,
+        utxo_coin_is_scheduled,
+        utxo_blocktime_role,
+        utxo_coin_visible_role,
+        utxo_outgoing_label_role,
+        utxo_outgoing_color_role,
+        utxo_coin_is_change_role,
     };
 
-    QString amountDisplay();
-    QString amountBTC();
     qint64 amountSats();
+    QString amountDisplay();
     QString amountCurrency();
-private:
-    QList<QUTXOPtr> d_;
+    QString amountBTC();
+    QString totalCurrency();
+    QString totalBTC();
+    qint64 totalSats();
+    QString totalDisplay();
+    int count() const;
+    QList<QUTXOPtr> fullList() const;
+    void clearAll();
 
+signals:
+    void countChanged();
+    void selectedCountChanged();
+    void countVisibleChanged();
+
+public slots:
+    void selectAll(bool select = true);
+
+private:
+    QString m_wallet_id;
+    QList<QUTXOPtr> m_data;
+    QString m_searchText {};
+    QMap<QString, QVariant> mFilters {};
+    typedef struct Filter_t {
+        bool m_isValid {false};
+        bool m_hasFilter {false};
+        bool result() {
+            if (m_hasFilter) {
+                return m_isValid;
+            } else {
+                return true;
+            }
+        }
+    } filter_t;
 signals:
     void amountChanged();
 };
-typedef QSharedPointer<UTXOListModel> QUTXOListModelPtr;
+typedef OurSharedPointer<QUTXOListModel> QUTXOListModelPtr;
 
 // Sort Amount
 bool sortbyAmountAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);

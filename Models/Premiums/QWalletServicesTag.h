@@ -107,8 +107,6 @@ public:
     bool lockdownByConfirmationCode();
     bool lockdownBySignDummyTx();
 
-    nunchuk::Wallet getWallet() const;
-
     QString untilTime() const;
     void setUntilTime(QString untilTime);
 
@@ -218,7 +216,6 @@ private:
 
     QKeyRecoveryPtr m_keyRecovery;
 
-    nunchuk::Wallet m_wallet;
     QJsonArray m_periods;
     QMap<QString,QString> m_signatures;
     QString m_untilTime;

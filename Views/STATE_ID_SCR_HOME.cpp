@@ -34,6 +34,7 @@
 #include "Premiums/QGroupWalletHealthCheck.h"
 #include "Premiums/QGroupWalletDummyTx.h"
 #include "Premiums/QRecurringPayment.h"
+#include "QPDFPrinter.h"
 
 void SCR_HOME_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::WALLET_TAB);
@@ -70,6 +71,9 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
                 QGroupWallets::instance()->dashboardInfoPtr()->setShowDashBoard(false);
             }
             QGroupWallets::instance()->setDashboardInfo(group_id);
+        }
+        if (auto w = AppModel::instance()->walletInfo()) {
+            w->setIsViewCoinShow(false);
         }
     }
     else if (qUtils::strCompare(type, "dashboard")) {
@@ -145,18 +149,22 @@ void EVT_HOME_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 void EVT_HOME_SEND_REQUEST_HANDLER(QVariant msg) {
     if(auto w = AppModel::instance()->walletInfo()){
         QString rollover_address = msg.toString();
-        if(rollover_address != ""){
+        if(rollover_address != "" && rollover_address != "selected"){
             w->setTranReplace(true);
-            timeoutHandler(1000, [=](){
+            timeoutHandler(100, [=](){
                 emit AppModel::instance()->walletInfo()->rollOverProcess(rollover_address);
             });
+            w->RequestGetCoins();
         }
         else {
             w->setTranReplace(false);
-            QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(AppModel::instance()->walletInfo()->id());
-            if(utxos){
-                AppModel::instance()->setUtxoList(utxos);
-            }
+            w->setReuse(msg.toString() == "selected");// w->unUseAddress();//
+            w->RequestGetCoins();
+            timeoutHandler(100, [=](){
+                if (msg.toString() == "selected") {
+                    emit w->requestCreateTransaction("");
+                }
+            });
         }
     }
 }
@@ -254,9 +262,40 @@ void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
-    QString file_path = qUtils::QGetFilePath(msg.toString());
-    if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), file_path, nunchuk::ExportFormat::BSMS);
+    if(AppModel::instance()->walletInfo()) {
+        QMap<QString, QVariant> maps = msg.toMap();
+        QString export_type = maps["export_type"].toString();
+        QString export_path = maps["export_path"].toString();
+        if("bsms" == export_type){
+            if(export_path != ""){
+                bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), export_path, nunchuk::ExportFormat::BSMS);
+            }
+        }
+        else {
+            QtConcurrent::run([maps, export_path]() {
+                QList<QVariant> export_data = maps["export_data"].toList();
+                QList<QVariant> final_data;
+                final_data.clear();
+                for (const auto &item : export_data)
+                {
+                    QObject *obj = item.value<QObject *>();
+                    if (obj)
+                    {
+                        QQuickItem *grabItem = qobject_cast<QQuickItem *>(obj);
+                        if (grabItem)
+                        {
+                            QString txid = grabItem->property("txid").toString();
+                            QTransactionPtr it = AppModel::instance()->walletInfo()->transactionHistory()->getTransactionByTxid(txid);
+                            if(it && it.data()->status() == (int)ENUNCHUCK::TransactionStatus::CONFIRMED){
+                                final_data.append(grabItem->property("invoiceContent"));
+                            }
+                        }
+                    }
+                }
+                DBG_INFO << final_data.count();
+                QPDFPrinter::instance()->printInvoicesToPdf(export_path, final_data);
+            });
+        }
     }
 }
 

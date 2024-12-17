@@ -220,7 +220,7 @@ QString Transaction::txid() const {
 }
 
 QString Transaction::memo() const {
-    return QString::fromStdString(m_transaction.get_memo());;
+    return QString::fromStdString(m_transaction.get_memo());
 }
 
 void Transaction::setMemo(const QString &memo)
@@ -362,6 +362,33 @@ void Transaction::cancelTransaction()
 
 }
 
+bool Transaction::hasDraftCoinChange()
+{
+    createParentCoinTag();
+    if (m_parentCoinsTag.isNull()) return false;
+    return hasChange() && m_parentCoinsTag->count() > 0;
+}
+
+void Transaction::createParentCoinTag()
+{
+    if (!m_parentCoinsTag) {
+        m_parentCoinsTag = QCoinTagsModelPtr(new QCoinTagsModel());
+    }
+    m_parentCoinsTag->clear();
+    QList<int> tags;
+    auto inputs = bridge::nunchukGetOriginCoinsFromTxInputs(m_walletId, m_transaction.get_inputs());
+    for (nunchuk::UnspentOutput it : inputs) {
+        for (auto tag: it.get_tags()) {
+            tags.append(tag);
+        }
+    }
+    if (auto w = AppModel::instance()->walletList()->getWalletById(walletId())) {
+        m_parentCoinsTag->setChecked(w->tagsInTxAssigned());
+    }
+    m_parentCoinsTag->refreshTags(tags, m_walletId, true);
+    emit parentCoinsTagChanged();
+}
+
 bool Transaction::ImportQRTransaction(const QStringList& qrtags)
 {
     QStringList in = qrtags;
@@ -396,6 +423,60 @@ bool Transaction::ImportQRTransaction(const QStringList& qrtags)
     else{
         return false;
     }
+}
+
+QUTXOListModel* Transaction::inputCoins()
+{
+    if(!m_inputCoins){
+        m_inputCoins = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
+    }
+    std::vector<nunchuk::UnspentOutput> inputs = bridge::nunchukGetOriginCoinsFromTxInputs(m_walletId, m_transaction.get_inputs());
+    m_inputCoins->clearAll();
+    for (nunchuk::UnspentOutput it : inputs) {
+        m_inputCoins->addUTXO(it);
+    }
+    return m_inputCoins.data();
+}
+
+QUTXOListModel *Transaction::manualCoins()
+{
+    return m_manualCoins.data();
+}
+
+void Transaction::createFilteringCoinInCoinSelection()
+{
+    if (m_manualCoins.isNull()) {
+        auto newCoins = bridge::nunchukGetOriginUnspentOutputs(m_walletId);
+        m_manualCoins = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
+        for (nunchuk::UnspentOutput it : newCoins) {
+            if (!it.is_locked()) {
+                m_manualCoins->addUTXO(it);
+            }
+        }
+    }
+    for (auto old_utxo : m_inputCoins->fullList()) {
+        for (auto new_utxo : m_manualCoins->fullList()) {
+            if (old_utxo->txid() == new_utxo->txid()) {
+                new_utxo->setSelected(true);
+            }
+        }
+    }
+    emit manualCoinsChanged();
+}
+
+QUTXOListModelPtr Transaction::GetUtxoListSelected()
+{
+    QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
+    if(m_manualCoins){
+        for (int i = 0; i < m_manualCoins->rowCount(); i++) {
+            QUTXOPtr it = m_manualCoins->getUTXOByIndex(i);
+            if(it.data() && it.data()->selected()){
+                DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->getTags();
+                inputs->addUTXO(it.data()->getUnspentOutput());
+            }
+        }
+    }
+    return inputs;
 }
 
 void Transaction::setTxJson(const QJsonObject &txJs)
@@ -472,6 +553,39 @@ bool Transaction::enableCancelTransaction()
         }
     }
     return true;
+}
+
+nunchuk::TxInput Transaction::changeInfo() // rename
+{
+    return {m_transaction.get_txid(), m_transaction.get_change_index()};
+}
+
+QCoinTagsModel *Transaction::changeCoinsTag()
+{
+    if (!m_changeCoinsTag) {
+        m_changeCoinsTag = QCoinTagsModelPtr(new QCoinTagsModel());
+    }
+    // ==> Call API lib
+    nunchuk::TxInput tx_input = changeInfo();
+    std::vector<nunchuk::TxInput> tx_inputs = {tx_input};
+    // Convert sang UTXT model
+    auto inputs = bridge::nunchukGetOriginCoinsFromTxInputs(m_walletId, tx_inputs);
+    QList<int> tags;
+    for (nunchuk::UnspentOutput it : inputs) {
+        if (it.get_txid() == tx_input.first && it.get_vout() == tx_input.second){
+            for (auto tag: it.get_tags()) {
+                tags.append(tag);
+            }
+        }
+    }
+    m_changeCoinsTag->clear();
+    m_changeCoinsTag->refreshTags(tags, m_walletId, true);
+    return m_changeCoinsTag.data();
+}
+
+QCoinTagsModel *Transaction::parentCoinsTag()
+{
+    return m_parentCoinsTag.data();
 }
 
 bool Transaction::hasChange() const {
@@ -602,9 +716,9 @@ int Transaction::numberSigned()
         if(it->second) { number_signed++; }
     }
 
-    for (std::pair<std::string, nunchuk::Amount> item : m_transaction.get_inputs()) {
-        if(AppModel::instance()->utxoList()){
-            AppModel::instance()->utxoList()->updateSelected(QString::fromStdString(item.first), item.second);
+    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->utxoList()){
+        for (std::pair<std::string, nunchuk::Amount> item : m_transaction.get_inputs()) {
+            AppModel::instance()->walletInfo()->utxoList()->updateSelected(QString::fromStdString(item.first), item.second);
         }
     }
     return number_signed;
@@ -921,7 +1035,7 @@ QTransactionPtr TransactionListModel::getTransactionByIndex(const int index)
 QTransactionPtr TransactionListModel::getTransactionByTxid(const QString &txid)
 {
     foreach (QTransactionPtr i , m_data ){
-        if(txid == i.data()->txid()){
+        if(qUtils::strCompare(txid, i.data()->txid())){
             return i;
         }
     }

@@ -133,9 +133,9 @@ public:
                                QWarningMessage& msg);
 
     nunchuk::SingleSigner GetUnusedSignerFromMasterSigner( const std::string& mastersigner_id,
-                                                           const nunchuk::WalletType& wallet_type,
-                                                           const nunchuk::AddressType& address_type,
-                                                           QWarningMessage& msg);
+                                                          const nunchuk::WalletType& wallet_type,
+                                                          const nunchuk::AddressType& address_type,
+                                                          QWarningMessage& msg);
 
     std::vector<nunchuk::SingleSigner> GetSignersFromMasterSigner(const std::string& mastersigner_id,
                                                                   QWarningMessage& msg);
@@ -155,7 +155,7 @@ public:
                                           QWarningMessage& msg);
 
     nunchuk::MasterSigner GetMasterSignerFingerprint(const std::string& fingerprint,
-                                          QWarningMessage& msg);
+                                                     QWarningMessage& msg);
 
     bool DeleteMasterSigner(const std::string& mastersigner_id,
                             QWarningMessage& msg);
@@ -174,7 +174,7 @@ public:
     std::vector<nunchuk::SingleSigner> GetRemoteSigners(QWarningMessage& msg);
 
     nunchuk::SingleSigner GetRemoteSigner(const std::string& master_fingerprint,
-                                         QWarningMessage& msg);
+                                          QWarningMessage& msg);
 
     std::string GetHealthCheckPath();
 
@@ -297,9 +297,9 @@ public:
     nunchuk::Amount EstimateFee(int conf_target, QWarningMessage& msg);
 
     bool ExportUnspentOutputs( const std::string& wallet_id,
-                               const std::string& file_path,
-                               nunchuk::ExportFormat format,
-                               QWarningMessage& msg);
+                              const std::string& file_path,
+                              nunchuk::ExportFormat format,
+                              QWarningMessage& msg);
 
     bool ExportTransactionHistory(const std::string& wallet_id,
                                   const std::string& file_path,
@@ -307,9 +307,9 @@ public:
                                   QWarningMessage& msg);
 
     void DisplayAddressOnDevice( const std::string& wallet_id,
-                                 const std::string& address,
-                                 const std::string& device_fingerprint,
-                                 QWarningMessage& msg);
+                                const std::string& address,
+                                const std::string& device_fingerprint,
+                                QWarningMessage& msg);
 
     nunchuk::Amount GetAddressBalance(const std::string& wallet_id,
                                       const std::string& address,
@@ -336,15 +336,15 @@ public:
                                            QWarningMessage& msg);
 
     std::vector<std::string> ExportCoboTransaction( const std::string& wallet_id,
-                                                    const std::string& tx_id,
-                                                    QWarningMessage& msg);
+                                                   const std::string& tx_id,
+                                                   QWarningMessage& msg);
 
     nunchuk::Transaction ImportCoboTransaction(const std::string& wallet_id,
                                                const std::vector<std::string>& qr_data,
                                                QWarningMessage& msg);
 
     std::vector<std::string> ExportCoboWallet( const std::string& wallet_id,
-                                               QWarningMessage& msg);
+                                              QWarningMessage& msg);
 
 
     nunchuk::Wallet ImportCoboWallet(const std::vector<std::string>& qr_data,
@@ -352,8 +352,8 @@ public:
                                      QWarningMessage& msg);
 
     nunchuk::Wallet ImportWalletConfigFile( const std::string& file_path,
-                                            const std::string& description,
-                                            QWarningMessage& msg);
+                                           const std::string& description,
+                                           QWarningMessage& msg);
 
     nunchuk::MasterSigner CreateSoftwareSigner(const std::string& name,
                                                const std::string& mnemonic,
@@ -450,15 +450,15 @@ public:
 
     // TAPSIGNER
     nunchuk::MasterSigner ImportTapsignerMasterSigner( const std::vector<unsigned char>& data,
-                                                       const std::string& backup_key,
-                                                       const std::string& name,
-                                                       bool is_primary,
-                                                       QWarningMessage& msg);
+                                                      const std::string& backup_key,
+                                                      const std::string& name,
+                                                      bool is_primary,
+                                                      QWarningMessage& msg);
 
     void VerifyTapsignerBackup( const std::vector<unsigned char>& data,
-                                const std::string& backup_key,
-                                const std::string& master_signer_id,
-                                QWarningMessage& msg);
+                               const std::string& backup_key,
+                               const std::string& master_signer_id,
+                               QWarningMessage& msg);
 
     nunchuk::TapsignerStatus BackupTapsigner(tap_protocol::Tapsigner* tapsigner,
                                              const std::string& cvc,
@@ -497,7 +497,7 @@ public:
                                                            QWarningMessage& msg);
 
     nunchuk::SingleSigner GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id,
-                                                                  QWarningMessage& msg);
+                                                           QWarningMessage& msg);
 
     nunchuk::SingleSigner GetSigner(const std::string& xfp,
                                     const nunchuk::WalletType& wallet_type,
@@ -511,22 +511,148 @@ public:
                 QWarningMessage& msg);
 
     bool IsMyAddress(const std::string& wallet_id,
-                    const std::string& address,
-                    QWarningMessage& msg);
+                     const std::string& address,
+                     QWarningMessage& msg);
 
-    std::vector<nunchuk::UnspentOutput> GetUnspentOutputsFromTxInputs(const std::string& wallet_id, const std::vector<nunchuk::TxInput>& inputs, QWarningMessage &msg);
+    std::vector<nunchuk::UnspentOutput> GetUnspentOutputsFromTxInputs(const std::string& wallet_id,
+                                                                      const std::vector<nunchuk::TxInput>& inputs,
+                                                                      QWarningMessage &msg);
 
     std::string SignMessage(const nunchuk::SingleSigner& signer,
-                                          const std::string& message,
-                                          QWarningMessage& msg);
+                            const std::string& message,
+                            QWarningMessage& msg);
 
     std::string GetSignerAddress(const nunchuk::SingleSigner& signer,
-                                          const nunchuk::AddressType& address_type,
-                                          QWarningMessage& msg);
+                                 const nunchuk::AddressType& address_type,
+                                 QWarningMessage& msg);
 
-    std::string GetHotWalletMnemonic(const std::string& wallet_id, const std::string& passphrase, QWarningMessage& msg);
+    std::string GetHotWalletMnemonic(const std::string& wallet_id,
+                                     const std::string& passphrase,
+                                     QWarningMessage& msg);
 
-    nunchuk::Wallet CreateHotWallet(const std::string& mnemonic, const std::string& passphraser,  bool need_backup, bool replace, QWarningMessage &msg);
+    nunchuk::Wallet CreateHotWallet(const std::string& mnemonic,
+                                    const std::string& passphraser,
+                                    bool need_backup,
+                                    bool replace,
+                                    QWarningMessage &msg);
+
+    // Coin control
+    bool UpdateCoinMemo(const std::string& wallet_id,
+                        const std::string& tx_id,
+                        int vout,
+                        const std::string& memo,
+                        QWarningMessage &msg);
+
+    bool LockCoin(const std::string& wallet_id,
+                  const std::string& tx_id,
+                  int vout,
+                  QWarningMessage &msg);
+
+    bool UnlockCoin(const std::string& wallet_id,
+                    const std::string& tx_id,
+                    int vout,
+                    QWarningMessage &msg);
+
+    nunchuk::CoinTag CreateCoinTag(const std::string& wallet_id,
+                                   const std::string& name,
+                                   const std::string& color,
+                                   QWarningMessage &msg);
+
+    std::vector<nunchuk::CoinTag> GetCoinTags(const std::string& wallet_id,
+                                              QWarningMessage &msg);
+
+    bool UpdateCoinTag(const std::string& wallet_id,
+                       const nunchuk::CoinTag& tag,
+                       QWarningMessage &msg);
+
+    bool DeleteCoinTag(const std::string& wallet_id,
+                       int tag_id,
+                       QWarningMessage &msg);
+
+    bool AddToCoinTag(const std::string& wallet_id,
+                      int tag_id,
+                      const std::string& tx_id,
+                      int vout,
+                      QWarningMessage &msg);
+
+    bool RemoveFromCoinTag(const std::string& wallet_id,
+                           int tag_id,
+                           const std::string& tx_id,
+                           int vout,
+                           QWarningMessage &msg);
+
+    std::vector<nunchuk::UnspentOutput> GetCoinByTag(const std::string& wallet_id,
+                                                     int tag_id,
+                                                     QWarningMessage &msg);
+
+    nunchuk::CoinCollection CreateCoinCollection(const std::string& wallet_id,
+                                                 const std::string& name,
+                                                 QWarningMessage &msg);
+
+    std::vector<nunchuk::CoinCollection> GetCoinCollections(const std::string& wallet_id,
+                                                            QWarningMessage &msg);
+
+    bool UpdateCoinCollection(const std::string& wallet_id,
+                              const nunchuk::CoinCollection& collection,
+                              bool apply_to_existing_coins,
+                              QWarningMessage &msg);
+
+    bool DeleteCoinCollection(const std::string& wallet_id,
+                              int collection_id,
+                              QWarningMessage &msg);
+
+    bool AddToCoinCollection(const std::string& wallet_id,
+                             int collection_id,
+                             const std::string& tx_id,
+                             int vout,
+                             QWarningMessage &msg);
+
+    bool RemoveFromCoinCollection(const std::string& wallet_id,
+                                  int collection_id,
+                                  const std::string& tx_id,
+                                  int vout,
+                                  QWarningMessage &msg);
+
+    std::vector<nunchuk::UnspentOutput> GetCoinInCollection(const std::string& wallet_id,
+                                                            int collection_id,
+                                                            QWarningMessage &msg);
+
+    std::string ExportCoinControlData(const std::string& wallet_id,
+                                      QWarningMessage &msg);
+
+    bool ImportCoinControlData(const std::string& wallet_id,
+                               const std::string& data,
+                               bool force,
+                               QWarningMessage &msg);
+
+    std::vector<std::vector<nunchuk::UnspentOutput>> GetCoinAncestry(const std::string& wallet_id,
+                                                            const std::string& tx_id,
+                                                            int vout,
+                                                            QWarningMessage &msg);
+
+
+    std::string ExportBIP329(const std::string& wallet_id,
+                             QWarningMessage &msg);
+    void ImportBIP329(const std::string& wallet_id,
+                      const std::string& data,
+                      QWarningMessage &msg);
+
+    std::string GetAddressPath(const std::string& wallet_id,
+                               const std::string& address,
+                               QWarningMessage &msg);
+
+    bool MarkAddressAsUsed(const std::string& wallet_id,
+                           const std::string& address,
+                           QWarningMessage &msg);
+
+    std::vector<nunchuk::UnspentOutput> GetCoinsFromTxInputs(
+        const std::string& wallet_id,
+        const std::vector<nunchuk::TxInput>& inputs,
+        QWarningMessage &msg);
+
+    std::vector<nunchuk::UnspentOutput> GetCoins(
+        const std::string& wallet_id,
+        QWarningMessage &msg);
 
     void VerifyColdcardBackup(const std::vector<unsigned char>& data,
                               const std::string& backup_key,

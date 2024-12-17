@@ -850,7 +850,7 @@ QString qUtils::SignPsbt(const QString &hwi_path, const nunchuk::Device &device,
     return ret;
 }
 
-QString qUtils::ImportPsbtViaFile(const QString &filepath)
+QString qUtils::ImportDataViaFile(const QString &filepath)
 {
     if (QFile::exists(filepath)) {
         QFile file(filepath);
@@ -864,13 +864,13 @@ QString qUtils::ImportPsbtViaFile(const QString &filepath)
     return "";
 }
 
-void qUtils::ExportPsbtViaFile(const QString &filepath, const QString &psbt)
+void qUtils::ExportDataViaFile(const QString &filepath, const QString &data)
 {
     QFile file(filepath);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream st(&file);
         st.setCodec("UTF-8");
-        st << psbt << endl;
+        st << data << endl;
         st.flush();
         file.close();
     }

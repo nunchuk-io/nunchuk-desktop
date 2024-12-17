@@ -148,30 +148,32 @@ QStringList QWalletDummyTx::ExportPsbtViaQR(const QString& request_body, QWarnin
     return {};
 }
 
-QString QWalletDummyTx::ImportPsbtViaFile(const QString &filepath)
+QStringList QWalletDummyTx::ExportPsbtViaBBQR(const QString &request_body, QWarningMessage &msg)
 {
-    if (QFile::exists(filepath)) {
-        QFile file(filepath);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            QString fileContent = in.readAll();
-            file.close();
-            return fileContent;
+    nunchuk::Wallet wallet = bridge::nunchukGetOriginWallet(wallet_id(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        msg.resetWarningMessage();
+        QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, request_body, msg);
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+            msg.resetWarningMessage();
+            QStringList qrtags = qUtils::ExportBBQRTransaction(tx_to_sign, msg);
+            if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+                msg.resetWarningMessage();
+                return qrtags;
+            }
         }
     }
-    return "";
+    return {};
+}
+
+QString QWalletDummyTx::ImportPsbtViaFile(const QString &filepath)
+{
+    return qUtils::ImportDataViaFile(filepath);
 }
 
 void QWalletDummyTx::ExportPsbtViaFile(const QString &filepath)
 {
-    QFile file(filepath);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream st(&file);
-        st.setCodec("UTF-8");
-        st << transactionPtr()->psbt() << endl;
-        st.flush();
-        file.close();
-    }
+    qUtils::ExportDataViaFile(filepath, transactionPtr()->psbt());
 }
 
 QJsonObject QWalletDummyTx::nonceBody() const

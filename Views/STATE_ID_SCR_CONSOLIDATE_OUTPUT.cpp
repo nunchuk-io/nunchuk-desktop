@@ -40,71 +40,8 @@ void EVT_CONSOLIDATE_BACK_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_CONSOLIDATE_MAKE_TRANSACTION_HANDLER(QVariant msg) {
-    QString toAddress = msg.toMap().value("toAddress").toString();
-    QString destinationMemo    = msg.toMap().value("destinationMemo").toString();
-    qint64 toAmount = 0;
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
-        QString amountStr = msg.toMap().value("toAmount").toString();
-        amountStr.remove(",");
-        toAmount = amountStr.toInt();
-    }
-    else{
-        toAmount = qUtils::QAmountFromValue(msg.toMap().value("toAmount").toString());
-    }
-    QDestinationListModelPtr destinationList = QDestinationListModelPtr(new DestinationListModel());
-    destinationList.data()->addDestination( toAddress, toAmount);
-    AppModel::instance()->setDestinationList(destinationList);
-    QUTXOListModelPtr inputs = QUTXOListModelPtr(new UTXOListModel());
-    if(AppModel::instance()->utxoList()){
-        for (int i = 0; i < AppModel::instance()->utxoList()->rowCount(); i++) {
-            QUTXOPtr it = AppModel::instance()->utxoList()->getUTXOByIndex(i);
-            if(it.data() && it.data()->selected()){
-                DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->amountSats();
-                inputs->addUTXO(it.data()->txid(),
-                                it.data()->vout(),
-                                it.data()->address(),
-                                it.data()->amountSats(),
-                                it.data()->height(),
-                                it.data()->memo(),
-                                it.data()->status());
-            }
-        }
-    }
-
-    QMap<QString, qint64> outputs;
-    if(AppModel::instance()->destinationList()){
-        outputs = AppModel::instance()->destinationList()->getOutputs();
-        DBG_INFO << "Destination:" << outputs;
-    }
-
-    QString wallet_id = "";
-    if(AppModel::instance()->walletInfo()){
-        wallet_id = AppModel::instance()->walletInfo()->id();
-    }
-    bool subtractFromFeeAmout = true;
-
-    DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output: false" << "| manual Fee:" << true << "| free rate:" << -1;
-    QWarningMessage msgwarning;
-    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
-                                                            outputs,
-                                                            inputs,
-                                                            -1,
-                                                            subtractFromFeeAmout,
-                                                            "",
-                                                            msgwarning);
-    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-        if(trans){
-            QString memo = "";
-            if(AppModel::instance()->transactionInfo()){
-                memo = AppModel::instance()->transactionInfo()->memo();
-            }
-            AppModel::instance()->setTransactionInfo(trans);
-            AppModel::instance()->transactionInfo()->setMemo(memo);
-            QEventProcessor::instance()->sendEvent(E::EVT_CONSOLIDATE_MAKE_TRANSACTION_SUCCEED);
-        }
-    }
-    else{
-        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+    if(auto w = AppModel::instance()->walletInfo()){
+        w->CreateDraftTransaction(E::EVT_CONSOLIDATE_MAKE_TRANSACTION_SUCCEED, msg);
     }
 }
 

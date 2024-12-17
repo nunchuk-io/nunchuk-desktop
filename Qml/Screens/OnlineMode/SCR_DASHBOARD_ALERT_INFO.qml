@@ -43,8 +43,8 @@ QScreen {
     property int flow: AppModel.walletInfo.flow
     property string config_flow: GroupWallet.dashboardInfo.configFlow
     readonly property var map_flow: [
-        {flow_action: AlertType.GROUP_WALLET_PENDING,        screen_component: _wallet_creation_pending},
-        {flow_action: AlertType.WALLET_PENDING,              screen_component: _wallet_creation_pending},
+        {flow_action: AlertType.GROUP_WALLET_PENDING,        screen_component: _group_wallet_creation_pending},
+        {flow_action: AlertType.WALLET_PENDING,              screen_component: _user_wallet_creation_pending},
         {flow_action: AlertType.GROUP_WALLET_SETUP,          screen_component: _wallet_setup},
         {flow_action: AlertType.UPDATE_SERVER_KEY,           screen_component: _platform_key_policy_change},
         {flow_action: AlertType.HEALTH_CHECK_PENDING,        screen_component: _health_check_pending},
@@ -83,8 +83,14 @@ QScreen {
         sourceComponent: map_flow.find(function(e) {if (e.flow_action === flow) return true; else return false}).screen_component
     }
     Component {
-        id: _wallet_creation_pending
+        id: _group_wallet_creation_pending
         QWalletCreationPending {}
+    }
+    Component {
+        id: _user_wallet_creation_pending
+        QWalletCreationPending {
+            isRead: true
+        }
     }
     Component {
         id: _register_gapped_device

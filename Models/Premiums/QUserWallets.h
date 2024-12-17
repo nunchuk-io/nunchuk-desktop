@@ -32,14 +32,21 @@
 class QUserWallets : public QAssistedDraftWallets
 {
     Q_OBJECT
+    Q_PROPERTY(QGroupDashboard* dashboardInfo       READ dashboardInfo                          NOTIFY dashboardInfoChanged)
 public:
     QUserWallets();
     ~QUserWallets();
     static QUserWallets *instance();
     void GetDraftWallet();
 
+    QGroupDashboard* dashboardInfo();
     QGroupDashboardPtr dashboardInfoPtr();
     bool hasDraftWallet(const QString& group_id);
+signals:
+    void dashboardInfoChanged();
+    void makeDashBoard(const QJsonObject& info);
+public slots:
+    void slotMakeDashBoard(const QJsonObject& info);
 private:
     QGroupDashboardPtr          mDashboard {};
 };

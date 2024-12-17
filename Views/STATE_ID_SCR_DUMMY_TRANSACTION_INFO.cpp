@@ -133,6 +133,25 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
                 dummy->requestForceSyncTx(w->groupId(), w->id(), dummy->tx_id());
             }
         }
+        else if (type == "dummy-tx-export-bbqr") {
+            AppModel::instance()->setQrExported(QStringList());
+            QWarningMessage msgwarning;
+            QStringList qrtags {};
+            if (auto dummy = w->groupDummyTxPtr()) {
+                if (AppModel::instance()->isSignIn()) {
+                    qrtags = AppModel::instance()->ExportPsbtViaBBQR();
+                }
+                else {
+                    qrtags = dummy->ExportPsbtViaBBQR(msgwarning);
+                }
+            }
+            if(!qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+            }
+        }
         else{}
     }
 }

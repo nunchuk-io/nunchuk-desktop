@@ -263,6 +263,15 @@ public:
                                                      QJsonObject& output,
                                                      QString &errormsg);
 
+    // Coin control
+    bool GetCoinControl(const QString &group_id, const QString &wallet_id, QJsonObject& output, QString &errormsg);
+    bool UpdateCoinControl(const QString &group_id, const QString &wallet_id, const QString& data, QJsonObject& output, QString &errormsg);
+
+    bool ReplacementDownloadBackupFile(const QString& group_id, const QString& wallet_id, const QString& xfp, const QString& passwordToken, QJsonObject& output, QString& errormsg);
+    bool ReplacementUploadBackupFile(const QString& group_id, const QString& wallet_id, const QString& passwordToken, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
+    bool DraftWalletDownloadBackupFile(const QString& group_id, const QString& xfp, QJsonObject& output, QString& errormsg);
+    bool DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
+
 };
 
 #endif // BYZANTINE_H

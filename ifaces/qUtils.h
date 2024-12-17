@@ -165,9 +165,9 @@ std::vector<nunchuk::Device> GetDevices(const QString& hwi_path, QWarningMessage
 
 QString SignPsbt(const QString& hwi_path, const nunchuk::Device& device, const QString& psbt, QWarningMessage &msg);
 
-QString ImportPsbtViaFile(const QString &filepath);
+QString ImportDataViaFile(const QString &filepath);
 
-void ExportPsbtViaFile(const QString &filepath, const QString &psbt);
+void ExportDataViaFile(const QString &filepath, const QString &data);
 
 bool isValidXPRV(const QString& xprv, QWarningMessage& msg);
 }

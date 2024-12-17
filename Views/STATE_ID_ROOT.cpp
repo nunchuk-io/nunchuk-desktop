@@ -57,13 +57,6 @@ void EVT_ONS_CLOSE_REQUEST_HANDLER(QVariant msg) {
     case E::STATE_ID_SCR_TRANSACTION_INFO :
     {
         AppModel::instance()->setTransactionInfo(NULL);
-        AppModel::instance()->setUtxoInfo(QUTXOPtr(new UTXO()));
-    }
-        break;
-    case E::STATE_ID_SCR_UTXOS :
-    case E::STATE_ID_SCR_UTXO_OUTPUT :
-    {
-        AppModel::instance()->setUtxoInfo(QUTXOPtr(new UTXO()));
     }
         break;
     default:
@@ -140,13 +133,6 @@ void EVT_ONLINE_ONS_CLOSE_REQUEST_HANDLER(QVariant msg) {
     case E::STATE_ID_SCR_TRANSACTION_INFO :
     {
         AppModel::instance()->setTransactionInfo(NULL);
-        AppModel::instance()->setUtxoInfo(QUTXOPtr(new UTXO()));
-    }
-        break;
-    case E::STATE_ID_SCR_UTXOS :
-    case E::STATE_ID_SCR_UTXO_OUTPUT :
-    {
-        AppModel::instance()->setUtxoInfo(QUTXOPtr(new UTXO()));
     }
         break;
     default:
@@ -320,4 +306,19 @@ void EVT_EDIT_MEMBERS_REQUEST_HANDLER(QVariant msg) {
         dashboard->initMembers();
     }
 }
+
+void EVT_COIN_DETAILS_CONTROL_REQUEST_HANDLER(QVariant msg) {
+    if (auto w = AppModel::instance()->walletInfoPtr()) {
+        w->RequestCoinScreen(msg);
+    }
+}
+
+void EVT_UTXOS_CONSOLIDATE_REQUEST_HANDLER(QVariant msg) {
+
+}
+
+void EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
+
+}
+
 

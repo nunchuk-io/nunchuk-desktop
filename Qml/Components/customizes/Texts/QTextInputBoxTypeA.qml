@@ -23,8 +23,8 @@ import "../../origins"
 
 TextField {
     id: editbox
-    property var borderColor: "#FFFFFF"
-    property var backgroundColor: "#DEDEDE"
+    property string borderColor: "#FFFFFF"
+    property string backgroundColor: "#DEDEDE"
     property int borderRadius: 8
     property bool showEdit: true
     clip: true

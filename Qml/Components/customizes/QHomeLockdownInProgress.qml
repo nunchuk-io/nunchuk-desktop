@@ -66,7 +66,7 @@ Item {
                 QImage {
                     anchors.centerIn: parent
                     width: 60; height: 60;
-                    source: "qrc:/Images/Images/lock-dark.svg"
+                    source: "qrc:/Images/Images/lock-red.svg"
                 }
                 anchors.horizontalCenter: parent.horizontalCenter
             }

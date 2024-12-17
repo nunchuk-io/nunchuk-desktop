@@ -32,6 +32,7 @@ Item {
     property alias label: screenname
     property alias closebutton: closeButton
     property alias extraHeader: extraHeaderInfo.sourceComponent
+    property alias extraTop: extraTopInfo.sourceComponent
     property alias content: contentInfo.sourceComponent
     property alias bottomLeft: botLeft.sourceComponent
     property alias bottomRight: botRight.sourceComponent
@@ -40,6 +41,11 @@ Item {
     property bool enableHeader: true
     property bool hasClose: true
     property int  offset: 36
+    property int  offsetTop: 36
+    property int  offsetBottom: 36
+    property int  offsetLeft: 36
+    property int  offsetRight: 36
+    property bool sameOffset: true
     property bool isShowLine: false
     property int  minWidth: -1
     signal closeClicked()
@@ -60,6 +66,11 @@ Item {
                 radius: 24
             }
         }
+        Loader {
+            id: extraTopInfo
+            height: extraTopInfo.sourceComponent ? extraTopInfo.item.height : 0
+            anchors.top: parent.top
+        }
     }
     DropShadow {
         anchors.fill: mask
@@ -71,12 +82,17 @@ Item {
         source: mask
     }
     Item {
-        anchors.fill: parent
-        anchors.margins: offset
+        anchors {
+            fill: parent
+            leftMargin: sameOffset ? offset : offsetLeft
+            rightMargin: sameOffset ? offset : offsetRight
+            topMargin: sameOffset ? offset : offsetTop
+            bottomMargin: sameOffset ? offset : offsetBottom
+        }
         Column {
             spacing: 16
             Item {
-                width: root.width - offset*2 + 12
+                width: root.width - (sameOffset ? offset : offsetLeft) - (sameOffset ? offset : offsetRight) + 12
                 height: childrenRect.height
                 Row {
                     spacing: 8
@@ -98,12 +114,12 @@ Item {
             }
             Loader {
                 id: contentInfo
-                width: root.width - offset*2
-                height: root.height - offset*2 - 40 - 16 - 18 - 48
+                width: root.width - (sameOffset ? offset : offsetLeft) - (sameOffset ? offset : offsetRight)
+                height: root.height - (sameOffset ? offset : offsetTop) - (sameOffset ? offset : offsetBottom) - 40 - 16 - 18 - 48
             }
         }
         Item {
-            width: root.width - offset*2
+            width: root.width - (sameOffset ? offset : offsetLeft) - (sameOffset ? offset : offsetRight)
             height: 48
             anchors.bottom: parent.bottom
             Loader{
@@ -119,6 +135,7 @@ Item {
     QCloseButton {
         id: closeButton
         visible: enableHeader && hasClose
+        bgColor: "transparent"
         anchors {
             right: parent.right
             rightMargin: 24

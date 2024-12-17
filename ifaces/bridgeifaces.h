@@ -496,7 +496,9 @@ QTransactionListModelPtr nunchukGetTransactionHistory(const QString& wallet_id, 
 
 std::vector<nunchuk::Transaction> nunchukGetOriginTransactionHistory(const QString& wallet_id, int count = 1000, int skip = 0);
 
-QUTXOListModelPtr nunchukGetUnspentOutputs(const QString& walletId);
+QUTXOListModelPtr nunchukGetUnspentOutputs(const QString& wallet_id);
+
+QUTXOListModelPtr nunchukLockedGetUnspentOutputs(const QString& wallet_id);
 
 int nunchukGetChainTip();
 
@@ -709,6 +711,106 @@ QString GetSignerAddress(const nunchuk::SingleSigner& signer,
 QString GetHotWalletMnemonic(const QString& wallet_id, const QString& passphrase);
 
 QWalletPtr nunchukCreateHotWallet(const QString &mnemonic, const QString& passphrase, bool need_backup, bool replace, QWarningMessage &msg);
+
+std::vector<nunchuk::CoinCollection> nunchukGetCoinCollections(const std::string& wallet_id);
+
+std::vector<nunchuk::CoinTag> nunchukGetCoinTags(const std::string& wallet_id);
+
+bool nunchukImportCoinControlData(const QString& wallet_id,
+                                  const QString& data,
+                                  bool force,
+                                  QWarningMessage &msg);
+
+QString nunchukExportCoinControlData(const QString& wallet_id,
+                                     QWarningMessage &msg);
+
+QUTXOListModelPtr nunchukGetCoinInCollection(const QString& wallet_id,
+                                             int collection_id);
+
+QUTXOListModelPtr nunckGetCoinByTag(const QString& wallet_id,
+                                    int tag_id);
+
+bool nunchukCreateCoinTag(const QString& wallet_id,
+                          const QString& name,
+                          const QString& color);
+
+bool nunchukUpdateCoinTag(const QString& wallet_id,
+                          const nunchuk::CoinTag& tag);
+
+bool nunchukUpdateCoinCollection(const QString& wallet_id,
+                                const nunchuk::CoinCollection &collection,
+                                bool apply_to_existing_coins);
+
+nunchuk::CoinCollection nunchukCreateCoinCollection(const QString& wallet_id,
+                                 const QString& name);
+
+bool nunchukAddToCoinCollection(const QString& wallet_id,
+                              int collection_id,
+                              const QString& tx_id,
+                              int vout);
+
+bool nunchukDeleteCoinCollection(const QString& wallet_id,
+                                int collection_id);
+
+bool nunchukDeleteCoinTag(const QString& wallet_id,
+                          int tag_id);
+
+bool nunchukAddToCoinTag(const QString& wallet_id,
+                         int tag_id,
+                         const QString& tx_id,
+                         int vout);
+
+bool nunchukRemoveFromCoinTag(const QString& wallet_id,
+                              int tag_id,
+                              const QString& tx_id,
+                              int vout);
+
+bool nunchukRemoveFromCoinCollection(const QString& wallet_id,
+                              int collection_id,
+                              const QString& tx_id,
+                              int vout);
+
+bool nunchukUpdateCoinMemo(const QString& wallet_id,
+                           const QString& tx_id,
+                           int vout,
+                           const QString& memo);
+
+bool nunchukLockCoin(const QString &wallet_id,
+                     const QString &tx_id,
+                     int vout);
+
+bool nunchukUnlockCoin(const QString& wallet_id,
+                       const QString& tx_id,
+                       int vout);
+
+std::vector<nunchuk::UnspentOutput> nunchukGetCoinByTag(const QString& wallet_id,
+                                                        int tag_id);
+
+std::vector<nunchuk::UnspentOutput> nunchukGetCoinByCollection(const QString& wallet_id,
+                                                        int collection_id);
+
+QList<QUTXOListModel*> nunchukGetCoinAncestry(const QString& wallet_id,
+                                              const QString& tx_id,
+                                              int vout);
+
+QString nunchukExportBIP329(const QString& wallet_id,
+                         QWarningMessage &msg);
+void nunchukImportBIP329(const QString& wallet_id,
+                  const QString& data,
+                  QWarningMessage &msg);
+
+QString nunchukGetAddressPath(const QString& wallet_id,
+                              const QString& address);
+
+bool nunchukMarkAddressUsed(const QString& wallet_id,
+                            const QString& address);
+
+std::vector<nunchuk::UnspentOutput> nunchukGetOriginCoinsFromTxInputs(const QString &walletId,
+                                              const std::vector<nunchuk::TxInput> &inputs);
+
+std::vector<nunchuk::UnspentOutput> nunchukGetOriginCoins(const QString &walletId);
+
+std::vector<nunchuk::UnspentOutput> nunchukGetOriginUnspentOutputs(const QString &walletId);
 
 QMasterSignerPtr ImportBackupKey( const std::vector<unsigned char>& data,
                                  const QString& backup_key,

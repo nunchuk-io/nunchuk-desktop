@@ -30,7 +30,7 @@ QOnScreenContent {
     signal prevClicked()
     property bool nextEnable: true
     bottomLeft: QTextButton {
-        width: 120
+        width: 80
         height: 48
         label.text: STR.STR_QML_245
         label.font.pixelSize: 16

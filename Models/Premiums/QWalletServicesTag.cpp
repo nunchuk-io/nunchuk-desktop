@@ -336,11 +336,6 @@ bool QWalletServicesTag::lockdownBySignDummyTx()
     return ret;
 }
 
-nunchuk::Wallet QWalletServicesTag::getWallet() const
-{
-    return m_wallet;
-}
-
 QString QWalletServicesTag::untilTime() const
 {
     return m_untilTime;
@@ -568,10 +563,9 @@ bool QWalletServicesTag::inheritanceCreateTx(const QJsonObject& data, const QStr
 void QWalletServicesTag::setInheritanceAddress(const QString& to_wallet_id)
 {
     QWalletPtr ptr = AppModel::instance()->walletList()->getWalletById(to_wallet_id);
-    if (!ptr) return;
-    ServiceSetting::instance()->setWalletInfo(ptr);
-    if(AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+    if(!ptr.isNull()){
+        ServiceSetting::instance()->setWalletInfo(ptr);
+        QString wallet_id = ptr->id();
         QStringList addrs = bridge::nunchukGetUnusedAddresses(wallet_id, false);
         if (addrs.size() > 0) {
             mInheritance.m_destinationAddress = addrs.first();

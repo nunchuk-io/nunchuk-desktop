@@ -226,6 +226,18 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     }
+    else if (type == "open-import-encrypted-backup") {
+        AppModel::instance()->setAddSignerPercentage(0);
+    }
+    else if (type == "import-encrypted-backup") {
+        QString currentFile = maps["currentFile"].toString();
+        QString xfp = maps["fingerPrint"].toString();
+        if (dashboard->canReplaceKey()) {
+            dashboard->ReplacementUploadBackupFile(xfp, currentFile);
+        } else {
+            dashboard->DraftWalletUploadBackupFile(xfp, currentFile);
+        }
+    }
     else {}
 }
 

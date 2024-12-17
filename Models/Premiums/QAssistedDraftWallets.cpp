@@ -138,14 +138,13 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
                 if (!hardware.mTag.isEmpty()) {
                     tags.append(hardware.mTag);
                 }
-
-                data["name"] = single->name() != "" ? single->name() : titleCase(hardware.mTag);
+                auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
+                data["name"] = dash.isNull() ? (single->name() != "" ? single->name() : titleCase(hardware.mTag)) : dash->generateName({hardware.mTag});
                 data["xfp"] = single->masterFingerPrint();
                 data["derivation_path"] = single->derivationPath();
                 data["xpub"] = single->xpub();
                 data["pubkey"] = single->publickey();
                 data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
-                auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
                 if (dash) {
                     if (dash->allowInheritance()) { // Request from Alert DashBoard
                         if (dash->nInfo() == 4 && hardware.mKeyIndex == 0) {
@@ -176,7 +175,7 @@ bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardwar
                     ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
                     DBG_INFO << ret << isDuplicateKey;
                 } else {
-                    if (dash && dash->isDraftWallet()) {
+                    if (dash && dash->isUserDraftWallet()) {
                         ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
                     } else {
                         ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
@@ -218,15 +217,14 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
         if (!hardware.mTag.isEmpty()) {
             tags.append(hardware.mTag);
         }
-
+        auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
         QString name = QString::fromStdString(keyresued.get_name());
-        data["name"]            = name != "" ? name : titleCase(hardware.mTag);
+        data["name"]            = dash.isNull() ? (name != "" ? name : titleCase(hardware.mTag)) : dash->generateName({hardware.mTag});
         data["xfp"]             = QString::fromStdString(keyresued.get_master_fingerprint());
         data["derivation_path"] = QString::fromStdString(keyresued.get_derivation_path());
         data["xpub"]            = QString::fromStdString(keyresued.get_xpub());
         data["pubkey"]          = QString::fromStdString(keyresued.get_public_key());
         data["type"]            = qUtils::GetSignerTypeString(keyresued.get_type());
-        auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
         if (dash) {
             if (dash->allowInheritance()) { // Request from Alert Dasboard
                 if (dash->nInfo() == 4 && hardware.mKeyIndex == 0) {
@@ -258,7 +256,7 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
             DBG_INFO << ret << isDuplicateKey << "Honybadger/IronHand";
         }
         else {
-            if (dash && dash->isDraftWallet()) {
+            if (dash && dash->isUserDraftWallet()) {
                 ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
                 DBG_INFO << ret << isDuplicateKey << "Honybadger/IronHand";
             } else {
@@ -469,13 +467,13 @@ bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
                     tags.append(tag);
                 }
             }
-            data["name"] = single->name() != "" ? single->name() : titleCase(single->tag());
+            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
+            data["name"] = dashboard.isNull() ? (single->name() != "" ? single->name() : titleCase(single->tag())) : dashboard->generateName({single->tag()});
             data["xfp"] = single->masterFingerPrint();
             data["derivation_path"] = single->derivationPath();
             data["xpub"] = single->xpub();
             data["pubkey"] = single->publickey();
             data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
-            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
             if (dashboard.isNull()) return false;
             if (dashboard->isInheritance() || hardware.mTags.contains("INHERITANCE")) { // Request receive from Mobile Banner
                 tags.append("INHERITANCE");

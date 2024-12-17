@@ -23,10 +23,10 @@ import "../../customizes/Texts"
 QBaseButton {
     id: idBtn
     property string label: "Value"
-    property int fontPixelSize: 16
-    property alias iconSize: idIcon.iconSize
-    property bool iconInRight: false
-    property alias icons : idIcon.icons
+    property int    fontPixelSize: 16
+    property alias  iconSize: idIcon.iconSize
+    property bool   iconInRight: false
+    property alias  icons : idIcon.icons
     QBackgroundState {
         anchors.fill: parent
     }

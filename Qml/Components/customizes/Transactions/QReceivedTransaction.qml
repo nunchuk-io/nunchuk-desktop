@@ -39,6 +39,8 @@ Rectangle {
     color: "#FFFFFF"
     border.color: "#EAEAEA"
     property var transactionInfo
+    property bool isDummy: false
+
     signal newMemoNotify(var newMemo)
     layer.enabled: true
     layer.effect: OpacityMask {
@@ -142,30 +144,11 @@ Rectangle {
                     }
                 }
             }
-            Rectangle {
-                width: parent.width
-                height: 1
-                anchors.right: parent.right
-                color: "#C9DEF1"
-            }
-            Item {
-                width: parent.width
-                height: memodisplay.height
-                clip: true
-                QTextInputBox {
-                    id: memodisplay
-                    textOutput: transactionInfo.memo
-                    placeholder.text: STR.STR_QML_218
-                    color: "transparent"
-                    width: parent.width
-                    heightMin: 64
-                    botomLineVisible: false
-                    mode: ePREVIEW_MODE
-                    onTypingFinished: {
-                        if(currentText !== transactionInfo.memo && currentText !== ""){
-                            newMemoNotify(currentText)
-                        }
-                    }
+            QTransactionNoteBlock {
+                id: transationNote
+                visible: !isDummy
+                onMemoNotify: {
+                    newMemoNotify(newMemo)
                 }
             }
         }

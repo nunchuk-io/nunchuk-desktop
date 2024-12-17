@@ -133,6 +133,7 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
                 matrixbrigde::BroadcastTransaction(room->id(),
                                                    init_event_id,
                                                    msgwarning);
+                DBG_INFO << wallet_id << init_event_id << msgwarning.type();
                 if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                     if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
                         QEventProcessor::instance()->sendEvent(E::EVT_ONLINE_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
@@ -152,8 +153,12 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
         else{
             QWarningMessage msgwarning;
             QTransactionPtr trans = bridge::nunchukBroadcastTransaction(wallet_id, AppModel::instance()->transactionInfo()->txid(), msgwarning);
+            DBG_INFO << wallet_id << AppModel::instance()->transactionInfo()->txid() << msgwarning.type();
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                 if(trans){
+                    if (auto wallet = AppModel::instance()->walletList()->getWalletById(wallet_id)) {
+                        wallet.data()->AssignTagsToTxChange();
+                    }
                     AppModel::instance()->setTransactionInfo(trans);
                     AppModel::instance()->showToast(0, STR_CPP_085, EWARNING::WarningType::SUCCESS_MSG);
                 }
@@ -261,15 +266,29 @@ void EVT_TRANSACTION_PROMT_PIN_REQUEST_HANDLER(QVariant msg) {
 void EVT_TRANSACTION_EXPORT_QRCODE_HANDLER(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
     if(AppModel::instance()->walletInfo() && AppModel::instance()->transactionInfo()){
+        QString qrtype = msg.toMap().value("qrtype").toString();;
+        DBG_INFO << qrtype;
         QWarningMessage msgwarning;
-        QStringList qrtags = bridge::nunchukExportQRTransaction(AppModel::instance()->walletInfo()->id(),
-                                                                AppModel::instance()->transactionInfo()->txid(),
-                                                                msgwarning);
-        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
-            AppModel::instance()->setQrExported(qrtags);
-        }
-        else{
-            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+
+        if(qUtils::strCompare(qrtype, "QR-transaction")){
+            QStringList qrtags = bridge::nunchukExportQRTransaction(AppModel::instance()->walletInfo()->id(),
+                                                                    AppModel::instance()->transactionInfo()->txid(),
+                                                                    msgwarning);
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+            }
+        } else if(qUtils::strCompare(qrtype, "BBQR-transaction")){
+            QStringList qrtags = qUtils::ExportBBQRTransaction(AppModel::instance()->transactionInfo()->psbt(), msgwarning);
+            DBG_INFO << qrtags;
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+                AppModel::instance()->setQrExported(qrtags);
+            }
+            else{
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+            }
         }
     }
 }

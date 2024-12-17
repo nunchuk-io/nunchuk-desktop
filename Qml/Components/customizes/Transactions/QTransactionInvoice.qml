@@ -32,289 +32,172 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
-Popup {
-    id: invoicePopup
-    width: parent.width
-    height: parent.height
-    modal: true
-    focus: true
-    background: Item{}
-    property bool isRecieveTx: AppModel.transactionInfo.isReceiveTx
-    QOnScreenContent {
-        id: contenCenter
-        width: 800
-        height: 700
-        anchors.centerIn: parent
-        label.text: "Invoice"
-        isShowLine: true
-        extraHeader:Item {}
-        bottomLeft:  Item {}
-        bottomRight: Row {
-            spacing: 12
-            QTextButton {
-                width: 100
-                height: 48
-                label.text: "Save PDF"
-                label.font.pixelSize: 16
-                type: eTypeB
-                onButtonClicked: {
-                    exportPDF.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/Transaction_"
-                            + AppModel.transactionInfo.txid
-                            + ".pdf"
-                    exportPDF.open()
+Rectangle {
+    id: invoiceElement
+    property string txid            : ""
+    property string total           : ""
+    property string subtotal        : ""
+    property string blocktime       : ""
+    property string fee             : ""
+    property string memo            : ""
+    property bool   hasChange       : false
+    property string changeAmount    : ""
+    property string changeAddress   : ""
+    property bool   isRecieveTx     : false
+    property alias  destinations    : destlist.model
+    property alias  interactive     : invoiceFlick.interactive
+    property alias  invoiceContent  : contentDisplay
+
+    width: 728
+    height: 496
+    radius: 12
+    color: "#F5F5F5"
+    Flickable {
+        id: invoiceFlick
+        anchors.fill: parent
+        anchors.margins: 16
+        anchors.horizontalCenter: parent.horizontalCenter
+        clip: true
+        flickableDirection: Flickable.VerticalFlick
+        interactive: true
+        contentHeight: contentDisplay.height
+        ScrollBar.vertical: ScrollBar { visible: interactive; active: interactive }
+        Column {
+            id: contentDisplay
+            width: parent.width // MUST
+            height: childrenRect.height
+            spacing: 16
+            Column {
+                width: parent.width
+                spacing: 4
+                QText {
+                    font.family: "Lato"
+                    color: "#031F2B"
+                    font.pixelSize: 16
+                    text: isRecieveTx ? "Amount receive" : "Amount sent"
+                }
+                QText {
+                    font.family: "Lato"
+                    color: "#031F2B"
+                    font.pixelSize: 24
+                    font.weight: Font.DemiBold
+                    text: {
+                        return qsTr("%1 %2").arg(isRecieveTx ? invoiceElement.subtotal : invoiceElement.total)
+                        .arg(RoomWalletData.unitValue)
+                    }
+                }
+                QText {
+                    font.family: "Lato"
+                    color: "#031F2B"
+                    font.pixelSize: 16
+                    text: invoiceElement.blocktime
                 }
             }
-        }
-        onCloseClicked: {
-            invoicePopup.close()
-        }
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: 764
-                height: 700
-                radius: 24
-            }
-        }
-        Rectangle {
-            width: 728
-            height: 496
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: -2
-            radius: 12
-            color: "#F5F5F5"
-            Flickable {
-                id: invoiceFlick
-                anchors.fill: parent
-                anchors.margins: 16
-                anchors.horizontalCenter: parent.horizontalCenter
-                clip: true
-                flickableDirection: Flickable.VerticalFlick
-                interactive: true
-                contentHeight: contentDisplay.height
-                ScrollBar.vertical: ScrollBar { active: true }
-                Column {
-                    id: contentDisplay
+            Column {
+                width: parent.width
+                Rectangle {
                     width: parent.width
-                    spacing: 16
-                    Column {
-                        width: parent.width
-                        spacing: 4
-                        QText {
-                            font.family: "Lato"
-                            color: "#031F2B"
-                            font.pixelSize: 16
-                            text: isRecieveTx ? "Amount receive" : "Amount sent"
-                        }
-                        QText {
-                            font.family: "Lato"
-                            color: "#031F2B"
-                            font.pixelSize: 24
-                            font.weight: Font.DemiBold
-                            text: {
-                                return qsTr("%1 %2").arg(isRecieveTx ? AppModel.transactionInfo.subtotal : AppModel.transactionInfo.total)
-                                                    .arg(RoomWalletData.unitValue)
-                            }
-                        }
-                        QText {
-                            font.family: "Lato"
-                            color: "#031F2B"
-                            font.pixelSize: 16
-                            text: AppModel.transactionInfo.blocktime
-                        }
+                    height: 48
+                    color: "#EAEAEA"
+                    QText {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        text: "Transaction ID"
                     }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    color: "#FFFFFF"
+                    QText {
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        text: invoiceElement.txid
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    color: "#EAEAEA"
+                    QText {
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                        text: isRecieveTx ? "Receive at" : "Send to address"
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: childrenRect.height
+                    color: "#FFFFFF"
                     Column {
                         width: parent.width
-                        Rectangle {
+                        QListView {
+                            id: destlist
                             width: parent.width
-                            height: 48
-                            color: "#EAEAEA"
-                            QText {
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                                text: "Transaction ID"
-                            }
-                        }
-                        Rectangle {
-                            width: parent.width
-                            height: 48
-                            color: "#FFFFFF"
-                            QText {
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 16
-                                font.weight: Font.DemiBold
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                text: AppModel.transactionInfo.txid
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                            }
-                        }
-                        Rectangle {
-                            width: parent.width
-                            height: 48
-                            color: "#EAEAEA"
-                            QText {
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                                text: isRecieveTx ? "Receive at" : "Send to address"
-                            }
-                        }
-                        Rectangle {
-                            width: parent.width
-                            height: childrenRect.height
-                            color: "#FFFFFF"
-                            Column {
-                                width: parent.width
-                                QListView {
-                                    id: destlist
-                                    width: parent.width
-                                    height: contentHeight
-                                    model: AppModel.transactionInfo.destinationList
-                                    interactive: false
-                                    delegate: Item {
-                                        width: destlist.width
-                                        height: 48
-                                        Row {
-                                            anchors.fill: parent
-                                            anchors.margins: 12
-                                            QText {
-                                                width: parent.width * 0.7
-                                                font.family: "Lato"
-                                                color: "#031F2B"
-                                                font.pixelSize: 16
-                                                font.weight: Font.DemiBold
-                                                text: destination_address
-                                                verticalAlignment: Text.AlignVCenter
-                                                horizontalAlignment: Text.AlignLeft
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                wrapMode: Text.WrapAnywhere
-                                            }
-                                            QText {
-                                                width: parent.width * 0.3
-                                                font.family: "Lato"
-                                                color: "#031F2B"
-                                                font.pixelSize: 16
-                                                font.weight: Font.DemiBold
-                                                text: qsTr("%1 %2").arg(destination_amount) //"21,000,000,000,000,000"
-                                                                   .arg(RoomWalletData.unitValue)
-                                                verticalAlignment: Text.AlignVCenter
-                                                horizontalAlignment: Text.AlignRight
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                wrapMode: Text.WrapAnywhere
-                                            }
-                                        }
+                            height: contentHeight
+                            interactive: false
+                            delegate: Item {
+                                width: destlist.width
+                                height: 48
+                                Row {
+                                    anchors.fill: parent
+                                    anchors.margins: 12
+                                    QText {
+                                        width: parent.width * 0.7
+                                        font.family: "Lato"
+                                        color: "#031F2B"
+                                        font.pixelSize: 16
+                                        font.weight: Font.DemiBold
+                                        text: destination_address
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignLeft
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        wrapMode: Text.WrapAnywhere
                                     }
-                                }
-                                Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    color: "#EAEAEA"
-                                    visible: !isRecieveTx
-                                }
-                                Item {
-                                    width: parent.width
-                                    height: 48
-                                    visible: !isRecieveTx
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.margins: 12
-                                        QText {
-                                            width: parent.width * 0.7
-                                            font.family: "Lato"
-                                            color: "#031F2B"
-                                            font.pixelSize: 16
-                                            text: "Transaction fee"
-                                            verticalAlignment: Text.AlignVCenter
-                                            horizontalAlignment: Text.AlignLeft
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            wrapMode: Text.WrapAnywhere
-                                        }
-                                        QText {
-                                            width: parent.width * 0.3
-                                            font.family: "Lato"
-                                            color: "#031F2B"
-                                            font.pixelSize: 16
-                                            font.weight: Font.DemiBold
-                                            text: qsTr("%1 %2").arg(AppModel.transactionInfo.fee) //"21,000,000,000,000,000"
-                                                               .arg(RoomWalletData.unitValue)
-                                            verticalAlignment: Text.AlignVCenter
-                                            horizontalAlignment: Text.AlignRight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            wrapMode: Text.WrapAnywhere
-                                        }
-                                    }
-                                }
-                                Item {
-                                    width: parent.width
-                                    height: 48
-                                    visible: !isRecieveTx
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.margins: 12
-                                        QText {
-                                            width: parent.width * 0.7
-                                            font.family: "Lato"
-                                            color: "#031F2B"
-                                            font.pixelSize: 16
-                                            text: "Total amount"
-                                            verticalAlignment: Text.AlignVCenter
-                                            horizontalAlignment: Text.AlignLeft
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            wrapMode: Text.WrapAnywhere
-                                        }
-                                        QText {
-                                            width: parent.width * 0.3
-                                            font.family: "Lato"
-                                            color: "#031F2B"
-                                            font.pixelSize: 16
-                                            font.weight: Font.DemiBold
-                                            text: qsTr("%1 %2").arg(AppModel.transactionInfo.total) //"21,000,000,000,000,000"
-                                                               .arg(RoomWalletData.unitValue)
-                                            verticalAlignment: Text.AlignVCenter
-                                            horizontalAlignment: Text.AlignRight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            wrapMode: Text.WrapAnywhere
-                                        }
+                                    QText {
+                                        width: parent.width * 0.3
+                                        font.family: "Lato"
+                                        color: "#031F2B"
+                                        font.pixelSize: 16
+                                        font.weight: Font.DemiBold
+                                        text: qsTr("%1 %2").arg(destination_amount) //"21,000,000,000,000,000"
+                                        .arg(RoomWalletData.unitValue)
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        wrapMode: Text.WrapAnywhere
                                     }
                                 }
                             }
                         }
                         Rectangle {
                             width: parent.width
-                            height: 48
+                            height: 1
                             color: "#EAEAEA"
-                            visible: !isRecieveTx && AppModel.transactionInfo.hasChange
-                            QText {
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                                text: "Change address"
-                            }
+                            visible: !isRecieveTx
                         }
-                        Rectangle {
+                        Item {
                             width: parent.width
                             height: 48
-                            color: "#FFFFFF"
-                            visible: !isRecieveTx && AppModel.transactionInfo.hasChange
+                            visible: !isRecieveTx
                             Row {
                                 anchors.fill: parent
                                 anchors.margins: 12
@@ -323,8 +206,7 @@ Popup {
                                     font.family: "Lato"
                                     color: "#031F2B"
                                     font.pixelSize: 16
-                                    font.weight: Font.DemiBold
-                                    text: AppModel.transactionInfo.change.address
+                                    text: "Transaction fee"
                                     verticalAlignment: Text.AlignVCenter
                                     horizontalAlignment: Text.AlignLeft
                                     anchors.verticalCenter: parent.verticalCenter
@@ -336,8 +218,8 @@ Popup {
                                     color: "#031F2B"
                                     font.pixelSize: 16
                                     font.weight: Font.DemiBold
-                                    text: qsTr("%1 %2").arg(AppModel.transactionInfo.change.amount) //"21,000,000,000,000,000"
-                                                       .arg(RoomWalletData.unitValue)
+                                    text: qsTr("%1 %2").arg(invoiceElement.fee) //"21,000,000,000,000,000"
+                                    .arg(RoomWalletData.unitValue)
                                     verticalAlignment: Text.AlignVCenter
                                     horizontalAlignment: Text.AlignRight
                                     anchors.verticalCenter: parent.verticalCenter
@@ -345,48 +227,125 @@ Popup {
                                 }
                             }
                         }
-                        Rectangle {
+                        Item {
                             width: parent.width
                             height: 48
-                            color: "#EAEAEA"
-                            QText {
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
+                            visible: !isRecieveTx
+                            Row {
                                 anchors.fill: parent
                                 anchors.margins: 12
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                                text: "Transaction note"
-                            }
-                        }
-                        Rectangle {
-                            width: parent.width
-                            height: 48
-                            color: "#FFFFFF"
-                            QText {
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 12
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                text: AppModel.transactionInfo.memo
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
+                                QText {
+                                    width: parent.width * 0.7
+                                    font.family: "Lato"
+                                    color: "#031F2B"
+                                    font.pixelSize: 16
+                                    text: "Total amount"
+                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignLeft
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    wrapMode: Text.WrapAnywhere
+                                }
+                                QText {
+                                    width: parent.width * 0.3
+                                    font.family: "Lato"
+                                    color: "#031F2B"
+                                    font.pixelSize: 16
+                                    font.weight: Font.DemiBold
+                                    text: qsTr("%1 %2").arg(invoiceElement.total) //"21,000,000,000,000,000"
+                                    .arg(RoomWalletData.unitValue)
+                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignRight
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    wrapMode: Text.WrapAnywhere
+                                }
                             }
                         }
                     }
                 }
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    color: "#EAEAEA"
+                    visible: !isRecieveTx && invoiceElement.hasChange
+                    QText {
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                        text: "Change address"
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    color: "#FFFFFF"
+                    visible: !isRecieveTx && invoiceElement.hasChange
+                    Row {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        QText {
+                            width: parent.width * 0.7
+                            font.family: "Lato"
+                            color: "#031F2B"
+                            font.pixelSize: 16
+                            font.weight: Font.DemiBold
+                            text: invoiceElement.changeAddress
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                            anchors.verticalCenter: parent.verticalCenter
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        QText {
+                            width: parent.width * 0.3
+                            font.family: "Lato"
+                            color: "#031F2B"
+                            font.pixelSize: 16
+                            font.weight: Font.DemiBold
+                            text: qsTr("%1 %2").arg(invoiceElement.changeAmount) //"21,000,000,000,000,000"
+                            .arg(RoomWalletData.unitValue)
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignRight
+                            anchors.verticalCenter: parent.verticalCenter
+                            wrapMode: Text.WrapAnywhere
+                        }
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    color: "#EAEAEA"
+                    QText {
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                        text: "Transaction note"
+                    }
+                }
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    color: "#FFFFFF"
+                    QText {
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 12
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        text: invoiceElement.memo
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                    }
+                }
             }
-        }
-    }
-
-    FileDialog {
-        id: exportPDF
-        fileMode: FileDialog.SaveFile
-        onAccepted: {
-            PDFPrinter.printInvoiceToPdf(exportPDF.currentFile, contentDisplay)
         }
     }
 }

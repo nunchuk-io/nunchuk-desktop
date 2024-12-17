@@ -37,6 +37,7 @@ import "../../Components/customizes/QRCodes"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
+    id: screenTxInfoRoot
     readonly property int  confirmations: Math.max(0, (AppModel.chainTip - AppModel.transactionInfo.height)+1)
     readonly property bool needShowRBF:   !AppModel.walletInfo.isSharedWallet
 
@@ -109,14 +110,14 @@ QScreen {
                 return receiveTxBtnLeft
             }
             else {
-                return btnPendingConfirmationLeft
+                return null
             }
         }
         bottomRight: {
             if (!AppModel.transactionInfo.isReceiveTx) {
                 if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return btnPendingSignatures }
                 else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return btnReadyToBroadcast }
-                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return btnPendingConfirmationRight }
+                else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return btnPendingConfirmation }
                 else if(AppModel.transactionInfo.status === NUNCHUCKTYPE.CONFIRMED){ return btnConfirmed }
                 else { return btnReplacedRejected }
             }
@@ -154,10 +155,7 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST)
             }
             onKeyExportRequest: {
-                savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                        + RoomWalletData.getValidFilename(transactionInfo.txid)
-                        + ".psbt"
-                savefileDialog.open()
+                requestExportPSBT()
             }
             onKeyImportRequest: {
                 openfileDialog.open()
@@ -173,6 +171,7 @@ QScreen {
             }
         }
     }
+    // Buttons Receive
     Component {
         id: receiveTxBtnLeft
         Item {
@@ -243,71 +242,52 @@ QScreen {
             }
         }
     }
-    // Buttons
+    // Button Send
     Component {
         id: btnPendingSignatures
         Row {
             height: 48
             spacing: 16
             readonly property string myRole: AppModel.walletInfo.myRole
-            QBtnOptions {
-                id: optionsBtn
-                readonly property bool allowMoreOption:    (myRole !== "")
-                                                        && (myRole !== "OBSERVER")
-                                                        && (myRole !== "KEYHOLDER_LIMITED")
-                enableRequestSignature : allowMoreOption
+            QBtnMore {
+                id: moreOptions
+                width: 102
+                height: 48
+                property bool allowRole: (myRole !== "")  && (myRole !== "OBSERVER") && (myRole !== "KEYHOLDER_LIMITED")
+                enableRequestSignature : allowRole
                 enableScheduleBroadcast: false
-                enableCancelTransaction: AppModel.walletInfo.isGroupWallet ? allowMoreOption : true
+                enableCancelTransaction: AppModel.walletInfo.isGroupWallet ? allowRole : true
+                enableExportTransaction: true
+                enableImportTransaction: true
                 isAssisedWallet: AppModel.walletInfo.isAssistedWallet
                 isSharedWallet:  AppModel.walletInfo.isSharedWallet
-                visible: myRole !== "OBSERVER" && !AppModel.walletInfo.tranReplace
-                funcs: [
-                    function(){ // Request signature
-                        groupMembers.open()
-                    },
-                    function(){ // Schedule broadcast
 
-                    },
-                    function(){ // Copy id
-                        AppModel.transactionInfo.copyTransactionID()
-                    },
-                    function(){ // Cancel tx
-                        if(isSharedWallet){
-                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_CANCEL_REQUEST)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
-                        }
-                    },
-                    function(){ // show invoice
-                        invoice.open()
-                    },
-                ]
-            }
-            QBtnExportImport {
-                id: advancedBtn
-                visible: myRole !== "OBSERVER"
-                funcs: [
-                    function() {
-                        // Export via file [.psbt]
-                        savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
-                                + ".psbt"
-                        savefileDialog.open()
-                    },
-                    function() {
-                        // Export via QR
-                        requestExportViaQR()
-                    },
-                    function() {
-                        // Import via file [.psbt]
-                        openfileDialog.open()
-                    },
-                    function() {
-                        // Import via QR
-                        qrcodeImport.open()
+                onExportToPSBT: {
+                    requestExportPSBT()
+                }
+                onExportToQR: {
+                    requestExportViaQR()
+                }
+                onExportToBBQR: {
+                    requestExportViaBBQR()
+                }
+                onImportViaPSBT: {
+                    openfileDialog.open()
+                }
+                onImportViaQR: {
+                    qrcodeImport.open()
+                }
+                onShowInvoice: {
+                    invoice.open()
+                }
+                onCancelTransaction: {
+                    if(isSharedWallet){
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_CANCEL_REQUEST)
                     }
-                ]
+                    else{
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                    }
+                }
             }
         }
     }
@@ -316,75 +296,33 @@ QScreen {
         Row {
             height: 48
             spacing: 16
-            QBtnOptions {
-                id: optionsBtn
-                enableRequestSignature : false
-                enableScheduleBroadcast: false
+            QBtnMore {
+                id: moreOptions
+                width: 102
+                height: 48
                 enableCancelTransaction: true
+                enableExportTransaction: true
                 isAssisedWallet: AppModel.walletInfo.isAssistedWallet
                 isSharedWallet:  AppModel.walletInfo.isSharedWallet
-                visible: false
-                funcs: [
-                    function(){ // Request signature
 
-                    },
-                    function(){ // Schedule broadcast
-
-                    },
-                    function(){ // Copy id
-                        AppModel.transactionInfo.copyTransactionID()
-                    },
-                    function(){ // Cancel tx
-                        if(isSharedWallet){
-                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_CANCEL_REQUEST)
-                        }
-                        else{
-                            QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
-                        }
-                    },
-                    function(){ // show invoice
-                        invoice.open()
-                    },
-                ]
-            }
-            QButtonLargeTail {
-                id: advancedBtn
-                width: 220
-                height: 48
-                type: eSECONDARY
-                label: STR.STR_QML_294
-                optionVisible: imExContextMenu.visible
-                visible: false
-                onButtonClicked: {
-                    imExContextMenu.x = 20
-                    imExContextMenu.y = 20 - imExContextMenu.height
-                    imExContextMenu.open()
+                onExportToPSBT: {
+                    requestExportPSBT()
                 }
-                QContextMenu {
-                    id: imExContextMenu
-                    menuWidth: 320
-                    labels: [
-                        STR.STR_QML_300,
-                        STR.STR_QML_114,
-                    ]
-                    icons: [
-                        "qrc:/Images/Images/ExportFile.svg",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
-                    ]
-                    onItemClicked: {
-                        switch(index){
-                        case 0: // Export via file [.psbt]
-                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                    + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
-                                    + ".psbt"
-                            savefileDialog.open()
-                            break;
-                        case 1: // Export via QR
-                            requestExportViaQR()
-                            break;
-                        default:
-                            break;
-                        }
+                onExportToQR: {
+                    requestExportViaQR()
+                }
+                onExportToBBQR: {
+                    requestExportViaBBQR()
+                }
+                onShowInvoice: {
+                    invoice.open()
+                }
+                onCancelTransaction: {
+                    if(isSharedWallet){
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_CANCEL_REQUEST)
+                    }
+                    else{
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
                     }
                 }
             }
@@ -402,28 +340,28 @@ QScreen {
         }
     }
     Component {
-        id: btnPendingConfirmationLeft
+        id: btnPendingConfirmation
         Row {
             height: 48
             spacing: 16
-            QButtonTextLink {
-                width: 170
-                height: 36
-                displayIcon: false
-                label: STR.STR_QML_296
-                textColor: ["#CF4018", "#CF4018", "#CF4018"]
-                fontPixelSize: 16
-                onButtonClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+            QBtnMore {
+                id: moreOptions
+                width: 102
+                height: 48
+                enableExportTransaction: true
+                onExportToPSBT: {
+                    requestExportPSBT()
+                }
+                onExportToQR: {
+                    requestExportViaQR()
+                }
+                onExportToBBQR: {
+                    requestExportViaBBQR()
+                }
+                onShowInvoice: {
+                    invoice.open()
                 }
             }
-        }
-    }
-    Component {
-        id: btnPendingConfirmationRight
-        Row {
-            height: 48
-            spacing: 16
             QTextButton {
                 id: replaceByFeeButton
                 width: 141
@@ -447,6 +385,20 @@ QScreen {
                     Qt.openUrlExternally(urlActiveLink())
                 }
             }
+            QTextButton {
+                id: manageCoin
+                width: 123
+                height: 48
+                label.text: STR.STR_QML_1514
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: {
+                    var input = {
+                        type: "manage-coin-details"
+                    }
+                    AppModel.walletInfo.requestSyncSelectCoinForMakeTransaction(input)
+                }
+            }
         }
     }
     Component {
@@ -454,29 +406,23 @@ QScreen {
         Row {
             height: 48
             spacing: 16
-            QBtnOptions {
-                id: optionsBtn
-                enableRequestSignature : false
-                enableScheduleBroadcast: false
-                enableCancelTransaction: false
-                enableShowInvoice: true
-                funcs: [
-                    function(){ // Request signature
-
-                    },
-                    function(){ // Schedule broadcast
-
-                    },
-                    function(){ // Copy id
-                        AppModel.transactionInfo.copyTransactionID()
-                    },
-                    function(){ // Cancel tx
-
-                    },
-                    function(){ // show invoice
-                        invoice.open()
-                    },
-                ]
+            QBtnMore {
+                id: moreOptions
+                width: 102
+                height: 48
+                enableExportTransaction: true
+                onExportToPSBT: {
+                    requestExportPSBT()
+                }
+                onExportToQR: {
+                    requestExportViaQR()
+                }
+                onExportToBBQR: {
+                    requestExportViaBBQR()
+                }
+                onShowInvoice: {
+                    invoice.open()
+                }
             }
             QTextButton {
                 id: viewBlockstreamBtn
@@ -489,6 +435,20 @@ QScreen {
                     Qt.openUrlExternally(urlActiveLink())
                 }
             }
+            QTextButton {
+                id: manageCoin
+                width: 123
+                height: 48
+                label.text: STR.STR_QML_1514
+                label.font.pixelSize: 16
+                type: eTypeB
+                onButtonClicked: {
+                    var input = {
+                        type: "manage-coin-details"
+                    }
+                    AppModel.walletInfo.requestSyncSelectCoinForMakeTransaction(input)
+                }
+            }
         }
     }
     Component {
@@ -496,74 +456,34 @@ QScreen {
         Row {
             height: 48
             spacing: 16
-            QBtnOptions {
-                id: optionsBtn
-                enableRequestSignature : false
-                enableScheduleBroadcast: false
+            QBtnMore {
+                id: moreOptions
+                width: 102
+                height: 48
                 enableCancelTransaction: true
+                enableExportTransaction: true
                 isAssisedWallet: AppModel.walletInfo.isAssistedWallet
                 isSharedWallet:  AppModel.walletInfo.isSharedWallet
-                funcs: [
-                    function(){ // Request signature
-
-                    },
-                    function(){ // Schedule broadcast
-
-                    },
-                    function(){ // Copy id
-                        AppModel.transactionInfo.copyTransactionID()
-                    },
-                    function(){ // Cancel tx
-                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
-                    },
-                    function(){ // show invoice
-                        invoice.open()
-                    },
-                ]
-            }
-            QButtonLargeTail {
-                id: advancedBtn
-                width: 220
-                height: 48
-                type: eSECONDARY
-                label: STR.STR_QML_294
-                optionVisible: imExContextMenu.visible
-                onButtonClicked: {
-                    imExContextMenu.x = 20
-                    imExContextMenu.y = 20 - imExContextMenu.height
-                    imExContextMenu.open()
+                onExportToPSBT: {
+                    requestExportPSBT()
                 }
-                QContextMenu {
-                    id: imExContextMenu
-                    menuWidth: 320
-                    labels: [
-                        STR.STR_QML_300,
-                        STR.STR_QML_114,
-                        STR.STR_QML_691,
-                    ]
-                    icons: [
-                        "qrc:/Images/Images/ExportFile.svg",
-                        "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
-                        "qrc:/Images/Images/copy-dark.svg"
-                    ]
-                    onItemClicked: {
-                        switch(index){
-                        case 0: // Export via file [.psbt]
-                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                    + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
-                                    + ".psbt"
-                            savefileDialog.open()
-                            break;
-                        case 1: // Export via QR
-                            requestExportViaQR()
-                            break;
-                        case 2: // Copy transaction ID
-                            requestCopyTransactionID()
-                            break;
-                        default:
-                            break;
-                        }
+                onExportToQR: {
+                    requestExportViaQR()
+                }
+                onExportToBBQR: {
+                    requestExportViaBBQR()
+                }
+
+                onCancelTransaction: {
+                    if(isSharedWallet){
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_CANCEL_REQUEST)
                     }
+                    else{
+                        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
+                    }
+                }
+                onShowInvoice: {
+                    invoice.open()
                 }
             }
         }
@@ -578,7 +498,7 @@ QScreen {
             }
         }
     }
-    QQrExportResult {
+    QQrExportResultPDF {
         id: qrcodeExportResult
         model: AppModel.qrExported
     }
@@ -646,17 +566,49 @@ QScreen {
         }
     }
 
-    QTransactionInvoice {
+    QTransactionInvoicePopup {
         id: invoice
         width: parent.width
         height: parent.height
+        txid            : AppModel.transactionInfo.txid
+        total           : AppModel.transactionInfo.total
+        subtotal        : AppModel.transactionInfo.subtotal
+        blocktime       : AppModel.transactionInfo.blocktime
+        fee             : AppModel.transactionInfo.fee
+        memo            : AppModel.transactionInfo.memo
+        hasChange       : AppModel.transactionInfo.hasChange
+        changeAmount    : AppModel.transactionInfo.change.amount
+        changeAddress   : AppModel.transactionInfo.change.address
+        isRecieveTx     : AppModel.transactionInfo.isReceiveTx
+        destinations    : AppModel.transactionInfo.destinationList
+    }
+
+    function requestExportPSBT() {
+        savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                + RoomWalletData.getValidFilename(AppModel.transactionInfo.txid)
+                + ".psbt"
+        savefileDialog.open()
     }
 
     function requestExportViaQR(){
-        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE)
         qrcodeExportResult.filename = "Transaction_" + AppModel.transactionInfo.txid
         qrcodeExportResult.open()
+        var datalegacy = {
+            "qrtype": "QR-transaction"
+        }
+        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE, datalegacy)
+
     }
+
+    function requestExportViaBBQR() {
+        qrcodeExportResult.filename = "Transaction_bbqr_" + AppModel.transactionInfo.txid
+        qrcodeExportResult.open()
+        var datalegacy = {
+            "qrtype": "BBQR-transaction"
+        }
+        QMLHandle.sendEvent(EVT.EVT_TRANSACTION_EXPORT_QRCODE, datalegacy)
+    }
+
     function urlActiveLink(){
         var activeLink = ""
         switch(AppSetting.primaryServer){

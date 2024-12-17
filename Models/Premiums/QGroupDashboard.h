@@ -7,6 +7,7 @@
 #include "TypeDefine.h"
 #include <nunchuk.h>
 #include "Premiums/QBasePremium.h"
+#include <QTimer>
 
 class AlertEnum : public QObject
 {
@@ -146,6 +147,10 @@ public:
     void GetDraftWalletInfo();
     void GetHealthCheckInfo();
     void UpdateKeys(const QJsonObject &data);
+    bool GetKeyReplacementStatus();
+    QMap<QString, QVariant> requestBodyUploadBackupFile(const QString &xfp, const QString &filePath);
+    bool ReplacementUploadBackupFile(const QString &xfp, const QString &filePath);
+    bool DraftWalletUploadBackupFile(const QString &xfp, const QString &filePath);
 
     QVariantList alerts() const;
     QVariant alert() const;
@@ -159,6 +164,7 @@ public:
     int mInfo() const;
     int nInfo() const;
 
+    QJsonObject GetDraftSigner(const QString& xfp) const;
     QJsonObject GetSigner(const QString& xfp) const;
 
     int flow() const;
@@ -196,7 +202,9 @@ public:
     bool canReplaceKey();
     Q_INVOKABLE bool isInheritance();
 
-    QString generateName(const QStringList &tags, bool isReplace = false);
+    QStringList getNameSameTag(const QString &tag);
+    QString createName(const QString &tag, int &index);
+    QString generateName(const QStringList &tags);
 
     bool canEntryClickAlert();
 
@@ -236,6 +244,9 @@ public slots:
     void requestShowLetAddYourKeys();
     void requestShowReplacementKey();
     bool isDowngrade(QString email_or_username, QString roleNew);
+    void updateProgress();
+    void updateSuccess();
+    void updateFail();
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);
@@ -260,6 +271,7 @@ private:
     QJsonObject m_myInfo {};
     QJsonObject m_inviterInfo {};
     QJsonArray m_signerInfo {};
+    QJsonObject m_walletDraftInfo {};
     QString m_alertId {};
     QVariantList m_keys {};
     bool m_showDashBoard {false};
@@ -274,5 +286,6 @@ private:
     QString mHistoryPeriodId {};
     bool m_groupChatExisted {false};
     QJsonArray m_editMembers;
+    QTimer *mTimer {nullptr};
 };
 #endif // QGROUPDASHBOARD_H

@@ -21,6 +21,8 @@
 #include "QRest.h"
 #include "AppModel.h"
 #include "QOutlog.h"
+#include <QHttpPart>
+#include <QHttpMultiPart>
 
 QString    QRest::m_dracoToken      = "";
 QByteArray QRest::m_machineUniqueId = QSysInfo::machineUniqueId();
@@ -120,6 +122,153 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+            reply_msg = STR_CPP_111;
+        }
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
+    reply.release()->deleteLater();
+    DBG_INFO << QString(response_data);
+    reply.release()->deleteLater();
+    return ret;
+}
+
+QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg)
+{
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("POST %1").arg(command));
+    QJsonObject ret;
+    QNetworkRequest requester_(QUrl::fromUserInput(command));
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    for (auto key : data.keys()) {
+        if (key == "file") {
+            QString filePath = data[key].toString();
+            QFile *file = new QFile(filePath);
+            if (!file->open(QIODevice::ReadOnly)) {
+                DBG_INFO << "Failed to open file:" << filePath;
+                delete file;
+                continue;
+            }
+
+            QHttpPart filePart;
+            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
+            filePart.setBodyDevice(file);
+            file->setParent(multiPart);
+
+            multiPart->append(filePart);
+        } else {
+            QHttpPart textPart;
+            textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
+            textPart.setBody(data[key].toByteArray());
+            multiPart->append(textPart);
+        }
+    }
+
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, multiPart));
+    multiPart->setParent(reply.get());
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+            reply_msg = STR_CPP_111;
+        }
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    ret = json.object();
+    reply.release()->deleteLater();
+    return ret;
+}
+
+QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg)
+{
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("POST %1").arg(command));
+    QJsonObject ret;
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    // Add addional params
+    for(QString param : paramsHeader.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
+    }
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    for (auto key : data.keys()) {
+        if (key == "file") {
+            QString filePath = data[key].toString();
+            QFile *file = new QFile(filePath);
+            if (!file->open(QIODevice::ReadOnly)) {
+                DBG_INFO << "Failed to open file:" << filePath;
+                delete file;
+                continue;
+            }
+
+            QHttpPart filePart;
+            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
+            filePart.setBodyDevice(file);
+            file->setParent(multiPart);
+
+            multiPart->append(filePart);
+        } else {
+            QHttpPart textPart;
+            textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
+            textPart.setBody(data[key].toByteArray());
+            multiPart->append(textPart);
+        }
+    }
+
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, multiPart));
+    multiPart->setParent(reply.get());
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();

@@ -21,6 +21,7 @@ public:
     bool SignInRequestSignTxViaFile(const QString &filepath);
 
     QStringList ExportPsbtViaQR();
+    QStringList ExportPsbtViaBBQR();
 
 private:
     void SignInRequestUpdateDummyTx(const QMap<QString, QString>& signatures);

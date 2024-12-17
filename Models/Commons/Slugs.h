@@ -23,7 +23,7 @@ public:
     virtual bool isGroupWallet() const;
     virtual bool isUserWallet() const;
 
-    virtual bool isDraftWallet() const;
+    virtual bool isUserDraftWallet() const;
 };
 
 #endif // SLUGS_H

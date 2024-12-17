@@ -13,6 +13,7 @@ QUserWallets::QUserWallets()
     : QAssistedDraftWallets(USER_WALLET)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    connect(this, &QUserWallets::makeDashBoard, this, &QUserWallets::slotMakeDashBoard, Qt::QueuedConnection);
 }
 
 QUserWallets::~QUserWallets()
@@ -54,10 +55,7 @@ void QUserWallets::GetDraftWallet()
             QJsonArray members;
             members.append(member);
             info["members"] = members;
-            QGroupDashboardPtr dashboard = QGroupDashboardPtr(new QGroupDashboard(""));
-            dashboard->setGroupInfo(info);
-            DBG_INFO << info;
-            mDashboard = dashboard;
+            emit makeDashBoard(info);
             QJsonArray signers = draft_wallet["signers"].toArray();
             for (auto js : signers) {
                 QJsonObject signer = js.toObject();
@@ -66,6 +64,11 @@ void QUserWallets::GetDraftWallet()
             emit WalletsMng->signalUpdateSigner();
         }
     }
+}
+
+QGroupDashboard *QUserWallets::dashboardInfo()
+{
+    return dashboardInfoPtr().data();
 }
 
 QGroupDashboardPtr QUserWallets::dashboardInfoPtr()
@@ -79,4 +82,12 @@ bool QUserWallets::hasDraftWallet(const QString& group_id)
         return true;
     }
     return false;
+}
+
+void QUserWallets::slotMakeDashBoard(const QJsonObject &info)
+{
+    QGroupDashboardPtr dashboard = QGroupDashboardPtr(new QGroupDashboard(""));
+    dashboard->setGroupInfo(info);
+    DBG_INFO << info;
+    mDashboard = dashboard;
 }

@@ -107,12 +107,7 @@ void EVT_WALLET_INFO_BACK_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_WALLET_INFO_UTXOS_REQUEST_HANDLER(QVariant msg) {
-    if(AppModel::instance()->walletInfo()){
-        QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(AppModel::instance()->walletInfo()->id());
-        if(utxos){
-            AppModel::instance()->setUtxoList(utxos);
-        }
-    }
+    AppModel::instance()->walletInfo()->RequestGetCoins();
 }
 
 void EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST_HANDLER(QVariant msg) {

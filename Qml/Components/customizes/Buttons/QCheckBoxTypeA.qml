@@ -17,39 +17,59 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-#ifndef QPDFPRINTER_H
-#define QPDFPRINTER_H
+import QtQuick 2.4
+import QtGraphicalEffects 1.0
+import "../../origins"
+import "../../customizes/Texts"
 
-#include <QObject>
-#include <QPrinter>
-#include <QQuickItem>
-#include <QImage>
-#include <QPainter>
-
-
-class QPDFPrinter : public QObject
-{
-    Q_OBJECT
-public:
-    explicit QPDFPrinter(QObject *parent = nullptr);
-    // Singleton instance
-    static QPDFPrinter *instance();
-    QPDFPrinter(QPDFPrinter &other) = delete;
-    QPDFPrinter(QPDFPrinter const &other) = delete;
-    void operator=(const QPDFPrinter &other) = delete;
-
-    // using printer to print pdf and expose qml
-    Q_INVOKABLE void printQRCodeToPdf(const QString &pdfPath, QVariant objects);
-    Q_INVOKABLE void printInvoiceToPdf(const QString &pdfPath, QVariant object);
-
-signals:
-
-private:
-    void printImageToPdf(const QString &pdfPath, QImage image);
-    void printImagesToPdf(const QString &pdfPath, const QList<QImage> &images);
-
-private:
-    QPrinter *m_printer;
-};
-
-#endif // QPDFPRINTER_H
+Rectangle {
+    id: _item
+    width: 539
+    height: 88
+    border.width: 2
+    border.color: "#000000"
+    radius: 12
+    property string label: ""
+    property string description: ""
+    property bool checked: false
+    signal buttonClicked()
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            buttonClicked()
+        }
+    }
+    Row {
+        anchors {
+            verticalCenter: parent.verticalCenter
+            left: parent.left
+            leftMargin: 18
+        }
+        height: 52
+        spacing: 12
+        QCheckBox {
+            anchors.top: parent.top
+            checked: _item.checked
+            partiallyChecked: false
+            onCheckboxClicked: {
+                _item.checked = !_item.checked
+                buttonClicked()
+            }
+        }
+        Column {
+            width: _item.width - 12 -24 - 2*18
+            spacing: 4
+            QLato {
+                text: label
+                font.weight: Font.Bold
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+            }
+            QLato {
+                text: description
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+    }
+}

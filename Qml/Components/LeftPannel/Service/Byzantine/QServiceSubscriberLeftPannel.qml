@@ -54,9 +54,9 @@ Item {
         {screen:_EMERGENCY,                          visible: hasEmergency,                 enable:false,  title:STR.STR_QML_702, icon: "qrc:/Images/Images/emergency-light.svg"    ,action: function(){ return true; } },
         {screen:_EMERGENCY_LOCKDOWN,                 visible: hasWalletLockdown,            enable:true,   title:STR.STR_QML_697, icon: ""                                          ,action: function(){ return emergencyLockdown(); } },
         {screen:_KEY_RECOVERY,                       visible: hasKeyRecovery,               enable:true,   title:STR.STR_QML_698, icon: ""                                          ,action: function(){ return true;} },
-        {screen:_INHERITANCE_PLANING,                visible: hasInheritancePlaning,        enable:false,  title:STR.STR_QML_736, icon: "qrc:/Images/Images/inheritance-light.svg"  ,action: function(){ return true;} },
+        {screen:_INHERITANCE_PLANING,                visible: true,                         enable:false,  title:STR.STR_QML_736, icon: "qrc:/Images/Images/inheritance-light.svg"  ,action: function(){ return true;} },
         {screen:_VIEW_INHERITANCE_PLANING,           visible: hasViewInheritancePlan,       enable:true,   title:STR.STR_QML_875, icon: ""                                          ,action: function(){ return viewInheritancePlan() } },
-        {screen:_CLAIM_AN_INHERITANCE,               visible: hasClaimAnInheritance,        enable:true,   title:STR.STR_QML_737, icon: ""                                          ,action: function(){ ServiceSetting.servicesTag.clearClaimAnInheritance(); return true; }},
+        {screen:_CLAIM_AN_INHERITANCE,               visible: true,                         enable:true,   title:STR.STR_QML_737, icon: ""                                          ,action: function(){ ServiceSetting.servicesTag.clearClaimAnInheritance(); return true; }},
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),         enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
         {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
@@ -73,9 +73,7 @@ Item {
     property bool hasPro: highestPermissionAccount.hasPro
     property bool hasEmergency: (role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN")
     property bool hasKeyRecovery: role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN"
-    property bool hasInheritancePlaning: hasPro && (role === "KEYHOLDER" || role === "MASTER" || role === "ADMIN")
     property bool hasViewInheritancePlan: ServiceSetting.servicesTag.listInheritantPlans.length > 0 && hasPro && (role === "KEYHOLDER" || role === "MASTER" || role === "ADMIN")
-    property bool hasClaimAnInheritance: hasPro && (role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN")
     property bool hasPlatformKeyCoSign: ServiceSetting.servicesTag.listPolicy.length > 0 && hasPro && (role === "KEYHOLDER" ||  role === "MASTER" || role === "ADMIN")
     property bool hasGetAdditionalWallet: role === "MASTER"
     property bool hasOrderNewHardware: role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN"

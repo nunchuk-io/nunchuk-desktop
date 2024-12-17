@@ -21,6 +21,8 @@ import QtQuick 2.4
 import QtGraphicalEffects 1.0
 import "../../origins"
 
+import "../../../../localization/STR_QML.js" as STR
+
 Column {
     id: textipboxType
     property string label: "This is label"
@@ -40,19 +42,22 @@ Column {
     property bool isValid: true
     property bool showError: false
     property bool showWarning: false
-    signal typingFinished(var currentText)
     property alias textBoxFocus: _input.focus
     property alias input: _input
-    property bool isPassword: false
+    property bool  isPassword: false
+    property bool  passwordValidate: false
+    property alias passwordValidateResult: validatePassword.isValid
     property int titleFontSize: 16
     property var disabledColor: "#EAEAEA"
-    spacing: 4
 
+    signal typingFinished(var currentText)
     signal downKeyRequest()
     signal upKeyRequest()
     signal enterKeyRequest()
     signal pasteKeyRequest()
     signal tabKeyRequest()
+
+    spacing: 4
 
     Row {
         width: parent.width
@@ -114,7 +119,9 @@ Column {
             font.pixelSize: 16
             clip: true
             echoMode: isPassword ? (showpass.visiblity ? TextInput.Normal : TextInput.Password) : TextInput.Normal
-            onTypingFinished: textipboxType.typingFinished(currentText)
+            onTypingFinished: {
+                textipboxType.typingFinished(currentText)
+            }
             Keys.onDownPressed: { downKeyRequest() }
             Keys.onUpPressed: { upKeyRequest() }
             Keys.onReturnPressed: { enterKeyRequest() }
@@ -189,5 +196,83 @@ Column {
             }
         }
         visible: showWarning && textipboxType.length === textipboxType.maxLength
+    }
+    Column {
+        id: validatePassword
+        width: myRectangle.width+2
+
+        property bool ableDisplay: textInputted.length !== 0
+        property bool lengthValid: textInputted.length >= 8
+        property bool upperCaseValid: textInputted.match(/[A-Z]/) !== null
+        property bool numberValid: textInputted.match(/\d/) !== null
+        property bool specialCharValid: textInputted.match(/[!@#$%^&*()_+{}:"<>?|[\]\\;',./~`-]/) !== null
+        property bool isValid: (textInputted.length === 0) || (lengthValid && upperCaseValid && upperCaseValid && specialCharValid && numberValid)
+
+        visible: textipboxType.isPassword && textipboxType.passwordValidate && validatePassword.ableDisplay
+        spacing: 4
+        Row {
+            spacing: 4
+            QImage {
+                width: 24
+                height: 24
+                source: "qrc:/Images/Images/info-60px.png"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QText {
+                font.family: "Lato"
+                font.pixelSize: 12
+                text: STR.STR_QML_1504
+                color: validatePassword.lengthValid ? "Green" : "red"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+        Row {
+            spacing: 4
+            QImage {
+                width: 24
+                height: 24
+                source: "qrc:/Images/Images/info-60px.png"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QText {
+                font.family: "Lato"
+                font.pixelSize: 12
+                text: STR.STR_QML_1505
+                color: validatePassword.numberValid ? "Green" : "red"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+        Row {
+            spacing: 4
+            QImage {
+                width: 24
+                height: 24
+                source: "qrc:/Images/Images/info-60px.png"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QText {
+                font.family: "Lato"
+                font.pixelSize: 12
+                text: STR.STR_QML_1506
+                color: validatePassword.upperCaseValid ? "Green" : "red"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+        Row {
+            spacing: 4
+            QImage {
+                width: 24
+                height: 24
+                source: "qrc:/Images/Images/info-60px.png"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QText {
+                font.family: "Lato"
+                font.pixelSize: 12
+                text: STR.STR_QML_1507
+                color: validatePassword.specialCharValid ? "Green" : "red"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
     }
 }

@@ -19,12 +19,18 @@
  **************************************************************************/
 #include <QQmlEngine>
 #include <QQuickItemGrabResult>
+#include <QtConcurrent/qtconcurrentrun.h>
 #include "QPDFPrinter.h"
 #include "QtGui/qpainter.h"
 #include "QOutlog.h"
 #include "qUtils.h"
 
-QPDFPrinter::QPDFPrinter(QObject *parent) : QObject{parent}, m_printer{new QPrinter(QPrinter::HighResolution)}
+#if defined (Q_OS_WIN)
+#include <windows.h>
+#endif
+
+QPDFPrinter::QPDFPrinter(QObject *parent) : QObject{parent},
+    m_printer{new QPrinter(QPrinter::HighResolution)}
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     m_printer->setOutputFormat(QPrinter::PdfFormat);
@@ -42,15 +48,21 @@ void QPDFPrinter::printQRCodeToPdf(const QString &pdfPath, QVariant objects)
     QList<QVariant> list = objects.toList();
     QList<QImage> images;
     images.clear();
+
+    int index = 0;
+    int total = list.count();
     for (auto item : list)
     {
+        emit progressChanged(index, total);
         QObject *obj = item.value<QObject *>();
         if (obj)
         {
             QQuickItem *grabItem = qobject_cast<QQuickItem *>(obj);
             if (grabItem)
             {
-                auto grabResult = grabItem->grabToImage();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Recommended for component completed
+                QSize targetSize = QSize(grabItem->width()*2, grabItem->height()*2);
+                auto grabResult = grabItem->grabToImage(targetSize);
                 QEventLoop pdfLoop;
                 QObject::connect(grabResult.data(),   &QQuickItemGrabResult::ready,   &pdfLoop, &QEventLoop::quit);
                 pdfLoop.exec();
@@ -60,8 +72,9 @@ void QPDFPrinter::printQRCodeToPdf(const QString &pdfPath, QVariant objects)
             }
         }
     }
-    DBG_INFO << images.count();
     printImagesToPdf(pdfPath, images);
+    emit progressChanged(total, total);
+    emit finished();
 }
 
 void QPDFPrinter::printInvoiceToPdf(const QString &pdfPath, QVariant object)
@@ -72,7 +85,9 @@ void QPDFPrinter::printInvoiceToPdf(const QString &pdfPath, QVariant object)
         QQuickItem *grabItem = qobject_cast<QQuickItem *>(obj);
         if (grabItem)
         {
-            auto grabResult = grabItem->grabToImage();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Recommended for component completed
+            QSize targetSize = QSize(grabItem->width()*2, grabItem->height()*2);
+            auto grabResult = grabItem->grabToImage(targetSize);
             QEventLoop pdfLoop;
             QObject::connect(grabResult.data(),   &QQuickItemGrabResult::ready,   &pdfLoop, &QEventLoop::quit);
             pdfLoop.exec();
@@ -80,6 +95,47 @@ void QPDFPrinter::printInvoiceToPdf(const QString &pdfPath, QVariant object)
             printImageToPdf(pdfPath, image);
         }
     }
+}
+
+void QPDFPrinter::printInvoicesToPdf(const QString &pdfPath, QList<QVariant> objects)
+{
+    QtConcurrent::run([=, this]() {
+        QList<QImage> images;
+        images.clear();
+        int index = 0;
+        int total = objects.count();
+        for (auto item : objects)
+        {
+            emit progressChanged(index, total);
+            QObject *obj = item.value<QObject *>();
+            if (obj)
+            {
+                QQuickItem *grabItem = qobject_cast<QQuickItem *>(obj);
+                if (grabItem)
+                {
+#if defined (Q_OS_WIN)
+                    if(index == 0){
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Recommended for component completed
+                    }
+#else
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Recommended for component completed
+#endif
+                    QSize targetSize = QSize(grabItem->width()*2, grabItem->height()*2);
+                    auto grabResult = grabItem->grabToImage(targetSize);
+                    QEventLoop pdfLoop;
+                    QObject::connect(grabResult.data(),   &QQuickItemGrabResult::ready,   &pdfLoop, &QEventLoop::quit);
+                    pdfLoop.exec();
+                    QImage image = grabResult->image();
+                    images.append(image);
+                    DBG_INFO << image.width() << " " << image.height() << images.count();
+                }
+            }
+            index++;
+        }
+        printImagesToPdf(pdfPath, images);
+        emit progressChanged(total, total);
+        emit finished();
+    });
 }
 
 void QPDFPrinter::printImageToPdf(const QString &pdfPath, QImage image)

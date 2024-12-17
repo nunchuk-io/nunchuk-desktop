@@ -62,385 +62,60 @@ Rectangle {
             width: parent.width
             spacing: 12
             anchors.horizontalCenter: parent.horizontalCenter
-            Rectangle {
-                width: parent.width
-                height: 32
-                color: "#F5F5F5"
-                QText {
-                    text: qsTr("%1 (%2)").arg(STR.STR_QML_213).arg(lstDestination.count)
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 12
-                    color: "#323E4A"
-                    anchors {
-                        left: parent.left
-                        leftMargin: 16
-                        verticalCenter: parent.verticalCenter
-                    }
-                }
-                QText {
-                    text: STR.STR_QML_214
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 12
-                    color: "#323E4A"
-                    anchors {
-                        right: parent.right
-                        rightMargin: 16
-                        verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            // Destination infomation
-            QListView {
-                id: lstDestination
-                model: transactionInfo.destinationList
-                width: parent.width
-                height: count > 10 ? 400 : 60*count
-                delegate: destDelegate
-                clip: true
-                cacheBuffer: 600
-                interactive: (count > 10)
-                spacing: 4
-                ScrollBar.vertical: ScrollBar { active: true }
-                Component {
-                    id: destDelegate
-                    Row {
-                        width: parent.width - 24
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 12
-                        QText {
-                            width: 192
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 20
-                            wrapMode: Text.WrapAnywhere
-                            font.pixelSize: 16
-                            font.weight: Font.Bold
-                            color: "#031F2B"
-                            font.family: "Lato"
-                            text: destination_address
-                            MouseArea {
-                                id: btnMouseVerify
-                                enabled: myRole !== "KEYHOLDER_LIMITED"
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                anchors.fill: parent
-                                onClicked: {
-                                    addrToVerify(destination_address)
-                                }
-                            }
-                        }
-                        Column {
-                            width: 122
-                            spacing: 4
-                            QText {
-                                width: parent.width
-                                lineHeightMode: Text.FixedHeight
-                                lineHeight: 20
-                                wrapMode: Text.WrapAnywhere
-                                font.pixelSize: 16
-                                font.weight: Font.Bold
-                                color: "#031F2B"
-                                font.family: "Lato"
-                                text: destination_amount + RoomWalletData.unitValue
-                                horizontalAlignment: Text.AlignRight
-                            }
-                            QText {
-                                width: parent.width
-                                lineHeightMode: Text.FixedHeight
-                                lineHeight: 16
-                                wrapMode: Text.WrapAnywhere
-                                font.pixelSize: 12
-                                color: "#031F2B"
-                                font.family: "Lato"
-                                text: qsTr("%1%2 %3")
-                                .arg(AppSetting.currencySymbol)
-                                .arg(model.destination_amount_currency)
-                                .arg(AppSetting.currency)
-                                horizontalAlignment: Text.AlignRight
-                            }
-                        }
-                    }
-                }
-            }
-            Rectangle { width: parent.width; height: 1; color: "#F5F5F5"}
-            Row {
-                width: parent.width - 24
+            QSendToAddressBlock {
+                id: sendToAddress
+                useMouseArea: true
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 12
-                z: 1
-                Item {
-                    width: 122
-                    height: 24
-                    z: 1
-                    Row {
-                        spacing: 6
-                        QLato {
-                            width: 97
-                            font.weight: Font.Bold
-                            text: STR.STR_QML_215
-                        }
-                        QTooltip {
-                            tipWidth: 200
-                            toolTip: STR.STR_QML_807
-                            source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
-                        }
-                    }
-                }
-                Column {
-                    width: 192
-                    spacing: 4
-                    QText {
-                        width: parent.width
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 20
-                        wrapMode: Text.WrapAnywhere
-                        font.pixelSize: 16
-                        font.weight: Font.Bold
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: transactionInfo.fee + RoomWalletData.unitValue
-                        horizontalAlignment: Text.AlignRight
-                    }
-                    QText {
-                        width: parent.width
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 16
-                        wrapMode: Text.WrapAnywhere
-                        font.pixelSize: 12
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: qsTr("%1%2 %3")
-                        .arg(AppSetting.currencySymbol)
-                        .arg(transactionInfo.feeCurrency)
-                        .arg(AppSetting.currency)
-                        horizontalAlignment: Text.AlignRight
-                    }
+                onAddressClicked: {
+                    addrToVerify(addr)
                 }
             }
-            Row {
-                width: parent.width - 24
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 12
-                QText {
-                    width: 122
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 20
-                    wrapMode: Text.WrapAnywhere
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    text: STR.STR_QML_216
-                }
-                Column {
-                    width: 192
-                    spacing: 4
-                    QText {
-                        width: parent.width
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 20
-                        wrapMode: Text.WrapAnywhere
-                        font.pixelSize: 16
-                        font.weight: Font.Bold
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: transactionInfo.total + RoomWalletData.unitValue
-                        horizontalAlignment: Text.AlignRight
-                    }
-                    QText {
-                        width: parent.width
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 16
-                        wrapMode: Text.WrapAnywhere
-                        font.pixelSize: 12
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: qsTr("%1%2 %3")
-                        .arg(AppSetting.currencySymbol)
-                        .arg(transactionInfo.totalCurrency)
-                        .arg(AppSetting.currency)
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-            Rectangle {
-                id: changeinfo
-                width: parent.width
+
+            QChangeAddressBlock {
+                id: changeAddress
                 visible: transactionInfo.hasChange
-                height: changeinfo.visible ? 32 : 0
-                color: "#F5F5F5"
-                QText {
-                    text: STR.STR_QML_217
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 12
-                    color: "#323E4A"
-                    anchors {
-                        left: parent.left
-                        leftMargin: 16
-                        verticalCenter: parent.verticalCenter
+                editShow: {
+                    var isShow = false
+                    if (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES) {
+                        isShow = transactionInfo.hasDraftCoinChange()
                     }
-                }
-                QText {
-                    text: STR.STR_QML_214
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 12
-                    color: "#323E4A"
-                    anchors {
-                        right: parent.right
-                        rightMargin: 16
-                        verticalCenter: parent.verticalCenter
+                    else {
+                        isShow = transactionInfo.hasChange
                     }
+                    return isShow
                 }
-            }
-            Row {
-                visible: changeinfo.visible
-                width: parent.width - 24
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 12
-                QText {
-                    width: 192
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 20
-                    wrapMode: Text.WrapAnywhere
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    text: transactionInfo.change.address
-                }
-                Column {
-                    width: 122
-                    spacing: 4
-                    QText {
-                        width: parent.width
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 20
-                        wrapMode: Text.WrapAnywhere
-                        font.pixelSize: 16
-                        font.weight: Font.Bold
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: transactionInfo.change.amount + RoomWalletData.unitValue
-                        horizontalAlignment: Text.AlignRight
+                onEditClicked: {
+                    if (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES) {
+                        if (transactionInfo.hasDraftCoinChange()) {
+                            changeTags.open()
+                        }
                     }
-                    QText {
-                        width: parent.width
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 16
-                        wrapMode: Text.WrapAnywhere
-                        font.pixelSize: 12
-                        color: "#031F2B"
-                        font.family: "Lato"
-                        text: qsTr("%1%2 %3")
-                        .arg(AppSetting.currencySymbol)
-                        .arg(transactionInfo.change.amountCurrency)
-                        .arg(AppSetting.currency)
-                        horizontalAlignment: Text.AlignRight
+                    else {
+                        var input = {
+                            type: "edit-change-address"
+                        }
+                        AppModel.walletInfo.requestSyncSelectCoinForMakeTransaction(input)
                     }
                 }
             }
-            Rectangle {
-                width: parent.width
+
+            QTransactionNoteBlock {
+                id: transationNote
                 visible: !isDummy
-                height: 32
-                color: "#F5F5F5"
-                QText {
-                    text: STR.STR_QML_218
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 12
-                    color: "#323E4A"
-                    anchors {
-                        left: parent.left
-                        leftMargin: 16
-                        verticalCenter: parent.verticalCenter
-                    }
+                onMemoNotify: {
+                    newMemoNotify(newMemo)
                 }
             }
-            QTextInputBoxTypeA {
-                width: parent.width - 24
-                visible: !isDummy
-                placeholderText: ""
-                text: transactionInfo.memo
-                backgroundColor: "Transparent"
-                borderColor: "Transparent"
-                color: "#000000"
-                font.family: "Montserrat"
-                font.pixelSize: 16
+
+            QSignaturesBlock {
+                id: signatures
                 anchors.horizontalCenter: parent.horizontalCenter
-                onTypingFinished: {
-                    var newMemo = currentText
-                    if(newMemo !== transactionInfo.memo){ newMemoNotify(newMemo) }
-                }
             }
-            Rectangle {
-                width: parent.width
-                visible: !isDummy
-                height: 32
-                color: "#F5F5F5"
-                QText {
-                    text: STR.STR_QML_219
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    font.pixelSize: 12
-                    color: "#323E4A"
-                    anchors {
-                        left: parent.left
-                        leftMargin: 16
-                        verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            Item {
-                width: parent.width
-                height: 32
-                visible: !isDummy
-                QText {
-                    id: numbersignaturepending
-                    text: transactionInfo.numberSigned + "/" + transactionInfo.m
-                    font.pixelSize: 16
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    font.weight: Font.Bold
-                    anchors {
-                        left: parent.left
-                        leftMargin: 16
-                        verticalCenter: parent.verticalCenter
-                    }
-                    width: 346
-                    height: 32
-                    wrapMode: Text.WordWrap
-                }
-                Row {
-                    spacing: 8
-                    height: 32
-                    visible: (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                    anchors {
-                        left: parent.left
-                        leftMargin: 70
-                        verticalCenter: numbersignaturepending.verticalCenter
-                    }
-                    Rectangle {
-                        id: indicatorStatus
-                        width: 4
-                        height: 24
-                        radius: 1
-                        color: "#E02247"
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    QText {
-                        text: STR.str_QML_220(Math.max(0, (transactionInfo.m - transactionInfo.numberSigned)))
-                        font.pixelSize: 12
-                        font.family: "Lato"
-                        color: indicatorStatus.color
-                        width: 346
-                        height: 32
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
+
+            QShowInputCoinsBlock {
+                id: inputCoins
+                anchors.horizontalCenter: parent.horizontalCenter
             }
         }
     }

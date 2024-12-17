@@ -90,25 +90,18 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                      << "| manual Output:" << manualOutput
                      << "| manual Fee:" << manualFee
                      << "| free rate:" << feeRate;
-            QUTXOListModelPtr inputs = NULL;
-            if(true == manualOutput) {
-                inputs = QUTXOListModelPtr(new UTXOListModel());
-                if(AppModel::instance()->utxoList()){
-                    for (int i = 0; i < AppModel::instance()->utxoList()->rowCount(); i++) {
-                        QUTXOPtr it = AppModel::instance()->utxoList()->getUTXOByIndex(i);
-                        if(it.data() && it.data()->selected()){
-                            DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->amountSats();
-                            inputs->addUTXO(it.data()->txid(),
-                                            it.data()->vout(),
-                                            it.data()->address(),
-                                            it.data()->amountSats(),
-                                            it.data()->height(),
-                                            it.data()->memo(),
-                                            it.data()->status());
-                        }
+
+            QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->id()));
+            if(transaction->inputCoins()){
+                for (int i = 0; i < transaction->inputCoins()->rowCount(); i++) {
+                    QUTXOPtr it = transaction->inputCoins()->getUTXOByIndex(i);
+                    if(it.data()){
+                        DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->amountSats();
+                        inputs->addUTXO(it.data()->getUnspentOutput());
                     }
                 }
             }
+
             QMap<QString, qint64> outputs;
             if(AppModel::instance()->destinationList()){
                 outputs = AppModel::instance()->destinationList()->getOutputs();
@@ -169,6 +162,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                         if(trans){
                             AppModel::instance()->setTransactionInfo(trans);
+                            wallet.data()->AssignTagsToTxChange();
                             if(wallet.data()->isAssistedWallet()){
                                 wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());
                             }
@@ -209,74 +203,16 @@ void EVT_CREATE_TRANSACTION_SAVE_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_CREATE_TRANSACTION_UTXO_SORT_REQUEST_HANDLER(QVariant msg) {
-    int sortRole = msg.toMap().value("sortRole").toInt();
-    int sortOrder = msg.toMap().value("sortOrder").toInt();
-
-    if(AppModel::instance()->utxoList()){
-        AppModel::instance()->utxoList()->requestSort(sortRole, sortOrder);
+    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->utxoList()){
+        int sortRole = msg.toMap().value("sortRole").toInt();
+        int sortOrder = msg.toMap().value("sortOrder").toInt();
+        AppModel::instance()->walletInfo()->utxoList()->requestSort(sortRole, sortOrder);
     }
 }
 
 void EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX_HANDLER(QVariant msg) {
-    bool subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
-    int feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    bool manualFee = msg.toMap().value("manualFee").toBool();
-    bool manualOutput = msg.toMap().value("manualOutput").toBool();
-    if(!manualFee) feeRate = -1;
-    QString replace_txid = AppModel::instance()->getTxidReplacing();
-    DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
-    QUTXOListModelPtr inputs = NULL;
-    if(true == manualOutput){
-        inputs = QUTXOListModelPtr(new UTXOListModel());
-        if(AppModel::instance()->utxoList()){
-            for (int i = 0; i < AppModel::instance()->utxoList()->rowCount(); i++) {
-                QUTXOPtr it = AppModel::instance()->utxoList()->getUTXOByIndex(i);
-                if(it.data() && it.data()->selected()){
-                    DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->amountSats();
-                    inputs->addUTXO(it.data()->txid(),
-                                    it.data()->vout(),
-                                    it.data()->address(),
-                                    it.data()->amountSats(),
-                                    it.data()->height(),
-                                    it.data()->memo(),
-                                    it.data()->status());
-                }
-            }
-        }
-    }
-
-    QMap<QString, qint64> outputs;
-    if(AppModel::instance()->destinationList()){
-        outputs = AppModel::instance()->destinationList()->getOutputs();
-    }
-
-    QString wallet_id = "";
-    if(AppModel::instance()->walletInfo()){
-        wallet_id = AppModel::instance()->walletInfo()->id();
-    }
-
-    QWarningMessage msgwarning;
-    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
-                                                            outputs,
-                                                            inputs,
-                                                            feeRate,
-                                                            subtractFromFeeAmout,
-                                                            replace_txid,
-                                                            msgwarning);
-    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-        if(trans){
-            if(AppModel::instance()->transactionInfo()){
-                trans.data()->setMemo(AppModel::instance()->transactionInfo()->memo());
-                if(QEventProcessor::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_INFO){
-                    DBG_INFO << "REPLACE BY FEE, KEEP ORIGIN FEE";
-                    trans.data()->setFee(AppModel::instance()->transactionInfo()->feeSats());
-                }
-            }
-            AppModel::instance()->setTransactionInfo(trans);
-        }
-    }
-    else{
-        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+    if (auto w = AppModel::instance()->walletInfo()) {
+        w->UpdateDraftTransaction(msg);
     }
 }
 

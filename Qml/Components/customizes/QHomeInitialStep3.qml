@@ -30,18 +30,26 @@ import "../../Components/origins"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Transactions"
 import "../../../localization/STR_QML.js" as STR
 
 Item {
     id: _item
     property bool existWallet: false
     property string myRole: AppModel.walletInfo.myRole
+    property bool walletNeedBackup: AppModel.walletInfo.needBackup
+    property bool walletIsReplaced: AppModel.walletInfo.isReplaced
+    property bool walletIsAssisted: AppModel.walletInfo.isAssistedWallet
+    property bool walletIsShared: AppModel.walletInfo.isSharedWallet
+    property bool walletIsLocked: AppModel.walletInfo.isLocked
+
+
     anchors.fill: parent
     anchors.margins: 24
     Column {
         spacing: 24
         Rectangle {
-            visible: AppModel.walletInfo.needBackup
+            visible: walletNeedBackup
             width: _item.width
             height: 80
             radius: 8
@@ -92,11 +100,11 @@ Item {
         QAreaWalletDetail{
             id: _walletDes
             width: _item.width
-            height: _item.height * 0.49
-            isAssisted: AppModel.walletInfo.isAssistedWallet
-            isHotWallet: AppModel.walletInfo.needBackup
-            isLocked: AppModel.walletInfo.isLocked
-            isReplaced: AppModel.walletInfo.isReplaced
+            height: (_item.height * 0.49)
+            isAssisted: walletIsAssisted
+            isHotWallet: walletNeedBackup
+            isLocked: walletIsLocked
+            isReplaced: walletIsReplaced
             Row{
                 anchors.fill: parent
                 Item {
@@ -193,7 +201,7 @@ Item {
                             width: 70
                             height: parent.height
                             radius: 20
-                            visible: AppModel.walletInfo.isSharedWallet
+                            visible: walletIsShared
                             color: "#EAEAEA"
                             Row {
                                 anchors.centerIn: parent
@@ -323,13 +331,17 @@ Item {
                             bottom: parent.bottom
                             bottomMargin: 24*QAPP_DEVICE_HEIGHT_RATIO
                         }
-                        QTextButton {
-                            label.text: STR.STR_QML_002
-                            width: 204
+                        QIconTextButton {
+                            width: 132
+                            height: 48
+                            label: STR.STR_QML_002
+                            icons: ["spend-dark.svg", "spend-dark.svg", "spend-dark.svg","spend-dark.svg"]
+                            fontPixelSize: 16
+                            iconSize: 24
                             type: eTypeF
-                            enabled: (existWallet && (myRole !== "OBSERVER")) && !AppModel.walletInfo.isLocked
+                            enabled: (existWallet && (myRole !== "OBSERVER")) && !walletIsLocked
                             onButtonClicked: {
-                                if(AppModel.walletInfo.isSharedWallet){
+                                if(walletIsShared){
                                     QMLHandle.sendEvent(EVT.EVT_GOTO_HOME_CHAT_TAB)
                                     QMLHandle.sendEvent(EVT.EVT_HOME_SHARED_WL_SEND_REQUEST,AppModel.walletInfo.walletId)
                                 }
@@ -338,25 +350,56 @@ Item {
                                 }
                             }
                         }
-                        QTextButton {
-                            label.text: STR.STR_QML_003
-                            width: 204
+
+                        QIconTextButton {
+                            width: 132
+                            height: 48
+                            label: STR.STR_QML_003
+                            icons: ["received-dark.svg", "received-dark.svg", "received-dark.svg", "received-dark.svg"]
+                            fontPixelSize: 16
+                            iconSize: 24
                             type: eTypeF
-                            enabled: existWallet
                             onButtonClicked: { QMLHandle.sendEvent(EVT.EVT_HOME_RECEIVE_REQUEST) }
+                        }
+
+                        QIconTextButton {
+                            width: 132
+                            height: 48
+                            label: STR.STR_QML_1407
+                            icons: ["bitcoin-dark.svg", "bitcoin-dark.svg", "bitcoin-dark.svg", "bitcoin-dark.svg"]
+                            fontPixelSize: 16
+                            iconSize: 24
+                            type: eTypeF
+                            enabled: AppModel.walletInfo.utxoList.count > 0
+                            onButtonClicked: {
+                                AppModel.walletInfo.isViewCoinShow = true
+                            }
                         }
                     }
 
                     /* for menu */
                     QContextMenu {
                         id: optionMenu
+                        menuWidth: 275
                         labels: [
                             STR.STR_QML_532,
                             STR.STR_QML_347,
+                            STR.STR_QML_1490,
                         ]
                         icons: [
                             "qrc:/Images/Images/import_031F2B.png",
                             "qrc:/Images/Images/OnlineMode/Backup.png",
+                            "qrc:/Images/Images/export_invoices.png",
+                        ]
+                        enables: [
+                            true,
+                            true,
+                            (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
+                        ]
+                        visibles: [
+                            true,
+                            true,
+                            (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
                         ]
                         onItemClicked: {
                             switch(index){
@@ -365,10 +408,28 @@ Item {
                                 break;
                             case 1: // "Save wallet config"
                                 exportwalletDialog.visible = false
-                                exportwalletDialog.exportFormat = NUNCHUCKTYPE.DESCRIPTOR
+                                exportwalletDialog.exportFormat = "bsms"
                                 exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                        + RoomWalletData.getValidFilename(RoomWalletData.walletName)
+                                        + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                         + ".bsms"
+                                exportwalletDialog.open()
+                                break;
+                            case 2: // "Export invoices"
+                                var currentDate = new Date();
+                                var monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                                  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                                var day = currentDate.getDate();
+                                var month = monthNames[currentDate.getMonth()];
+                                var year = currentDate.getFullYear();
+                                var today = day + '' + month + '' + year;;
+
+                                exportwalletDialog.visible = false
+                                exportwalletDialog.exportFormat = "pdf"
+                                exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                        + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                        + "_transaction_history_"
+                                        + today
+                                        + ".pdf"
                                 exportwalletDialog.open()
                                 break;
                             default:
@@ -492,112 +553,107 @@ Item {
                 }
             }
         }
-
         Item {
             width: _item.width
-            height: _item.height * 0.45
-            Item {
-                anchors.fill: parent
-                Row {
-                    id: trans_lbl
+            height: _item.height * 0.49
+            Row {
+                id: trans_lbl
+                height: 24
+                spacing: 8
+                visible: AppModel.walletInfo !== null && AppModel.walletInfo.transactionHistory !== null
+                QText {
                     height: 24
-                    spacing: 8
-                    visible: AppModel.walletInfo !== null && AppModel.walletInfo.transactionHistory !== null
-                    QText {
-                        height: 24
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 20
-                        color: "#031F2B";
-                        font.family: "Lato"
-                        text: STR.STR_QML_010
-                        verticalAlignment: Text.AlignVCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    QText {
-                        height: 24
-                        font.weight: Font.Normal
-                        font.pixelSize: 12
-                        color: "#757575";
-                        font.family: "Lato"
-                        text: STR.STR_QML_010_number.arg(AppModel.walletInfo && AppModel.walletInfo.transactionHistory ? AppModel.walletInfo.transactionHistory.count : 0)
-                        verticalAlignment: Text.AlignVCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                QButtonTextLink {
-                    height: 24
-                    label: STR.STR_QML_011
-                    direction: eRIGHT
-                    enabled: transaction_lst.count > 0
-                    anchors {
-                        right: parent.right
-                    }
-                    onButtonClicked: {
-                        QMLHandle.sendEvent(EVT.EVT_HOME_TRANSACTION_HISTORY_REQUEST)
-                    }
+                    font.weight: Font.DemiBold
+                    font.pixelSize: 20
+                    color: "#031F2B";
+                    font.family: "Lato"
+                    text: STR.STR_QML_010
+                    verticalAlignment: Text.AlignVCenter
+                    anchors.verticalCenter: parent.verticalCenter
                 }
                 QText {
-                    id: trans_not_have
-                    anchors {
-                        top: parent.top
-                        topMargin: 100
-                        horizontalCenter: parent.horizontalCenter
-                    }
                     height: 24
                     font.weight: Font.Normal
-                    font.pixelSize: 14
-                    color: "#323E4A";
-                    font.family: "Montserrat"
-                    text: STR.STR_QML_692
-                    visible: transaction_lst.count == 0
+                    font.pixelSize: 12
+                    color: "#757575";
+                    font.family: "Lato"
+                    text: STR.STR_QML_010_number.arg(AppModel.walletInfo && AppModel.walletInfo.transactionHistory ? AppModel.walletInfo.transactionHistory.count : 0)
+                    verticalAlignment: Text.AlignVCenter
+                    anchors.verticalCenter: parent.verticalCenter
                 }
-                QListView {
-                    id: transaction_lst
-                    width: parent.width
-                    height: 6*64*QAPP_DEVICE_HEIGHT_RATIO
-                    model: AppModel.walletInfo.transactionHistory
-                    interactive: QAPP_DEVICE_HEIGHT_RATIO == 1 ? false : true
-                    ScrollBar.vertical: ScrollBar { active: interactive }
-                    cacheBuffer: 0
-                    anchors {
-                        right: parent.right
-                        top: trans_lbl.bottom
-                        topMargin: 12
+            }
+            QButtonTextLink {
+                height: 24
+                label: STR.STR_QML_011
+                direction: eRIGHT
+                enabled: transaction_lst.count > 0
+                anchors {
+                    right: parent.right
+                }
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_HOME_TRANSACTION_HISTORY_REQUEST)
+                }
+            }
+            QText {
+                id: trans_not_have
+                anchors {
+                    top: parent.top
+                    topMargin: 100
+                    horizontalCenter: parent.horizontalCenter
+                }
+                height: 24
+                font.weight: Font.Normal
+                font.pixelSize: 14
+                color: "#323E4A";
+                font.family: "Montserrat"
+                text: STR.STR_QML_692
+                visible: transaction_lst.count == 0
+            }
+            QListView {
+                id: transaction_lst
+                width: parent.width
+                height: parent.height*(walletNeedBackup ? 0.6 : 0.9)
+                model: AppModel.walletInfo.transactionHistory
+                ScrollBar.vertical: ScrollBar { active: transaction_lst.contentHeight > transaction_lst.height }
+                anchors {
+                    right: parent.right
+                    top: trans_lbl.bottom
+                    topMargin: 12
+                }
+                clip: true
+                delegate: QTransactionDelegate {
+                    width: transaction_lst.width
+                    height: 64
+                    parentList: transaction_lst
+                    transactionisReceiveTx: transaction_isReceiveTx
+                    transactiontxid: transaction_txid
+                    transactiondestinationList: transaction_destinationDisp_role
+                    transactionstatus: transaction_status
+                    transactionMemo: transaction_memo
+                    transactionAmount: (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
+                    transactiontotalCurrency: (transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency)
+                    confirmation: Math.max(0, (AppModel.chainTip - transaction_height)+1)
+                    transactionDate: transaction_blocktime
+                    addressWidth: width*0.20
+                    statusWidth: width*0.20
+                    timeWidth: width*0.15
+                    memoWidth: width*0.20
+                    amountWidth: width*0.25
+                    transactionIsRbf: transaction_isRbf
+                    isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
+                    onButtonClicked: {
+                        QMLHandle.signalNotifySendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transactiontxid)
                     }
-                    clip: true
-                    delegate: QTransactionDelegate {
-                        width: transaction_lst.width
-                        height: 64
-                        transactionisReceiveTx: transaction_isReceiveTx
-                        transactiontxid: transaction_txid
-                        transactiondestinationList: transaction_destinationDisp_role
-                        transactionstatus: transaction_status
-                        transactionMemo: transaction_memo
-                        transactionAmount: (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
-                        transactiontotalCurrency: (transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency)
-                        confirmation: Math.max(0, (AppModel.chainTip - transaction_height)+1)
-                        transactionDate: transaction_blocktime
-                        addressWidth: width*0.20
-                        statusWidth: width*0.20
-                        timeWidth: width*0.15
-                        memoWidth: width*0.20
-                        amountWidth: width*0.25
-                        transactionIsRbf: transaction_isRbf
-                        isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
-                        onButtonClicked: {
-                            QMLHandle.signalNotifySendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transactiontxid)
-                        }
-                    }
                 }
-                BusyIndicator {
-                    id: notxWaiting
-                    anchors.centerIn: transaction_lst
-                    running: transaction_lst.count === 0 && ClientController.isMatrixLoggedIn === false
-                }
-                Connections {
-                    target: AppModel
-                    onFinishedGetTransactionHistory: {notxWaiting.visible = false}
-                }
+            }
+            BusyIndicator {
+                id: notxWaiting
+                anchors.centerIn: transaction_lst
+                running: transaction_lst.count === 0 && ClientController.isMatrixLoggedIn === false
+            }
+            Connections {
+                target: AppModel
+                onFinishedGetTransactionHistory: {notxWaiting.visible = false}
             }
         }
     }
@@ -610,10 +666,20 @@ Item {
     }
     FileDialog {
         id: exportwalletDialog
-        property int exportFormat: -1
+        property string exportFormat: "bsms"
         fileMode: FileDialog.SaveFile
         onAccepted: {
-            QMLHandle.sendEvent(EVT.EVT_HOME_EXPORT_BSMS, exportwalletDialog.currentFile)
+            if(exportwalletDialog.exportFormat === "pdf") {
+                invoicePopup.open()
+                invoicePopup.startPrintInvoices(exportwalletDialog.currentFile)
+            }
+            else {
+                var exportObj = {
+                    "export_type"    : "bsms",
+                    "export_path"    : exportwalletDialog.currentFile
+                };
+                QMLHandle.sendEvent(EVT.EVT_HOME_EXPORT_BSMS, exportObj)
+            }
         }
     }
     enabled: !isLocked
@@ -628,5 +694,160 @@ Item {
             anchors.fill: parent
         }
     }
-}
 
+    Popup {
+        id: invoicePopup
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        background: Item{}
+
+        property int currentIndex: 0
+        property int total: 100
+
+        function startPrintInvoices(filepath) {
+            contentInvoice.item.startPrintInvoices(filepath)
+        }
+        function progressChanged(index, total) {
+            invoicePopup.currentIndex = index
+            invoicePopup.total = total
+        }
+        Loader {
+            id: contentInvoice
+            sourceComponent: null
+            visible: false
+        }
+
+        Rectangle {
+            width: 300
+            height: 222
+            radius: 24
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            anchors.horizontalCenterOffset: -386/2
+            Column {
+                spacing: 8
+                anchors.centerIn: parent
+                QText {
+                    width: 252
+                    height: 28
+                    text: "Processing"
+                    font.weight: Font.Bold
+                    font.family: "Lato"
+                    font.pixelSize: 20
+                    color: "#031F2B"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                Item {
+                    width: 252
+                    height: 16
+                }
+                QProgressbarTypeA {
+                    width: 252
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    percentage: invoicePopup.currentIndex*100/invoicePopup.total
+                }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QText {
+                        width: 252/2
+                        height: 28
+                        text: invoicePopup.currentIndex + "/" + invoicePopup.total
+                        font.family: "Lato"
+                        font.pixelSize: 16
+                        color: "#031F2B"
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QText {
+                        width: 252/2
+                        height: 28
+                        text: Math.round(invoicePopup.currentIndex*100/invoicePopup.total) + "%"
+                        font.family: "Lato"
+                        font.pixelSize: 16
+                        color: "#031F2B"
+                        anchors.verticalCenter: parent.verticalCenter
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+                Item {
+                    width: 252
+                    height: 16
+                }
+                QTextButton {
+                    width: 252
+                    height: 48
+                    label.text: "Cancel"
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onButtonClicked: {
+                        invoicePopup.close()
+                    }
+                }
+            }
+        }
+        onOpened : {
+            invoicePopup.currentIndex = 0
+            invoicePopup.total = 100
+            contentInvoice.sourceComponent = invoiceComponent
+        }
+        onClosed: {
+            invoicePopup.currentIndex = 0
+            invoicePopup.total = 100
+            contentInvoice.sourceComponent = null
+        }
+    }
+    Component {
+        id: invoiceComponent
+        Repeater {
+            id: listInvoices
+            width: 728
+            height: 496
+            clip: true
+            model: AppModel.walletInfo.transactionHistory
+            delegate: QTransactionInvoice {
+                txid            : transaction_txid
+                total           : transaction_total
+                subtotal        : transaction_subtotal
+                blocktime       : transaction_blocktime
+                fee             : transaction_fee
+                memo            : transaction_memo
+                hasChange       : transaction_hasChange
+                changeAmount    : transaction_change_role.amount
+                changeAddress   : transaction_change_role.address
+                isRecieveTx     : transaction_isReceiveTx
+                destinations    : transaction_destinationList
+                interactive     : false
+            }
+            function startPrintInvoices(filepath) {
+                var objects = [];
+                for(var i = 0; i < listInvoices.count; i++) {
+                    objects.push(listInvoices.itemAt(i))
+                }
+                // PDFPrinter.printInvoicesToPdf(filepath, objects)
+                var exportObj = {
+                    "export_type"    : "pdf",
+                    "export_path"    : filepath,
+                    "export_data"    : objects
+                };
+                QMLHandle.sendEvent(EVT.EVT_HOME_EXPORT_BSMS, exportObj)
+            }
+        }
+    }
+
+    Connections {
+        target: PDFPrinter
+        onFinished: {
+            invoicePopup.close()
+        }
+        onProgressChanged: {
+            invoicePopup.progressChanged(index, total)
+        }
+    }
+}

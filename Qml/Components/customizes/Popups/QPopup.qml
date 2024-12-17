@@ -37,6 +37,7 @@ Popup {
     modal: true
     focus: true
     property int offset: 24
+    property int offsetRadius: 24
     property Component content
     readonly property Item itemInfo: contentInfo.item
     closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
@@ -47,7 +48,7 @@ Popup {
         height: contentInfo.implicitHeight + offset*2
         anchors.centerIn: parent
         color: "#FFFFFF"
-        radius: 24
+        radius: offsetRadius
         layer.enabled: true
         layer.effect: OpacityMask {
             maskSource: Rectangle {

@@ -1065,21 +1065,33 @@ std::vector<nunchuk::Transaction> bridge::nunchukGetOriginTransactionHistory(con
     return trans_result;
 }
 
-QUTXOListModelPtr bridge::nunchukGetUnspentOutputs(const QString &walletId)
+QUTXOListModelPtr bridge::nunchukGetUnspentOutputs(const QString &wallet_id)
 {
     QWarningMessage msg;
-    std::vector<nunchuk::UnspentOutput> utxo_result = nunchukiface::instance()->GetUnspentOutputs(walletId.toStdString(), msg);
+    std::vector<nunchuk::UnspentOutput> utxo_result = nunchukiface::instance()->GetUnspentOutputs(wallet_id.toStdString(), msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        QUTXOListModelPtr ret = QUTXOListModelPtr(new UTXOListModel());
+        QUTXOListModelPtr ret = QUTXOListModelPtr(new QUTXOListModel(wallet_id));
         for (nunchuk::UnspentOutput it : utxo_result) {
-            DBG_INFO << it.get_amount() << it.get_height() << (int)it.get_status();
-            ret.data()->addUTXO(QString::fromStdString(it.get_txid()),
-                                it.get_vout(),
-                                QString::fromStdString(it.get_address()),
-                                it.get_amount(),
-                                it.get_height(),
-                                QString::fromStdString(it.get_memo()),
-                                (int)it.get_status());
+            ret.data()->addUTXO(it);
+        }
+        return ret;
+    }
+    else{
+        return NULL;
+    }
+}
+
+
+QUTXOListModelPtr bridge::nunchukLockedGetUnspentOutputs(const QString &wallet_id)
+{
+    QWarningMessage msg;
+    std::vector<nunchuk::UnspentOutput> utxo_result = nunchukiface::instance()->GetUnspentOutputs(wallet_id.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        QUTXOListModelPtr ret = QUTXOListModelPtr(new QUTXOListModel(wallet_id));
+        for (nunchuk::UnspentOutput it : utxo_result) {
+            if (it.is_locked()) {
+                ret.data()->addUTXO(it);
+            }
         }
         return ret;
     }
@@ -2167,6 +2179,309 @@ nunchuk::MasterSigner bridge::CreateSoftwareSignerFromMasterXprv(const QString &
                                                                         isPrimaryKey,
                                                                         replace,
                                                                         msg);
+}
+
+std::vector<nunchuk::CoinCollection> bridge::nunchukGetCoinCollections(const std::string &wallet_id)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetCoinCollections(wallet_id, msg);
+}
+
+std::vector<nunchuk::CoinTag> bridge::nunchukGetCoinTags(const string &wallet_id)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetCoinTags(wallet_id, msg);
+}
+
+bool bridge::nunchukImportCoinControlData(const QString &wallet_id, const QString &data, bool force, QWarningMessage &msg)
+{
+    return nunchukiface::instance()->ImportCoinControlData(wallet_id.toStdString(), data.toStdString(), force, msg);
+}
+
+QString bridge::nunchukExportCoinControlData(const QString &wallet_id, QWarningMessage &msg)
+{
+    return QString::fromStdString(nunchukiface::instance()->ExportCoinControlData(wallet_id.toStdString(), msg));
+}
+
+QUTXOListModelPtr bridge::nunchukGetCoinInCollection(const QString &wallet_id, int collection_id)
+{
+    QWarningMessage msg;
+    std::vector<nunchuk::UnspentOutput> utxo_result = nunchukiface::instance()->GetCoinInCollection(wallet_id.toStdString(), collection_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        QUTXOListModelPtr ret = QUTXOListModelPtr(new QUTXOListModel(wallet_id));
+        for (nunchuk::UnspentOutput it : utxo_result) {
+            DBG_INFO << it.get_amount() << it.get_height() << (int)it.get_status() << it.get_memo() << it.get_tags();
+            ret.data()->addUTXO(it);
+        }
+        return ret;
+    }
+    else{
+        return NULL;
+    }
+}
+
+QUTXOListModelPtr bridge::nunckGetCoinByTag(const QString &wallet_id, int tag_id)
+{
+    QWarningMessage msg;
+    std::vector<nunchuk::UnspentOutput> utxo_result = nunchukiface::instance()->GetCoinByTag(wallet_id.toStdString(), tag_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        QUTXOListModelPtr ret = QUTXOListModelPtr(new QUTXOListModel(wallet_id));
+        for (nunchuk::UnspentOutput it : utxo_result) {
+            ret.data()->addUTXO(it);
+        }
+        return ret;
+    }
+    else{
+        return NULL;
+    }
+}
+
+bool bridge::nunchukUpdateCoinTag(const QString &wallet_id, const nunchuk::CoinTag &tag)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->UpdateCoinTag(wallet_id.toStdString(), tag, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukUpdateCoinCollection(const QString &wallet_id, const nunchuk::CoinCollection &collection, bool apply_to_existing_coins)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->UpdateCoinCollection(wallet_id.toStdString(), collection, apply_to_existing_coins, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+nunchuk::CoinCollection bridge::nunchukCreateCoinCollection(const QString &wallet_id, const QString &name)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->CreateCoinCollection(wallet_id.toStdString(), name.toStdString(), msg);
+}
+
+
+bool bridge::nunchukAddToCoinCollection(const QString &wallet_id, int collection_id, const QString &tx_id, int vout)
+{
+    QWarningMessage msg;
+    nunchukiface::instance()->AddToCoinCollection(wallet_id.toStdString(), collection_id, tx_id.toStdString(), vout, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukDeleteCoinCollection(const QString &wallet_id, int collection_id)
+{
+    QWarningMessage msg;
+    nunchukiface::instance()->DeleteCoinCollection(wallet_id.toStdString(), collection_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukDeleteCoinTag(const QString &wallet_id, int tag_id)
+{
+    DBG_INFO << wallet_id << tag_id;
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->DeleteCoinTag(wallet_id.toStdString(), tag_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukUpdateCoinMemo(const QString &wallet_id, const QString &tx_id, int vout, const QString &memo)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->UpdateCoinMemo(wallet_id.toStdString(), tx_id.toStdString(), vout, memo.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukLockCoin(const QString &wallet_id, const QString &tx_id, int vout)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->LockCoin(wallet_id.toStdString(), tx_id.toStdString(), vout, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukUnlockCoin(const QString &wallet_id, const QString &tx_id, int vout)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->UnlockCoin(wallet_id.toStdString(), tx_id.toStdString(), vout, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukAddToCoinTag(const QString &wallet_id, int tag_id, const QString &tx_id, int vout)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->AddToCoinTag(wallet_id.toStdString(), tag_id, tx_id.toStdString(), vout, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukRemoveFromCoinTag(const QString &wallet_id, int tag_id, const QString &tx_id, int vout)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->RemoveFromCoinTag(wallet_id.toStdString(), tag_id, tx_id.toStdString(), vout, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukRemoveFromCoinCollection(const QString &wallet_id, int collection_id, const QString &tx_id, int vout)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->RemoveFromCoinCollection(wallet_id.toStdString(), collection_id, tx_id.toStdString(), vout, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return false;
+    }
+}
+
+bool bridge::nunchukCreateCoinTag(const QString &wallet_id, const QString &name, const QString &color)
+{
+    QWarningMessage msg;
+    auto tag = nunchukiface::instance()->CreateCoinTag(wallet_id.toStdString(), name.toStdString(), color.toStdString(), msg);
+    DBG_INFO << tag.get_id() << tag.get_name() << tag.get_color();
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+std::vector<nunchuk::UnspentOutput> bridge::nunchukGetCoinByTag(const QString &wallet_id, int tag_id)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetCoinByTag(wallet_id.toStdString(), tag_id, msg);
+}
+
+std::vector<nunchuk::UnspentOutput> bridge::nunchukGetCoinByCollection(const QString &wallet_id, int collection_id)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetCoinInCollection(wallet_id.toStdString(), collection_id, msg);
+}
+
+QList<QUTXOListModel *> bridge::nunchukGetCoinAncestry(const QString &wallet_id, const QString &tx_id, int vout)
+{
+    QList<QUTXOListModel *> list;
+    QWarningMessage msg;
+    std::vector<nunchuk::UnspentOutput> utxo_result = nunchukiface::instance()->GetUnspentOutputs(wallet_id.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        QUTXOListModel *model = new QUTXOListModel(wallet_id);
+        for (nunchuk::UnspentOutput it : utxo_result) {
+            if (it.get_txid() == tx_id.toStdString() && it.get_vout() == vout) {
+                model->addUTXO(it);
+            }
+        }
+        if (model->count() > 0) {
+            list.append(model);
+        }
+    }
+
+    std::vector<std::vector<nunchuk::UnspentOutput>> ancestry = nunchukiface::instance()->GetCoinAncestry(wallet_id.toStdString(), tx_id.toStdString(), vout, msg);
+
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        for (std::vector<nunchuk::UnspentOutput> it : ancestry) {
+            QUTXOListModel *model = new QUTXOListModel(wallet_id);
+            for (nunchuk::UnspentOutput utxo : it) {
+                model->addUTXO(utxo);
+            }
+            if (model->count() > 0) {
+                list.append(model);
+            }
+        }
+        return list;
+    }
+    else{
+        return {};
+    }
+}
+
+QString bridge::nunchukExportBIP329(const QString &wallet_id, QWarningMessage &msg)
+{
+    return QString::fromStdString(nunchukiface::instance()->ExportBIP329(wallet_id.toStdString(), msg));
+}
+
+void bridge::nunchukImportBIP329(const QString &wallet_id, const QString &data, QWarningMessage &msg)
+{
+    nunchukiface::instance()->ImportBIP329(wallet_id.toStdString(), data.toStdString(), msg);
+}
+
+QString bridge::nunchukGetAddressPath(const QString &wallet_id, const QString &address)
+{
+    QWarningMessage msg;
+    return QString::fromStdString(nunchukiface::instance()->GetAddressPath(wallet_id.toStdString(), address.toStdString(), msg));
+}
+
+bool bridge::nunchukMarkAddressUsed(const QString &wallet_id, const QString &address)
+{
+    QWarningMessage msg;
+    bool ret = nunchukiface::instance()->MarkAddressAsUsed(wallet_id.toStdString(), address.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        AppModel::instance()->showToast(0, STR_CPP_131, EWARNING::WarningType::SUCCESS_MSG);
+    }
+    else{
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    return ret;
+}
+
+std::vector<nunchuk::UnspentOutput> bridge::nunchukGetOriginCoinsFromTxInputs(const QString &walletId, const std::vector<nunchuk::TxInput> &inputs)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetCoinsFromTxInputs(walletId.toStdString(), inputs, msg);
+}
+
+std::vector<nunchuk::UnspentOutput> bridge::nunchukGetOriginCoins(const QString &walletId)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetCoins(walletId.toStdString(), msg);
+}
+
+std::vector<nunchuk::UnspentOutput> bridge::nunchukGetOriginUnspentOutputs(const QString &walletId)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetUnspentOutputs(walletId.toStdString(), msg);
 }
 
 QMasterSignerPtr bridge::ImportBackupKey(const std::vector<unsigned char> &data, const QString &backup_key, const QString &name, bool is_primary, QWarningMessage &msg)

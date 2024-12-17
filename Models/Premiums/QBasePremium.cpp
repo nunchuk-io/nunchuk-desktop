@@ -100,7 +100,7 @@ QStringList QBasePremium::slugs() const
     return walletInfoPtr() ? walletInfoPtr()->slugs() : QStringList();
 }
 
-bool QBasePremium::isDraftWallet() const
+bool QBasePremium::isUserDraftWallet() const
 {
     auto dash = dynamic_cast<const QGroupDashboard*>(this);
     if (dash) {

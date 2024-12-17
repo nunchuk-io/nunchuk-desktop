@@ -51,8 +51,6 @@ class AppModel final : public Controller,
     Q_PROPERTY(QSingleSigner*           singleSignerInfo    READ singleSignerInfo   NOTIFY singleSignerInfoChanged)
     Q_PROPERTY(QVariantList             walletsUsingSigner  READ walletsUsingSigner NOTIFY walletsUsingSignerChanged)
     Q_PROPERTY(Transaction*             transactionInfo     READ transactionInfo    NOTIFY transactionInfoChanged)
-    Q_PROPERTY(UTXOListModel*           utxoList            READ utxoList           NOTIFY utxoListChanged)
-    Q_PROPERTY(UTXO*                    utxoInfo            READ utxoInfo           NOTIFY utxoInfoChanged)
     Q_PROPERTY(DestinationListModel*    destinationList     READ destinationList    NOTIFY destinationListChanged)
     Q_PROPERTY(int walletListCurrentIndex  READ walletListCurrentIndex  	WRITE setWalletListCurrentIndex         NOTIFY walletListCurrentIndexChanged)
     Q_PROPERTY(int   addSignerStep         READ getAddSignerStep            NOTIFY addSignerStepChanged)
@@ -145,10 +143,6 @@ public:
     QTransactionPtr transactionInfoPtr() const;
     void setTransactionInfo(const QTransactionPtr& d);
 
-    UTXOListModel *utxoList() const;
-    QUTXOListModelPtr utxoListPtr() const;
-    void setUtxoList(const QUTXOListModelPtr &utxoList);
-
     DestinationListModel* destinationList() const;
     QDestinationListModelPtr destinationListPtr() const;
     void setDestinationList(const QDestinationListModelPtr &destinationList);
@@ -158,10 +152,6 @@ public:
 
     int chainTip() const;
     void setChainTip(int chainTip);
-
-    UTXO* utxoInfo() const;
-    QUTXOPtr utxoInfoPtr() const;
-    void setUtxoInfo(const QUTXOPtr &utxoInfo);
 
     QTransactionPtr getTransactionReplaceInfo() const;
     void setTransactionReplaceInfo(const QTransactionPtr &transactionReplaceInfo);
@@ -276,8 +266,6 @@ private:
     QTransactionPtr     transactionInfo_;
     QTransactionPtr     transactionReplaceInfo_;
     QTransactionListModelPtr  transactionPending_;
-    QUTXOListModelPtr   utxoList_;
-    QUTXOPtr            utxoInfo_;
     QDestinationListModelPtr destinationList_;
     int                 walletListCurrentIndex_;
     int                 chainTip_;
@@ -322,11 +310,9 @@ signals:
     void walletInfoChanged();
     void transactionInfoChanged();
     void transactionPendingChanged();
-    void utxoListChanged();
     void destinationListChanged();
     void walletListCurrentIndexChanged();
     void chainTipChanged();
-    void utxoInfoChanged();
     void addSignerStepChanged();
     void addSignerPercentageChanged();
     void fastestFeeChanged();

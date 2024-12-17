@@ -124,11 +124,13 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.41");
+    app.setApplicationVersion("1.9.42");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
     QWalletManagement::instance();
+    QUserWallets::instance();
+    QGroupWallets::instance();
 
 #ifndef RELEASE_MODE
 //    QPingThread objTracking;

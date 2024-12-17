@@ -33,6 +33,7 @@ QBaseButton {
     property int fontPixelSize: 14
     property var fontWeight: Font.Bold
     property string fontFamily: "Lato"
+    property int plusSize: 10
 
     QBackgroundState {
         id:bg
@@ -47,14 +48,14 @@ QBaseButton {
             height: 16
             anchors.verticalCenter: parent.verticalCenter
             Rectangle {
-                width: 10
+                width: plusSize
                 height: 2
                 anchors.centerIn: parent
                 color: text.color
             }
             Rectangle {
                 width: 2
-                height: 10
+                height: plusSize
                 color: text.color
                 anchors.centerIn: parent
             }

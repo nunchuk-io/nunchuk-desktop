@@ -39,7 +39,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: STR.STR_QML_211
         onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
-        content: QCreateTransaction {
+        content: QCreateTransactionClaimInheritance {
             transactionInfo: AppModel.transactionInfo
             pendingSignatureShow: false
             onSignalDraftTransaction: {

@@ -597,7 +597,7 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
         QStringList used_change_addr = bridge::nunchukGetUsedAddresses(wallet_id, true);
 
         QStringList unused_addr = bridge::nunchukGetUnusedAddresses(wallet_id, false);
-        QStringList unsued_chabge_addr = bridge::nunchukGetUnusedAddresses(wallet_id, true);
+        QStringList unsued_change_addr = bridge::nunchukGetUnusedAddresses(wallet_id, true);
 
         QWalletPtr wallet = NULL;
         if(AppModel::instance()->walletInfo()){
@@ -614,12 +614,13 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
             wallet.data()->setUsedAddressList(used_addr);
             wallet.data()->setUsedChangeAddressList(used_change_addr);
             wallet.data()->setunUsedAddressList(unused_addr);
-            wallet.data()->setUnUsedChangeddAddressList(unsued_chabge_addr);
+            wallet.data()->setUnUsedChangeddAddressList(unsued_change_addr);
             if(wallet){
                 QtConcurrent::run([wallet, wallet_id]() {
                     wallet.data()->GetAssistedTxs();
                     AppModel::instance()->startGetTransactionHistory(wallet_id);
                 });
+
             }
         }
     }
@@ -1400,5 +1401,10 @@ void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
 
 void Controller::slotFinishSyncWalletDb(const QString &wallet_id)
 {
-
+    if(AppModel::instance()->walletList()){
+        auto wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
+        if (wallet) {
+            wallet.data()->GetCoinControlFromServer();
+        }
+    }
 }

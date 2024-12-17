@@ -37,11 +37,12 @@ Item {
     signal tapsignerClicked()
     signal serkeyClicked()
     signal hardwareClicked()
+    signal backupClicked()
     Loader {
         id: _source
         anchors.fill: parent
         sourceComponent: {
-            if(modelData.type === "NFC") {
+            if(modelData.is_inheritance) {
                 return modelData.has ? inheritanceAdded : inheritanceAdd
             }
             else if (modelData.type === "SERVER") {
@@ -124,7 +125,7 @@ Item {
         id: inheritanceAdded
         Rectangle {
             anchors.fill: parent
-            color: "#A7F0BA"
+            color: modelData.user_key !== null ? "#A7F0BA" : "#FDEBD2"
             radius: 8
             Row {
                 anchors {
@@ -136,6 +137,7 @@ Item {
                     bgSize: 36
                     icon.iconSize: 24
                     icon.typeStr: modelData.type
+                    icon.tag: modelData.tag
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#F5F5F5"
                 }
@@ -185,21 +187,36 @@ Item {
                             }
                         }
                     }
-                    QLato {
+                    Item {
                         width: parent.width
-                        text: {
-                            var card_id_text = modelData.card_id
-                            var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
-                            return "Card ID: ••" + textR
+                        height: 16
+                        QLato {
+                            visible: modelData.card_id !== ""
+                            width: parent.width
+                            text: {
+                                var card_id_text = modelData.card_id
+                                var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
+                                return "Card ID: ••" + textR
+                            }
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            font.capitalization: Font.AllUppercase
+                            font.pixelSize: 12
                         }
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        font.capitalization: Font.AllUppercase
-                        font.pixelSize: 12
+                        QLato {
+                            visible: modelData.xfp !== ""
+                            width: parent.width
+                            text: "XFP: " + modelData.xfp
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            font.capitalization: Font.AllUppercase
+                            font.pixelSize: 12
+                        }
                     }
                 }
             }
             QBadge {
+                visible: modelData.user_key !== null
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
@@ -211,6 +228,22 @@ Item {
                 icon: "qrc:/Images/Images/check-circle-dark.svg"
                 text: STR.STR_QML_104
                 color: "#A7F0BA"
+            }
+            QTextButton {
+                visible: modelData.user_key === null
+                anchors {
+                    verticalCenter: parent.verticalCenter
+                    right: parent.right
+                    rightMargin: 12
+                }
+                width: label.paintedWidth + 2*20
+                height: 36
+                type: eTypeB
+                label.text: STR.STR_QML_342
+                label.font.pixelSize: 16
+                onButtonClicked: {
+                    backupClicked()
+                }
             }
         }
     }

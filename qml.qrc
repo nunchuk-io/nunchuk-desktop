@@ -167,7 +167,7 @@
         <file>Qml/Screens/OnlineMode/SCR_PRIMARY_KEY_CONFIGURATION.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SIGN_IN_MANUALLY.qml</file>
-        <file>Qml/Components/customizes/QCreateTransaction.qml</file>
+        <file>Qml/Components/customizes/QCreateTransactionClaimInheritance.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_ADD_HARDWARE.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_ADD_HARDWARE_ASK.qml</file>
         <file>Qml/Components/customizes/QProgressbarTypeA.qml</file>
@@ -472,11 +472,75 @@
         <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberSuccess.qml</file>
         <file>Qml/Screens/OnlineMode/EditMembers/QEditMemberConfirmEmail.qml</file>
         <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceFacilitatorAdminSubscriberLeftPannel.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewCoinsDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_COIN_DETAILS_CONTROL.qml</file>
+        <file>Qml/Components/customizes/QHomeViewCoinsWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QWalletViewAllCoins.qml</file>
+        <file>Qml/Components/customizes/Buttons/QCheckBox.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSingleCoinDetailDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinType.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinText.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinNote.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewFilterCoinTagsDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewFilterCoinCollectionDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCollectionChangeName.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewCoinTags.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinColorTagDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinCollectionDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewCoinCollections.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinColorTagNewTag.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSelectMoveToAnotherCollection.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinCollectionRadioDelegate.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioSelect.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSearchingBox.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewFilteringSearchCoins.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QFilterCoinTextBox.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QFilterAmountCoinTextBox.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSearchFilterTags.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSearchFilterCollections.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewLockedCoins.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewConsolidateCoins.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewCoinAncestry.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinAncestry.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinAncestryListItem.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QViewSpentCoinDetails.qml</file>
+        <file>Qml/Components/customizes/Chats/QMenuDelegate.qml</file>
+        <file>Qml/Components/customizes/Chats/QMultiContextMenu.qml</file>
+        <file>Qml/Components/customizes/Chats/QSubContextMenu.qml</file>
+        <file>Qml/Components/customizes/Transactions/QSendToAddressBlock.qml</file>
+        <file>Qml/Components/customizes/Transactions/QAddressBalanceDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/QEstimatedFee.qml</file>
+        <file>Qml/Components/customizes/Transactions/QTotalAmount.qml</file>
+        <file>Qml/Components/customizes/Transactions/QChangeAddressBlock.qml</file>
+        <file>Qml/Components/customizes/Transactions/QTransactionNoteBlock.qml</file>
+        <file>Qml/Components/customizes/Transactions/QSignaturesBlock.qml</file>
+        <file>Qml/Components/customizes/Transactions/QShowInputCoinsBlock.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QInputCoinDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/QTransactionInvoicePopup.qml</file>
+        <file>Qml/Components/customizes/Buttons/QSwitchTypeIconLabel.qml</file>
+        <file>Qml/Components/customizes/Transactions/QManualFeeRate.qml</file>
+        <file>Qml/Components/customizes/Transactions/QSubtractFeeFromSendAmount.qml</file>
+        <file>Qml/Components/customizes/Transactions/QCoinSelectionTransaction.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSelectCoinForTransaction.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QSearchingBoxTwo.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QChangeTagsInTransaction.qml</file>
+        <file>Qml/Components/customizes/QTextExtendTip.qml</file>
+        <file>Qml/Components/customizes/QCalloutShape.qml</file>
+        <file>Qml/Components/customizes/Transactions/QBtnMore.qml</file>
         <file>Qml/Components/customizes/QWarningBgMulti.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QSelectPassPhraseQuestion.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QImportantNoticeAboutPassphrase.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QPassphraseBackupReminder.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCreateANewCollection.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCreateANewCollectionDescription.qml</file>
+        <file>Qml/Components/customizes/Buttons/QCheckBoxTypeA.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPopupTheBackupPassword.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackup.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupLoading.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupSuccess.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QPopupHardwareAddKey.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QPopupImportColdcardBackup.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupFailed.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -781,7 +845,28 @@
         <file>Images/groups-dark.svg</file>
         <file>Images/health-check-light.svg</file>
         <file>Images/person-add-24px.svg</file>
+        <file>Images/bitcoin-dark.svg</file>
+        <file>Images/received-dark.svg</file>
+        <file>Images/spend-dark.svg</file>
+        <file>Images/search_24px.svg</file>
+        <file>Images/checkbox-indeterminate-dark.svg</file>
+        <file>Images/transaction-note-dark.svg</file>
+        <file>Images/coin-tag-dark.svg</file>
+        <file>Images/lock-red.svg</file>
+        <file>Images/edit-dark.svg</file>
+        <file>Images/select-color-dark.svg</file>
+        <file>Images/camera-dark.svg</file>
+        <file>Images/filter-dark.svg</file>
+        <file>Images/not-found-dark.svg</file>
+        <file>Images/ancestry_selected.svg</file>
+        <file>Images/ancestry_unselected.svg</file>
+        <file>Images/ancestry_unselected_begin.svg</file>
+        <file>Images/ancestry_unselected_end.svg</file>
+        <file>Images/export_invoices.png</file>
+        <file>Images/CheckSquareOffset.png</file>
         <file>Images/wallet-dark-disabled.svg</file>
+        <file>Images/coin-collection.svg</file>
+        <file>Images/COLDCARD-desktop-illustration.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

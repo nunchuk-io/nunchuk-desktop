@@ -1,3 +1,23 @@
+/**************************************************************************
+ * This file is part of the Nunchuk software (https://nunchuk.io/)        *
+ * Copyright (C) 2020-2022 Enigmo								          *
+ * Copyright (C) 2022 Nunchuk								              *
+ *                                                                        *
+ * This program is free software; you can redistribute it and/or          *
+ * modify it under the terms of the GNU General Public License            *
+ * as published by the Free Software Foundation; either version 3         *
+ * of the License, or (at your option) any later version.                 *
+ *                                                                        *
+ * This program is distributed in the hope that it will be useful,        *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ * GNU General Public License for more details.                           *
+ *                                                                        *
+ * You should have received a copy of the GNU General Public License      *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+ *                                                                        *
+ **************************************************************************/
+
 #include "Byzantine.h"
 #include "Draco.h"
 
@@ -2466,5 +2486,178 @@ bool Byzantine::CalculateRequireSignaturesForEditingMembers(const QString &group
         }
     }
     errormsg = reply_msg;
+    return false;
+}
+
+bool Byzantine::GetCoinControl(const QString &group_id, const QString &wallet_id, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_COINCONTROL_GET];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Byzantine::UpdateCoinControl(const QString &group_id, const QString &wallet_id, const QString &data, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_COINCONTROL_UPDATE];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject body;
+    body["data"] = data;
+    QJsonObject jsonObj = postSync(cmd, body, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Byzantine::ReplacementDownloadBackupFile(const QString& group_id, const QString& wallet_id, const QString& xfp, const QString& passwordToken, QJsonObject& output, QString& errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_DOWNLOAD_BACKUP_KEY_REPLACEMENT];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = postSync(cmd, {}, params, {}, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+        }
+    }
+    return false;
+}
+
+bool Byzantine::ReplacementUploadBackupFile(const QString& group_id, const QString& wallet_id, const QString& passwordToken, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject jsonObj = postMultiPartSync(cmd, {}, params, requestBody, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+        }
+    }
+    return false;
+}
+
+bool Byzantine::DraftWalletDownloadBackupFile(const QString& group_id, const QString& xfp, QJsonObject& output, QString& errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_DOWNLOAD_BACKUP];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject jsonObj = postSync(cmd, {}, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+        }
+    }
+    return false;
+}
+
+bool Byzantine::DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_UPLOAD_BACKUP];
+    cmd.replace("{group_id}", group_id);
+
+    QJsonObject jsonObj = postMultiPartSync(cmd, requestBody, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+        }
+    }
     return false;
 }

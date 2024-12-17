@@ -33,7 +33,7 @@
 #define CORERPC_MAINNET_PORT        8332
 #define CORERPC_TESTNET_PORT        18332
 #define EXPLORER_MAINNET "https://mempool.space/tx/"
-#define EXPLORER_TESTNET "https://mempool.space/testnet/tx/"
+#define EXPLORER_TESTNET "https://mempool.space/testnet4/tx/"
 #define EXPLORER_SIGNNET "https://mempool.space/signet/tx/"
 #define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
 
@@ -257,6 +257,7 @@ public:
     void setReminderStates(const QVariant &states);
 
     QStringList favoriteAddresses();
+    Q_INVOKABLE void loadFavoriteAddresses();
     void setFavoriteAddresses(const QStringList &newFavoriteAddresses);
     Q_INVOKABLE void removeFavoriteAddress(const QString &label, const QString &address);
     Q_INVOKABLE void addFavoriteAddress(const QString &label, const QString &address);

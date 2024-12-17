@@ -81,7 +81,7 @@ QScreen {
                                 if (!is_inheritance) {
                                     ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
                                 }
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "Coldcard" , type: "coldcard", tag: "COLDCARD"})
                             }
                             if (!is_inheritance) {
                                 ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })

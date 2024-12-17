@@ -23,31 +23,32 @@ import "../../origins"
 import "../../customizes/Texts"
 
 Item {
+    id: _item
     width: 539
     height: 24
     property string label: ""
     property bool checked: false
+    property int fontWeight: Font.Bold
     QLato {
         id: text
         text: label
-        font.weight: Font.Bold
+        font.weight: fontWeight
         anchors.verticalCenter: parent.verticalCenter
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
     }
-    QIcon {
-        id: _check
-        iconSize: 24
-        anchors.verticalCenter: text.verticalCenter
-        anchors.right: parent.right
-        source: checked ? "qrc:/Images/Images/checkbox-checked-dark.svg" : "qrc:/Images/Images/checkbox-dark.svg"
+    QCheckBox {
+        anchors {
+            verticalCenter: text.verticalCenter
+            right: parent.right
+        }
+        checked: _item.checked
+        partiallyChecked: false
+        onCheckboxClicked: {
+            _item.checked = !_item.checked
+            buttonClicked()
+        }
     }
-    MouseArea {
-        id: mouse
-        anchors.fill: _check
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: { checked = !checked; buttonClicked() }
-    }
+
     signal buttonClicked()
 }

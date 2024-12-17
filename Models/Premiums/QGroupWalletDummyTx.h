@@ -26,6 +26,7 @@ public:
     QString tx_id() const;
 
     QStringList ExportPsbtViaQR(QWarningMessage &msg);
+    QStringList ExportPsbtViaBBQR(QWarningMessage &msg);
 
     QVariant requester_user();
 

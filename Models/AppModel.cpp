@@ -44,8 +44,6 @@ AppModel::AppModel(): inititalized_{false},
     transactionInfo_(QTransactionPtr(new Transaction())),
     transactionReplaceInfo_(NULL),
     transactionPending_(QTransactionListModelPtr(new TransactionListModel())),
-    utxoList_(QUTXOListModelPtr(new UTXOListModel())),
-    utxoInfo_(QUTXOPtr(new UTXO())),
     walletListCurrentIndex_(-1),
     chainTip_(0), addSignerStep_(-1), addSignerPercentage_(0), txidReplacing_(""),
     fastestFee_(1000), halfHourFee_(1000), hourFee_(1000), minFee_(1000),
@@ -93,8 +91,6 @@ AppModel::~AppModel(){
     walletInfo_.clear();
     transactionInfo_.clear();
     transactionReplaceInfo_.clear();
-    utxoList_.clear();
-    utxoInfo_.clear();
     destinationList_.clear();
     disconnect();
 }
@@ -670,22 +666,6 @@ void AppModel::setTransactionReplaceInfo(const QTransactionPtr &transactionRepla
     transactionReplaceInfo_ = transactionReplaceInfo;
 }
 
-UTXO *AppModel::utxoInfo() const
-{
-    return utxoInfo_.data();
-}
-
-QUTXOPtr AppModel::utxoInfoPtr() const
-{
-    return utxoInfo_;
-}
-
-void AppModel::setUtxoInfo(const QUTXOPtr &utxoInfo)
-{
-    utxoInfo_ = utxoInfo;
-    emit utxoInfoChanged();
-}
-
 int AppModel::chainTip() const
 {
     return chainTip_;
@@ -1029,6 +1009,7 @@ void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
                  << "Wallet Slug:" << walletInfo_.data()->slug()
                  << "Wallet Status:" << walletInfo_.data()->status();
         QGroupWallets::instance()->setDashboardInfo(walletInfo_);
+        walletInfo_.data()->RequestGetCoins();
     }
 }
 
@@ -1067,25 +1048,6 @@ void AppModel::setTransactionInfo(const QTransactionPtr& d)
         transactionInfo_ = QTransactionPtr(new Transaction());
     }
     emit transactionInfoChanged();
-}
-
-UTXOListModel *AppModel::utxoList() const
-{
-    return utxoList_.data();
-}
-
-QUTXOListModelPtr AppModel::utxoListPtr() const
-{
-    return utxoList_;
-}
-
-void AppModel::setUtxoList(const QUTXOListModelPtr &utxoList)
-{
-    utxoList_ = utxoList;
-    if(utxoList_.data()){
-        utxoList_.data()->requestSort(UTXOListModel::UTXORoles::utxo_amount_role,  Qt::DescendingOrder);
-    }
-    emit utxoListChanged();
 }
 
 DestinationListModel *AppModel::destinationList() const

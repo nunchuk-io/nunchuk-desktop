@@ -42,11 +42,13 @@ QButtonLargeTail {
         labels: [
             STR.STR_QML_300,
             STR.STR_QML_114,
+            STR.STR_QML_1531,
             STR.STR_QML_301,
             STR.STR_QML_302
         ]
         icons: [
             "qrc:/Images/Images/ExportFile.svg",
+            "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
             "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
             "qrc:/Images/Images/importFile.svg",
             "qrc:/Images/Images/OnlineMode/QRCodeScan.png"

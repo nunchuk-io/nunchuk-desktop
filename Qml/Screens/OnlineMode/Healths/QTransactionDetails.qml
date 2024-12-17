@@ -85,10 +85,7 @@ QOnScreenContentTypeA {
             QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _scanDevice )
         }
         onKeyExportRequest: {
-            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                    + RoomWalletData.getValidFilename(transactionInfo.txid)
-                    + ".psbt"
-            savefileDialog.open()
+            requestExportPSBT()
         }
         onKeyImportRequest: {
             openfileDialog.open()
@@ -101,8 +98,8 @@ QOnScreenContentTypeA {
             id: optionsBtn
             width: 102
             height: 48
-            label: "More"
-            labels: ["Force sync"]
+            label: STR.STR_QML_1094
+            labels: [STR.STR_QML_1200]
             icons: ["qrc:/Images/Images/cached_24px.png"]
             colors:   [ "#031F2B"]
             enables:  [ true ]
@@ -121,10 +118,10 @@ QOnScreenContentTypeA {
             id: advancedBtn
             funcs: [
                 function() {
-                    savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                            + RoomWalletData.getValidFilename(transactionInfo.txid)
-                            + ".psbt"
-                    savefileDialog.open()
+                    requestExportPSBT()
+                },
+                function() {
+                    requestExportViaBBQR()
                 },
                 function() {
                     requestExportViaQR()
@@ -178,7 +175,7 @@ QOnScreenContentTypeA {
             }
         }
     }
-    QQrExportResult {
+    QQrExportResultPDF {
         id: qrcodeExportResult
         model: AppModel.qrExported
     }
@@ -242,12 +239,26 @@ QOnScreenContentTypeA {
             _warning.open()
         }
     }
-    function requestExportViaQR(){
+    function requestExportPSBT() {
+        savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                + RoomWalletData.getValidFilename(transactionInfo.txid)
+                + ".psbt"
+        savefileDialog.open()
+    }
+    function requestExportViaQR() {
         var _input = {
             type: "dummy-tx-export-qr",
         }
         QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _input)
         qrcodeExportResult.filename = "Transaction_" + transactionInfo.txid
+        qrcodeExportResult.open()
+    }
+    function requestExportViaBBQR() {
+        var _input = {
+            type: "dummy-tx-export-bbqr",
+        }
+        QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _input)
+        qrcodeExportResult.filename = "Transaction_bbqr_" + transactionInfo.txid
         qrcodeExportResult.open()
     }
 }

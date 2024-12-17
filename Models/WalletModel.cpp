@@ -20,6 +20,7 @@
 #include "WalletModel.h"
 #include "qUtils.h"
 #include "AppSetting.h"
+#include "ViewsEnums.h"
 #include "AppModel.h"
 #include <QQmlEngine>
 #include "bridgeifaces.h"
@@ -46,12 +47,12 @@ Wallet::Wallet() :
     m_creationMode((int)CreationMode::CREATE_NEW_WALLET)
 {
     m_roomMembers.clear();
-    init();
+    Wallet::init();
+    CoinsControl::init();
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Wallet::Wallet(const nunchuk::Wallet &w)
-    : Wallet()
+Wallet::Wallet(const nunchuk::Wallet &w) : Wallet()
 {
     m_wallet = w;
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -110,9 +111,13 @@ void Wallet::convert(const nunchuk::Wallet &w)
     }
 }
 
-QString Wallet::id() const {return m_id;}
+QString Wallet::id() const {
+    return m_id;
+}
 
-int Wallet::m() const { return m_m;}
+int Wallet::m() const {
+    return m_m;
+}
 
 int Wallet::n() {
     n_n = m_signers.data()->rowCount();
@@ -133,7 +138,9 @@ QString Wallet::walletOriginName() const
     return m_name;
 }
 
-QString Wallet::addressType() const {return m_addressType;}
+QString Wallet::addressType() const {
+    return m_addressType;
+}
 
 qint64 Wallet::balanceSats() const
 {
@@ -1660,6 +1667,77 @@ QString Wallet::bip32path(const QString &xfp, int index) {
 bool Wallet::updateKeyReplace(const QString &xfp, const int index)
 {
     return ReplaceKeyFreeUser::updateKeyReplace(xfp, index);
+}
+
+void Wallet::requestForAllCoins(const QVariant &act)
+{
+    CoinsControl::RequestForAllCoins(act);
+}
+
+void Wallet::requestForLockedAllCoins(const QVariant &act)
+{
+    CoinsControl::RequestForLockedAllCoins(act);
+}
+
+void Wallet::requestImportCoinControlData(const QString &filePath)
+{
+    CoinsControl::ImportCoinControlData(filePath);
+}
+
+void Wallet::requestExportCoinControlData(const QString &filePath)
+{
+    CoinsControl::ExportCoinControlData(filePath);
+}
+
+void Wallet::requestExportBIP329(const QString &filePath)
+{
+    CoinsControl::ExportBIP329(filePath);
+}
+
+void Wallet::requestImportBIP329(const QString &filePath)
+{
+    CoinsControl::ImportBIP329(filePath);
+}
+
+void Wallet::requestConsolidateMakeTransaction(const QVariant &msg)
+{
+    CoinsControl::CreateDraftTransaction(E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, msg);
+}
+
+void Wallet::requestSyncSelectCoinForMakeTransaction(const QVariant &msg)
+{
+    CoinsControl::RequestSyncSelectCoinForMakeTransaction(msg);
+}
+
+QString Wallet::addressPath(const QString &address)
+{
+    return bridge::nunchukGetAddressPath(id(), address);
+}
+
+QString Wallet::addressBalance(const QString &address)
+{
+    qint64 amount = bridge::nunchukGetAddressBalance(id(), address);
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+        QLocale locale(QLocale::English);
+        return locale.toString(amount);
+    }
+    else{
+        return qUtils::QValueFromAmount(amount);
+    }
+}
+
+bool Wallet::markAddressUsed(const QString &address)
+{
+    bool ret = bridge::nunchukMarkAddressUsed(id(), address);
+    if(ret){
+        QtConcurrent::run([=, this]() {
+            QStringList used_addr = bridge::nunchukGetUsedAddresses(id(), false);
+            QStringList unused_addr = bridge::nunchukGetUnusedAddresses(id(), false);
+            this->setUsedAddressList(used_addr);
+            this->setunUsedAddressList(unused_addr);
+        });
+    }
+    return ret;
 }
 
 QString Wallet::groupId() const

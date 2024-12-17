@@ -191,16 +191,7 @@ QScreen {
                     label: STR.STR_QML_394
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
                     input.placeholderText: STR.STR_QML_1500
-                    // textInputted: Draco.emailRequested // FIXME
-                    onTextInputtedChanged: {
-                        if(!emailaddrs.isValid){
-                            emailaddrs.isValid = true
-                            emailaddrs.errorText = ""
-                        }
-                        emailaddrs.showError = false
-                    }
                     onEnterKeyRequest: {
                         btnSignin.buttonClicked(null)
                     }
@@ -360,7 +351,6 @@ QScreen {
                     label: STR.STR_QML_394
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
                     enabled: false
                     textInputted: Draco.emailRequested
                     input.placeholderText: STR.STR_QML_1500
@@ -574,7 +564,6 @@ QScreen {
                         label: STR.STR_QML_394
                         boxWidth: 338
                         boxHeight: 48
-                        isValid: true
                         enabled: false
                         textInputted: Draco.emailRequested
                     }
@@ -584,7 +573,6 @@ QScreen {
                         isPassword: true
                         boxWidth: 338
                         boxHeight: 48
-                        isValid: true
                         input.placeholderText: STR.STR_QML_1501
                         onTextInputtedChanged: {
                             if(!passwd.isValid){
@@ -670,7 +658,6 @@ QScreen {
                     label: STR.STR_QML_393
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
                     visible: signinNewAccountItem.inputStep === signinNewAccountItem.eINPUT_USERNAME
                     input.placeholderText: STR.STR_QML_1502
                     onTextInputtedChanged: {
@@ -907,13 +894,6 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
-                    onTextInputtedChanged: {
-                        if(!oldPassword.isValid){
-                            oldPassword.isValid = true
-                            oldPassword.errorText = ""
-                        }
-                    }
                 }
                 QTextInputBoxTypeB {
                     id: newPassword
@@ -921,13 +901,8 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
-                    onTextInputtedChanged: {
-                        if(!newPassword.isValid){
-                            newPassword.isValid = true
-                            newPassword.errorText = ""
-                        }
-                    }
+                    passwordValidate: true
+                    isValid: passwordValidateResult
                 }
                 QTextInputBoxTypeB {
                     id: confirmPassword
@@ -935,7 +910,7 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: textInputted === "" || textInputted === newPassword.textInputted
+                    isValid: (textInputted === "") || (textInputted === newPassword.textInputted)
                     errorText: STR.STR_QML_404
                     onEnterKeyRequest: {
                         btnChangePassword.buttonClicked(null)
@@ -965,28 +940,15 @@ QScreen {
                     label.text: STR.STR_QML_405
                     label.font.pixelSize: 16
                     type: eTypeE
-                    enabled: newPassword.textInputted !== "" && (newPassword.textInputted === confirmPassword.textInputted)
+                    enabled: (newPassword.textInputted !== "") && (newPassword.textInputted === confirmPassword.textInputted) && newPassword.isValid
                     onButtonClicked: {
-                        if(newPassword.textInputted === oldPassword.textInputted){
-                            newPassword.isValid = false
-                            oldPassword.isValid = false
-                            if(newPassword.textInputted === ""){
-                                newPassword.errorText = STR.STR_QML_396
-                                oldPassword.errorText = STR.STR_QML_396
-                            }
-                            else{
-                                oldPassword.errorText = STR.STR_QML_406
-                            }
-                        }
-                        else{
-                            var requestBody = {
-                                "action"      : "login-tempo",
-                                "email"       : Draco.emailRequested,
-                                "oldPassword" : oldPassword.textInputted,
-                                "newPassword" : newPassword.textInputted,
-                            };
-                            QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_CHANGE_PASSWORD, requestBody)
-                        }
+                        var requestBody = {
+                            "action"      : "login-tempo",
+                            "email"       : Draco.emailRequested,
+                            "oldPassword" : oldPassword.textInputted,
+                            "newPassword" : newPassword.textInputted,
+                        };
+                        QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_CHANGE_PASSWORD, requestBody)
                     }
                 }
                 QButtonTextLink {
@@ -1080,13 +1042,6 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
-                    onTextInputtedChanged: {
-                        if(!oldPassword.isValid){
-                            oldPassword.isValid = true
-                            oldPassword.errorText = ""
-                        }
-                    }
                 }
                 QTextInputBoxTypeB {
                     id: newPassword
@@ -1094,13 +1049,8 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
-                    onTextInputtedChanged: {
-                        if(!newPassword.isValid){
-                            newPassword.isValid = true
-                            newPassword.errorText = ""
-                        }
-                    }
+                    passwordValidate: true
+                    isValid: passwordValidateResult
                 }
                 QTextInputBoxTypeB {
                     id: confirmPassword
@@ -1108,7 +1058,7 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: textInputted === "" || textInputted === newPassword.textInputted
+                    isValid: (textInputted === "") || (textInputted === newPassword.textInputted)
                     errorText: STR.STR_QML_404
                     onEnterKeyRequest: {
                         btnChangePassword.buttonClicked(null)
@@ -1138,28 +1088,15 @@ QScreen {
                     label.text: STR.STR_QML_405
                     label.font.pixelSize: 16
                     type: eTypeE
-                    enabled: newPassword.textInputted !== "" && (newPassword.textInputted === confirmPassword.textInputted)
+                    enabled: (newPassword.textInputted !== "") && (newPassword.textInputted === confirmPassword.textInputted) && newPassword.isValid
                     onButtonClicked: {
-                        if(newPassword.textInputted === oldPassword.textInputted){
-                            newPassword.isValid = false
-                            oldPassword.isValid = false
-                            if(newPassword.textInputted === ""){
-                                newPassword.errorText = STR.STR_QML_396
-                                oldPassword.errorText = STR.STR_QML_396
-                            }
-                            else{
-                                oldPassword.errorText = STR.STR_QML_406
-                            }
-                        }
-                        else{
-                            var requestBody = {
-                                "action"      : "change-password",
-                                "enail"       : Draco.emailRequested,
-                                "oldPassword" : oldPassword.textInputted,
-                                "newPassword" : newPassword.textInputted,
-                            };
-                            QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_CHANGE_PASSWORD, requestBody)
-                        }
+                        var requestBody = {
+                            "action"      : "change-password",
+                            "enail"       : Draco.emailRequested,
+                            "oldPassword" : oldPassword.textInputted,
+                            "newPassword" : newPassword.textInputted,
+                        };
+                        QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_CHANGE_PASSWORD, requestBody)
                     }
                 }
                 QButtonTextLink {
@@ -1238,13 +1175,6 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
-                    onTextInputtedChanged: {
-                        if(!tokenPassword.isValid){
-                            tokenPassword.isValid = true
-                            tokenPassword.errorText = ""
-                        }
-                    }
                 }
                 QTextInputBoxTypeB {
                     id: newPassword
@@ -1252,13 +1182,8 @@ QScreen {
                     isPassword: true
                     boxWidth: 338
                     boxHeight: 48
-                    isValid: true
-                    onTextInputtedChanged: {
-                        if(!newPassword.isValid){
-                            newPassword.isValid = true
-                            newPassword.errorText = ""
-                        }
-                    }
+                    passwordValidate: true
+                    isValid: passwordValidateResult
                 }
                 QTextInputBoxTypeB {
                     id: confirmPassword
