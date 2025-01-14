@@ -33,9 +33,8 @@ Item {
     Row {
         height: 24
         spacing: 8
-        QImage {
-            width: 24
-            height: 24
+        QIcon {
+            iconSize: 24
             source: icon
             anchors.verticalCenter: parent.verticalCenter
         }

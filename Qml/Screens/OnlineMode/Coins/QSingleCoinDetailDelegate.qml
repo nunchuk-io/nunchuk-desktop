@@ -53,6 +53,7 @@ Rectangle {
     property string removeLabel: STR.STR_QML_1451
     property string outgoing_label: ""
     property string outgoing_color: ""
+    property bool isLarge: true
 
     signal coinViewClicked()
     signal coinViewCheck()
@@ -122,7 +123,7 @@ Rectangle {
                                 border.color: "#EAEAEA"
                                 color: "#FFFFFF"
                                 font.weight: Font.Medium
-                                fontSize: 12
+                                fontSize: 10
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: isChange
                             }
@@ -144,29 +145,81 @@ Rectangle {
                             }
                         }
                     }
-                    Item {
+                    Column {
                         width: parent.width
-                        height: 12
-                        Row {
-                            spacing: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            QLato {
-                                text: qsTr("%1 %2 • %3").arg(AppSetting.currency).arg(amount_currency).arg(blocktime)
-                                color: "#595959"
-                                font.pixelSize: 12
-                                font.weight: Font.Normal
-                                verticalAlignment: Text.AlignVCenter
+                        Item {
+                            visible: isLarge
+                            width: parent.width
+                            height: 12
+                            Row {
+                                spacing: 8
                                 anchors.verticalCenter: parent.verticalCenter
+                                QLato {
+                                    text: qsTr("%1 %2 • %3").arg(AppSetting.currency).arg(amount_currency).arg(blocktime)
+                                    color: "#595959"
+                                    font.pixelSize: 12
+                                    font.weight: Font.Normal
+                                    verticalAlignment: Text.AlignVCenter
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                QBadge {
+                                    topMargin: 0
+                                    color: outgoing_color
+                                    text: outgoing_label
+                                    font.weight: Font.Black
+                                    font.pixelSize: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
-                            QBadge {
-                                color: outgoing_color
-                                text: outgoing_label
-                                font.weight: Font.Black
-                                font.pixelSize: 10
-                                anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Column {
+                            width: parent.width
+                            visible: !isLarge
+                            spacing: 4
+                            Item {
+                                width: parent.width
+                                height: 12
+                                Row {
+                                    spacing: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    QLato {
+                                        text: qsTr("%1 %2").arg(AppSetting.currency).arg(amount_currency)
+                                        color: "#595959"
+                                        font.pixelSize: 12
+                                        font.weight: Font.Normal
+                                        verticalAlignment: Text.AlignVCenter
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                            Item {
+                                width: parent.width
+                                height: 12
+                                Row {
+                                    spacing: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    QLato {
+                                        text: qsTr("%1").arg(blocktime)
+                                        color: "#595959"
+                                        font.pixelSize: 12
+                                        font.weight: Font.Normal
+                                        verticalAlignment: Text.AlignVCenter
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    QBadge {
+                                        topMargin: 0
+                                        color: outgoing_color
+                                        text: outgoing_label
+                                        font.weight: Font.Black
+                                        font.pixelSize: 10
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
                             }
                         }
                     }
+
+
                     Rectangle {
                         radius: 12
                         width: parent.width

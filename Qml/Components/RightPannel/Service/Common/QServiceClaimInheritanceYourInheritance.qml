@@ -163,7 +163,7 @@ Item {
                         ]
                         icons: [
                             "qrc:/Images/Images/wallet-dark.svg",
-                            "qrc:/Images/Images/OnlineMode/monetization_on-24px_2.png",
+                            "qrc:/Images/Images/spend-dark.svg",
                         ]
                         onItemClicked: {
                             QMLHandle.sendEvent(EVT.EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST,index)

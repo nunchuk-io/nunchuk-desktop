@@ -204,7 +204,7 @@ Item {
                             font.pixelSize: 12
                         }
                         QLato {
-                            visible: modelData.xfp !== ""
+                            visible: modelData.card_id === ""
                             width: parent.width
                             text: "XFP: " + modelData.xfp
                             horizontalAlignment: Text.AlignLeft

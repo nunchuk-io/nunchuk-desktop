@@ -53,6 +53,7 @@ public:
     QWalletPtr walletInfoPtr() const;
     void setWalletInfo(const QWalletPtr &d);
 public slots:
+    void requestStartAddHardwareKey(const QString &tag);
     void clearWalletInfo();
 signals:
     void claimInheritanceFlowChanged();

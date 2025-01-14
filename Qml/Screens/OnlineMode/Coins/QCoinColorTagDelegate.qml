@@ -63,10 +63,9 @@ Item {
                 horizontalAlignment: Text.AlignLeft
             }
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             source: "qrc:/Images/Images/right-arrow-dark.svg"
-            width: 24
-            height: 24
             visible: !isEdit
             anchors.verticalCenter: parent.verticalCenter
             MouseArea {

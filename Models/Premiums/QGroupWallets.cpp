@@ -224,6 +224,7 @@ void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
                 mDashboard->GetHealthCheckInfo();
             }
         });
+        mDashboard->GetDraftWalletInfo();
     }
 }
 
@@ -301,8 +302,8 @@ void QGroupWallets::dismiss(const QString &alert_id)
 void QGroupWallets::refresh()
 {
     if (!mDashboard) return;
+    mDashboard->GetDraftWalletInfo();
     QtConcurrent::run([this]() {
-        mDashboard->GetDraftWalletInfo();
         if (mDashboard->hasWallet()) {
             mDashboard->GetWalletInfo();
         }

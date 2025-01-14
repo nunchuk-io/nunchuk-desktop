@@ -66,11 +66,10 @@ Item {
             anchors.fill: parent
             anchors.margins: 8
             spacing: 8
-            QImage {
+            QIcon {
                 id: icoLastTransaction
-                width: 18
-                height: 18
-                source: "qrc:/Images/Images/OnlineMode/PendingTransaction.png"
+                iconSize: 18
+                source: "qrc:/Images/Images/PendingTransaction.png"
             }
             Column {
                 spacing: 8

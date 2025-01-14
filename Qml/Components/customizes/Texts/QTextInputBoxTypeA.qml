@@ -49,7 +49,7 @@ TextField {
             right: parent.right
             rightMargin: 12
         }
-        source: "qrc:/Images/Images/edit.png"
+        source: "qrc:/Images/Images/edit-dark.svg"
         visible: !editbox.activeFocus && showEdit
         MouseArea {
             anchors.fill: parent

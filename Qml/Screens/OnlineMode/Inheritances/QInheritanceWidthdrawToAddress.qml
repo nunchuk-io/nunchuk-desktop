@@ -106,14 +106,13 @@ QOnScreenContentTypeB {
                             anchors.verticalCenter: toAddr.verticalCenter
                             color: "#C9DEF1"
                             radius: 8
-                            QImage {
+                            QIcon {
+                                iconSize: 56
                                 id: qricoimport
                                 source: "qrc:/Images/Images/QrIco.png"
                                 anchors.centerIn: parent
                                 transformOrigin: Item.Center
                                 scale: qrMouse.pressed ? 0.95 : 1
-                                width: 56
-                                height: 56
                                 MouseArea {
                                     id: qrMouse
                                     hoverEnabled: true
@@ -153,10 +152,9 @@ QOnScreenContentTypeB {
                             font.family: "Lato"
                         }
                     }
-                    QImage {
+                    QIcon {
+                        iconSize: 32
                         id: removeRowBtn
-                        width: 32
-                        height: 32
                         source: "qrc:/Images/Images/Delete.png"
                         transformOrigin: Item.Center
                         scale: removeRow.pressed ? 0.95 : 1

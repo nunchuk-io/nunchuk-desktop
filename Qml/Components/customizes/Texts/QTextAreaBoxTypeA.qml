@@ -119,10 +119,9 @@ Column {
     Item{
         width: myRectangle.width+2
         height: 28
-        QImage {
+        QIcon {
+            iconSize: 20
             id: alert
-            width: 20
-            height: 20
             source: "qrc:/Images/Images/error_outline_24px.png"
             anchors {
                 left: parent.left

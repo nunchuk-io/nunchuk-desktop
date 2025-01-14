@@ -46,9 +46,9 @@ QScreen {
                 width: 96;height: 96;
                 radius: 48
                 color: "#A7F0BA"
-                QImage {
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    width: 60; height: 60;
                     source: "qrc:/Images/Images/check-dark.svg"
                 }
             }
@@ -57,7 +57,7 @@ QScreen {
                 height: 40
                 text: {
                     var user = ClientController.user
-                    return (user.isByzantineUser || user.isFinneyUser) ? STR.STR_QML_1029.arg(ServiceSetting.walletInfo.walletName) : STR.STR_QML_720
+                    return user.isGroupWallet ? STR.STR_QML_1029.arg(ServiceSetting.walletInfo.walletName) : STR.STR_QML_720
                 }
                 font.pixelSize: 32
                 font.weight: Font.DemiBold

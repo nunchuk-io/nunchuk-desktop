@@ -43,9 +43,8 @@ QScreen {
         Column{
             anchors.centerIn: parent
             spacing: 24
-            QImage {
-                width: 64
-                height: 64
+            QIcon {
+                iconSize: 64
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: "qrc:/Images/Images/logo-light.svg"
             }
@@ -104,9 +103,8 @@ QScreen {
                     Row {
                         id: staySignedin
                         spacing: 4
-                        QImage {
-                            width: 18
-                            height: 18
+                        QIcon {
+                            iconSize: 18
                             anchors.verticalCenter: parent.verticalCenter
                             source: Draco.stayLoggedIn ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
                             MouseArea {

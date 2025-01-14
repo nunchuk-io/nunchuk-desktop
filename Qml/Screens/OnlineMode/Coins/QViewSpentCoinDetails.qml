@@ -168,7 +168,7 @@ QOnScreenContentTypeA {
                                     horizontalAlignment: Text.AlignLeft
                                     verticalAlignment: Text.AlignVCenter
                                 }
-                                QCoinNote {
+                                QCoinNoteBoder {
                                     id: _note
                                     memo: tx.memo
                                     width: parent.width

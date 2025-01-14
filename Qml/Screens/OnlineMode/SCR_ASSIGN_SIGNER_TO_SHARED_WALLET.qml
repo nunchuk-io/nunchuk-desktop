@@ -55,7 +55,7 @@ QScreen {
                 topMargin: 44
             }
             transformOrigin: Item.Center
-            source: "qrc:/Images/Images/OnlineMode/compress-24px.png"
+            source: "qrc:/Images/Images/compress-24px.png"
             scale: compressmouse.pressed ? 1: compressmouse.containsMouse ? 1.1 : 1
             MouseArea {
                 id: compressmouse

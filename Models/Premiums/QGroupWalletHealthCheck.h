@@ -32,8 +32,8 @@ public:
     QList<QVariant> reminderKeys() const;
     void setReminderKeys(const QList<QVariant> &newReminderKeys);
 
-    bool GetKeyHealthReminder();
-    bool AddOrUpdateKeyHealthReminder(const QStringList xfps, const QString frequency, const QString start_date_millis);
+    void GetKeyHealthReminder();
+    void AddOrUpdateKeyHealthReminder(const QStringList xfps, const QString frequency, const QString start_date_millis);
     bool DeleteKeyHealthReminder(const QStringList& xfps);
     bool SkipKeyHealthReminder();
     QJsonObject GetReminder(const QString& xfp) const;

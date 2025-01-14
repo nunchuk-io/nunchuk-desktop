@@ -181,89 +181,93 @@ void QGroupDashboard::GetMemberInfo()
 
 void QGroupDashboard::GetAlertsInfo()
 {
-    if (isReplaced()) return;
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret {false};
-    if (isUserDraftWallet()) {
-        ret = Draco::instance()->DraftWalletGetAlerts(output, error_msg);
-    }
-    else if (isUserWallet()) {
-        ret = Draco::instance()->GetAlerts(wallet_id(), output, error_msg);
-    }
-    else {
-        ret = Byzantine::instance()->GetGroupAlerts(groupId(), output, error_msg);
-    }
-    DBG_INFO << ret << output;
-    if(ret){
-        // Handle preparing model here.
-        QJsonArray   alerts  = output["alerts"].toArray();
-        QJsonArray v_alerts;
-        for (auto js : alerts) {
-            QJsonObject alert = js.toObject();
-            long int created_time_millis = static_cast<long int>(alert.value("created_time_millis").toDouble()/1000);
-            QDateTime date_time = QDateTime::fromTime_t(created_time_millis);
-            alert["created_time_millis"] = QString("%1 at %2")
-                                               .arg(date_time.date().toString("MM/dd/yyyy"))
-                                               .arg(date_time.time().toString("hh:mm AP"));
-            QString type = alert["type"].toString();
-            alert["type"] = StringToInt(type);
-            v_alerts.append(alert);
+    runInThread<QJsonArray>([this]() ->QJsonArray{
+        if (isReplaced()) return {};
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret {false};
+        if (isUserDraftWallet()) {
+            ret = Draco::instance()->DraftWalletGetAlerts(output, error_msg);
         }
-        output["alerts"] = v_alerts;
-        m_alertInfo = output;
-        emit alertInfoChanged();
-    }
-    else{
-        //Show error
-    }
+        else if (isUserWallet()) {
+            ret = Draco::instance()->GetAlerts(wallet_id(), output, error_msg);
+        }
+        else {
+            ret = Byzantine::instance()->GetGroupAlerts(groupId(), output, error_msg);
+        }
+        DBG_INFO << ret;
+        return output["alerts"].toArray();
+    },[this](QJsonArray alerts) {
+        if(!alerts.isEmpty()) {
+            QJsonArray v_alerts;
+            for (auto js : alerts) {
+                QJsonObject alert = js.toObject();
+                long int created_time_millis = static_cast<long int>(alert.value("created_time_millis").toDouble()/1000);
+                QDateTime date_time = QDateTime::fromTime_t(created_time_millis);
+                alert["created_time_millis"] = QString("%1 at %2")
+                                                   .arg(date_time.date().toString("MM/dd/yyyy"))
+                                                   .arg(date_time.time().toString("hh:mm AP"));
+                QString type = alert["type"].toString();
+                alert["type"] = StringToInt(type);
+                v_alerts.append(alert);
+            }
+            m_alertInfo["alerts"] = v_alerts;
+            emit alertInfoChanged();
+            DBG_INFO << m_alertInfo;
+            setAlertId(alertId());
+        }
+    });
 }
 
 bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
 {
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret {false};
-    if (isUserDraftWallet()) {
-        ret = Draco::instance()->DraftWalletMarkAnAlertAsRead(alert_id, output, error_msg);
-    }
-    else if (isUserWallet()) {
-        ret = Draco::instance()->MarkAlertAsRead(wallet_id(), alert_id, output, error_msg);
-    }
-    else {
-        ret = Byzantine::instance()->MarkGroupAlertAsRead(groupId(), alert_id, output, error_msg);
-    }
-    DBG_INFO << ret << error_msg;
-    if(ret){
-        // Handle preparing model here.
-    }
-    else{
-        //Show error
-    }
-    return ret;
+    if (alert_id.isEmpty()) return false;
+    runInThread<bool>([this, alert_id]() ->bool{
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret {false};
+        if (isUserDraftWallet()) {
+            ret = Draco::instance()->DraftWalletMarkAnAlertAsRead(alert_id, output, error_msg);
+        }
+        else if (isUserWallet()) {
+            ret = Draco::instance()->MarkAlertAsRead(wallet_id(), alert_id, output, error_msg);
+        }
+        else {
+            ret = Byzantine::instance()->MarkGroupAlertAsRead(groupId(), alert_id, output, error_msg);
+        }
+        DBG_INFO << ret << error_msg;
+        return ret;
+    },[this](bool ret) {
+        if(ret) {
+            GetAlertsInfo();
+        }
+    });
+    return true;
 }
 
 bool QGroupDashboard::DismissAlert(const QString &alert_id)
 {
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret {false};
-    if (isUserDraftWallet()) {
-        ret = Draco::instance()->DraftWalletDismissAnAlert(alert_id, output, error_msg);
-    }
-    else if (isUserWallet()) {
-        ret = Draco::instance()->DismissAlert(wallet_id(), alert_id, output, error_msg);
-    }
-    else {
-        ret = Byzantine::instance()->DismissGroupAlert(groupId(), alert_id, output, error_msg);
-    }
-    if(ret){
-        // Handle preparing model here.
-    }
-    else{
-        //Show error
-    }
-    return ret;
+    runInThread<bool>([this, alert_id]() ->bool{
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret {false};
+        if (isUserDraftWallet()) {
+            ret = Draco::instance()->DraftWalletDismissAnAlert(alert_id, output, error_msg);
+        }
+        else if (isUserWallet()) {
+            ret = Draco::instance()->DismissAlert(wallet_id(), alert_id, output, error_msg);
+        }
+        else {
+            ret = Byzantine::instance()->DismissGroupAlert(groupId(), alert_id, output, error_msg);
+        }
+        DBG_INFO << ret << error_msg;
+        return ret;
+    },[this](bool ret) {
+        if(ret) {
+            GetAlertsInfo();
+        }
+    });
+    return false;
 }
 
 bool QGroupDashboard::DismissAlert()
@@ -317,19 +321,22 @@ void QGroupDashboard::checkInheritanceWallet()
 
 void QGroupDashboard::GetDraftWalletInfo()
 {
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret {false};
-    if (isUserDraftWallet()) {
-        ret = Draco::instance()->DraftWalletGetCurrent(output, error_msg);
-    } else if (!isUserWallet()){
-        ret = Byzantine::instance()->GetCurrentGroupDraftWallet(groupId(), output, error_msg);
-    }
-    if (ret) {
-        QJsonObject draft_wallet = output["draft_wallet"].toObject();
+    runInThread<QJsonObject>([this]() ->QJsonObject{
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret {false};
+        if (isUserDraftWallet()) {
+            ret = Draco::instance()->DraftWalletGetCurrent(output, error_msg);
+        } else if (!isUserWallet()){
+            ret = Byzantine::instance()->GetCurrentGroupDraftWallet(groupId(), output, error_msg);
+        }
+        return output["draft_wallet"].toObject();
+    },[this](QJsonObject draft_wallet) {
+        if (draft_wallet.isEmpty()) return;
+        DBG_INFO << draft_wallet;
         m_walletDraftInfo = draft_wallet;
         UpdateKeys(draft_wallet);
-    }
+    });
 }
 
 void QGroupDashboard::GetHealthCheckInfo()
@@ -625,16 +632,10 @@ bool QGroupDashboard::registerKeyDone()
         QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
         bool ret = m_registered_key_xfps.size() == register_key_xfps.size() && m_registered_key_xfps.size() > 0;
         if (ret) {
-            QtConcurrent::run([this](){
-                DismissAlert();
-                GetAlertsInfo();
-            });
+            DismissAlert();
         }
         else if (register_key_xfps.size() == 0) {
-            QtConcurrent::run([this](){
-                DismissAlert();
-                GetAlertsInfo();
-            });
+            DismissAlert();
         }
         return ret;
     }
@@ -655,7 +656,7 @@ bool QGroupDashboard::registerKeyNext()
 
 QString QGroupDashboard::alertId() const
 {
-    return m_alertId;
+    return alertJson()["id"].toString();
 }
 
 bool QGroupDashboard::canEntryClickAlert()
@@ -693,8 +694,8 @@ bool QGroupDashboard::canEntryClickAlert()
     }
     case AlertEnum::E_Alert_t::WALLET_PENDING:
     case AlertEnum::E_Alert_t::GROUP_WALLET_PENDING:{
+        GetDraftWalletInfo();
         QtConcurrent::run([this]() {
-            GetDraftWalletInfo();
             if (hasWallet()) {
                 GetWalletInfo();
             }
@@ -1051,6 +1052,11 @@ void QGroupDashboard::updateFail()
     mTimer->stop();
 }
 
+void QGroupDashboard::markRead()
+{
+    MarkAlertAsRead(alertId());
+}
+
 bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type)
 {
     DBG_INFO << tags << qUtils::GetSignerTypeString(type);
@@ -1240,11 +1246,10 @@ QVariant QGroupDashboard::health() const
 
 void QGroupDashboard::setAlertId(const QString &alertId)
 {
-    m_alertId = alertId;
     QJsonArray array = m_alertInfo["alerts"].toArray();
     for(auto js : array) {
         QJsonObject alert = js.toObject();
-        if (alert["id"].toString() == m_alertId) {
+        if (alert["id"].toString() == alertId) {
             setAlertId(alert);
         }
     }
@@ -1375,6 +1380,7 @@ QString QGroupDashboard::createName(const QString &tag, int &index)
     maps["BITBOX"] = "BitBox";
     maps["LEDGER"] = "Ledger";
     maps["TREZOR"] = "Trezor";
+    maps["JADE"] = "Jade";
     QStringList names = getNameSameTag(tag);
     QString name = maps[tag] + (index == 0 ? "" : QString("#%1").arg(index));
     if (names.contains(name)) {

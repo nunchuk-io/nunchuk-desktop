@@ -170,10 +170,9 @@ QScreen {
                         anchors.fill: parent
                         anchors.margins: 12
                         spacing: 8
-                        QImage {
-                            height: parent.height
-                            width: height
-                            source: "qrc:/Images/Images/info-60px.png"
+                        QIcon {
+                            iconSize: 60
+                            source: "qrc:/Images/Images/info-60px.svg"
                         }
                         QText {
                             height: parent.height
@@ -344,10 +343,9 @@ QScreen {
                         anchors.fill: parent
                         anchors.margins: 12
                         spacing: 8
-                        QImage {
-                            height: parent.height
-                            width: height
-                            source: "qrc:/Images/Images/info-60px.png"
+                        QIcon {
+                            iconSize: 60
+                            source: "qrc:/Images/Images/info-60px.svg"
                         }
                         QText {
                             height: parent.height

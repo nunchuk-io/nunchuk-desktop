@@ -56,11 +56,10 @@ QScreen {
                     width: 515
                     height: 56
                     spacing: 8
-                    QImage {
-                        width: 36
-                        height: 36
+                    QIcon {
+                        iconSize: 36
                         anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/Images/Images/info-60px.png"
+                        source: "qrc:/Images/Images/info-60px.svg"
                     }
                     QText {
                         width: 471

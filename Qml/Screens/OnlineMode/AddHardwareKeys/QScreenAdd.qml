@@ -19,6 +19,7 @@ Item {
         {type: NUNCHUCKTYPE.ADD_TREZOR   ,name: "Trezor"  , device_type: "trezor"  , tag: "TREZOR"  },
         {type: NUNCHUCKTYPE.ADD_COLDCARD ,name: "Coldcard", device_type: "coldcard", tag: "COLDCARD"},
         {type: NUNCHUCKTYPE.ADD_BITBOX   ,name: "BitBox"  , device_type: "bitbox02", tag: "BITBOX"  },
+        {type: NUNCHUCKTYPE.ADD_JADE     ,name: "Blockstream Jade"  , device_type: "jade", tag: "JADE"  },
     ]
     readonly property var hardware: map_hardware.find(function(e) {if (e.type === hardwareType) return true; else return false})
     readonly property string _HARDWARE: hardware ? hardware.name : ""

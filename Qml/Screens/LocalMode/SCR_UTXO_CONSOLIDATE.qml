@@ -59,10 +59,9 @@ QScreen {
                 Row {
                     anchors.centerIn: parent
                     spacing: 3
-                    QImage {
+                    QIcon {
+                        iconSize: 16
                         source: "qrc:/Images/Images/Escrow Wallet.png"
-                        width: 16
-                        height: 16
                     }
                     QText {
                         text: STR.STR_QML_212
@@ -474,10 +473,9 @@ QScreen {
                         Row {
                             height: parent.height
                             spacing: 8
-                            QImage {
-                                source: "qrc:/Images/Images/fav_bookmark_24px.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/fav_bookmark_24px.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
@@ -561,10 +559,9 @@ QScreen {
                         Row {
                             height: parent.height
                             spacing: 8
-                            QImage {
-                                source: "qrc:/Images/Images/fav_wallet-dark.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/fav_wallet-dark.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
@@ -734,10 +731,9 @@ QScreen {
                             anchors.fill: parent
                             anchors.margins: 12
                             spacing: 8
-                            QImage {
-                                source: "qrc:/Images/Images/fav_bookmark_24px.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/fav_bookmark_24px.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
@@ -750,10 +746,9 @@ QScreen {
                                 wrapMode: Text.WrapAnywhere
                                 width: parent.width - 64
                             }
-                            QImage {
-                                source: "qrc:/Images/Images/Arrow-Right.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/right-arrow-dark.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                                 scale: mouseedit.pressed ? 0.95 : 1
                                 transformOrigin: Item.Center
@@ -785,9 +780,8 @@ QScreen {
                 Row {
                     anchors.centerIn: parent
                     spacing: 8
-                    QImage {
-                        width: 36
-                        height: 36
+                    QIcon {
+                        iconSize: 36
                         source: "qrc:/Images/Images/warning-dark.svg"
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -919,10 +913,9 @@ QScreen {
                         anchors.left: parent.left
                         spacing: 4
                         visible: favLabelEdit.length > 0
-                        QImage {
-                            source: "qrc:/Images/Images/info-60px.png"
-                            width: 16
-                            height: 16
+                        QIcon {
+                            iconSize: 16
+                            source: "qrc:/Images/Images/info-60px.svg"
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QText {
@@ -950,17 +943,16 @@ QScreen {
                         input.placeholderText: "Enter an address"
                         input.rightPadding: 48
                     }
-                    QImage {
+                    QIcon {
+                        iconSize: 36
                         id: qricoimport
-                        source: "qrc:/Images/Images/QrSendButton.png"
+                        source: "qrc:/Images/Images/QrSendButton.svg"
                         anchors.bottom: favValueEdit.bottom
                         anchors.bottomMargin: favValueEdit.isValid ? 6 : 38
                         anchors.right: favValueEdit.right
                         anchors.rightMargin: 6
                         transformOrigin: Item.Center
                         scale: qrMouse.pressed ? 0.95 : 1
-                        width: 36
-                        height: 36
                         visible: addNewAddress.dataValue === ""
                         MouseArea {
                             id: qrMouse
@@ -986,9 +978,8 @@ QScreen {
                 Row {
                     anchors.centerIn: parent
                     spacing: 8
-                    QImage {
-                        width: 36
-                        height: 36
+                    QIcon {
+                        iconSize: 36
                         source: "qrc:/Images/Images/warning-dark.svg"
                         anchors.verticalCenter: parent.verticalCenter
                     }

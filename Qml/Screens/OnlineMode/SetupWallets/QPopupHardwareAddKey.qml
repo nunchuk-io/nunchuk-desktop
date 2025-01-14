@@ -36,6 +36,7 @@ import "../../../../localization/STR_QML.js" as STR
 
 QPopupEmpty {
     id: _popup
+    property string hardware: ""
     property bool isInheritance: false
     onOpened: {
         GroupWallet.addHardwareFromConfig(-1, "", -1)
@@ -43,26 +44,27 @@ QPopupEmpty {
     }
     content: QOnScreenContentTypeB {
         width: 600
-        height: 516
+        height: 546
         anchors.centerIn: parent
-        label.text: _hardwareAddKey.isInheritance ? STR.STR_QML_1601 : STR.STR_QML_1602
+        label.text: isInheritance ? STR.STR_QML_1601 : STR.STR_QML_1602
         label.width: 600
         extraHeader: Item {}
-        onCloseClicked: { _hardwareAddKey.close() }
+        onCloseClicked: { _popup.close() }
         content: Item {
             Column {
                 anchors.fill: parent
+                spacing: 0
                 QLato {
                     width: parent.width
-                    height: 56
+                    height: 20 + 12
                     text: STR.STR_QML_942
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignVCenter
+                    verticalAlignment: Text.AlignTop
                 }
                 QLato {
                     width: parent.width
-                    height: 32
+                    height: isKeyHolderLimited ? 32 : 0
                     text: STR.STR_QML_1282
                     font.weight: Font.Normal
                     font.pixelSize: 12
@@ -80,20 +82,24 @@ QPopupEmpty {
                         model: {
                             var ls = []
                             if (!isKeyHolderLimited) {
-                                if (!_hardwareAddKey.isInheritance) {
+                                if (!isInheritance) {
                                     ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
                                 }
                                 ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
                             }
-                            if (!_hardwareAddKey.isInheritance) {
+                            if (!isInheritance) {
                                 ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
                                 ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
                             }
-                            if (_hardwareAddKey.isInheritance) {
+                            if (isInheritance) {
                                 ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
+                            }
+                            if (!isInheritance) {
+                                ls.push({add_type: NUNCHUCKTYPE.ADD_JADE,   txt: "Blockstream Jade"   , type: "JADE"  , tag: "JADE"  })
                             }
                             return ls
                         }
+
                         QRadioButtonTypeA {
                             id: btn
                             width: 528
@@ -106,7 +112,7 @@ QPopupEmpty {
                             enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
                             selected: GroupWallet.qAddHardware === modelData.add_type
                             onButtonClicked: {
-                                GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index, _hardwareAddKey.isInheritance)
+                                GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index, isInheritance)
                                 hardware = modelData.tag
                             }
                         }
@@ -115,18 +121,18 @@ QPopupEmpty {
             }
             QWarningBgMulti {
                 width: 528
-                visible: _hardwareAddKey.isInheritance
+                visible: isInheritance
                 height: 108
-                icon: "qrc:/Images/Images/info-60px.png"
+                icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: STR.STR_QML_1603
                 anchors.bottom: parent.bottom
             }
 
             QWarningBg {
                 width: 528
-                visible: !_hardwareAddKey.isInheritance
+                visible: !isInheritance
                 height: 60
-                icon: "qrc:/Images/Images/info-60px.png"
+                icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: STR.STR_QML_943
                 anchors.bottom: parent.bottom
             }
@@ -134,7 +140,8 @@ QPopupEmpty {
         nextEnable: GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_COLDCARD ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_LEDGER ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_TREZOR ||
-                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX;
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX ||
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
         onPrevClicked:{ closeClicked() }
         onNextClicked: {
             if (ServiceSetting.existHardware(hardware)) {

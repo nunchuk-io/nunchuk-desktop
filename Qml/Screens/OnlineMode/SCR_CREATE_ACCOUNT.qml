@@ -41,9 +41,8 @@ QScreen {
         Column{
             anchors.centerIn: parent
             spacing: 24
-            QImage {
-                width: 64
-                height: 64
+            QIcon {
+                iconSize: 64
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: "qrc:/Images/Images/logo-light.svg"
             }

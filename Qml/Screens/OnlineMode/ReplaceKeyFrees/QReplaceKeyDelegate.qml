@@ -79,9 +79,8 @@ Item {
                     rightMargin: 12
                 }
                 spacing: 4
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     source: "qrc:/Images/Images/check-circle-dark.svg"
                 }
                 QLato {
@@ -102,9 +101,8 @@ Item {
             }
             Row {
                 spacing: 4
-                QImage {
-                    width: 16
-                    height: 16
+                QIcon {
+                    iconSize: 16
                     source: "qrc:/Images/Images/replace.svg"
                 }
                 QLato {

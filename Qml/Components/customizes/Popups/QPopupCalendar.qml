@@ -61,7 +61,7 @@ Popup {
                 anchors.fill: parent
                 anchors.margins: 1
                 Button {
-                  iconSource: "qrc:/Images/Images/chevron_left_24px_n.png"
+                  iconSource: "qrc:/Images/Images/chevron-left-dark.svg"
                   style: ButtonStyle {
                       background: Item{}
                   }
@@ -79,7 +79,7 @@ Popup {
                   verticalAlignment: Text.AlignVCenter
                 }
                 Button {
-                  iconSource: "qrc:/Images/Images/chevron_right_24px_n.png"
+                  iconSource: "qrc:/Images/Images/chevron-right-dark.svg"
                   style: ButtonStyle {
                       background: Item{}
                   }

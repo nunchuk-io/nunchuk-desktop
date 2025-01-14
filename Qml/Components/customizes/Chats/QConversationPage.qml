@@ -144,7 +144,7 @@ Row {
                                             }
                                             QIcon {
                                                 iconSize: 24
-                                                source: "qrc:/Images/Images/OnlineMode/close_24px.png"
+                                                source: "qrc:/Images/Images/close_24px.png"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 MouseArea {
                                                     anchors.fill: parent
@@ -255,7 +255,7 @@ Row {
                                                 iconSize: 24
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 visible: model.selected
-                                                source: "qrc:/Images/Images/OnlineMode/check_circle_24px copy.png"
+                                                source: "qrc:/Images/Images/check_circle_24px copy.png"
                                             }
                                         }
                                         MouseArea {
@@ -561,13 +561,12 @@ Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 16
-                QImage {
+                QIcon {
+                    iconSize: 36
                     id: btnScrollBottom
-                    width: 36
-                    height: 36
                     scale: btnScrollBottomMouse.pressed ? 1 : btnScrollBottomMouse.containsMouse ? 1.1 : 1
                     transformOrigin: Item.Center
-                    source: "qrc:/Images/Images/OnlineMode/downend.png"
+                    source: "qrc:/Images/Images/downend.png"
                 }
                 onClicked:  { listView.positionViewAtEnd()}
             }
@@ -669,12 +668,11 @@ Row {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                             }
-                            QImage {
-                                width: 32
-                                height: 32
+                            QIcon {
+                                iconSize: 32
                                 sourceSize.width: width
                                 sourceSize.height: height
-                                source: "qrc:/Images/Images/OnlineMode/remove-button.png"
+                                source: "qrc:/Images/Images/remove-button.png"
                                 anchors.left: parent.right
                                 anchors.leftMargin: -16
                                 anchors.bottom: parent.top
@@ -705,7 +703,7 @@ Row {
                             iconSize: 24
                             scale: selectFileBtn.pressed ? 1: selectFileBtn.containsMouse ? 1.1 : 1
                             transformOrigin: Item.Center
-                            source: "qrc:/Images/Images/OnlineMode/attach_file.svg"
+                            source: "qrc:/Images/Images/attach_file.svg"
                         }
                         onClicked:{
                             console.log(selectFileBtn.mouseX, selectFileBtn.mouseY, " | " , selectFileBtn.x, selectFileBtn.y)
@@ -800,7 +798,7 @@ Row {
                 id: icoSwl
                 scale: createSharedBottom.pressed ? 1: createSharedBottom.containsMouse ? 1.1 : 1
                 transformOrigin: Item.Center
-                source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                source: "qrc:/Images/Images/collab-wallet-dark.svg"
             }
             enabled: RoomWalletData.currentRoom
             onClicked:{
@@ -826,7 +824,7 @@ Row {
                 id: icoSwl
                 scale: createTXBottom.pressed ? 1: createTXBottom.containsMouse ? 1.1 : 1
                 transformOrigin: Item.Center
-                source: "qrc:/Images/Images/OnlineMode/monetization_on-24px.png"
+                source: "qrc:/Images/Images/bitcoin-dark.svg"
             }
             enabled: RoomWalletData.currentRoom
             onClicked:{

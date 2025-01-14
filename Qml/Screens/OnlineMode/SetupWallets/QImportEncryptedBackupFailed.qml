@@ -45,9 +45,9 @@ QOnScreenContent {
             width: 96;height: 96;
             radius: 48
             color: "#FFD7D9"
-            QImage {
+            QIcon {
+                iconSize: 60
                 anchors.centerIn: parent
-                width: 60; height: 60;
                 source: "qrc:/Images/Images/error_outline_24px.png"
             }
         }

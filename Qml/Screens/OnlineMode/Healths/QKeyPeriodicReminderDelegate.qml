@@ -93,9 +93,8 @@ Rectangle {
                     leftMargin: 12
                     verticalCenter: parent.verticalCenter
                 }
-                QImage {
-                    width: 24
-                    height: 24
+                QIcon {
+                    iconSize: 24
                     anchors.verticalCenter: parent.verticalCenter
                     source: "qrc:/Images/Images/scheduling-dark.svg"
                 }

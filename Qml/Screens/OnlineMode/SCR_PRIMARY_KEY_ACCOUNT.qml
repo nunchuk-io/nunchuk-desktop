@@ -81,10 +81,9 @@ QScreen {
                     radius: 96/2
                     color: "#F5F5F5"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    QImage {
+                    QIcon {
+                        iconSize: 64
                         anchors.centerIn: parent
-                        width: 64
-                        height: 64
                         source: "qrc:/Images/Images/primary-key-dark.svg"
                     }
                 }

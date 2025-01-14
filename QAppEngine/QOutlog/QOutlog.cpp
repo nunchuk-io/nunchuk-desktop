@@ -31,7 +31,9 @@ QOutlog::~QOutlog()
     if(mLogString.endsWith(QLatin1Char(' '))) {
         mLogString.chop(1);
     }
-    std::cout << mLogString.toStdString() << std::endl;
+    if (!mLogString.contains("QCoreApplication")) {
+        std::cout << mLogString.toStdString() << std::endl;
+    }
 //    g_writer.writeLog(mLogString);
 #endif
 }

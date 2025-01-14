@@ -141,7 +141,7 @@ Rectangle {
                             width: masterList.width
                             height: 48
                             signername : model.master_signer_name
-                            card_id_or_xfp: model.master_signer_fingerPrint
+                            card_id_or_xfp: model.master_signer_type === NUNCHUCKTYPE.NFC ? model.master_signer_device.cardId : model.master_signer_fingerPrint
                             devicetype: model.master_signer_deviceType
                             signerType: model.master_signer_type
                             signerTag: model.master_signer_tag

@@ -307,6 +307,7 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
                     QString msg_approved = textForToast(flow);
                     AppModel::instance()->showToast(0, msg_approved, EWARNING::WarningType::SUCCESS_MSG);
                 }
+                break;
             }
             case AlertEnum::E_Alert_t::CHANGE_EMAIL: {
                 QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);

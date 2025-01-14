@@ -56,7 +56,7 @@ QScreen {
                 topMargin: 44
             }
             transformOrigin: Item.Center
-            source: "qrc:/Images/Images/OnlineMode/compress-24px.png"
+            source: "qrc:/Images/Images/compress-24px.png"
             scale: compressmouse.pressed ? 1: compressmouse.containsMouse ? 1.1 : 1
             MouseArea {
                 id: compressmouse
@@ -83,9 +83,8 @@ QScreen {
                 color: "#F5F5F5"
                 radius: 48
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage{
-                    width: 60
-                    height: 60
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
                     source: "qrc:/Images/Images/collab-wallet-dark.svg"
                 }
@@ -221,7 +220,7 @@ QScreen {
                     topMargin: 44
                 }
                 transformOrigin: Item.Center
-                source: "qrc:/Images/Images/OnlineMode/compress-24px.png"
+                source: "qrc:/Images/Images/compress-24px.png"
                 scale: _compressmouse.pressed ? 1: _compressmouse.containsMouse ? 1.1 : 1
                 MouseArea {
                     id: _compressmouse

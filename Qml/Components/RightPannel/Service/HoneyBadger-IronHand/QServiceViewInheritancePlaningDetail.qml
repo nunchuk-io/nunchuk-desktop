@@ -116,9 +116,8 @@ Item {
                     Row {
                         anchors.fill: parent
                         spacing: 12
-                        QImage {
-                            width: 60
-                            height: 60
+                        QIcon {
+                            iconSize: 60
                             anchors.verticalCenter: parent.verticalCenter
                             source: "qrc:/Images/Images/wallet-brand-icon.svg"
                         }

@@ -196,10 +196,9 @@ Rectangle {
                          false : !alreadySigned && (signerType === NUNCHUCKTYPE.HARDWARE || signerType === NUNCHUCKTYPE.COLDCARD_NFC)
             height: 16
             spacing: 4
-            QImage {
-                width: 16
-                height: 16
-                source: signerReadyToSign ? "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png" : "qrc:/Images/Images/OnlineMode/warning_amber-24px 2.png"
+            QIcon {
+                iconSize: 16
+                source: signerReadyToSign ? "qrc:/Images/Images/check_circle_24px_n.png" : "qrc:/Images/Images/warning_amber-24px 2.png"
                 anchors.verticalCenter: parent.verticalCenter
             }
             QText {
@@ -220,7 +219,7 @@ Rectangle {
                 tipWidth: 270
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
+                source: "qrc:/Images/Images/help_outline_24px.svg"
                 toolTip: {
                     switch(signerType){
                     case NUNCHUCKTYPE.AIRGAP: return STR.STR_QML_507
@@ -237,7 +236,7 @@ Rectangle {
         Item {
             QIcon {
                 iconSize: 24
-                source: "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png"
+                source: "qrc:/Images/Images/check_circle_24px_n.png"
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
             }

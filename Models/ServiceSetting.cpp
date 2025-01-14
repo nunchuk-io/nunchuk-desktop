@@ -106,6 +106,18 @@ void ServiceSetting::setWalletInfo(const QWalletPtr &d)
     }
 }
 
+void ServiceSetting::requestStartAddHardwareKey(const QString &tag)
+{
+    if (QAssistedDraftWallets::IsByzantine()) {
+        QGroupWallets::instance()->setDashboardInfo(QGroupWallets::instance()->request().mGroupId);
+    } else {
+        QGroupWallets::instance()->SignInDashBoard(QUserWallets::instance()->dashboardInfoPtr());
+    }
+    if (auto dash = QGroupWallets::instance()->dashboardInfoPtr()) {
+        dash->requestStartKeyReplacement(tag);
+    }
+}
+
 void ServiceSetting::clearWalletInfo()
 {
     walletInfo_.clear();

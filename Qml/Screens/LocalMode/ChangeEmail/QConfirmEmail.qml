@@ -63,7 +63,7 @@ QOnScreenContentTypeB {
         QWarningBg {
             width: 728
             iSize: 60
-            icon: "qrc:/Images/Images/info-60px.png"
+            icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: STR.STR_QML_1028_bottom.arg(ProfileSetting.newEmail)
             anchors.bottom: parent.bottom
         }

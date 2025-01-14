@@ -86,10 +86,9 @@ QLinearGradient {
                     Row {
                         anchors.centerIn: parent
                         spacing: 4
-                        QImage {
-                            width: 12
-                            height: 12
-                            source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                        QIcon {
+                            iconSize: 12
+                            source: "qrc:/Images/Images/collab-wallet-dark.svg"
                         }
                         QText{
                             font.family: "Lato"

@@ -113,9 +113,8 @@ Popup {
         anchors.centerIn: parent
         width: toast.width - 30
         spacing: 8
-        QImage {
-            width: 36
-            height: 36
+        QIcon {
+            iconSize: 36
             source: warningIcon[warningType]
             anchors.verticalCenter: parent.verticalCenter
         }

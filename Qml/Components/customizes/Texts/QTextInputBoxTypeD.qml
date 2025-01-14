@@ -155,7 +155,7 @@ Column {
                 "Copy content"
             ]
             icons: [
-                "qrc:/Images/Images/Copy_031F2B.png"
+                "qrc:/Images/Images/copy-dark.svg"
             ]
             onItemClicked: {
                 switch(index){
@@ -170,10 +170,9 @@ Column {
     Item{
         width: myRectangle.width+2
         height: 28
-        QImage {
+        QIcon {
+            iconSize: 20
             id: alert
-            width: 20
-            height: 20
             source: "qrc:/Images/Images/error_outline_24px.png"
             anchors {
                 left: parent.left

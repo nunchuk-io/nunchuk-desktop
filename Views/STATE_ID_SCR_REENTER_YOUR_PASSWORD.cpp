@@ -55,6 +55,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         }
         break;
     case E::STATE_ID_SCR_SETUP_SECURITY_QUESTION:
+        DBG_INFO << ServiceSetting::instance()->servicesTagPtr()->list2FA().size();
         if (ServiceSetting::instance()->servicesTagPtr()->list2FA().size() > 0) {
             QString w_id = ServiceSetting::instance()->servicesTagPtr()->list2FA().first();
             if (auto w = AppModel::instance()->walletList()->getWalletById(w_id)) {
@@ -91,9 +92,7 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         ServiceSetting::instance()->setWalletInfo(wallet);
         if (ServiceSetting::instance()->servicesTagPtr()->requestInheritancePlanVerifyPassword(password)) {
             if (wallet && wallet->inheritancePlanPtr()) {
-                QtConcurrent::run([wallet]() {
-                    wallet->inheritancePlanPtr()->GetInheritancePlan();
-                });
+                wallet->inheritancePlanPtr()->GetInheritancePlan();
             }
             QTimer::singleShot(100, [ = ]() {
                 QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);

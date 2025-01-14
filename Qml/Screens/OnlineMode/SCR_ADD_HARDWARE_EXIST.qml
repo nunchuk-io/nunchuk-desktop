@@ -39,6 +39,7 @@ QScreen {
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
             case NUNCHUCKTYPE.ADD_COLDCARD: return _Coldcard
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
+            case NUNCHUCKTYPE.ADD_JADE: return _Jade
             default: return null
             }
         }
@@ -58,6 +59,10 @@ QScreen {
     Component {
         id: _BitBox
         QScreenAddBitBoxExist {}
+    }
+    Component {
+        id: _Jade
+        QScreenAddJadeExist {}
     }
     function doneAddHardwareKey() {
         AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);

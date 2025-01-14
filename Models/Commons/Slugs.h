@@ -16,6 +16,7 @@ public:
     virtual bool isByzantine() const;
     virtual bool isHoneyBadger() const;
     virtual bool isHoneyBadgerPlus() const;
+    virtual bool isHoneyBadgerPremier() const;
     virtual bool isIronHand() const;
     virtual bool isMultiSubscriptions() const;
 

@@ -43,7 +43,7 @@ Item {
         var user = ClientController.user
         if (user.isIronHandUser || user.isHoneyBadgerUser) {
             return true
-        } else if (user.isByzantineUser || user.isFinneyUser) {
+        } else if (user.isGroupWallet) {
             var highestPermissionAccount = GroupWallet.highestPermissionAccount
             var role = highestPermissionAccount.role
 

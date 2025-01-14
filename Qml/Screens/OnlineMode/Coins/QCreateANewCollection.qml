@@ -126,9 +126,8 @@ QOnScreenContentTypeB {
                     height: 24
                     Row {
                         spacing: 8
-                        QImage {
-                            width: 24
-                            height: 24
+                        QIcon {
+                            iconSize: 24
                             source: "qrc:/Images/Images/coin-tag-dark.svg"
                             anchors.verticalCenter: parent.verticalCenter
                         }

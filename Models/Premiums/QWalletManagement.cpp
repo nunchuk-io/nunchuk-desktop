@@ -741,8 +741,8 @@ void QWalletManagement::slotGetListWalletFinish()
             }
         }
         walletList->updateHealthCheckTime();
-        emit QGroupWallets::instance()->dashboardInfoChanged();
     }
+    emit QGroupWallets::instance()->dashboardInfoChanged();
     QGroupWallets::instance()->clearDashBoard();
     ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
     QGroupWallets::instance()->findPermissionAccount();

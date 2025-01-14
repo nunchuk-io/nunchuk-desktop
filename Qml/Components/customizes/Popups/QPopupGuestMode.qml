@@ -83,10 +83,9 @@ Popup {
                 id:_colum
                 spacing: 24
                 anchors.centerIn: parent
-                QImage {
+                QIcon {
+                    iconSize: 96
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 96
-                    height: 96
                     source: "qrc:/Images/Images/account-circle-dark.svg"
                 }
 

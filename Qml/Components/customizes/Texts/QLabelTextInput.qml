@@ -93,7 +93,7 @@ Column {
         QIcon {
             iconSize: 24
             property bool visiblity: false
-            source: "qrc:/Images/Images/edit.png"
+            source: "qrc:/Images/Images/edit-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 12

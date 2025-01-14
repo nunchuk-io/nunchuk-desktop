@@ -154,7 +154,7 @@ Column {
             iconSize: 24
             id: showpass
             property bool visiblity: false
-            source: showpass.visiblity ? "qrc:/Images/Images/visibility.png":"qrc:/Images/Images/visibility-off.png"
+            source: showpass.visiblity ? "qrc:/Images/Images/visibility-dark.svg":"qrc:/Images/Images/visibility-off-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 12
@@ -168,10 +168,9 @@ Column {
     Item{
         width: myRectangle.width+2
         height: 28
-        QImage {
+        QIcon {
+            iconSize: 20
             id: alert
-            width: 20
-            height: 20
             source: "qrc:/Images/Images/error_outline_24px.png"
             anchors {
                 left: parent.left
@@ -199,10 +198,9 @@ Column {
         height: 28
         Row {
             spacing: 4
-            QImage {
-                width: 20
-                height: 20
-                source: "qrc:/Images/Images/info-60px.png"
+            QIcon {
+                iconSize: 20
+                source: "qrc:/Images/Images/info-60px.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
             QText {

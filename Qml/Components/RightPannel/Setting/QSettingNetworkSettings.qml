@@ -474,7 +474,7 @@ Item {
     }
 
     QWarningBg {
-        icon: "qrc:/Images/Images/info-60px.png"
+        icon: "qrc:/Images/Images/info-60px.svg"
         txt.text: STR.STR_QML_1301.arg("https://github.com/nunchuk-io/resources/tree/main/docs/connection-guide")
         txt.textFormat: Text.RichText
         txt.font.weight: Font.Bold

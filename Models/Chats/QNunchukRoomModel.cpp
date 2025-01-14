@@ -1960,9 +1960,6 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     dashboard->GetHealthCheckInfo();
                     if (auto plan = dashboard->inheritancePlanPtr()) {
                         plan->GetInheritancePlan();
-                        if (auto tag = dashboard->servicesTagPtr()) {
-                            tag->setListInheritantPlans();
-                        }
                     }
                 }
                 if (msgtype.contains("io.nunchuk.custom.wallet_inheritance_updated", Qt::CaseInsensitive)

@@ -48,11 +48,10 @@ QScreen {
             anchors.top: parent.top
             anchors.topMargin: 144
             spacing: 24
-            QImage {
-                width: 96
-                height: 96
+            QIcon {
+                iconSize: 96
                 anchors.horizontalCenter: parent.horizontalCenter
-                source: "qrc:/Images/Images/OnlineMode/keys.png"
+                source: "qrc:/Images/Images/keys.svg"
             }
             Column {
                 anchors.horizontalCenter: parent.horizontalCenter

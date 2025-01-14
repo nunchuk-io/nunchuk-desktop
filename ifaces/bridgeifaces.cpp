@@ -356,7 +356,6 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                 QString in_message = qUtils::QGenerateRandomMessage();
                 AppModel::instance()->setNewKeySignMessage(in_message);
                 if(selectedDv.data()){
-                    QString out_signature = "";
                     QString out_path = "";
                     AppModel::instance()->setAddSignerStep(1);
 #if 0 //SKIP HEALTHCHECK //Redundant

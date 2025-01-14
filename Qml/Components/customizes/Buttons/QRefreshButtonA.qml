@@ -87,11 +87,9 @@ Rectangle {
     Row {
         anchors.centerIn: parent
         spacing: iconSpacing
-        QImage {
+        QIcon {
             id: ico
-            width: iconSize
-            height: iconSize
-            transformOrigin: Item.Center
+            iconSize: idRootStyle1.iconSize
             source: "qrc:/Images/Images/cached_24px.png"
             anchors.verticalCenter: parent.verticalCenter
         }

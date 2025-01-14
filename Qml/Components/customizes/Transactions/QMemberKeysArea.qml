@@ -58,11 +58,10 @@ Item {
                 text: STR.STR_QML_289
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QImage {
+            QIcon {
+                iconSize: 16
                 visible: (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                width: 16
-                height: 16
-                source: "qrc:/Images/Images/OnlineMode/pending_actions-24px.png"
+                source: "qrc:/Images/Images/pending_actions-24px.png"
                 anchors.verticalCenter: parent.verticalCenter
             }
             QText {

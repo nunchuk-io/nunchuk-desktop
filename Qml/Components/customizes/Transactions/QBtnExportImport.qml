@@ -48,10 +48,10 @@ QButtonLargeTail {
         ]
         icons: [
             "qrc:/Images/Images/ExportFile.svg",
-            "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
-            "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+            "qrc:/Images/Images/QRCodeScan.png",
+            "qrc:/Images/Images/QRCodeScan.png",
             "qrc:/Images/Images/importFile.svg",
-            "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+            "qrc:/Images/Images/QRCodeScan.png"
         ]
 
         onItemClicked: {

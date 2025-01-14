@@ -62,6 +62,7 @@ QIcon {
                 case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger-hardware-dark.svg"; break
                 case "software":  img = "qrc:/Images/Images/Device_Icons/software_dark.svg"; break
                 case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
+                case "jade"     : img = "qrc:/Images/Images/Device_Icons/jade-hardware-dark.svg"; break
                 default: img = ""
                 }
                 if (img === "") {

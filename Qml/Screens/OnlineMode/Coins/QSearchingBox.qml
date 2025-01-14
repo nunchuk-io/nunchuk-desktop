@@ -27,82 +27,91 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 
 
-QTextInputBoxTypeA {
-    id: _search
+Rectangle {
+    id: _searchBar
     width: 500
     height: 48
-    placeholderText: ""
-    borderColor: "#DEDEDE"
-    backgroundColor: "#FFFFFF"
-    leftPadding: 52
-    activeFocusOnPress: true
-    showEdit: false
+    border.width: 1
+    border.color: "#EAEAEA"
     enabled: true
-    borderRadius: 44
+    radius: 44
     signal filterClicked()
-    maximumLength: 50
-    QIconButton {
-        width: 24
+
+    Item {
+        width: 468
         height: 24
-        iconSize: 24
         anchors {
-            verticalCenter: parent.verticalCenter
             left: parent.left
             leftMargin: 16
-        }
-        bgColor: "transparent"
-        icon: "qrc:/Images/Images/search_24px.svg"
-        onClicked: {
-            walletInfo.searchText = _search.text
-        }
-    }
-
-    onTextChanged: {
-        walletInfo.searchText = _search.text
-    }
-
-    QIconButton {
-        width: 24
-        height: 24
-        iconSize: 24
-        visible: _search.text !== ""
-        anchors {
             verticalCenter: parent.verticalCenter
-            right: _filter.left
-            rightMargin: 16
         }
-        bgColor: "transparent"
-        icon: "qrc:/Images/Images/close-dark.svg"
-        onClicked: {
-            _search.text = ""
-        }
-    }
-    QIconButton {
-        id: _filter
-        width: 24
-        height: 24
-        iconSize: 24
-        anchors {
-            verticalCenter: parent.verticalCenter
-            right: parent.right
-            rightMargin: 16
-        }
-        bgColor: "transparent"
-        icon: "qrc:/Images/Images/filter-dark.svg"
-        onClicked: {
-            filterClicked()
-        }
-        Rectangle {
-            width: 16
-            height: 16
-            color: "#CF4018"
-            radius: 16
-            visible: walletInfo.utxoList.isFiltered
-            anchors {
-                top: parent.top
-                topMargin: -8
-                right: parent.right
-                rightMargin: -8
+        Row {
+            id:_row
+            spacing: 12
+            anchors.fill: parent
+            QIconButton {
+                height: 24
+                width: 24
+                iconSize: 24
+                bgColor: "transparent"
+                icon: "qrc:/Images/Images/search_24px.svg"
+                onClicked: {
+                    walletInfo.searchText = _search.text
+                }
+            }
+
+            TextField {
+                id: _search
+                height: 48
+                width: 396 - ((_close.visible ? 24 : 0) + (_close.visible ? 12 : 0))
+                anchors.verticalCenter: parent.verticalCenter
+                background: Item {}
+                leftPadding: 0
+                rightPadding: 0
+                color: "#031F2B"
+                font.family: "Lato"
+                font.pixelSize: 16
+                selectByMouse: true
+                onTextChanged: {
+                    walletInfo.searchText = text
+                }
+            }
+
+            QIconButton {
+                id: _close
+                height: 24
+                width: 24
+                iconSize: 24
+                visible: _search.text !== ""
+                bgColor: "transparent"
+                icon: "qrc:/Images/Images/close-dark.svg"
+                onClicked: {
+                    _search.text = ""
+                }
+            }
+            QIconButton {
+                id: _filter
+                height: 24
+                width: 24
+                iconSize: 24
+                bgColor: "transparent"
+                icon: "qrc:/Images/Images/filter-dark.svg"
+                onClicked: {
+                    filterClicked()
+                }
+                Rectangle {
+                    width: 16
+                    height: 16
+                    color: "#CF4018"
+                    radius: 16
+                    visible: walletInfo.utxoList.isFiltered
+                    anchors {
+                        top: parent.top
+                        topMargin: -8
+                        right: parent.right
+                        rightMargin: -8
+                    }
+                }
             }
         }
     }

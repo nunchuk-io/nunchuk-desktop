@@ -110,7 +110,7 @@ QWalletDelegateBackground {
                         width: height
                         height: parent.height
                         anchors.right: parent.right
-                        source: "qrc:/Images/Images/OnlineMode/Escrow Wallet.png"
+                        source: "qrc:/Images/Images/Escrow Wallet.png"
                     }
                 }
                 Item {
@@ -140,10 +140,9 @@ QWalletDelegateBackground {
                     Row {
                         anchors.centerIn: parent
                         spacing: 4
-                        QImage {
-                            width: 12
-                            height: 12
-                            source: "qrc:/Images/Images/OnlineMode/visibility-dark.svg"
+                        QIcon {
+                            iconSize: 12
+                            source: "qrc:/Images/Images/visibility-dark.svg"
                         }
                         QText{
                             font.family: "Lato"
@@ -165,10 +164,9 @@ QWalletDelegateBackground {
                     Row {
                         anchors.centerIn: parent
                         spacing: 4
-                        QImage {
-                            width: 12
-                            height: 12
-                            source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                        QIcon {
+                            iconSize: 12
+                            source: "qrc:/Images/Images/collab-wallet-dark.svg"
                         }
                         QText{
                             font.family: "Lato"
@@ -208,10 +206,9 @@ QWalletDelegateBackground {
                     Row {
                         anchors.centerIn: parent
                         spacing: 4
-                        QImage {
-                            width: 12
-                            height: 12
-                            source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                        QIcon {
+                            iconSize: 12
+                            source: "qrc:/Images/Images/collab-wallet-dark.svg"
                         }
                         QText{
                             font.family: "Lato"

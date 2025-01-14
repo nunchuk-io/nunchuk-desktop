@@ -71,42 +71,56 @@ QScreen {
                     verticalAlignment: Text.AlignVCenter
                     visible: isKeyHolderLimited
                 }
-                Column {
-                    spacing: 0
-                    Repeater {
-                        model: {
-                            var ls = []
-                            var is_inheritance = alert.payload.is_inheritance
-                            if (!isKeyHolderLimited) {
-                                if (!is_inheritance) {
-                                    ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                Flickable {
+                    width: 528 + 8
+                    height: 4 * 48
+                    contentHeight: keyList.count * 48
+                    clip: true
+                    ScrollBar.vertical: ScrollBar {
+                        active: true
+                        policy: ScrollBar.AlwaysOn
+                    }
+                    Column {
+                        spacing: 0
+                        Repeater {
+                            id: keyList
+                            model: {
+                                var ls = []
+                                var is_inheritance = alert.payload.is_inheritance
+                                if (!isKeyHolderLimited) {
+                                    if (!is_inheritance) {
+                                        ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
+                                    }
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "Coldcard" , type: "coldcard", tag: "COLDCARD"})
                                 }
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "Coldcard" , type: "coldcard", tag: "COLDCARD"})
+                                if (!is_inheritance) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
+                                }
+                                if (is_inheritance) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
+                                }
+                                if (!is_inheritance) {
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_JADE,   txt: "Blockstream Jade"   , type: "JADE"  , tag: "JADE"  })
+                                }
+                                return ls
                             }
-                            if (!is_inheritance) {
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
-                            }
-                            if (is_inheritance) {
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
-                            }
-                            return ls
-                        }
-                        QRadioButtonTypeA {
-                            id: btn
-                            width: 528
-                            height: 48
-                            label: modelData.txt
-                            layoutDirection: Qt.LeftToRight
-                            fontFamily: "Lato"
-                            fontPixelSize: 16
-                            fontWeight: Font.Normal
-                            enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
-                            selected: GroupWallet.qAddHardware === modelData.add_type && hardware === modelData.tag
-                            onButtonClicked: {
-                                var key_index = alert.payload.key_index
-                                GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index)
-                                hardware = modelData.tag
+                            QRadioButtonTypeA {
+                                id: btn
+                                width: 528
+                                height: 48
+                                label: modelData.txt
+                                layoutDirection: Qt.LeftToRight
+                                fontFamily: "Lato"
+                                fontPixelSize: 16
+                                fontWeight: Font.Normal
+                                enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
+                                selected: GroupWallet.qAddHardware === modelData.add_type && hardware === modelData.tag
+                                onButtonClicked: {
+                                    var key_index = alert.payload.key_index
+                                    GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index)
+                                    hardware = modelData.tag
+                                }
                             }
                         }
                     }
@@ -116,7 +130,7 @@ QScreen {
                 width: 528
                 visible: alert.payload.is_inheritance
                 height: 108
-                icon: "qrc:/Images/Images/info-60px.png"
+                icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: STR.STR_QML_1603
                 anchors.bottom: parent.bottom
             }
@@ -125,7 +139,7 @@ QScreen {
                 width: 528
                 visible: !alert.payload.is_inheritance
                 height: 60
-                icon: "qrc:/Images/Images/info-60px.png"
+                icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: STR.STR_QML_943
                 anchors.bottom: parent.bottom
             }
@@ -133,7 +147,8 @@ QScreen {
         nextEnable: GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_COLDCARD ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_LEDGER ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_TREZOR ||
-                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX;
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX ||
+                    GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
         onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         onNextClicked: {
             dashInfo.requestStartKeyReplacement(hardware)

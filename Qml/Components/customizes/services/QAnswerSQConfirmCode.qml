@@ -109,11 +109,10 @@ QOnScreenContentTypeA {
             anchors.fill: parent
             anchors.margins: 15
             spacing: 11
-            QImage {
-                width: 30
-                height: 30
+            QIcon {
+                iconSize: 30
                 anchors.verticalCenter: parent.verticalCenter
-                source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                source: "qrc:/Images/Images/error_outline_24px_n.png"
             }
             QLato {
                 width: 650

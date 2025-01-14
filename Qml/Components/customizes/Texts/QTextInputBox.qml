@@ -105,7 +105,7 @@ Rectangle {
     QIcon {
         iconSize: 24
         id: icoEdit
-        source: "qrc:/Images/Images/edit.png"
+        source: "qrc:/Images/Images/edit-dark.svg"
         anchors.right: parent.right
         anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter

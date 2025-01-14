@@ -73,10 +73,9 @@ QOnScreenContentTypeA {
                     input.placeholderText: "Select your country"
 
                 }
-                QImage {
-                    width: 24
-                    height: 24
-                    source: "qrc:/Images/Images/chevron_right_24px_n.png"
+                QIcon {
+                    iconSize: 24
+                    source: "qrc:/Images/Images/chevron-right-dark.svg"
                     anchors {
                         right: parent.right
                         rightMargin: 16

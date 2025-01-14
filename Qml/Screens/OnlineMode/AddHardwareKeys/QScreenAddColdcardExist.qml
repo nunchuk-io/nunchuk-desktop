@@ -43,7 +43,6 @@ QScreenAdd {
     readonly property int eREUSE_SCAN_DEVICE: 3
     readonly property int eREUSE_RESULT: 4
     readonly property int eREUSE_VIA_FILE: 5
-    readonly property int eREUSE_REVIEW_KEY_ADDED: 6
     property int eADD_STEP: eREUSE_LIST_KEYS
     readonly property int _ASK_PASSPHRASE: 1
     readonly property int _IMPORTANT_NOTICE: 2
@@ -213,7 +212,7 @@ QScreenAdd {
                                 iconSize: 24
                                 anchors.centerIn: parent
                                 device_type: inputtingIndex.device_type
-                                type: NUNCHUCKTYPE.HARDWARE
+                                type: inputtingIndex.signer_type
                                 tag: inputtingIndex.device_tag
                             }
                         }
@@ -328,7 +327,7 @@ QScreenAdd {
             funcs: [
                 function() {},
                 function() {
-                    eADD_STEP = eREUSE_REVIEW_KEY_ADDED
+                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
                 }
             ]
         }
@@ -424,9 +423,9 @@ QScreenAdd {
                 width: 96;height: 96;
                 radius: 48
                 color: "#A7F0BA"
-                QImage {
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    width: 60; height: 60;
                     source: "qrc:/Images/Images/check-dark.svg"
                 }
             }
@@ -483,12 +482,7 @@ QScreenAdd {
             eADD_STEP = eREUSE_SCAN_DEVICE
         }
     }
-    QWalletCreationPending {
-        width: popupWidth
-        height: popupHeight
-        anchors.centerIn: parent
-        visible: eADD_STEP === eREUSE_REVIEW_KEY_ADDED
-    }
+
     Connections {
         target: draftWallet
         onReuseKeyGetSignerResult : {
@@ -496,7 +490,7 @@ QScreenAdd {
             {
                 if(result == 1){
                     GroupWallet.refresh()
-                    eADD_STEP = eREUSE_REVIEW_KEY_ADDED
+                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
                 }
             }
             else {

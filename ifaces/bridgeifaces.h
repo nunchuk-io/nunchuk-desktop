@@ -153,6 +153,7 @@ public:
         NFC,
         COLDCARD_NFC,
         SERVER,
+        PORTAL_NFC,
     };
 
     enum class RoomType {

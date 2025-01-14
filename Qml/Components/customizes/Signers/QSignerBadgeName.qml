@@ -60,6 +60,7 @@ QBadge {
                 case "coldcard":  value = "Wired"; break
                 case "bitbox02":  value = "Wired"; break
                 case "ledger":    value = "Wired"; break
+                case "jade":      value = "Wired"; break
                 case "software":  value = "Software"; break
                 case "nfc"      : value = "NFC"; break
                 default: value = ""
@@ -70,9 +71,9 @@ QBadge {
                     case "LEDGER":      value = "Wired"; break
                     case "TREZOR":      value = "Wired"; break
                     case "BITBOX":      value = "Wired"; break
+                    case "JADE":        value = "Wired"; break
                     case "INHERITANCE":
                     case "KEYSTONE":
-                    case "JADE":
                     case "PASSPORT":
                     case "SEEDSIGNER":
                     default:value = "Unknown"; break

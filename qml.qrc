@@ -541,14 +541,17 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/QPopupHardwareAddKey.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QPopupImportColdcardBackup.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QImportEncryptedBackupFailed.qml</file>
+        <file>Qml/Components/origins/QPicture.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinNoteBoder.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddJade.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddJadeAsk.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddJadeExist.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
         <file>Images/Close.png</file>
         <file>Images/check_circle_outline_24px.png</file>
-        <file>Images/edit.png</file>
         <file>Images/error_outline_24px.png</file>
-        <file>Images/Arrow-Right.png</file>
         <file>Images/Checked_n.png</file>
         <file>Images/UnChecked_n.png</file>
         <file>Images/download.png</file>
@@ -566,10 +569,10 @@
         <file>Images/fileDownload.png</file>
         <file>Images/SortAscen.png</file>
         <file>Images/SortDescen.png</file>
-        <file>Images/chevron_left_24px_d.png</file>
-        <file>Images/chevron_left_24px_n.png</file>
-        <file>Images/chevron_right_24px_d.png</file>
-        <file>Images/chevron_right_24px_n.png</file>
+        <file>Images/chevron-left-dark-disabled.svg</file>
+        <file>Images/chevron-left-dark.svg</file>
+        <file>Images/chevron-right-dark-disabled.svg</file>
+        <file>Images/chevron-right-dark.svg</file>
         <file>Images/first_page_24px_d.png</file>
         <file>Images/first_page_24px_n.png</file>
         <file>Images/last_page_24px_d.png</file>
@@ -580,11 +583,6 @@
         <file>Images/notification_success.png</file>
         <file>Images/notification_warning.png</file>
         <file>Images/close_toast_24px.png</file>
-        <file>Images/arrow_outline_d.png</file>
-        <file>Images/arrow_outline_n.png</file>
-        <file>Images/arrow_outline_p.png</file>
-        <file>Images/visibility.png</file>
-        <file>Images/visibility-off.png</file>
         <file>Images/link.png</file>
         <file>Images/Signed.png</file>
         <file>Images/snipbar.png</file>
@@ -599,80 +597,24 @@
         <file>Images/QrIco.png</file>
         <file>Images/qrline.png</file>
         <file>Images/exportqr.png</file>
-        <file>Images/Copy_9CAEB8.png</file>
-        <file>Images/Copy_031F2B.png</file>
-        <file>Images/Copy_F1FAFE.png</file>
-        <file>Images/wallet_031F2B.png</file>
         <file>Images/health_031F2B.png</file>
         <file>Images/health_C9DEF1.png</file>
-        <file>Images/d_chevron_24px_9CAEB8.png</file>
-        <file>Images/d_chevron_24px_031F2B.png</file>
-        <file>Images/d_chevron_24px_F1FAFE.png</file>
+        <file>Images/d-chevron-disabled.svg</file>
+        <file>Images/d-chevron-dark.svg</file>
+        <file>Images/d-chevron-light.svg</file>
         <file>Images/bookmark_border_24px_9CAEB8.png</file>
         <file>Images/bookmark_border_24px_031F2B.png</file>
         <file>Images/bookmark_border_24px_C9DEF1.png</file>
         <file>Images/bookmark_border_24px_F1FAFE.png</file>
-        <file>Images/visibility_9CAEB8.png</file>
-        <file>Images/visibility_031F2B.png</file>
-        <file>Images/visibility_F1FAFE.png</file>
         <file>Images/backspace-24px-1.png</file>
         <file>Images/backspace-24px-2.png</file>
         <file>Images/download_031F2B.png</file>
         <file>Images/import_031F2B.png</file>
-        <file>Images/Device_Icons/bitbox.png</file>
-        <file>Images/Device_Icons/coldcard.png</file>
-        <file>Images/Device_Icons/ledger.png</file>
-        <file>Images/Device_Icons/other.png</file>
-        <file>Images/Device_Icons/trezor.png</file>
         <file>Images/hardware_add-60px.png</file>
         <file>Images/software_add-60px.svg</file>
-        <file>Images/info-60px.png</file>
+        <file>Images/info-60px.svg</file>
         <file>Images/warning_amber-60px.png</file>
-        <file>Images/OnlineMode/Gradient_background.png</file>
-        <file>Images/OnlineMode/brucelee.png</file>
-        <file>Images/OnlineMode/DirectMessage.png</file>
-        <file>Images/OnlineMode/check_circle_outline_24px.png</file>
-        <file>Images/OnlineMode/close_24px.png</file>
-        <file>Images/OnlineMode/error_outline_24px.png</file>
-        <file>Images/OnlineMode/error_outline_24px_n.png</file>
-        <file>Images/OnlineMode/check_circle_24px copy.png</file>
-        <file>Images/OnlineMode/close_24px_white.png</file>
-        <file>Images/OnlineMode/Joint wallet_031F2B.png</file>
-        <file>Images/OnlineMode/Joint wallet_FFFFFF.png</file>
-        <file>Images/OnlineMode/more_horiz_24px.png</file>
-        <file>Images/OnlineMode/cancel_red_24dp.png</file>
-        <file>Images/OnlineMode/Inline Edit Button.png</file>
-        <file>Images/OnlineMode/person_add-24px.png</file>
-        <file>Images/OnlineMode/expand_less_24px_FFFFFF.png</file>
-        <file>Images/OnlineMode/switch_indicator_off.png</file>
-        <file>Images/OnlineMode/switch_indicator_on.png</file>
-        <file>Images/OnlineMode/switch_off.png</file>
-        <file>Images/OnlineMode/switch_on.png</file>
-        <file>Images/OnlineMode/compress-24px.png</file>
-        <file>Images/OnlineMode/check_circle_24px.png</file>
-        <file>Images/OnlineMode/pending_actions-24px.png</file>
-        <file>Images/OnlineMode/dot-dot-dot.gif</file>
-        <file>Images/OnlineMode/check_circle_24px_d.png</file>
-        <file>Images/OnlineMode/check_circle_24px_n.png</file>
-        <file>Images/OnlineMode/Export.png</file>
-        <file>Images/OnlineMode/QRCodeScan.png</file>
-        <file>Images/OnlineMode/Backup.png</file>
-        <file>Images/OnlineMode/Device Registration.png</file>
-        <file>Images/OnlineMode/Escrow Wallet.png</file>
-        <file>Images/OnlineMode/Gradient_bg.png</file>
-        <file>Images/OnlineMode/Gradient_overlay.png</file>
-        <file>Images/OnlineMode/error_outline_24px_w.png</file>
-        <file>Images/OnlineMode/warning_amber-24px.png</file>
-        <file>Images/OnlineMode/warning_amber-24px 2.png</file>
-        <file>Images/OnlineMode/monetization_on-24px.png</file>
-        <file>Images/OnlineMode/monetization_on-24px_FFFFFF.png</file>
-        <file>Images/OnlineMode/PendingTransaction.png</file>
-        <file>Images/OnlineMode/keys.png</file>
-        <file>Images/OnlineMode/Cover.png</file>
-        <file>Images/OnlineMode/history-24px.png</file>
         <file>Images/Device_Icons/software.svg</file>
-        <file>Images/OnlineMode/addContact.png</file>
-        <file>Images/OnlineMode/downend.png</file>
         <file>Images/Nunchuk.png</file>
         <file>Images/email.png</file>
         <file>Images/twt.png</file>
@@ -682,11 +624,9 @@
         <file>Images/error-dark.svg</file>
         <file>Images/error-light.svg</file>
         <file>Images/warning-dark.svg</file>
-        <file>Images/OnlineMode/monetization_on-24px_2.png</file>
-        <file>Images/OnlineMode/arrow_outline_right.png</file>
-        <file>Images/OnlineMode/pending_actions-24px 1.png</file>
         <file>Images/compose-dark.svg</file>
         <file>Images/left-arrow-dark.svg</file>
+        <file>Images/left-arrow-dark-disabled.svg</file>
         <file>Images/message-light.svg</file>
         <file>Images/right-arrow-dark.svg</file>
         <file>Images/wallet-light.svg</file>
@@ -738,10 +678,6 @@
         <file>Images/Device_Icons/ColdCard.svg</file>
         <file>Images/Device_Icons/Trezor.svg</file>
         <file>Images/Device_Icons/unknown-key-dark.svg</file>
-        <file>Images/OnlineMode/no-image.jpg</file>
-        <file>Images/OnlineMode/attachment.png</file>
-        <file>Images/OnlineMode/video-thumb.png</file>
-        <file>Images/OnlineMode/remove-button.png</file>
         <file>Images/services-dark.svg</file>
         <file>Images/subscription-light.svg</file>
         <file>Images/emergency-lockdown-illustrations.svg</file>
@@ -752,7 +688,6 @@
         <file>Images/contact-support-light.svg</file>
         <file>Images/local-currency-light.svg</file>
         <file>Images/chat-empty-state.svg</file>
-        <file>Images/OnlineMode/attach_file.svg</file>
         <file>Images/claim-inheritance-illustration.svg</file>
         <file>Images/assisted-wallet.svg</file>
         <file>Images/emergency-light.svg</file>
@@ -766,7 +701,6 @@
         <file>Images/copy-light.svg</file>
         <file>Images/radio-dark.svg</file>
         <file>Images/member-discount-dark.svg</file>
-        <file>Images/OnlineMode/help_outline_24px.svg</file>
         <file>Images/ExportFile.svg</file>
         <file>Images/ledger-illustration.svg</file>
         <file>Images/more-horizontal-dark.svg</file>
@@ -803,17 +737,12 @@
         <file>Images/save-backup-dark.svg</file>
         <file>Images/COLDCARD-register.svg</file>
         <file>Images/key_security_tip.svg</file>
-        <file>Images/OnlineMode/inactive_avatar.png</file>
         <file>Images/lock-dark.svg</file>
-        <file>Images/OnlineMode/wallet-dark.png</file>
         <file>Images/notifications_active_black.svg</file>
         <file>Images/pending-transaction-dark.svg</file>
         <file>Images/QR-dark.svg</file>
         <file>Images/sort-dark.svg</file>
         <file>Images/4.Active.svg</file>
-        <file>Images/OnlineMode/scheduling-dark.png</file>
-        <file>Images/OnlineMode/signature-dark.png</file>
-        <file>Images/OnlineMode/visibility-dark.svg</file>
         <file>Images/connected.svg</file>
         <file>Images/onboarding-assisted-wallet.svg</file>
         <file>Images/onboarding-unassisted-wallet.svg</file>
@@ -821,19 +750,17 @@
         <file>Images/unassisted-wallet-description.svg</file>
         <file>Images/hot-wallet-description.svg</file>
         <file>Images/circle-assisted-wallet.svg</file>
-        <file>Images/chevron-right-dark.svg</file>
         <file>Images/unassisted-wallet-description.png</file>
         <file>Images/onboarding-assisted-wallet.png</file>
         <file>Images/onboarding-unassisted-wallet.png</file>
         <file>Images/accounts-settings-dark.svg</file>
         <file>Images/scheduling-dark.svg</file>
-        <file>Images/QrSendButton.png</file>
-        <file>Images/arrow_drop_down_24px.png</file>
-        <file>Images/fav_wallet-dark.png</file>
-        <file>Images/fav_bookmark_24px.png</file>
-        <file>Images/fav_close-circle-dark.png</file>
-        <file>Images/fav_swapt-24px.png</file>
-        <file>Images/OnlineMode/sticky_note_2.png</file>
+        <file>Images/QrSendButton.svg</file>
+        <file>Images/arrow_drop_down_24px.svg</file>
+        <file>Images/fav_wallet-dark.svg</file>
+        <file>Images/fav_bookmark_24px.svg</file>
+        <file>Images/fav_close-circle-dark.svg</file>
+        <file>Images/fav_swapt-24px.svg</file>
         <file>Images/key-dark.svg</file>
         <file>Images/roll-over-illustrations.svg</file>
         <file>Images/emergency-lockdown-dark.png</file>
@@ -867,6 +794,71 @@
         <file>Images/wallet-dark-disabled.svg</file>
         <file>Images/coin-collection.svg</file>
         <file>Images/COLDCARD-desktop-illustration.svg</file>
+        <file>Images/bitcoin-light.svg</file>
+        <file>Images/received-light.svg</file>
+        <file>Images/received_dark.svg</file>
+        <file>Images/spend-light.svg</file>
+        <file>Images/bitcoin-disabled.svg</file>
+        <file>Images/visibility-disabled.svg</file>
+        <file>Images/visibility-light.svg</file>
+        <file>Images/Backup.png</file>
+        <file>Images/Cover.png</file>
+        <file>Images/Device Registration.png</file>
+        <file>Images/DirectMessage.png</file>
+        <file>Images/Export.png</file>
+        <file>Images/Gradient_background.png</file>
+        <file>Images/Gradient_bg.png</file>
+        <file>Images/Gradient_overlay.png</file>
+        <file>Images/PendingTransaction.png</file>
+        <file>Images/QRCodeScan.png</file>
+        <file>Images/addContact.svg</file>
+        <file>Images/right-arrow-light.svg</file>
+        <file>Images/attach_file.svg</file>
+        <file>Images/attachment.png</file>
+        <file>Images/cancel_red_24dp.png</file>
+        <file>Images/catch.wav</file>
+        <file>Images/check_circle_24px copy.png</file>
+        <file>Images/check_circle_24px.png</file>
+        <file>Images/check_circle_24px_d.png</file>
+        <file>Images/check_circle_24px_n.png</file>
+        <file>Images/close_24px_white.png</file>
+        <file>Images/compress-24px.png</file>
+        <file>Images/dot-dot-dot.gif</file>
+        <file>Images/downend.png</file>
+        <file>Images/error_outline_24px_n.png</file>
+        <file>Images/error_outline_24px_w.png</file>
+        <file>Images/expand_less_24px_FFFFFF.png</file>
+        <file>Images/help_outline_24px.svg</file>
+        <file>Images/history-24px.png</file>
+        <file>Images/inactive_avatar.png</file>
+        <file>Images/keys.svg</file>
+        <file>Images/more_horiz_24px.png</file>
+        <file>Images/no-image.jpg</file>
+        <file>Images/pending_actions-24px 1.png</file>
+        <file>Images/pending_actions-24px.png</file>
+        <file>Images/person_add-24px.png</file>
+        <file>Images/remove-button.png</file>
+        <file>Images/scheduling-dark.png</file>
+        <file>Images/signature-dark.png</file>
+        <file>Images/sticky_note_2.png</file>
+        <file>Images/switch_indicator_off.png</file>
+        <file>Images/switch_indicator_on.png</file>
+        <file>Images/switch_off.png</file>
+        <file>Images/switch_on.png</file>
+        <file>Images/video-thumb.png</file>
+        <file>Images/wallet-dark.png</file>
+        <file>Images/warning_amber-24px 2.png</file>
+        <file>Images/warning_amber-24px.png</file>
+        <file>Images/Device_Icons/bitbox-hardware-light.svg</file>
+        <file>Images/Device_Icons/coldcard-hardware-light.svg</file>
+        <file>Images/Device_Icons/jade-hardware-light.svg</file>
+        <file>Images/Device_Icons/keystone-hardware-light.svg</file>
+        <file>Images/Device_Icons/ledger-hardware-light.svg</file>
+        <file>Images/Device_Icons/other-hardware-light.svg</file>
+        <file>Images/Device_Icons/passport-hardware-light.svg</file>
+        <file>Images/Device_Icons/seedsigner-hardware-light.svg</file>
+        <file>Images/Device_Icons/trezor-hardware-light.svg</file>
+        <file>Images/Device_Icons/unknown-key-light.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

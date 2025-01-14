@@ -102,8 +102,9 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: 8
             enabled: pin.textOutput !== ""
-            QImage {
-                anchors.fill: parent
+            QIcon {
+                iconSize: 24
+                anchors.centerIn: parent
                 source: parent.pressed ? "qrc:/Images/Images/backspace-24px-2.png" :
                                          "qrc:/Images/Images/backspace-24px-1.png"
             }

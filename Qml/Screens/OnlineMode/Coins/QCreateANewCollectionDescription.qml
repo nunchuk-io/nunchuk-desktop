@@ -47,9 +47,7 @@ QOnScreenContentTypeB {
                 topMargin: 8
             }
             spacing: 24
-            QImage {
-                width: sourceSize.width
-                height: sourceSize.height
+            QPicture {
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: "qrc:/Images/Images/coin-collection.svg"
             }

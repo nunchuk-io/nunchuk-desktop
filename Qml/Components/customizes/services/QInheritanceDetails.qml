@@ -30,9 +30,7 @@ import "../../customizes/Texts"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
-    property var inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property var planInfo: inheritancePlanInfo.planInfo
-
     property string title: STR.STR_QML_887
     property string warning: STR.STR_QML_890
     width: 346

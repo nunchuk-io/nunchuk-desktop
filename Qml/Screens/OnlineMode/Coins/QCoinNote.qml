@@ -27,12 +27,9 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
-Rectangle {
+Item {
     implicitWidth:  width
     implicitHeight: rowDisplay.height + 16
-    border.width: 1
-    border.color: "#DEDEDE"
-    radius: 12
 
     property int    gapWidth: 24
     property int    memoWidth: width - 48 - gapWidth
@@ -64,9 +61,8 @@ Rectangle {
             color: "#F5F5F5"
             border.width: 1
             border.color: "#DEDEDE"
-            QImage {
-                width: 16
-                height: 16
+            QIcon {
+                iconSize: 16
                 anchors.centerIn: parent
                 source: "qrc:/Images/Images/transaction-note-dark.svg"
             }

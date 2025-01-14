@@ -63,10 +63,9 @@ Item {
                 Row {
                     spacing: 4
                     anchors.centerIn: parent
-                    QImage {
-                        width: 12
-                        height: 12
-                        source: "qrc:/Images/Images/OnlineMode/history-24px.png"
+                    QIcon {
+                        iconSize: 12
+                        source: "qrc:/Images/Images/history-24px.png"
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     QText{

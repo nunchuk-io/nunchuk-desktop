@@ -89,9 +89,8 @@ QScreen {
                                 radius: width
                                 color: "#F5F5F5"
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                QImage {
-                                    width: 60
-                                    height: 60
+                                QIcon {
+                                    iconSize: 60
                                     anchors.centerIn: parent
                                     source: "qrc:/Images/Images/hardware_add-60px.png"
                                 }
@@ -146,9 +145,8 @@ QScreen {
                                 radius: width
                                 color: "#F5F5F5"
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                QImage {
-                                    width: 60
-                                    height: 60
+                                QIcon {
+                                    iconSize: 60
                                     anchors.centerIn: parent
                                     source: "qrc:/Images/Images/logo-dark.svg"
                                 }
@@ -236,11 +234,10 @@ QScreen {
                         radius: width
                         color: "#F5F5F5"
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QImage {
-                            width: 60
-                            height: 60
+                        QIcon {
+                            iconSize: 60
                             anchors.centerIn: parent
-                            source: "qrc:/Images/Images/info-60px.png"
+                            source: "qrc:/Images/Images/info-60px.svg"
                         }
                     }
                     QText {
@@ -423,9 +420,8 @@ QScreen {
                         height: 96
                         radius: width
                         color: "#F5F5F5"
-                        QImage {
-                            width: 60
-                            height: 60
+                        QIcon {
+                            iconSize: 60
                             anchors.centerIn: parent
                             source: "qrc:/Images/Images/warning_amber-60px.png"
                         }
@@ -443,9 +439,8 @@ QScreen {
                     }
                     Row {
                         spacing: 12
-                        QImage {
-                            width: 24
-                            height: 24
+                        QIcon {
+                            iconSize: 24
                             source: "qrc:/Images/Images/replace-primary-key-dark.png"
                         }
                         Column {
@@ -477,9 +472,8 @@ QScreen {
                     }
                     Row {
                         spacing: 12
-                        QImage {
-                            width: 24
-                            height: 24
+                        QIcon {
+                            iconSize: 24
                             source: "qrc:/Images/Images/emergency-lockdown-dark.png"
                         }
                         Column {
@@ -522,10 +516,9 @@ QScreen {
                             width: 704
                             spacing: 8
                             anchors.centerIn: parent
-                            QImage {
-                                width: 30
-                                height: 30
-                                source: "qrc:/Images/Images/info-60px.png"
+                            QIcon {
+                                iconSize: 30
+                                source: "qrc:/Images/Images/info-60px.svg"
                             }
                             QText {
                                 width: 500
@@ -673,9 +666,8 @@ QScreen {
                                 radius: width
                                 color: "#F5F5F5"
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                QImage {
-                                    width: 60
-                                    height: 60
+                                QIcon {
+                                    iconSize: 60
                                     anchors.centerIn: parent
                                     source: "qrc:/Images/Images/hardware_add-60px.png"
                                 }
@@ -728,9 +720,8 @@ QScreen {
                                 radius: width
                                 color: "#F5F5F5"
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                QImage {
-                                    width: 60
-                                    height: 60
+                                QIcon {
+                                    iconSize: 60
                                     anchors.centerIn: parent
                                     source: "qrc:/Images/Images/software_add-60px.svg"
                                 }
@@ -829,11 +820,10 @@ QScreen {
                         radius: width
                         color: "#F5F5F5"
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QImage {
-                            width: 60
-                            height: 60
+                        QIcon {
+                            iconSize: 60
                             anchors.centerIn: parent
-                            source: "qrc:/Images/Images/info-60px.png"
+                            source: "qrc:/Images/Images/info-60px.svg"
                         }
                     }
                     QText {
@@ -1016,9 +1006,8 @@ QScreen {
                         radius: width
                         color: "#F5F5F5"
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QImage {
-                            width: 60
-                            height: 60
+                        QIcon {
+                            iconSize: 60
                             anchors.centerIn: parent
                             source: "qrc:/Images/Images/warning_amber-60px.png"
                         }

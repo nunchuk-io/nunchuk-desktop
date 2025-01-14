@@ -37,9 +37,8 @@ QScreen {
         anchors.centerIn: parent
         label.text: STR.STR_QML_239
         enableHeader: false
-        QImage {
-            width: 120
-            height: 120
+        QIcon {
+            iconSize: 120
             anchors{
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top

@@ -38,7 +38,7 @@ bool Slugs::isFinney() const
 
 bool Slugs::isByzantine() const
 {
-    return isByzantineStandard() || isByzantinePro() || isByzantinePremier() || isHoneyBadgerPlus();
+    return isByzantineStandard() || isByzantinePro() || isByzantinePremier();
 }
 
 bool Slugs::isHoneyBadger() const
@@ -63,7 +63,7 @@ bool Slugs::isPremierGroup() const
 
 bool Slugs::isGroupWallet() const
 {
-    return isByzantine() || isFinney() || isHoneyBadgerPlus();
+    return isByzantine() || isFinney() || isHoneyBadgerPlus() || isHoneyBadgerPremier();
 }
 
 bool Slugs::isUserWallet() const
@@ -74,6 +74,11 @@ bool Slugs::isUserWallet() const
 bool Slugs::isHoneyBadgerPlus() const
 {
     return slugs().contains("honey_badger_plus_testnet") || slugs().contains("honey_badger_plus");
+}
+
+bool Slugs::isHoneyBadgerPremier() const
+{
+    return slugs().contains("honey_badger_premier_testnet") || slugs().contains("honey_badger_premier");
 }
 
 bool Slugs::isUserDraftWallet() const

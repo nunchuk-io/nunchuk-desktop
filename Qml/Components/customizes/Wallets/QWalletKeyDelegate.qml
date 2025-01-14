@@ -78,6 +78,7 @@ Item {
             }
             Row {
                 spacing: 8
+                visible: signerType !== NUNCHUCKTYPE.SERVER
                 QText {
                     height: 16
                     visible: (signerXFP !== "" || card_id !== "")
@@ -97,7 +98,6 @@ Item {
                     width: typesigner.width + 10
                     height: 16
                     color: "#EAEAEA"
-                    visible: signerType !== NUNCHUCKTYPE.SERVER
                     radius: 8
                     QText {
                         id: typesigner
@@ -113,7 +113,7 @@ Item {
                     width: accttext.width + 10
                     height: 16
                     color: "#EAEAEA"
-                    visible: (accountIndex > 0) && (signerType !== NUNCHUCKTYPE.SERVER)
+                    visible: (accountIndex > 0)
                     radius: 8
                     QText {
                         id: accttext

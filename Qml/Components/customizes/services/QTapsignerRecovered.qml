@@ -55,9 +55,9 @@ QOnScreenContent {
                 width: 96;height: 96;
                 radius: 48
                 color: "#A7F0BA"
-                QImage {
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    width: 60; height: 60;
                     source: "qrc:/Images/Images/check-dark.svg"
                 }
             }
@@ -128,9 +128,8 @@ QOnScreenContent {
             anchors.fill: parent
             anchors.margins: 15
             spacing: 11
-            QImage {
-                width: 30
-                height: 30
+            QIcon {
+                iconSize: 30
                 anchors.verticalCenter: parent.verticalCenter
                 source: "qrc:/Images/Images/warning-dark.svg"
             }

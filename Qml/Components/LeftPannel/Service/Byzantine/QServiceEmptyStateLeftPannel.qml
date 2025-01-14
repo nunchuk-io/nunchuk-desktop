@@ -39,9 +39,8 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#F5F5F5"
                 radius: 48
-                QImage {
-                    width: 60
-                    height: 60
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
                     source: "qrc:/Images/Images/services-dark.svg"
                 }

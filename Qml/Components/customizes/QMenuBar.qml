@@ -60,10 +60,9 @@ Rectangle {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
     }
-    QImage {
+    QIcon {
+        iconSize: 32
         id: logo
-        width: 32
-        height: 32
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 24

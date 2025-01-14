@@ -91,6 +91,7 @@ bool QKeyRecovery::CreateTapsigners()
                     DBG_INFO << key;
                     QString card_id = key["card_id"].toString();
                     QStringRef textR = card_id.rightRef(5);
+                    key["key_name"] = master_key->name();
                     key["displayName"] = QString("%1 (••%2)").arg(key["key_name"].toString()).arg(textR);
                     tapsigners.append(key);
                 }
@@ -398,6 +399,7 @@ bool QKeyRecovery::UpdateSecurityQuestionsRequiredSignatures()
                 QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
                 if (auto w = ServiceSetting::instance()->walletInfoPtr()) {
                     if (auto dummy = w->groupDummyTxPtr()) {
+                        DBG_INFO << dummy_transaction;
                         dummy->setDummyTxData(dummy_transaction);
                         QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
                     }
@@ -405,7 +407,26 @@ bool QKeyRecovery::UpdateSecurityQuestionsRequiredSignatures()
             }
             return true;
         } else {
-            return false;
+            QJsonObject output;
+            QString errormsg = "";
+            QJsonObject data;
+            data["nonce"] = Draco::instance()->randomNonce();
+            data["body"]  = JsBody();
+            bool ret = Draco::instance()->SecQuesUpdate(data,
+                                                        {},
+                                                        servicesTagPtr()->passwordToken(),
+                                                        "",
+                                                        "",
+                                                        false,
+                                                        output,
+                                                        errormsg);
+            if (ret) {
+                setRequireQuestions({});
+                AutomaticGenerateSecurityQuestions();
+                QString msg_name = QString("Security questions updated");
+                AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+            }
+            return true;
         }
     }
     else {
@@ -500,7 +521,8 @@ QJsonArray QKeyRecovery::questionsAndChangeAnswers() const
         QJsonObject obj = js.toObject();
         QJsonObject answer;
         QString str_answer = obj["answer"].toString();
-        if (!str_answer.isEmpty()) {
+        bool is_answered = obj["is_answered"].toBool();
+        if (!str_answer.isEmpty() || is_answered) {
             answer["question_id"] = obj["id"];
             answer["answer"] = obj["answer"];
             answer["change"] = obj["change"];

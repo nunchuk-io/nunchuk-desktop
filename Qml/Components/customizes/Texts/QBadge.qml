@@ -26,9 +26,8 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 4
         layoutDirection: iconInRight ?  Qt.RightToLeft : Qt.LeftToRight
-        QImage {
-            width: iconSize
-            height: iconSize
+        QIcon {
+            iconSize: _badge.iconSize
             source: icon
             visible: icon != ""
             anchors.verticalCenter: parent.verticalCenter

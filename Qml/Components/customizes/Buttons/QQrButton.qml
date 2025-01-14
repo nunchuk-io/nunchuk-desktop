@@ -44,10 +44,9 @@ Item {
         visible: false
     }
 
-    QImage {
+    QIcon {
         id: qricoimport
-        width: 100
-        height: 100
+        iconSize: 100
         source: "qrc:/Images/Images/QrIco.png"
         visible: false
     }

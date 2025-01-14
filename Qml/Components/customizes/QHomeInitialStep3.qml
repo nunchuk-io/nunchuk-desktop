@@ -58,9 +58,8 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 12
                 spacing: 8
-                QImage {
-                    height: 36
-                    width: 36
+                QIcon {
+                    iconSize: 36
                     anchors.verticalCenter: parent.verticalCenter
                     source: "qrc:/Images/Images/warning-dark.svg"
                 }
@@ -150,7 +149,7 @@ Item {
                             width: 24
                             height: 24
                             visible: (myRole !== "OBSERVER") && (myRole !== "FACILITATOR_ADMIN")
-                            icon: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
+                            icon: "qrc:/Images/Images/more_horiz_24px.png"
                             onClicked: {
                                 optionMenu.popup(_more,mouse.x - 250 + 24,24)
                             }
@@ -206,10 +205,9 @@ Item {
                             Row {
                                 anchors.centerIn: parent
                                 spacing: 4
-                                QImage {
-                                    width: 12
-                                    height: 12
-                                    source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                                QIcon {
+                                    iconSize: 12
+                                    source: "qrc:/Images/Images/collab-wallet-dark.svg"
                                 }
                                 QText{
                                     font.family: "Lato"
@@ -230,10 +228,9 @@ Item {
                             Row {
                                 anchors.centerIn: parent
                                 spacing: 4
-                                QImage {
-                                    width: 12
-                                    height: 12
-                                    source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                                QIcon {
+                                    iconSize: 12
+                                    source: "qrc:/Images/Images/collab-wallet-dark.svg"
                                 }
                                 QText{
                                     font.family: "Lato"
@@ -300,9 +297,9 @@ Item {
                         height: 24
                         label: STR.STR_QML_574
                         icon: [
-                            "qrc:/Images/Images/OnlineMode/arrow_outline_right.png",
-                            "qrc:/Images/Images/OnlineMode/arrow_outline_right.png",
-                            "qrc:/Images/Images/OnlineMode/arrow_outline_right.png"
+                            "qrc:/Images/Images/right-arrow-light.svg",
+                            "qrc:/Images/Images/right-arrow-light.svg",
+                            "qrc:/Images/Images/right-arrow-light.svg"
                         ]
                         textColor: [
                             "#FFFFFF",
@@ -335,7 +332,7 @@ Item {
                             width: 132
                             height: 48
                             label: STR.STR_QML_002
-                            icons: ["spend-dark.svg", "spend-dark.svg", "spend-dark.svg","spend-dark.svg"]
+                            icons: ["spend-dark.svg", "spend-light.svg", "spend-dark.svg","spend-light.svg"]
                             fontPixelSize: 16
                             iconSize: 24
                             type: eTypeF
@@ -355,7 +352,7 @@ Item {
                             width: 132
                             height: 48
                             label: STR.STR_QML_003
-                            icons: ["received-dark.svg", "received-dark.svg", "received-dark.svg", "received-dark.svg"]
+                            icons: ["received-dark.svg", "received-light.svg", "received-dark.svg", "received-light.svg"]
                             fontPixelSize: 16
                             iconSize: 24
                             type: eTypeF
@@ -366,7 +363,7 @@ Item {
                             width: 132
                             height: 48
                             label: STR.STR_QML_1407
-                            icons: ["bitcoin-dark.svg", "bitcoin-dark.svg", "bitcoin-dark.svg", "bitcoin-dark.svg"]
+                            icons: ["bitcoin-dark.svg", "bitcoin-light.svg", "bitcoin-disabled.svg", "bitcoin-light.svg"]
                             fontPixelSize: 16
                             iconSize: 24
                             type: eTypeF
@@ -388,7 +385,7 @@ Item {
                         ]
                         icons: [
                             "qrc:/Images/Images/import_031F2B.png",
-                            "qrc:/Images/Images/OnlineMode/Backup.png",
+                            "qrc:/Images/Images/Backup.png",
                             "qrc:/Images/Images/export_invoices.png",
                         ]
                         enables: [
@@ -518,7 +515,7 @@ Item {
                                 label: STR.STR_QML_005
                                 icons: ["copy-dark.svg", "copy-light.svg", "copy-dark.svg","copy-light.svg"]
                                 fontPixelSize: 16
-                                iconSize: 16
+                                iconSize: 24
                                 type: eTypeB
                                 enabled: existWallet
                                 onButtonClicked: {
@@ -530,13 +527,13 @@ Item {
                                 height: 48
                                 label: STR.STR_QML_006
                                 icons: [
-                                    "visibility_031F2B.png",
-                                    "visibility_031F2B.png",
-                                    "visibility_F1FAFE.png",
-                                    "visibility_F1FAFE.png"
+                                    "visibility-dark.svg",
+                                    "visibility-light.svg",
+                                    "visibility-disabled.svg",
+                                    "visibility-light.svg"
                                 ]
                                 fontPixelSize: 16
-                                iconSize: 16
+                                iconSize: 24
                                 type: eTypeB
                                 onButtonClicked: {QMLHandle.sendEvent(EVT.EVT_HOME_DISPLAY_ADDRESS, qrCode.textInput) }
                                 enabled: AppModel.walletInfo.containsHWSigner

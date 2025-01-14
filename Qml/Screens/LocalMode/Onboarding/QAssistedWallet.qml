@@ -57,9 +57,8 @@ QOnScreenContentTypeA {
 
         Column {
             spacing: 24
-            QImage {
-                width: 96
-                height: 96
+            QIcon {
+                iconSize: 96
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: "qrc:/Images/Images/circle-assisted-wallet.svg"
             }

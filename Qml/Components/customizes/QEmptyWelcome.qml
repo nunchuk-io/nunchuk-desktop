@@ -60,9 +60,8 @@ Item {
             anchors.fill: parent
             anchors.margins: 28
             spacing: 24
-            QImage {
-                width: 96
-                height: 96
+            QIcon {
+                iconSize: 96
                 source: icon
             }
             Column {

@@ -139,7 +139,7 @@ QScreen {
                     height: 512
                     radius: 24
                     color: "#D0E2FF"
-                    QImage {
+                    QPicture {
                         width: 153
                         height: 214
                         anchors.centerIn: parent
@@ -187,7 +187,7 @@ QScreen {
                     height: 512
                     radius: 24
                     color: "#D0E2FF"
-                    QImage {
+                    QPicture {
                         width: 153
                         height: 214
                         anchors.centerIn: parent
@@ -235,7 +235,7 @@ QScreen {
                     height: 512
                     radius: 24
                     color: "#D0E2FF"
-                    QImage {
+                    QPicture {
                         width: 153
                         height: 214
                         anchors.centerIn: parent

@@ -148,9 +148,8 @@ QScreen {
                                 Row {
                                     spacing: 6
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    QImage {
-                                        width: 18
-                                        height: 18
+                                    QIcon {
+                                        iconSize: 18
                                         source: "qrc:/Images/Images/CheckSquareOffset.png"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -224,10 +223,10 @@ QScreen {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     label: STR.STR_QML_205
                                     icons: [
-                                        "Copy_F1FAFE.png",
-                                        "Copy_F1FAFE.png",
-                                        "Copy_031F2B.png",
-                                        "Copy_F1FAFE.png"
+                                        "copy-light.svg",
+                                        "copy-light.svg",
+                                        "copy-dark.svg",
+                                        "copy-light.svg"
                                     ]
                                     fontPixelSize: 12
                                     iconSize: 16
@@ -241,10 +240,10 @@ QScreen {
                                     height: 36
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     icons: [
-                                        "visibility_031F2B.png",
-                                        "visibility_9CAEB8.png",
-                                        "visibility_F1FAFE.png",
-                                        "visibility_F1FAFE.png"
+                                        "visibility-dark.svg",
+                                        "visibility-light.svg",
+                                        "visibility-disabled.svg",
+                                        "visibility-light.svg"
                                     ]
                                     fontPixelSize: 12
                                     iconSize: 16

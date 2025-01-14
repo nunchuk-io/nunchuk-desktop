@@ -419,11 +419,9 @@ void QSingleSigner::setEmail(const QString &email)
 
 QString QSingleSigner::tag() const
 {
-    if (singleSigner_.get_tags().size() > 0) {
-        nunchuk::SignerTag tag = singleSigner_.get_tags().front();
-        return QString::fromStdString(SignerTagToStr(tag));
-    }
-    return "";
+    QStringList list = tags();
+    list.removeOne("INHERITANCE");
+    return list.isEmpty() ? "" : list.first();
 }
 
 QStringList QSingleSigner::tags() const

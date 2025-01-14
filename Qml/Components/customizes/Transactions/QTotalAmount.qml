@@ -46,7 +46,7 @@ Row {
             font.weight: Font.Bold
             color: "#031F2B"
             font.family: "Lato"
-            text: AppModel.transactionInfo.total + RoomWalletData.unitValue
+            text: transactionInfo.total + RoomWalletData.unitValue
             horizontalAlignment: Text.AlignRight
         }
         QLato {
@@ -59,7 +59,7 @@ Row {
             font.family: "Lato"
             text: qsTr("%1%2 %3")
             .arg(AppSetting.currencySymbol)
-            .arg(AppModel.transactionInfo.totalCurrency)
+            .arg(transactionInfo.totalCurrency)
             .arg(AppSetting.currency)
             horizontalAlignment: Text.AlignRight
         }

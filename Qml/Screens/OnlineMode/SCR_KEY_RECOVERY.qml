@@ -57,8 +57,8 @@ QScreen {
                 width: parent.width
                 readonly property var content_map: [
                     {width: 646, height: 84, title:STR.STR_QML_722, icon: ""   },
-                    {width: 539, height: 56, title:STR.STR_QML_723, icon: "qrc:/Images/Images/1.Active.svg"   },
-                    {width: 539, height: 28, title:STR.STR_QML_724, icon: "qrc:/Images/Images/2.Active.svg"   },
+                    {width: 539, height: 84, title:STR.STR_QML_723, icon: "qrc:/Images/Images/1.Active.svg"   },
+                    {width: 539, height: 56, title:STR.STR_QML_724, icon: "qrc:/Images/Images/2.Active.svg"   },
                 ]
                 model: content_map.length
                 Rectangle {
@@ -108,11 +108,10 @@ QScreen {
                 anchors.fill: parent
                 anchors.margins: 15
                 spacing: 11
-                QImage {
-                    width: 30
-                    height: 30
+                QIcon {
+                    iconSize: 30
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
                 QText {
                     width: 650

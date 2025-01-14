@@ -38,47 +38,46 @@ QIcon {
         var img = ""
         switch(type) {
         case NUNCHUCKTYPE.HARDWARE: img = ""; break
-        // case NUNCHUCKTYPE.AIRGAP:   img = "qrc:/Images/Images/Device_Icons/air-gapped-key-dark.svg"; break
         case NUNCHUCKTYPE.SOFTWARE: img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
         case NUNCHUCKTYPE.FOREIGN_SOFTWARE: img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
         case NUNCHUCKTYPE.NFC: img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
-        case NUNCHUCKTYPE.COLDCARD_NFC: img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
+        case NUNCHUCKTYPE.COLDCARD_NFC: img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-light.svg"; break
         case NUNCHUCKTYPE.SERVER: img = ""; break
         default: img = ""
         }
         if (img === "") {
             switch(typeStr) {
             case "HARDWARE": img = ""; break
-            // case "AIRGAP":   img = "qrc:/Images/Images/Device_Icons/air-gapped-key-dark.svg"; break
             case "SOFTWARE": img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
             case "FOREIGN_SOFTWARE": img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
             case "NFC": img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
-            case "COLDCARD_NFC": img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
+            case "COLDCARD_NFC": img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-light.svg"; break
             case "SERVER": img = ""; break
             default: img = ""
             }
             if (img === "") {
                 switch(device_type){
-                case "trezor":    img = "qrc:/Images/Images/Device_Icons/trezor.png"; break
-                case "coldcard":  img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
-                case "bitbox02":  img = "qrc:/Images/Images/Device_Icons/bitbox.png"; break
-                case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger.png"; break
+                case "trezor":    img = "qrc:/Images/Images/Device_Icons/trezor-hardware-light.svg"; break
+                case "coldcard":  img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-light.svg"; break
+                case "bitbox02":  img = "qrc:/Images/Images/Device_Icons/bitbox-hardware-light.svg"; break
+                case "ledger":    img = "qrc:/Images/Images/Device_Icons/ledger-hardware-light.svg"; break
                 case "software":  img = "qrc:/Images/Images/Device_Icons/software-key-light.svg"; break
                 case "nfc"      : img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
+                case "jade"     : img = "qrc:/Images/Images/Device_Icons/jade-hardware-light.svg"; break
                 default: img = ""
                 }
                 if (img === "") {
                     switch(tag) {
-                    case "COLDCARD":    img = "qrc:/Images/Images/Device_Icons/coldcard.png"; break
-                    case "LEDGER":      img = "qrc:/Images/Images/Device_Icons/ledger.png"; break
-                    case "TREZOR":      img = "qrc:/Images/Images/Device_Icons/trezor.png"; break
-                    case "BITBOX":      img = "qrc:/Images/Images/Device_Icons/bitbox.png"; break
-                    case "INHERITANCE":
-                    case "KEYSTONE":
-                    case "JADE":
-                    case "PASSPORT":
-                    case "SEEDSIGNER":
-                    default:img = "qrc:/Images/Images/Device_Icons/other.png"; break
+                    case "COLDCARD":    img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-light.svg"; break
+                    case "LEDGER":      img = "qrc:/Images/Images/Device_Icons/ledger-hardware-light.svg"; break
+                    case "TREZOR":      img = "qrc:/Images/Images/Device_Icons/trezor-hardware-light.svg"; break
+                    case "BITBOX":      img = "qrc:/Images/Images/Device_Icons/bitbox-hardware-light.svg"; break
+                    case "INHERITANCE": img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
+                    case "KEYSTONE":    img = "qrc:/Images/Images/Device_Icons/keystone-hardware-light.svg"; break
+                    case "JADE":        img = "qrc:/Images/Images/Device_Icons/jade-hardware-light.svg"; break
+                    case "PASSPORT":    img = "qrc:/Images/Images/Device_Icons/passport-hardware-light.svg"; break
+                    case "SEEDSIGNER":  img = "qrc:/Images/Images/Device_Icons/seedsigner-hardware-light.svg"; break
+                    default:img = "qrc:/Images/Images/Device_Icons/unknown-key-light.svg"; break
                     }
                 }
             }

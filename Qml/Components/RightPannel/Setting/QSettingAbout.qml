@@ -43,9 +43,7 @@ Item {
             height: 50
             width: parent.width
         }
-        QImage {
-            width: 240
-            height: 96
+        QPicture {
             anchors.horizontalCenter: parent.horizontalCenter
             source: "qrc:/Images/Images/logo-vertical-light.svg"
         }
@@ -71,9 +69,8 @@ Item {
                 Column {
                     anchors.fill: parent
                     spacing: 12
-                    QImage {
-                        width: 48
-                        height: 48
+                    QIcon {
+                        iconSize: 48
                         source: "qrc:/Images/Images/twt.png"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -98,9 +95,8 @@ Item {
                 Column {
                     anchors.fill: parent
                     spacing: 12
-                    QImage {
-                        width: 48
-                        height: 48
+                    QIcon {
+                        iconSize: 48
                         source: "qrc:/Images/Images/email.png"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }

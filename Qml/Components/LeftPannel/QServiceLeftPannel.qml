@@ -41,7 +41,7 @@ Item {
             }
             else if (user.isHoneyBadgerUser) { return hb_subscriber }
             else if (user.isIronHandUser) { return ih_subscriber }
-            else if (user.isByzantineUser || user.isFinneyUser) {
+            else if (user.isGroupWallet) {
                 if (hasGroupWallet) { return isFacilitatorAdmin ? b_facilitator_admin_subscriber : isObserver ? b_observer_subscriber : b_subscriber }
                 else { return b_empty_state }
             }

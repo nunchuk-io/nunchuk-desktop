@@ -59,11 +59,10 @@ QScreen {
                 height: 96
                 color: "#F5F5F5"
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
-                    width: 60
-                    height: 60
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    source: "qrc:/Images/Images/OnlineMode/Device Registration.png"
+                    source: "qrc:/Images/Images/Device Registration.png"
                 }
             }
             QText {
@@ -136,7 +135,7 @@ QScreen {
             QContextMenu {
                 id: exportMenu
                 labels: [STR.STR_QML_328, "Export wallet as QR code"]
-                icons: ["qrc:/Images/Images/OnlineMode/Export.png", "qrc:/Images/Images/OnlineMode/QRCodeScan.png"]
+                icons: ["qrc:/Images/Images/Export.png", "qrc:/Images/Images/QRCodeScan.png"]
                 onItemClicked: {
                     switch(index){
                     case 0:

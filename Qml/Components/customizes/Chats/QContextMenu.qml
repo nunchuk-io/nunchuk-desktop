@@ -87,10 +87,9 @@ Menu {
             contentItem: Item {
                 width: menuWidth
                 height: menuHeight
-                QImage {
+                QIcon {
                     id:_icon
-                    width: _icon.source == "" ? 0 : 24
-                    height: 24
+                    iconSize: _icon.source == "" ? 0 : 24
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter

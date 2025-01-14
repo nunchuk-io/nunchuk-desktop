@@ -311,7 +311,7 @@ QScreen {
                 width: 150
                 height: 24
                 label: STR.STR_QML_205
-                icons: ["Copy_031F2B.png", "Copy_9CAEB8.png", "Copy_F1FAFE.png","Copy_F1FAFE.png"]
+                icons: ["copy-dark.svg", "copy-light.svg", "copy-dark.svg","copy-light.svg"]
                 fontPixelSize: 10
                 type: eTypeB
                 anchors {

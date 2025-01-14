@@ -45,7 +45,7 @@ QOnScreenContentTypeA {
                 height: 512
                 radius: 24
                 color: "#FDEBD2"
-                QImage {
+                QPicture {
                     width: 260
                     height: 260
                     anchors.centerIn: parent

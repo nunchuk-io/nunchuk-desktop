@@ -64,31 +64,27 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 5
             Rectangle {
-                width: parent.width - 2
+                width: parent.width
                 height: 32
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#F5F5F5"
-                QText {
+                QLato {
                     text: STR.STR_QML_290
-                    font.family: "Lato"
                     font.weight: Font.Bold
                     font.pixelSize: 12
-                    color: "#323E4A"
                     anchors {
                         left: parent.left
-                        leftMargin: 20
+                        leftMargin: 12
                         verticalCenter: parent.verticalCenter
                     }
                 }
-                QText {
+                QLato {
                     text: STR.STR_QML_214
-                    font.family: "Lato"
                     font.weight: Font.Bold
                     font.pixelSize: 12
-                    color: "#323E4A"
                     anchors {
                         right: parent.right
-                        rightMargin: 20
+                        rightMargin: 12
                         verticalCenter: parent.verticalCenter
                     }
                 }
@@ -100,46 +96,43 @@ Rectangle {
                 Item {
                     width: parent.width
                     height: 40
-                    QText {
+                    QLato {
                         width: parent.width*2/3 - 20
                         text: destination_address
                         wrapMode: Text.WrapAnywhere
                         font.pixelSize: 12
-                        color: "#031F2B"
-                        font.family: "Lato"
                         anchors {
                             left: parent.left
-                            leftMargin: 20
+                            leftMargin: 12
                             verticalCenter: parent.verticalCenter
                         }
                     }
                     Column {
+                        width: parent.width*1/3 - 20
                         anchors {
                             right: parent.right
-                            rightMargin: 20
+                            rightMargin: 12
                             verticalCenter: parent.verticalCenter
                         }
-                        QText {
-                            width: parent.width*1/3 - 20
+                        QLato {
+                            width: parent.width
                             height: 16
                             text: destination_amount + RoomWalletData.unitValue
                             horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
                             font.pixelSize: 16
                             font.weight: Font.Bold
-                            color: "#031F2B"
-                            font.family: "Lato"
                         }
-                        QText {
-                            width: parent.width*1/3 - 20
+                        QLato {
+                            width: parent.width
                             height: 16
                             text: qsTr("%1%2 %3")
                             .arg(AppSetting.currencySymbol)
                             .arg(model.destination_amount_currency)
                             .arg(AppSetting.currency)
                             horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
                             font.pixelSize: 12
-                            color: "#031F2B"
-                            font.family: "Lato"
                         }
                     }
                 }

@@ -602,18 +602,20 @@ void Wallet::CancelAssistedTxs(const QString &txid)
 void Wallet::CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo)
 {
     DBG_INFO << "tx_id:" << txid << " psbt:" << psbt << "wallet status:" << status();
-    if(isReplaced()){
-        return;
-    }
-    if(isGroupWallet()){
-        CreateGroupTxs(txid, psbt, memo);
-    }
-    else if(isUserWallet()){
-        CreateUserTxs(txid, psbt, memo);
-    }
-    else{
-        //TBD
-    }
+    QtConcurrent::run([=, this]() {
+        if(isReplaced()){
+            return;
+        }
+        if(isGroupWallet()){
+            CreateGroupTxs(txid, psbt, memo);
+        }
+        else if(isUserWallet()){
+            CreateUserTxs(txid, psbt, memo);
+        }
+        else{
+            //TBD
+        }
+    });
 }
 
 void Wallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo)
@@ -636,24 +638,24 @@ void Wallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QS
 bool Wallet::RbfAsisstedTxs(const QString &tx_id, const QString &psbt)
 {
     DBG_INFO << "tx_id:" << tx_id << " psbt:" << psbt << "wallet status:" << status();
-    if(isReplaced()){
-        return false;
-    }
-    QJsonObject data;
-    QString errormsg = "";
-    QString wallet_id = id();
-    if(isGroupWallet()){
-        QString group_id = groupId();
-        bool ret = Byzantine::instance()->RbfTransaction(group_id, wallet_id, tx_id, psbt, data, errormsg);
-        return ret;
-    }
-    else if(isUserWallet()){
-        bool ret = Draco::instance()->assistedRbfTx(wallet_id, tx_id, psbt, data, errormsg);
-        return ret;
-    }
-    else{
-        //TBD
-    }
+    QtConcurrent::run([=, this]() {
+        if(isReplaced()){
+            return;
+        }
+        QJsonObject data;
+        QString errormsg = "";
+        QString wallet_id = id();
+        if(isGroupWallet()){
+            QString group_id = groupId();
+            Byzantine::instance()->RbfTransaction(group_id, wallet_id, tx_id, psbt, data, errormsg);
+        }
+        else if(isUserWallet()){
+            Draco::instance()->assistedRbfTx(wallet_id, tx_id, psbt, data, errormsg);
+        }
+        else{
+            //TBD
+        }
+    });
     return false;
 }
 

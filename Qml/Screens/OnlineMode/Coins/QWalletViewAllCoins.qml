@@ -124,10 +124,9 @@ Rectangle {
                             verticalCenter: parent.verticalCenter
                         }
                         spacing: 16
-                        QImage {
+                        QIcon {
+                            iconSize: 24
                             source: "qrc:/Images/Images/left-arrow-dark.svg"
-                            width: 24
-                            height: 24
                             anchors.verticalCenter: parent.verticalCenter
                             scale: mouseedit.pressed ? 0.95 : 1
                             transformOrigin: Item.Center
@@ -283,9 +282,9 @@ Rectangle {
                         radius: 48
                         color: "#F5F5F5"
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QImage {
+                        QIcon {
+                            iconSize: 60
                             anchors.centerIn: parent
-                            width: 60; height: 60;
                             source: "qrc:/Images/Images/not-found-dark.svg"
                         }
                     }

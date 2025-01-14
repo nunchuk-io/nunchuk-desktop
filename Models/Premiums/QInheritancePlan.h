@@ -51,7 +51,7 @@ private:
     QJsonObject ConvertToDisplayQml(QJsonObject data);
 public:
     void UpdateFromDummyTx(QJsonObject data);
-    bool GetInheritancePlan();
+    void GetInheritancePlan();
 
     QJsonObject JsBody();
     bool inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &info, bool isCancel = false);

@@ -168,7 +168,7 @@ Item {
                                 QTooltip {
                                     tipWidth: 200
                                     toolTip: STR.STR_QML_807
-                                    source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
+                                    source: "qrc:/Images/Images/help_outline_24px.svg"
                                 }
                             }
                         }
@@ -666,7 +666,7 @@ Item {
                                 anchors.left: parent.right
                                 anchors.leftMargin: 8
                                 toolTip: STR.STR_QML_227
-                                source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
+                                source: "qrc:/Images/Images/help_outline_24px.svg"
                             }
                         }
                         QIcon {

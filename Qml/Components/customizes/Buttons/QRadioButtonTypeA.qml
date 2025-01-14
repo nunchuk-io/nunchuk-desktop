@@ -41,6 +41,12 @@ Row {
         color: radioRoot.enabled ? "#031F2B" : "#666666"
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width - icon.width - 8
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: { buttonClicked() }
+        }
     }
     ColorOverlay {
         anchors.verticalCenter: parent.verticalCenter
@@ -53,7 +59,6 @@ Row {
         }
         color: radioRoot.enabled ? "#031F2B" : "#666666"
         MouseArea {
-            id: mouse
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor

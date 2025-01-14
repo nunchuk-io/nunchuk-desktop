@@ -45,9 +45,9 @@ QOnScreenContentTypeA {
                 width: 96;height: 96;
                 radius: 48
                 color: "#D9D9D9"
-                QImage {
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    width: 60; height: 60;
                     source: "qrc:/Images/Images/add-to-collection-dark.svg"
                 }
             }

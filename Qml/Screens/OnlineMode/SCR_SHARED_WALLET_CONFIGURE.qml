@@ -91,11 +91,10 @@ QScreen {
                 Row {
                     spacing: 4
                     anchors.centerIn: parent
-                    QImage {
-                        width: 16
-                        height: 16
+                    QIcon {
+                        iconSize: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                        source: "qrc:/Images/Images/collab-wallet-dark.svg"
                     }
                     QText {
                         anchors.verticalCenter: parent.verticalCenter
@@ -204,12 +203,11 @@ QScreen {
                         font.pixelSize: 18
                         anchors.verticalCenter: parent.verticalCenter
                     }
-                    QImage {
-                        width: 16
-                        height: 16
+                    QIcon {
+                        iconSize: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        source: RoomWalletData.fullSigners ? "qrc:/Images/Images/OnlineMode/check_circle_24px.png" :
-                                                             "qrc:/Images/Images/OnlineMode/pending_actions-24px.png"
+                        source: RoomWalletData.fullSigners ? "qrc:/Images/Images/check_circle_24px.png" :
+                                                             "qrc:/Images/Images/pending_actions-24px.png"
                     }
                     QText {
                         text: RoomWalletData.fullSigners ? STR.STR_QML_439 : (RoomWalletData.pendingSigners <= 1 ? STR.STR_QML_440_: STR.STR_QML_440.arg(RoomWalletData.pendingSigners))
@@ -385,8 +383,8 @@ QScreen {
                             STR.STR_QML_446
                         ]
                         icons: [
-                            "qrc:/Images/Images/OnlineMode/Export.png",
-                            "qrc:/Images/Images/OnlineMode/QRCodeScan.png"
+                            "qrc:/Images/Images/Export.png",
+                            "qrc:/Images/Images/QRCodeScan.png"
                         ]
                         onItemClicked: {
                             switch(index){

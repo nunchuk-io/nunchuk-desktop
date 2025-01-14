@@ -35,7 +35,7 @@ Rectangle {
             titleSuggest: STR.STR_QML_614
             content: STR.STR_QML_615
             height: 152
-            icon:"qrc:/Images/Images/OnlineMode/keys.png"
+            icon:"qrc:/Images/Images/keys.svg"
             onBtnClicked: {
                 QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
             }

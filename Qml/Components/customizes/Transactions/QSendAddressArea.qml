@@ -110,11 +110,13 @@ Rectangle {
 
             QSignaturesBlock {
                 id: signatures
+                visible: !isDummy
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
             QShowInputCoinsBlock {
                 id: inputCoins
+                visible: !isDummy
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }

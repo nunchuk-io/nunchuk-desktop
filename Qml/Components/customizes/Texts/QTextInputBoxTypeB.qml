@@ -61,21 +61,18 @@ Column {
 
     Row {
         width: parent.width
-        QText {
+        QLato {
             id:txt1
             width: paintedWidth
-            font.family: "Lato"
             font.pixelSize: titleFontSize
             font.weight: textweight
-            color: "#031F2B"
             text: label
             visible: label != ""
             anchors.bottom: parent.bottom
         }
-        QText {
+        QLato {
             id:txt2
             width: paintedWidth
-            font.family: "Lato"
             font.pixelSize: 12
             font.weight: textweight
             color: "#595959"
@@ -83,11 +80,9 @@ Column {
             visible: optional != ""
             anchors.verticalCenter: txt1.verticalCenter
         }
-        QText {
+        QLato {
             width: textipboxType.width - txt1.width - txt2.width
-            font.family: "Lato"
             font.pixelSize: 12
-            color: "#031F2B"
             text: textipboxType.length + "/" + textipboxType.maxLength
             visible: textipboxType.enableLengthLimit
             horizontalAlignment: Text.AlignRight
@@ -135,7 +130,7 @@ Column {
             iconSize: 24
             id: showpass
             property bool visiblity: false
-            source: showpass.visiblity ? "qrc:/Images/Images/visibility.png":"qrc:/Images/Images/visibility-off.png"
+            source: showpass.visiblity ? "qrc:/Images/Images/visibility-dark.svg":"qrc:/Images/Images/visibility-off-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 12
@@ -149,10 +144,9 @@ Column {
     Item{
         width: myRectangle.width+2
         height: 28
-        QImage {
+        QIcon {
+            iconSize: 20
             id: alert
-            width: 20
-            height: 20
             source: "qrc:/Images/Images/error_outline_24px.png"
             anchors {
                 left: parent.left
@@ -161,10 +155,9 @@ Column {
             }
             visible: !isValid && showError
         }
-        QText {
+        QLato {
             id: textErrorItem
             width: myRectangle.width+2
-            font.family: "Lato"
             font.pixelSize: 12
             color: "#CF4018"
             anchors {
@@ -180,15 +173,13 @@ Column {
         height: 28
         Row {
             spacing: 4
-            QImage {
-                width: 20
-                height: 20
-                source: "qrc:/Images/Images/info-60px.png"
+            QIcon {
+                iconSize: 20
+                source: "qrc:/Images/Images/info-60px.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QText {
+            QLato {
                 width: myRectangle.width+2
-                font.family: "Lato"
                 font.pixelSize: 12
                 color: "#595959"
                 text: textipboxType.length + "/" + textipboxType.maxLength
@@ -212,14 +203,12 @@ Column {
         spacing: 4
         Row {
             spacing: 4
-            QImage {
-                width: 24
-                height: 24
-                source: "qrc:/Images/Images/info-60px.png"
+            QIcon {
+                iconSize: 24
+                source: "qrc:/Images/Images/info-60px.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QText {
-                font.family: "Lato"
+            QLato {
                 font.pixelSize: 12
                 text: STR.STR_QML_1504
                 color: validatePassword.lengthValid ? "Green" : "red"
@@ -228,14 +217,12 @@ Column {
         }
         Row {
             spacing: 4
-            QImage {
-                width: 24
-                height: 24
-                source: "qrc:/Images/Images/info-60px.png"
+            QIcon {
+                iconSize: 24
+                source: "qrc:/Images/Images/info-60px.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QText {
-                font.family: "Lato"
+            QLato {
                 font.pixelSize: 12
                 text: STR.STR_QML_1505
                 color: validatePassword.numberValid ? "Green" : "red"
@@ -244,14 +231,12 @@ Column {
         }
         Row {
             spacing: 4
-            QImage {
-                width: 24
-                height: 24
-                source: "qrc:/Images/Images/info-60px.png"
+            QIcon {
+                iconSize: 24
+                source: "qrc:/Images/Images/info-60px.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QText {
-                font.family: "Lato"
+            QLato {
                 font.pixelSize: 12
                 text: STR.STR_QML_1506
                 color: validatePassword.upperCaseValid ? "Green" : "red"
@@ -260,14 +245,12 @@ Column {
         }
         Row {
             spacing: 4
-            QImage {
-                width: 24
-                height: 24
-                source: "qrc:/Images/Images/info-60px.png"
+            QIcon {
+                iconSize: 24
+                source: "qrc:/Images/Images/info-60px.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QText {
-                font.family: "Lato"
+            QLato {
                 font.pixelSize: 12
                 text: STR.STR_QML_1507
                 color: validatePassword.specialCharValid ? "Green" : "red"

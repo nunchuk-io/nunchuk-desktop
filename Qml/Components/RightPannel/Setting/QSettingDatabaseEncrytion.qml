@@ -125,7 +125,7 @@ Item {
                     iconSize: 24
                     id: showconfirmpass
                     property bool visiblity: false
-                    source: showconfirmpass.visiblity ? "qrc:/Images/Images/visibility.png":"qrc:/Images/Images/visibility-off.png"
+                    source: showconfirmpass.visiblity ? "qrc:/Images/Images/visibility-dark.svg":"qrc:/Images/Images/visibility-off-dark.svg"
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 17

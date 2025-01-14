@@ -54,10 +54,9 @@ QOnScreenContent {
             Row {
                 anchors.centerIn: parent
                 spacing: 3
-                QImage {
+                QIcon {
+                    iconSize: 16
                     source: "qrc:/Images/Images/Escrow Wallet.png"
-                    width: 16
-                    height: 16
                 }
                 QText {
                     text: STR.STR_QML_212

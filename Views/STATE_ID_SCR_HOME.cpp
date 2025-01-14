@@ -326,10 +326,12 @@ void EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ASK_HARDWARE_REQ_HANDLER(QVariant msg) {
+    DBG_INFO;
     QGroupWallets::instance()->setDashboardInfo("");
 }
 
 void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {
+    DBG_INFO;
 }
 
 void EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER(QVariant msg)
@@ -369,7 +371,7 @@ void EVT_RECURRING_PAYMENTS_REQUEST_HANDLER(QVariant msg)
 }
 
 void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg) {
-
+    DBG_INFO;
 }
 
 void EVT_ADD_SOFTWARE_SIGNER_RESULT_HANDLER(QVariant msg) {

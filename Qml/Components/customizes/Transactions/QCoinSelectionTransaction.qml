@@ -38,9 +38,8 @@ Column {
         Row {
             height: 24
             spacing: 8
-            QImage {
-                width: 24
-                height: 24
+            QIcon {
+                iconSize: 24
                 source: "qrc:/Images/Images/bitcoin-dark.svg"
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -122,6 +121,7 @@ Column {
                     allowRightClick: false
                     showCheckBox: false
                     backgroundColor: "#F5F5F5"
+                    isLarge: false
                 }
             }
         }

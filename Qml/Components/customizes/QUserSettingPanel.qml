@@ -117,9 +117,8 @@ Column {
                     id:_row
                     anchors.centerIn: parent
                     spacing: 4
-                    QImage {
-                        width: 12
-                        height: 12
+                    QIcon {
+                        iconSize: 12
                         source: "qrc:/Images/Images/subscription-dark.svg"
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -140,6 +139,9 @@ Column {
                             }
                             else if (user.isHoneyBadgerPlusUser) {
                                 return STR.STR_QML_1503
+                            }
+                            else if (user.isHoneyBadgerPremierUser) {
+                                return STR.STR_QML_1534
                             }
                             else if (user.isByzantineUserStandard) {
                                 return STR.STR_QML_1003

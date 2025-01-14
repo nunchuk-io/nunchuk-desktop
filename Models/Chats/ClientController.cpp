@@ -500,12 +500,15 @@ QVariant ClientController::user() const
         maps["isByzantineUserStandard"] = isByzantineStandard();
         maps["isByzantineUserPremier"]  = isByzantinePremier();
         maps["isHoneyBadgerUser"]    = isHoneyBadger();
-        maps["isHoneyBadgerPlusUser"]= isHoneyBadgerPlus();
+        maps["isHoneyBadgerPlusUser"] = isHoneyBadgerPlus();
+        maps["isHoneyBadgerPremierUser"] = isHoneyBadgerPremier();
         maps["isIronHandUser"]       = isIronHand();
         maps["isFinneyUserPro"]      = isFinneyPro();
         maps["isFinneyUserStandard"] = isFinneyStandard();
         maps["isFinneyUser"]         = isFinney();
         maps["isMultiSubscriptions"] = isMultiSubscriptions();
+        maps["isGroupWallet"]       = isGroupWallet();
+        maps["isUserWallet"]        = isUserWallet();
     }
     else{
         maps["isSubscribedUser"] = false;
@@ -515,11 +518,14 @@ QVariant ClientController::user() const
         maps["isByzantineUserPremier"]  = false;
         maps["isHoneyBadgerUser"]    = false;
         maps["isHoneyBadgerPlusUser"]= false;
+        maps["isHoneyBadgerPremierUser"] = false;
         maps["isIronHandUser"]       = false;
         maps["isFinneyUserPro"]      = false;
         maps["isFinneyUserStandard"] = false;
         maps["isFinneyUser"]         = false;
         maps["isMultiSubscriptions"] = false;
+        maps["isGroupWallet"]       = false;
+        maps["isUserWallet"]        = false;
     }
     if(AppModel::instance()->getPrimaryKey()){
         maps["master_fingerprint"] = AppModel::instance()->getPrimaryKey()->fingerPrint();

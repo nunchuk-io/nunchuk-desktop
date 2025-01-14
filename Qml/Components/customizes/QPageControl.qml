@@ -25,8 +25,8 @@ Row {
     width: 144
     height: 24
     spacing: 16
-    readonly property var chevronLeft: ["qrc:/Images/Images/chevron_left_24px_n.png", "qrc:/Images/Images/chevron_left_24px_d.png"]
-    readonly property var chevronRight: ["qrc:/Images/Images/chevron_right_24px_n.png", "qrc:/Images/Images/chevron_right_24px_d.png"]
+    readonly property var chevronLeft: ["qrc:/Images/Images/chevron-left-dark.svg", "qrc:/Images/Images/chevron-left-dark-disabled.svg"]
+    readonly property var chevronRight: ["qrc:/Images/Images/chevron-right-dark.svg", "qrc:/Images/Images/chevron-right-dark-disabled.svg"]
     readonly property var firstPage: ["qrc:/Images/Images/first_page_24px_n.png", "qrc:/Images/Images/first_page_24px_d.png"]
     readonly property var lastPage: ["qrc:/Images/Images/last_page_24px_n.png", "qrc:/Images/Images/last_page_24px_d.png"]
 

@@ -120,15 +120,14 @@ Popup {
                 height: 108
                 color: "#EAEAEA"
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
-                    width: 30
-                    height: 30
+                QIcon {
+                    iconSize: 30
                     anchors{
                         verticalCenter: parent.verticalCenter
                         left: parent.left
                         leftMargin: 15
                     }
-                    source: "qrc:/Images/Images/info-60px.png"
+                    source: "qrc:/Images/Images/info-60px.svg"
                 }
                 QText {
                     width: parent.width - 12 - 56

@@ -52,9 +52,9 @@ QOnScreenContentTypeB {
             width: 96;height: 96;
             radius: 48
             color: "#F5F5F5"
-            QImage {
+            QIcon {
+                iconSize: 60
                 anchors.centerIn: parent
-                width: 60; height: 60;
                 source: "qrc:/Images/Images/save-backup-dark.svg"
             }
         }

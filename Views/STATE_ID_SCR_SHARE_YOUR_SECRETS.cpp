@@ -36,10 +36,7 @@ void EVT_UPDATE_YOUR_SECRET_REQUEST_HANDLER(QVariant msg) {
     QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
     if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
         if (dashboard->flow() == (int)AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS) {
-            QtConcurrent::run([dashboard](){
-                dashboard->DismissAlert();
-                dashboard->GetAlertsInfo();
-            });
+            dashboard->DismissAlert();
         }
     }
 }

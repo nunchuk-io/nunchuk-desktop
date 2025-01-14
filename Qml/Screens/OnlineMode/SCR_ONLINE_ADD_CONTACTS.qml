@@ -112,8 +112,8 @@ QScreen {
                                     property bool isemail: emailrepeat.validateEmail(dataInput.requestlist[index])
                                     QIcon {
                                         iconSize: 24
-                                        source: emailelement.isemail ? "qrc:/Images/Images/OnlineMode/check_circle_outline_24px.png"
-                                                                     : "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png";
+                                        source: emailelement.isemail ? "qrc:/Images/Images/check_circle_outline_24px.png"
+                                                                     : "qrc:/Images/Images/error_outline_24px_n.png";
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     QText {
@@ -179,9 +179,8 @@ QScreen {
                 height: 28
                 anchors.left: parent.left
                 visible: dataInput.errorAlert
-                QImage {
-                    width: 20
-                    height: 20
+                QIcon {
+                    iconSize: 20
                     source: "qrc:/Images/Images/error_outline_24px.png"
                     anchors.verticalCenter: parent.verticalCenter
                 }

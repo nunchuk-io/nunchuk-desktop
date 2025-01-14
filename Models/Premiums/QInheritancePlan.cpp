@@ -197,20 +197,26 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
     emit planInfoOldChanged();
 }
 
-bool QInheritancePlan::GetInheritancePlan()
+void QInheritancePlan::GetInheritancePlan()
 {
-    QWalletPtr w = walletInfoPtr();
-    if (w.isNull() || (w.data()->status() == "REPLACED")) return false;
-    QJsonObject response;
-    QString errormsg;
-    bool ret = Draco::instance()->inheritanceGetPlan(w->id(), w->groupId(), response, errormsg);
-    if(ret){
-        QJsonObject inheritance = response["inheritance"].toObject();
+    runInThread<QJsonObject>([this]() ->QJsonObject{
+        QWalletPtr w = walletInfoPtr();
+        if (w.isNull() || (w.data()->status() == "REPLACED")) return {};
+        QJsonObject response;
+        QString errormsg;
+        Draco::instance()->inheritanceGetPlan(w->id(), w->groupId(), response, errormsg);
+        return response["inheritance"].toObject();
+    },[this](QJsonObject inheritance) {
+        if (inheritance.isEmpty()) return;
         DBG_INFO << inheritance;
         m_planInfoCurrent = ConvertToDisplayQml(inheritance);
         setPlanInfo(ConvertToDisplayQml(inheritance));
-    }
-    return ret;
+        if (auto dash = dashBoardPtr()) {
+            if (auto tag = dash->servicesTagPtr()) {
+                tag->setListInheritantPlans();
+            }
+        }
+    });
 }
 
 QJsonObject QInheritancePlan::JsBody()

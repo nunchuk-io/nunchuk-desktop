@@ -59,11 +59,10 @@ Item {
             anchors.fill: parent
             anchors.margins: 8
             spacing: 8
-            QImage {
+            QIcon {
                 id: icoSharedWalletInfo
-                width: 18
-                height: 18
-                source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                iconSize: 18
+                source: "qrc:/Images/Images/collab-wallet-dark.svg"
             }
             Column {
                 spacing: 8

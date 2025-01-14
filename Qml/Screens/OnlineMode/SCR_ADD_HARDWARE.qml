@@ -58,6 +58,7 @@ QScreen {
                 }
             }()
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
+            case NUNCHUCKTYPE.ADD_JADE: return _Jade
             default: return null
             }
         }
@@ -77,6 +78,10 @@ QScreen {
     Component {
         id: _BitBox
         QScreenAddBitBox {}
+    }
+    Component {
+        id: _Jade
+        QScreenAddJade {}
     }
     Component {
         id: _passPhraseSelect

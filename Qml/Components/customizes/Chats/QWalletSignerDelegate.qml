@@ -109,7 +109,7 @@ Rectangle {
         }
         QIcon {
             iconSize: 24
-            source: "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png"
+            source: "qrc:/Images/Images/check_circle_24px_n.png"
             anchors.verticalCenter: parent.verticalCenter
             visible: signerxfp !== "" && !isLocaluser
         }

@@ -36,7 +36,7 @@ Item {
     readonly property int eHOVER    : 2
 
     // Property set
-    property var icon: ["qrc:/Images/Images/left-arrow-dark.svg", "qrc:/Images/Images/arrow_outline_d.png", "qrc:/Images/Images/arrow_outline_p.png"]
+    property var icon: ["qrc:/Images/Images/left-arrow-dark.svg", "qrc:/Images/Images/left-arrow-dark-disabled.svg", "qrc:/Images/Images/left-arrow-dark.svg"]
     property var textColor: ["#031F2B", "#839096", "#35ABEE"]
 
     property int direction: eLEFT
@@ -103,7 +103,7 @@ Item {
             anchors.verticalCenter: ico.verticalCenter
             text: label
             font.pixelSize: fontPixelSize
-            font.weight: Font.DemiBold
+            font.weight: Font.Bold
         }
     }
 

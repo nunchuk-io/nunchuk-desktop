@@ -58,11 +58,10 @@ QScreen {
                 height: 96
                 color: "#F5F5F5"
                 anchors.horizontalCenter: parent.horizontalCenter
-                QImage {
-                    width: 60
-                    height: 60
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    source: "qrc:/Images/Images/OnlineMode/Backup.png"
+                    source: "qrc:/Images/Images/Backup.png"
                 }
             }
             QText {

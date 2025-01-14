@@ -615,7 +615,7 @@ QScreen {
                         titleSuggest: STR.STR_QML_369
                         content: STR.STR_QML_368
                         height: 180
-                        icon:"qrc:/Images/Images/OnlineMode/addContact.png"
+                        icon:"qrc:/Images/Images/addContact.svg"
                         onBtnClicked: {
                             preventTimer.restart()
                             QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
@@ -927,7 +927,7 @@ QScreen {
                                 iconSize: 24
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: model.selected
-                                source: "qrc:/Images/Images/OnlineMode/check_circle_24px copy.png"
+                                source: "qrc:/Images/Images/check_circle_24px copy.png"
                             }
                         }
                         MouseArea {

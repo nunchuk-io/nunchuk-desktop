@@ -50,13 +50,13 @@ QImage {
 
     source: {
         if(file_mimeType === _FILE_IMAGE){
-            return (file_path !== "") ? file_path : "qrc:/Images/Images/OnlineMode/no-image.jpg"
+            return (file_path !== "") ? file_path : "qrc:/Images/Images/no-image.jpg"
         }
         else if(file_mimeType === _FILE_VIDEO){
-            return "qrc:/Images/Images/OnlineMode/video-thumb.png"
+            return "qrc:/Images/Images/video-thumb.png"
         }
         else{
-            return "qrc:/Images/Images/OnlineMode/attach_file.svg"
+            return "qrc:/Images/Images/attach_file.svg"
         }
     }
     Component.onCompleted: {

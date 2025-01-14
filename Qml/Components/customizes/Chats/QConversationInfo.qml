@@ -68,7 +68,7 @@ Rectangle {
             id: icoClose
             scale: closeinfoMouse.containsMouse ? 1.1 : 1
             transformOrigin: Item.Center
-            source: "qrc:/Images/Images/OnlineMode/close_24px_white.png"
+            source: "qrc:/Images/Images/close_24px_white.png"
         }
         onClicked:  { conversationInfo.width = 0 }
     }
@@ -131,8 +131,8 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QIcon {
                     iconSize: 24
-                    source: RoomWalletData.roomWalletCreated ? "qrc:/Images/Images/OnlineMode/monetization_on-24px_2.png" :
-                                                               "qrc:/Images/Images/OnlineMode/Joint wallet_FFFFFF.png"
+                    source: RoomWalletData.roomWalletCreated ? "qrc:/Images/Images/spend-dark.svg" :
+                                                               "qrc:/Images/Images/collab-wallet-light.svg"
                     anchors.centerIn: parent
                     scale: createsharedWlMouse.pressed ? 1 : createsharedWlMouse.containsMouse ? 1.1 : 1
                     transformOrigin: Item.Center
@@ -177,7 +177,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QIcon {
                     iconSize: 24
-                    source: "qrc:/Images/Images/OnlineMode/more_horiz_24px.png"
+                    source: "qrc:/Images/Images/more_horiz_24px.png"
                     anchors.centerIn: parent
                     scale: moreOptionsMouse.pressed ? 1 : moreOptionsMouse.containsMouse ? 1.1 : 1
                     transformOrigin: Item.Center
@@ -215,7 +215,7 @@ Rectangle {
                     id: editNameMenu
                     height: 48
                     text: STR.STR_QML_381
-                    icon.source: "qrc:/Images/Images/OnlineMode/Inline Edit Button.png"
+                    icon.source: "qrc:/Images/Images/edit-dark.svg"
                     onTriggered: {triggerEditGroupName()}
                     enabled: (RoomWalletData.currentRoom && RoomWalletData.currentRoom.userCount > 2)
                     background: Rectangle {
@@ -229,7 +229,7 @@ Rectangle {
                     id: addMembersMenu
                     height: visible ? 48 : 0
                     text: STR.STR_QML_503
-                    icon.source: "qrc:/Images/Images/OnlineMode/person_add-24px.png"
+                    icon.source: "qrc:/Images/Images/person_add-24px.png"
                     onTriggered: {triggerAddMembers()}
                     visible: RoomWalletData.currentRoom && !RoomWalletData.currentRoom.roomWallet
                     enabled: true
@@ -244,7 +244,7 @@ Rectangle {
                     id: leavRoomMenu
                     text: STR.STR_QML_504
                     height: 48
-                    icon.source: "qrc:/Images/Images/OnlineMode/cancel_red_24dp.png"
+                    icon.source: "qrc:/Images/Images/cancel_red_24dp.png"
                     onTriggered: {triggerLeaveGroup()}
                     enabled: true
                     background: Rectangle {
@@ -334,7 +334,7 @@ Rectangle {
                         scale: closeinfoMouse.containsMouse ? 1.1 : 1
                         transformOrigin: Item.Center
                         rotation: collapseTx.isCollapsed ? 0 : 180
-                        source: "qrc:/Images/Images/OnlineMode/expand_less_24px_FFFFFF.png"
+                        source: "qrc:/Images/Images/expand_less_24px_FFFFFF.png"
                     }
                     onClicked:  { collapseTx.isCollapsed = !collapseTx.isCollapsed }
                 }
@@ -372,10 +372,9 @@ Rectangle {
                             anchors.fill: parent
                             anchors.margins: 8
                             spacing: 8
-                            QImage {
-                                width: 18
-                                height: 18
-                                source: "qrc:/Images/Images/OnlineMode/PendingTransaction.png"
+                            QIcon {
+                                iconSize: 18
+                                source: "qrc:/Images/Images/PendingTransaction.png"
                             }                            
                             Column {
                                 spacing: 8
@@ -482,7 +481,7 @@ Rectangle {
                         scale: closeinfoMouse.containsMouse ? 1.1 : 1
                         transformOrigin: Item.Center
                         rotation: collapseMember.isCollapsed ? 0 : 180
-                        source: "qrc:/Images/Images/OnlineMode/expand_less_24px_FFFFFF.png"
+                        source: "qrc:/Images/Images/expand_less_24px_FFFFFF.png"
                     }
                     onClicked:  { collapseMember.isCollapsed = !collapseMember.isCollapsed }
                 }
@@ -520,7 +519,7 @@ Rectangle {
                             id: removeMemberMenu
                             height: 48
                             text: "Remove"
-                            icon.source: "qrc:/Images/Images/OnlineMode/cancel_red_24dp.png"
+                            icon.source: "qrc:/Images/Images/cancel_red_24dp.png"
                             onTriggered: { if(RoomWalletData.currentRoom) RoomWalletData.currentRoom.kickMember(model.id) }
                             background: Rectangle {
                                 implicitWidth: 180
@@ -562,10 +561,9 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: 4
                     spacing: 4
-                    QImage {
-                        width: 18
-                        height: 18
-                        source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                    QIcon {
+                        iconSize: 18
+                        source: "qrc:/Images/Images/collab-wallet-dark.svg"
                     }
                     Column {
                         spacing: 8
@@ -653,7 +651,7 @@ Rectangle {
                         }
                         QIcon {
                             iconSize: 24
-                            source: "qrc:/Images/Images/OnlineMode/Escrow Wallet.png"
+                            source: "qrc:/Images/Images/Escrow Wallet.png"
                             anchors.verticalCenter: parent.verticalCenter
                             visible: RoomWalletData.isEscrow
                         }
@@ -678,10 +676,9 @@ Rectangle {
                             Row {
                                 spacing: 4
                                 anchors.centerIn: parent
-                                QImage {
-                                    width: 12
-                                    height: 12
-                                    source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                                QIcon {
+                                    iconSize: 12
+                                    source: "qrc:/Images/Images/collab-wallet-dark.svg"
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QLato {

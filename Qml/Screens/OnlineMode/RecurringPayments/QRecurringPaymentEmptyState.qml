@@ -56,9 +56,9 @@ QOnScreenContentTypeB {
                     radius: 48
                     color: "#F5F5F5"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    QImage {
+                    QIcon {
+                        iconSize: 60
                         anchors.centerIn: parent
-                        width: 60; height: 60;
                         source: "qrc:/Images/Images/pending-transaction-dark.svg"
                     }
                 }

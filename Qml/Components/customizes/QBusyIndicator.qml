@@ -22,13 +22,11 @@ import "../origins"
 
 Item {
     id: rootBusy
-    QImage {
+    QIcon {
+        iconSize: 64
         id: circular
-        width: 64
-        height: 64
         anchors.centerIn: parent
         source: "qrc:/Images/Images/Circular.svg"
-        transformOrigin: Item.Center
     }
     RotationAnimator {
         target: circular;

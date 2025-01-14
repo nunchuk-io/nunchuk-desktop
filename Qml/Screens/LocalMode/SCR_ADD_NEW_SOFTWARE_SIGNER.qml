@@ -121,7 +121,7 @@ QScreen {
                 QImage {
                     height: parent.height
                     width: height
-                    source: "qrc:/Images/Images/info-60px.png"
+                    source: "qrc:/Images/Images/info-60px.svg"
                 }
                 QLato {
                     height: parent.height

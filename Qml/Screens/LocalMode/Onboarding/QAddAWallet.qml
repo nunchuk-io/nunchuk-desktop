@@ -109,7 +109,7 @@ QOnScreenContentTypeA {
                     STR.STR_QML_1254
                 ]
                 icons: [
-                    "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                    "qrc:/Images/Images/QRCodeScan.png",
                     "qrc:/Images/Images/import.png",
                     "qrc:/Images/Images/import.png",
                     "qrc:/Images/Images/import.png",

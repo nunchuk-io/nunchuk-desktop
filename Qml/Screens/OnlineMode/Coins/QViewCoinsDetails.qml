@@ -214,7 +214,7 @@ QOnScreenContentTypeB {
                                         horizontalAlignment: Text.AlignLeft
                                         verticalAlignment: Text.AlignVCenter
                                     }
-                                    QCoinNote {
+                                    QCoinNoteBoder {
                                         id: _note
                                         memo: tx.memo
                                         width: parent.width
@@ -237,9 +237,8 @@ QOnScreenContentTypeB {
                         height: 48
                         Row {
                             spacing: 8
-                            QImage {
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
                                 source: "qrc:/Images/Images/lock-dark.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
@@ -276,9 +275,8 @@ QOnScreenContentTypeB {
                             height: 24
                             Row {
                                 spacing: 8
-                                QImage {
-                                    width: 24
-                                    height: 24
+                                QIcon {
+                                    iconSize: 24
                                     source: "qrc:/Images/Images/coin-tag-dark.svg"
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -386,9 +384,8 @@ QOnScreenContentTypeB {
                             Row {
                                 spacing: 8
                                 anchors.verticalCenter: parent.verticalCenter
-                                QImage {
-                                    width: 24
-                                    height: 24
+                                QIcon {
+                                    iconSize: 24
                                     source: "qrc:/Images/Images/add-to-collection-dark.svg"
                                     anchors.verticalCenter: parent.verticalCenter
                                 }

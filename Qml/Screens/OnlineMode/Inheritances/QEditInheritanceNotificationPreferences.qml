@@ -95,9 +95,9 @@ QOnScreenContentTypeB {
                 anchors.fill: parent
                 anchors.margins: 12
                 spacing: 8
-                QImage {
+                QIcon {
+                    iconSize: 36
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 36; height: 36;
                     source: "qrc:/Images/Images/warning-dark.svg"
                 }
                 QLato {

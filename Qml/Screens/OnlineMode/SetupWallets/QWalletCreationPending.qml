@@ -41,6 +41,10 @@ Item {
     property bool isRead: false
     property int key_index: -1
     property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
+    function closeScreen() {
+        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        dashInfo.markRead()
+    }
 
     QOnScreenContentTypeB {
         visible: alert.status === "UNREAD"
@@ -49,7 +53,7 @@ Item {
         anchors.centerIn: parent
         label.text: alert.title
         extraHeader: Item {}
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeScreen()
         content: Item {
             Column {
                 anchors.fill: parent
@@ -66,9 +70,10 @@ Item {
                 }
             }
         }
-        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onPrevClicked: closeScreen()
         onNextClicked: {
             isRead = true
+            dashInfo.markRead()
         }
     }
 
@@ -78,7 +83,7 @@ Item {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_938
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeScreen()
         content: Item {
             Row {
                 anchors.fill: parent
@@ -212,11 +217,11 @@ Item {
                 }
             }
         }
-        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onPrevClicked: closeScreen()
         bottomRight: Item{}
     }
 
-    property string hardware: ""
+
     QPopupHardwareAddKey {
         id: _hardwareAddKey
     }

@@ -49,7 +49,7 @@ QScreenAdd {
                     height: 512
                     radius: 24
                     color: "#D0E2FF"
-                    QImage {
+                    QPicture {
                         width: 346
                         height: 300
                         anchors.verticalCenter: parent.verticalCenter
@@ -239,9 +239,9 @@ QScreenAdd {
                 width: 96;height: 96;
                 radius: 48
                 color: AppModel.addSignerWizard === eADD_SUCCESSFULLY ? "#A7F0BA" : "#FFD7D9"
-                QImage {
+                QIcon {
+                    iconSize: 60
                     anchors.centerIn: parent
-                    width: 60; height: 60;
                     source: AppModel.addSignerWizard === eADD_SUCCESSFULLY ? "qrc:/Images/Images/check-dark.svg" : "qrc:/Images/Images/error_outline_24px.png"
                 }
             }

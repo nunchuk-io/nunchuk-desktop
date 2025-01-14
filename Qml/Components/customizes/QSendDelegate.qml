@@ -49,7 +49,7 @@ Rectangle {
     property int   itemCount: 0
     property alias recipientLabel: addressInput.label
     property alias toAmount: amountInput.textInputted
-    property alias toAddress: addressInput.textInputted
+    property string toAddress: ""
     property alias enableInput: addressInput.enabled
     property bool  enableInputAmount: true
     property bool  onCurrency: false
@@ -99,67 +99,91 @@ Rectangle {
         anchors.margins: 18
         spacing: 12
 
-        Row {
-            spacing: 24
+        Item {
+            width: parent.width
+            height: childrenRect.height
+            QTextInputBoxTypeB {
+                id: addressInput
+                label: STR.STR_QML_787
+                boxWidth: 693
+                boxHeight: 48
+                isValid: true
+                maxLength: 280
+                enabled: (inputObject.toType === "Input")
+                disabledColor: "#FFFFFF"
+                input.rightPadding: 36
+                textInputted: inputObject.toAddress
+                onTextInputtedChanged: {
+                    if(walletInfo.isValidAddress(addressInput.textInputted)) {
+                        addressInput.isValid = true
+                        addressInput.errorText = ""
+                        addressInput.showError = false;
+                        sendDelegateRoot.toAddress = addressInput.textInputted
+                    } else {
+                        if (addressInput.isValid) {
+                            addressInput.isValid = false
+                            AppModel.showToast(-1, STR.STR_QML_1184, EWARNING.ERROR_MSG);
+                            sendDelegateRoot.toAddress = ""
+                        }
+                    }
+                }
+            }
+            QButtonTextLink {
+                height: 24
+                label: STR.STR_QML_1134
+                displayIcon: false
+                btnText.font.underline: true
+                anchors.top: addressInput.top
+                anchors.right: addressInput.right
+                visible: itemCount > 1
+                onButtonClicked: {
+                    removeItemRequest()
+                }
+            }
             Item {
-                width: childrenRect.width
-                height: childrenRect.height
-                QTextInputBoxTypeB {
-                    id: addressInput
-                    label: STR.STR_QML_787
-                    boxWidth: 620
-                    boxHeight: 48
-                    isValid: true
-                    maxLength: 280
-                    enabled: (inputObject.toType === "Input")
-                    disabledColor: "#FFFFFF"
-                    input.rightPadding: 36
+                width: parent.width
+                height: 48
+                anchors {
+                    top: parent.top
+                    topMargin: 25
                 }
                 Loader {
                     id: closeLoader
-                    anchors.bottom: addressInput.bottom
-                    anchors.bottomMargin: 12
-                    anchors.right: addressInput.right
-                    anchors.rightMargin: 12
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        right: parent.right
+                        rightMargin: 12
+                    }
                     sourceComponent: dropdownfav
                 }
                 Loader {
                     id: iconLoader
-                    anchors.bottom: addressInput.bottom
-                    anchors.bottomMargin: 12
-                    anchors.left: addressInput.left
-                    anchors.leftMargin: 12
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        left: parent.left
+                        leftMargin: 12
+                    }
                     sourceComponent: null
                 }
-                QButtonTextLink {
-                    height: 24
-                    label: STR.STR_QML_1134
-                    displayIcon: false
-                    btnText.font.underline: true
-                    anchors.top: addressInput.top
-                    anchors.right: addressInput.right
-                    visible: itemCount > 1
-                    onButtonClicked: {
-                        removeItemRequest()
+                QIcon {
+                    iconSize: 36
+                    id: qricoimport
+                    source: "qrc:/Images/Images/QrSendButton.svg"
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        right: parent.right
+                        rightMargin: 46
                     }
-                }
-            }
-            QImage {
-                id: qricoimport
-                source: "qrc:/Images/Images/QrSendButton.png"
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 6
-                transformOrigin: Item.Center
-                scale: qrMouse.pressed ? 0.95 : 1
-                width: 36
-                height: 36
-                MouseArea {
-                    id: qrMouse
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    anchors.fill: parent
-                    onClicked: {
-                        qrCodeRequest()
+                    transformOrigin: Item.Center
+                    scale: qrMouse.pressed ? 0.95 : 1
+                    MouseArea {
+                        id: qrMouse
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        anchors.fill: parent
+                        onClicked: {
+                            qrCodeRequest()
+                        }
                     }
                 }
             }
@@ -171,7 +195,7 @@ Rectangle {
             QTextInputBoxTypeB {
                 id: amountInput
                 label: STR.STR_QML_214
-                boxWidth: 620
+                boxWidth: 693
                 boxHeight: 48
                 isValid: true
                 validator: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? intvalidator : doubleValidator
@@ -182,7 +206,7 @@ Rectangle {
                 anchors.right: amountInput.right
                 anchors.rightMargin: 12
                 spacing: 4
-                QText {
+                QLato {
                     height: 24
                     anchors.verticalCenter: parent.verticalCenter
                     text: {
@@ -193,17 +217,14 @@ Rectangle {
                             return qsTr("%1").arg((AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? "sat" : "BTC")
                         }
                     }
-                    color: "#031F2B"
-                    font.family: "Lato"
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Bold
                     font.pixelSize: 16
                     verticalAlignment: Text.AlignVCenter
                 }
-                QImage {
-                    height: 24
-                    width: 24
+                QIcon {
+                    iconSize: 24
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/fav_swapt-24px.png"
+                    source: "qrc:/Images/Images/fav_swapt-24px.svg"
                     transformOrigin: Item.Center
                     scale: moneyMouse.pressed ? 0.95 : 1
                     MouseArea {
@@ -234,12 +255,11 @@ Rectangle {
     RegExpValidator { id: doubleValidator;   regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
     Component {
         id: dropdownfav
-        QImage {
-            source: "qrc:/Images/Images/arrow_drop_down_24px.png"
+        QIcon {
+            iconSize: 24
+            source: "qrc:/Images/Images/arrow_drop_down_24px.svg"
             transformOrigin: Item.Center
             scale: favMouse.pressed ? 0.95 : 1
-            width: 24
-            height: 24
             MouseArea {
                 id: favMouse
                 hoverEnabled: true
@@ -253,12 +273,11 @@ Rectangle {
     }
     Component {
         id: clearfav
-        QImage {
-            source: "qrc:/Images/Images/fav_close-circle-dark.png"
+        QIcon {
+            iconSize: 24
+            source: "qrc:/Images/Images/fav_close-circle-dark.svg"
             transformOrigin: Item.Center
             scale: favMouse.pressed ? 0.95 : 1
-            width: 24
-            height: 24
             MouseArea {
                 id: favMouse
                 hoverEnabled: true
@@ -278,18 +297,16 @@ Rectangle {
     }
     Component {
         id: iconFavAddr
-        QImage {
-            source: "qrc:/Images/Images/fav_bookmark_24px.png"
-            width: 24
-            height: 24
+        QIcon {
+            iconSize: 24
+            source: "qrc:/Images/Images/fav_bookmark_24px.svg"
         }
     }
     Component {
         id: iconFavWallet
-        QImage {
-            source: "qrc:/Images/Images/fav_wallet-dark.png"
-            width: 24
-            height: 24
+        QIcon {
+            iconSize: 24
+            source: "qrc:/Images/Images/fav_wallet-dark.svg"
         }
     }
 }

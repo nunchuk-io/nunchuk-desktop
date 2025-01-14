@@ -56,10 +56,9 @@ Rectangle {
         Item {
             width: 12
             height: 12
-            QImage {
+            QIcon {
+                iconSize: 12
                 id: syncingIco
-                width: 12
-                height: 12
                 transformOrigin: Item.Center
                 anchors.centerIn: parent
                 source: "qrc:/Images/Images/syncing.png"

@@ -136,10 +136,9 @@ Item {
                     Row {
                         anchors.centerIn: parent
                         spacing: 12
-                        QImage {
-                            width: 36
-                            height: 36
-                            source: "qrc:/Images/Images/OnlineMode/Joint wallet_031F2B.png"
+                        QIcon {
+                            iconSize: 36
+                            source: "qrc:/Images/Images/collab-wallet-dark.svg"
                         }
                         Column {
                             spacing: 12
@@ -221,7 +220,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
                 QText {
                     id: eventText
@@ -335,7 +334,7 @@ Item {
                                 onClicked: {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
-                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
                                         optionMenu.functions = [function(){
                                             var txt = ClientController.getPlainText(messageText.text)
                                             ClientController.copyMessage(txt)
@@ -567,8 +566,8 @@ Item {
                             QIcon {
                                 iconSize: 24
                                 anchors.verticalCenter: parent.verticalCenter
-                                source: RoomWalletData.fullSigners ? "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png" :
-                                                                     "qrc:/Images/Images/OnlineMode/pending_actions-24px 1.png"
+                                source: RoomWalletData.fullSigners ? "qrc:/Images/Images/check_circle_24px_n.png" :
+                                                                     "qrc:/Images/Images/pending_actions-24px 1.png"
                             }
                             QText {
                                 text: RoomWalletData.fullSigners ? STR.STR_QML_439 : (RoomWalletData.pendingSigners <= 1 ? STR.STR_QML_440_: STR.STR_QML_440.arg(RoomWalletData.pendingSigners))
@@ -682,7 +681,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
 
                 QText {
@@ -740,7 +739,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
 
                 QText {
@@ -777,7 +776,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/check_circle_outline_24px.png"
+                    source: "qrc:/Images/Images/check_circle_outline_24px.png"
                 }
                 QText {
                     id: eventText
@@ -833,7 +832,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
                 QText {
                     id: eventText
@@ -1077,9 +1076,9 @@ Item {
                                 iconSize: 24
                                 anchors.verticalCenter: parent.verticalCenter
                                 source: {
-                                    if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED) return "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png"
-                                    else return iteminit.tx_pending_signatures === 0 ? "qrc:/Images/Images/OnlineMode/check_circle_24px_n.png" :
-                                                                                       "qrc:/Images/Images/OnlineMode/pending_actions-24px 1.png"
+                                    if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED) return "qrc:/Images/Images/check_circle_24px_n.png"
+                                    else return iteminit.tx_pending_signatures === 0 ? "qrc:/Images/Images/check_circle_24px_n.png" :
+                                                                                       "qrc:/Images/Images/pending_actions-24px 1.png"
                                 }
                             }
                             QText {
@@ -1123,7 +1122,7 @@ Item {
                     if (mouse.button === Qt.RightButton) {
                         optionMenu.width = 200
                         optionMenu.labels = [STR.STR_QML_691]
-                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                        optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
                         optionMenu.functions = [function(){
                             ClientController.copyMessage(iteminit.to_addr)
                         }]
@@ -1224,7 +1223,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
                 QText {
                     id: eventText
@@ -1296,7 +1295,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
                 QText {
                     id: eventText
@@ -1357,7 +1356,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px_n.png"
+                    source: "qrc:/Images/Images/error_outline_24px_n.png"
                 }
                 QText {
                     id: eventText
@@ -1420,7 +1419,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/OnlineMode/error_outline_24px.png"
+                    source: "qrc:/Images/Images/error_outline_24px.png"
                 }
                 QText {
                     id: eventText
@@ -1490,8 +1489,8 @@ Item {
                                     anchors.centerIn: parent
                                     radius: 24
                                     Rectangle {
-                                        width: parent.radius
-                                        height: parent.radius
+                                        width: maskChat.radius
+                                        height: maskChat.radius
                                         anchors {
                                             top: parent.top
                                             left: parent.left
@@ -1534,7 +1533,7 @@ Item {
                                 onClicked: {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
-                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
                                         optionMenu.functions = [function(){
                                             var txt = ClientController.getPlainText(messageText.text)
                                             ClientController.copyMessage(txt)
@@ -1699,7 +1698,7 @@ Item {
                                 onClicked: {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
-                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
                                         optionMenu.functions = [function(){
                                             var txt = ClientController.getPlainText(messageText.text)
                                             ClientController.copyMessage(txt)
@@ -1863,7 +1862,7 @@ Item {
                                 onClicked: {
                                     if (mouse.button === Qt.RightButton) {
                                         optionMenu.labels = ["Copy message"]
-                                        optionMenu.icons = ["qrc:/Images/Images/Copy_031F2B.png"]
+                                        optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
                                         optionMenu.functions = [function(){
                                             var txt = ClientController.getPlainText(messageText.text)
                                             ClientController.copyMessage(txt)
@@ -1941,7 +1940,7 @@ Item {
             "Copy message"
         ]
         icons: [
-            "qrc:/Images/Images/Copy_031F2B.png"
+            "qrc:/Images/Images/copy-dark.svg"
         ]
         onItemClicked: {
             functions[index]()

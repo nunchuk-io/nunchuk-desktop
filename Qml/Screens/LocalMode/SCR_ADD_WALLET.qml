@@ -366,7 +366,7 @@ QScreen {
                 ]
                 icons: [
                     "qrc:/Images/Images/import.png",
-                    "qrc:/Images/Images/OnlineMode/QRCodeScan.png",
+                    "qrc:/Images/Images/QRCodeScan.png",
                     "qrc:/Images/Images/import.png",
                     "qrc:/Images/Images/download.png"
                 ]

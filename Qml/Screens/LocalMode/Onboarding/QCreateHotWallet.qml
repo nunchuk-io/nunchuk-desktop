@@ -56,10 +56,9 @@ QBoxShadow {
             verticalCenter: parent.verticalCenter
         }
         spacing: 24
-        QImage {
+        QIcon {
+            iconSize: 48
             source: desImg
-            width: 48
-            height: 48
             anchors.verticalCenter: parent.verticalCenter
         }
         Item {
@@ -92,10 +91,9 @@ QBoxShadow {
                 }
             }
         }
-        QImage {
+        QIcon {
+            iconSize: 24
             source: "qrc:/Images/Images/right-arrow-dark.svg"
-            width: 24
-            height: 24
             anchors.verticalCenter: parent.verticalCenter
         }
     }

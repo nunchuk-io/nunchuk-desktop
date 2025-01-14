@@ -72,9 +72,8 @@ Item {
             id: contentRow
             anchors.centerIn: parent
             spacing: 8
-            QImage {
-                width: 36
-                height: 36
+            QIcon {
+                iconSize: 36
                 source: warningIcon[type]
                 anchors.verticalCenter: parent.verticalCenter
             }

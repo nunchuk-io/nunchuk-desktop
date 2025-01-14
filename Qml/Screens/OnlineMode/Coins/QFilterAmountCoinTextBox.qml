@@ -111,7 +111,7 @@ Column {
             spacing: 6
             QIcon {
                 iconSize: 24
-                source: "qrc:/Images/Images/fav_swapt-24px.png"
+                source: "qrc:/Images/Images/fav_swapt-24px.svg"
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {

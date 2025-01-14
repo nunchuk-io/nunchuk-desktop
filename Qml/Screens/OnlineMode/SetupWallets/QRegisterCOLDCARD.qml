@@ -48,9 +48,7 @@ QOnScreenContentTypeB {
                 height: 464
                 radius: 24
                 color: "#D0E2FF"
-                QImage {
-                    width: 346
-                    height: 300
+                QPicture {
                     anchors.verticalCenter: parent.verticalCenter
                     source: "qrc:/Images/Images/COLDCARD-register.svg"
                 }

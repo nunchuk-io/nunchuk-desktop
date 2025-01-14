@@ -101,7 +101,7 @@ void AppModel::confirmSyncingWalletFromServer(bool yes, bool no)
     if (yes) {
         int index = masterSignerList()->getIndexNameByFingerPrint(fingerPrint);
         if (index >= 0) {
-            QEventProcessor::instance()->sendEvent(E::EVT_HOME_MASTER_SIGNER_INFO_REQUEST, index);
+            QEventProcessor::instance()->sendEvent(E::EVT_HOME_MASTER_SIGNER_INFO_REQUEST, fingerPrint);
             emit syncingConfirmWalletRemoveKey(fingerPrint);
         }
     }

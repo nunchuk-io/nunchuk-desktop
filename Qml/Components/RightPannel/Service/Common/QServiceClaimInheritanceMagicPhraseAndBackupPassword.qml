@@ -64,10 +64,8 @@ Item {
             height: parent.height * 0.42
             radius: 24
             color: "#D0E2FF"
-            QImage {
+            QPicture {
                 anchors.centerIn: parent
-                width: sourceSize.width
-                height: sourceSize.height
                 source: "qrc:/Images/Images/claim-inheritance-illustration.svg"
             }
         }

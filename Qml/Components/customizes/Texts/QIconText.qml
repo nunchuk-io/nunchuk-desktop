@@ -7,9 +7,8 @@ Row {
     property string icon: ""
     property alias text: _txt
     spacing: 4
-    QImage {
-        width: iconSize
-        height: iconSize
+    QIcon {
+        iconSize: _row.iconSize
         source: icon
         visible: icon != ""
         anchors.verticalCenter: parent.verticalCenter

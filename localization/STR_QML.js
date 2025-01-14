@@ -865,9 +865,11 @@ var STR_QML_721 = qsTr("The lockdown will last <b>%1</b>.")
 var STR_QML_722 = qsTr("If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \n \
 TAPSIGNER’s private key using the encrypted backup from the server. Please note the \n \
 following:")
-var STR_QML_723 = qsTr("Once you have entered the lockdown, no one—including yourself—will \n \
-be able to sign in to your account and access your wallet.")
-var STR_QML_724 = qsTr("There is no way to end the lockdown early.")
+var STR_QML_723 = qsTr("The Backup Password is required, please have it ready. The password is \n \
+printed on the back of the TAPSIGNER. You should have had a copy of \n \
+this when setting up the TAPSIGNER for the first time.")
+var STR_QML_724 = qsTr("This procedure will convert the TAPSIGNER into a software key on this \n \
+device.")
 
 var STR_QML_725 = qsTr("Enter Backup Password")
 var STR_QML_726 = qsTr("Please enter the Backup Password for [<b>%1</b>] (card ID: <b>••%2</b>).")
@@ -1843,6 +1845,16 @@ var STR_QML_1530 = qsTr("Collection avatar")
 var STR_QML_1531 = qsTr("Export via BBQR")
 var STR_QML_1532 = qsTr("Export QR")
 var STR_QML_1533 = qsTr("Import via PSBT")
+var STR_QML_1534 = qsTr("Honey Badger Premier")
+var STR_QML_1535 = qsTr("Add Blockstream Jade")
+var STR_QML_1536 = qsTr("It looks like you want to add Blockstream Jade as a hardware key to an assisted wallet. Would you like to do it now?")
+var STR_QML_1537 = qsTr("Follow Blockstream Jade’s instruction on how to set up your device with a seed phrase.")
+var STR_QML_1538 = qsTr("Please ensure that the Blockstream Jade device is connected to this computer, and click on Refresh.")
+var STR_QML_1539 = qsTr("We noticed that you already have Blockstream Jade in your key manager.")
+var STR_QML_1540 = qsTr("Adding Blockstream Jade... Please keep your device connected.")
+var STR_QML_1541 = qsTr("Blockstream Jade added successfully")
+var STR_QML_1542 = qsTr("Unable to add Blockstream Jade")
+
 
 var STR_QML_1600 = qsTr("Inheritance")
 var STR_QML_1601 = qsTr("Add inheritance key")

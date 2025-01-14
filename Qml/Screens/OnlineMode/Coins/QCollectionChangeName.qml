@@ -79,9 +79,8 @@ QPopupEmpty {
                     height: 24
                     radius: 24
                     color: "#FFFFFF"
-                    QImage {
-                        width: 12
-                        height: 12
+                    QIcon {
+                        iconSize: 12
                         anchors.centerIn: parent
                         source: "qrc:/Images/Images/camera-dark.svg"
                     }

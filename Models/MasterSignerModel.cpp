@@ -301,11 +301,9 @@ void QMasterSigner::setOriginMasterSigner(const nunchuk::MasterSigner &signer)
 
 QString QMasterSigner::tag() const
 {
-    if (masterSigner_.get_tags().size() > 0) {
-        nunchuk::SignerTag tag = masterSigner_.get_tags().front();
-        return QString::fromStdString(SignerTagToStr(tag));
-    }
-    return "";
+    QStringList list = tags();
+    list.removeOne("INHERITANCE");
+    return list.isEmpty() ? "" : list.first();
 }
 
 QStringList QMasterSigner::tags() const

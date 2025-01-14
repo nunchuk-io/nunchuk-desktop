@@ -19,6 +19,7 @@ const QMap<Key, StructAddHardware> map_keys = {
     {Key::ADD_TREZOR,   {"TREZOR",   "trezor",   STR_CPP_124, STR_CPP_123, 124}},
     {Key::ADD_COLDCARD, {"COLDCARD", "coldcard", STR_CPP_126, STR_CPP_125, 152}},
     {Key::ADD_BITBOX,   {"BITBOX",   "bitbox02", STR_CPP_128, STR_CPP_127, 124}},
+    {Key::ADD_JADE,     {"JADE",     "jade",     STR_CPP_133, STR_CPP_132, 152}},
 };
 
 namespace {
@@ -619,6 +620,7 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
         return false;
     };
     for (auto m : masterList->fullList()) {
+        DBG_INFO << m->tag() << m->signerType();
         if ((m->tag() == tag && (m->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || m->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
             (qUtils::strCompare(tag, "COLDCARD") && m->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) ||
             qUtils::strCompare(m->tag(), "KEEPKEY")) {
@@ -638,6 +640,7 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
         }
     }
     for (auto s : remoteList->fullList()) {
+        DBG_INFO << s->tag() << s->signerType();
         if ((s->tag() == tag && (s->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || s->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
             (qUtils::strCompare(tag, "COLDCARD") && s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) ||
             qUtils::strCompare(s->tag(), "KEEPKEY")) {
@@ -671,7 +674,7 @@ void QAssistedDraftWallets::finishScanDevices()
                     mRefreshDeviceList->addDevice(device);
                 }
             }
-            DBG_INFO << m_mode << "size: " << mRefreshDeviceList->rowCount();
+            DBG_INFO << m_mode << typeReq() << "size: " << mRefreshDeviceList->rowCount();
         }
         emit deviceListChanged();
     }

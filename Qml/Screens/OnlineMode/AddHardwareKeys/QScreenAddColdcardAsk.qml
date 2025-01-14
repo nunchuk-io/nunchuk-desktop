@@ -90,11 +90,7 @@ QScreenAdd {
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {
-                    if (ServiceSetting.existHardware(_HARDWARE_TAG)) {
-                        QMLHandle.sendEvent(EVT.EVT_EXIST_HARDWARE_REQ)
-                    } else {
-                        QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_REQUEST)
-                    }
+                    ServiceSetting.requestStartAddHardwareKey(_HARDWARE_TAG)
                 }
             }
         }

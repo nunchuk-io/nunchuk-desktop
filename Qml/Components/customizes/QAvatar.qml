@@ -41,7 +41,7 @@ Rectangle {
     property bool activeStatus: true
     property bool displayStatus: true
     readonly property bool isAvatarUrl: avatarUrl != "";
-    readonly property url realSource: !activeStatus ? "qrc:/Images/Images/OnlineMode/inactive_avatar.png" : (isAvatarUrl ? "image://nunchuk/" + avatarUrl : "")
+    readonly property url realSource: !activeStatus ? "qrc:/Images/Images/inactive_avatar.png" : (isAvatarUrl ? "image://nunchuk/" + avatarUrl : "")
     property int maxChar: 1
     readonly property QImage url: QImage{
         source: realSource

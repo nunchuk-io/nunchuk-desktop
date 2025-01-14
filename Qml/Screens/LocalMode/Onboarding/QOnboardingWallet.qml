@@ -90,14 +90,13 @@ Rectangle {
             }
         }
         
-        QImage {
+        QIcon {
+            iconSize: 120
             anchors {
                 right: parent.right
                 bottom: parent.bottom
             }
             source: desImg
-            width: 120
-            height: 120
         }
     }
 }

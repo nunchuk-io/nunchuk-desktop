@@ -27,8 +27,8 @@ Rectangle {
     property bool switchOn         : false
     property var borderColors      : ["#031F2B","#FFFFFF"]
     property var backgroundColors  : ["#FFFFFF","#031F2B"]
-    property var leftIcons : ["qrc:/Images/Images/OnlineMode/switch_indicator_off.png","qrc:/Images/Images/OnlineMode/switch_on.png"]
-    property var rightIcons: ["qrc:/Images/Images/OnlineMode/switch_off.png","qrc:/Images/Images/OnlineMode/switch_indicator_on.png"]
+    property var leftIcons : ["qrc:/Images/Images/switch_indicator_off.png","qrc:/Images/Images/switch_on.png"]
+    property var rightIcons: ["qrc:/Images/Images/switch_off.png","qrc:/Images/Images/switch_indicator_on.png"]
 
     color: !enabled ? "#757575" : (switchOn ? backgroundColors[1] : backgroundColors[0])
     border.color: !enabled ? "#757575" : (switchOn ? borderColors[1] : borderColors[0])

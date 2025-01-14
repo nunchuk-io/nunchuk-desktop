@@ -90,9 +90,7 @@ Rectangle {
             text: titleWelcome
             color: "#000000"
         }
-        QImage {
-            width: 600
-            height: 280
+        QPicture {
             source: "qrc:/Images/Images/chat-empty-state.svg"
         }
 

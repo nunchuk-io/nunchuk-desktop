@@ -487,6 +487,7 @@ bool QWalletServicesTag::inheritanceClaimRequest(const nunchuk::Wallet wallet, c
         current["balance"] = 0;
         setInheritanceClaimPlan(current); // reset
         emit inheritanceInfoChanged();
+        AppModel::instance()->requestCreateUserWallets();
     }
     return ret;
 }

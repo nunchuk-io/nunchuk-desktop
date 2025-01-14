@@ -61,11 +61,11 @@ QButtonLargeTail {
             "Show as an invoice"
         ]
         icons: [
-            "qrc:/Images/Images/OnlineMode/signature-dark.png",
-            "qrc:/Images/Images/OnlineMode/scheduling-dark.png",
-            "qrc:/Images/Images/Copy_031F2B.png",
-            "qrc:/Images/Images/OnlineMode/cancel_red_24dp.png",
-            "qrc:/Images/Images/OnlineMode/sticky_note_2.png"
+            "qrc:/Images/Images/signature-dark.png",
+            "qrc:/Images/Images/scheduling-dark.png",
+            "qrc:/Images/Images/copy-dark.svg",
+            "qrc:/Images/Images/cancel_red_24dp.png",
+            "qrc:/Images/Images/sticky_note_2.png"
         ]
         colors:   [ "#031F2B", "#031F2B", "#031F2B", "#CF4018", "#031F2B"]
         enables:  [ enableRequestSignature, enableScheduleBroadcast, true, enableCancelTransaction, enableShowInvoice ]

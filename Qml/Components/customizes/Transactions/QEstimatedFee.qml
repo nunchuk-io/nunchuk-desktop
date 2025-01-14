@@ -45,7 +45,7 @@ Row {
             QTooltip {
                 tipWidth: 200
                 toolTip: STR.STR_QML_807
-                source: "qrc:/Images/Images/OnlineMode/help_outline_24px.svg"
+                source: "qrc:/Images/Images/help_outline_24px.svg"
             }
         }
     }
@@ -61,7 +61,7 @@ Row {
             font.weight: Font.Bold
             color: "#031F2B"
             font.family: "Lato"
-            text: AppModel.transactionInfo.fee + RoomWalletData.unitValue
+            text: transactionInfo.fee + RoomWalletData.unitValue
             horizontalAlignment: Text.AlignRight
         }
         QText {
@@ -74,7 +74,7 @@ Row {
             font.family: "Lato"
             text: qsTr("%1%2 %3")
             .arg(AppSetting.currencySymbol)
-            .arg(AppModel.transactionInfo.feeCurrency)
+            .arg(transactionInfo.feeCurrency)
             .arg(AppSetting.currency)
             horizontalAlignment: Text.AlignRight
         }

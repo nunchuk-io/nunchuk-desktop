@@ -324,7 +324,7 @@ QScreen {
                     topMargin: 257
                 }
                 label: STR.STR_QML_048
-                icons: ["d_chevron_24px_031F2B.png","d_chevron_24px_9CAEB8.png","d_chevron_24px_F1FAFE.png","d_chevron_24px_F1FAFE.png"]
+                icons: ["d-chevron-dark.svg","d-chevron-light.svg","d-chevron-disabled.svg","d-chevron-light.svg"]
                 onButtonClicked: {
                     QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER)
                     QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER)
@@ -520,14 +520,13 @@ QScreen {
                         text: STR.STR_QML_055.arg(model.singleSigner_derivationPath)
                     }
                 }
-                QImage {
+                QIcon {
+                    iconSize: 32
                     anchors {
                         right: parent.right
                         rightMargin: 20
                         verticalCenter: indicatiorValid.verticalCenter
                     }
-                    width: 32
-                    height: 32
                     source: "qrc:/Images/Images/Delete.png"
                     MouseArea {
                         id: dlgRightMouse

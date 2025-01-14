@@ -64,20 +64,19 @@ QScreen {
         Item {
             width: rootlogin.width
             height: rootlogin.height
-            QImage {
-                source: "qrc:/Images/Images/OnlineMode/Gradient_bg.png"
+            QPicture {
+                source: "qrc:/Images/Images/Gradient_bg.png"
                 anchors.fill: parent
             }
-            QImage {
-                source: "qrc:/Images/Images/OnlineMode/Gradient_overlay.png"
+            QPicture {
+                source: "qrc:/Images/Images/Gradient_overlay.png"
                 anchors.fill: parent
             }
             Column {
                 spacing: 36
                 anchors.centerIn: parent
-                QImage {
-                    width: 120
-                    height: 120
+                QIcon {
+                    iconSize: 120
                     anchors.horizontalCenter: parent.horizontalCenter
                     source: "qrc:/Images/Images/logo-light.svg"
                 }
@@ -124,20 +123,19 @@ QScreen {
         Item {
             width: eLEFT_WIDTH
             height: rootlogin.height
-            QImage {
-                source: "qrc:/Images/Images/OnlineMode/Gradient_bg.png"
+            QPicture {
+                source: "qrc:/Images/Images/Gradient_bg.png"
                 anchors.fill: parent
             }
-            QImage {
-                source: "qrc:/Images/Images/OnlineMode/Gradient_overlay.png"
+            QPicture {
+                source: "qrc:/Images/Images/Gradient_overlay.png"
                 anchors.fill: parent
             }
             Column {
                 spacing: 36
                 anchors.centerIn: parent
-                QImage {
-                    width: 120
-                    height: 120
+                QIcon {
+                    iconSize: 120
                     anchors.horizontalCenter: parent.horizontalCenter
                     source: "qrc:/Images/Images/logo-light.svg"
                 }
@@ -392,9 +390,8 @@ QScreen {
                 anchors.top: inputUserEmail.bottom
                 anchors.topMargin: 14
                 spacing: 4
-                QImage {
-                    width: 18
-                    height: 18
+                QIcon {
+                    iconSize: 18
                     anchors.verticalCenter: parent.verticalCenter
                     source: Draco.stayLoggedIn ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
                     MouseArea {
@@ -597,9 +594,8 @@ QScreen {
                                 anchors.left: parent.left
                                 spacing: 4
                                 anchors.verticalCenter: parent.verticalCenter
-                                QImage {
-                                    width: 18
-                                    height: 18
+                                QIcon {
+                                    iconSize: 18
                                     anchors.verticalCenter: parent.verticalCenter
                                     source: Draco.stayLoggedIn ? "qrc:/Images/Images/Checked_n.png" : "qrc:/Images/Images/UnChecked_n.png"
                                     MouseArea {

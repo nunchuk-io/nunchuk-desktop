@@ -78,9 +78,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
             }
         }
-        QImage {
-            width: sourceSize.width
-            height: sourceSize.height
+        QPicture {
             source: "qrc:/Images/Images/key_security_tip.svg"
             anchors {
                 horizontalCenter: parent.horizontalCenter

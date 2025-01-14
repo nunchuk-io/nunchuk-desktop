@@ -201,6 +201,11 @@ public:
         QString strJson(doc.toJson(QJsonDocument::Compact));
         return operator<<(strJson);
     }
+    inline QOutlog &operator<<(const QJsonArray & t) {
+        QJsonDocument doc(t);
+        QString strJson(doc.toJson(QJsonDocument::Compact));
+        return operator<<(strJson);
+    }
     inline QOutlog &operator<<(QUrl t) { mStream << t.toString() << ' '; return *this; }
 
     template <class T>

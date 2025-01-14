@@ -45,7 +45,7 @@ Item {
             else if (user.isHoneyBadgerUser) {
                 return hb_ih_subscriber
             }
-            else if (user.isByzantineUser || user.isFinneyUser) {
+            else if (user.isGroupWallet) {
                 if (hasGroupWallet) {
                     return isObserver ? observer_subscriber() : b_subscriber
                 }

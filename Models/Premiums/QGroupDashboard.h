@@ -247,6 +247,7 @@ public slots:
     void updateProgress();
     void updateSuccess();
     void updateFail();
+    void markRead();
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);
@@ -272,7 +273,6 @@ private:
     QJsonObject m_inviterInfo {};
     QJsonArray m_signerInfo {};
     QJsonObject m_walletDraftInfo {};
-    QString m_alertId {};
     QVariantList m_keys {};
     bool m_showDashBoard {false};
     int m_mInfo {0};

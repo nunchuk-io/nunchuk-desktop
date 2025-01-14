@@ -168,7 +168,7 @@ QButtonLargeTail {
             {
                 visible: enableRequestSignature,
                 label: "Request signature",
-                icon: "qrc:/Images/Images/OnlineMode/signature-dark.png",
+                icon: "qrc:/Images/Images/signature-dark.png",
                 iconRight: "",
                 color: "#031F2B",
                 enable: enableRequestSignature,
@@ -180,7 +180,7 @@ QButtonLargeTail {
             {
                 visible: enableScheduleBroadcast,
                 label: "Schedule broadcast",
-                icon:  "qrc:/Images/Images/OnlineMode/scheduling-dark.png",
+                icon:  "qrc:/Images/Images/scheduling-dark.png",
                 iconRight: "",
                 color: "#031F2B",
                 enable: enableScheduleBroadcast,
@@ -192,7 +192,7 @@ QButtonLargeTail {
             {
                 visible: true,
                 label: "Copy transaction ID",
-                icon: "qrc:/Images/Images/Copy_031F2B.png",
+                icon: "qrc:/Images/Images/copy-dark.svg",
                 iconRight: "",
                 color: "#031F2B",
                 enable: true,
@@ -204,7 +204,7 @@ QButtonLargeTail {
             {
                 visible: enableCancelTransaction,
                 label: (isAssisedWallet || isSharedWallet) ? "Cancel transaction" : "Remove transaction",
-                icon: "qrc:/Images/Images/OnlineMode/cancel_red_24dp.png",
+                icon: "qrc:/Images/Images/cancel_red_24dp.png",
                 iconRight: "",
                 color: "#CF4018",
                 enable: enableCancelTransaction,
@@ -216,7 +216,7 @@ QButtonLargeTail {
             {
                 visible: enableShowInvoice,
                 label: "Show as an invoice",
-                icon: "qrc:/Images/Images/OnlineMode/sticky_note_2.png",
+                icon: "qrc:/Images/Images/sticky_note_2.png",
                 iconRight: "",
                 color: "#031F2B",
                 enable: enableShowInvoice,

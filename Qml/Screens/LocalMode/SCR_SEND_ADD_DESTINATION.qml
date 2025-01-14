@@ -62,30 +62,28 @@ QScreen {
                 Row {
                     anchors.centerIn: parent
                     spacing: 3
-                    QImage {
+                    QIcon {
+                        iconSize: 16
                         source: "qrc:/Images/Images/Escrow Wallet.png"
-                        width: 16
-                        height: 16
                     }
-                    QText {
+                    QLato {
                         text: STR.STR_QML_212
                         color: "#F8D418"
                         width: 49
                         height: 10
                         font.weight: Font.Bold
-                        font.family: "Lato"
                         font.pixelSize: 10
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
 
-            QText {
+            QLato {
                 text: "(" + walletInfo.walletName + ")"
-                color: "#031F2B"
-                font.weight: Font.DemiBold
-                font.family: "Montserrat"
-                font.pixelSize: 14
+                font.weight: Font.Bold
+                font.pixelSize: 16
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignLeft
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -116,36 +114,26 @@ QScreen {
                         anchors.fill: parent
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 6
-                        QText {
+                        QLato {
                             height: parent.height
                             text: sendRoot.sendCoinSelected ? STR.STR_QML_1488 : STR.STR_QML_259
-                            color: "#031F2B"
-                            font.family: "Lato"
-                            font.weight: Font.DemiBold
+                            font.weight: Font.Bold
                             font.pixelSize: 16
                             verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
                         }
-                        QText {
+                        QLato {
                             height: parent.height
-                            text: sendRoot.totalAmount
-                            color: "#031F2B"
-                            font.family: "Lato"
+                            text: qsTr("%1%2").arg(sendRoot.totalAmount).arg(RoomWalletData.unitValue)
+                            font.weight: Font.Normal
                             font.pixelSize: 16
                             verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
                         }
-                        QText {
-                            height: parent.height
-                            text: RoomWalletData.unitValue
-                            color: "#031F2B"
-                            font.family: "Lato"
-                            font.pixelSize: 16
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        QText {
+                        QLato {
                             height: parent.height
                             text: qsTr("(%1%2)").arg(AppSetting.currencySymbol).arg(sendRoot.sendCoinSelected ? walletInfo.utxoList.amountCurrency : walletInfo.walletBalanceCurrency)
-                            color: "#595959"
-                            font.family: "Lato"
+                            color: "#757575"
                             font.pixelSize: 12
                             verticalAlignment: Text.AlignVCenter
                         }
@@ -155,13 +143,12 @@ QScreen {
                     width: 250
                     height: 28
                     visible: destination.count == 1
-                    QText {
+                    QLato {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
                         text: sendRoot.sendCoinSelected ? STR.STR_QML_1487 : STR.STR_QML_262
-                        color: "#031F2B"
                         font.pixelSize: 16
-                        font.weight: Font.DemiBold
+                        font.weight: Font.Bold
                         scale: sendAllMouse.pressed ? 0.95 : 1
                         transformOrigin: Item.Center
                         MouseArea {
@@ -587,10 +574,9 @@ QScreen {
                         Row {
                             height: parent.height
                             spacing: 8
-                            QImage {
-                                source: "qrc:/Images/Images/fav_bookmark_24px.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/fav_bookmark_24px.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
@@ -674,10 +660,9 @@ QScreen {
                         Row {
                             height: parent.height
                             spacing: 8
-                            QImage {
-                                source: "qrc:/Images/Images/fav_wallet-dark.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/fav_wallet-dark.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
@@ -842,10 +827,9 @@ QScreen {
                             anchors.fill: parent
                             anchors.margins: 12
                             spacing: 8
-                            QImage {
-                                source: "qrc:/Images/Images/fav_bookmark_24px.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/fav_bookmark_24px.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QText {
@@ -858,10 +842,9 @@ QScreen {
                                 wrapMode: Text.WrapAnywhere
                                 width: parent.width - 64
                             }
-                            QImage {
-                                source: "qrc:/Images/Images/Arrow-Right.png"
-                                width: 24
-                                height: 24
+                            QIcon {
+                                iconSize: 24
+                                source: "qrc:/Images/Images/right-arrow-dark.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                                 scale: mouseedit.pressed ? 0.95 : 1
                                 transformOrigin: Item.Center
@@ -893,9 +876,8 @@ QScreen {
                 Row {
                     anchors.centerIn: parent
                     spacing: 8
-                    QImage {
-                        width: 36
-                        height: 36
+                    QIcon {
+                        iconSize: 36
                         source: "qrc:/Images/Images/warning-dark.svg"
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -1030,10 +1012,9 @@ QScreen {
                         anchors.left: parent.left
                         spacing: 4
                         visible: favLabelEdit.length > 0
-                        QImage {
-                            source: "qrc:/Images/Images/info-60px.png"
-                            width: 16
-                            height: 16
+                        QIcon {
+                            iconSize: 16
+                            source: "qrc:/Images/Images/info-60px.svg"
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QText {
@@ -1061,17 +1042,16 @@ QScreen {
                         input.placeholderText: "Enter an address"
                         input.rightPadding: 48
                     }
-                    QImage {
+                    QIcon {
+                        iconSize: 36
                         id: qricoimport
-                        source: "qrc:/Images/Images/QrSendButton.png"
+                        source: "qrc:/Images/Images/QrSendButton.svg"
                         anchors.bottom: favValueEdit.bottom
                         anchors.bottomMargin: favValueEdit.isValid ? 6 : 38
                         anchors.right: favValueEdit.right
                         anchors.rightMargin: 6
                         transformOrigin: Item.Center
                         scale: qrMouse.pressed ? 0.95 : 1
-                        width: 36
-                        height: 36
                         visible: addNewAddress.dataValue === ""
                         MouseArea {
                             id: qrMouse
@@ -1097,9 +1077,8 @@ QScreen {
                 Row {
                     anchors.centerIn: parent
                     spacing: 8
-                    QImage {
-                        width: 36
-                        height: 36
+                    QIcon {
+                        iconSize: 36
                         source: "qrc:/Images/Images/warning-dark.svg"
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -1196,6 +1175,7 @@ QScreen {
     }
 
     function requestFilterOutAddress() {
+        AppSetting.loadFavoriteAddresses()
         filterOutAddress = []
         for(var i = 0; i < AppSetting.favoriteAddresses.length; i++) {
             var _address = AppSetting.favoriteAddresses[i]

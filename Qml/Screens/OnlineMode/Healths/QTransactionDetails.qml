@@ -121,10 +121,10 @@ QOnScreenContentTypeA {
                     requestExportPSBT()
                 },
                 function() {
-                    requestExportViaBBQR()
+                    requestExportViaQR()
                 },
                 function() {
-                    requestExportViaQR()
+                    requestExportViaBBQR()
                 },
                 function() {
                     openfileDialog.open()

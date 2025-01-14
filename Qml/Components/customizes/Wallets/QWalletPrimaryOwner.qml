@@ -88,7 +88,7 @@ QOnScreenContentTypeA {
         QWarningBg {
             width: 728
             iSize: 36
-            icon: "qrc:/Images/Images/info-60px.png"
+            icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: STR.STR_QML_1196
             anchors.bottom: parent.bottom
         }
