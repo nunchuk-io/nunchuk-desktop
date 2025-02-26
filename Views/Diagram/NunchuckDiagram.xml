@@ -217,6 +217,7 @@
                     <UML:Transition xmi.idref="vvh1-3b6d01e8addcd5b8c44b389da0aed4cf"/>
                     <UML:Transition xmi.idref="aya-a4b3c58768f18e7c0e0d72f1cf342a27"/>
                     <UML:Transition xmi.idref="195e-ad04fdd1149a1eaf497e99522048b9e1"/>
+                    <UML:Transition xmi.idref="dbud-3ec9bc54ed208b8880405346ac06d135"/>
                   </UML:StateVertex.outgoing>
                   <UML:StateVertex.incoming>
                     <UML:Transition xmi.idref="jltv-745d81bff669bd4594ffc06dd0835a51"/>
@@ -240,6 +241,7 @@
                     <UML:Transition xmi.idref="32m3-a13a0553316f5a4cc347d639643cab65"/>
                     <UML:Transition xmi.idref="bncf-f9b0a716d273f642dd6f5cc2c514fe1d"/>
                     <UML:Transition xmi.idref="ttmz-3b6d01e8addcd5b8c44b389da0aed4cf"/>
+                    <UML:Transition xmi.idref="b563-3ec9bc54ed208b8880405346ac06d135"/>
                   </UML:StateVertex.incoming>
                   <UML:State.entry>
                     <UML:Action xmi.id="2rx-37df39f05319013eab9ee82f88a58653" name="ROOT_Entry" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
@@ -5724,6 +5726,44 @@
                             </UML:Transition>
                           </UML:State.internalTransition>
                         </UML:CompositeState>
+                        <UML:CompositeState xmi.id="hso-3ec9bc54ed208b8880405346ac06d135" name="SCR_SETUP_GROUP_WALLET%5BLAYER%3A%3ALAYER_ONSCREEN%5D" version="0" unSolvedFlag="false" isConcurrent="true" isOrthogonal="false" isRegion="true">
+                          <UML:StateVertex.container>
+                            <UML:CompositeState xmi.idref="3r974-591e79a94a652a5d94517ec076c2b3d9"/>
+                          </UML:StateVertex.container>
+                          <UML:StateVertex.outgoing>
+                            <UML:Transition xmi.idref="hur-3ec9bc54ed208b8880405346ac06d135"/>
+                            <UML:Transition xmi.idref="b563-3ec9bc54ed208b8880405346ac06d135"/>
+                          </UML:StateVertex.outgoing>
+                          <UML:StateVertex.incoming>
+                            <UML:Transition xmi.idref="hur-3ec9bc54ed208b8880405346ac06d135"/>
+                            <UML:Transition xmi.idref="dbud-3ec9bc54ed208b8880405346ac06d135"/>
+                          </UML:StateVertex.incoming>
+                          <UML:State.entry>
+                            <UML:Action xmi.id="73xx-3ec9bc54ed208b8880405346ac06d135" name="SCR_SETUP_GROUP_WALLET_Entry" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                          </UML:State.entry>
+                          <UML:State.exit>
+                            <UML:Action xmi.id="73xz-3ec9bc54ed208b8880405346ac06d135" name="SCR_SETUP_GROUP_WALLET_Exit" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                          </UML:State.exit>
+                          <UML:State.doActivity>
+                            <UML:Action xmi.id="73xy-3ec9bc54ed208b8880405346ac06d135" name="NONE" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                          </UML:State.doActivity>
+                          <UML:State.internalTransition>
+                            <UML:Transition xmi.id="hur-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_ENTER+%2F+EVT_SETUP_GROUP_WALLET_ENTER_HANDLER" version="0" unSolvedFlag="false">
+                              <UML:Transition.effect>
+                                <UML:Action xmi.id="96a5-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_ENTER_HANDLER" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                              </UML:Transition.effect>
+                              <UML:Transition.trigger>
+                                <UML:Event xmi.id="96a4-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_ENTER" version="0" unSolvedFlag="false"></UML:Event>
+                              </UML:Transition.trigger>
+                              <UML:Transition.source>
+                                <UML:StateVertex xmi.idref="hso-3ec9bc54ed208b8880405346ac06d135"/>
+                              </UML:Transition.source>
+                              <UML:Transition.target>
+                                <UML:StateVertex xmi.idref="hso-3ec9bc54ed208b8880405346ac06d135"/>
+                              </UML:Transition.target>
+                            </UML:Transition>
+                          </UML:State.internalTransition>
+                        </UML:CompositeState>
                       </UML:CompositeState.subvertex>
                     </UML:CompositeState>
                     <UML:CompositeState xmi.id="3r975-591e79a94a652a5d94517ec076c2b3d9" name="" version="0" unSolvedFlag="false" isConcurrent="true" isOrthogonal="false" isRegion="true">
@@ -9344,6 +9384,40 @@
                 <UML:StateMachine xmi.idref="7-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
               </UML:Transition.stateMachine>
             </UML:Transition>
+            <UML:Transition xmi.id="b563-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_BACK+%2F+EVT_SETUP_GROUP_WALLET_BACK_HANDLER" version="0" unSolvedFlag="false">
+              <UML:Transition.effect>
+                <UML:Action xmi.id="dbrj-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_BACK_HANDLER" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+              </UML:Transition.effect>
+              <UML:Transition.trigger>
+                <UML:Event xmi.id="dbri-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_BACK" version="0" unSolvedFlag="false"></UML:Event>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:StateVertex xmi.idref="hso-3ec9bc54ed208b8880405346ac06d135"/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:StateVertex xmi.idref="3ri-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              </UML:Transition.target>
+              <UML:Transition.stateMachine>
+                <UML:StateMachine xmi.idref="7-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              </UML:Transition.stateMachine>
+            </UML:Transition>
+            <UML:Transition xmi.id="dbud-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_REQUEST+%2F+EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER" version="0" unSolvedFlag="false">
+              <UML:Transition.effect>
+                <UML:Action xmi.id="ffed-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+              </UML:Transition.effect>
+              <UML:Transition.trigger>
+                <UML:Event xmi.id="ffec-3ec9bc54ed208b8880405346ac06d135" name="EVT_SETUP_GROUP_WALLET_REQUEST" version="0" unSolvedFlag="false"></UML:Event>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:StateVertex xmi.idref="3ri-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:StateVertex xmi.idref="hso-3ec9bc54ed208b8880405346ac06d135"/>
+              </UML:Transition.target>
+              <UML:Transition.stateMachine>
+                <UML:StateMachine xmi.idref="7-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              </UML:Transition.stateMachine>
+            </UML:Transition>
           </UML:StateMachine.transitions>
         </UML:StateMachine>
       </UML:Namespace.ownedElement>
@@ -9481,6 +9555,8 @@
               <JUDE:TransitionPresentation xmi.idref="ttmy-3b6d01e8addcd5b8c44b389da0aed4cf"/>
               <JUDE:TransitionPresentation xmi.idref="ay9-a4b3c58768f18e7c0e0d72f1cf342a27"/>
               <JUDE:TransitionPresentation xmi.idref="195d-ad04fdd1149a1eaf497e99522048b9e1"/>
+              <JUDE:TransitionPresentation xmi.idref="b562-3ec9bc54ed208b8880405346ac06d135"/>
+              <JUDE:TransitionPresentation xmi.idref="dbuc-3ec9bc54ed208b8880405346ac06d135"/>
             </JUDE:UPresentation.clients>
             <JUDE:UPresentation.customStyleMap>
               <JUDE:UPresentation.styleProperty key="fill.color.alpha" value="FF"/>
@@ -11402,6 +11478,26 @@
             <JUDE:JomtPresentation.location>
               <XMI.field>737.0619056685769</XMI.field>
               <XMI.field>4486.534979499773</XMI.field>
+            </JUDE:JomtPresentation.location>
+          </JUDE:CompositeStatePresentation>
+          <JUDE:CompositeStatePresentation xmi.id="hsn-3ec9bc54ed208b8880405346ac06d135" version="0" depth="2147483631" stereotypeVisibility="true" constraintVisibility="true" notationType="0" width="681.0128895534476" height="217.21875" doAutoResize="false" visibility="true" label="SCR_SETUP_GROUP_WALLET%5BLAYER%3A%3ALAYER_ONSCREEN%5D" allActionVisibility="true" horizontalOffsetString="" verticalOffsetString="">
+            <JUDE:UPresentation.semanticModel>
+              <UML:CompositeState xmi.idref="hso-3ec9bc54ed208b8880405346ac06d135"/>
+            </JUDE:UPresentation.semanticModel>
+            <JUDE:UPresentation.diagram>
+              <JUDE:Diagram xmi.idref="6-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+            </JUDE:UPresentation.diagram>
+            <JUDE:UPresentation.clients>
+              <JUDE:TransitionPresentation xmi.idref="b562-3ec9bc54ed208b8880405346ac06d135"/>
+              <JUDE:TransitionPresentation xmi.idref="dbuc-3ec9bc54ed208b8880405346ac06d135"/>
+            </JUDE:UPresentation.clients>
+            <JUDE:UPresentation.customStyleMap>
+              <JUDE:UPresentation.styleProperty key="fill.color.alpha" value="FF"/>
+              <JUDE:UPresentation.styleProperty key="fill.color" value="#FFFFCC"/>
+            </JUDE:UPresentation.customStyleMap>
+            <JUDE:JomtPresentation.location>
+              <XMI.field>149.18765835692375</XMI.field>
+              <XMI.field>3946.589350501901</XMI.field>
             </JUDE:JomtPresentation.location>
           </JUDE:CompositeStatePresentation>
           <JUDE:TransitionPresentation xmi.id="36qjg-7abe990174f0ad293315f57584c87114" version="0" depth="2147483587" stereotypeVisibility="true" constraintVisibility="true" notationType="0" rightAngle="true" visibility="true">
@@ -21989,6 +22085,110 @@
               <XMI.field>531.5019951905324</XMI.field>
               <XMI.field>-6439.426041830513</XMI.field>
               <XMI.field>467.54816281182116</XMI.field>
+            </JUDE:PathPresentation.points>
+          </JUDE:TransitionPresentation>
+          <JUDE:TransitionPresentation xmi.id="b562-3ec9bc54ed208b8880405346ac06d135" version="0" depth="2147483042" stereotypeVisibility="true" constraintVisibility="true" notationType="0" rightAngle="false" visibility="true">
+            <JUDE:UPresentation.semanticModel>
+              <UML:Transition xmi.idref="b563-3ec9bc54ed208b8880405346ac06d135"/>
+            </JUDE:UPresentation.semanticModel>
+            <JUDE:UPresentation.diagram>
+              <JUDE:Diagram xmi.idref="6-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+            </JUDE:UPresentation.diagram>
+            <JUDE:UPresentation.servers>
+              <JUDE:CompositeStatePresentation xmi.idref="hsn-3ec9bc54ed208b8880405346ac06d135"/>
+              <JUDE:CompositeStatePresentation xmi.idref="3rh-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+            </JUDE:UPresentation.servers>
+            <JUDE:UPresentation.customStyleMap>
+              <JUDE:UPresentation.styleProperty key="line.shape" value="line"/>
+            </JUDE:UPresentation.customStyleMap>
+            <JUDE:JomtPresentation.location>
+              <XMI.field>0.0</XMI.field>
+              <XMI.field>0.0</XMI.field>
+            </JUDE:JomtPresentation.location>
+            <JUDE:PathPresentation.namePresentation>
+              <JUDE:LabelPresentation xmi.id="b58d-3ec9bc54ed208b8880405346ac06d135" version="0" depth="0" stereotypeVisibility="true" constraintVisibility="true" notationType="0" width="500.0" height="15.09375" doAutoResize="true" visibility="true" label="EVT_SETUP_GROUP_WALLET_BACK+%2F+EVT_SETUP_GROUP_WALLET_BACK_HANDLER">
+                <JUDE:JomtPresentation.location>
+                  <XMI.field>969.8783287976466</XMI.field>
+                  <XMI.field>4689.306453880351</XMI.field>
+                </JUDE:JomtPresentation.location>
+                <JUDE:JomtPresentation.compositeParent>
+                  <JUDE:UPresentation xmi.idref="b562-3ec9bc54ed208b8880405346ac06d135"/>
+                </JUDE:JomtPresentation.compositeParent>
+              </JUDE:LabelPresentation>
+            </JUDE:PathPresentation.namePresentation>
+            <JUDE:PathPresentation.points>
+              <XMI.field>1210.9064578514824</XMI.field>
+              <XMI.field>4067.5979841355365</XMI.field>
+              <XMI.field>1225.9064578514824</XMI.field>
+              <XMI.field>5104.5979841355365</XMI.field>
+              <XMI.field>1001.9064578514824</XMI.field>
+              <XMI.field>5107.5979841355365</XMI.field>
+            </JUDE:PathPresentation.points>
+            <JUDE:BinaryRelationPresentation.sourceEnd>
+              <XMI.field>0.5</XMI.field>
+              <XMI.field>0.5</XMI.field>
+            </JUDE:BinaryRelationPresentation.sourceEnd>
+            <JUDE:BinaryRelationPresentation.targetEnd>
+              <XMI.field>0.5</XMI.field>
+              <XMI.field>0.5</XMI.field>
+            </JUDE:BinaryRelationPresentation.targetEnd>
+            <JUDE:PathPresentation.points>
+              <XMI.field>1210.9064578514824</XMI.field>
+              <XMI.field>4067.5979841355365</XMI.field>
+              <XMI.field>1225.9064578514824</XMI.field>
+              <XMI.field>5104.5979841355365</XMI.field>
+              <XMI.field>1001.9064578514824</XMI.field>
+              <XMI.field>5107.5979841355365</XMI.field>
+            </JUDE:PathPresentation.points>
+          </JUDE:TransitionPresentation>
+          <JUDE:TransitionPresentation xmi.id="dbuc-3ec9bc54ed208b8880405346ac06d135" version="0" depth="2147483041" stereotypeVisibility="true" constraintVisibility="true" notationType="0" rightAngle="false" visibility="true">
+            <JUDE:UPresentation.semanticModel>
+              <UML:Transition xmi.idref="dbud-3ec9bc54ed208b8880405346ac06d135"/>
+            </JUDE:UPresentation.semanticModel>
+            <JUDE:UPresentation.diagram>
+              <JUDE:Diagram xmi.idref="6-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+            </JUDE:UPresentation.diagram>
+            <JUDE:UPresentation.servers>
+              <JUDE:CompositeStatePresentation xmi.idref="3rh-6a009c9f9c0d5cdd74bbc0b3963ace20"/>
+              <JUDE:CompositeStatePresentation xmi.idref="hsn-3ec9bc54ed208b8880405346ac06d135"/>
+            </JUDE:UPresentation.servers>
+            <JUDE:UPresentation.customStyleMap>
+              <JUDE:UPresentation.styleProperty key="line.shape" value="line"/>
+            </JUDE:UPresentation.customStyleMap>
+            <JUDE:JomtPresentation.location>
+              <XMI.field>0.0</XMI.field>
+              <XMI.field>0.0</XMI.field>
+            </JUDE:JomtPresentation.location>
+            <JUDE:PathPresentation.namePresentation>
+              <JUDE:LabelPresentation xmi.id="fptv-3ec9bc54ed208b8880405346ac06d135" version="0" depth="0" stereotypeVisibility="true" constraintVisibility="true" notationType="0" width="552.0" height="15.09375" doAutoResize="true" visibility="true" label="EVT_SETUP_GROUP_WALLET_REQUEST+%2F+EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER">
+                <JUDE:JomtPresentation.location>
+                  <XMI.field>257.459491905518</XMI.field>
+                  <XMI.field>4763.127882768313</XMI.field>
+                </JUDE:JomtPresentation.location>
+                <JUDE:JomtPresentation.compositeParent>
+                  <JUDE:UPresentation xmi.idref="dbuc-3ec9bc54ed208b8880405346ac06d135"/>
+                </JUDE:JomtPresentation.compositeParent>
+              </JUDE:LabelPresentation>
+            </JUDE:PathPresentation.namePresentation>
+            <JUDE:PathPresentation.points>
+              <XMI.field>735.9064578514824</XMI.field>
+              <XMI.field>4974.5979841355365</XMI.field>
+              <XMI.field>545.9064578514824</XMI.field>
+              <XMI.field>4962.5979841355365</XMI.field>
+            </JUDE:PathPresentation.points>
+            <JUDE:BinaryRelationPresentation.sourceEnd>
+              <XMI.field>0.5</XMI.field>
+              <XMI.field>0.5</XMI.field>
+            </JUDE:BinaryRelationPresentation.sourceEnd>
+            <JUDE:BinaryRelationPresentation.targetEnd>
+              <XMI.field>0.5</XMI.field>
+              <XMI.field>0.5</XMI.field>
+            </JUDE:BinaryRelationPresentation.targetEnd>
+            <JUDE:PathPresentation.points>
+              <XMI.field>735.9064578514824</XMI.field>
+              <XMI.field>4974.5979841355365</XMI.field>
+              <XMI.field>545.9064578514824</XMI.field>
+              <XMI.field>4962.5979841355365</XMI.field>
             </JUDE:PathPresentation.points>
           </JUDE:TransitionPresentation>
         </JUDE:Diagram.presentations>

@@ -33,9 +33,34 @@ Item {
     property bool isDashboard: false
     property bool isLocked: false
     property bool isReplaced: false
+    property bool isSandboxWallet: false
     property string walletRole: ""
-    readonly property string gradientFrom   : isHotWallet ? "#A66800" : (isLocked || (walletRole === "KEYHOLDER_LIMITED") ? "#595959" : (isAssisted || isDashboard ? "#2F766D" : "#2F466C"))
-    readonly property string gradientTo     : isHotWallet ? "#A66800" : (isLocked || (walletRole === "KEYHOLDER_LIMITED") ? "#595959" : (isAssisted || isDashboard ? "#1C4A21" : "#1C4A21"))
+    readonly property string gradientFrom: {
+        if (isHotWallet)
+            return "#A66800";
+        else if (isSandboxWallet)
+            return "#2B74A9";
+        else if (isLocked || walletRole === "KEYHOLDER_LIMITED")
+            return "#595959";
+        else if (isAssisted || isDashboard)
+            return "#2F766D";
+        else
+            return "#2F466C";
+    }
+
+    readonly property string gradientTo : {
+        if (isHotWallet)
+            return "#A66800";
+        else if (isSandboxWallet)
+            return "#031F2B";
+        else if (isLocked || walletRole === "KEYHOLDER_LIMITED")
+            return "#595959";
+        else if (isAssisted || isDashboard)
+            return "#1C4A21";
+        else
+            return "#031F2B";
+    }
+
     Item {
         id: _detail
         anchors.fill: parent
@@ -43,12 +68,22 @@ Item {
         Column {
             anchors.fill: parent
             LinearGradient {
+                id: gradientItem
                 height: 78
                 width: _item.width
-                start: Qt.point(0, 0)
-                end: Qt.point(0, 78)
+                start: {
+                    if (isSandboxWallet)
+                        return Qt.point(0, 0)
+                    else
+                        return Qt.point(0, 0)
+                }
+                end: {
+                    if (isSandboxWallet)
+                        return Qt.point(_item.width, _item.height)
+                    else
+                        return Qt.point(_item.width, 0)
+                }
                 gradient: Gradient {
-                    orientation: Gradient.Horizontal
                     GradientStop { position: 0.0; color: gradientFrom }
                     GradientStop { position: 1.0; color: gradientTo }
                 }

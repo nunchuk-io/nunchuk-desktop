@@ -58,28 +58,23 @@ void EVT_ADD_WALLET_TOP_UP_XPUBS_REQUEST_HANDLER(QVariant msg) {
             QWarningMessage warningmsg;
             bridge::nunchukCacheMasterSignerXPub(master_signer_id, warningmsg);
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-                if(((int)ENUNCHUCK::SignerType::SOFTWARE == signer_type)
-                        || (int)ENUNCHUCK::SignerType::HARDWARE == signer_type
-                        || (int)ENUNCHUCK::SignerType::NFC == signer_type)
+                if(((int)ENUNCHUCK::SignerType::SOFTWARE == signer_type) || ((int)ENUNCHUCK::SignerType::HARDWARE == signer_type) || ((int)ENUNCHUCK::SignerType::NFC == signer_type))
                 {
-                    int numberSignerRequired = AppModel::instance()->newWalletInfo()->n();
-                    bool escrow = AppModel::instance()->newWalletInfo()->escrow();
-                    ENUNCHUCK::WalletType walletType =  escrow ? ENUNCHUCK::WalletType::ESCROW :
-                                                                 numberSignerRequired > 1 ? ENUNCHUCK::WalletType::MULTI_SIG
-                                                                                          : ENUNCHUCK::WalletType::SINGLE_SIG;
-                    ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt();
+                    int  walletType =  AppModel::instance()->newWalletInfo()->walletType();
+                    int  addressType = AppModel::instance()->newWalletInfo()->walletAddressType();
+
                     warningmsg.resetWarningMessage();
                     QSingleSignerPtr signer{nullptr};
                     if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == signer_type) {
                         signer = bridge::nunchukGetDefaultSignerFromMasterSigner(master_signer_id,
-                                                                                 walletType,
-                                                                                 addressType,
+                                                                                 (ENUNCHUCK::WalletType)walletType,
+                                                                                 (ENUNCHUCK::AddressType)addressType,
                                                                                  warningmsg);
                     }
                     else {
                         signer = bridge::nunchukGetUnusedSignerFromMasterSigner(master_signer_id,
-                                                                                walletType,
-                                                                                addressType,
+                                                                                (ENUNCHUCK::WalletType)walletType,
+                                                                                (ENUNCHUCK::AddressType)addressType,
                                                                                 warningmsg);
                     }
 
@@ -123,13 +118,13 @@ void EVT_ADD_WALLET_GENERATE_SIGNER_HANDLER(QVariant msg) {
 void EVT_ADD_WALLET_GET_WALLET_DESCRIPTOR_HANDLER(QVariant msg) {
     if(QEventProcessor::instance()->onsRequester() != E::STATE_ID_SCR_ADD_WALLET){
         QWarningMessage msgWarning;
-        QString ret = bridge::nunchukDraftWallet(AppModel::instance()->newWalletInfo()->name(),
-                                                  AppModel::instance()->newWalletInfo()->m(),
-                                                  AppModel::instance()->newWalletInfo()->n(),
+        QString ret = bridge::nunchukDraftWallet(AppModel::instance()->newWalletInfo()->walletNameDisplay(),
+                                                  AppModel::instance()->newWalletInfo()->walletM(),
+                                                  AppModel::instance()->newWalletInfo()->walletN(),
                                                   AppModel::instance()->newWalletInfo()->singleSignersAssigned(),
-                                                  (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt(),
-                                                  AppModel::instance()->newWalletInfo()->escrow(),
-                                                  AppModel::instance()->newWalletInfo()->description(),
+                                                  (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->walletAddressType(),
+                                                  AppModel::instance()->newWalletInfo()->walletEscrow(),
+                                                  AppModel::instance()->newWalletInfo()->walletDescription(),
                                                   msgWarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgWarning.type()){
             AppModel::instance()->newWalletInfo()->setDescriptior(ret);

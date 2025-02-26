@@ -52,6 +52,7 @@ class QMasterSigner : public QObject, public WalletKeys {
     Q_PROPERTY(QVariantList healthCheckHistory READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
     Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
     Q_PROPERTY(bool isMine                 READ isMine                                  CONSTANT)
+    Q_PROPERTY(bool taprootSupported       READ taprootSupported                        CONSTANT)
 
 public:
     QMasterSigner();
@@ -125,6 +126,12 @@ public:
     QSingleSignerPtr cloneSingleSigner();
 
     bool isMine() const;
+
+    bool taprootSupported();
+    void setDeviceIndex(int newDeviceIndex);
+
+    int deviceIndex() const;
+
 private:
     QString id_ = "";
     QString name_ = "";
@@ -144,6 +151,7 @@ private:
     bool isPrimaryKey_ = false;
     bool isDraft = false;
     QString m_address;
+    int m_deviceIndex {0};
 signals:
     void idChanged();
     void nameChanged();
@@ -165,7 +173,6 @@ signals:
     void healthCheckHistoryChanged() final;
     void addressChanged();
 };
-typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;
 
 bool sortMasterSignerByNameAscending(const QMasterSignerPtr &v1, const QMasterSignerPtr &v2);
 bool sortMasterSignerByNameDescending(const QMasterSignerPtr &v1, const QMasterSignerPtr &v2);
@@ -184,6 +191,7 @@ public:
     QMasterSignerPtr getMasterSignerByIndex(const int index);
     QMasterSignerPtr getMasterSignerById(const QString& id);
     QMasterSignerPtr getMasterSignerByXfp(const QString& xfp);
+    QMasterSignerPtr getMasterSignerByXfpName(const QString& xfp, const QString& name);
     QString getMasterSignerNameByFingerPrint(const QString &fingerprint);
     int getIndexNameByFingerPrint(const QString &fingerprint);
     bool removeMasterSigner(const QMasterSignerPtr it);
@@ -219,7 +227,8 @@ public:
         master_signer_need_pin_Role,
         master_signer_need_xpub_Role,
         master_signer_primary_key_Role,
-        master_signer_tag_Role
+        master_signer_tag_Role,
+        master_signer_taproot_supported
     };
 
 public slots:

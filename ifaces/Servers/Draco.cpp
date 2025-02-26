@@ -129,7 +129,7 @@ void Draco::btcRates()
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
     QEventLoop eventLoop;
-    QObject::connect(reply.get(), SIGNAL(finished()), &eventLoop, SLOT(quit()));
+    QObject::connect(reply.get(), &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray response_data = reply->readAll();
@@ -588,7 +588,7 @@ void Draco::getMe()
             user.chat_id     = userObj["chat_id"].toString();
             user.username    = userObj["username"].toString();
             user.login_type  = userObj["login_type"].toString();
-            if(0 != QString::compare(user.email, AppSetting::instance()->groupSetting(), Qt::CaseInsensitive)){
+            if(!qUtils::strCompare(user.email, AppSetting::instance()->groupSetting())){
                 AppSetting::instance()->setGroupSetting(user.email);
             }
             AppModel::instance()->startCheckAuthorize();
@@ -632,7 +632,7 @@ void Draco::getMepKey(const QString &public_address)
             user.chat_id     = userObj["chat_id"].toString();
             user.username    = userObj["username"].toString();
             user.login_type  = userObj["login_type"].toString();
-            if(0 != QString::compare(user.email, AppSetting::instance()->groupSetting(), Qt::CaseInsensitive)){
+            if(!qUtils::strCompare(user.email, AppSetting::instance()->groupSetting())){
                 AppSetting::instance()->setGroupSetting(user.email);
             }
             CLIENT_INSTANCE->setMe(user);
@@ -4630,5 +4630,53 @@ bool Draco::DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBo
     }
     errormsg = reply_msg;
     return false;
+}
+
+bool Draco::GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg)
+{
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Common::CMD_IDX::TAPROOT_SUPPORTED_SIGNERS];
+    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+QSet<int> Draco::GetTaprootSupportedCached(bool reset)
+{
+    if(reset && m_taproot_support_types.size() > 0){
+        m_taproot_support_types.clear();
+    }
+    if(m_taproot_support_types.count() == 0){
+        QJsonObject data;
+        QString     error_msg = "";
+        bool get_result = Draco::instance()->GetTaprootSupportedSigners(data, error_msg);
+        if(get_result){
+            DBG_INFO << data;
+            QJsonArray supported_signers = data["supported_signers"].toArray();
+            foreach (const QJsonValue &value, supported_signers) {
+                QJsonObject obj = value.toObject();
+                QString type = obj["signer_type"].toString();
+                nunchuk::SignerType type_enum = qUtils::GetSignerType(type);
+                m_taproot_support_types.insert((int)type_enum);
+            }
+        }
+    }
+    return m_taproot_support_types;
 }
 

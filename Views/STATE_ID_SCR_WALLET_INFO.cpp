@@ -46,15 +46,16 @@ void SCR_WALLET_INFO_Exit(QVariant msg) {
 void EVT_WALLET_INFO_EDIT_NAME_HANDLER(QVariant msg) {
     QString name        = msg.toMap().value("name").toString();
     QString description = msg.toMap().value("description").toString();
+    DBG_INFO << name << description;
     if (auto w = AppModel::instance()->walletInfo()) {
-        bridge::nunchukUpdateWallet(w->id(), name, description);
+        bridge::nunchukUpdateWallet(w->walletId(), name, description);
     }
 }
 
 void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
     Wallet *wallet = msg.value<Wallet*>();
     if(wallet){
-        QString wallet_id = wallet->id();
+        QString wallet_id = wallet->walletId();
         if (wallet->isDeleting()) {
             if (ServiceSetting::instance()->servicesTagPtr()->secQuesAnswer()) {
                 if (wallet->DeleteAssistedWallet()) {
@@ -75,7 +76,7 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
             if (wallet->isAssistedWallet()) {
                 QMap<QString, QVariant> data;
                 data["state_id"] = E::STATE_ID_SCR_WALLET_INFO;
-                data["wallet_id"] = wallet->id();
+                data["wallet_id"] = wallet->walletId();
                 QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
             }
             else {
@@ -127,7 +128,7 @@ void EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_EXPORT_DB_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(),
+        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(),
                                                 file_path,
                                                 nunchuk::ExportFormat::DB);
         DBG_INFO << file_path << ret;
@@ -140,13 +141,13 @@ void EVT_WALLET_INFO_EXPORT_CSV_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(file);
     if(AppModel::instance()->walletInfo() && (file_path != "")){
         if(csv_type > 0 ){
-            bool ret = bridge::nunchukExportTransactionHistory(AppModel::instance()->walletInfo()->id(),
+            bool ret = bridge::nunchukExportTransactionHistory(AppModel::instance()->walletInfo()->walletId(),
                                                                 file_path,
                                                                 nunchuk::ExportFormat::CSV);
             DBG_INFO << file_path << ret;
         }
         else{
-            bool ret = bridge::nunchukExportUnspentOutputs(AppModel::instance()->walletInfo()->id(),
+            bool ret = bridge::nunchukExportUnspentOutputs(AppModel::instance()->walletInfo()->walletId(),
                                                             file_path,
                                                             nunchuk::ExportFormat::CSV);
             DBG_INFO << file_path << ret;
@@ -157,7 +158,7 @@ void EVT_WALLET_INFO_EXPORT_CSV_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_EXPORT_DESCRIPTOR_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), file_path, nunchuk::ExportFormat::BSMS);
+        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), file_path, nunchuk::ExportFormat::BSMS);
         DBG_INFO << file_path << ret;
     }
 }
@@ -165,7 +166,7 @@ void EVT_WALLET_INFO_EXPORT_DESCRIPTOR_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_EXPORT_COLDCARD_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->id(), file_path, nunchuk::ExportFormat::COLDCARD);
+        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), file_path, nunchuk::ExportFormat::COLDCARD);
         DBG_INFO << file_path << ret;
     }
 }
@@ -216,8 +217,8 @@ void EVT_WALLET_INFO_EDIT_DESCRIPTION_HANDLER(QVariant msg) {
         QString name        = msg.toMap().value("name").toString();
         QString description = msg.toMap().value("description").toString();
 
-        bridge::nunchukUpdateWallet(AppModel::instance()->walletInfo()->id(), name, description);
-        AppModel::instance()->walletList()->updateDescription(AppModel::instance()->walletInfo()->id(), description);
+        bridge::nunchukUpdateWallet(AppModel::instance()->walletInfo()->walletId(), name, description);
+        AppModel::instance()->walletList()->updateDescription(AppModel::instance()->walletInfo()->walletId(), description);
     }
 }
 
@@ -228,7 +229,7 @@ void EVT_WALLET_INFO_EXPORT_QRCODE_HANDLER(QVariant msg) {
         DBG_INFO << qrtype;
         QWarningMessage msgwarning;
         if(qUtils::strCompare(qrtype, "BC-UR2-QR")){ // Seedhammer
-            QStringList qrtags = bridge::nunchukExportBCR2020010Wallet(AppModel::instance()->walletInfo()->id(), msgwarning);
+            QStringList qrtags = bridge::nunchukExportBCR2020010Wallet(AppModel::instance()->walletInfo()->walletId(), msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
                 AppModel::instance()->setQrExported(qrtags);
             }
@@ -237,7 +238,7 @@ void EVT_WALLET_INFO_EXPORT_QRCODE_HANDLER(QVariant msg) {
             }
         }
         else if(qUtils::strCompare(qrtype, "BC-UR2-QR-Legacy")){ //Keystone, Passport, SeedSigner, Jade
-            QStringList qrtags = bridge::nunchukExportKeystoneWallet(AppModel::instance()->walletInfo()->id(), msgwarning);
+            QStringList qrtags = bridge::nunchukExportKeystoneWallet(AppModel::instance()->walletInfo()->walletId(), msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
                 AppModel::instance()->setQrExported(qrtags);
             }
@@ -246,7 +247,7 @@ void EVT_WALLET_INFO_EXPORT_QRCODE_HANDLER(QVariant msg) {
             }
         }
         else { // if(qUtils::strCompare(qrtype, "BBQR-Coldcard")){ //Keystone, Passport, SeedSigner, Jade
-            QStringList qrtags = qUtils::ExportBBQRWallet(AppModel::instance()->walletInfo()->wallet(), msgwarning);
+            QStringList qrtags = qUtils::ExportBBQRWallet(AppModel::instance()->walletInfo()->nunchukWallet(), msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
                 AppModel::instance()->setQrExported(qrtags);
             }
@@ -261,7 +262,7 @@ void EVT_WALLET_INFO_IMPORT_PSBT_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
     if (file_path != "" && wallet){
-        QString wallet_id = wallet->id();
+        QString wallet_id = wallet->walletId();
         QWarningMessage msgwarning;
         QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
@@ -289,9 +290,9 @@ void EVT_WALLET_INFO_REFRESH_WALLET_REQUEST_HANDLER(QVariant msg) {
 void EVT_WALLET_INFO_GAP_LIMIT_REQUEST_HANDLER(QVariant msg)
 {
     if (AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+        QString wallet_id = AppModel::instance()->walletInfo()->walletId();
         uint gap_limit = msg.toUInt();
         bridge::nunchukUpdateWalletGapLimit(wallet_id, gap_limit);
-        AppModel::instance()->walletInfo()->setGapLimit(gap_limit);
+        AppModel::instance()->walletInfo()->setWalletGapLimit(gap_limit);
     }
 }

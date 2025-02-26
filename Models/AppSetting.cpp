@@ -844,7 +844,7 @@ void AppSetting::setEnableMultiDeviceSync(bool enableMultiDeviceSync)
 
 QString AppSetting::currencySymbol()
 {
-    if(0 == QString::compare(currency(), "USD", Qt::CaseInsensitive)){
+    if(qUtils::strCompare(currency(), "USD")){
         return "$";
     }
     else{

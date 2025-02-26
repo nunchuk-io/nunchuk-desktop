@@ -113,6 +113,7 @@ namespace OnlineMode {
 #define SCR_SIGN_IN_VIA_XPUB                      "qrc:/Qml/Screens/OnlineMode/SCR_SIGN_IN_VIA_XPUB.qml"
 #define SCR_EDIT_MEMBERS                          "qrc:/Qml/Screens/OnlineMode/SCR_EDIT_MEMBERS.qml"
 #define SCR_COIN_DETAILS_CONTROL                  "qrc:/Qml/Screens/OnlineMode/SCR_COIN_DETAILS_CONTROL.qml"
+#define SCR_SETUP_GROUP_WALLET                    "qrc:/Qml/Screens/OnlineMode/SCR_SETUP_GROUP_WALLET.qml"
 }
 
 namespace Popups {

@@ -58,6 +58,7 @@ class ENUNCHUCK: public QObject
     Q_ENUMS(RoomType)
     Q_ENUMS(IN_FLOW)
     Q_ENUMS(ROOM_EVT)
+    Q_ENUMS(WalletOptionType_t)
 public:
     enum class AddHardware : int {
         ADD_INHERITANCE = (int)nunchuk::SignerTag::INHERITANCE,
@@ -121,6 +122,7 @@ public:
         PENDING_CONFIRMATION,
         REPLACED,
         CONFIRMED,
+        PENDING_NONCE,
     };
 
     enum class ConnectionStatus {
@@ -208,6 +210,12 @@ public:
         FILE_VIDEO,         //20
         FILE_OTHER,         //21
         INVALID,            //22
+    };
+    enum class WalletOptionType_t : int {
+        E_PERSONAL_WALLET,
+        E_GROUP_WALLET,
+        E_ASSISTED_WALLET,
+        E_HOT_WALLET,
     };
 };
 Q_DECLARE_METATYPE(ENUNCHUCK::AddressType)
@@ -309,6 +317,9 @@ nunchuk::SingleSigner nunchukGetOriginSingleSigner(const QString& xfp,
                                                    const int index,
                                                    QWarningMessage& msg);
 
+nunchuk::SingleSigner nunchukGetOriginSingleSigner(const nunchuk::SingleSigner& signer,
+                                                   QWarningMessage& msg);
+
 QSingleSignerPtr nunchukGetUnusedSignerFromMasterSigner(const QString& mastersigner_id,
                                                         const ENUNCHUCK::WalletType& wallet_type,
                                                         const ENUNCHUCK::AddressType& address_type,
@@ -367,19 +378,12 @@ QWalletPtr nunchukCreateWallet(const nunchuk::Wallet& wallet,
 nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
                                           int m,
                                           int n,
-                                          SingleSignerListModel* signers,
-                                          ENUNCHUCK::AddressType address_type,
-                                          bool is_escrow,
-                                          const QString &desc,
-                                          QWarningMessage &msg);
-
-nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
-                                          int m,
-                                          int n,
-                                          const std::vector<nunchuk::SingleSigner>& signers,
-                                          ENUNCHUCK::AddressType address_type,
-                                          bool is_escrow,
-                                          const QString &desc,
+                                          SingleSignerListModel *signers,
+                                          nunchuk::AddressType address_type,
+                                          nunchuk::WalletType wallet_type,
+                                          const QString& description,
+                                          bool allow_used_signer,
+                                          const QString& decoy_pin,
                                           QWarningMessage &msg);
 
 QString nunchukDraftWallet(const QString& name,
@@ -649,6 +653,7 @@ QTransactionPtr nunchukImportPassportTransaction(const QString& wallet_id,
                                                  QWarningMessage& msg);
 
 void stopNunchuk();
+void stopAllNunchuk();
 
 void AddTapsigner(const QString& card_ident, const QString& xfp,
                   const QString& name, const QString& version,
@@ -820,6 +825,92 @@ QMasterSignerPtr ImportBackupKey( const std::vector<unsigned char>& data,
                                  QWarningMessage& msg);
 
 std::vector<nunchuk::SingleSigner> GetSignersFromMasterSigner(const QString& mastersigner_id);
-}
 
+// Group wallet
+void EnableGroupWallet();
+
+void StartConsumeGroupEvent();
+
+void StopConsumeGroupEvent();
+
+std::vector<nunchuk::Wallet> nunchukGetOriginGroupWallets(QWarningMessage& msg);
+
+// Group chat
+void SendGroupMessage(const std::string& walletId,
+                      const std::string& message,
+                      const nunchuk::SingleSigner& signer,
+                      QWarningMessage &msg);
+
+std::vector<nunchuk::GroupMessage> GetGroupMessages(const std::string& walletId,
+                                                    int page,
+                                                    int pageSize,
+                                                    bool latest,
+                                                    QWarningMessage &msg);
+
+nunchuk::GroupWalletConfig GetGroupWalletConfig(const std::string& walletId,
+                                                QWarningMessage &msg);
+
+void SetGroupWalletConfig(const std::string& walletId,
+                          const nunchuk::GroupWalletConfig& config,
+                          QWarningMessage &msg);
+
+QPair<QString, QString> ParseGroupUrl(const QString& url,
+                                      QWarningMessage &msg);
+
+nunchuk::GroupConfig GetGroupConfig(QWarningMessage &msg);
+
+nunchuk::GroupSandbox CreateGroup(const QString& name,
+                                  int m,
+                                  int n,
+                                  nunchuk::AddressType addressType,
+                                  QWarningMessage &msg);
+
+int GetGroupOnline(const QString& groupId);
+
+nunchuk::GroupSandbox GetGroup(const QString& groupId,
+                               QWarningMessage &msg);
+
+std::vector<nunchuk::GroupSandbox> GetGroups(QWarningMessage &msg);
+
+nunchuk::GroupSandbox JoinGroup(const QString& groupId,
+                                QWarningMessage &msg);
+
+bool DeleteGroup(const QString &groupId);
+
+nunchuk::GroupSandbox SetSlotOccupied(const nunchuk::GroupSandbox& sandbox,
+                                      int index,
+                                      bool value);
+
+nunchuk::GroupSandbox AddSignerToGroup(const QString& groupId,
+                                       const nunchuk::SingleSigner& signer,
+                                       int index, QWarningMessage &msg);
+
+nunchuk::GroupSandbox RemoveSignerFromGroup(const QString& groupId,
+                                            int index,
+                                            QWarningMessage &msg);
+
+nunchuk::GroupSandbox UpdateGroup(const QString& groupId,
+                                  const QString& name,
+                                  int m,
+                                  int n,
+                                  nunchuk::AddressType addressType,
+                                  QWarningMessage &msg);
+
+nunchuk::GroupSandbox FinalizeGroup(const QString& groupId,
+                                    QWarningMessage &msg);
+
+bool CheckGroupWalletExists(const nunchuk::Wallet& wallet,
+                            QWarningMessage &msg);
+
+void RecoverGroupWallet(const QString& walletId,
+                        QWarningMessage &msg);
+
+void SetLastReadMessage(const QString& walletId,
+                        const QString& messageId);
+
+int GetUnreadMessagesCount(const QString& walletId);
+
+QString GetGroupDeviceUID();
+
+}
 #endif // BRIDGEINTERFACE_H

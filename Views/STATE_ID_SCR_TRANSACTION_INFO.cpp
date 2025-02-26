@@ -39,7 +39,7 @@ void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
     QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
     QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
     if(wallet && transaction && transaction.data()->singleSignersAssigned()){
-        QString wallet_id = wallet.data()->id();
+        QString wallet_id = wallet.data()->walletId();
         QString tx_id = transaction.data()->txid();
         QSingleSignerPtr signer = transaction.data()->singleSignersAssigned()->getSingleSignerByFingerPrint(signerXfp);
         if(!signer){
@@ -95,7 +95,7 @@ void EVT_TRANSACTION_EXPORT_REQUEST_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(file_path != ""){
         QWarningMessage msgwarning;
-        bool ret = bridge::nunchukExportTransaction(AppModel::instance()->walletInfo()->id(),
+        bool ret = bridge::nunchukExportTransaction(AppModel::instance()->walletInfo()->walletId(),
                                                     AppModel::instance()->transactionInfo()->txid(),
                                                     file_path,
                                                     msgwarning);
@@ -111,7 +111,7 @@ void EVT_TRANSACTION_IMPORT_REQUEST_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
     if (file_path != "" && wallet){
-        QString wallet_id = wallet.data()->id();
+        QString wallet_id = wallet.data()->walletId();
         QWarningMessage msgwarning;
         QTransactionPtr trans = bridge::nunchukImportTransaction(wallet_id, file_path, msgwarning);
         if(trans){
@@ -271,7 +271,7 @@ void EVT_TRANSACTION_EXPORT_QRCODE_HANDLER(QVariant msg) {
         QWarningMessage msgwarning;
 
         if(qUtils::strCompare(qrtype, "QR-transaction")){
-            QStringList qrtags = bridge::nunchukExportQRTransaction(AppModel::instance()->walletInfo()->id(),
+            QStringList qrtags = bridge::nunchukExportQRTransaction(AppModel::instance()->walletInfo()->walletId(),
                                                                     AppModel::instance()->transactionInfo()->txid(),
                                                                     msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
@@ -304,7 +304,7 @@ void EVT_TRANSACTION_IMPORT_QRCODE_HANDLER(QVariant msg) {
 
 void EVT_TRANSACTION_VERIFY_ADDRESS_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->id(), msg.toString());
+        AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->walletId(), msg.toString());
     }
 }
 

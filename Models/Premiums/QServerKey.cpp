@@ -239,7 +239,7 @@ bool QServerKey::serverKeyGetCurrentPolicies()
 QJsonObject QServerKey::serverKeyBody()
 {
     QJsonObject data;
-    data["name"] = walletInfoPtr()->name();
+    data["name"] = walletInfoPtr()->walletName();
     data["wallet"] = wallet_id();
     data["policies"] = m_keyCoSigning;
     return data;

@@ -24,12 +24,15 @@
 #include <QHttpPart>
 #include <QHttpMultiPart>
 
+#define DRAGON_URL            "https://api.nunchuk.io/v1.1"
+#define DRAGON_TESTNET_URL    "https://api-testnet.nunchuk.io/v1.1"
+
 QString    QRest::m_dracoToken      = "";
 QByteArray QRest::m_machineUniqueId = QSysInfo::machineUniqueId();
 
-QRest::QRest() : m_networkManager(new QNetworkAccessManager())
+QRest::QRest() : m_networkManager(OurSharedPointer(new QNetworkAccessManager()))
 {
-    m_networkManager->setCookieJar(new QNetworkCookieJar(m_networkManager));
+    m_networkManager->setCookieJar(new QNetworkCookieJar(m_networkManager.data()));
 }
 
 QRest::~QRest()
@@ -52,6 +55,15 @@ QByteArray QRest::machineUniqueId()
     return m_machineUniqueId;
 }
 
+QString QRest::url() const
+{
+    if ((int)AppSetting::Chain::TESTNET == AppSetting::instance()->primaryServer()) {
+        return DRAGON_TESTNET_URL;
+    } else {
+        return DRAGON_URL;
+    }
+}
+
 QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
@@ -68,7 +80,17 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -86,8 +108,14 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -121,7 +149,17 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -139,10 +177,14 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
-    DBG_INFO << QString(response_data);
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -188,7 +230,16 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
         }
     }
 
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, multiPart));
+    locker.unlock();
+
     multiPart->setParent(reply.get());
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -207,8 +258,14 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -267,7 +324,16 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
         }
     }
 
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, multiPart));
+    locker.unlock();
+
     multiPart->setParent(reply.get());
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -286,23 +352,27 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
-    DBG_INFO << QString(response_data);
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
-QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
+QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("GET %1").arg(command));
     QJsonObject ret;
     QUrl url = QUrl::fromUserInput(command);
-    if(!data.isEmpty()){
+    if(!paramsQuery.isEmpty()){
         QUrlQuery params;
-        foreach(const QString& key, data.keys()) {
-            QJsonValue value        = data.value(key);
+        foreach(const QString& key, paramsQuery.keys()) {
+            QJsonValue value        = paramsQuery.value(key);
             QString encodedValue    = QUrl::toPercentEncoding(value.toString());
             params.addQueryItem(key, encodedValue);
         }
@@ -319,8 +389,17 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
-    // Add addional params
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -339,21 +418,27 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject data, int &reply_code
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
-QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
+QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("GET %1").arg(command));
     QJsonObject ret;
     QUrl url = QUrl::fromUserInput(command);
-    if(!data.isEmpty()){
+    if(!paramsQuery.isEmpty()){
         QUrlQuery params;
-        foreach(const QString& key, data.keys()) {
-            QJsonValue value        = data.value(key);
+        foreach(const QString& key, paramsQuery.keys()) {
+            QJsonValue value        = paramsQuery.value(key);
             QString encodedValue    = QUrl::toPercentEncoding(value.toString());
             params.addQueryItem(key, encodedValue);
         }
@@ -374,7 +459,17 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -393,8 +488,14 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -414,7 +515,17 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->put(requester_, QJsonDocument(data).toJson()));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -433,8 +544,14 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -468,7 +585,17 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->put(requester_, QJsonDocument(data).toJson()));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -487,8 +614,14 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -508,7 +641,17 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -527,8 +670,14 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }
 
@@ -562,7 +711,17 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
+
+    if (m_networkManager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+    locker.unlock();
+
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -581,7 +740,13 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
-    ret = json.object();
-    reply.release()->deleteLater();
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    reply.release();
     return ret;
 }

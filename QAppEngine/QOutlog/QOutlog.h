@@ -57,7 +57,7 @@ enum class LOG_LEVEL : int
 #define DBG_WARN     QOutlog().begin(LOG_LEVEL::LOG_WARN)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_QT_MSG   QOutlog().begin(LOG_LEVEL::LOG_ERROR)
-#define DBG_FUNCTION_TIME_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << "[Function time]"
+#define DBG_FUNCTION_TIME_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << "[ Function time ]"
 
 static const QString logfilePath = "logfile_nunchuck-client-qt.log";
 
@@ -217,6 +217,17 @@ public:
         mStream  << ' ';
         return *this;
     }
+
+    inline QOutlog &operator<<(const QVariantList &list)
+    {
+        mStream << '(';
+        for (int i = 0; i < list.count(); ++i) {
+            if (i) { mStream << ","; }
+            mStream << list.at(i).toString();  // Chuyển QVariant thành chuỗi để hiển thị
+        }
+        mStream << ')' << ' ';
+        return *this;
+    }
 private:
     QTextStream mStream;
     QString     mLogString;
@@ -280,6 +291,7 @@ class OurSharedPointer : public QSharedPointer<T>
 {
 public:
     OurSharedPointer(T* ptr = nullptr) : QSharedPointer<T>(ptr, DeleterWithDeleteLater<T>()) {}
+    bool isValid() const { return !this->isNull(); }
 };
 
 #endif // QQOutlog_H

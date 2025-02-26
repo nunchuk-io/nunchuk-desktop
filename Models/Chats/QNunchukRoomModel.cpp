@@ -2112,7 +2112,7 @@ nunchuk::Wallet QNunchukRoom::createWalletFromJson(const QJsonObject &json)
             wallet.set_description(description.toStdString());
             wallet.set_m(m);
             wallet.set_n(n);
-            wallet.set_escrow(is_escrow);
+            // wallet.set_escrow(is_escrow); //FIXME
             wallet.set_name(name.toStdString());
         } catch (const nunchuk::NunchukException &e) {
             DBG_INFO << "nunchuk::NunchukException: " << e.what() << m << n << signers.size();

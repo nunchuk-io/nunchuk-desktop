@@ -215,7 +215,7 @@ void QRoomTransactionModel::removeTransaction(const QRoomTransactionPtr &tx)
     if(tx){
         beginResetModel();
         foreach (QRoomTransactionPtr it, m_data) {
-            if(0 == QString::compare(it.data()->get_tx_id(), tx.data()->get_tx_id(), Qt::CaseInsensitive)){
+            if(qUtils::strCompare(it.data()->get_tx_id(), tx.data()->get_tx_id())){
                 m_data.removeAll(it);
             }
         }
@@ -235,7 +235,7 @@ void QRoomTransactionModel::addTransaction(const QRoomTransactionPtr &tx)
 int QRoomTransactionModel::transactionIndexById(const QString &txid)
 {
     for (int i = 0; i < m_data.count(); i++) {
-        if(0 == QString::compare(m_data.at(i).data()->get_tx_id(), txid, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(m_data.at(i).data()->get_tx_id(), txid)){
             return i;
         }
     }
@@ -246,7 +246,7 @@ void QRoomTransactionModel::transactionChanged(const QString &tx_id, const int s
 {
     beginResetModel();
     foreach (QRoomTransactionPtr it, m_data) {
-        if(0 == QString::compare(it.data()->get_tx_id(), tx_id, Qt::CaseInsensitive) && it.data()->transaction()){
+        if(qUtils::strCompare(it.data()->get_tx_id(), tx_id) && it.data()->transaction()){
             if(status == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES
                     || status == (int)ENUNCHUCK::TransactionStatus::READY_TO_BROADCAST
                     || status == (int)ENUNCHUCK::TransactionStatus::PENDING_CONFIRMATION)
@@ -265,7 +265,7 @@ void QRoomTransactionModel::transactionChanged(const QString &tx_id, const int s
 bool QRoomTransactionModel::contains(const QString &txid)
 {
     foreach (QRoomTransactionPtr it , m_data ){
-        if(0 == QString::compare(it.data()->get_tx_id(), txid, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(it.data()->get_tx_id(), txid)){
             return true;
         }
     }
@@ -281,7 +281,7 @@ void QRoomTransactionModel::refresh()
 QString QRoomTransactionModel::transactionInitEventById(const QString &txid)
 {
     foreach (QRoomTransactionPtr it , m_data ){
-        if(0 == QString::compare(it.data()->get_tx_id(), txid, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(it.data()->get_tx_id(), txid)){
             return it.data()->get_init_event_id();
         }
     }

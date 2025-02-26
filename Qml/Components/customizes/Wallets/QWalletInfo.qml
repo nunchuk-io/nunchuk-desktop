@@ -432,9 +432,9 @@ QOnScreenContent {
             ]
             icons: [
                 "qrc:/Images/Images/description.png",
-                "qrc:/Images/Images/backup.png",
-                "qrc:/Images/Images/backup.png",
-                "qrc:/Images/Images/backup.png",
+                "qrc:/Images/Images/Backup.png",
+                "qrc:/Images/Images/Backup.png",
+                "qrc:/Images/Images/Backup.png",
                 "qrc:/Images/Images/exportqr.png",
                 "qrc:/Images/Images/exportqr.png",
                 "qrc:/Images/Images/fileDownload.png",

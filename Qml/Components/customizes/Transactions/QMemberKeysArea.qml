@@ -98,7 +98,7 @@ Item {
                 spacing: 16
                 model: transactionInfo.singleSignersAssigned
                 ScrollBar.vertical: ScrollBar { active: true }
-                delegate: QTransactionSignerDelegate {
+                delegate: QMemberKeysDelegate {
                     width: signerlist.width
                     alreadySigned: model.single_signer_signed_status
                     signername: model.singleSigner_name

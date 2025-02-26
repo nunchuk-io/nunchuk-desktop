@@ -171,12 +171,12 @@ QScreen {
         }
     }
 
-    QPopupEnterServerAddress {
+    QPopupEnterTextInput {
         id: enterServerAddress
-        onEnterServerAddress: {
+        onEnterText: {
             var _input = {
                 type: "enter-add-server",
-                serverAddress: address
+                serverAddress: str
             }
             QMLHandle.notifySendEvent(EVT.EVT_SELECT_SERVER_ENTER, _input)
         }

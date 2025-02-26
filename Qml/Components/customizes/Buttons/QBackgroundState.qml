@@ -23,42 +23,43 @@ import DataPool 1.0
 
 Rectangle {
     id: _background
-    property var backgroundColor: GlobalData.backgroundColor[type]
-    property var borderColor: GlobalData.borderColor[type]
+    property var backgroundColor: GlobalData.backgroundColor.find(function(e) {return e.id === type})
+    property var borderColor: GlobalData.borderColor.find(function(e) {return e.id === type})
     border.width: 1
     radius: _background.width/2
     state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
+
     states: [
         State {
             name: "default"
             PropertyChanges {
                 target: _background
-                color: backgroundColor[eNORMAL]
-                border.color: borderColor[eNORMAL]
+                color: backgroundColor.normal
+                border.color: borderColor.normal
             }
         },
         State {
             name: "hover"
             PropertyChanges {
                 target: _background
-                color: backgroundColor[eHOVER]
-                border.color: borderColor[eHOVER]
+                color: backgroundColor.hover
+                border.color: borderColor.hover
             }
         },
         State {
             name: "disable"
             PropertyChanges {
                 target: _background
-                color: backgroundColor[eDISABLE]
-                border.color: borderColor[eDISABLE]
+                color: backgroundColor.disable
+                border.color: borderColor.disable
             }
         },
         State {
             name: "clicked"
             PropertyChanges {
                 target: _background
-                color: backgroundColor[eCLICKED]
-                border.color: borderColor[eCLICKED]
+                color: backgroundColor.clicked
+                border.color: borderColor.clicked
             }
         }
     ]

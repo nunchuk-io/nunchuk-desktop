@@ -38,23 +38,28 @@ Item {
         id: screen_layer_1
         anchors.fill: parent
         transformOrigin: Item.TopLeft
-        onLoaded: { switch_screen_layer_base( screen_layer_2, screen_layer_1 ); }
+        // onLoaded: { switch_screen_layer_base( screen_layer_2, screen_layer_1 ); }
     }
-    Loader {
-        id: screen_layer_2
-        anchors.fill: parent
-        transformOrigin: Item.TopLeft
-        onLoaded: { switch_screen_layer_base( screen_layer_1, screen_layer_2 ); }
-    }
-    function switch_screen_layer_base(from, to) {
-        if ( from.item !== null ) { from.item.visible = false; from.sourceComponent = null }
-        if ( to.item !== null ) { to.item.visible = true }
-        screen_layer_base = from;
-    }
+    // Loader {
+    //     id: screen_layer_2
+    //     anchors.fill: parent
+    //     transformOrigin: Item.TopLeft
+    //     onLoaded: { switch_screen_layer_base( screen_layer_1, screen_layer_2 ); }
+    // }
+    // function switch_screen_layer_base(from, to) {
+    //     if ( from.item !== null ) { from.item.visible = false; from.sourceComponent = null }
+    //     if ( to.item !== null ) { to.item.visible = true }
+    //     screen_layer_base = from;
+    // }
+    // function screen_Transition() {
+    //     screen_layer_base.sourceComponent = null
+    //     screen_layer_base.sourceComponent = QAppScreen
+    // }
     function screen_Transition() {
-        screen_layer_base.sourceComponent = null
-        screen_layer_base.sourceComponent = QAppScreen
+        screen_layer_1.sourceComponent = null
+        screen_layer_1.sourceComponent = QAppScreen
     }
+
     ListModel { id: onsDataList }
     Repeater {
         id: ons_Creator

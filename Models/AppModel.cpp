@@ -30,68 +30,76 @@
 #include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QSharedWallets.h"
 #include "ServiceSetting.h"
 #include "OnBoardingModel.h"
+#include "QThreadForwarder.h""
 
-AppModel::AppModel(): inititalized_{false},
-    walletList_(QWalletListModelPtr(new WalletListModel())),
-    deviceList_(QDeviceListModelPtr(new DeviceListModel())),
-    masterSignerList_(QMasterSignerListModelPtr(new MasterSignerListModel())),
-    remoteSignerList_(QSingleSignerListModelPtr(new SingleSignerListModel())),
-    masterSignerInfo_(QMasterSignerPtr(new QMasterSigner())),
-    singleSignerInfo_(QSingleSignerPtr(new QSingleSigner())),
-    walletInfo_(QWalletPtr(new Wallet())),
-    transactionInfo_(QTransactionPtr(new Transaction())),
-    transactionReplaceInfo_(NULL),
-    transactionPending_(QTransactionListModelPtr(new TransactionListModel())),
-    walletListCurrentIndex_(-1),
-    chainTip_(0), addSignerStep_(-1), addSignerPercentage_(0), txidReplacing_(""),
-    fastestFee_(1000), halfHourFee_(1000), hourFee_(1000), minFee_(1000),
-    addressBalance_(0),mnemonic_(""),
-    softwareSignerDeviceList_(QDeviceListModelPtr(new DeviceListModel())),
-    nunchukMode_(LOCAL_MODE),
+class QEmpyTask : public QRunnable {
+public:
+    void run() override {
+        DBG_INFO << "Running task on thread:" << QThread::currentThread();
+    }
+};
+
+AppModel::AppModel(): m_inititalized{false},
+    m_walletList(QWalletListModelPtr(new WalletListModel())),
+    m_deviceList(QDeviceListModelPtr(new DeviceListModel())),
+    m_masterSignerList(QMasterSignerListModelPtr(new MasterSignerListModel())),
+    m_remoteSignerList(QSingleSignerListModelPtr(new SingleSignerListModel())),
+    m_masterSignerInfo(QMasterSignerPtr(new QMasterSigner())),
+    m_singleSignerInfo(QSingleSignerPtr(new QSingleSigner())),
+    m_walletInfo(QWalletPtr(new Wallet())),
+    m_transactionInfo(QTransactionPtr(new Transaction())),
+    m_transactionReplaceInfo(NULL),
+    m_transactionPending(QTransactionListModelPtr(new TransactionListModel())),
+    m_walletListCurrentIndex(-1),
+    m_chainTip(0), m_addSignerStep(-1), m_addSignerPercentage(0), m_txidReplacing(""),
+    m_fastestFee(1000), m_halfHourFee(1000), m_hourFee(1000), m_minFee(1000),
+    m_addressBalance(0),m_mnemonic(""),
+    m_softwareSignerDeviceList(QDeviceListModelPtr(new DeviceListModel())),
+    m_nunchukMode(LOCAL_MODE),
     m_tabIndex((int)ENUNCHUCK::TabSelection::WALLET_TAB),
-    warningMessage_(QWarningMessagePtr(new QWarningMessage())),
-    exchangeRates_(0), btcRates_(0),lasttime_checkEstimatedFee_(QDateTime::currentDateTime()),
+    m_warningMessage(QWarningMessagePtr(new QWarningMessage())),
+    m_exchangeRates(0), m_btcRates(0),m_lasttimeCheckEstimatedFee(QDateTime::currentDateTime()),
     m_primaryKey(NULL),
-    newKeySignMessage_(""),
-    timeLogging_(QDateTime::currentDateTime())
+    m_newKeySignMessage(""),
+    m_timeLogging(QDateTime::currentDateTime())
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(&timerRefreshHealthCheck_, &QTimer::timeout, this, &AppModel::timerHealthCheckTimeHandle, Qt::QueuedConnection);
-    connect(&timerFeeRates_, &QTimer::timeout, this, &AppModel::timerFeeRatesHandle, Qt::QueuedConnection);
-    connect(&timerCheckAuthorized_, &QTimer::timeout, this, &AppModel::timerCheckAuthorizedHandle, Qt::QueuedConnection);
+    connect(&m_timerRefreshHealthCheck, &QTimer::timeout, this, &AppModel::timerHealthCheckTimeHandle, Qt::QueuedConnection);
+    connect(&m_timerFeeRates, &QTimer::timeout, this, &AppModel::timerFeeRatesHandle, Qt::QueuedConnection);
+    connect(&m_timerCheckAuthorized, &QTimer::timeout, this, &AppModel::timerCheckAuthorizedHandle, Qt::QueuedConnection);
     connect(this, &AppModel::forwardToast, this, &AppModel::recieveToast, Qt::QueuedConnection);
     connect(this, &AppModel::signViaSingature, this, &AppModel::slotSignViaSingature, Qt::QueuedConnection);
 
-    timerRefreshHealthCheck_.start(60000);  // Every 1'
-    timerFeeRates_.start(300000);           // Every 5'
-    qrExported_.clear();
-    suggestMnemonics_.clear();
+    m_timerRefreshHealthCheck.start(60000);  // Every 1'
+    m_timerFeeRates.start(300000);           // Every 5'
+    m_qrExported.clear();
+    m_suggestMnemonics.clear();
 
-    connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [] {
         DBG_INFO << "APPLICATION ABOUT TO QUIT" << QThreadPool::globalInstance()->activeThreadCount();
+        bridge::stopAllNunchuk();
         QThreadPool::globalInstance()->clear();
-        QThreadPool::globalInstance()->waitForDone();
-        this->disconnect();
-        bridge::stopNunchuk();
+        QThreadPool::globalInstance()->setMaxThreadCount(0);
     });
 }
 
 AppModel::~AppModel(){
-    timerRefreshHealthCheck_.stop();
-    timerCheckAuthorized_.stop();
-    walletList_.clear();
-    deviceList_.clear();
-    masterSignerList_.clear();
-    remoteSignerList_.clear();
-    masterSignerInfo_.clear();
-    singleSignerInfo_.clear();
-    newWalletInfo_.clear();
-    walletInfo_.clear();
-    transactionInfo_.clear();
-    transactionReplaceInfo_.clear();
-    destinationList_.clear();
+    m_timerRefreshHealthCheck.stop();
+    m_timerCheckAuthorized.stop();
+    m_walletList.clear();
+    m_deviceList.clear();
+    m_masterSignerList.clear();
+    m_remoteSignerList.clear();
+    m_masterSignerInfo.clear();
+    m_singleSignerInfo.clear();
+    m_newWalletInfo.clear();
+    m_walletInfo.clear();
+    m_transactionInfo.clear();
+    m_transactionReplaceInfo.clear();
+    m_destinationList.clear();
     disconnect();
 }
 
@@ -109,7 +117,7 @@ void AppModel::confirmSyncingWalletFromServer(bool yes, bool no)
 
 void AppModel::setTimeLogging(const QDateTime &newTimeLogging)
 {
-    timeLogging_ = newTimeLogging;
+    m_timeLogging = newTimeLogging;
 }
 
 void AppModel::slotSignViaSingature()
@@ -122,18 +130,18 @@ void AppModel::slotSignViaSingature()
 
 QString AppModel::newKeySignMessage() const
 {
-    return newKeySignMessage_;
+    return m_newKeySignMessage;
 }
 
 QString AppModel::newKeySignMessageSHA256() const
 {
-    return qUtils::GetSHA256(newKeySignMessage_);
+    return qUtils::GetSHA256(m_newKeySignMessage);
 }
 
 void AppModel::setNewKeySignMessage(const QString &value)
 {
-    if(newKeySignMessage_ != value){
-        newKeySignMessage_ = value;
+    if(m_newKeySignMessage != value){
+        m_newKeySignMessage = value;
         emit newKeySignMessageChanged();
     }
 }
@@ -179,11 +187,11 @@ int AppModel::addSignerWizard() const
 bool AppModel::checkAutoSignOut()
 {
     QDateTime now = QDateTime::currentDateTime();
-    qint64 secs = timeLogging_.secsTo(now);
+    qint64 secs = m_timeLogging.secsTo(now);
     qint64 _7days = 7 * 24 * 60 * 60;
     if(secs > _7days){
         ClientController::instance()->requestSignout();
-        timeLogging_ = now;
+        m_timeLogging = now;
         return true;
     }
     return false;
@@ -191,7 +199,7 @@ bool AppModel::checkAutoSignOut()
 
 QString AppModel::lasttimeCheckEstimatedFee() const
 {
-    QDateTime in = lasttime_checkEstimatedFee_;
+    QDateTime in = m_lasttimeCheckEstimatedFee;
     QDateTime today = QDateTime::currentDateTime();
     qint64 secs = in.secsTo(today);
     const qint64 DAY = 86400;
@@ -225,20 +233,20 @@ QString AppModel::lasttimeCheckEstimatedFee() const
 
 void AppModel::setLasttimeCheckEstimatedFee(const QDateTime &lasttime_checkEstimatedFee)
 {
-    if(lasttime_checkEstimatedFee_ == lasttime_checkEstimatedFee) {return;}
-    lasttime_checkEstimatedFee_ = lasttime_checkEstimatedFee;
+    if(m_lasttimeCheckEstimatedFee == lasttime_checkEstimatedFee) {return;}
+    m_lasttimeCheckEstimatedFee = lasttime_checkEstimatedFee;
     emit lasttimeCheckEstimatedFeeChanged();
 }
 
 void AppModel::startCheckAuthorize()
 {
-    timerCheckAuthorized_.stop();
-    timerCheckAuthorized_.start(120000); // Every 2'
+    m_timerCheckAuthorized.stop();
+    m_timerCheckAuthorized.start(120000); // Every 2'
 }
 
 void AppModel::stopCheckAuthorize()
 {
-    timerCheckAuthorized_.stop();
+    m_timerCheckAuthorized.stop();
 }
 
 bool AppModel::makeInstanceForAccount(const QVariant msg, const QString &dbPassphrase)
@@ -425,23 +433,23 @@ void AppModel::setTabIndex(int tabIndex)
 
 int AppModel::nunchukMode() const
 {
-    return nunchukMode_;
+    return m_nunchukMode;
 }
 
 void AppModel::setNunchukMode(int nunchukMode)
 {
-    nunchukMode_ = nunchukMode;
+    m_nunchukMode = nunchukMode;
     emit nunchukModeChanged();
 }
 
 bool AppModel::inititalized() const
 {
-    return inititalized_[nunchukMode_];
+    return m_inititalized[m_nunchukMode];
 }
 
 void AppModel::setInititalized(bool inititalized)
 {
-    inititalized_[nunchukMode_] = inititalized;
+    m_inititalized[m_nunchukMode] = inititalized;
 }
 
 bool AppModel::limitSoftwareSigner() const
@@ -455,52 +463,52 @@ bool AppModel::limitSoftwareSigner() const
 
 QStringList AppModel::getSuggestMnemonics() const
 {
-    return suggestMnemonics_;
+    return m_suggestMnemonics;
 }
 
 void AppModel::setSuggestMnemonics(const QStringList &suggestMnemonics)
 {
-    suggestMnemonics_ = suggestMnemonics;
+    m_suggestMnemonics = suggestMnemonics;
     emit suggestMnemonicsChanged();
 }
 
 QString AppModel::getMnemonic() const
 {
-    return mnemonic_;
+    return m_mnemonic;
 }
 
 void AppModel::setMnemonic(const QString &mnemonic)
 {
-    if(mnemonic_ != mnemonic){
-        mnemonic_ = mnemonic;
+    if(m_mnemonic != mnemonic){
+        m_mnemonic = mnemonic;
         emit mnemonicChanged();
     }
 }
 
 DeviceListModel *AppModel::softwareSignerDeviceList() const
 {
-    return softwareSignerDeviceList_.data();
+    return m_softwareSignerDeviceList.data();
 }
 
 QDeviceListModelPtr AppModel::softwareSignerDeviceListPtr() const
 {
-    return softwareSignerDeviceList_;
+    return m_softwareSignerDeviceList;
 }
 
 void AppModel::setSoftwareSignerDeviceList(const QDeviceListModelPtr &value)
 {
-    softwareSignerDeviceList_ = value;
+    m_softwareSignerDeviceList = value;
     emit softwareSignerDeviceListChanged();
 }
 
 qint64 AppModel::hourFeeOrigin() const
 {
-    return hourFee_;
+    return m_hourFee;
 }
 
 QString AppModel::hourFeeCurrency() const
 {
-    double fee = (double)hourFee_/1000;
+    double fee = (double)m_hourFee/1000;
     double btcRate = btcRates()/100000000;
     double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
@@ -509,28 +517,28 @@ QString AppModel::hourFeeCurrency() const
 
 QString AppModel::hourFee() const
 {    
-    double fee = (double)hourFee_/1000;
+    double fee = (double)m_hourFee/1000;
     QLocale locale(QLocale::English);
     return locale.toString(fee, 'f', 2);
 }
 
 void AppModel::setHourFee(qint64 fee)
 {
-    if(hourFee_ != fee){
-        hourFee_ = fee;
+    if(m_hourFee != fee){
+        m_hourFee = fee;
         emit hourFeeChanged();
     }
 }
 
 qint64 AppModel::minFeeOrigin() const
 {
-    return minFee_;
+    return m_minFee;
 }
 
 QString AppModel::minFeeCurrency() const
 {
     double btcRate = btcRates()/100000000;
-    double fee = (double)minFee_/1000;
+    double fee = (double)m_minFee/1000;
     double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
@@ -538,38 +546,38 @@ QString AppModel::minFeeCurrency() const
 
 QString AppModel::minFee() const
 {
-    double fee = (double)minFee_/1000;
+    double fee = (double)m_minFee/1000;
     QLocale locale(QLocale::English);
     return locale.toString(fee, 'f', 2);
 }
 
 void AppModel::setMinFee(qint64 fee)
 {
-    if(minFee_ != fee){
-        minFee_ = fee;
+    if(m_minFee != fee){
+        m_minFee = fee;
         emit minFeeChanged();
     }
 }
 
 void AppModel::resetSignersChecked()
 {
-    if(masterSignerList_){
-        masterSignerList_.data()->resetUserChecked();
+    if(m_masterSignerList){
+        m_masterSignerList.data()->resetUserChecked();
     }
-    if(remoteSignerList_){
-        remoteSignerList_.data()->resetUserChecked();
+    if(m_remoteSignerList){
+        m_remoteSignerList.data()->resetUserChecked();
     }
 }
 
 qint64 AppModel::halfHourFeeOrigin() const
 {
-    return halfHourFee_;
+    return m_halfHourFee;
 }
 
 QString AppModel::halfHourFeeCurrency() const
 {
     double btcRate = btcRates()/100000000;
-    double fee = (double)halfHourFee_/1000;
+    double fee = (double)m_halfHourFee/1000;
     double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
@@ -577,28 +585,28 @@ QString AppModel::halfHourFeeCurrency() const
 
 QString AppModel::halfHourFee() const
 {
-    double fee = (double)halfHourFee_/1000;
+    double fee = (double)m_halfHourFee/1000;
     QLocale locale(QLocale::English);
     return locale.toString(fee, 'f', 2);
 }
 
 void AppModel::setHalfHourFee(qint64 fee)
 {
-    if(halfHourFee_ != fee){
-        halfHourFee_ = fee;
+    if(m_halfHourFee != fee){
+        m_halfHourFee = fee;
         emit halfHourFeeChanged();
     }
 }
 
 qint64 AppModel::fastestFeeOrigin() const
 {
-    return fastestFee_;
+    return m_fastestFee;
 }
 
 QString AppModel::fastestFeeCurrency() const
 {
     double btcRate = btcRates()/100000000;
-    double fee = (double)fastestFee_/1000;
+    double fee = (double)m_fastestFee/1000;
     double feeCurrency = btcRate*fee*140;
     QLocale locale(QLocale::English);
     return locale.toString(feeCurrency, 'f', 2);
@@ -606,91 +614,91 @@ QString AppModel::fastestFeeCurrency() const
 
 QString AppModel::fastestFee() const
 {
-    double fee = (double)fastestFee_/1000;
+    double fee = (double)m_fastestFee/1000;
     QLocale locale(QLocale::English);
     return locale.toString(fee, 'f', 2);
 }
 
 void AppModel::setFastestFee(qint64 fee)
 {
-    if(fastestFee_ != fee){
-        fastestFee_ = fee;
+    if(m_fastestFee != fee){
+        m_fastestFee = fee;
         emit fastestFeeChanged();
     }
 }
 
 QString AppModel::getTxidReplacing() const
 {
-    return txidReplacing_;
+    return m_txidReplacing;
 }
 
 void AppModel::setTxidReplacing(const QString &txidReplacing)
 {
-    txidReplacing_ = txidReplacing;
+    m_txidReplacing = txidReplacing;
     emit txidReplacingChanged();
 }
 
 int AppModel::getAddSignerPercentage() const
 {
-    return addSignerPercentage_;
+    return m_addSignerPercentage;
 }
 
 void AppModel::setAddSignerPercentage(int addSignerPercentage)
 {
-    if(addSignerPercentage_ != addSignerPercentage){
-        addSignerPercentage_ = addSignerPercentage;
+    if(m_addSignerPercentage != addSignerPercentage){
+        m_addSignerPercentage = addSignerPercentage;
         emit addSignerPercentageChanged();
     }
 }
 
 int AppModel::getAddSignerStep() const
 {
-    return addSignerStep_;
+    return m_addSignerStep;
 }
 
 void AppModel::setAddSignerStep(int addSignerStep)
 {
-    if(addSignerStep_ != addSignerStep){
-        addSignerStep_ = addSignerStep;
+    if(m_addSignerStep != addSignerStep){
+        m_addSignerStep = addSignerStep;
         emit addSignerStepChanged();
     }
 }
 
 QTransactionPtr AppModel::getTransactionReplaceInfo() const
 {
-    return transactionReplaceInfo_;
+    return m_transactionReplaceInfo;
 }
 
 void AppModel::setTransactionReplaceInfo(const QTransactionPtr &transactionReplaceInfo)
 {
-    transactionReplaceInfo_ = transactionReplaceInfo;
+    m_transactionReplaceInfo = transactionReplaceInfo;
 }
 
 int AppModel::chainTip() const
 {
-    return chainTip_;
+    return m_chainTip;
 }
 
 void AppModel::setChainTip(int chainTip)
 {
-    if(chainTip_ != chainTip){
-        chainTip_ = chainTip;
+    if(m_chainTip != chainTip){
+        m_chainTip = chainTip;
         emit chainTipChanged();
     }
 }
 
 int AppModel::walletListCurrentIndex() const
 {
-    return walletListCurrentIndex_;
+    return m_walletListCurrentIndex;
 }
 
 void AppModel::setWalletListCurrentIndex(int index, bool force)
 {
-    if(walletListCurrentIndex_ != index){
-        walletListCurrentIndex_ = index;
+    if(m_walletListCurrentIndex != index){
+        m_walletListCurrentIndex = index;
     }
     emit walletListCurrentIndexChanged();
-    setWalletInfoByIndex(walletListCurrentIndex_, force);
+    setWalletInfoByIndex(m_walletListCurrentIndex, force);
     emit QGroupWallets::instance()->dashboardInfoChanged();
 }
 
@@ -701,12 +709,19 @@ AppModel *AppModel::instance() {
 
 void AppModel::requestInitialData()
 {
+    //For Group wallet
+    bridge::EnableGroupWallet();
+    QSharedWallets::instance()->GetGroupDeviceUID();
+    // Order
+    bridge::StartConsumeGroupEvent();
+
     if(ONLINE_MODE == bridge::nunchukCurrentMode()){
         requestCreateUserWallets();
     }
     else{
         startReloadUserDb();
     }
+    requestSyncGroups();
 }
 
 void AppModel::requestSyncWalletDb(const QString &wallet_id)
@@ -748,7 +763,7 @@ void AppModel::requestSyncSharedWallets()
                     final.data()->setIsSharedWallet(true);
                     final.data()->setRoomId(room_id);
                     final.data()->setInitEventId(init_event_id);
-                    final.data()->setName(wallet_name);
+                    final.data()->setWalletName(wallet_name);
                     if(roomWwallet.data()->walletSigners() && final.data()->singleSignersAssigned()){
                         QList<SignerAssigned> signers = roomWwallet.data()->walletSigners()->fullList();
                         for(SignerAssigned signer : signers){
@@ -773,8 +788,11 @@ void AppModel::requestClearData()
     if(remoteSignerList()){
         remoteSignerList()->cleardata();
     }
-
+    if(groupWalletList()){
+        groupWalletList()->cleardata();
+    }
     WalletsMng->clear();
+    SharedWalletsMng->clear();
     setWalletListCurrentIndex(-1);
     AppSetting::instance()->setSyncPercent(0);
     QUserWallets::instance()->reset();
@@ -796,35 +814,61 @@ void AppModel::requestOnboarding()
     });
 }
 
+void AppModel::requestSyncGroups()
+{
+    QUserWallets::instance()->GetListAllRequestAddKey();
+    QGroupWallets::instance()->GetAllGroups();
+    QSharedWallets::instance()->GetAllGroups();
+}
+
 QWalletListModelPtr AppModel::walletListPtr() const
 {
-    return walletList_;
+    return m_walletList;
 }
 
 WalletListModel* AppModel::walletList() const {
-    return walletList_.data();
+    return m_walletList.data();
 }
 
 DeviceListModel* AppModel::deviceList() const {
-    return deviceList_.data();
+    return m_deviceList.data();
 }
 
 QDeviceListModelPtr AppModel::deviceListPtr() const
 {
-    return deviceList_;
+    return m_deviceList;
 }
 
 void AppModel::setWalletList(const QWalletListModelPtr &d){
-    walletList_ = d;
-    if(walletList_){
-        walletList_.data()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
+    m_walletList = d;
+    if(m_walletList){
+        m_walletList.data()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
     }
     emit walletListChanged();
 }
 
+WalletListModel *AppModel::groupWalletList() const
+{
+    return m_groupWalletList.data();
+}
+
+QWalletListModelPtr AppModel::groupWalletListPtr() const
+{
+    return m_groupWalletList;
+}
+
+void AppModel::setGroupWalletList(const QWalletListModelPtr &d)
+{
+    m_groupWalletList = d;
+    if (m_groupWalletList.isValid()) {
+        m_groupWalletList->startAllConversation();
+    }
+    emit groupWalletListChanged();
+}
+
 void AppModel::setDeviceList(const QDeviceListModelPtr &d){
-    if(deviceList_.data()){
-        deviceList_.data()->updateDeviceList(d);
+    if(m_deviceList.data()){
+        m_deviceList.data()->updateDeviceList(d);
         emit deviceListChanged();
     }
 }
@@ -857,95 +901,95 @@ QMasterSignerPtr AppModel::getPrimaryKey() const
 }
 
 MasterSignerListModel *AppModel::masterSignerList() const {
-    return masterSignerList_.data();
+    return m_masterSignerList.data();
 }
 
 QMasterSignerListModelPtr AppModel::masterSignerListPtr() const
 {
-    return masterSignerList_;
+    return m_masterSignerList;
 }
 
 void AppModel::setMasterSignerList(const QMasterSignerListModelPtr &d)
 {
-    masterSignerList_ = d;
-    if(masterSignerList_){
-        masterSignerList_.data()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
+    m_masterSignerList = d;
+    if(m_masterSignerList){
+        m_masterSignerList.data()->requestSort(MasterSignerListModel::MasterSignerRoles::master_signer_name_Role, Qt::AscendingOrder);
     }
     emit masterSignerListChanged();
 }
 
 SingleSignerListModel* AppModel::remoteSignerList() const
 {
-    return remoteSignerList_.data();
+    return m_remoteSignerList.data();
 }
 
 QSingleSignerListModelPtr AppModel::remoteSignerListPtr() const
 {
-    return remoteSignerList_;
+    return m_remoteSignerList;
 }
 
 void AppModel::setRemoteSignerList(const QSingleSignerListModelPtr &d)
 {
-    remoteSignerList_ = d;
-    if(remoteSignerList_){
-        remoteSignerList_.data()->requestSort();
+    m_remoteSignerList = d;
+    if(m_remoteSignerList){
+        m_remoteSignerList.data()->requestSort();
     }
     emit remoteSignerListChanged();
 }
 
 
 QMasterSigner *AppModel::masterSignerInfo() const {
-    return masterSignerInfo_.data();
+    return m_masterSignerInfo.data();
 }
 
 QMasterSignerPtr AppModel::masterSignerInfoPtr() const
 {
-    return masterSignerInfo_;
+    return m_masterSignerInfo;
 }
 
 void AppModel::setMasterSignerInfo(const QMasterSignerPtr &d)
 {
-    masterSignerInfo_ = d;
+    m_masterSignerInfo = d;
     emit masterSignerInfoChanged();
 }
 
 void AppModel::setMasterSignerInfo(const int index) {
-    if(masterSignerList_.data()){
-        masterSignerInfo_ = masterSignerList_.data()->getMasterSignerByIndex(index);
+    if(m_masterSignerList.data()){
+        m_masterSignerInfo = m_masterSignerList.data()->getMasterSignerByIndex(index);
         emit masterSignerInfoChanged();
     }
 }
 
 QSingleSigner *AppModel::singleSignerInfo()
 {
-    return singleSignerInfo_.data();
+    return m_singleSignerInfo.data();
 }
 
 QSingleSignerPtr AppModel::singleSignerInfoPtr() const
 {
-    return singleSignerInfo_;
+    return m_singleSignerInfo;
 }
 
 void AppModel::setSingleSignerInfo(const QSingleSignerPtr &d)
 {
-    singleSignerInfo_ = d;
+    m_singleSignerInfo = d;
     emit singleSignerInfoChanged();
 }
 
 QVariantList AppModel::walletsUsingSigner() const {
-    return walletsUsingSigner_;
+    return m_walletsUsingSigner;
 }
 
 void AppModel::setWalletsUsingSigner(QVariantList d){
-    walletsUsingSigner_ = d;
+    m_walletsUsingSigner = d;
     emit walletsUsingSigner();
 }
 
 bool AppModel::removeMasterSigner(const QString &masterSignerId)
 {
     bool ret = false;
-    if(masterSignerList_.data()){
-        ret = masterSignerList_.data()->removeMasterSigner(masterSignerId);
+    if(m_masterSignerList.data()){
+        ret = m_masterSignerList.data()->removeMasterSigner(masterSignerId);
         if(ret) emit masterSignerListChanged();
     }
     return ret;
@@ -953,63 +997,66 @@ bool AppModel::removeMasterSigner(const QString &masterSignerId)
 
 void AppModel::removeWallet(const QString &wallet_id)
 {
-    if(walletList_.data()){
-        walletList_.data()->removeWallet(wallet_id);
+    if(m_walletList){
+        m_walletList.data()->removeWallet(wallet_id);
+    }
+    if(m_groupWalletList){
+        m_groupWalletList.data()->removeWallet(wallet_id);
     }
     emit walletListChanged();
 }
 
 Wallet *AppModel::newWalletInfo() const
 {
-    return newWalletInfo_.data();
+    return m_newWalletInfo.data();
 }
 
 QWalletPtr AppModel::newWalletInfoPtr() const
 {
-    return newWalletInfo_;
+    return m_newWalletInfo;
 }
 
 void AppModel::setNewWalletInfo(const QWalletPtr &d)
 {
-    newWalletInfo_ = d;
+    m_newWalletInfo = d;
     emit newWalletInfoChanged();
 }
 
 Wallet *AppModel::walletInfo() const
 {
-    return walletInfo_.data();
+    return m_walletInfo.data();
 }
 
 QWalletPtr AppModel::walletInfoPtr() const
 {
-    return walletInfo_;
+    return m_walletInfo;
 }
 
 void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
 {
-    bool allow = force || !qUtils::strCompare(d.data()->id(), walletInfo_->id());
+    bool allow = force || !qUtils::strCompare(d.data()->walletId(), m_walletInfo->walletId());
     if(d && allow){
-        walletInfo_ = d;
-        if(walletInfo_){
-            QString wallet_id = walletInfo_.data()->id();
+        m_walletInfo = d;
+        if(m_walletInfo){
+            QString wallet_id = m_walletInfo.data()->walletId();
             if(wallet_id != ""){
                 requestSyncWalletDb(wallet_id);
                 QtConcurrent::run([wallet_id]() {
                     bridge::nunchukSetSelectedWallet(wallet_id);
                 });
-                walletInfo_.data()->getChatInfo();
+                m_walletInfo.data()->getChatInfo();
             }
         }
         emit walletInfoChanged();
     }
-    if(walletInfo_){
+    if(m_walletInfo){
         DBG_INFO << "Force set:" << allow
-                 << "Wallet Id:" << walletInfo_.data()->id()
-                 << "Wallet Role:" << walletInfo_.data()->myRole()
-                 << "Wallet Slug:" << walletInfo_.data()->slug()
-                 << "Wallet Status:" << walletInfo_.data()->status();
-        QGroupWallets::instance()->setDashboardInfo(walletInfo_);
-        walletInfo_.data()->RequestGetCoins();
+                 << "Wallet Id:" << m_walletInfo.data()->walletId()
+                 << "Wallet Role:" << m_walletInfo.data()->myRole()
+                 << "Wallet Slug:" << m_walletInfo.data()->slug()
+                 << "Wallet Status:" << m_walletInfo.data()->status();
+        QGroupWallets::instance()->setDashboardInfo(m_walletInfo);
+        m_walletInfo.data()->RequestGetCoins();
     }
 }
 
@@ -1019,8 +1066,8 @@ void AppModel::setWalletInfoByIndex(const int index, bool force)
         setWalletInfo(QWalletPtr(new Wallet()), force);
     }
     else{
-        if(walletList_){
-            QWalletPtr newWallet = walletList_.data()->getWalletByIndex(index);
+        if(m_walletList){
+            QWalletPtr newWallet = m_walletList.data()->getWalletByIndex(index);
             if(!newWallet){
                 newWallet = QWalletPtr(new Wallet());
             }
@@ -1031,55 +1078,55 @@ void AppModel::setWalletInfoByIndex(const int index, bool force)
 
 Transaction *AppModel::transactionInfo() const
 {
-    return transactionInfo_.data();
+    return m_transactionInfo.data();
 }
 
 QTransactionPtr AppModel::transactionInfoPtr() const
 {
-    return transactionInfo_;
+    return m_transactionInfo;
 }
 
 void AppModel::setTransactionInfo(const QTransactionPtr& d)
 {
     if(d){
-        transactionInfo_ = d;
+        m_transactionInfo = d;
     }
     else {
-        transactionInfo_ = QTransactionPtr(new Transaction());
+        m_transactionInfo = QTransactionPtr(new Transaction());
     }
     emit transactionInfoChanged();
 }
 
 DestinationListModel *AppModel::destinationList() const
 {
-    return destinationList_.data();
+    return m_destinationList.data();
 }
 
 QDestinationListModelPtr AppModel::destinationListPtr() const
 {
-    return destinationList_;
+    return m_destinationList;
 }
 
 void AppModel::setDestinationList(const QDestinationListModelPtr &destinationList)
 {
-    destinationList_ = destinationList;
+    m_destinationList = destinationList;
 }
 
 QString AppModel::addressBalance() const
 {
     if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
         QLocale locale(QLocale::English);
-        return locale.toString(addressBalance_);
+        return locale.toString(m_addressBalance);
     }
     else{
-        return qUtils::QValueFromAmount(addressBalance_);
+        return qUtils::QValueFromAmount(m_addressBalance);
     }
 }
 
-void AppModel::setAddressBalance(const qint64 &addressBalance)
+void AppModel::setAddressBalance(const qint64 addressBalance)
 {
-    if(addressBalance_ != addressBalance){
-        addressBalance_ = addressBalance;
+    if(m_addressBalance != addressBalance){
+        m_addressBalance = addressBalance;
         emit addressBalanceChanged();
     }
 }
@@ -1101,6 +1148,9 @@ void AppModel::timerFeeRatesHandle()
         Draco::instance()->btcRates();
         Draco::instance()->exchangeRates(AppSetting::instance()->currency());
         startGetEstimatedFee();
+
+        //Get taproot supported
+        Draco::instance()->GetTaprootSupportedCached(true);
     });
 }
 
@@ -1108,8 +1158,7 @@ void AppModel::timerCheckAuthorizedHandle()
 {
     checkAutoSignOut();
     Draco::instance()->getMe();
-    QGroupWallets::instance()->GetAllGroups();
-    QUserWallets::instance()->GetListAllRequestAddKey();
+    requestSyncGroups();
 }
 
 bool AppModel::parseQRWallet(const QString name, const QString desc, const QStringList qrtags)
@@ -1123,11 +1172,11 @@ bool AppModel::parseQRWallet(const QString name, const QString desc, const QStri
     QWalletPtr walletImported = bridge::nunchukImportKeystoneWallet(in, desc, importmsg);
     if(walletImported && importmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
         walletImported.data()->setCreationMode((int)Wallet::CreationMode::CREATE_BY_IMPORT_QRCODE);
-        walletImported.data()->setName(name);
+        walletImported.data()->setWalletName(name);
         walletList()->addWallet(walletImported);
         resetSignersChecked();
         walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
-        int index = walletList()->getWalletIndexById(walletImported.data()->id());
+        int index = walletList()->getWalletIndexById(walletImported.data()->walletId());
         if(-1 != index){
             setWalletListCurrentIndex(index);
         }
@@ -1231,40 +1280,40 @@ bool AppModel::enableDatabaseEncryption(const QString in)
 
 QStringList AppModel::qrExported() const
 {
-    return qrExported_;
+    return m_qrExported;
 }
 
 void AppModel::setQrExported(const QStringList &qrExported)
 {
-    qrExported_ = qrExported;
+    m_qrExported = qrExported;
     emit qrExportedChanged();
 }
 
 QWarningMessagePtr AppModel::warningMessagePtr() const
 {
-    return warningMessage_;
+    return m_warningMessage;
 }
 
 QWarningMessage* AppModel::warningMessage() const
 {
-    return warningMessage_.data();
+    return m_warningMessage.data();
 }
 
 void AppModel::setWarningMessage(const QWarningMessagePtr &warningMessage)
 {
-    warningMessage_ = warningMessage;
+    m_warningMessage = warningMessage;
     emit warningMessageChanged();
 }
 
 double AppModel::exchangeRates() const
 {
-    return exchangeRates_;
+    return m_exchangeRates;
 }
 
 void AppModel::setExchangeRates(double exchangeRates)
 {
-    if(exchangeRates_ != exchangeRates && exchangeRates > 0){
-        exchangeRates_ = exchangeRates;
+    if(m_exchangeRates != exchangeRates && exchangeRates > 0){
+        m_exchangeRates = exchangeRates;
         emit btcRatesChanged();
         emit exchangeRatesChanged();
     }
@@ -1272,13 +1321,13 @@ void AppModel::setExchangeRates(double exchangeRates)
 
 double AppModel::btcRates() const
 {
-    return btcRates_;
+    return m_btcRates;
 }
 
 void AppModel::setBtcRates(double btcRates)
 {
-    if(btcRates_ != btcRates && btcRates > 0){
-        btcRates_ = btcRates;
+    if(m_btcRates != btcRates && btcRates > 0){
+        m_btcRates = btcRates;
         emit btcRatesChanged();
         emit exchangeRatesChanged();
     }
@@ -1286,7 +1335,7 @@ void AppModel::setBtcRates(double btcRates)
 
 QVariantList AppModel::listMessage() const
 {
-    return listMessage_;
+    return m_listMessage;
 }
 
 void AppModel::showToast(int code, const QString &what, EWARNING::WarningType type){
@@ -1295,17 +1344,19 @@ void AppModel::showToast(int code, const QString &what, EWARNING::WarningType ty
 
 void AppModel::recieveToast(int code, const QString &what, EWARNING::WarningType type)
 {
-    timeoutHandler(500, [this, code, what, type]() {
-        QWarningMessage message;
-        message.setWarningMessage(code, what, type);
-        QJsonObject data;
-        data["contentDisplay"] = message.contentDisplay();
-        data["explaination"  ] = message.explaination();
-        data["what"          ] = message.what();
-        data["code"          ] = message.code();
-        data["type"          ] = message.type();
-        data["popupType"     ] = message.popupType();
-        QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(data));
+    QThreadForwarder::instance()->forwardInQueuedConnection([code, type, what](){
+        timeoutHandler(500, [code, what, type]() {
+            QWarningMessage message;
+            message.setWarningMessage(code, what, type);
+            QJsonObject data;
+            data["contentDisplay"] = message.contentDisplay();
+            data["explaination"  ] = message.explaination();
+            data["what"          ] = message.what();
+            data["code"          ] = message.code();
+            data["type"          ] = message.type();
+            data["popupType"     ] = message.popupType();
+            QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(data));
+        });
     });
 }
 
@@ -1314,12 +1365,12 @@ qint64 AppModel::qAmountFromBTC(const QString &btcValue)
     return qUtils::QAmountFromValue(btcValue);
 }
 
-QString AppModel::qBTCFromAmount(const qint64 &amount)
+QString AppModel::qBTCFromAmount(const qint64 amount)
 {
     return qUtils::QValueFromAmount(amount);
 }
 
-QString AppModel::qCurrencyFromAmount(qint64 amountSats)
+QString AppModel::qCurrencyFromAmount(const qint64 amountSats)
 {
     return qUtils::currencyLocale(amountSats);
 }

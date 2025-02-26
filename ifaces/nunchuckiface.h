@@ -65,6 +65,18 @@ public:
 
     nunchuk::Wallet CreateWallet(const nunchuk::Wallet& wallet,
                                  bool allow_used_signer,
+                                 const std::string& decoy_pin,
+                                 QWarningMessage& msg);
+
+    nunchuk::Wallet CreateWallet(const std::string& name,
+                                 int m,
+                                 int n,
+                                 const std::vector<nunchuk::SingleSigner>& signers,
+                                 nunchuk::AddressType address_type,
+                                 nunchuk::WalletType wallet_type,
+                                 const std::string& description,
+                                 bool allow_used_signer,
+                                 const std::string& decoy_pin,
                                  QWarningMessage& msg);
 
     std::string DraftWallet(const std::string& name,
@@ -388,14 +400,15 @@ public:
 
     void AddBalanceListener( std::function<void(std::string, nunchuk::Amount)> listener);
     void AddBalancesListener( std::function<void(std::string, nunchuk::Amount, nunchuk::Amount)> listener);
-
     void AddTransactionListener( std::function<void(std::string, nunchuk::TransactionStatus, std::string)> listener);
-
     void AddDeviceListener( std::function<void(std::string, bool)> listener);
-
     void AddBlockListener( std::function<void(int , std::string)> listener);
-
     void AddBlockchainConnectionListener( std::function<void(nunchuk::ConnectionStatus, int)> listener);
+    //For group wallet
+    void AddGroupUpdateListener(std::function<void(const nunchuk::GroupSandbox& state)> listener);
+    void AddGroupMessageListener(std::function<void(const nunchuk::GroupMessage& msg)> listener);
+    void AddGroupOnlineListener(std::function<void(const std::string& groupId, int online)> listener);
+    void AddGroupDeleteListener(std::function<void(const std::string& groupId)> listener);
 
     nunchuk::SingleSigner ParseKeystoneSigner(const std::string& qr_data,
                                               QWarningMessage& msg);
@@ -438,7 +451,8 @@ public:
     nunchuk::Transaction ImportPassportTransaction(const std::string& wallet_id,
                                                    const std::vector<std::string>& qr_data,
                                                    QWarningMessage& msg);
-    void stopInstance();
+    void stopOneInstance();
+    void stopAllInstance();
 
     bool UpdateTransactionSchedule(const std::string& wallet_id,
                                    const std::string& tx_id,
@@ -503,6 +517,9 @@ public:
                                     const nunchuk::WalletType& wallet_type,
                                     const nunchuk::AddressType& address_type,
                                     const int index,
+                                    QWarningMessage& msg);
+
+    nunchuk::SingleSigner GetSigner(const nunchuk::SingleSigner& signer,
                                     QWarningMessage& msg);
 
     bool IsCPFP(const std::string& wallet_id,
@@ -671,6 +688,104 @@ public:
                                           const std::string& name,
                                           bool is_primary,
                                           QWarningMessage &msg);
+
+    // For GroupWallet
+    void EnableGroupWallet(const std::string& osName,
+                           const std::string& osVersion,
+                           const std::string& appVersion,
+                           const std::string& deviceClass,
+                           const std::string& deviceId,
+                           const std::string& accessToken,
+                           QWarningMessage &msg);
+
+    void StartConsumeGroupEvent(QWarningMessage &msg);
+
+    void StopConsumeGroupEvent(QWarningMessage &msg);
+
+    void SendGroupMessage(const std::string& walletId,
+                          const std::string& message,
+                          const nunchuk::SingleSigner& signer,
+                          QWarningMessage &msg);
+
+    std::vector<nunchuk::GroupMessage> GetGroupMessages(const std::string& walletId,
+                                                        int page,
+                                                        int pageSize,
+                                                        bool latest,
+                                                        QWarningMessage &msg);
+
+    nunchuk::GroupWalletConfig GetGroupWalletConfig(const std::string& walletId,
+                                                    QWarningMessage &msg);
+
+    void SetGroupWalletConfig(const std::string& walletId,
+                              const nunchuk::GroupWalletConfig& config,
+                              QWarningMessage &msg);
+
+    std::pair<std::string, std::string> ParseGroupUrl(const std::string& url,
+                                                      QWarningMessage &msg);
+
+    nunchuk::GroupConfig GetGroupConfig(QWarningMessage &msg);
+
+    nunchuk::GroupSandbox CreateGroup(const std::string& name,
+                                      int m,
+                                      int n,
+                                      nunchuk::AddressType addressType,
+                                      QWarningMessage &msg);
+
+    int GetGroupOnline(const std::string& groupId,
+                       QWarningMessage &msg);
+
+    nunchuk::GroupSandbox GetGroup(const std::string& groupId,
+                                   QWarningMessage &msg);
+
+    std::vector<nunchuk::GroupSandbox> GetGroups(QWarningMessage &msg);
+
+    nunchuk::GroupSandbox JoinGroup(const std::string& groupId,
+                                    QWarningMessage &msg);
+
+    void DeleteGroup(const std::string& groupId,
+                     QWarningMessage &msg);
+
+    nunchuk::GroupSandbox SetSlotOccupied(const std::string& groupId,
+                                          int index,
+                                          bool value,
+                                          QWarningMessage &msg);
+
+    nunchuk::GroupSandbox AddSignerToGroup(const std::string& groupId,
+                                           const nunchuk::SingleSigner& signer,
+                                           int index,
+                                           QWarningMessage &msg);
+
+    nunchuk::GroupSandbox RemoveSignerFromGroup(const std::string& groupId,
+                                                int index,
+                                                QWarningMessage &msg);
+
+    nunchuk::GroupSandbox UpdateGroup(const std::string& groupId,
+                                      const std::string& name,
+                                      int m,
+                                      int n,
+                                      nunchuk::AddressType addressType,
+                                      QWarningMessage &msg);
+
+    nunchuk::GroupSandbox FinalizeGroup(const std::string& groupId,
+                                        QWarningMessage &msg);
+
+    std::vector<nunchuk::Wallet> GetGroupWallets(QWarningMessage &msg);
+
+    bool CheckGroupWalletExists(const nunchuk::Wallet& wallet,
+                                QWarningMessage &msg);
+
+    void RecoverGroupWallet(const std::string& walletId,
+                            QWarningMessage &msg);
+
+    void SetLastReadMessage(const std::string& walletId,
+                            const std::string& messageId,
+                            QWarningMessage &msg);
+
+    int GetUnreadMessagesCount(const std::string& walletId,
+                               QWarningMessage &msg);
+
+    std::string GetGroupDeviceUID(QWarningMessage &msg);
+
 private:
     nunchukiface();
     ~nunchukiface();

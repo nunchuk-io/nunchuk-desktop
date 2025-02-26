@@ -113,7 +113,7 @@ void QWalletSignersModel::addSigner(SignerAssigned signer)
 QString QWalletSignersModel::getJoinEventId(const QString &xfp)
 {
     foreach (SignerAssigned it, m_data) {
-        if(0 == QString::compare(xfp, it.xfp, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.xfp)){
             return it.joid_id;
         }
     }
@@ -133,7 +133,7 @@ QStringList QWalletSignersModel::xfplist()
 bool QWalletSignersModel::constains(const QString &xfp)
 {
     foreach (SignerAssigned it, m_data) {
-        if(0 == QString::compare(xfp, it.xfp, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.xfp)){
             return true;
         }
     }

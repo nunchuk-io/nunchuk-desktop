@@ -27,14 +27,14 @@ QOutlog::QOutlog()
 
 QOutlog::~QOutlog()
 {
-#ifndef RELEASE_MODE
+#ifdef ENABLE_OUTLOG
     if(mLogString.endsWith(QLatin1Char(' '))) {
         mLogString.chop(1);
     }
     if (!mLogString.contains("QCoreApplication")) {
         std::cout << mLogString.toStdString() << std::endl;
     }
-//    g_writer.writeLog(mLogString);
+    g_writer.writeLog(mLogString);
 #endif
 }
 
@@ -82,7 +82,7 @@ void LogWriteToFile::writeLog(const QString &log)
 
 LogWriteToFile::LogWriteToFile(const QString &file)
 {
-#ifndef RELEASE_MODE
+#ifdef ENABLE_OUTLOG
     logfile = QSharedPointer<QFile>(new QFile(file));
     logfile.data()->open(QIODevice::WriteOnly);
 #endif
@@ -100,7 +100,7 @@ QFunctionTime::QFunctionTime(QString _func) : mFunc(_func)
 
 QFunctionTime::~QFunctionTime()
 {
-#ifndef RELEASE_MODE
+#ifdef ENABLE_OUTLOG
     DBG_FUNCTION_TIME_INFO << QString("%1 takes %2 ms").arg(mFunc).arg(mTime.elapsed());
 #endif
 }

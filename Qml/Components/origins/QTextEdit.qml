@@ -17,25 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
-TextInput {
+
+TextEdit {
     id: textEdit
     color: "Black"
     activeFocusOnTab : true
     activeFocusOnPress: true
     verticalAlignment: Text.AlignVCenter
-    cursorVisible: !readOnly && textEdit.activeFocus
+    cursorVisible: true
     selectByMouse: true
     renderType: Text.QtRendering
-    signal typingFinished(var currentText)
-    onTextChanged: if(initialized === true) inputIdentify.restart()
-
-    property bool initialized: false
-    Timer {
-        id: inputIdentify
-        interval: 250
-        onTriggered: { if(textEdit.text !== "") typingFinished(textEdit.text) }
+    textFormat: TextEdit.RichText
+    onLinkActivated: {
+        Qt.openUrlExternally(link)
     }
-    Component.onCompleted: initialized = true
+    onLinkHovered: {
+
+    }
 }

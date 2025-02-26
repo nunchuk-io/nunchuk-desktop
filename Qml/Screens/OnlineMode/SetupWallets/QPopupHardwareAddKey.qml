@@ -144,11 +144,7 @@ QPopupEmpty {
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
         onPrevClicked:{ closeClicked() }
         onNextClicked: {
-            if (ServiceSetting.existHardware(hardware)) {
-                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_KEY_EXIST_REQ)
-            } else {
-                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_KEY_REQUEST)
-            }
+            dashInfo.requestStartKeyCreate(hardware)
         }
     }
 }

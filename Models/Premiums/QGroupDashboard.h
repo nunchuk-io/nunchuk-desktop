@@ -235,6 +235,7 @@ public:
     QJsonObject bodyEditMembers();
 public slots:
     bool requestStartKeyReplacement(const QString &tag);
+    bool requestStartKeyCreate(const QString &tag);
     void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
 

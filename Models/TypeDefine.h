@@ -34,3 +34,7 @@ typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;
 class Transaction;
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 class QAssistedDraftWallets;
+class QGroupSandbox;
+typedef OurSharedPointer<QGroupSandbox> QGroupSandboxPtr;
+class GroupSandboxModel;
+typedef OurSharedPointer<GroupSandboxModel> QGroupSandboxModelPtr;

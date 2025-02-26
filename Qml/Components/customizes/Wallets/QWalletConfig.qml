@@ -125,7 +125,7 @@ QOnScreenContent {
                         Item {
                             width: parent.width
                             height: 48
-                            visible: walletInfo.aliasName === "" && isAlias
+                            visible: walletInfo.walletAliasName === "" && isAlias
                             Row {
                                 anchors{
                                     left: parent.left
@@ -150,7 +150,7 @@ QOnScreenContent {
                         Item {
                             width: parent.width
                             height: 48
-                            visible: walletInfo.aliasName !== "" && isAlias
+                            visible: walletInfo.walletAliasName !== "" && isAlias
                             Row {
                                 anchors{
                                     left: parent.left
@@ -540,9 +540,9 @@ QOnScreenContent {
                 ]
                 icons: [
                     "qrc:/Images/Images/description.png",
-                    "qrc:/Images/Images/backup.png",
-                    "qrc:/Images/Images/backup.png",
-                    "qrc:/Images/Images/backup.png",
+                    "qrc:/Images/Images/Backup.png",
+                    "qrc:/Images/Images/Backup.png",
+                    "qrc:/Images/Images/Backup.png",
                     "qrc:/Images/Images/fileDownload.png",
                     "qrc:/Images/Images/exportqr.png",
                     "qrc:/Images/Images/exportqr.png",

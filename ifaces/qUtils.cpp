@@ -21,9 +21,47 @@
 #include "AppSetting.h"
 #include "AppModel.h"
 #include "QOutlog.h"
+#include "ifaces/Servers/Draco.h"
 #include <QCryptographicHash>
 #include <QJsonDocument>
 #include <boost/algorithm/string.hpp>
+
+QString qUtils::deviceId() {
+    QString deviceId = QSysInfo::machineUniqueId();
+    if (deviceId.isEmpty()) {
+        deviceId = QSysInfo::machineHostName(); // Dự phòng
+    }
+    return deviceId;
+}
+
+QString qUtils::deviceClass() {
+#if defined(Q_OS_MACOS)
+    return "Desktop-MACOS";
+#elif defined(Q_OS_WINDOWS)
+    return "Desktop-WINDOWS";
+#elif defined(Q_OS_LINUX)
+    return "Desktop-LINUX";
+#else
+    return "Desktop";
+#endif
+}
+
+QString qUtils::osName() {
+    return QSysInfo::prettyProductName();
+}
+
+QString qUtils::osVersion() {
+    return QSysInfo::kernelVersion();
+}
+
+QString qUtils::appVersion() {
+    return qApp->applicationVersion();
+}
+
+QString qUtils::accessToken()
+{
+    return Draco::instance()->dracoToken();
+}
 
 QString qUtils::encryptXOR(const QString data, const QString key) {
     if(key == ""){
@@ -57,9 +95,20 @@ qint64 qUtils::QAmountFromValue(const QString &btcValue, const bool allow_negati
     return ret;
 }
 
-QString qUtils::QValueFromAmount(const qint64 &amount) {
+QString qUtils::QValueFromAmount(const qint64 amount) {
+    DBG_INFO << amount << INT64_MAX;
     QString ret = "";
-    ret = QString::fromStdString(nunchuk::Utils::ValueFromAmount(amount));
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::ValueFromAmount(amount));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        ret = "";
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        ret = "";
+    }
     if((int)AppSetting::Unit::BTC == AppSetting::instance()->unit() && false == AppSetting::instance()->enableFixedPrecision()){
         ret.remove( QRegExp("0+$") ); // Remove any number of trailing 0's
         ret.remove( QRegExp("\\.$") ); // If the last character is just a '.' then remove it
@@ -526,7 +575,7 @@ uint qUtils::GetCurrentTimeSecond()
 
 bool qUtils::strCompare(const QString &str1, const QString &str2)
 {
-    return 0 == QString::compare(str1, str2, Qt::CaseInsensitive);
+    return (0 == QString::compare(str1, str2, Qt::CaseInsensitive)) && !str1.isEmpty();
 }
 
 nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags)

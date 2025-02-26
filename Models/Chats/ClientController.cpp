@@ -327,10 +327,12 @@ QStringList ClientController::contactsByStringList()
 
 void ClientController::requestSignout()
 {
+    bridge::StopConsumeGroupEvent();
     if(m_loginHandler){
         m_loginHandler.data()->requestLogout();
     }
     Draco::instance()->signout();
+    bridge::stopNunchuk();
     QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
     setIsNunchukLoggedIn(false);
     setAttachmentEnable(false);
@@ -800,7 +802,7 @@ void ClientController::DownloadFile(const QString &file_name, const QString &min
                         QString room_id = jsonResult["room_id"].toString();
                         QNunchukRoomPtr room = rooms()->getRoomById(room_id);
                         if(room){
-                            if(0 != QString::compare(matrixType, NUNCHUK_EVENT_TRANSACTION, Qt::CaseInsensitive)){
+                            if(!qUtils::strCompare(matrixType, NUNCHUK_EVENT_TRANSACTION)){
                                 return;
                             }
                             Conversation cons;

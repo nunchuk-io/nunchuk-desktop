@@ -30,6 +30,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Wallets"
 import "../OnlineMode/ReplaceKeyFrees"
 import "../OnlineMode/AddHardwareKeys"
 import "../../../localization/STR_QML.js" as STR
@@ -56,7 +57,7 @@ QScreen {
         {screen_name: "replace-transfer-funds",   screen_component: replace_transfer_funds},
         {screen_name: "replace-before-you-begin", screen_component: replace_before_you_begin},
         {screen_name: "replace-add-signer",       screen_component: addSigner()},
-        {screen_name: "replace-AddColdcardViaAFile", screen_component: replace_AddColdcardViaAFile}
+        {screen_name: "replace-AddColdcardViaAFile", screen_component: replace_AddColdcardViaAFile},
     ]
     function setReplaceFlow(flow) {
         var _input = {

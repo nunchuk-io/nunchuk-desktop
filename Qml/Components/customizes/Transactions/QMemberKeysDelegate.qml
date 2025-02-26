@@ -30,6 +30,7 @@ import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
 import "../../customizes/Signers"
+import "../../customizes/Chats"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -50,9 +51,10 @@ Rectangle {
     property int    accountIndex: 0
     property string card_id: ""
     property string tag: ""
-    property bool has_sign_btn: true
-    property bool is_cosigning: false
+    property bool   has_sign_btn: true
+    property bool   is_cosigning: false
     property string myRole: ""
+    property bool   isValueKey: false
     signal signRequest()
     signal scanRequest()
     signal exportRequest()
@@ -96,6 +98,22 @@ Rectangle {
                 }
                 Row {
                     spacing: 4
+                    Rectangle {
+                        width: valuekeytext.width + 10
+                        height: 16
+                        color: "#D0E2FF"
+                        visible: isValueKey
+                        radius: 8
+                        QText {
+                            id: valuekeytext
+                            font.family: "Lato"
+                            color: "#031F2B"
+                            font.pixelSize: 10
+                            anchors.centerIn: parent
+                            font.weight: Font.Bold
+                            text: "Value Key"
+                        }
+                    }
                     Rectangle {
                         width: typesigner.width + 10
                         height: 16

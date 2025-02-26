@@ -95,7 +95,7 @@ QWalletPtr ServiceSetting::walletInfoPtr() const
 void ServiceSetting::setWalletInfo(const QWalletPtr &d)
 {
     if(d){
-        walletInfo_ = bridge::convertWallet(d->wallet());
+        walletInfo_ = bridge::convertWallet(d->nunchukWallet());
         if (walletInfo_) {
             QGroupWallets::instance()->setDashboardInfo(walletInfo_);
             if (auto dummy = walletInfo_->groupDummyTxPtr()) {

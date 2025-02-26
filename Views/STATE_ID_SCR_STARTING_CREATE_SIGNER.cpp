@@ -43,6 +43,5 @@ void EVT_STARTING_CREATE_SIGNER_BACK_HANDLER(QVariant msg) {
 }
 
 void EVT_ONLINE_MODE_ADD_NEW_SIGNER_HANDLER(QVariant msg) {
-//    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ONLINE_ADD_SIGNER);
 }
 

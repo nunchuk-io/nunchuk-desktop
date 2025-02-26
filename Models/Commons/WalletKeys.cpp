@@ -35,9 +35,7 @@ bool WalletKeys::SyncSignerToServer(const nunchuk::SingleSigner &signer)
     }
     data["tags"] = tags;
     if (signer.get_type() == nunchuk::SignerType::NFC) {
-        QWarningMessage msgGetTap;
-        nunchuk::TapsignerStatus tap = nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(signer.get_master_fingerprint(), msgGetTap);
-
+        nunchuk::TapsignerStatus tap = bridge::GetTapsignerStatusFromMasterSigner(QString::fromStdString(signer.get_master_fingerprint()));
         QJsonObject tapsigner;
         tapsigner["card_id"] = QString::fromStdString(tap.get_card_ident());
         tapsigner["version"] = QString::fromStdString(tap.get_version());

@@ -117,9 +117,10 @@ static const APPLICATION_STATE STATE_ID_SCR_REPLACE_KEYS                        
 static const APPLICATION_STATE STATE_ID_SCR_EDIT_MEMBERS                         = {E::STATE_ID_SCR_EDIT_MEMBERS                        , SCR_EDIT_MEMBERS_Entry                        , SCR_EDIT_MEMBERS_Exit                        , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_EDIT_MEMBERS                         };
 static const APPLICATION_STATE STATE_ID_SCR_SIGN_IN_VIA_XPUB                     = {E::STATE_ID_SCR_SIGN_IN_VIA_XPUB                    , SCR_SIGN_IN_VIA_XPUB_Entry                    , SCR_SIGN_IN_VIA_XPUB_Exit                    , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SIGN_IN_VIA_XPUB                     };
 static const APPLICATION_STATE STATE_ID_SCR_COIN_DETAILS_CONTROL                 = {E::STATE_ID_SCR_COIN_DETAILS_CONTROL                , SCR_COIN_DETAILS_CONTROL_Entry                , SCR_COIN_DETAILS_CONTROL_Exit                , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_COIN_DETAILS_CONTROL                 };
+static const APPLICATION_STATE STATE_ID_SCR_SETUP_GROUP_WALLET                   = {E::STATE_ID_SCR_SETUP_GROUP_WALLET                  , SCR_SETUP_GROUP_WALLET_Entry                  , SCR_SETUP_GROUP_WALLET_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_GROUP_WALLET                   };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_ROOT_trigger[37] = 
+static const STATE_TRIGGER STATE_ID_ROOT_trigger[38] = 
 {
 	{E::EVT_STARTING_APPLICATION_LOCALMODE                  , EVT_STARTING_APPLICATION_LOCALMODE_HANDLER                  , NULL                                  },
 	{E::EVT_STARTING_APPLICATION_ONLINEMODE                 , EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER                 , NULL                                  },
@@ -158,6 +159,7 @@ static const STATE_TRIGGER STATE_ID_ROOT_trigger[37] =
 	{E::EVT_COIN_DETAILS_CONTROL_REQUEST                    , EVT_COIN_DETAILS_CONTROL_REQUEST_HANDLER                    , &STATE_ID_SCR_COIN_DETAILS_CONTROL    },
 	{E::EVT_UTXOS_CONSOLIDATE_REQUEST                       , EVT_UTXOS_CONSOLIDATE_REQUEST_HANDLER                       , &STATE_ID_SCR_CONSOLIDATE_OUTPUT      },
 	{E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST_HANDLER, &STATE_ID_SCR_CREATE_TRANSACTION      },
+	{E::EVT_SETUP_GROUP_WALLET_REQUEST                      , EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER                      , &STATE_ID_SCR_SETUP_GROUP_WALLET      },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -933,6 +935,15 @@ static const STATE_TRIGGER STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_trigger[2
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const STATE_TRIGGER STATE_ID_SCR_SETUP_GROUP_WALLET_trigger[2] = 
+{
+	{E::EVT_SETUP_GROUP_WALLET_ENTER, EVT_SETUP_GROUP_WALLET_ENTER_HANDLER, NULL           },
+	{E::EVT_SETUP_GROUP_WALLET_BACK , EVT_SETUP_GROUP_WALLET_BACK_HANDLER , &STATE_ID_ROOT },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const STATE_TRIGGER STATE_ID_SCR_SETUP_SECURITY_QUESTION_trigger[2] = 
 {
 	{E::EVT_INPUT_SECURITY_QUESTION_REQUEST   , EVT_INPUT_SECURITY_QUESTION_REQUEST_HANDLER   , NULL                                         },
@@ -1165,7 +1176,7 @@ static const STATE_TRIGGER STATE_ID_TOAST_MESSAGE_DISPLAY_trigger[1] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_SYSTEM STATE_ALL[89] = 
+static const STATE_SYSTEM STATE_ALL[90] = 
 {
 	{E::STATE_ID_ROOT                                    , STATE_ID_ROOT_trigger                                    , ALEN(STATE_ID_ROOT_trigger)                                    , &STATE_ID_ROOT                                     },
 	{E::STATE_ID_SCR_HOME                                , STATE_ID_SCR_HOME_trigger                                , ALEN(STATE_ID_SCR_HOME_trigger)                                , &STATE_ID_SCR_HOME                                 },
@@ -1256,6 +1267,7 @@ static const STATE_SYSTEM STATE_ALL[89] =
 	{E::STATE_ID_SCR_EDIT_MEMBERS                        , STATE_ID_SCR_EDIT_MEMBERS_trigger                        , ALEN(STATE_ID_SCR_EDIT_MEMBERS_trigger)                        , &STATE_ID_SCR_EDIT_MEMBERS                         },
 	{E::STATE_ID_SCR_SIGN_IN_VIA_XPUB                    , STATE_ID_SCR_SIGN_IN_VIA_XPUB_trigger                    , ALEN(STATE_ID_SCR_SIGN_IN_VIA_XPUB_trigger)                    , &STATE_ID_SCR_SIGN_IN_VIA_XPUB                     },
 	{E::STATE_ID_SCR_COIN_DETAILS_CONTROL                , STATE_ID_SCR_COIN_DETAILS_CONTROL_trigger                , ALEN(STATE_ID_SCR_COIN_DETAILS_CONTROL_trigger)                , &STATE_ID_SCR_COIN_DETAILS_CONTROL                 },
+	{E::STATE_ID_SCR_SETUP_GROUP_WALLET                  , STATE_ID_SCR_SETUP_GROUP_WALLET_trigger                  , ALEN(STATE_ID_SCR_SETUP_GROUP_WALLET_trigger)                  , &STATE_ID_SCR_SETUP_GROUP_WALLET                   },
 
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

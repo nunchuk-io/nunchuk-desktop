@@ -28,9 +28,12 @@
 #include "Chats/QNunchukRoomModel.h"
 #include "Chats/matrixbrigde.h"
 #include "localization/STR_CPP.h"
+#include "ProfileSetting.h"
 
 void SCR_HOME_ONLINE_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::CHAT_TAB);
+    ProfileSetting::instance()->createCurrencies();
+    AppModel::instance()->requestSyncGroups();
     if(CLIENT_INSTANCE->rooms()){
         CLIENT_INSTANCE->rooms()->startCountdown();
     }

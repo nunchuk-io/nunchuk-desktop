@@ -35,6 +35,8 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: rootAddsignerToWallet
+    property var newWalletInfo  : AppModel.newWalletInfo
+    property var sandbox        : AppModel.newWalletInfo.sandbox
     QOnScreenContent {
         width: popupWidth
         height: popupHeight
@@ -125,6 +127,11 @@ QScreen {
                                     height: 48
                                     label.text: STR.STR_QML_086
                                     label.font.pixelSize: 16
+                                    enabled: {
+                                        var isTaproot = newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT || sandbox.addressType === NUNCHUCKTYPE.TAPROOT
+                                        return isTaproot ? false : true
+                                    }
+
                                     type: eTypeB
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     onButtonClicked: {

@@ -31,6 +31,7 @@ import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Transactions"
+import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 Item {
@@ -42,6 +43,7 @@ Item {
     property bool walletIsAssisted: AppModel.walletInfo.isAssistedWallet
     property bool walletIsShared: AppModel.walletInfo.isSharedWallet
     property bool walletIsLocked: AppModel.walletInfo.isLocked
+    property bool walletIsSandboxWallet: AppModel.walletInfo.isGlobalGroupWallet
 
 
     anchors.fill: parent
@@ -84,15 +86,15 @@ Item {
                     _info2.contentText = STR.STR_QML_1268
                     _info2.labels = [STR.STR_QML_097,STR.STR_QML_1276]
                     _info2.funcs = [
-                        function() {
-                            OnBoarding.state = "seedPhrase"
-                            QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
-                        },
-                        function() {
-                            _info2.close()
-                        }
-                    ]
-                    _info2.open()
+                                function() {
+                                    OnBoarding.state = "seedPhrase"
+                                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+                                },
+                                function() {
+                                    _info2.close()
+                                }
+                            ]
+                    _info2.open();
                 }
             }
         }
@@ -104,6 +106,7 @@ Item {
             isHotWallet: walletNeedBackup
             isLocked: walletIsLocked
             isReplaced: walletIsReplaced
+            isSandboxWallet: walletIsSandboxWallet
             Row{
                 anchors.fill: parent
                 Item {
@@ -188,9 +191,7 @@ Item {
                             QText {
                                 id:_txt
                                 anchors.centerIn: parent
-                                text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : (AppModel.walletInfo.walletN === 1) ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(AppModel.walletInfo.walletM)
-                                                                                                                                                            .arg(AppModel.walletInfo.walletN)
-                                                                                                                                                            .arg(STR.STR_QML_069);
+                                text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : (AppModel.walletInfo.walletN === 1) ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(AppModel.walletInfo.walletM).arg(AppModel.walletInfo.walletN).arg(STR.STR_QML_069);
                                 color: "#031F2B"
                                 font.weight: Font.Bold
                                 font.pixelSize: 10
@@ -214,6 +215,27 @@ Item {
                                     font.pixelSize: 10
                                     color: "#031F2B"
                                     text: STR.STR_QML_438
+                                    font.weight: Font.Bold
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+                        Rectangle{
+                            width: 70
+                            height: parent.height
+                            radius: 20
+                            visible: walletIsSandboxWallet
+                            color: "#EAEAEA"
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 4
+                                QIcon {
+                                    iconSize: 12
+                                    source: "qrc:/Images/Images/sandboxGroup.svg"
+                                }
+                                QLato{
+                                    font.pixelSize: 10
+                                    text: STR.STR_QML_1675
                                     font.weight: Font.Bold
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -278,8 +300,7 @@ Item {
                             font.pixelSize: 28
                             font.family: "Lato"
                             font.weight: Font.Bold
-                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance)
-                                                                                             .arg(RoomWalletData.unitValue)
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance).arg(RoomWalletData.unitValue)
                         }
                         QText {
                             id: wlBalanceCurrency
@@ -288,9 +309,7 @@ Item {
                             font.pixelSize: 16
                             font.family: "Lato"
                             font.weight: Font.Medium
-                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol)
-                                                                                               .arg(AppModel.walletInfo.walletBalanceCurrency)
-                                                                                               .arg(AppSetting.currency)
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol).arg(AppModel.walletInfo.walletBalanceCurrency).arg(AppSetting.currency)
                         }
                     }
                     QButtonTextLink {
@@ -382,36 +401,39 @@ Item {
                             STR.STR_QML_532,
                             STR.STR_QML_347,
                             STR.STR_QML_1490,
+                            STR.STR_QML_970  //Manage group chat history
                         ]
                         icons: [
                             "qrc:/Images/Images/import_031F2B.png",
                             "qrc:/Images/Images/Backup.png",
                             "qrc:/Images/Images/export_invoices.png",
+                            "qrc:/Images/Images/clock-dark.svg",
                         ]
                         enables: [
                             true,
                             true,
                             (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
+                            true,
                         ]
                         visibles: [
                             true,
                             true,
                             (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
+                            true,
                         ]
-                        onItemClicked: {
-                            switch(index){
-                            case 0: // Import PSBT
+                        functions: [
+                            function() { // Import PSBT
                                 openfileDialog.open()
-                                break;
-                            case 1: // "Save wallet config"
+                            },
+                            function() { // "Save wallet config"
                                 exportwalletDialog.visible = false
                                 exportwalletDialog.exportFormat = "bsms"
                                 exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
                                         + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
                                         + ".bsms"
                                 exportwalletDialog.open()
-                                break;
-                            case 2: // "Export invoices"
+                            },
+                            function() { // "Export invoices"
                                 var currentDate = new Date();
                                 var monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
                                                   "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -428,10 +450,18 @@ Item {
                                         + today
                                         + ".pdf"
                                 exportwalletDialog.open()
-                                break;
-                            default:
-                                break;
-                            }
+                            },
+                            function() {
+                                console.warn("Manage group chat history")
+                                var obj = {
+                                    type: "show-manage-chat-history"
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
+                                chatHistorySandbox.open()
+                            },
+                        ]
+                        onItemClicked: {
+                            functions[index]()
                         }
                     }
                 }
@@ -654,6 +684,19 @@ Item {
             }
         }
     }
+
+    Loader {
+        anchors.right: parent.right
+        anchors.rightMargin: 30
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 30
+        sourceComponent: AppModel.walletInfo.isGlobalGroupWallet ? messageBubble : null
+    }
+    Component {
+        id: messageBubble
+        QMessageBubble { }
+    }
+
     FileDialog {
         id: openfileDialog
         fileMode: FileDialog.OpenFile
@@ -661,6 +704,7 @@ Item {
             QMLHandle.sendEvent(EVT.EVT_HOME_IMPORT_PSBT, openfileDialog.file)
         }
     }
+
     FileDialog {
         id: exportwalletDialog
         property string exportFormat: "bsms"
@@ -837,7 +881,6 @@ Item {
             }
         }
     }
-
     Connections {
         target: PDFPrinter
         onFinished: {

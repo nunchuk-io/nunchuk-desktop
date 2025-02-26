@@ -44,14 +44,15 @@ Item {
     readonly property int eTypeO: 14
 
     readonly property int eTypeP: 15
+    readonly property int eTypeQ: 16
 
     // Click state
     readonly property int eNORMAL: 0
     readonly property int eHOVER : 1
     readonly property int eDISABLE: 2
     readonly property int eCLICKED: 3
-    property var backgroundColor: GlobalData.backgroundColor[type]
-    property var borderColor: GlobalData.borderColor[type]
+    property var backgroundColor: GlobalData.backgroundColor.find(function(e) {return e.id === type})
+    property var borderColor: GlobalData.borderColor.find(function(e) {return e.id === type})
     property alias btnMouse: _mouse
     signal buttonClicked(var mouse)
     signal pressed(var mouse)

@@ -40,18 +40,15 @@ void timeoutHandler(int timeoutInterval, Function&& f)
 
 template <typename T, typename Func1, typename Func2>
 void runInThread(Func1&& execute, Func2&& ret) {
-    QFuture<T> future = QtConcurrent::run(execute);
-    QFutureWatcher<T>* watcher = new QFutureWatcher<T>();
-
-    // Connect the finished signal
-    QMetaObject::Connection c;
-    c = QObject::connect(watcher, &QFutureWatcher<T>::finished, [watcher, ret, c]() mutable {
-        ret(watcher->result());  // Process the result
-        QObject::disconnect(c); // Explicitly disconnect
-        watcher->deleteLater(); // Clean up the watcher
+    QFuture<T> future = QtConcurrent::run(std::forward<Func1>(execute));
+    QSharedPointer<QFutureWatcher<T>> watcher = QSharedPointer<QFutureWatcher<T>>::create();
+    QObject::connect(watcher.get(), &QFutureWatcher<T>::finished, [watcher, ret]() mutable {
+        try {
+            ret(watcher->result());
+        } catch (...) {
+            DBG_INFO << "Exception in result processing";
+        }
     });
-
-    // Ensure the future is set
     watcher->setFuture(future);
 }
 
@@ -122,7 +119,7 @@ signals:
     void signalNotifySendEvent(uint eventID, QVariant msg = QVariant());
     void currentFlowChanged();
     void signalNotifyToastMessage(QVariant msg);
-
+    void stateChanged();
 public slots:
     void onVisibleChanged(bool state);
     void sendEvent(uint eventID, QVariant msg = QVariant());

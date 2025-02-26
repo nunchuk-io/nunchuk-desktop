@@ -571,70 +571,147 @@ void QSingleSigner::setKeyReplaced(const QSingleSignerPtr &keyReplaced)
     m_keyReplaced = keyReplaced;
 }
 
+bool QSingleSigner::taprootSupported()
+{
+    bool ret = true;
+    QSet<int> types = Draco::instance()->GetTaprootSupportedCached();
+    if(types.size() > 0){
+        ret = types.contains(signerType());
+    }
+    return ret;
+}
+
+int QSingleSigner::keysetIndex() const
+{
+    return m_keyset_index;
+}
+
+void QSingleSigner::setKeysetIndex(const int index)
+{
+    if(m_keyset_index != index){
+        m_keyset_index = index;
+        emit keysetIndexChanged();
+    }
+}
+
+int QSingleSigner::keysetStatus() const
+{
+    return m_keyset_status;
+}
+
+void QSingleSigner::setKeysetStatus(const int status)
+{
+    if(m_keyset_status != status){
+        m_keyset_status = status;
+        emit keysetStatusChanged();
+    }
+}
+
+int QSingleSigner::keysetPendingNumber() const
+{
+    return m_keyset_pendingnumber;
+}
+
+void QSingleSigner::setKeysetPendingNumber(const int number)
+{
+    if(m_keyset_pendingnumber != number){
+        m_keyset_pendingnumber = number;
+        emit keysetPendingNumberChanged();
+    }
+}
+
+bool QSingleSigner::valueKey() const
+{
+    return m_valuekey;
+}
+
+void QSingleSigner::setValueKey(const bool data)
+{
+    if(m_valuekey != data){
+        m_valuekey = data;
+        emit valueKeyChanged();
+    }
+}
+
+bool QSingleSigner::isValid()
+{
+    return !masterFingerPrint().isEmpty();
+}
+
 SingleSignerListModel::SingleSignerListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-SingleSignerListModel::~SingleSignerListModel(){d_.clear();}
+SingleSignerListModel::~SingleSignerListModel(){m_data.clear();}
 
 int SingleSignerListModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return d_.count();
+    return m_data.count();
 }
 
 QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
 {
     switch (role) {
     case single_signer_name_Role:
-        return d_[index.row()]->name();
+        return m_data[index.row()]->name();
     case single_signer_xpub_Role:
-        return d_[index.row()]->xpub();
+        return m_data[index.row()]->xpub();
     case single_signer_public_key_Role:
-        return d_[index.row()]->publickey();
+        return m_data[index.row()]->publickey();
     case single_signer_derivation_path_Role:
-        return d_[index.row()]->derivationPath();
+        return m_data[index.row()]->derivationPath();
     case single_signer_master_fingerprint_Role:
-        return d_[index.row()]->masterFingerPrint();
+        return m_data[index.row()]->masterFingerPrint();
     case single_signer_master_signer_id_Role:
-        return d_[index.row()]->masterSignerId();
+        return m_data[index.row()]->masterSignerId();
     case single_signer_last_health_check_Role:
-        return d_[index.row()]->lastHealthCheck();
+        return m_data[index.row()]->lastHealthCheck();
     case single_signer_signed_status_Role:
-        return d_[index.row()]->signerSigned();
+        return m_data[index.row()]->signerSigned();
     case single_signer_type_Role:
-        return d_[index.row()]->signerType();
+        return m_data[index.row()]->signerType();
     case single_signer_need_Topup_Xpub_Role:
-        return d_[index.row()]->needTopUpXpub();
+        return m_data[index.row()]->needTopUpXpub();
     case single_signer_signed_message_Role:
-        return d_[index.row()]->message();
+        return m_data[index.row()]->message();
     case single_signer_signed_signature_Role:
-        return d_[index.row()]->signature();
+        return m_data[index.row()]->signature();
     case single_signer_health_Role:
-        return d_[index.row()]->health();
+        return m_data[index.row()]->health();
     case single_signer_isColdcard_Role:
-        return d_[index.row()]->isColdCard();
+        return m_data[index.row()]->isColdCard();
     case single_signer_checked_Role:
-        return d_[index.row()]->checked();
+        return m_data[index.row()]->checked();
     case single_signer_readyToSign_Role:
-        return d_[index.row()]->readyToSign();
+        return m_data[index.row()]->readyToSign();
     case single_signer_is_local_Role:
-        return d_[index.row()]->isLocalSigner();
+        return m_data[index.row()]->isLocalSigner();
     case single_signer_primary_key_Role:
-        return d_[index.row()]->isPrimaryKey();
+        return m_data[index.row()]->isPrimaryKey();
     case single_signer_devicetype_Role:
-        return d_[index.row()]->devicetype();
+        return m_data[index.row()]->devicetype();
     case single_signer_device_cardid_Role:
-        return d_[index.row()]->cardId();
+        return m_data[index.row()]->cardId();
     case single_signer_tag_Role:
-        return d_[index.row()]->tag();
+        return m_data[index.row()]->tag();
     case single_signer_has_sign_btn_Role:
-        return d_[index.row()]->hasSignBtn();
+        return m_data[index.row()]->hasSignBtn();
     case single_signer_account_index_Role:
-        return d_[index.row()]->accountIndex();
+        return m_data[index.row()]->accountIndex();
     case single_signer_isReplaced_Role:
-        return d_[index.row()]->isReplaced();
+        return m_data[index.row()]->isReplaced();
     case single_signer_keyReplaced_Role:
-        return QVariant::fromValue(d_[index.row()]->keyReplaced().data());
+        return QVariant::fromValue(m_data[index.row()]->keyReplaced().data());
+    case single_signer_taproot_supported:
+        return m_data[index.row()]->taprootSupported();
+    case single_signer_keyset_index:
+        return m_data[index.row()]->keysetIndex();
+    case single_signer_keyset_status:
+        return m_data[index.row()]->keysetStatus();
+    case single_signer_keyset_remaining:
+        return m_data[index.row()]->keysetPendingNumber();
+    case single_signer_value_key:
+        return m_data[index.row()]->valueKey();
     default:
         return QVariant();
     }
@@ -643,13 +720,13 @@ QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
 bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     if(role == single_signer_signed_message_Role) {
-        d_[index.row()]->setMessage(value.toString());
+        m_data[index.row()]->setMessage(value.toString());
     }
     else if(role == single_signer_signed_signature_Role){
-        d_[index.row()]->setSignature(value.toString());
+        m_data[index.row()]->setSignature(value.toString());
     }
     else if(role == single_signer_checked_Role){
-        d_[index.row()]->setChecked(value.toBool());
+        m_data[index.row()]->setChecked(value.toBool());
         DBG_INFO;
     }
     else{ }
@@ -685,39 +762,66 @@ QHash<int, QByteArray> SingleSignerListModel::roleNames() const
     roles[single_signer_account_index_Role]       = "single_signer_account_index";
     roles[single_signer_isReplaced_Role]          = "single_signer_isReplaced";
     roles[single_signer_keyReplaced_Role]         = "single_signer_keyReplaced";
+    roles[single_signer_taproot_supported]        = "single_signer_taproot_supported";
+    roles[single_signer_keyset_index]             = "single_signer_keyset_index";
+    roles[single_signer_keyset_status]            = "single_signer_keyset_status";
+    roles[single_signer_keyset_remaining]         = "single_signer_keyset_remaining";
+    roles[single_signer_value_key]                = "single_signer_value_key";
     return roles;
 }
 
 void SingleSignerListModel::replaceSingleSigner(int index, const QSingleSignerPtr &value)
 {
-    if(index < 0 || index >= d_.count()){
+    if(index < 0 || index >= m_data.count()){
         DBG_INFO << "Index out of range";
     }
     else {
         beginResetModel();
-        d_.replace(index, value);
+        m_data.replace(index, value);
         endResetModel();
     }
 }
 
 void SingleSignerListModel::addSingleSigner(const QSingleSignerPtr &d)
 {
-    beginResetModel();
     if(d && !containsSigner(d.data()->masterFingerPrint(), d.data()->derivationPath())){
         nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(d->masterFingerPrint());
         if(key.get_master_fingerprint() != ""){
             d->setOriginPrimaryKey(key);
         }
-        d_.append(d);
+        beginResetModel();
+        m_data.append(d);
+        endResetModel();
     }
-    endResetModel();
+}
+
+void SingleSignerListModel::addKeysetSigner(const QSingleSignerPtr &signer, const int keyset_index)
+{
+    if(signer){
+        QString xfp = signer.data()->masterFingerPrint();
+        if(!containsKeyset(xfp, keyset_index)){
+            beginResetModel();
+            m_data.append(signer);
+            endResetModel();
+        }
+    }
+}
+
+void SingleSignerListModel::updateKeysetPendingnumber(const int keyset_index, const int number)
+{
+    for (int i = 0; i < m_data.count(); i++) {
+        if(keyset_index == m_data.at(i).data()->keysetIndex()){
+            m_data.at(i).data()->setKeysetPendingNumber(number);
+            emit dataChanged(index(i), index(i) );
+        }
+    }
 }
 
 void SingleSignerListModel::initSignatures()
 {
     beginResetModel();
-    for (int var = 0; var < d_.count(); var++) {
-        d_[var]->setSignerSigned(false);
+    for (int var = 0; var < m_data.count(); var++) {
+        m_data[var]->setSignerSigned(false);
     }
     endResetModel();
 }
@@ -725,17 +829,17 @@ void SingleSignerListModel::initSignatures()
 
 void SingleSignerListModel::updateSignatures(const QString &masterfingerprint, const bool value, const QString& signature)
 {
-    for (int var = 0; var < d_.count(); var++) {
-        if(0 == QString::compare(masterfingerprint, d_.at(var).data()->masterFingerPrint(), Qt::CaseInsensitive)){
-            d_[var]->setSignerSigned(value);
-            d_[var]->setSignature(signature);
+    for (int var = 0; var < m_data.count(); var++) {
+        if(qUtils::strCompare(masterfingerprint, m_data.at(var).data()->masterFingerPrint())){
+            m_data[var]->setSignerSigned(value);
+            m_data[var]->setSignature(signature);
         }
     }
 }
 
 bool SingleSignerListModel::needTopUpXpubs() const
 {
-    foreach (QSingleSignerPtr i , d_ ){
+    foreach (QSingleSignerPtr i , m_data ){
         if(i.data()->needTopUpXpub()){
             return true;
         }
@@ -744,18 +848,18 @@ bool SingleSignerListModel::needTopUpXpubs() const
 }
 
 QSingleSignerPtr SingleSignerListModel::getSingleSignerByIndex(const int index) {
-    if(index < 0 || index >= d_.count()){
+    if(index < 0 || index >= m_data.count()){
         DBG_INFO << "Index out of range";
         return NULL;
     }
     else {
-        return d_.at(index);
+        return m_data.at(index);
     }
 }
 
 bool SingleSignerListModel::containsMasterSignerId(const QString &masterSignerId) {
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(masterSignerId, i.data()->masterSignerId(), Qt::CaseInsensitive)){
+    foreach (QSingleSignerPtr i , m_data ){
+        if(qUtils::strCompare(masterSignerId, i.data()->masterSignerId())){
             return true;
         }
     }
@@ -765,7 +869,18 @@ bool SingleSignerListModel::containsMasterSignerId(const QString &masterSignerId
 bool SingleSignerListModel::removeSingleSignerByIndex(const int index)
 {
     beginResetModel();
-    d_.removeAt(index);
+    m_data.removeAt(index);
+    endResetModel();
+    return false;
+}
+
+bool SingleSignerListModel::removeSingleSignerByType(const int type)
+{
+    beginResetModel();
+    m_data.erase(std::remove_if(m_data.begin(), m_data.end(), [type](const auto& item) {
+                                return item.data()->signerType() == type;
+                            }), m_data.end());
+
     endResetModel();
     return false;
 }
@@ -773,11 +888,11 @@ bool SingleSignerListModel::removeSingleSignerByIndex(const int index)
 QString SingleSignerListModel::getMasterSignerIdByIndex(const int index)
 {
     QString ret = "";
-    if(index < 0 || index >= d_.count()){
+    if(index < 0 || index >= m_data.count()){
         DBG_INFO << "Index out of range";
     }
     else {
-        ret = d_.at(index)->masterSignerId();
+        ret = m_data.at(index)->masterSignerId();
     }
 
     return ret;
@@ -786,19 +901,29 @@ QString SingleSignerListModel::getMasterSignerIdByIndex(const int index)
 QString SingleSignerListModel::getMasterSignerXfpByIndex(const int index)
 {
     QString ret = "";
-    if(index < 0 || index >= d_.count()){
+    if(index < 0 || index >= m_data.count()){
         DBG_INFO << "Index out of range";
     }
     else {
-        ret = d_.at(index)->masterFingerPrint();
+        ret = m_data.at(index)->masterFingerPrint();
     }
     return ret;
 }
 
 QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QString &xfp) {
 
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+    foreach (QSingleSignerPtr i , m_data ){
+        if(qUtils::strCompare(xfp, i.data()->masterFingerPrint())){
+            return i;
+        }
+    }
+    return NULL;
+}
+
+QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QString &xfp, const QString &name)
+{
+    foreach (QSingleSignerPtr i , m_data ){
+        if(qUtils::strCompare(xfp, i.data()->masterFingerPrint()) && qUtils::strCompare(name, i.data()->name())){
             return i;
         }
     }
@@ -807,8 +932,8 @@ QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QStri
 
 int SingleSignerListModel::getIndexByFingerPrint(const QString &fingerprint)
 {
-    for (int i = 0; i < d_.count(); i++) {
-        if(0 == QString::compare(fingerprint, d_[i].data()->masterFingerPrint(), Qt::CaseInsensitive)){
+    for (int i = 0; i < m_data.count(); i++) {
+        if(qUtils::strCompare(fingerprint, m_data[i].data()->masterFingerPrint())){
             return i;
         }
     }
@@ -817,7 +942,7 @@ int SingleSignerListModel::getIndexByFingerPrint(const QString &fingerprint)
 
 int SingleSignerListModel::getnumberSigned() {
     int ret = 0;
-    foreach (QSingleSignerPtr i , d_ ){
+    foreach (QSingleSignerPtr i , m_data ){
         if(true == i.data()->signerSigned()){
             ret++;
         }
@@ -827,7 +952,7 @@ int SingleSignerListModel::getnumberSigned() {
 
 bool SingleSignerListModel::containsHardwareKey()
 {
-    foreach (QSingleSignerPtr i , d_ ){
+    foreach (QSingleSignerPtr i , m_data ){
         if(i.data()->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE) {
             return true;
         }
@@ -837,9 +962,9 @@ bool SingleSignerListModel::containsHardwareKey()
 
 bool SingleSignerListModel::containsSigner(const QString &xfp, const QString &path)
 {
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(path, i.data()->derivationPath(), Qt::CaseInsensitive)
-                && 0 == QString::compare(xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive))
+    foreach (QSingleSignerPtr i , m_data ){
+        if(qUtils::strCompare(path, i.data()->derivationPath())
+                && qUtils::strCompare(xfp, i.data()->masterFingerPrint()))
         {
             return true;
         }
@@ -849,7 +974,7 @@ bool SingleSignerListModel::containsSigner(const QString &xfp, const QString &pa
 
 bool SingleSignerListModel::containsColdcard()
 {
-    foreach (QSingleSignerPtr i , d_ ){
+    foreach (QSingleSignerPtr i , m_data ){
         if(i.data()->isColdCard()){
             return true;
         }
@@ -859,8 +984,18 @@ bool SingleSignerListModel::containsColdcard()
 
 bool SingleSignerListModel::containsFingerPrint(const QString &masterFingerPrint)
 {
-    foreach (QSingleSignerPtr i , d_ ){
-        if(0 == QString::compare(masterFingerPrint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+    foreach (QSingleSignerPtr i , m_data ){
+        if(qUtils::strCompare(masterFingerPrint, i.data()->masterFingerPrint())){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SingleSignerListModel::containsKeyset(const QString &xfp, const int keyset_index)
+{
+    foreach (QSingleSignerPtr i , m_data ){
+        if((i.data()->keysetIndex() == keyset_index) && qUtils::strCompare(xfp, i.data()->masterFingerPrint())){
             return true;
         }
     }
@@ -871,8 +1006,8 @@ bool SingleSignerListModel::checkUsableToSign(const QString &masterFingerPrint)
 {
     bool isContains = containsFingerPrint(masterFingerPrint);
     if(isContains){
-        foreach (QSingleSignerPtr i , d_ ){
-            if(0 == QString::compare(masterFingerPrint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)) {
+        foreach (QSingleSignerPtr i , m_data ){
+            if(qUtils::strCompare(masterFingerPrint, i.data()->masterFingerPrint())) {
                 if(!i.data()->signerSigned()){
                     return true;
                 }
@@ -885,7 +1020,7 @@ bool SingleSignerListModel::checkUsableToSign(const QString &masterFingerPrint)
 void SingleSignerListModel::updateSignerHealthStatus(const QString &xfp, const int status, const time_t time)
 {
     beginResetModel();
-    foreach (QSingleSignerPtr i , d_ ){
+    foreach (QSingleSignerPtr i , m_data ){
         if(i.data() && qUtils::strCompare(xfp, i.data()->masterFingerPrint())){
             i.data()->setHealth(status);
         }
@@ -896,7 +1031,7 @@ void SingleSignerListModel::updateSignerHealthStatus(const QString &xfp, const i
 void SingleSignerListModel::notifyMasterSignerDeleted(const QString &masterSignerId)
 {
     beginResetModel();
-    foreach (QSingleSignerPtr i , d_ ){
+    foreach (QSingleSignerPtr i , m_data ){
         if(i.data() && masterSignerId == i.data()->masterSignerId()){
             i.data()->setSignerType((int)ENUNCHUCK::SignerType::AIRGAP);
         }
@@ -907,8 +1042,8 @@ void SingleSignerListModel::notifyMasterSignerDeleted(const QString &masterSigne
 void SingleSignerListModel::updateSignerOfRoomWallet(const SignerAssigned &signer)
 {
     beginResetModel();
-    foreach (QSingleSignerPtr i , d_ ){
-        if(!i.data()->isLocalSigner() && 0 == QString::compare(signer.xfp, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+    foreach (QSingleSignerPtr i , m_data ){
+        if(!i.data()->isLocalSigner() && qUtils::strCompare(signer.xfp, i.data()->masterFingerPrint())){
             i.data()->setName(signer.name);
             i.data()->setSignerType(signer.type);
         }
@@ -919,7 +1054,7 @@ void SingleSignerListModel::updateSignerOfRoomWallet(const SignerAssigned &signe
 void SingleSignerListModel::resetUserChecked()
 {
     beginResetModel();
-    foreach (QSingleSignerPtr it, d_) {
+    foreach (QSingleSignerPtr it, m_data) {
         it.data()->setChecked(false);
     }
     endResetModel();
@@ -928,8 +1063,8 @@ void SingleSignerListModel::resetUserChecked()
 void SingleSignerListModel::setUserCheckedByFingerprint(const bool state, const QString fp)
 {
     beginResetModel();
-    foreach (QSingleSignerPtr it, d_) {
-        if(0 == QString::compare(fp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+    foreach (QSingleSignerPtr it, m_data) {
+        if(qUtils::strCompare(fp, it.data()->masterFingerPrint())){
             it.data()->setChecked(state);
         }
     }
@@ -938,12 +1073,12 @@ void SingleSignerListModel::setUserCheckedByFingerprint(const bool state, const 
 
 void SingleSignerListModel::setUserChecked(const bool state, const int index)
 {
-    if(index < 0 || index >= d_.count()){
+    if(index < 0 || index >= m_data.count()){
         DBG_INFO << "Index out of range";
     }
     else {
         beginResetModel();
-        d_.at(index)->setChecked(state);
+        m_data.at(index)->setChecked(state);
         endResetModel();
     }
 }
@@ -951,7 +1086,7 @@ void SingleSignerListModel::setUserChecked(const bool state, const int index)
 void SingleSignerListModel::updateHealthCheckTime()
 {
     beginResetModel();
-    foreach (QSingleSignerPtr it, d_) {
+    foreach (QSingleSignerPtr it, m_data) {
         it.data()->lastHealthCheckChanged();
     }
     endResetModel();
@@ -959,11 +1094,11 @@ void SingleSignerListModel::updateHealthCheckTime()
 
 void SingleSignerListModel::syncNunchukEmail(QList<DracoUser> users)
 {
-    for (int i = 0; i < d_.count(); i++) {
-        if(d_.at(i) && !d_.at(i).data()->isLocalSigner()){
+    for (int i = 0; i < m_data.count(); i++) {
+        if(m_data.at(i) && !m_data.at(i).data()->isLocalSigner()){
             foreach (DracoUser user, users) {
-                if(0 == QString::compare(d_.at(i).data()->name(), user.chat_id, Qt::CaseInsensitive)){
-                    d_.at(i).data()->setEmail(user.email);
+                if(qUtils::strCompare(m_data.at(i).data()->name(), user.chat_id)){
+                    m_data.at(i).data()->setEmail(user.email);
                     emit dataChanged(index(i), index(i) );
                 }
             }
@@ -974,7 +1109,7 @@ void SingleSignerListModel::syncNunchukEmail(QList<DracoUser> users)
 bool SingleSignerListModel::needSyncNunchukEmail()
 {
     bool ret = false;
-    for (QSingleSignerPtr p : d_) {
+    for (QSingleSignerPtr p : m_data) {
         if(!p.data()->isLocalSigner() && p.data()->email() == ""){
             return true;
         }
@@ -985,22 +1120,42 @@ bool SingleSignerListModel::needSyncNunchukEmail()
 void SingleSignerListModel::requestSort()
 {
     beginResetModel();
-    if(d_.count() > 1){
-        qSort(d_.begin(), d_.end(), sortSingleSignerByNameAscending);
+    if(m_data.count() > 1){
+        qSort(m_data.begin(), m_data.end(), sortSingleSignerByNameAscending);
+    }
+    endResetModel();
+}
+
+void SingleSignerListModel::requestSortKeyset()
+{
+    beginResetModel();
+    if(m_data.count() > 1){
+        qSort(m_data.begin(), m_data.end(), sortSingleSignerByKeysetIndexAscending);
     }
     endResetModel();
 }
 
 QList<QSingleSignerPtr > SingleSignerListModel::fullList() const
 {
-    return d_;
+    return m_data;
 }
 
 std::vector<nunchuk::SingleSigner> SingleSignerListModel::signers() const
 {
     std::vector<nunchuk::SingleSigner> signerList;
-    for (QSingleSignerPtr p : d_) {
+    for (QSingleSignerPtr p : m_data) {
         signerList.push_back(p->originSingleSigner());
+    }
+    return signerList;
+}
+
+std::vector<nunchuk::SingleSigner> SingleSignerListModel::localSigners() const
+{
+    std::vector<nunchuk::SingleSigner> signerList;
+    for (QSingleSignerPtr p : m_data) {
+        if(p.data()->isLocalSigner()){
+            signerList.push_back(p->originSingleSigner());
+        }
     }
     return signerList;
 }
@@ -1008,12 +1163,93 @@ std::vector<nunchuk::SingleSigner> SingleSignerListModel::signers() const
 QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
 {
     QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
-    for (QSingleSignerPtr signer : d_) {
+    for (QSingleSignerPtr signer : m_data) {
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
         if(ret){
+            // username
             ret.data()->setEmail(signer.data()->email());
+            // tapsigner
             ret.data()->setCardId(signer.data()->cardId());
+            //primary key
+            ret.data()->setOriginPrimaryKey(signer.data()->originPrimaryKey());
+            // Add to data
             clone.data()->addSingleSigner(ret);
+        }
+    }
+    return clone;
+}
+
+QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneKeysets(std::vector<nunchuk::KeysetStatus> keyset_status) const
+{
+    QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
+    for (int i = 0; i < keyset_status.size(); i++){
+        nunchuk::KeysetStatus keyset = keyset_status[i];
+        nunchuk::TransactionStatus tx_status = keyset.first;
+        nunchuk::KeyStatus keystatus = keyset.second;
+        int pending_number = 0;
+        for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++){
+            QString xfp = QString::fromStdString(it->first);
+            bool    signedStatus = it->second;
+            //FIXME - TRICK -->>
+            std::set<int> valid_numbers = {(int)nunchuk::TransactionStatus::CONFIRMED, (int)nunchuk::TransactionStatus::READY_TO_BROADCAST, (int)nunchuk::TransactionStatus::PENDING_CONFIRMATION};
+            if (valid_numbers.find((int)tx_status) != valid_numbers.end()) {
+                signedStatus = true;
+            }
+            //FIXME - TRICK <<--
+
+            if(!signedStatus) {
+                pending_number++;
+            }
+            for (QSingleSignerPtr signer : m_data) {
+                if(qUtils::strCompare(xfp, signer.data()->masterFingerPrint())){
+                    QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
+                    if(ret){
+                        // username
+                        ret.data()->setEmail(signer.data()->email());
+                        // tapsigner
+                        ret.data()->setCardId(signer.data()->cardId());
+                        //primary key
+                        ret.data()->setOriginPrimaryKey(signer.data()->originPrimaryKey());
+                        // keyset
+                        ret.data()->setSignerSigned(signedStatus);
+                        ret.data()->setKeysetIndex(i);
+                        ret.data()->setKeysetStatus((int)tx_status);
+                        ret.data()->setValueKey(signer.data()->valueKey());
+                        // Add to data
+                        clone.data()->addKeysetSigner(ret, i);
+                    }
+                }
+            }
+        }
+        clone.data()->updateKeysetPendingnumber(i, pending_number);
+    }
+    return clone;
+}
+
+QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneFinalSigners(std::map<std::string, bool> final_signers) const
+{
+    QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
+
+    for (auto it = final_signers.begin(); it != final_signers.end(); ++it) {
+        QString xfp = QString::fromStdString(it->first);
+        bool    signedStatus = it->second;
+        for (QSingleSignerPtr signer : m_data) {
+            if(qUtils::strCompare(xfp, signer.data()->masterFingerPrint())){
+                QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
+                if(ret){
+                    // username
+                    ret.data()->setEmail(signer.data()->email());
+                    // tapsigner
+                    ret.data()->setCardId(signer.data()->cardId());
+                    //primary key
+                    ret.data()->setOriginPrimaryKey(signer.data()->originPrimaryKey());
+                    // sign status
+                    ret.data()->setSignerSigned(signedStatus);
+                    ret.data()->setValueKey(signer.data()->valueKey());
+                    // Add to data
+                    clone.data()->addSingleSigner(ret);
+                }
+            }
         }
     }
     return clone;
@@ -1022,14 +1258,14 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
 void SingleSignerListModel::cleardata()
 {
     beginResetModel();
-    d_.clear();
+    m_data.clear();
     endResetModel();
 }
 
 QStringList SingleSignerListModel::getKeyNames()
 {
     QStringList ret;
-    foreach (QSingleSignerPtr it, d_) {
+    foreach (QSingleSignerPtr it, m_data) {
         if(it) {
             ret << it.data()->name();
         }
@@ -1039,7 +1275,7 @@ QStringList SingleSignerListModel::getKeyNames()
 
 void SingleSignerListModel::setCardIDList(const QMap<QString, QString> &card_ids)
 {
-    foreach (QSingleSignerPtr it, d_) {
+    foreach (QSingleSignerPtr it, m_data) {
         if(it) {
             QString card_id = card_ids.value(it.data()->masterFingerPrint());
             it.data()->setCardId(card_id);
@@ -1049,16 +1285,45 @@ void SingleSignerListModel::setCardIDList(const QMap<QString, QString> &card_ids
 
 int SingleSignerListModel::signerCount() const
 {
-    return d_.count();
+    return m_data.count();
 }
 
 int SingleSignerListModel::signerSelectedCount() const
 {
     int ret = 0;
-    foreach (QSingleSignerPtr it, d_) {
+    foreach (QSingleSignerPtr it, m_data) {
         if(it.data()->checked()) { ret++;}
     }
     return ret;
+}
+
+
+int SingleSignerListModel::keyinfo() const
+{
+    return 0;
+}
+
+int SingleSignerListModel::keysetStatus(int keyset_index)
+{
+    DBG_INFO << keyset_index;
+    foreach (QSingleSignerPtr it, m_data) {
+        if(it && (it.data()->keysetIndex() == keyset_index)) {
+            return it.data()->keysetStatus();
+        }
+    }
+    return (int)nunchuk::TransactionStatus::PENDING_NONCE;
+}
+
+int SingleSignerListModel::keysetRemaingSignarure(int keyset_index)
+{
+    DBG_INFO << keyset_index;
+    int remaining = 0;
+    foreach (QSingleSignerPtr it, m_data) {
+        if(it && (it.data()->keysetIndex() == keyset_index) && (!it.data()->signerSigned())) {
+            remaining += 1;
+        }
+    }
+    return remaining;
 }
 
 bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
@@ -1072,4 +1337,9 @@ bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSi
     else {
         return (QString::compare((v1.data()->name()), (v2.data()->name())) < 0);
     }
+}
+
+bool sortSingleSignerByKeysetIndexAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
+{
+    return (v1->keysetIndex() < v2->keysetIndex());
 }

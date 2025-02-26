@@ -36,7 +36,7 @@ void SignInViaDummy::initWallet()
 {
     qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
     AppModel::instance()->setWalletInfo(QWalletPtr(new Wallet()), true);
-    AppModel::instance()->walletInfoPtr()->setId(walletId());
+    AppModel::instance()->walletInfoPtr()->setWalletId(walletId());
     WalletsMng->CreateData<QGroupWalletHealthCheckPtr>(walletId());
     WalletsMng->CreateData<QWalletDummyTxPtr>(walletId());
     WalletsMng->initSignInWallet(walletId());
@@ -84,7 +84,7 @@ void SignInViaDummy::convertWalelt()
     m_wallet.set_signers(signers);
     if (auto w = AppModel::instance()->walletInfoPtr()) {
         w->convert(m_wallet);
-        w->setId(walletId());
+        w->setWalletId(walletId());
         if (auto signers = w->singleSignersAssigned()) {
             signers->setCardIDList(m_card_ids);
         }
@@ -146,7 +146,7 @@ void SignInViaDummy::SignInCreateDummyTransaction()
                 trans->setHideSignBtns(xfps);
                 emit dummy->transactionInfoChanged();
             }
-            emit trans->singleSignerAssignedChanged();
+            emit trans->nunchukTransactionChanged();
         }
     }
     else{
@@ -344,7 +344,7 @@ void SignInViaDummy::SignInRequestUpdateDummyTx(const QMap<QString, QString>& si
                 if (isSignIn()) {
                     QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
                     trans->setTxJson(dummy_transaction);
-                    emit trans->singleSignerAssignedChanged();
+                    emit trans->nunchukTransactionChanged();
                     if (auto dummy = dashboard()->groupDummyTxPtr()) {
                         dummy->setDummyTxData(dummy_transaction);
                     }

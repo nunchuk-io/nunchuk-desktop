@@ -140,7 +140,7 @@ Item {
                     }
                     QIcon {
                         iconSize: 24
-                        source: fingerPrint === modelData.signer_fingerPrint ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                        source: fingerPrint === modelData.signer_fingerPrint && key_name === modelData.signer_name ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
                         scale: primaryKeyMouse.pressed ? 0.9 : 1.0
                         anchors{
                             right: parent.right

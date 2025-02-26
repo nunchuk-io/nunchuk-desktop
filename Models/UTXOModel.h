@@ -57,12 +57,12 @@ public:
     int count() const;
     void clear();
     QVariant tag();
-    void setTag(const int &tag_id);
+    void setTag(const int tag_id);
     nunchuk::CoinTag getCoinTagById(const int tag_id);
     Q_INVOKABLE bool containColor(const QString &color);
 
-    void increase(const int &tag_id, QString wallet_id);
-    int get_count(const int &tag_id) const;
+    void increase(const int tag_id, QString wallet_id);
+    int get_count(const int tag_id) const;
 
     bool isChecked();
     bool isPartiallyChecked();
@@ -129,10 +129,10 @@ public:
     int count() const;
     void clear();
     QVariant collection();
-    void setCollection(const int &collection_id);
+    void setCollection(const int collection_id);
 
-    void increase(const int &collection_id, QString wallet_id);
-    int get_count(const int &collection_id) const;
+    void increase(const int collection_id, QString wallet_id);
+    int get_count(const int collection_id) const;
     nunchuk::CoinCollection getCoinCollectionById(const int collection_id);
 
     bool isChecked();

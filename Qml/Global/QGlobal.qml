@@ -32,72 +32,66 @@ QtObject {
     property bool   customMsgHealthcheck: false
     property int    listFocusing: 0
     property string recoverSoftwareType: "seed"
+    property bool   showOthersKeyset: true
+
+    readonly property color color1: Qt.rgba(241, 250, 254, 0.2)
 
     property var backgroundColor: [
-        ["#F6D65D", "#96833B", "#9CAEB8", "#B8A048"],
-        ["transparent", "#031F2B", "transparent", "#1A333D"],
-        ["transparent", Qt.rgba(218, 222, 224, 0.1), "transparent", Qt.rgba(218, 222, 224, 0.4)],
-        ["transparent", "#9FA0A1","transparent", "#8B8C8C"],
-        ["#031F2B", "#1A333D","#EAEAEA", "#031F2B"],
-        ["#FFFFFF", "#031F2B","#EAEAEA", "#031F2B"],
-        ["#FFFFFF", "#031F2B","#EAEAEA", "#1A333D"],
-
-        ["#F6D65D", "#9CAEB8", "#96833B", "#B8A048"],
-        ["transparent", "transparent", "#031F2B", "#1A333D"],
-
-        ["#C9DEF1", "#9CAEB8", "#031F2B", "#C9DEF1"],
-        ["transparent", "transparent", "#031F2B" ,"transparent"],
-        ["transparent", "transparent", "#F1FAFE", "transparent"],
-        ["#D0E2FF", "#FFFFFF", "transparent", "#D0E2FF"],
-        ["#031F2B", "#1A333D","#031F2B", "#031F2B"],
-        ["transparent", "#1A333D", "transparent", "transparent"],
-
-        ["transparent", "transparent", "transparent", "transparent"], // eFOURTEEN
-        ["transparent", "transparent", "transparent", "transparent"]  // eFIFTEEN
+        {id: 0, normal: "#F6D65D",     hover: "#96833B",                   disable: "#9CAEB8",     clicked: "#B8A048"},
+        {id: 1, normal: "transparent", hover: "#031F2B",                   disable: "transparent", clicked: "#1A333D"},
+        {id: 2, normal: "transparent", hover: Qt.rgba(218, 222, 224, 0.1), disable: "transparent", clicked: Qt.rgba(218, 222, 224, 0.4)},
+        {id: 3, normal: "transparent", hover: "#9FA0A1",                   disable: "transparent", clicked: "#8B8C8C"},
+        {id: 4, normal: "#031F2B",     hover: "#1A333D",                   disable: "#EAEAEA",     clicked: "#031F2B"},
+        {id: 5, normal: "#FFFFFF",     hover: "#031F2B",                   disable: "#EAEAEA",     clicked: "#031F2B"},
+        {id: 6, normal: "#FFFFFF",     hover: "#031F2B",                   disable: "#EAEAEA",     clicked: "#1A333D"},
+        {id: 7, normal: "#F6D65D",     hover: "#9CAEB8",                   disable: "#96833B",     clicked: "#B8A048"},
+        {id: 8, normal: "transparent", hover: "transparent",               disable: "#031F2B",     clicked: "#1A333D"},
+        {id: 9, normal: "#C9DEF1",     hover: "#9CAEB8",                   disable: "#031F2B",     clicked: "#C9DEF1"},
+        {id:10, normal: "transparent", hover: "transparent",               disable: "#031F2B",     clicked: "transparent"},
+        {id:11, normal: "transparent", hover: "transparent",               disable: "#F1FAFE",     clicked: "transparent"},
+        {id:12, normal: "#D0E2FF",     hover: "#FFFFFF",                   disable: "transparent", clicked: "#D0E2FF"},
+        {id:13, normal: "#031F2B",     hover: "#1A333D",                   disable: "#031F2B",     clicked: "#031F2B"},
+        {id:14, normal: "transparent", hover: "#1A333D",                   disable: "transparent", clicked: "transparent"},
+        {id:15, normal: "transparent", hover: "transparent",               disable: "transparent", clicked: "transparent"},
+        {id:16, normal: color1,        hover: color1,                      disable: color1,        clicked: color1},
     ]
     property var borderColor: [
-        ["transparent", "transparent", "transparent", "#F6D65D"],
-        ["#031F2B", "#031F2B", "#9CAEB8", "#031F2B"],
-        ["#F1FAFE", Qt.rgba(241, 250, 254, 0.4), "#F1FAFE", "#F1FAFE"],
-        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
-        ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"],
-        ["#FFFFFF", "#031F2B", "#EAEAEA", "#595959"],
-        ["#FFFFFF", "#FFFFFF", "#EAEAEA", "#FFFFFF"],
-
-        ["transparent", "transparent", "transparent", "#F6D65D"],
-        ["#031F2B", "#9CAEB8", "#031F2B", "#031F2B"],
-
-        ["transparent", "transparent", "transparent","transparent"],
-        ["#031F2B", "#9CAEB8", "#031F2B", "#031F2B"],
-        ["#F1FAFE", "#839096", "transparent", "#F1FAFE"],
-        ["transparent", "transparent", "transparent", "transparent"],
-        ["#031F2B", "#031F2B", "#EAEAEA", "#031F2B"],
-        ["transparent", "transparent", "transparent", "transparent"],
-
-        ["transparent", "transparent", "transparent", "transparent"],   // eFOURTEEN
-        ["transparent", "transparent", "transparent", "transparent"]    // eFIFTEEN
+        {id: 0, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "#F6D65D"},
+        {id: 1, normal: "#031F2B",     hover: "#031F2B",                   disable: "#9CAEB8",         clicked: "#031F2B"},
+        {id: 2, normal: "#F1FAFE",     hover: Qt.rgba(241, 250, 254, 0.4), disable: "#F1FAFE",         clicked: "#F1FAFE"},
+        {id: 3, normal: "#031F2B",     hover: "#031F2B",                   disable: "#031F2B",         clicked: "#031F2B"},
+        {id: 4, normal: "#031F2B",     hover: "#031F2B",                   disable: "#EAEAEA",         clicked: "#031F2B"},
+        {id: 5, normal: "#FFFFFF",     hover: "#031F2B",                   disable: "#EAEAEA",         clicked: "#595959"},
+        {id: 6, normal: "#FFFFFF",     hover: "#FFFFFF",                   disable: "#EAEAEA",         clicked: "#FFFFFF"},
+        {id: 7, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "#F6D65D"},
+        {id: 8, normal: "#031F2B",     hover: "#9CAEB8",                   disable: "#031F2B",         clicked: "#031F2B"},
+        {id: 9, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
+        {id:10, normal: "#031F2B",     hover: "#9CAEB8",                   disable: "#031F2B",         clicked: "#031F2B"},
+        {id:11, normal: "#F1FAFE",     hover: "#839096",                   disable: "transparent",     clicked: "#F1FAFE"},
+        {id:12, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
+        {id:13, normal: "#031F2B",     hover: "#031F2B",                   disable: "#EAEAEA",         clicked: "#031F2B"},
+        {id:14, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
+        {id:15, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
+        {id:16, normal: color1,        hover: color1,                      disable: color1,            clicked: color1},
     ]
     property var textColor: [
-        ["#031F2B", "#C9DEF1", "#C9DEF1", "#031F2B"],
-        ["#031F2B", "#F1FAFE", "#9CAEB8", "#F1FAFE"],
-        ["#F1FAFE", "#F1FAFE", "#F1FAFE", "#F1FAFE"],
-        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
-        ["#FFFFFF", "#FFFFFF", "#595959", "#FFFFFF"],
-        ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
-        ["#031F2B", "#FFFFFF", "#595959", "#FFFFFF"],
-
-        ["#031F2B", "#C9DEF1", "#031F2B", "#031F2B"],
-        ["#031F2B", "#9CAEB8", "#F1FAFE", "#F1FAFE"],
-
-        ["#031F2B", "#C9DEF1", "#C9DEF1", "#031F2B"],
-        ["#031F2B", "#9CAEB8", "#F1FAFE", "#031F2B"],
-        ["#F1FAFE", "#839096", "#031F2B", "#F1FAFE"],
-        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
-        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
-        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
-
-        ["#031F2B", "#031F2B", "#031F2B", "#031F2B"],
-        ["transparent", "transparent", "transparent", "transparent"],// eFIFTEEN
+        {id: 0, normal: "#031F2B",     hover: "#C9DEF1",     disable: "#C9DEF1",     clicked: "#031F2B"},
+        {id: 1, normal: "#031F2B",     hover: "#F1FAFE",     disable: "#9CAEB8",     clicked: "#F1FAFE"},
+        {id: 2, normal: "#F1FAFE",     hover: "#F1FAFE",     disable: "#F1FAFE",     clicked: "#F1FAFE"},
+        {id: 3, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
+        {id: 4, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#595959",     clicked: "#FFFFFF"},
+        {id: 5, normal: "#031F2B",     hover: "#FFFFFF",     disable: "#595959",     clicked: "#FFFFFF"},
+        {id: 6, normal: "#031F2B",     hover: "#FFFFFF",     disable: "#595959",     clicked: "#FFFFFF"},
+        {id: 7, normal: "#031F2B",     hover: "#C9DEF1",     disable: "#031F2B",     clicked: "#031F2B"},
+        {id: 8, normal: "#031F2B",     hover: "#9CAEB8",     disable: "#F1FAFE",     clicked: "#F1FAFE"},
+        {id: 9, normal: "#031F2B",     hover: "#C9DEF1",     disable: "#C9DEF1",     clicked: "#031F2B"},
+        {id:10, normal: "#031F2B",     hover: "#9CAEB8",     disable: "#F1FAFE",     clicked: "#031F2B"},
+        {id:11, normal: "#F1FAFE",     hover: "#839096",     disable: "#031F2B",     clicked: "#F1FAFE"},
+        {id:12, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
+        {id:13, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
+        {id:14, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
+        {id:15, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
+        {id:16, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
     ]
 
     function signers(type){

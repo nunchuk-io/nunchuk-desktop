@@ -114,7 +114,7 @@ QStringList QContactModel::contactsByStringList()
 QString QContactModel::getContactNameByChatId(const QString &id)
 {
     foreach (DracoUser it, m_data) {
-        if(0 == QString::compare(it.chat_id, id, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(it.chat_id, id)){
             return it.name;
         }
     }
@@ -187,7 +187,7 @@ void QContactModel::cancelFriendRequest(const QString &contact_id)
 bool QContactModel::containsUserId(const QString &userid)
 {
     foreach (DracoUser it, m_data) {
-        if(0 == QString::compare(it.chat_id, userid, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(it.chat_id, userid)){
             return true;
         }
     }

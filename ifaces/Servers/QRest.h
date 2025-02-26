@@ -49,23 +49,24 @@ public:
     static QString dracoToken();
     static void setDracoToken(const QString token);
     static QByteArray machineUniqueId();
-
+    QString url() const;
 protected:
-    QNetworkAccessManager *m_networkManager;
+    OurSharedPointer<QNetworkAccessManager> m_networkManager;
     QJsonObject postSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
     QJsonObject postMultiPartSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
-    QJsonObject getSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
-    QJsonObject getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
+    QJsonObject getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
     QJsonObject putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject putSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
 
 private:
-    static QString m_dracoToken;
-    static QByteArray m_machineUniqueId;
+    static QString      m_dracoToken;
+    static QByteArray   m_machineUniqueId;
+    QMutex              m_networkManagerMutex;
 };
 
 #endif // QREST_H

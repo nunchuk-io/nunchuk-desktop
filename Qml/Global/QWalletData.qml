@@ -27,11 +27,11 @@ QtObject {
     readonly property string unitValue: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? " sat" : " BTC"
     readonly property QtObject currentRoom: ClientController.rooms ? ClientController.rooms.currentRoom : null
     readonly property QtObject roomWallet : currentRoom ? currentRoom.roomWallet : null
-    readonly property bool roomWalletReady: currentRoom && roomWallet
-    readonly property bool roomWalletInitialized: walletInitId && roomWallet.walletInitId !== ""
-    readonly property bool roomWalletCreated: roomWalletReady ? roomWallet.walletReady : false
-    readonly property int typeSeleted: roomWalletReady ? parseInt(roomWallet.walletAddressType) : 3
-    readonly property var typeSeletedStr: ["Any", "Legacy", "Nested Segwit", "Native Segwit"]
+    readonly property bool  roomWalletReady: currentRoom && roomWallet
+    readonly property bool  roomWalletInitialized: walletInitId && roomWallet.walletInitId !== ""
+    readonly property bool  roomWalletCreated: roomWalletReady ? roomWallet.walletReady : false
+    readonly property int   typeSeleted: roomWalletReady ? parseInt(roomWallet.walletAddressType) : 3
+    readonly property var   typeSeletedStr: ["Any", "Legacy", "Nested Segwit", "Native Segwit"]
     readonly property string walletType: roomWalletReady ? roomWallet.walletEscrow ? "Escrow wallet" : "Standard wallet" : "Escrow wallet"
     readonly property string addressType: typeSeletedStr[typeSeleted]
     readonly property string multisigConfiguration: roomWalletReady ? (roomWallet.walletM + "/" + roomWallet.walletN) : "0/0"

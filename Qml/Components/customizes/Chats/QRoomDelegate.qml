@@ -67,8 +67,7 @@ Rectangle {
             avatarUrl: contactAvt
             username: contactname
             displayStatus: userCount > 2
-            anchors.top: parent.top
-            anchors.topMargin: 4
+            anchors.verticalCenter: parent.verticalCenter
         }
         Column {
             width: parent.width - 90
@@ -151,7 +150,7 @@ Rectangle {
                         radius: 20
                         color: "#EAEAEA"
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: isEncrypted
+                        visible: false//isEncrypted
                         Row {
                             anchors.centerIn: parent
                             spacing: 4

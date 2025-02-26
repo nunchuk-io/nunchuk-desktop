@@ -64,7 +64,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 icon:"qrc:/Images/Images/add-light.svg"
                 onClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
+                    QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST, { type: "add-key-free" })
                 }
             }
         }
@@ -191,7 +191,7 @@ Rectangle {
                 enabled: false
                 visible: !busyIdct.running
                 signername : STR.STR_QML_016
-                card_id_or_xfp: "XFP: DEADBEEF"
+                card_id_or_xfp: "DEADBEEF"
                 Rectangle {
                     anchors.fill: parent
                     color: "#031F2B"

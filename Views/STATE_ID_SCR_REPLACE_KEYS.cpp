@@ -46,7 +46,7 @@ void EVT_REPLACE_KEYS_ENTER_HANDLER(QVariant msg) {
             w->SelectKeyToReplace(maps["fingerXfp"].toString(), maps["indexXfp"].toInt());
             w->setReplaceFlow("replace-existing-key");
         } else if (type == "request-add-a-key") {
-            QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST, msg);
             QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_USER_FREE);
         } else if (type == "replace-Key-Enter") {
             w->CreateANewWallet();
@@ -86,7 +86,7 @@ void EVT_REPLACE_KEYS_ENTER_HANDLER(QVariant msg) {
                     w->setReplaceFlow(type);
                 }
                 else {
-                    QString new_wallet_id = w->id();
+                    QString new_wallet_id = w->walletId();
                     int index = AppModel::instance()->walletList()->getWalletIndexById(new_wallet_id);
                     if(-1 != index){
                         AppModel::instance()->setWalletListCurrentIndex(index);

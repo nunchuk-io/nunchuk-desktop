@@ -48,7 +48,6 @@ public:
     Draco(Draco &other) = delete;
     Draco(Draco const &other) = delete;
     void operator=(const Draco &other) = delete;
-    void connectDragonServer(QUrl url);
     Q_INVOKABLE void refreshDevices();
     Q_INVOKABLE void refreshContacts();
     Q_INVOKABLE void checkAccountAvailability(const QString &email);
@@ -436,6 +435,11 @@ public:
     bool ReplacementUploadBackupFile(const QString& wallet_id, const QString& passwordToken, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
     bool DraftWalletDownloadBackupFile(const QString& xfp, QJsonObject& output, QString& errormsg);
     bool DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
+
+    // Supported signers
+    bool GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg);
+    QSet<int> GetTaprootSupportedCached(bool reset = false);
+
 private:
     Draco();
     ~Draco();
@@ -449,6 +453,7 @@ private:
     QString m_deviceId;
     bool m_stayLoggedIn;
     bool m_isSubscribed;
+    QSet<int> m_taproot_support_types {};
 
 signals:
     void uidChanged();

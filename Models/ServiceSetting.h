@@ -41,7 +41,7 @@ public:
 
     void checkInheritanceDownloadBackup();
 
-    Q_INVOKABLE bool existHardware(const QString& tag);
+    bool existHardware(const QString& tag);
 
     int optionIndex() const;
     void setOptionIndex(int index);

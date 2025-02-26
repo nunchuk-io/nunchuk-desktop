@@ -42,7 +42,7 @@ bool QUserWalletDummyTx::CreateDummyTransaction()
     if (CreateDummyTx(bodyString())) {
         if (transactionPtr()) {
             transactionPtr()->setSignatures({});
-            emit transactionPtr()->singleSignerAssignedChanged();
+            emit transactionPtr()->nunchukTransactionChanged();
         }
         emit transactionInfoChanged();
         return true;
@@ -62,7 +62,7 @@ bool QUserWalletDummyTx::CreateDummyTransaction(const QString &period_id)
     if (CreateDummyTx(bodyString())) {
         if (transactionPtr()) {
             transactionPtr()->setSignatures({});
-            emit transactionPtr()->singleSignerAssignedChanged();
+            emit transactionPtr()->nunchukTransactionChanged();
         }
         emit transactionInfoChanged();
         return true;
@@ -192,7 +192,7 @@ void QUserWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sign
     DBG_INFO << signatures;
     if(!signatures.isEmpty()){
         transactionPtr()->setSignatures(signatures);
-        emit transactionPtr()->singleSignerAssignedChanged();
+        emit transactionPtr()->nunchukTransactionChanged();
         QJsonObject reqiredSignatures = servicesTagPtr()->reqiredSignaturesJs();
         reqiredSignatures["required_signatures"] = (m_required_signatures - signatures.size());
         servicesTagPtr()->setReqiredSignatures(reqiredSignatures);

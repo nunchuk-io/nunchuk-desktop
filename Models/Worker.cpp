@@ -28,6 +28,7 @@
 #include "Premiums/QGroupWallets.h"
 #include "ServiceSetting.h"
 #include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QSignerManagement.h"
 
 Worker *Worker::mInstance = NULL;
 Worker::Worker()
@@ -394,40 +395,100 @@ void Worker::slotStartCreateSoftwareSignerXprv(const QString name, const QString
     }
 }
 
-void Worker::slotStartCreateWallet(bool backup,
-                                   QString file_path)
+void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
 {
-    DBG_INFO << backup << file_path;
-    QWarningMessage msgWarning;
-    nunchuk::Wallet ret = bridge::nunchukCreateOriginWallet(AppModel::instance()->newWalletInfo()->name(),
-                                                            AppModel::instance()->newWalletInfo()->m(),
-                                                            AppModel::instance()->newWalletInfo()->n(),
-                                                            AppModel::instance()->newWalletInfo()->singleSignersAssigned(),
-                                                            (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt(),
-                                                            AppModel::instance()->newWalletInfo()->escrow(),
-                                                            AppModel::instance()->newWalletInfo()->description(),
-                                                            msgWarning);
-    emit finishCreateWallet(ret,
-                            msgWarning.what(),
-                            msgWarning.type(),
-                            msgWarning.code());
-    if(backup){
-        bridge::nunchukExportWallet(QString::fromStdString(ret.get_id()),
-                                    file_path,
-                                    nunchuk::ExportFormat::BSMS);
+    DBG_INFO << need_backup << file_path;
+    if(AppModel::instance()->newWalletInfo()){
+        DBG_INFO << "CREATE"
+                 << AppModel::instance()->newWalletInfo()->walletAddressType()
+                 << AppModel::instance()->newWalletInfo()->walletType()
+                 << AppModel::instance()->newWalletInfo()->walletM()
+                 << AppModel::instance()->newWalletInfo()->walletN();
+        if(AppModel::instance()->newWalletInfo()->walletAddressType() == (int)nunchuk::AddressType::TAPROOT){
+            QJsonObject data;
+            QString     error_msg = "";
+            bool get_result = Draco::instance()->GetTaprootSupportedSigners(data, error_msg);
+            if(get_result){
+                DBG_INFO << data;
+                QJsonArray supported_signers = data["supported_signers"].toArray();
+                enum class SignerType {
+                    UNKNOWN = -1,
+                    HARDWARE,
+                    AIRGAP,
+                    SOFTWARE,
+                    FOREIGN_SOFTWARE,
+                    NFC,
+                    COLDCARD_NFC,
+                    SERVER,
+                    PORTAL_NFC,
+                };
+
+                QSet<int> all_types = {
+                    (int)SignerType::UNKNOWN,
+                    (int)SignerType::HARDWARE,
+                    (int)SignerType::AIRGAP,
+                    (int)SignerType::SOFTWARE,
+                    (int)SignerType::FOREIGN_SOFTWARE,
+                    (int)SignerType::NFC,
+                    (int)SignerType::COLDCARD_NFC,
+                    (int)SignerType::SERVER,
+                    (int)SignerType::PORTAL_NFC
+                };
+
+                QSet<int> supported_types;
+                supported_types.clear();
+                foreach (const QJsonValue &value, supported_signers) {
+                    QJsonObject obj = value.toObject();
+                    QString type = obj["signer_type"].toString();
+                    nunchuk::SignerType type_enum = qUtils::GetSignerType(type);
+                    supported_types.insert((int)type_enum);
+                }
+
+                QSet<int> unsupported_types = all_types - supported_types;
+                foreach (int unsupported_type, unsupported_types) {
+                    AppModel::instance()->newWalletInfo()->singleSignersAssigned()->removeSingleSignerByType(unsupported_type);
+                }
+            }
+        }
+        QWarningMessage msgWarning;
+        nunchuk::Wallet ret = bridge::nunchukCreateOriginWallet(AppModel::instance()->newWalletInfo()->walletNameDisplay(),
+                                                                AppModel::instance()->newWalletInfo()->walletM(),
+                                                                AppModel::instance()->newWalletInfo()->walletN(),
+                                                                AppModel::instance()->newWalletInfo()->singleSignersAssigned(),
+                                                                (nunchuk::AddressType)AppModel::instance()->newWalletInfo()->walletAddressType(),
+                                                                nunchuk::WalletType::MULTI_SIG,//(nunchuk::WalletType)AppModel::instance()->newWalletInfo()->walletType(),
+                                                                AppModel::instance()->newWalletInfo()->walletDescription(),
+                                                                false /*allow used signer*/,
+                                                                "" /*decoy pin*/,
+                                                                msgWarning);
+
+        DBG_INFO << "CREATE" << ret.get_name() << (int)ret.get_wallet_type() << (int)ret.get_address_type() << ret.get_m() << ret.get_n();
+
+        emit finishCreateWallet(ret,
+                                msgWarning.what(),
+                                msgWarning.type(),
+                                msgWarning.code());
+        if(need_backup){
+            bridge::nunchukExportWallet(QString::fromStdString(ret.get_id()), file_path, nunchuk::ExportFormat::BSMS);
+        }
     }
 }
 
 void Worker::slotStartBalanceChanged(const QString &id,
                                      const qint64 balance)
 {
-    if(AppModel::instance()->walletList() && AppModel::instance()->walletList()->rowCount() > 0){
-        AppModel::instance()->walletList()->updateBalance(id, balance);
-        if(AppModel::instance()->walletInfo()  && 0 == QString::compare(id, AppModel::instance()->walletInfo()->id(), Qt::CaseInsensitive)){
-            AppModel::instance()->walletInfo()->setBalance(balance);
+    QWarningMessage msg;
+    nunchuk::Wallet origin_wallet = bridge::nunchukGetOriginWallet(id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        if(AppModel::instance()->walletList()){
+            AppModel::instance()->walletList()->updateNunchukWallet(id, origin_wallet);
         }
-        emit finishBalanceChanged(id, balance);
+        if(AppModel::instance()->walletInfo()  && qUtils::strCompare(id, AppModel::instance()->walletInfo()->walletId())){
+            AppModel::instance()->walletInfo()->setNunchukWallet(origin_wallet);
+            slotStartGetTransactionHistory(id);
+        }
     }
+    emit finishBalanceChanged(id, balance);
 }
 
 void Worker::slotStartTransactionChanged(const QString &tx_id,
@@ -546,10 +607,17 @@ void Worker::slotStartReloadUserDb()
 {
     QFunctionTime f(__PRETTY_FUNCTION__);
     QWarningMessage msg;
+
+    std::vector<nunchuk::Wallet> group_wallets = bridge::nunchukGetOriginGroupWallets(msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        emit finishReloadGroupWallets(group_wallets);
+    }
+
     std::vector<nunchuk::Wallet> wallets = bridge::nunchukGetOriginWallets(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         emit finishReloadWallets(wallets);
     }
+
     std::vector<nunchuk::MasterSigner> masters = bridge::nunchukGetOriginMasterSigners(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         emit finishReloadMasterSigners(masters);
@@ -562,7 +630,13 @@ void Worker::slotStartReloadUserDb()
 
 void Worker::slotStartReloadWallets()
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QWarningMessage msg;
+    std::vector<nunchuk::Wallet> group_wallets = bridge::nunchukGetOriginGroupWallets(msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        emit finishReloadGroupWallets(group_wallets);
+    }
+
     std::vector<nunchuk::Wallet> wallets = bridge::nunchukGetOriginWallets(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         emit finishReloadWallets(wallets);
@@ -571,6 +645,7 @@ void Worker::slotStartReloadWallets()
 
 void Worker::slotStartReloadMasterSigners()
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QWarningMessage msg;
     std::vector<nunchuk::MasterSigner> masters = bridge::nunchukGetOriginMasterSigners(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
@@ -580,6 +655,7 @@ void Worker::slotStartReloadMasterSigners()
 
 void Worker::slotStartReloadRemoteSigners()
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QWarningMessage msg;
     std::vector<nunchuk::SingleSigner> remotes = bridge::nunchukGetOriginRemoteSigners(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
@@ -589,7 +665,15 @@ void Worker::slotStartReloadRemoteSigners()
 
 void Worker::slotStartSyncWalletDb(const QString &wallet_id)
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     if(wallet_id != ""){
+        QWarningMessage msg;
+        nunchuk::Wallet origin_wallet = bridge::nunchukGetOriginWallet(wallet_id, msg);
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+            AppModel::instance()->walletInfo()->setNunchukWallet(origin_wallet);
+            AppModel::instance()->walletInfo()->startDownloadConversation();
+        }
+
         std::vector<nunchuk::Transaction> trans_result = bridge::nunchukGetOriginTransactionHistory(wallet_id);
         emit finishGetTransactionHistory(wallet_id, trans_result);
 
@@ -601,7 +685,7 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
 
         QWalletPtr wallet = NULL;
         if(AppModel::instance()->walletInfo()){
-            if(0 == QString::compare(AppModel::instance()->walletInfo()->id(), wallet_id, Qt::CaseInsensitive)){
+            if(qUtils::strCompare(AppModel::instance()->walletInfo()->walletId(), wallet_id)){
                 wallet = AppModel::instance()->walletInfoPtr();
             }
         }
@@ -615,12 +699,12 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
             wallet.data()->setUsedChangeAddressList(used_change_addr);
             wallet.data()->setunUsedAddressList(unused_addr);
             wallet.data()->setUnUsedChangeddAddressList(unsued_change_addr);
+            wallet.data()->startDownloadConversation();
             if(wallet){
                 QtConcurrent::run([wallet, wallet_id]() {
                     wallet.data()->GetAssistedTxs();
                     AppModel::instance()->startGetTransactionHistory(wallet_id);
                 });
-
             }
         }
     }
@@ -701,7 +785,7 @@ Controller::Controller() {
 
     // Create software signerX
     connect(this, &Controller::startCreateSoftwareSignerXprv, worker, &Worker::slotStartCreateSoftwareSignerXprv, Qt::QueuedConnection);
-    connect(worker, &Worker::finishCreateSoftwareSignerXprv, this, &Controller::slotFinishCreateSoftwareSigner, Qt::QueuedConnection);
+    connect(worker, &Worker::finishCreateSoftwareSignerXprv, this, &Controller::slotFinishCreateSoftwareSignerXprv, Qt::QueuedConnection);
 
     // Create wallet
     connect(this, &Controller::startCreateWallet, worker, &Worker::slotStartCreateWallet, Qt::QueuedConnection);
@@ -743,6 +827,7 @@ Controller::Controller() {
 
     connect(this, &Controller::startReloadWallets, worker, &Worker::slotStartReloadWallets, Qt::QueuedConnection);
     connect(worker, &Worker::finishReloadWallets, this, &Controller::slotFinishReloadWallets, Qt::QueuedConnection);
+    connect(worker, &Worker::finishReloadGroupWallets, this, &Controller::slotFinishReloadGroupWallets, Qt::QueuedConnection);
 
     connect(this, &Controller::startReloadMasterSigners, worker, &Worker::slotStartReloadMasterSigners, Qt::QueuedConnection);
     connect(worker, &Worker::finishReloadMasterSigners, this, &Controller::slotFinishReloadMasterSigners, Qt::QueuedConnection);
@@ -790,6 +875,11 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
             AppModel::instance()->setMasterSignerInfo(newsigner);
             selectFingerPrint = newsigner->fingerPrint();
             keyName = newsigner->name();
+        }
+        DBG_INFO << selectFingerPrint << keyName;
+        if (QSignerManagement::instance()->finishCreateMasterSigner())  {
+            AppModel::instance()->setAddSignerStep(-1);
+            return;
         }
         int last = QEventProcessor::instance()->getCurrentStates().last();
         DBG_INFO << last << selectFingerPrint << keyName;
@@ -864,6 +954,10 @@ void Controller::slotFinishCreateRemoteSigner(const int event,
             AppModel::instance()->setRemoteSignerList(remoteSigners);
         }
         DBG_INFO << event;
+        if (QSignerManagement::instance()->finishCreateRemoteSigner()) {
+            emit finishedCreateRemoteSigner();
+            return;
+        }
         if(event == E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER){
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_REMOTE_SIGNER_RESULT);
         }
@@ -911,7 +1005,7 @@ void Controller::slotFinishScanDevices(const int state_id,
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
     }
     if(AppModel::instance()->transactionInfoPtr()){
-        emit AppModel::instance()->transactionInfoPtr()->singleSignerAssignedChanged();
+        emit AppModel::instance()->transactionInfoPtr()->nunchukTransactionChanged();
     }
     if (auto s = AppModel::instance()->masterSignerInfoPtr()) {
         if (auto d = s->devicePtr()) {
@@ -951,14 +1045,14 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
         }
         QString tx_id = QString::fromStdString(result.get_txid());
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId);
-        if(AppModel::instance()->transactionInfo() && (qUtils::strCompare(tx_id, AppModel::instance()->transactionInfo()->txid()))){
-            if(qUtils::strCompare(walletId, AppModel::instance()->transactionInfo()->walletId())){
-                AppModel::instance()->setTransactionInfo(bridge::convertTransaction(result, walletId));
+        if(AppModel::instance()->transactionInfo())
+            if(qUtils::strCompare(tx_id, AppModel::instance()->transactionInfo()->txid()) && qUtils::strCompare(walletId, AppModel::instance()->transactionInfo()->walletId())){
+                DBG_INFO << "TAPROOT-TEST";
+                AppModel::instance()->transactionInfo()->setNunchukTransaction(result);
                 if(wallet){
                     wallet.data()->SignAsisstedTxs(tx_id, QString::fromStdString(result.get_psbt()), QString::fromStdString(result.get_memo()));
                 }
             }
-        }
         AppModel::instance()->requestSyncWalletDb(walletId);
     }
     else{
@@ -1077,6 +1171,84 @@ void Controller::slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }
 
+        if (QSignerManagement::instance()->finishCreateSoftwareSigner()) {
+            return;
+        }
+
+        switch (QEventProcessor::instance()->currentFlow()) {
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY:
+        {
+            uint last = QEventProcessor::instance()->getCurrentStates().last();
+            if(last == (int)E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION){
+                AppModel::instance()->showToast(0, STR_CPP_102.arg(QString::fromStdString(ret.get_name())), EWARNING::WarningType::SUCCESS_MSG);
+            }
+            else if(last == (int)E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY){
+                QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED);
+            }
+            else if(last == (int)E::STATE_ID_SCR_UNLOCK_DB){
+                QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
+                AppModel::instance()->makeMatrixInstanceForAccount();
+                QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
+                if(pKey){
+                    timeoutHandler(3000,[pKey](){
+                        AppModel::instance()->showToast(0,STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
+                        QWarningMessage msg;
+                        bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
+                    });
+                }
+            }
+            else{}
+            break;
+        }
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY:
+        {
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
+            AppModel::instance()->setPrimaryKey(ClientController::instance()->getMe().username);
+            break;
+        }
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER:
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET:
+        {
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
+            QString message = QString("<b>%1</b> has been added").arg(newsigner->name());
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::SUCCESS_MSG);
+
+            break;
+        }
+        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_USER_FREE: {
+            if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+                if (newsigner) {
+                    w->updateNewKeyReplace(newsigner->fingerPrint());
+                    AppModel::instance()->showToast(0, STR_CPP_062, EWARNING::WarningType::SUCCESS_MSG);
+                }
+            }
+            break;
+        }
+        default:
+            QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
+            break;
+        }
+    }
+    else{
+        AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
+    }
+}
+
+void Controller::slotFinishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret, QString what, int type, int code)
+{
+    if(type != (int)EWARNING::WarningType::EXCEPTION_MSG){
+        QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+        QMasterSignerPtr newsigner;
+        if(mastersigners){
+            AppModel::instance()->setMasterSignerList(mastersigners);
+            newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(QString::fromStdString(ret.get_device().get_master_fingerprint()));
+            AppModel::instance()->setMasterSignerInfo(newsigner);
+        }
+
+        if (QSignerManagement::instance()->finishCreateSoftwareSignerXprv()) {
+            return;
+        }
+
         switch (QEventProcessor::instance()->currentFlow()) {
         case (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY:
         {
@@ -1182,12 +1354,7 @@ void Controller::slotFinishBackupWallet(QString what,
 void Controller::slotFinishBalanceChanged(const QString &id,
                                           const qint64 balance)
 {
-    if(AppModel::instance()->walletInfo() && qUtils::strCompare(id, AppModel::instance()->walletInfo()->id())){
-        startGetTransactionHistory(id);
-    }
-    if(AppModel::instance()->walletList()){
-        AppModel::instance()->walletList()->updateBalance(id, balance);
-    }
+
 }
 
 void Controller::slotFinishTransactionChanged(const QString &tx_id,
@@ -1252,7 +1419,7 @@ void Controller::slotFinishGetTransactionHistory(const QString wallet_id,
 {
     QWalletPtr wallet = NULL;
     if(AppModel::instance()->walletInfo()){
-        if(0 == QString::compare(AppModel::instance()->walletInfo()->id(), wallet_id, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(AppModel::instance()->walletInfo()->walletId(), wallet_id)){
             wallet = AppModel::instance()->walletInfoPtr();
         }
     }
@@ -1394,6 +1561,24 @@ void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
         if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){
             if(CLIENT_INSTANCE->rooms()){
                 CLIENT_INSTANCE->rooms()->downloadRoomWallets();
+            }
+        }
+    }
+}
+
+void Controller::slotFinishReloadGroupWallets(std::vector<nunchuk::Wallet> wallets)
+{
+    QFunctionTime f(__PRETTY_FUNCTION__);
+    QWalletListModelPtr ret = bridge::nunchukConvertWallets(wallets);
+    if(ret){
+        AppModel::instance()->setGroupWalletList(ret);
+        if (auto list = AppModel::instance()->groupWalletListPtr()) {
+            int index = list->currentIndex();
+            if(index < list->count()) {
+                list->setCurrentIndex(index);
+            }
+            else {
+                list->setCurrentIndex(0);
             }
         }
     }

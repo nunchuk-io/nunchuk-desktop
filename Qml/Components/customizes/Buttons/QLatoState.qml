@@ -26,35 +26,35 @@ import "../../customizes/Texts"
 QLato {
     id: _text
     // Click state
-    property var textColor: GlobalData.textColor[type]
+    property var textColor: GlobalData.textColor.find(function(e) {return e.id === type})
     state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
     states: [
         State {
             name: "default"
             PropertyChanges {
                 target: _text
-                color: textColor[eNORMAL]
+                color: textColor.normal
             }
         },
         State {
             name: "hover"
             PropertyChanges {
                 target: _text
-                color: textColor[eHOVER]
+                color: textColor.hover
             }
         },
         State {
             name: "disable"
             PropertyChanges {
                 target: _text
-                color: textColor[eDISABLE]
+                color: textColor.disable
             }
         },
         State {
             name: "clicked"
             PropertyChanges {
                 target: _text
-                color: textColor[eCLICKED]
+                color: textColor.clicked
             }
         }
     ]

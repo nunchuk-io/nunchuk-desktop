@@ -41,6 +41,9 @@ Rectangle {
     width: parent.width
     height: (parent.height - 215)/2
     clip: true
+    readonly property int _FOCUS_PENDING_GROUP_WALLET: 0
+    readonly property int _FOCUS_PENDING_WALLET: 1
+    readonly property int _FOCUS_WALLET: 2
     Column {
         width: parent.width
         spacing: 12
@@ -119,6 +122,35 @@ Rectangle {
                     width: parent.width
                     spacing: 4
                     QListView {
+                        id: pendingGroupList
+                        height: contentHeight
+                        width: parent.width - 32
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: pendingGroupList.count > 0
+                        snapMode: ListView.NoSnap
+                        model: SharedWallet.sandboxList
+                        interactive: false
+                        currentIndex: SharedWallet.currentIndex
+                        spacing: 4
+                        delegate: QPendingGroupWallet {
+                            width: pendingGroupList.width
+                            name_group: model.group_name
+                            isCurrentIndex: (!walletList.visible) ? (pendingGroupList.visible) && (index === pendingGroupList.currentIndex) :
+                                                                    (pendingGroupList.visible) && (index === pendingGroupList.currentIndex)
+                                                                    && (GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET)
+
+                            onButtonClicked: {
+                                GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
+                                SharedWallet.currentIndex = index
+                                var obj = {
+                                    type: "setup-group-wallet",
+                                    group_id: model.group_id
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
+                            }
+                        }
+                    }
+                    QListView {
                         id: pendingList
                         height: contentHeight
                         width: parent.width - 32
@@ -136,9 +168,10 @@ Rectangle {
                             email_person: modelData.userEmail
                             user_accepted: modelData.accepted
                             isCurrentIndex: (!walletList.visible) ? (pendingList.visible) && (index === pendingList.currentIndex) :
-                                                                    (pendingList.visible) && (index === pendingList.currentIndex) && (GlobalData.listFocusing === 0)
+                                                                    (pendingList.visible) && (index === pendingList.currentIndex)
+                                                                    && (GlobalData.listFocusing === _FOCUS_PENDING_WALLET)
                             onDeny: {
-                                GlobalData.listFocusing = 0
+                                GlobalData.listFocusing = _FOCUS_PENDING_WALLET
                                 GroupWallet.currentIndex = index
                                 var obj = {
                                     type: "deny",
@@ -147,7 +180,7 @@ Rectangle {
                                 askDeny(obj)
                             }
                             onAccept: {
-                                GlobalData.listFocusing = 0
+                                GlobalData.listFocusing = _FOCUS_PENDING_WALLET
                                 GroupWallet.currentIndex = index
                                 var obj = {
                                     type: "accept",
@@ -156,7 +189,7 @@ Rectangle {
                                 QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
                             }
                             onDashboard: {
-                                GlobalData.listFocusing = 0
+                                GlobalData.listFocusing = _FOCUS_PENDING_WALLET
                                 GroupWallet.currentIndex = index
                                 var obj = {
                                     type: "dashboard",
@@ -165,15 +198,13 @@ Rectangle {
                                 QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
                             }
                             onButtonClicked: {
-                                GlobalData.listFocusing = 0
+                                GlobalData.listFocusing = _FOCUS_PENDING_WALLET
                                 GroupWallet.currentIndex = index
-//                                if (user_accepted) {
-                                    var obj = {
-                                        type: "dashboard",
-                                        group_id: modelData.groupId
-                                    }
-                                    QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
-//                                }
+                                var obj = {
+                                    type: "dashboard",
+                                    group_id: modelData.groupId
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
                             }
 
                             layer.enabled: true
@@ -200,24 +231,26 @@ Rectangle {
                             id: walletListdelegate
                             width: walletList.width
                             isCurrentIndex: (!pendingList.visible) ? (walletList.visible) && (index === walletList.currentIndex) :
-                                                                     (walletList.visible) && (index === walletList.currentIndex) && (GlobalData.listFocusing === 1)
-                            isEscrow: model.wallet_Escrow
-                            isShared: model.wallet_isSharedWallet
-                            isAssisted: model.wallet_isAssistedWallet
+                                                                     (walletList.visible) && (index === walletList.currentIndex)
+                                                                     && (GlobalData.listFocusing === _FOCUS_WALLET)
                             walletCurrency: model.wallet_Balance_Currency
                             walletName :model.wallet_name
                             walletBalance: model.wallet_Balance
                             walletM: model.wallet_M
                             walletN: model.wallet_N
-                            isDashboard: model.wallet_slug !== ""
-                            isLocked: model.wallet_dashboard ? (model.wallet_dashboard.isLocked || model.wallet_isLocked || model.wallet_isReplaced) : false
-                            isReplaced: model.wallet_isReplaced
                             walletRole: model.wallet_role
                             hasOwner: model.wallet_hasOwner
                             primaryOwner: model.wallet_primaryOwner
                             isHotWallet: model.wallet_isHotWallet
+                            isDashboard: model.wallet_slug !== ""
+                            isLocked: model.wallet_dashboard ? (model.wallet_dashboard.isLocked || model.wallet_isLocked || model.wallet_isReplaced) : false
+                            isReplaced: model.wallet_isReplaced
+                            isEscrow: model.wallet_Escrow
+                            isShared: model.wallet_isSharedWallet
+                            isAssisted: model.wallet_isAssistedWallet
+                            isSandboxWallet: model.wallet_isSanboxWallet
                             onDashboard: {
-                                GlobalData.listFocusing = 1
+                                GlobalData.listFocusing = _FOCUS_WALLET
                                 var obj = {
                                     type: "wallet_dashboard",
                                     data: index,
@@ -227,7 +260,7 @@ Rectangle {
                                 QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
                             }
                             onButtonClicked: {
-                                GlobalData.listFocusing = 1
+                                GlobalData.listFocusing = _FOCUS_WALLET
                                 var obj = {
                                     type: "selected",
                                     data: index,

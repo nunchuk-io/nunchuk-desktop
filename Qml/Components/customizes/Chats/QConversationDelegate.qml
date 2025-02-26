@@ -347,24 +347,18 @@ Item {
                                     }
                                 }
                             }
-                            QText {
+                            QTextEdit {
                                 id: messageText
                                 text: messageContent
                                 color: "#031F2B"
                                 width: Math.min(conversationRoot.width*0.70, implicitWidth)
                                 anchors.centerIn: parent
                                 wrapMode: Text.WrapAnywhere
+                                readOnly: true
                                 font.family: "Lato"
                                 textFormat: Text.RichText
-                                lineHeight: 1.5
                                 font.pixelSize: 16
                                 horizontalAlignment: Text.AlignJustify
-                                onLinkActivated: Qt.openUrlExternally( link )
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: messageText.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                    acceptedButtons: Qt.NoButton
-                                }
                             }
                         }
                     }

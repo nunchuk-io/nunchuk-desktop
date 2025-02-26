@@ -344,7 +344,7 @@ QStringList QRecurringPayment::walletIdList() const
     QStringList list;
     for (auto w : AppModel::instance()->walletListPtr()->fullList()) {
         if (w) {
-            list.append(w->id());
+            list.append(w->walletId());
         }
     }
     return list;
@@ -444,7 +444,7 @@ bool QRecurringPayment::ImportWallet(WalletId w_id)
         return false;
     }
     if (auto w = walletInfoPtr()) {
-        nunchuk::Wallet wallet = w->wallet();
+        nunchuk::Wallet wallet = w->nunchukWallet();
         return ConvertWalletToBsmsAndAddress(wallet);
     }
     return false;
@@ -473,29 +473,22 @@ bool QRecurringPayment::hasServerKey()
 
 bool QRecurringPayment::ImportFileWallet(const QString &filepath, bool bsms)
 {
-    if (QFile::exists(filepath)) {
-        QFile file(filepath);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            QString fileContent = in.readAll();
-            file.close();
-            QWarningMessage parsewarningmsg;
-            nunchuk::Wallet wallet = qUtils::ParseWalletDescriptor(fileContent, parsewarningmsg);
-            if((int)EWARNING::WarningType::NONE_MSG == parsewarningmsg.type()){
-                parsewarningmsg.resetWarningMessage();
-                WalletId walletId = QString::fromStdString(wallet.get_id());
-                if (qUtils::strCompare(walletId, wallet_id())) {
-                    QString message = QString("Destination cannot be the same wallet.");
-                    AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
-                    return false;
-                }
-                return ConvertWalletToBsmsAndAddress(wallet);
-            }
-            else {
-                QString message = QString("Invalid wallet configuration");
-                AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
-            }
+    QString fileContent = qUtils::ImportDataViaFile(filepath);
+    QWarningMessage parsewarningmsg;
+    nunchuk::Wallet wallet = qUtils::ParseWalletDescriptor(fileContent, parsewarningmsg);
+    if((int)EWARNING::WarningType::NONE_MSG == parsewarningmsg.type()){
+        parsewarningmsg.resetWarningMessage();
+        WalletId walletId = QString::fromStdString(wallet.get_id());
+        if (qUtils::strCompare(walletId, wallet_id())) {
+            QString message = QString("Destination cannot be the same wallet.");
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
         }
+        return ConvertWalletToBsmsAndAddress(wallet);
+    }
+    else {
+        QString message = QString("Invalid wallet configuration");
+        AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
     }
     return false;
 }

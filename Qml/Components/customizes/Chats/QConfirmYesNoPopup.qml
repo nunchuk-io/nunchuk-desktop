@@ -65,45 +65,48 @@ Popup {
         }
         Column {
             id:_column
-            spacing: 12
+            spacing: 24
             anchors.centerIn: parent
-            QText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                font.family: "Lato"
-                font.pixelSize: 16
-                font.weight: Font.Bold
-                text: title
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 20
-            }
-            QText {
-                width: 252
-                anchors.horizontalCenter: parent.horizontalCenter
-                font.family: "Lato"
-                font.pixelSize: 16
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 28
-                wrapMode: contentWrapMode
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: contentText
+            Column {
+                spacing: 12
+                QText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.Bold
+                    text: title
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 20
+                }
+                QText {
+                    width: 252
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 28
+                    wrapMode: contentWrapMode
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: contentText
+                }
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 12
                 QTextButton {
-                    width: 120
-                    height: 36
+                    width: 118
+                    height: 48
                     label.text: leftBtnLabel
-                    label.font.pixelSize: 12
-                    type: eTypeB
+                    label.font.pixelSize: 16
+                    type: eTypeP
                     onButtonClicked: {confirmNo()}
                 }
                 QTextButton {
-                    width: 120
-                    height: 36
+                    width: 118
+                    height: 48
                     label.text: rightBtnLabel
-                    label.font.pixelSize: 12
+                    label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {confirmYes()}
                 }

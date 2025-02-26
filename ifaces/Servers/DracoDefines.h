@@ -134,6 +134,9 @@ enum CMD_IDX {
     // Check account availability
     ACCOUNT_AVAILABILITY,
 
+    // Check supported signers
+    TAPROOT_SUPPORTED_SIGNERS,
+
     CMD_MAX
 };
 }
@@ -766,6 +769,9 @@ const QMap<int, QString> commands {
     // Coin Control Group
     { Group::CMD_IDX::GROUP_WALLET_COINCONTROL_GET               , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/coin-control") },
     { Group::CMD_IDX::GROUP_WALLET_COINCONTROL_UPDATE            , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/coin-control") },
+
+    // Check supported signers
+    { Common::CMD_IDX::TAPROOT_SUPPORTED_SIGNERS                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("taproot/supported-signers") },
 };
 
 class DRACO_CODE: public QObject

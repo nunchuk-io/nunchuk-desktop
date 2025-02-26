@@ -364,6 +364,26 @@ bool QMasterSigner::isMine() const
     return it != signers.end();
 }
 
+bool QMasterSigner::taprootSupported()
+{
+    bool ret = true;
+    QSet<int> types = Draco::instance()->GetTaprootSupportedCached();
+    if(types.size() > 0){
+        ret = types.contains(signerType());
+    }
+    return ret;
+}
+
+void QMasterSigner::setDeviceIndex(int newDeviceIndex)
+{
+    m_deviceIndex = newDeviceIndex;
+}
+
+int QMasterSigner::deviceIndex() const
+{
+    return m_deviceIndex;
+}
+
 MasterSignerListModel::MasterSignerListModel() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -403,6 +423,8 @@ QVariant MasterSignerListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->isPrimaryKey();
     case master_signer_tag_Role:
         return d_[index.row()]->tag();
+    case master_signer_taproot_supported:
+        return d_[index.row()]->taprootSupported();
     default:
         return QVariant();
     }
@@ -433,6 +455,7 @@ QHash<int, QByteArray> MasterSignerListModel::roleNames() const {
     roles[master_signer_need_xpub_Role]     = "master_signer_need_xpub";
     roles[master_signer_primary_key_Role]   = "master_signer_primary_key";
     roles[master_signer_tag_Role]           = "master_signer_tag";
+    roles[master_signer_taproot_supported]  = "master_signer_taproot_supported";
     return roles;
 }
 
@@ -468,7 +491,17 @@ QMasterSignerPtr MasterSignerListModel::getMasterSignerById(const QString &id)
 QMasterSignerPtr MasterSignerListModel::getMasterSignerByXfp(const QString &xfp)
 {
     foreach (QMasterSignerPtr it, d_) {
-        if(0 == QString::compare(xfp, it.data()->fingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.data()->fingerPrint())){
+            return it;
+        }
+    }
+    return NULL;
+}
+
+QMasterSignerPtr MasterSignerListModel::getMasterSignerByXfpName(const QString &xfp, const QString &name)
+{
+    foreach (QMasterSignerPtr it, d_) {
+        if(qUtils::strCompare(xfp, it.data()->fingerPrint()) && qUtils::strCompare(name, it.data()->name())){
             return it;
         }
     }
@@ -478,7 +511,7 @@ QMasterSignerPtr MasterSignerListModel::getMasterSignerByXfp(const QString &xfp)
 QString MasterSignerListModel::getMasterSignerNameByFingerPrint(const QString &fingerprint)
 {
     foreach (QMasterSignerPtr it, d_) {
-        if(0 == QString::compare(fingerprint, it.data()->fingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(fingerprint, it.data()->fingerPrint())){
             return it.data()->name();
         }
     }
@@ -488,7 +521,7 @@ QString MasterSignerListModel::getMasterSignerNameByFingerPrint(const QString &f
 int MasterSignerListModel::getIndexNameByFingerPrint(const QString &fingerprint)
 {
     for (int i = 0; i < d_.count(); i++) {
-        if(0 == QString::compare(fingerprint, d_[i].data()->fingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(fingerprint, d_[i].data()->fingerPrint())){
             return i;
         }
     }
@@ -533,7 +566,7 @@ void MasterSignerListModel::setUserCheckedById(const bool state, const QString &
 {
     beginResetModel();
     foreach (QMasterSignerPtr it, d_) {
-        if(0 == QString::compare(id, it.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(id, it.data()->id())){
             it.data()->setChecked(state);
         }
     }
@@ -544,7 +577,7 @@ void MasterSignerListModel::setUserCheckedByFingerprint(const bool state, const 
 {
     beginResetModel();
     foreach (QMasterSignerPtr it, d_) {
-        if(0 == QString::compare(xfp, it.data()->fingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.data()->fingerPrint())){
             it.data()->setChecked(state);
         }
     }
@@ -562,7 +595,7 @@ bool MasterSignerListModel::removeMasterSigner(const QMasterSignerPtr it)
 bool MasterSignerListModel::contains(const QString &masterSignerId)
 {
     foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(masterSignerId, i.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(masterSignerId, i.data()->id())){
             return true;
         }
     }
@@ -572,7 +605,7 @@ bool MasterSignerListModel::contains(const QString &masterSignerId)
 bool MasterSignerListModel::containsFingerPrint(const QString &fingerprint)
 {
     foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->fingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(fingerprint, i.data()->fingerPrint())){
             return true;
         }
     }
@@ -583,7 +616,7 @@ void MasterSignerListModel::updateMasterSignerNeedXpubById(const QString &id, co
 {
     beginResetModel();
     foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(id, i.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(id, i.data()->id())){
             i.data()->setNeedXpub(value);
         }
     }
@@ -594,7 +627,7 @@ void MasterSignerListModel::updateMasterSignerNeedXpubByXfp(const QString &xfp, 
 {
     beginResetModel();
     foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(xfp, i.data()->fingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, i.data()->fingerPrint())){
             i.data()->setNeedXpub(value);
         }
     }
@@ -615,7 +648,7 @@ QStringList MasterSignerListModel::getColdCardId() const
     QStringList ret;
     ret.clear();
     foreach (QMasterSignerPtr i , d_ ){
-        if(i.data()->device() && 0 == QString::compare("coldcard", i.data()->device()->type(), Qt::CaseInsensitive)){
+        if(i.data()->device() && qUtils::strCompare("coldcard", i.data()->device()->type())){
             ret << i.data()->id();
         }
     }
@@ -699,7 +732,7 @@ void MasterSignerListModel::reloadOriginMasterSignerById(const QString &id)
 {
     beginResetModel();
     foreach (QMasterSignerPtr i , d_ ){
-        if(0 == QString::compare(id, i.data()->id(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(id, i.data()->id())){
             QWarningMessage msg;
             nunchuk::MasterSigner signer = bridge::nunchukGetOriginMasterSigner(id, msg);
             if((int)EWARNING::WarningType::NONE_MSG == msg.type()){

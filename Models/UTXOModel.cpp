@@ -159,7 +159,7 @@ QVariant QCoinTagsModel::tag()
     return {};
 }
 
-void QCoinTagsModel::setTag(const int &tag_id)
+void QCoinTagsModel::setTag(const int tag_id)
 {
     m_tag_id = tag_id;
     emit tagChanged();
@@ -187,14 +187,14 @@ bool QCoinTagsModel::containColor(const QString &color)
     return false;
 }
 
-void QCoinTagsModel::increase(const int &tag_id, QString wallet_id)
+void QCoinTagsModel::increase(const int tag_id, QString wallet_id)
 {
     int count = bridge::nunchukGetCoinByTag(wallet_id, tag_id).size();
     tag_t t {tag_id, count};
     m_tags_count.insert(tag_id, t);
 }
 
-int QCoinTagsModel::get_count(const int &tag_id) const
+int QCoinTagsModel::get_count(const int tag_id) const
 {
     return m_tags_count.value(tag_id).m_count;
 }
@@ -435,20 +435,20 @@ QVariant QCoinCollectionsModel::collection()
     return {};
 }
 
-void QCoinCollectionsModel::setCollection(const int &collection_id)
+void QCoinCollectionsModel::setCollection(const int collection_id)
 {
     m_collection_id = collection_id;
     emit collectionChanged();
 }
 
-void QCoinCollectionsModel::increase(const int &collection_id, QString wallet_id)
+void QCoinCollectionsModel::increase(const int collection_id, QString wallet_id)
 {
     int count = bridge::nunchukGetCoinByCollection(wallet_id, collection_id).size();
     collection_t t {collection_id, count};
     m_collections_count.insert(collection_id, t);
 }
 
-int QCoinCollectionsModel::get_count(const int &collection_id) const
+int QCoinCollectionsModel::get_count(const int collection_id) const
 {
     return m_collections_count.value(collection_id).m_count;
 }

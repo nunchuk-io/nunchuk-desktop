@@ -215,7 +215,7 @@ QString DeviceListModel::getDevicePathByIndex(const int index){
 QString DeviceListModel::getDevicePathByXfp(const QString &xfp)
 {
     foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.data()->masterFingerPrint())){
             return it.data()->path();
         }
     }
@@ -226,7 +226,7 @@ bool DeviceListModel::deviceNeedPinSent(const QString &xfp)
 {
     bool needPin = false;
     foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.data()->masterFingerPrint())){
             needPin = it.data()->needsPinSent();
         }
     }
@@ -237,11 +237,9 @@ bool DeviceListModel::deviceNeedPinSent(const QString &deviceModel, const QStrin
 {
     bool needPin = false;
      foreach (QDevicePtr it, d_) {
-         if((0 == QString::compare(deviceModel, it.data()->model(), Qt::CaseInsensitive)) &&
-            (0 == QString::compare(deviceType, it.data()->type(), Qt::CaseInsensitive)))
-         {
-             needPin = it.data()->needsPinSent();
-         }
+        if(qUtils::strCompare(deviceModel, it.data()->model()) && qUtils::strCompare(deviceType, it.data()->type())){
+            needPin = it.data()->needsPinSent();
+        }
      }
      return needPin;
 }
@@ -257,7 +255,7 @@ QDevicePtr DeviceListModel::getDeviceByIndex(const int index){
 
 QDevicePtr DeviceListModel::getDeviceByPath(const QString& path){
     foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(path, it.data()->path(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(path, it.data()->path())){
             return it;
         }
     }
@@ -266,7 +264,7 @@ QDevicePtr DeviceListModel::getDeviceByPath(const QString& path){
 
 QDevicePtr DeviceListModel::getDeviceByXfp(const QString& xfp){
     foreach (QDevicePtr it, d_) {
-        if(0 == QString::compare(xfp, it.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, it.data()->masterFingerPrint())){
             return it;
         }
     }
@@ -306,7 +304,7 @@ void DeviceListModel::clearList()
 bool DeviceListModel::contains(const QString &fingerprint)
 {
     foreach (QDevicePtr i , d_ ){
-        if(0 == QString::compare(fingerprint, i.data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(fingerprint, i.data()->masterFingerPrint())){
             return true;
         }
     }
@@ -350,7 +348,7 @@ int DeviceListModel::deviceCount() const
 int DeviceListModel::getDeviceIndexByXfp(const QString &xfp)
 {
     for (int i = 0; i < d_.count(); i++) {
-        if(0 == QString::compare(xfp, d_.at(i).data()->masterFingerPrint(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(xfp, d_.at(i).data()->masterFingerPrint())){
             return i;
         }
     }

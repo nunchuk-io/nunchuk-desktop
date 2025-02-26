@@ -332,9 +332,6 @@ Row {
                                     username:  RoomWalletData.currentRoom.talkersName[index] + RoomWalletData.currentRoom.users.change
                                     avatarUrl: RoomWalletData.currentRoom.talkersAvatar[index] + RoomWalletData.currentRoom.users.change
                                     displayStatus: false
-                                    Component.onCompleted: {
-                                        console.log(username);
-                                    }
                                 }
                             }
                         }
@@ -754,7 +751,7 @@ Row {
             }
             Connections{
                 target: ClientController.rooms
-                onCurrentIndexChanged:{
+                function currentIndexChanged() {
                     attachedFile.fileLocalPath = ""
                     messageField.text = "";
                     if(RoomWalletData.currentRoom && (RoomWalletData.currentRoom.roomType === NUNCHUCKTYPE.SUPPORT_ROOM)){

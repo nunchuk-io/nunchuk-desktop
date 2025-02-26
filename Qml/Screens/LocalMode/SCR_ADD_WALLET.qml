@@ -32,416 +32,208 @@ import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/QRCodes"
 import "../../Components/customizes/Popups"
+import "../../Components/customizes/Wallets"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id:_screen
     property bool firstEnable: true
-    QOnScreenContent {
+    readonly property int walletOptType: AppModel.newWalletInfo.walletOptType
+    property var sandbox        : AppModel.newWalletInfo.sandbox
+    QOnScreenContentTypeB {
+        id:_content
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_021
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_WALLET)
-        }
-        Row {
-            id: step
-            width: 644
-            height: 31
-            spacing: 8
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 78
-            }
-            QAddStep {
-                step: 1
-                stepName: STR.STR_QML_022
-                currentStep: 1
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            Rectangle {
-                width: 30
-                height: 2
-                radius: 4
-                color: "#839096"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            QAddStep {
-                step: 2
-                stepName: STR.STR_QML_023
-                currentStep: 1
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            Rectangle {
-                width: 30
-                height: 2
-                radius: 4
-                color: "#839096"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            QAddStep {
-                step: 3
-                stepName: STR.STR_QML_024
-                currentStep: 1
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-        QText {
-            text: STR.STR_QML_022
-            font.weight: Font.Bold
-            font.pixelSize: 16
-            color: "#031F2B"
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: step.bottom
-                topMargin: 32
-            }
-        }
-        Row {
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 195
-            }
-            spacing: 32
-            QTextInputBox {
-                id: signerName
-                width: 269
-                heightMin: 56
-                mode: eEDIT_MODE
-                placeholder.text: STR.STR_QML_025
-                maximumLength: 42
-                textOutput: AppModel.newWalletInfo.walletName
-                color: Qt.rgba(255, 255, 255, 0.5)
-                rightPading: 50
-                border.color: "#C9DEF1"
-                radius: 4
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            QTextInputBox {
-                id: signerDescription
-                width: 419
-                heightMin: 56
-                mode: eEDIT_MODE
-                placeholder.text: STR.STR_QML_026
-                textOutput: AppModel.newWalletInfo.walletDescription
-                color: Qt. rgba(255, 255, 255, 0.5)
-                border.color: "#C9DEF1"
-                rightPading: 50
-                maximumLength: 76
-                radius: 4
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-        QText {
-            text: STR.STR_QML_027
-            font.weight: Font.Bold
-            font.pixelSize: 14
-            color: "#031F2B"
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 283
-            }
-        }
-        FocusScope {
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 312
-            }
-            Item {
-                id: standardWallet
-                focus: !AppModel.newWalletInfo.walletEscrow
-                width: 130
-                height: 24
-                Image {
-                    id:icostandard
-                    source: standardWallet.focus ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-                }
-                QText {
-                    text: STR.STR_QML_028
-                    font.pixelSize: 14
-                    color: "#031F2B"
-                    anchors {
-                        left: icostandard.right
-                        leftMargin: 8
-                        verticalCenter: icostandard.verticalCenter
+        label.text: STR.STR_QML_073
+        extraHeader: Item {}
+        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        content: Item {
+            clip: true
+            Column {
+                id: _cols
+                width: 550
+                spacing: 24
+                QTextInputBoxTypeB {
+                    id: _walletName
+                    label: STR.STR_QML_025
+                    boxWidth: _cols.width
+                    boxHeight: 48
+                    isValid: true
+                    enableLengthLimit: true
+                    maxLength: 20
+                    textInputted: AppModel.newWalletInfo.walletName
+                    onTextInputtedChanged: {
+                        if(!_walletName.isValid){
+                            _walletName.isValid = true
+                            _walletName.errorText = ""
+                        }
+                        _walletName.showError = false;
                     }
                 }
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: standardWallet.focus = true
+                QLine {
+                    width: _cols.width
                 }
-            }
-            Item {
-                id: escrowWallet
-                focus: AppModel.newWalletInfo.walletEscrow
-                height: 24
-                anchors {
-                    left: standardWallet.right
-                    leftMargin: 42
-                    verticalCenter: standardWallet.verticalCenter
-                }
-                Row {
-                    Item {
-                        width: 212
-                        height: 24
-                        Image {
-                            id:icoescrow
-                            source: escrowWallet.focus ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-                        }
-                        QText {
-                            id: textEscrow
-                            text: STR.STR_QML_029
-                            font.pixelSize: 14
-                            color: "#031F2B"
-                            anchors {
-                                left: icoescrow.right
-                                leftMargin: 8
-                                verticalCenter: icoescrow.verticalCenter
+                Flickable {
+                    width: _cols.width
+                    height: 400
+                    contentHeight: _area.childrenRect.height
+                    clip: true
+                    Column {
+                        id: _area
+                        spacing: 24
+                        QAddAddressType {
+                            id: addressTypeSelection
+                            width: 360
+                            onSelectTypeOption: {
+                                addressTypeSelection.typeOption = type
                             }
                         }
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: escrowWallet.focus = true
+                        QLine {
+                            width: 360
+                            visible: walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET
+                        }
+                        QAddWalletConfig {
+                            id: walletConfig
+                            width: 360
+                            addressType: addressTypeSelection.typeOption
+                            visible: walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET
                         }
                     }
-                    QTooltip {
-                        toolTip: STR.STR_QML_030
-                    }
                 }
             }
-        }
-        Rectangle {
-            width: 720
-            height: 1
-            color: "#C9DEF1"
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                top: parent.top
-                topMargin: 368
+            function isEnable() {
+                return _walletName.textInputted !== ""
             }
-        }
-        Item {
-            id: expandOption
-            property bool expanded: false
-            width: 492
-            height: 24
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                top: parent.top
-                topMargin: 394
-            }
-            Row {
-                Image {
-                    id: expandIcon
-                    source: expandOption.expanded ? "qrc:/Images/Images/expand_less_24px.png" : "qrc:/Images/Images/expand_more_24px.png"
-                }
-                QText {
-                    text: STR.STR_QML_031
-                    font.weight: Font.Bold
-                    font.pixelSize: 14
-                    color: "#031F2B"
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: expandOption.expanded = !expandOption.expanded
-            }
-        }
-        Column {
-            visible: expandOption.expanded
-            focus: true
-            spacing: 8
-            anchors {
-                left: parent.left
-                leftMargin: 68
-                top: parent.top
-                topMargin: 425
-            }
-            Repeater {
-                id: addressTypeSelection
-                property int typeSeleted: AppModel.newWalletInfo.walletAddressType
-                readonly property var typeValue: [
-                    NUNCHUCKTYPE.NATIVE_SEGWIT,
-                    NUNCHUCKTYPE.NESTED_SEGWIT,
-                    NUNCHUCKTYPE.LEGACY,
-                    NUNCHUCKTYPE.TAPROOT
-                ]
-                readonly property var typeText: [
-                    STR.STR_QML_032,
-                    STR.STR_QML_033,
-                    STR.STR_QML_034,
-                    STR.STR_QML_553
-                ]
-                model: typeValue.length
-                Item {
-                    width: 576
-                    height: 24
-                    Row {
-                        id: walletType
-                        anchors.fill: parent
-                        spacing: 8
-                        QIcon {
-                            iconSize: 24
-                            id:icowalletType
-                            source: (addressTypeSelection.typeSeleted === addressTypeSelection.typeValue[index]) ? "qrc:/Images/Images/radio-selected-dark.svg" :
-                                                                                                                   "qrc:/Images/Images/radio-dark.svg"
-                        }
-                        QText {
-                            text: addressTypeSelection.typeText[index]
-                            font.pixelSize: 14
-                            color: "#031F2B"
-                            anchors.verticalCenter: icowalletType.verticalCenter
-                        }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: { addressTypeSelection.typeSeleted = addressTypeSelection.typeValue[index] }
-                    }
-                }
-            }
-        }
-        QTextButton {
-            width: 120
-            height: 48
-            label.text: STR.STR_QML_035
-            label.font.pixelSize: 16
-            type: eTypeB
-            anchors {
-                left: parent.left
-                leftMargin: 32
-                bottom: parent.bottom
-                bottomMargin: 32
-            }
-            onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_REQUEST, EVT.STATE_ID_SCR_ADD_WALLET)
-            }
-        }
-        QButtonLargeTail {
-            id: importwallet
-            width: 209
-            height: 48
-            anchors {
-                left: parent.left
-                leftMargin: 335
-                bottom: parent.bottom
-                bottomMargin: 32
-            }
-            label: STR.STR_QML_036
-            type: eSECONDARY
-            optionVisible: optionMenu.visible
-            onButtonClicked: {
-                optionMenu.x = 20
-                optionMenu.y = 20 - optionMenu.height
-                optionMenu.open()
-            }
-            QContextMenu {
-                id: optionMenu
-                menuWidth: 350
-                labels: [
-                    STR.STR_QML_037,
-                    STR.STR_QML_038,
-                    STR.STR_QML_040,
-                    STR.STR_QML_041
-                ]
-                icons: [
-                    "qrc:/Images/Images/import.png",
-                    "qrc:/Images/Images/QRCodeScan.png",
-                    "qrc:/Images/Images/import.png",
-                    "qrc:/Images/Images/download.png"
-                ]
-                onItemClicked: {
-                    switch(index){
-                    case 0:
-                        fileDialog.iType = Popup_t.IMPORT_WALLET_DESCRIPTOR
-                        fileDialog.open()
-                        break;
-                    case 1:
-                        fileDialog.iType = Popup_t.IMPORT_WALLET_QRCODE
-                        qrscaner.open()
-                        break;
-                    case 2:
-                        fileDialog.iType = Popup_t.IMPORT_WALLET_CONFIGFILE
-                        fileDialog.open()
-                        break;
-                    case 3:
-                        fileDialog.iType = Popup_t.IMPORT_WALLET_DB
-                        fileDialog.open()
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
-        }
 
-        QTextButton {
-            width: 200
-            height: 48
-            label.text: STR.STR_QML_042
-            label.font.pixelSize: 16
-            type: eTypeE
-            enabled: (signerName.textOutput !== "") || firstEnable
-            anchors {
-                right: parent.right
-                rightMargin: 40
-                bottom: parent.bottom
-                bottomMargin: 32
-            }
-            onButtonClicked: {
-                firstEnable = false
-                if(signerName.textOutput !== ""){
-                    var newSignerObj = { "walletNameInputted"    : signerName.textOutput,
-                                         "walletDescription"     : signerDescription.textOutput ,
-                                         "walletEscrow"          : escrowWallet.focus ,
-                                         "addressType"           : addressTypeSelection.typeSeleted };
-                    QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST, newSignerObj)
+            function createWallet() {
+                if(_walletName.textInputted !== ""){
+                    var newObj = { "walletNameInputted"    : _walletName.textInputted,
+                                         "addressType"     : addressTypeSelection.typeOption };
+                    QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST, newObj)
                 }
                 else{
                     _warning.open()
                 }
             }
+            function createGroupWallet() {
+                if(_walletName.textInputted !== ""){
+                    var config = walletConfig.findOpt()
+                    var newObj = {
+                        "type": "create-group-wallet",
+                        "walletNameInputted": _walletName.textInputted,
+                        "walletM"         : config.walletM,
+                        "walletN"         : config.walletN,
+                        "addressType"     : addressTypeSelection.typeOption };
+                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_REQUEST, newObj)
+                }
+                else{
+                    _warning.open()
+                }
+            }
+            function importQRScan() {
+                if(AppModel.parseQRWallet(_walletName.textOutput, "", qrscaner.tags)){
+                    qrscaner.close()
+                    var importData = {  "qrTags"        : qrscaner.tags,
+                                        "importType"    : fileDialog.iType,
+                                        "walletname"    : _walletName.textOutput,
+                                        "walletdescription"    : ""};
+                    QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
+                }
+            }
+            function importFile() {
+                var importData = {  "filePath"      : fileDialog.file,
+                                    "importType"    : fileDialog.iType,
+                                    "walletname"    : _walletName.textOutput,
+                                    "walletdescription"    : ""};
+                QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
+            }
         }
-        QPopupToast{
-            id:_warning
-            x:36
-            y:520
-            warningType:EWARNING.WARNING_MSG
-            warningExplain:STR.STR_QML_587
+        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        bottomRight: Row {
+            spacing: 8
+            QButtonLargeTail {
+                id: importwallet
+                width: 159
+                height: 48
+                label: STR.STR_QML_036
+                type: eSECONDARY
+                optionVisible: optionMenu.visible
+                layoutDirection: Qt.RightToLeft
+                visible: walletOptType == NUNCHUCKTYPE.E_PERSONAL_WALLET
+                onButtonClicked: {
+                    optionMenu.x = 20
+                    optionMenu.y = 20 - optionMenu.height
+                    optionMenu.open()
+                }
+                QContextMenu {
+                    id: optionMenu
+                    menuWidth: 350
+                    labels: [
+                        STR.STR_QML_037,
+                        STR.STR_QML_038,
+                        STR.STR_QML_040,
+                        STR.STR_QML_041
+                    ]
+                    icons: [
+                        "qrc:/Images/Images/import.png",
+                        "qrc:/Images/Images/QRCodeScan.png",
+                        "qrc:/Images/Images/import.png",
+                        "qrc:/Images/Images/download.png"
+                    ]
+                    functions: [
+                        function(){
+                            fileDialog.iType = Popup_t.IMPORT_WALLET_DESCRIPTOR
+                            fileDialog.open()
+                        },
+                        function(){
+                            fileDialog.iType = Popup_t.IMPORT_WALLET_QRCODE
+                            qrscaner.open()
+                        },
+                        function(){
+                            fileDialog.iType = Popup_t.IMPORT_WALLET_CONFIGFILE
+                            fileDialog.open()
+                        },
+                        function(){
+                            fileDialog.iType = Popup_t.IMPORT_WALLET_DB
+                            fileDialog.open()
+                        },
+                    ]
+                    onItemClicked: {
+                        functions[index]()
+                    }
+                }
+            }
+            QTextButton {
+                width: 99
+                height: 48
+                label.text: STR.STR_QML_265
+                label.font.pixelSize: 16
+                type: eTypeE
+                enabled: _content.contentItem.isEnable() || firstEnable
+                onButtonClicked: {
+                    firstEnable = false
+                    if (walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET) {
+                        _content.contentItem.createGroupWallet()
+                    } else {
+                        _content.contentItem.createWallet()
+                    }
+                }
+            }
+
         }
     }
-
+    QPopupToast{
+        id:_warning
+        x:_content.x + 36
+        y:_content.y + 520
+        warningType:EWARNING.WARNING_MSG
+        warningExplain:STR.STR_QML_587
+    }
     QQrImportScanner {
         id: qrscaner
         onTagFound: {
-            if(AppModel.parseQRWallet(signerName.textOutput, signerDescription.textOutput, qrscaner.tags)){
-                qrscaner.close()
-                var importData = {  "qrTags"        : qrscaner.tags,
-                                    "importType"    : fileDialog.iType,
-                                    "walletname"    : signerName.textOutput,
-                                    "walletdescription"    : signerDescription.textOutput};
-                QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
-            }
+            _content.contentItem.importQRScan()
         }
     }
     FileDialog {
@@ -449,11 +241,7 @@ QScreen {
         property int iType: Popup_t.IMPORT_WALLET_DB
         fileMode: FileDialog.OpenFile
         onAccepted: {
-            var importData = {  "filePath"      : fileDialog.file,
-                                "importType"    : fileDialog.iType,
-                                "walletname"    : signerName.textOutput,
-                                "walletdescription"    : signerDescription.textOutput};
-            QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
+            _content.contentItem.importFile()
         }
     }
 }

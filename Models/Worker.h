@@ -96,7 +96,7 @@ public slots:
                                            const QString xprv,
                                            bool replace);
 
-    void slotStartCreateWallet(bool backup, QString file_path);
+    void slotStartCreateWallet(bool need_backup, QString file_path);
 
     // for callback
     void slotStartBalanceChanged(const QString& id,
@@ -247,6 +247,8 @@ signals:
 
     void finishReloadWallets(std::vector<nunchuk::Wallet> wallets);
 
+    void finishReloadGroupWallets(std::vector<nunchuk::Wallet> wallets);
+
     void finishSyncWalletDb(const QString &wallet_id);
 };
 
@@ -299,7 +301,13 @@ public slots:
                                            int code);
     void slotFinishDisplayAddress(bool result);
     void slotFinishRescanBlockchain();
+
     void slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
+                                        QString what,
+                                        int type,
+                                        int code);
+
+    void slotFinishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret,
                                         QString what,
                                         int type,
                                         int code);
@@ -355,6 +363,8 @@ public slots:
 
     void slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets);
 
+    void slotFinishReloadGroupWallets(std::vector<nunchuk::Wallet> wallets);
+
     void slotFinishSyncWalletDb(const QString &wallet_id);
 signals:
     void startCreateMasterSigner(const QString id,
@@ -402,8 +412,7 @@ signals:
                                        const QString xprv,
                                        bool replace = false);
 
-    void startCreateWallet(bool backup,
-                           QString file_path);
+    void startCreateWallet(bool need_backup, QString file_path);
 
     // For callback
     void startBalanceChanged(const QString& id,

@@ -119,6 +119,8 @@ void QWarningMessage::setWarningMessage(int code, const QString &what, EWARNING:
     setType((int)type);
     switch(type){
     case EWARNING::WarningType::ERROR_MSG:
+        setExplaination("");
+        break;
     case EWARNING::WarningType::EXCEPTION_MSG:
         setExplaination("Error");
         break;

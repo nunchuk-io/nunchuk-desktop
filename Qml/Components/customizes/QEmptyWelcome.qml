@@ -66,25 +66,26 @@ Item {
             }
             Column {
                 spacing: 4
-                QText {
-                    font.family: "Lato"
+                QLato {
                     font.pixelSize: 20
                     font.weight: Font.Bold
                     text: titleSuggest
                     color: "#000000"
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignLeft
                 }
-                QText {
+                QLato {
                     width: 424
-                    font.family: "Lato"
                     font.pixelSize: 16
                     text: content
                     color: "#000000"
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 28
                     wrapMode: Text.WordWrap
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignLeft
                 }
                 QButtonTextLink {
-                    width: 122
                     height: 24
                     label: btnTextLink
                     direction: eRIGHT

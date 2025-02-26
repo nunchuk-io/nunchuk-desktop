@@ -32,13 +32,25 @@
 #include "QWarningMessage.h"
 
 namespace qUtils {
+QString deviceId();
+
+QString deviceClass();
+
+QString osName();
+
+QString osVersion();
+
+QString appVersion();
+
+QString accessToken();
+
 QString encryptXOR(const QString data, const QString key);
 
 QString decryptXOR(const QString encryptedData, const QString key);
 
 qint64 QAmountFromValue(const QString &btcValue, const bool allow_negative = false);
 
-QString QValueFromAmount(const qint64 &amount);
+QString QValueFromAmount(const qint64 amount);
 
 QString QGenerateRandomMessage(int message_length = 20);
 

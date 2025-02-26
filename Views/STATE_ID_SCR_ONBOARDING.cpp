@@ -25,12 +25,14 @@
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
 #include "Premiums/QGroupWallets.h"
+#include "Premiums/QSharedWallets.h"
+#include "Premiums/GroupSandboxModel.h"
 
 void SCR_ONBOARDING_Entry(QVariant msg) {
     if (OnBoardingModel::instance()->state() == "seedPhrase") {
         if (auto w = AppModel::instance()->walletInfoPtr()) {
-            DBG_INFO << w->id();
-            QString mnemonic = bridge::GetHotWalletMnemonic(w->id(), "");
+            DBG_INFO << w->walletId();
+            QString mnemonic = bridge::GetHotWalletMnemonic(w->walletId(), "");
             AppModel::instance()->setMnemonic(mnemonic);
         }
     }
@@ -48,6 +50,7 @@ void SCR_ONBOARDING_Exit(QVariant msg) {
 
 void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
     QString type = msg.toMap()["type"].toString();
+    DBG_INFO << type;
     if (type == "send-query") {
         QString country_code = msg.toMap()["country_code"].toString();
         QString email = msg.toMap()["email"].toString();
@@ -60,8 +63,8 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
         if (auto w = OnBoardingModel::instance()->CreateAHotWallet()) {
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             timeoutHandler(1000, [w]() {
-                int index = AppModel::instance()->walletListPtr()->getWalletIndexById(w->id());
-                DBG_INFO << w->id() << index;
+                int index = AppModel::instance()->walletListPtr()->getWalletIndexById(w->walletId());
+                DBG_INFO << w->walletId() << index;
                 if (index >= 0) {
                     AppModel::instance()->setWalletListCurrentIndex(index);
                 }
@@ -78,6 +81,17 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
     }
     else if (type == "create-new-wallet") {
         QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_WALLET_REQUEST);
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            w->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_PERSONAL_WALLET);
+        }
+    }
+    else if (type == "create-new-group-wallet") {
+        if (QSharedWallets::instance()->CheckGroupConfig()) {
+            QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_WALLET_REQUEST);
+            if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+                w->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_GROUP_WALLET);
+            }
+        }
     }
     else if (type == "recover-existing-wallet") {
         QString filePath = msg.toMap()["filePath"].toString();
@@ -90,11 +104,16 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
         else if (recoverType == "recover-via-coldcard") {
             wallet = OnBoardingModel::instance()->ImportWalletDescriptor(file_path);
         }
+        else if (recoverType == "recover-sandbox-wallet") {
+            wallet = QSharedWallets::instance()->RecoverSandboxWallet(file_path);
+        }
         if (wallet) {
-            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            if (recoverType == "recover-via-bsms-config-file" || recoverType == "recover-via-coldcard") {
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            }
             timeoutHandler(1000, [wallet]() {
-                int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->id());
-                DBG_INFO << wallet->id() << index;
+                int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->walletId());
+                DBG_INFO << wallet->walletId() << index;
                 if (index >= 0) {
                     AppModel::instance()->setWalletListCurrentIndex(index);
                 }
@@ -109,13 +128,13 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
             if (auto wallet = OnBoardingModel::instance()->CreateAHotWallet(mnemonic, false)) {
                 QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                 timeoutHandler(1000, [wallet]() {
-                    int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->id());
-                    DBG_INFO << wallet->id() << index;
+                    int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->walletId());
+                    DBG_INFO << wallet->walletId() << index;
                     if (index >= 0) {
                         AppModel::instance()->setWalletListCurrentIndex(index);
                     }
                 });
-                QString msg = QString("%1 has been recovered.").arg(wallet->name());
+                QString msg = QString("%1 has been recovered.").arg(wallet->walletName());
                 AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
             }
         }
@@ -123,6 +142,26 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
             AppModel::instance()->setMnemonic("-101");
             AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
         }
+    }
+    else if (type == "enter-link-url" || type == "enter-link-qr-url") {
+        QString sandboxUrl = msg.toMap()["sandboxUrl"].toString();
+        DBG_INFO << sandboxUrl;
+        AppModel::instance()->setNewWalletInfo(new Wallet());
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            w->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_GROUP_WALLET);
+            if (auto sandbox = w->groupSandboxPtr()) {
+                if (sandbox->JoinGroup(sandboxUrl)) {
+                    sandbox->setScreenFlow("setup-group-wallet");
+                    QJsonObject json;
+                    json["type"] = "setup-group-wallet";
+                    QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
+                    QSharedWallets::instance()->GetAllGroups();
+                }
+            }
+        }
+    }
+    else if (type == "sign-up") {
+        QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     }
 
 }

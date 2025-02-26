@@ -35,11 +35,22 @@
 #include "Chats/ClientController.h"
 #include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
+#include "Premiums/QSharedWallets.h"
 #include "contrib/libnunchuk/src/utils/loguru.hpp"
 #include "RegisterTypes/DashRectangle.h"
-#include "QPingThread.h"
 #include "QRScanner/QBarcodeFilter.h"
 #include "QPDFPrinter.h"
+
+#ifdef ENABLE_THREAD_MONITOR
+#include "QPingThread.h"
+#endif
+
+#ifdef ENABLE_BACKTRACE
+#include <csignal>
+#include <execinfo.h>
+#include <fstream>
+#include <iostream>
+#endif
 
 QStringList latoFonts = {
     ":/fonts/fonts/Lato/Lato-BlackItalic.ttf",
@@ -74,6 +85,53 @@ QStringList montserratFonts = {
     ":/fonts/fonts/Montserrat/Montserrat-ThinItalic.ttf",
     ":/fonts/fonts/Montserrat/Montserrat-Thin.ttf"
 };
+
+#ifdef ENABLE_BACKTRACE
+void writeBacktraceToFile() {
+    std::time_t t = std::time(nullptr);
+    std::tm tm = *std::localtime(&t);
+
+    char filename[32];
+    std::strftime(filename, sizeof(filename), "backtrace_%H%M%S.txt", &tm);
+
+    const int max_frames = 256;
+    void **buffer = (void **)malloc(max_frames * sizeof(void *));
+    if (!buffer) {
+        std::cerr << "Failed to allocate memory for backtrace buffer" << std::endl;
+        return;
+    }
+
+    int nptrs = backtrace(buffer, max_frames);
+    std::ofstream outFile(filename, std::ios::out | std::ios::app);
+    if (!outFile) {
+        std::cerr << "Could not open file: " << filename << std::endl;
+        free(buffer);
+        return;
+    }
+
+    outFile << "Backtrace (size = " << nptrs << "):" << std::endl;
+    char **symbols = backtrace_symbols(buffer, nptrs);
+    if (!symbols) {
+        outFile << "Error retrieving symbols." << std::endl;
+        free(buffer);
+        return;
+    }
+
+    for (int i = 0; i < nptrs; i++) {
+        outFile << symbols[i] << std::endl;
+    }
+
+    free(symbols);
+    free(buffer);
+}
+
+// Signal handler
+void signalHandler(int sig) {
+    writeBacktraceToFile();
+    exit(sig);
+}
+#endif
+
 
 inline double calculateScaleFactor()
 {
@@ -112,6 +170,12 @@ int main(int argc, char* argv[])
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
+
+#ifdef ENABLE_BACKTRACE
+    signal(SIGSEGV, signalHandler);  // Segmentation fault
+    signal(SIGABRT, signalHandler);  // Abort signal
+#endif
+
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     double scale_factor = calculateScaleFactor();
@@ -124,15 +188,16 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.42");
+    app.setApplicationVersion("1.9.43");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
     QWalletManagement::instance();
     QUserWallets::instance();
     QGroupWallets::instance();
+    QSharedWallets::instance();
 
-#ifndef RELEASE_MODE
+#ifdef ENABLE_THREAD_MONITOR
 //    QPingThread objTracking;
 //    objTracking.startPing();
 #endif
@@ -202,6 +267,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->registerCtxProperty("qapplicationVersion", app.applicationVersion());
     QEventProcessor::instance()->registerCtxProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
     QEventProcessor::instance()->registerCtxProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
+    QEventProcessor::instance()->registerCtxProperty("SharedWallet", QVariant::fromValue(QSharedWallets::instance()));
     QEventProcessor::instance()->registerCtxProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
     QEventProcessor::instance()->registerCtxProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
     QEventProcessor::instance()->registerCtxProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
@@ -212,15 +278,17 @@ int main(int argc, char* argv[])
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),
         [](int result, const QString& title, const QString& message, const QString& doItLaterCTALbl)->void {
             QObject* obj = QEventProcessor::instance()->getQuickWindow()->rootObject();
-            if (result == 2) // Forced update
-            {
-                QMetaObject::invokeMethod(obj, "funcUpdateRequired", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
-            }
-            else if (result == 1) { // Recommended update
-                static bool sendOneTime = false;
-                if (sendOneTime == false) {
-                    sendOneTime = true;
-                    QMetaObject::invokeMethod(obj, "funcUpdateAvailable", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
+            if(obj){
+                if (result == 2) // Forced update
+                {
+                    QMetaObject::invokeMethod(obj, "funcUpdateRequired", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
+                }
+                else if (result == 1) { // Recommended update
+                    static bool sendOneTime = false;
+                    if (sendOneTime == false) {
+                        sendOneTime = true;
+                        QMetaObject::invokeMethod(obj, "funcUpdateAvailable", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
+                    }
                 }
             }
         }

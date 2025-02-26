@@ -91,7 +91,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                      << "| manual Fee:" << manualFee
                      << "| free rate:" << feeRate;
 
-            QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->id()));
+            QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->walletId()));
             if(transaction->inputCoins()){
                 for (int i = 0; i < transaction->inputCoins()->rowCount(); i++) {
                     QUTXOPtr it = transaction->inputCoins()->getUTXOByIndex(i);
@@ -191,7 +191,7 @@ void EVT_CREATE_TRANSACTION_SAVE_REQUEST_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if (file_path != ""){
         QWarningMessage msgwarning;
-        bool ret = bridge::nunchukExportTransaction(AppModel::instance()->walletInfo()->id(),
+        bool ret = bridge::nunchukExportTransaction(AppModel::instance()->walletInfo()->walletId(),
                                                     AppModel::instance()->transactionInfo()->txid(),
                                                     file_path,
                                                     msgwarning);

@@ -7,6 +7,7 @@
 #include "ServiceSetting.h"
 #include "Premiums/QAssistedDraftWallets.h"
 #include "Premiums/QWalletServicesTag.h"
+#include "Premiums/GroupSandboxModel.h"
 
 bool ReplaceKeyFreeUser::m_tranReplace = false;
 void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
@@ -15,7 +16,9 @@ void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
     setReplaceFlow("replace-key-info");
     auto masterList = AppModel::instance()->masterSignerListPtr();
     auto remoteList = AppModel::instance()->remoteSignerListPtr();
-    DBG_INFO << masterList->rowCount() << remoteList->rowCount();
+    auto w = dynamic_cast<Wallet*>(this);
+    if (w == nullptr || masterList == nullptr || remoteList == nullptr) return;
+    DBG_INFO << w->walletAddressType() << masterList->rowCount() << remoteList->rowCount();
     QJsonArray arrays;
     for (auto m : masterList->fullList()) {
         QJsonObject signer;
@@ -29,7 +32,13 @@ void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
         signer["signer_is_primary"] = m->isPrimaryKey();
         signer["signer_account_index"] = 0;
         signer["signer_card_id"] = m->device()->cardId();
-        arrays.append(signer);
+        if (w && w->groupSandboxPtr() && w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
+            if (m->signerType() == (int)nunchuk::SignerType::SOFTWARE && m->tag().isEmpty()) {
+                arrays.append(signer);
+            }
+        } else {
+            arrays.append(signer);
+        }
     }
     for (auto s : remoteList->fullList()) {
         QJsonObject signer;
@@ -43,7 +52,13 @@ void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
         signer["signer_is_primary"] = s->isPrimaryKey();
         signer["signer_account_index"] = s->accountIndex();
         signer["signer_card_id"] = s->cardId();
-        arrays.append(signer);
+        if (w && w->groupSandboxPtr() && w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
+            if (s->signerType() == (int)nunchuk::SignerType::SOFTWARE && s->tag().isEmpty()) {
+                arrays.append(signer);
+            }
+        } else {
+            arrays.append(signer);
+        }
     }
     setSignerExistList(arrays);
 }
@@ -102,8 +117,8 @@ void ReplaceKeyFreeUser::walletCreateDone()
         setReplaceFlow("congratulation-done");
         QWarningMessage msg;
         if (auto wallet = AppModel::instance()->walletInfoPtr()) { // Rename old wallet
-            auto w = wallet->wallet();
-            QString oldName = "[DEPRECATED]" + wallet->name();
+            auto w = wallet->nunchukWallet();
+            QString oldName = "[DEPRECATED]" + wallet->walletName();
             w.set_name(oldName.toStdString());
             bridge::UpdateWallet(w, msg);
             AppModel::instance()->startReloadUserDb();

@@ -187,6 +187,7 @@ void DestinationListModel::clearAll()
 Transaction::Transaction() :
     m_destinations(QDestinationListModelPtr(new DestinationListModel())),
     m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
+    m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))),
     m_change(QDestinationPtr(new Destination())),
     m_walletId(""),
     m_roomId(""),
@@ -197,9 +198,25 @@ Transaction::Transaction() :
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
+Transaction::Transaction(const nunchuk::Transaction &tx):
+    m_destinations(QDestinationListModelPtr(new DestinationListModel())),
+    m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
+    m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))),
+    m_change(QDestinationPtr(new Destination())),
+    m_transaction(tx),
+    m_walletId(""),
+    m_roomId(""),
+    m_initEventId(""),
+    m_createByMe(true),
+    m_serverKeyMessage("")
+{
+
+}
+
 Transaction::~Transaction()
 {
     m_destinations.clear();
+    m_keysets.clear();
     m_signers.clear();
     m_change.clear();
 }
@@ -212,7 +229,7 @@ bool Transaction::isReceiveTx() const
 void Transaction::setIsReceiveTx(bool receive)
 {
     m_transaction.set_receive(receive);
-    emit isReceiveTxChanged();
+    emit nunchukTransactionChanged();
 }
 
 QString Transaction::txid() const {
@@ -229,7 +246,7 @@ void Transaction::setMemo(const QString &memo)
     if(!qUtils::strCompare(memo, QString::fromStdString(m_transaction.get_memo()))){
         m_transaction.set_memo(memo.toStdString());
         bridge::nunchukUpdateTransactionMemo(walletId(), txid(), memo);
-        emit memoChanged();
+        emit nunchukTransactionChanged();
     }
 }
 
@@ -240,7 +257,17 @@ int Transaction::status() const {
 void Transaction::setStatus(int status)
 {
     m_transaction.set_status((nunchuk::TransactionStatus)status);
-    emit statusChanged();
+    emit nunchukTransactionChanged();
+}
+
+const std::vector<nunchuk::KeysetStatus> &Transaction::keysetStatus() const
+{
+    return m_transaction.get_keyset_status();
+}
+
+int Transaction::keysetsCount()
+{
+    return keysetStatus().size();
 }
 
 int Transaction::m() const {
@@ -254,7 +281,7 @@ int Transaction::height() const
 
 void Transaction::setHeight(const int value){
     m_transaction.set_height(value);
-    emit heightChanged();
+    emit nunchukTransactionChanged();
 }
 
 QString Transaction::feeDisplay() const
@@ -280,13 +307,13 @@ QString Transaction::feeCurrency() const
 
 qint64 Transaction::feeSats() const
 {
-    return m_transaction.get_fee();
+    return (qint64)m_transaction.get_fee();
 }
 
 void Transaction::setFee(const qint64 fee)
 {
     m_transaction.set_fee(fee);
-    emit feeChanged();
+    emit nunchukTransactionChanged();
 }
 
 bool Transaction::subtractFromFeeAmount() const
@@ -479,6 +506,12 @@ QUTXOListModelPtr Transaction::GetUtxoListSelected()
     return inputs;
 }
 
+std::map<string, bool> Transaction::taprootFinalSigners()
+{
+    std::map<std::string, bool> ret = m_transaction.get_signers();
+    return ret;
+}
+
 void Transaction::setTxJson(const QJsonObject &txJs)
 {
     m_txJson = txJs;
@@ -647,61 +680,105 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
     else {
         wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
     }
-
-    if(wallet && wallet->singleSignersAssigned()){
+    if(wallet){
         setRoomId(wallet->roomId());
-        if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
-            wallet->syncCollabKeyname();
-        }
-        if(m_signers.data()->rowCount() == 0){
-            m_signers = wallet->singleSignersAssigned()->clone();
-        }
-        else{
-            if(m_signers->needSyncNunchukEmail()){
-                m_signers = wallet->singleSignersAssigned()->clone();
-            }
-        }
-    }
-    if(m_signers){
-        m_signers.data()->initSignatures();
-        std::map<std::string, bool> signers = m_transaction.get_signers();
-        for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
-            m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second, "");
-        }
-        DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
-        if (!m_txJson.isEmpty() || isDummyTx()) {// Use for dummy transaction
-            if (!m_txJson.isEmpty()) {
-                QJsonArray signatures = m_txJson["signatures"].toArray();
-                for (auto js : signatures) {
-                    QString xfp = js.toObject()["xfp"].toString();
-                    QString signature = js.toObject()["signature"].toString().split(".").at(1);
-                    m_signers.data()->updateSignatures(xfp, true, signature);
-                }
-            } else if (m_signatures.size() > 0) {
-                for (auto xfp : m_signatures.uniqueKeys()) {
-                    QString signature = m_signatures.value(xfp);
-                    m_signers.data()->updateSignatures(xfp, true, signature);
-                }
-            }
-            for (int i = 0; i < m_signers->rowCount(); i++) {
-                auto signer = m_signers->getSingleSignerByIndex(i);
-                signer->setHasSignBtn(true);
-                if (signer->signerType() == (int)ENUNCHUCK::SignerType::SERVER) {
-                    m_signers->removeSingleSignerByIndex(i);
-                    --i;
-                }
-                if (!dummyXfp().isEmpty()) {
-                    if (dummyXfp() != signer->masterFingerPrint() ) {
-                        signer->setHasSignBtn(false);
+        int walletAddressType = wallet->walletAddressType();
+        int walletType        = wallet->walletType();
+        if(walletAddressType == (int)nunchuk::AddressType::TAPROOT){
+            DBG_INFO << status();
+            if(status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::READY_TO_BROADCAST)
+            {
+                std::vector<nunchuk::KeysetStatus> keyset_status = keysetStatus();
+                if(wallet->singleSignersAssigned()){
+                    if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
+                        wallet->syncCollabKeyname();
+                    }
+                    m_keysets = wallet->singleSignersAssigned()->cloneKeysets(keyset_status);
+                    if(m_keysets->needSyncNunchukEmail()){
+                        m_keysets = wallet->singleSignersAssigned()->cloneKeysets(keyset_status);
                     }
                 }
-                if (hideSignBtns().contains(signer->masterFingerPrint())) {
-                    signer->setHasSignBtn(false);
+                if(m_keysets){
+                    m_keysets.data()->requestSortKeyset();
                 }
+                if(m_keysets){
+                    emit m_keysets.data()->keyinfoChanged();
+                }
+                return m_keysets.data();
+            }
+            else {
+                std::map<std::string, bool> final_signers = taprootFinalSigners();
+                if(wallet->singleSignersAssigned()){
+                    if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
+                        wallet->syncCollabKeyname();
+                    }
+                    m_signers = wallet->singleSignersAssigned()->cloneFinalSigners(final_signers);
+                    if(m_signers->needSyncNunchukEmail()){
+                        m_signers = wallet->singleSignersAssigned()->cloneFinalSigners(final_signers);
+                    }
+                }
+                return m_signers.data();
             }
         }
-        m_signers.data()->requestSort();
-        return m_signers.data();
+        else {
+            if(wallet->singleSignersAssigned()){
+                if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
+                    wallet->syncCollabKeyname();
+                }
+                if(m_signers.data()->rowCount() == 0){
+                    m_signers = wallet->singleSignersAssigned()->clone();
+                }
+                else{
+                    if(m_signers->needSyncNunchukEmail()){
+                        m_signers = wallet->singleSignersAssigned()->clone();
+                    }
+                }
+            }
+            if(m_signers){
+                m_signers.data()->initSignatures();
+                std::map<std::string, bool> signers = m_transaction.get_signers();
+                for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
+                    m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second, "");
+                }
+                DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
+                if (!m_txJson.isEmpty() || isDummyTx()) {// Use for dummy transaction
+                    if (!m_txJson.isEmpty()) {
+                        QJsonArray signatures = m_txJson["signatures"].toArray();
+                        for (auto js : signatures) {
+                            QString xfp = js.toObject()["xfp"].toString();
+                            QString signature = js.toObject()["signature"].toString().split(".").at(1);
+                            m_signers.data()->updateSignatures(xfp, true, signature);
+                        }
+                    } else if (m_signatures.size() > 0) {
+                        for (auto xfp : m_signatures.uniqueKeys()) {
+                            QString signature = m_signatures.value(xfp);
+                            m_signers.data()->updateSignatures(xfp, true, signature);
+                        }
+                    }
+                    for (int i = 0; i < m_signers->rowCount(); i++) {
+                        auto signer = m_signers->getSingleSignerByIndex(i);
+                        signer->setHasSignBtn(true);
+                        if (signer->signerType() == (int)ENUNCHUCK::SignerType::SERVER) {
+                            m_signers->removeSingleSignerByIndex(i);
+                            --i;
+                        }
+                        if (!dummyXfp().isEmpty()) {
+                            if (dummyXfp() != signer->masterFingerPrint() ) {
+                                signer->setHasSignBtn(false);
+                            }
+                        }
+                        if (hideSignBtns().contains(signer->masterFingerPrint())) {
+                            signer->setHasSignBtn(false);
+                        }
+                    }
+                }
+                m_signers.data()->requestSort();
+                return m_signers.data();
+            }
+            else {
+                return (new SingleSignerListModel());
+            }
+        }
     }
     else {
         return (new SingleSignerListModel());
@@ -742,7 +819,7 @@ QString Transaction::subtotalDisplay() const
 
 qint64 Transaction::subtotalSats() const
 {
-    return m_transaction.get_sub_amount();
+    return (qint64)m_transaction.get_sub_amount();
 }
 
 QString Transaction::subtotalBTC() const
@@ -819,7 +896,9 @@ nunchuk::Transaction Transaction::nunchukTransaction() const
 
 void Transaction::setNunchukTransaction(const nunchuk::Transaction &tx)
 {
+    DBG_INFO << "TAPROOT-TEST";
     m_transaction = tx;
+    emit nunchukTransactionChanged();
 }
 
 QString Transaction::roomId()
@@ -1046,6 +1125,7 @@ void TransactionListModel::addTransaction(const QTransactionPtr &d){
     if(d){
         if(!contains(d.data()->txid())){
             m_data.append(d);
+            emit countChanged();
         }
     }
 }
@@ -1101,16 +1181,16 @@ void TransactionListModel::removeTransaction(const QString &tx_id)
             beginResetModel();
             m_data.removeAll(it);
             endResetModel();
-            emit countChanged();
             break;
         }
     }
+    emit countChanged();
 }
 
 bool TransactionListModel::contains(const QString &tx_id)
 {
     foreach (QTransactionPtr i , m_data ){
-        if(0 == QString::compare(tx_id, i.data()->txid(), Qt::CaseInsensitive)){
+        if(qUtils::strCompare(tx_id, i.data()->txid())){
             return true;
         }
     }

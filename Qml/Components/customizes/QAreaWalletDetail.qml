@@ -30,6 +30,7 @@ Item {
     property bool isHotWallet: false
     property bool isLocked: false
     property bool isReplaced: false
+    property bool isSandboxWallet: false
     property real ratio: 0.55
     property string myRole: AppModel.walletInfo.myRole
     Item {
@@ -43,8 +44,16 @@ Item {
             start: Qt.point(0, 0)
             end: Qt.point(parent.width, 0)
             gradient: Gradient {
-                GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#2F766D" : "#2F466C") }
-                GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : (isReplaced || isLocked) ? "#595959" : (isAssisted ? "#1C4A21" : "#031F2B") }
+                GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : isSandboxWallet
+                                                                 ? "#2B74A9" : (isReplaced || isLocked)
+                                                                 ? "#595959" : isAssisted
+                                                                 ? "#2F766D" : "#2F466C"
+                }
+                GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : isSandboxWallet
+                                                                 ? "#084B7B" : (isReplaced || isLocked)
+                                                                 ? "#595959" : isAssisted
+                                                                 ? "#1C4A21" : "#031F2B"
+                }
             }
         }
     }

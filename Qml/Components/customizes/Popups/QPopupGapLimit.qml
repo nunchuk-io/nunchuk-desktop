@@ -68,7 +68,7 @@ QPopup {
                     boxWidth: 252
                     boxHeight: 48
                     validator: IntValidator {bottom: 0;}
-                    textInputted: AppModel.walletInfo.gapLimit
+                    textInputted: AppModel.walletInfo.walletGapLimit
                     onTextInputtedChanged: {
                         if(!inputGapLimit.isValid){
                             inputGapLimit.isValid = true

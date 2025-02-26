@@ -181,7 +181,7 @@ void QWalletManagement::GetListWallet(int mode)
                 QWarningMessage walletwarningmsg;
                 nunchuk::Wallet wallet_result = bridge::nunchukGetOriginWallet(wallet_id, walletwarningmsg);
                 if((int)EWARNING::WarningType::NONE_MSG == walletwarningmsg.type()){
-                    if(qUtils::strCompare(AppModel::instance()->walletInfo()->id(), wallet_id)){
+                    if(qUtils::strCompare(AppModel::instance()->walletInfo()->walletId(), wallet_id)){
                         AppModel::instance()->startSyncWalletDb(wallet_id);
                         emit AppModel::instance()->walletInfo()->groupInfoChanged();
                     }
@@ -192,9 +192,9 @@ void QWalletManagement::GetListWallet(int mode)
                     bridge::UpdateWallet(wallet_result, walletwarningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == walletwarningmsg.type()){
                         if(AppModel::instance()->walletInfo()){
-                            if(qUtils::strCompare(AppModel::instance()->walletInfo()->id(), wallet_id)){
-                                AppModel::instance()->walletInfo()->setName(wallet_name);
-                                AppModel::instance()->walletInfo()->setDescription(wallet_description);
+                            if(qUtils::strCompare(AppModel::instance()->walletInfo()->walletId(), wallet_id)){
+                                AppModel::instance()->walletInfo()->setWalletName(wallet_name);
+                                AppModel::instance()->walletInfo()->setWalletDescription(wallet_description);
                             }
                         }
                     }
@@ -728,8 +728,8 @@ void QWalletManagement::slotGetListWalletFinish()
         if (auto walletList = AppModel::instance()->walletListPtr()) {
             for(auto w : walletList->fullList()) {
                 if (w->isAssistedWallet() ) {
-                    mWallets.insert(w->id(), w->groupId());
-                    FactoryWorker(w->id(), w->groupId());
+                    mWallets.insert(w->walletId(), w->groupId());
+                    FactoryWorker(w->walletId(), w->groupId());
                 }
             }
         }

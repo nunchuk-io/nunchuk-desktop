@@ -303,7 +303,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                         wl.data()->setIsSharedWallet(true);
                         wl.data()->setRoomId(room->id());
                         wl.data()->setInitEventId(ret.data()->get_init_event_id());
-                        wl.data()->setName(ret.data()->walletName());
+                        wl.data()->setWalletName(ret.data()->walletName());
                         AppModel::instance()->walletList()->addWallet(wl);
                         AppModel::instance()->requestSyncWalletDb(wallet_id);
                         ret.data()->setWalletInfo(wl);
@@ -311,7 +311,7 @@ QRoomWalletPtr matrixbrigde::ReloadRoomWallet( QNunchukRoom * const room)
                 }
                 else{
                     AppModel::instance()->walletList()->updateSharedWalletById(wallet_id, room->id(), ret.data()->get_init_event_id(), ret.data()->walletName());
-                    if(AppModel::instance()->walletInfo() && (0 == QString::compare(AppModel::instance()->walletInfo()->id(), wallet_id, Qt::CaseInsensitive))){
+                    if(AppModel::instance()->walletInfo() && (qUtils::strCompare(AppModel::instance()->walletInfo()->walletId(), wallet_id))){
                         AppModel::instance()->walletInfo()->setIsSharedWallet(true);
                     }
                     QWalletPtr realWl = AppModel::instance()->walletList()->getWalletById(wallet_id);

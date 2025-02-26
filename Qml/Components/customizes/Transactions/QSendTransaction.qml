@@ -34,8 +34,9 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     id: _send
-    property var transactionInfo
-    property int pendingSignatue: 0
+    property var  transactionInfo
+    property bool isTaproot: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
+    property int  pendingSignatue: 0
     property bool isDummy: false
     signal addrToVerify(var addr)
     signal newMemoNotify(var newMemo)
@@ -54,6 +55,15 @@ Item {
             onAddrToVerify: _send.addrToVerify(addr)
             onNewMemoNotify: _send.newMemoNotify(newMemo)
         }
+        Loader {
+            sourceComponent: _send.isTaproot ? taprootWalletKeys : standardWalletKeys
+        }
+    }
+    QChangeTagsInTransaction {
+        id: changeTags
+    }
+    Component {
+        id: standardWalletKeys
         QMemberKeysArea {
             transactionInfo: _send.transactionInfo
             pendingSignatue: _send.pendingSignatue
@@ -65,7 +75,17 @@ Item {
             onKeyImportRequest: _send.keyImportRequest()
         }
     }
-    QChangeTagsInTransaction {
-        id: changeTags
+    Component {
+        id: taprootWalletKeys
+        QMemberKeysAreaTaproot {
+            transactionInfo: _send.transactionInfo
+            pendingSignatue: _send.pendingSignatue
+            myRole: _send.myRole
+            isDummy: _send.isDummy
+            onKeySignRequest: _send.keySignRequest(signer)
+            onKeyScanRequest: _send.keyScanRequest()
+            onKeyExportRequest: _send.keyExportRequest()
+            onKeyImportRequest: _send.keyImportRequest()
+        }
     }
 }

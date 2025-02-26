@@ -199,19 +199,20 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
 
 void QInheritancePlan::GetInheritancePlan()
 {
-    runInThread<QJsonObject>([this]() ->QJsonObject{
-        QWalletPtr w = walletInfoPtr();
+    QPointer<QInheritancePlan> safeThis(this);
+    runInThread<QJsonObject>([safeThis]() ->QJsonObject{
+        QWalletPtr w = safeThis->walletInfoPtr();
         if (w.isNull() || (w.data()->status() == "REPLACED")) return {};
         QJsonObject response;
         QString errormsg;
-        Draco::instance()->inheritanceGetPlan(w->id(), w->groupId(), response, errormsg);
+        Draco::instance()->inheritanceGetPlan(w->walletId(), w->groupId(), response, errormsg);
         return response["inheritance"].toObject();
-    },[this](QJsonObject inheritance) {
+    },[safeThis](QJsonObject inheritance) {
         if (inheritance.isEmpty()) return;
         DBG_INFO << inheritance;
-        m_planInfoCurrent = ConvertToDisplayQml(inheritance);
-        setPlanInfo(ConvertToDisplayQml(inheritance));
-        if (auto dash = dashBoardPtr()) {
+        safeThis->m_planInfoCurrent = safeThis->ConvertToDisplayQml(inheritance);
+        safeThis->setPlanInfo(safeThis->ConvertToDisplayQml(inheritance));
+        if (auto dash = safeThis->dashBoardPtr()) {
             if (auto tag = dash->servicesTagPtr()) {
                 tag->setListInheritantPlans();
             }
@@ -479,7 +480,7 @@ bool QInheritancePlan::IsActived() const
 bool QInheritancePlan::InheritancePlanningRequestApprove()
 {
     if (auto wallet = walletInfoPtr()) {
-        QString wallet_id = wallet->id();
+        QString wallet_id = wallet->walletId();
         if (auto dash = dashBoardPtr()) {
             QJsonObject alert = dash->alertJson();
             QJsonObject payload = alert["payload"].toObject();
@@ -495,7 +496,7 @@ bool QInheritancePlan::InheritancePlanningRequestApprove()
 bool QInheritancePlan::InheritancePlanningRequestDeny()
 {
     if (auto wallet = walletInfoPtr()) {
-        QString wallet_id = wallet->id();
+        QString wallet_id = wallet->walletId();
         if (auto dash = dashBoardPtr()) {
             QJsonObject alert = dash->alertJson();
             QJsonObject payload = alert["payload"].toObject();

@@ -57,6 +57,11 @@ class QSingleSigner : public QObject, public WalletKeys {
     Q_PROPERTY(QString descriptor               READ descriptor                                     CONSTANT)
     Q_PROPERTY(bool isMine                      READ isMine                                         CONSTANT)
     Q_PROPERTY(QString cardId                   READ cardId                                         CONSTANT)
+    Q_PROPERTY(bool taprootSupported            READ taprootSupported                               CONSTANT)
+    Q_PROPERTY(bool keysetIndex                 READ keysetIndex                                    NOTIFY keysetIndexChanged)
+    Q_PROPERTY(bool keysetStatus                READ keysetStatus                                   NOTIFY keysetStatusChanged)
+    Q_PROPERTY(bool valueKey                    READ valueKey                                       NOTIFY valueKeyChanged)
+
 public:
     QSingleSigner();
     QSingleSigner(const nunchuk::SingleSigner& singleKey);
@@ -157,6 +162,17 @@ public:
 
     QSingleSignerPtr keyReplaced() const;
     void setKeyReplaced(const QSingleSignerPtr &keyReplaced);
+
+    bool taprootSupported();
+    int  keysetIndex() const;
+    void setKeysetIndex(const int index);
+    int  keysetStatus() const;
+    void setKeysetStatus(const int status);
+    int  keysetPendingNumber() const;
+    void setKeysetPendingNumber(const int number);
+    bool valueKey() const;
+    void setValueKey(const bool data);
+    bool isValid();
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -182,6 +198,12 @@ private:
     QString m_address;
     bool m_isReplaced {false};
     QSingleSignerPtr m_keyReplaced;
+
+    // Taproot only
+    int  m_keyset_index {0};
+    int  m_keyset_status {0};
+    int  m_keyset_pendingnumber {0};
+    bool m_valuekey {false};
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -213,17 +235,19 @@ signals:
     void healthCheckHistoryChanged() final;
     void addressChanged();
     void notifySignerExist(bool isSoftware);
+    void keysetIndexChanged();
+    void keysetStatusChanged();
+    void keysetPendingNumberChanged();
+    void valueKeyChanged();
 };
-typedef QSharedPointer<QSingleSigner> QSingleSignerPtr;
 
 bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
-
-class QMasterSigner;
-typedef QSharedPointer<QMasterSigner> QMasterSignerPtr;
+bool sortSingleSignerByKeysetIndexAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
 
 class SingleSignerListModel  : public QAbstractListModel
 {
     Q_OBJECT
+    Q_PROPERTY(int  keyinfo READ keyinfo    NOTIFY keyinfoChanged)
 public:
     SingleSignerListModel();
     ~SingleSignerListModel();
@@ -252,7 +276,12 @@ public:
         single_signer_has_sign_btn_Role,
         single_signer_account_index_Role,
         single_signer_isReplaced_Role,
-        single_signer_keyReplaced_Role
+        single_signer_keyReplaced_Role,
+        single_signer_taproot_supported,
+        single_signer_keyset_index,
+        single_signer_keyset_status,
+        single_signer_keyset_remaining,
+        single_signer_value_key
     };
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
@@ -260,19 +289,24 @@ public:
     QHash<int,QByteArray> roleNames() const;
     void replaceSingleSigner(int index, const QSingleSignerPtr &value);
     void addSingleSigner(const QSingleSignerPtr &d);
+    void addKeysetSigner(const QSingleSignerPtr &signer, const int keyset_index);
+    void updateKeysetPendingnumber(const int keyset_index, const int number);
     void updateSignatures(const QString& masterfingerprint, const bool value, const QString& signature);
     bool needTopUpXpubs() const;
     void initSignatures();
     QSingleSignerPtr getSingleSignerByIndex(const int index);
     bool containsMasterSignerId(const QString& masterSignerId);
     bool removeSingleSignerByIndex(const int index);
+    bool removeSingleSignerByType(const int type);
     QString getMasterSignerIdByIndex(const int index);
     QString getMasterSignerXfpByIndex(const int index);
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp);
+    QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp, const QString& name);
     int getIndexByFingerPrint(const QString &fingerprint);
     int getnumberSigned();
     bool containsHardwareKey();
     bool containsFingerPrint(const QString& masterFingerPrint);
+    bool containsKeyset(const QString &xfp, const int keyset_index);
     bool containsSigner(const QString &xfp, const QString &path);
     bool containsColdcard();
     bool checkUsableToSign(const QString& masterFingerPrint);
@@ -287,17 +321,32 @@ public:
     void syncNunchukEmail(QList<DracoUser> users);
     bool needSyncNunchukEmail();
     void requestSort();
+    void requestSortKeyset();
     QList<QSingleSignerPtr> fullList() const;
     std::vector<nunchuk::SingleSigner> signers() const;
+    std::vector<nunchuk::SingleSigner> localSigners() const;
     QSharedPointer<SingleSignerListModel> clone() const;
+    QSharedPointer<SingleSignerListModel> cloneKeysets(std::vector<nunchuk::KeysetStatus> keyset_status) const;
+    QSharedPointer<SingleSignerListModel> cloneFinalSigners(std::map<std::string, bool> final_signers) const;
+
     void cleardata();
     QStringList getKeyNames();
     void setCardIDList(const QMap<QString, QString> &card_ids);
+
+    // Fortaproot
+    int keyinfo() const;
+
 public slots:
     int signerCount() const;
     int signerSelectedCount() const;
+    int keysetStatus(int keyset_index);
+    int keysetRemaingSignarure(int keyset_index);
+
+signals:
+    void keyinfoChanged();
+
 private:
-    QList<QSingleSignerPtr> d_;
+    QList<QSingleSignerPtr> m_data;
 };
 typedef QSharedPointer<SingleSignerListModel> QSingleSignerListModelPtr;
 

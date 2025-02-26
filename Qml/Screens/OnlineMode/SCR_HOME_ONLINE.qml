@@ -153,6 +153,7 @@ QScreen {
                                         width: parent.width - 26
                                         height: 36
                                         anchors.horizontalCenter: parent.horizontalCenter
+                                        visible: ClientController.isNunchukLoggedIn
                                         QText{
                                             text: STR.STR_QML_367
                                             width: parent.width - iconDirect.width
@@ -170,7 +171,7 @@ QScreen {
                                             icon:"qrc:/Images/Images/compose-dark.svg"
                                             enabled: ClientController.isNunchukLoggedIn
                                             onClicked: {
-                                                conversationContentLoader.changeNewRoomComponent()
+                                                conversationContentLoader.changeRoomComponent(true)
                                             }
                                         }
                                     }
@@ -181,28 +182,37 @@ QScreen {
                                         color: "#FFFFFF"
                                         font.family: "Lato"
                                         font.pixelSize: 16
-                                        visible: ClientController.rooms ? ClientController.rooms.count === 0 : false
+                                        visible: roomlist.totalCount == 0 ? true : false
                                     }
                                     Loader {
                                         id: contactEmptyMsg
                                         width: parent.width
-                                        visible: ClientController.contacts.count === 0
+                                        visible: ClientController.isNunchukLoggedIn && (ClientController.contacts.count === 0)
                                         height: sourceComponent !== null ? 132 : 0
-                                        sourceComponent : ClientController.contacts.count === 0 ? contactEmptyMsgComp : null
+                                        sourceComponent : visible ? contactEmptyMsgComp : null
                                     }
                                     Loader {
                                         id: roomlist
+                                        property int matrixRoomCount: ClientController.rooms ? ClientController.rooms.count : 0
+                                        property int walletRoomCount: AppModel.groupWalletList ? AppModel.groupWalletList.count : 0
+                                        property int totalCount: roomlist.matrixRoomCount + roomlist.walletRoomCount
                                         width: parent.width
                                         height: leftSide.height - 104 - (contactEmptyMsg.sourceComponent !== null ? (contactEmptyMsg.height + 12*3) : 12*2)
                                         sourceComponent: {
-                                            if(ClientController.rooms){
-                                                return ClientController.rooms.count > 0 ? roomListComp : busyRoomsComp
-                                            }
+                                            return roomlist.totalCount > 0 ? roomListComp : busyRoomsComp
                                         }
                                         Connections {
                                             target: ClientController.rooms
-                                            onFinishedDownloadRoom: {
+                                            function finishedDownloadRoom() {
                                                 roomlist.sourceComponent = roomListComp
+                                                conversationContentLoader.changeRoomComponent(false)
+                                            }
+                                        }
+                                        Connections {
+                                            target: AppModel
+                                            function groupWalletListChanged() {
+                                                roomlist.sourceComponent = roomListComp
+                                                conversationContentLoader.changeRoomComponent(false)
                                             }
                                         }
                                     }
@@ -245,7 +255,12 @@ QScreen {
                                         anchors.fill: parent
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         onItemClicked: {
-                                            conversationContentLoader.changeCurrentRoomComponent()
+                                            conversationContentLoader.isSandboxRoom = false
+                                            conversationContentLoader.changeRoomComponent(false)
+                                        }
+                                        onItemGroupWalletClick: {
+                                            conversationContentLoader.isSandboxRoom = true
+                                            conversationContentLoader.changeRoomComponent(false)
                                         }
                                     }
                                 }
@@ -263,6 +278,7 @@ QScreen {
                         }
                         Tab {
                             title: STR.STR_QML_370
+                            enabled: ClientController.isNunchukLoggedIn
                             Column {
                                 width: 305
                                 spacing: 16
@@ -514,54 +530,68 @@ QScreen {
             color: "#FFFFFF"
             Loader {
                 id: conversationContentLoader
-                property int eCURRENT_MODE:  (ClientController.rooms !== null) && (ClientController.contacts !== null) ?
-                                                 (ClientController.rooms.count === 0 && ClientController.contacts.count === 0) ?
-                                                     eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM : eRIGHT_EMPTY_ROOM
-                readonly property var sourceItems: [emptyroomstate,newroom,roomChat]
-                sourceComponent: {
-                    var ret = null
-                    var isEmpty = ClientController.rooms.count === 0 && ClientController.contacts.count === 0
-                    if(ClientController.isNunchukLoggedIn){
-                        if(tabselect.currentIndex === 0){
-                            if (conversationContentLoader.eCURRENT_MODE === eRIGHT_A_NEW_ROOM) {
-                                ret = conversationContentLoader.sourceItems[conversationContentLoader.eCURRENT_MODE]
-                            }
-                            else {
-                                var mode = isEmpty ? eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM
-                                ret = conversationContentLoader.sourceItems[mode]
-                            }
-                        }
-                        else{
-                            if(!isEmpty){ ret = contactInfo }
-                            else{ ret = emptyroomstate }
-                        }
-                    }
-                    else{ ret = requireLogin }
-                    return ret
-                }
+                property bool hasNormalRoom: (ClientController.rooms && ClientController.rooms.count > 0)
+                property bool hasSandboxRoom: (AppModel.groupWalletList && AppModel.groupWalletList.count > 0)
+                property bool isSandboxRoom: hasNormalRoom ? false : hasSandboxRoom
+                property bool isEmptyTabMessage: !hasNormalRoom && ! hasSandboxRoom
+                property bool isEmptyTabContact: !ClientController.contacts || ClientController.contacts.count === 0
+                property var  sourceItems: [
+                    function(){ return emptyroomstate },
+                    function(){ return newroom },
+                    function(){
+                        return isSandboxRoom ? roomSandboxChat : roomChat },
+                    function(){ return contactInfo }
+                ]
+                property int  eCURRENT_MODE: eRIGHT_EXIST_ROOM
+
                 anchors.fill: parent
-                function changeNewRoomComponent( ){
-                    conversationContentLoader.eCURRENT_MODE = eRIGHT_A_NEW_ROOM
-                }
-                function changeCurrentRoomComponent(){
-                    if(ClientController.rooms.count === 0 && ClientController.contacts.count === 0){
-                        conversationContentLoader.eCURRENT_MODE = eRIGHT_EMPTY_ROOM
+                sourceComponent: {
+                    if (!ClientController.isNunchukLoggedIn){
+                        var groupwallet_count = AppModel.groupWalletList ? AppModel.groupWalletList.count : 0
+                        if(groupwallet_count > 0){
+                            return roomSandboxChat
+                        }
+                        else {
+                            return requireLogin
+                        }
                     }
-                    else{
-                        conversationContentLoader.eCURRENT_MODE = eRIGHT_EXIST_ROOM
+                    switch (tabselect.currentIndex) {
+                        case 0: // Tab Message (Tab 0)
+                        {
+                            if (eCURRENT_MODE === eRIGHT_A_NEW_ROOM)
+                                return sourceItems[eRIGHT_A_NEW_ROOM]()
+                            return sourceItems[isEmptyTabMessage ? eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM]()
+                        }
+                        case 1: // Tab Contacts (Tab 1)
+                        {
+                            return isEmptyTabContact ? emptyroomstate : contactInfo
+                        }
+                        default:
+                            return emptyroomstate
                     }
                 }
-            }
-            Connections {
-                target: ClientController.rooms
-                onFinishedDownloadRoom: {
-                    conversationContentLoader.changeCurrentRoomComponent()
+
+                Keys.onEscapePressed: {
+                    conversationContentLoader.changeRoomComponent(false)
+                }
+
+                function changeRoomComponent(isNewRoom) {
+                    if (isNewRoom) {
+                        eCURRENT_MODE = eRIGHT_A_NEW_ROOM;
+                    } else {
+                        if (tabselect.currentIndex === 0) {
+                            eCURRENT_MODE = isEmptyTabMessage ? eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM;
+                        } else {
+                            eCURRENT_MODE = isEmptyTabContact ? eRIGHT_EMPTY_ROOM : eRIGHT_CONTACT_INFO;
+                        }
+                    }
+                    console.warn("Change to Room: ", isNewRoom, eCURRENT_MODE)
                 }
             }
             Connections {
                 target: ClientController
-                onContactsChanged: {
-                    conversationContentLoader.changeCurrentRoomComponent()
+                function contactsChanged() {
+                    conversationContentLoader.changeRoomComponent(false)
                 }
             }
             Component {
@@ -602,11 +632,11 @@ QScreen {
                     anchors.fill: parent
                     createRoom: true
                     modelCoversation: 0
-                    onCreateRoomDone: conversationContentLoader.changeCurrentRoomComponent()
+                    onCreateRoomDone: conversationContentLoader.changeRoomComponent(false)
                 }
             }
             Component {
-                id: emptyroomstate
+                id: emptyroomstate // Need fix, update new empty state
                 QAddWelcome{
                     anchors.fill: parent
                     titleWelcome: STR.STR_QML_379
@@ -653,7 +683,7 @@ QScreen {
                     onSend_a_messageClicked: {
                         tabselect.currentIndex = 0
                         ClientController.createRoomDirectChat(user.chat_id, user.name)
-                        conversationContentLoader.changeCurrentRoomComponent()
+                        conversationContentLoader.changeRoomComponent(false)
                     }
                     onSend_removeContact: {
                         if(ClientController.rooms.hasContact(id)){
@@ -672,12 +702,18 @@ QScreen {
                     anchors.fill: parent
                 }
             }
+            Component {
+                id: roomSandboxChat
+                QConversationSandboxPage {
+                }
+            }
         }
     }
 
     readonly property int eRIGHT_EMPTY_ROOM: 0
     readonly property int eRIGHT_A_NEW_ROOM: 1
     readonly property int eRIGHT_EXIST_ROOM: 2
+    readonly property int eRIGHT_CONTACT_INFO: 3
 
     Rectangle {
         id: editRoomnameModal

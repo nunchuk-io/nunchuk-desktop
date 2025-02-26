@@ -98,7 +98,7 @@ Column {
             smooth: true
             source: background
 
-            QTextEdit {
+            QTextInput {
                 id: input
                 anchors {
                     fill: parent

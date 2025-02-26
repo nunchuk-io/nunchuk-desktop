@@ -26,7 +26,7 @@
 
 void SCR_CONSOLIDATE_Entry(QVariant msg) {
     AppModel::instance()->setTransactionInfo(NULL);
-    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->escrow()){
+    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->walletEscrow()){
         AppModel::instance()->showToast(0, STR_CPP_072, EWARNING::WarningType::WARNING_MSG);
     }
 }

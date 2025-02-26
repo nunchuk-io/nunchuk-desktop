@@ -44,7 +44,7 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
             }
         }
     }
-    emit AppModel::instance()->newWalletInfo()->nChanged();
+    emit AppModel::instance()->newWalletInfo()->walletChanged();
 }
 
 void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
@@ -58,7 +58,7 @@ void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
             }
         }
     }
-    emit AppModel::instance()->newWalletInfo()->nChanged();
+    emit AppModel::instance()->newWalletInfo()->walletChanged();
 }
 
 void EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER_HANDLER(QVariant msg) {
@@ -75,10 +75,10 @@ void EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER_HANDLER(QVariant msg) {
         }
     }
     AppModel::instance()->newWalletInfo()->singleSignersAssigned()->removeSingleSignerByIndex(signerIndex);
-    if(AppModel::instance()->newWalletInfo()->m() > AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount()){
-        AppModel::instance()->newWalletInfo()->setM(AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount());
+    if(AppModel::instance()->newWalletInfo()->walletM() > AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount()){
+        AppModel::instance()->newWalletInfo()->setWalletM(AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount());
     }
-    emit AppModel::instance()->newWalletInfo()->nChanged();
+    emit AppModel::instance()->newWalletInfo()->walletChanged();
 }
 
 void EVT_ADD_WALLET_SIGNER_CONFIGURATION_BACK_HANDLER(QVariant msg) {
@@ -106,29 +106,27 @@ void EVT_SIGNER_CONFIGURATION_MASTER_SIGNER_SEND_PASSPHRASE_HANDLER(QVariant msg
 void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
     DBG_INFO << msg;
     if(AppModel::instance()->newWalletInfo() && AppModel::instance()->newWalletInfo()->singleSignersAssigned()){
-        int numberSignerRequired = AppModel::instance()->newWalletInfo()->n();
-        bool escrow = AppModel::instance()->newWalletInfo()->escrow();
-        ENUNCHUCK::WalletType walletType =  escrow ? ENUNCHUCK::WalletType::ESCROW :
-                                                     numberSignerRequired > 1 ? ENUNCHUCK::WalletType::MULTI_SIG
-                                                                              : ENUNCHUCK::WalletType::SINGLE_SIG;
-        ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)AppModel::instance()->newWalletInfo()->addressType().toInt();
+        int numberSignerRequired = AppModel::instance()->newWalletInfo()->walletN();
+        nunchuk::WalletType walletType =  numberSignerRequired > 1 ? nunchuk::WalletType::MULTI_SIG : nunchuk::WalletType::SINGLE_SIG;
+        AppModel::instance()->newWalletInfo()->setWalletType((int)walletType);
+        DBG_INFO << "CREATE" << (int)walletType << AppModel::instance()->newWalletInfo()->walletType();
+        nunchuk::AddressType addressType = (nunchuk::AddressType)AppModel::instance()->newWalletInfo()->walletAddressType();
         for (int i = 0; i < AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount(); i++) {
             QSingleSignerPtr it = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->getSingleSignerByIndex(i);
-            if((it && (int)ENUNCHUCK::SignerType::SOFTWARE == it.data()->signerType())
-                    || (int)ENUNCHUCK::SignerType::HARDWARE == it.data()->signerType()
-                    || (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()){
+            int signerType = it.data()->signerType();
+            if((it && (int)nunchuk::SignerType::SOFTWARE == signerType) || ((int)nunchuk::SignerType::HARDWARE == signerType)|| ((int)nunchuk::SignerType::NFC == signerType)){
                 QSingleSignerPtr signer{nullptr};
                 QWarningMessage warningmsg;
-                if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
+                if (ClientController::instance()->isSubscribed() && (int)nunchuk::SignerType::NFC == it.data()->signerType()) {
                     signer = bridge::nunchukGetDefaultSignerFromMasterSigner(it.data()->masterSignerId(),
-                                                                             walletType,
-                                                                             addressType,
+                                                                             (ENUNCHUCK::WalletType)walletType,
+                                                                             (ENUNCHUCK::AddressType)addressType,
                                                                              warningmsg);
                 }
                 else {
                     signer = bridge::nunchukGetUnusedSignerFromMasterSigner(it.data()->masterSignerId(),
-                                                                            walletType,
-                                                                            addressType,
+                                                                            (ENUNCHUCK::WalletType)walletType,
+                                                                            (ENUNCHUCK::AddressType)addressType,
                                                                             warningmsg);
                 }
                 if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){

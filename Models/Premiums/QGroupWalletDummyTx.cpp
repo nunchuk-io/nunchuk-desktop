@@ -48,7 +48,7 @@ void QGroupWalletDummyTx::setDummyTxData(QJsonObject data)
             }
         }
         if (transactionPtr()) {
-            emit transactionPtr()->singleSignerAssignedChanged();
+            emit transactionPtr()->nunchukTransactionChanged();
         }
         emit transactionInfoChanged();
     }
@@ -235,7 +235,7 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
             // GO TO KEY STATUS SCREEN
             QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
             transactionPtr()->setTxJson(dummy_transaction);
-            emit transactionPtr()->singleSignerAssignedChanged();
+            emit transactionPtr()->nunchukTransactionChanged();
             QString type = dummy_transaction["type"].toString();
             int pending_signatures = dummy_transaction["pending_signatures"].toInt();
             int flow = StringToInt(type);
@@ -326,7 +326,7 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
 void QGroupWalletDummyTx::finishScanDevices()
 {
     if (!transactionPtr()) return;
-    emit transactionPtr()->singleSignerAssignedChanged();
+    emit transactionPtr()->nunchukTransactionChanged();
 }
 
 QString QGroupWalletDummyTx::textForToast(int flow)

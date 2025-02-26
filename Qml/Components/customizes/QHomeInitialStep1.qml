@@ -37,7 +37,7 @@ Rectangle {
             height: 152
             icon:"qrc:/Images/Images/keys.svg"
             onBtnClicked: {
-                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
+                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST, { type: "add-key-free" })
             }
         }
         hotWallet {

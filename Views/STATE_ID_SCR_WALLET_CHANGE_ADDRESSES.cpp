@@ -25,7 +25,7 @@
 
 void SCR_WALLET_CHANGE_ADDRESSES_Entry(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+        QString wallet_id = AppModel::instance()->walletInfo()->walletId();
         AppModel::instance()->startGetUsedAddresses(wallet_id);
         AppModel::instance()->startGetUnusedAddresses(wallet_id);
     }
@@ -37,7 +37,7 @@ void SCR_WALLET_CHANGE_ADDRESSES_Exit(QVariant msg) {
 
 void EVT_WALLET_CHANGE_ADDRESSES_GEN_NEW_ADDRESS_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+        QString wallet_id = AppModel::instance()->walletInfo()->walletId();
         if(AppModel::instance()->walletInfo()->unUsedChangeddAddressList().count() < MAX_UNUSED_ADDR){
             bridge::nunchukGenNewAddresses(wallet_id, true);
             AppModel::instance()->startGetUsedAddresses(wallet_id);

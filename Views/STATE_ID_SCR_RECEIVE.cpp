@@ -27,7 +27,7 @@
 
 void SCR_RECEIVE_Entry(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+        QString wallet_id = AppModel::instance()->walletInfo()->walletId();
         AppModel::instance()->startGetUsedAddresses(wallet_id);
         AppModel::instance()->startGetUnusedAddresses(wallet_id);
     }
@@ -39,7 +39,7 @@ void SCR_RECEIVE_Exit(QVariant msg) {
 
 void EVT_BTN_GEN_NEW_ADDRESS_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        QString wallet_id = AppModel::instance()->walletInfo()->id();
+        QString wallet_id = AppModel::instance()->walletInfo()->walletId();
         if(AppModel::instance()->walletInfo()->unUsedAddressList().count() < MAX_UNUSED_ADDR){
             bridge::nunchukGenNewAddresses(wallet_id, false);
             AppModel::instance()->startGetUsedAddresses(wallet_id);
@@ -68,14 +68,14 @@ void EVT_RECEIVE_SET_QUICK_RECEIVE_ADDRESS_HANDLER(QVariant msg) {
 
 void EVT_RECEIVE_DISPLAY_ADDRESS_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->id(),
+        AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->walletId(),
                                                   msg.toString());
     }
 }
 
 void EVT_RECEIVE_ADDRESS_BALANCE_HANDLER(QVariant msg) {
     if(AppModel::instance()->walletInfo()){
-        qint64 amount = bridge::nunchukGetAddressBalance(AppModel::instance()->walletInfo()->id(), msg.toString());
+        qint64 amount = bridge::nunchukGetAddressBalance(AppModel::instance()->walletInfo()->walletId(), msg.toString());
         AppModel::instance()->setAddressBalance(amount);
     }
 }

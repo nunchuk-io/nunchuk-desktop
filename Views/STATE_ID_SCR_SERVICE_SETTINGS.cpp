@@ -109,7 +109,7 @@ void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
         if (auto wallet = AppModel::instance()->walletList()->getWalletById(wallet_id)) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD;
-            data["wallet_id"] = wallet->id();
+            data["wallet_id"] = wallet->walletId();
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     } else if (type == "wallet-lockdown") {
@@ -123,7 +123,7 @@ void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
         if (!wallet.isNull()) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_SERVICE_SETTINGS;
-            data["wallet_id"] = wallet->id();
+            data["wallet_id"] = wallet->walletId();
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     } else if (type == "inheritance-planing") {
@@ -132,7 +132,7 @@ void EVT_SERVICE_SELECT_WALLET_REQUEST_HANDLER(QVariant msg) {
         if (!wallet.isNull()) {
             QMap<QString, QVariant> data;
             data["state_id"] = E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN;
-            data["wallet_id"] = wallet->id();
+            data["wallet_id"] = wallet->walletId();
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_REQUEST, data);
         }
     }

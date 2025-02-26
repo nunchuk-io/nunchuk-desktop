@@ -232,7 +232,7 @@ void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
         if (auto w = AppModel::instance()->walletInfoPtr()) {
             QMap<QString, QVariant> maps;
             maps["type"] = "inheritance-planing";
-            maps["wallet_id"] = w->id();
+            maps["wallet_id"] = w->walletId();
             DBG_INFO << maps;
             timeoutHandler(500,[maps](){
                 QEventProcessor::instance()->sendEvent(E::EVT_SERVICE_SELECT_WALLET_REQUEST, QVariant::fromValue(maps));
@@ -243,7 +243,7 @@ void EVT_GOTO_SERVICE_SETTING_TAB_HANDLER(QVariant msg)
         if (auto w = AppModel::instance()->walletInfoPtr()) {
             QMap<QString, QVariant> maps;
             maps["type"] = "platform-key-co-signing-policies";
-            maps["wallet_id"] = w->id();
+            maps["wallet_id"] = w->walletId();
             DBG_INFO << maps;
             timeoutHandler(500,[maps](){
                 QEventProcessor::instance()->sendEvent(E::EVT_SERVICE_SELECT_WALLET_REQUEST, QVariant::fromValue(maps));
@@ -321,4 +321,27 @@ void EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST_HANDLER(QVariant msg) 
 
 }
 
+void EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER(QVariant msg) {
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    if (type == "create-group-wallet") {
+        QString walletNameInputted = maps["walletNameInputted"].toString();
+        QString walletDescription  = maps["walletDescription"].toString();
+        int  addressType = maps["addressType"].toInt();
+        if(auto nw = AppModel::instance()->newWalletInfo()) {
+            nw->setWalletName(walletNameInputted);
+            nw->setWalletDescription(walletDescription);
+            nw->setWalletAddressType(addressType);
+            DBG_INFO << maps;
+            int walletM = maps["walletM"].toInt();
+            int walletN = maps["walletN"].toInt();
+            if (auto sandbox = nw->groupSandboxPtr()) {
+                sandbox->CreateAGroup(walletNameInputted, walletM, walletN, addressType);
+                sandbox->setScreenFlow("setup-group-wallet");
+                // sandbox->setScreenFlow("register-wallet-hardware");
+            }
+        }
+    } else if (type == "setup-group-wallet") {
 
+    }
+}

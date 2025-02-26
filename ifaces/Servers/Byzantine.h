@@ -41,6 +41,9 @@ private:
     ~Byzantine();
 public:
     static Byzantine *instance();
+    Byzantine(Byzantine &other) = delete;
+    Byzantine(Byzantine const &other) = delete;
+    void operator=(const Byzantine &other) = delete;
     bool GetListGroupWallets(QJsonObject& output, QString &errormsg);
 
     bool GetAllGroupWallets(QJsonObject& output, QString &errormsg);

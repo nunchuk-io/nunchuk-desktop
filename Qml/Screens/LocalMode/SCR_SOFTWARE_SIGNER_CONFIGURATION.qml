@@ -258,6 +258,7 @@ QScreen {
                             "key_yes_accept": true
                         };
                         QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
+                        stateAddSigner.visible = true
                     }
                 }
             }
@@ -403,6 +404,7 @@ QScreen {
                                 var signerObj = { "signername"    : rootAddsignerToWallet.signerNameInputted,
                                                   "passphrase"    : passphrase.textInputted};
                                 QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
+                                stateAddSigner.visible = true
                             }
                         }
                     }
@@ -463,10 +465,16 @@ QScreen {
             target: AppModel
             onAddSignerPercentageChanged : {
                 if(AppModel.addSignerPercentage === 100){
-                    stateAddSigner.visible = false
+                    delayClose.restart()
                 }
             }
         }
+        Timer {
+            id: delayClose
+            interval: 3000; running: false; repeat: false
+            onTriggered: stateAddSigner.visible = false
+        }
+
         QConfirmYesNoPopup{
             id:confirmPrimaryKey
             contentText: STR.STR_QML_642
@@ -478,6 +486,7 @@ QScreen {
                     "passphrase"    : ""
                 };
                 QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
+                stateAddSigner.visible = true
             }
             onConfirmNo: close()
         }

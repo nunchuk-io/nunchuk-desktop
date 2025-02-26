@@ -182,7 +182,7 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
     if (mPendingWallets.size() > 0) {
         if (mDashboard.isNull()) {
             if (auto w = AppModel::instance()->walletInfoPtr()) {
-                if (w->id().isEmpty()) { // There not wallet selected
+                if (w->walletId().isEmpty()) { // There not wallet selected
                     dashboard(mPendingWallets.first()->groupId(), "");
                     mDashboard->setShowDashBoard(true);
                 }
@@ -195,14 +195,14 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
         }
         if (mDashboard.isNull()) {
             if (auto w = AppModel::instance()->walletInfoPtr()) {
-                if (w->id().isEmpty()) { // There not wallet selected
+                if (w->walletId().isEmpty()) { // There not wallet selected
                     if (auto w_0 = AppModel::instance()->walletListPtr()->getWalletByIndex(0)) {
-                        dashboard(w_0->groupId(), w_0->id());
+                        dashboard(w_0->groupId(), w_0->walletId());
                     }
                 }
             }
             else if (auto w_0 = AppModel::instance()->walletListPtr()->getWalletByIndex(0)) {
-                dashboard(w_0->groupId(), w_0->id());
+                dashboard(w_0->groupId(), w_0->walletId());
             }
         }
     }
@@ -220,11 +220,11 @@ void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
             if(mDashboard){
                 mDashboard->GetAlertsInfo();
                 mDashboard->GetMemberInfo();
-                mDashboard->GetWalletInfo();
                 mDashboard->GetHealthCheckInfo();
             }
         });
         mDashboard->GetDraftWalletInfo();
+	mDashboard->GetWalletInfo();
     }
 }
 
@@ -303,11 +303,9 @@ void QGroupWallets::refresh()
 {
     if (!mDashboard) return;
     mDashboard->GetDraftWalletInfo();
-    QtConcurrent::run([this]() {
-        if (mDashboard->hasWallet()) {
-            mDashboard->GetWalletInfo();
-        }
-    });
+    if (mDashboard->hasWallet()) {
+        mDashboard->GetWalletInfo();
+    }
 }
 
 void QGroupWallets::setDashboardInfo(const QString &group_id, const QString &wallet_id)
@@ -366,7 +364,7 @@ void QGroupWallets::setDashboardInfo(const QWalletPtr &wallet)
         else {
             if (mDashboard) {
                 mDashboard->setShowDashBoard(false);
-                if (!wallet->id().isEmpty()) {
+                if (!wallet->walletId().isEmpty()) {
                     mDashboard.clear();
                 }
                 emit dashboardInfoChanged();

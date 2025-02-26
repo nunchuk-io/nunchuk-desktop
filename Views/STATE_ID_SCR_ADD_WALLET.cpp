@@ -22,6 +22,7 @@
 #include "Models/AppModel.h"
 #include "Models/SingleSignerModel.h"
 #include "Models/WalletModel.h"
+#include "Premiums/GroupSandboxModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
 
@@ -70,7 +71,7 @@ void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
                 AppModel::instance()->walletList()->addWallet(walletImported);
                 AppModel::instance()->resetSignersChecked();
                 AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
-                int index = AppModel::instance()->walletList()->getWalletIndexById(walletImported.data()->id());
+                int index = AppModel::instance()->walletList()->getWalletIndexById(walletImported.data()->walletId());
                 if(-1 != index){
                     AppModel::instance()->setWalletListCurrentIndex(index);
                 }
@@ -89,15 +90,14 @@ void EVT_ADD_WALLET_BACK_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER(QVariant msg) {
-    QString walletNameInputted = msg.toMap().value("walletNameInputted").toString();
-    QString walletDescription  = msg.toMap().value("walletDescription").toString();
-    bool walletEscrow = msg.toMap().value("walletEscrow").toBool();
-    QString addressType = msg.toMap().value("addressType").toString();
-    if(AppModel::instance()->newWalletInfo()){
-        AppModel::instance()->newWalletInfo()->setName(walletNameInputted);
-        AppModel::instance()->newWalletInfo()->setDescription(walletDescription);
-        AppModel::instance()->newWalletInfo()->setEscrow(walletEscrow);
-        AppModel::instance()->newWalletInfo()->setAddressType(addressType);
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString walletNameInputted = maps["walletNameInputted"].toString();
+    QString walletDescription  = maps["walletDescription"].toString();
+    int  addressType = maps["addressType"].toInt();
+    if(auto nw = AppModel::instance()->newWalletInfo()) {
+        nw->setWalletName(walletNameInputted);
+        nw->setWalletDescription(walletDescription);
+        nw->setWalletAddressType(addressType);
     }
 }
 

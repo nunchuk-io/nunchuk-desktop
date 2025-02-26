@@ -117,6 +117,7 @@ bool QEventProcessor::updateCtxProperty(const QString &str, const QVariant &var)
 void QEventProcessor::sendEvent(uint eventID, QVariant msg)
 {
     // CHECK IN CURRENT POPUP
+    DBG_INFO << "eventID: " << eventID;
     if(NULL != m_popMng){
         QList<uint> pops = m_popMng->getCurrentPopups();
         for (int i = 0; i < pops.count(); i++) {
@@ -128,6 +129,7 @@ void QEventProcessor::sendEvent(uint eventID, QVariant msg)
                 if(NULL != m_poolEvt[pops.at(i)][eventID].trans){
                     handleTransition(m_stateRegisted[pops.at(i)], m_poolEvt[pops.at(i)][eventID].trans, msg);
                 }
+                emit stateChanged();
                 return;
             }
         }
@@ -144,6 +146,7 @@ void QEventProcessor::sendEvent(uint eventID, QVariant msg)
             if(NULL != m_poolEvt[scr][eventID].trans){
                 handleTransition(m_stateRegisted[scr], m_poolEvt[scr][eventID].trans, msg);
             }
+            emit stateChanged();
             return;
         }
     }
@@ -157,6 +160,7 @@ void QEventProcessor::sendEvent(uint eventID, QVariant msg)
         if(NULL != m_poolEvt[m_RootState][eventID].trans){
             handleTransition(m_stateRegisted[m_RootState], m_poolEvt[m_RootState][eventID].trans, msg);
         }
+        emit stateChanged();
         return;
     }
 }
@@ -199,6 +203,7 @@ void QEventProcessor::onHeightChanged(int h)
 void QEventProcessor::aboutToQuit(QEventProcessor::QPrivateSignal signal)
 {
     DBG_INFO;
+    emit stateChanged();
 }
 
 void QEventProcessor::doRegisterQML(QObject *objPropose)

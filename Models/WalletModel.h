@@ -29,85 +29,112 @@
 #include "TypeDefine.h"
 #include "Commons/Slugs.h"
 #include <QJsonArray>
+#include <QtCore/qreadwritelock.h>
 #include "Commons/ReplaceKeyFreeUser.h"
 #include "Commons/CoinsControl.h"
+#include "Chats/QGroupWalletRoomModel.h"
+#include "Premiums/GroupSandboxModel.h"
 #include "UTXOModel.h"
 
-class Wallet : public QObject, public Slugs, public ReplaceKeyFreeUser, public CoinsControl
+class Wallet : public QObject,
+               public Slugs,
+               public ReplaceKeyFreeUser,
+               public CoinsControl
 {
     Q_OBJECT
-    Q_PROPERTY(QString      walletId                                READ id                     WRITE setId             NOTIFY idChanged)
-    Q_PROPERTY(int          walletM                                 READ m                      WRITE setM              NOTIFY mChanged)
-    Q_PROPERTY(int          walletN                                 READ n                      WRITE setN              NOTIFY nChanged)
-    Q_PROPERTY(int          walletNShared                           READ nShared                WRITE setNShared        NOTIFY nSharedChanged)
-    Q_PROPERTY(QString      walletName                              READ name                   WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(QString      walletOriginName                        READ walletOriginName                               NOTIFY nameChanged)
-    Q_PROPERTY(QString      walletAddressType                       READ addressType            WRITE setAddressType    NOTIFY addressTypeChanged)
-    Q_PROPERTY(QString      walletBalance                           READ balanceDisplay                                 NOTIFY balanceChanged)
-    Q_PROPERTY(QString      walletBalanceBTC                        READ balanceBTC                                     NOTIFY balanceChanged)
-    Q_PROPERTY(QString      walletBalanceSats                       READ balanceSats                                    NOTIFY balanceChanged)
-    Q_PROPERTY(QString      walletBalanceCurrency                   READ balanceCurrency                                NOTIFY balanceChanged)
-    Q_PROPERTY(qint64      walletBalanceSats                        READ balanceSats                                    NOTIFY balanceChanged)
-    Q_PROPERTY(QString      walletCreateDate                        READ createDate                                     NOTIFY createDateChanged)
-    Q_PROPERTY(bool         walletEscrow                            READ escrow                 WRITE setEscrow         NOTIFY escrowChanged)
-    Q_PROPERTY(SingleSignerListModel* walletSingleSignerAssigned    READ singleSignersAssigned                          NOTIFY singleSignersAssignedChanged)
-    Q_PROPERTY(TransactionListModel*  transactionHistory            READ transactionHistory                             NOTIFY transactionHistoryChanged)
-    Q_PROPERTY(QString      walletAddress                           READ address                WRITE setAddress        NOTIFY addressChanged)
-    Q_PROPERTY(QStringList  walletusedAddressList                   READ usedAddressList                                NOTIFY usedAddressChanged)
-    Q_PROPERTY(QStringList  walletunUsedAddressList                 READ unUsedAddressList                              NOTIFY unUsedAddressChanged)
-    Q_PROPERTY(QStringList  walletusedChangedAddressList            READ usedChangeAddressList                          NOTIFY usedChangeAddressChanged)
-    Q_PROPERTY(QStringList  walletunUsedChangedAddressList          READ unUsedChangeddAddressList                      NOTIFY unUsedChangeAddressChanged)
-    Q_PROPERTY(bool         capableCreate                           READ capableCreate                                  NOTIFY capableCreateChanged)
-    Q_PROPERTY(QString      walletDescription                       READ description            WRITE setDescription    NOTIFY descriptionChanged)
-    Q_PROPERTY(QString      walletDescriptior                       READ descriptior                                    NOTIFY descriptiorChanged)
-    Q_PROPERTY(int          creationMode                            READ getCreationMode                                NOTIFY creationModeChanged)
-    Q_PROPERTY(int          containsHWSigner                        READ getContainsHWSigner                            NOTIFY containsHWSignerChanged)
-    Q_PROPERTY(bool         isSharedWallet                          READ isSharedWallet                                 NOTIFY isSharedWalletChanged)
-    Q_PROPERTY(bool         isAssistedWallet                        READ isAssistedWallet                               NOTIFY isAssistedWalletChanged)
-    Q_PROPERTY(int          gapLimit                 			    READ gapLimit                                       NOTIFY gapLimitChanged)
-    Q_PROPERTY(QString      groupId                 			    READ groupId                                        NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariant     dashboardInfo                 			READ dashboardInfo                                  NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariant     serverKeyInfo                 			READ serverKeyInfo                                  NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariant     inheritancePlanInfo                 	READ inheritancePlanInfo                            NOTIFY groupInfoChanged)
-    Q_PROPERTY(int          flow                                    READ flow                                           NOTIFY flowChanged)
-    Q_PROPERTY(QVariant     dummyTx                                 READ dummyTx                                        CONSTANT)
-    Q_PROPERTY(QVariant     recurringPayment                        READ recurringPayment                               CONSTANT)
-    Q_PROPERTY(bool         containsColdcard                        READ containsColdcard                               CONSTANT)
-    Q_PROPERTY(bool         isDeleting                              READ isDeleting             WRITE setIsDeleting     NOTIFY isDeletingChanged)
-    Q_PROPERTY(bool         isPro                                   READ isPro                                          CONSTANT)
-    Q_PROPERTY(QString      myRole                                  READ myRole                                         NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString      unUseAddress                            READ unUseAddress                                   CONSTANT)
-    Q_PROPERTY(QVariantList aliasMembers                            READ aliasMembers                                   NOTIFY aliasMembersChanged)
-    Q_PROPERTY(QString      aliasName                               READ aliasName                                      NOTIFY aliasNameChanged)
-    Q_PROPERTY(bool         isByzantineWallet                       READ isByzantineWallet                              CONSTANT)
-    Q_PROPERTY(bool         isUserWallet                            READ isUserWallet                                   CONSTANT)
-    Q_PROPERTY(bool         isGroupWallet                           READ isGroupWallet                                  CONSTANT)
-    Q_PROPERTY(QVariantList ownerMembers                            READ ownerMembers                                   CONSTANT)
-    Q_PROPERTY(QVariant     ownerPrimary                            READ ownerPrimary                                   CONSTANT)
-    Q_PROPERTY(bool         needBackup                              READ needBackup             WRITE setNeedBackup     NOTIFY needBackupChanged)
-    Q_PROPERTY(QString      slug                                    READ slug                                           CONSTANT)
-    Q_PROPERTY(bool         enableCreateChat                        READ enableCreateChat                               CONSTANT)
-    Q_PROPERTY(bool         isReplaced                              READ isReplaced                                     NOTIFY groupInfoChanged)
-    Q_PROPERTY(bool         isLocked                                READ isLocked                                       NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariantList signerExistList                         READ signerExistList                                NOTIFY signerExistListChanged)
-    Q_PROPERTY(QString      replaceFlow                             READ replaceFlow                                    NOTIFY replaceFlowChanged)
-    Q_PROPERTY(DeviceListModel*         deviceList                  READ deviceList                                     NOTIFY deviceListChanged)
-    Q_PROPERTY(QString      deviceType                              READ deviceType                                     NOTIFY deviceTypeChanged)
-    Q_PROPERTY(bool         tranReplace                             READ tranReplace                                    NOTIFY tranReplaceChanged)
-    Q_PROPERTY(bool         isHoneyBadger                           READ isHoneyBadger                                  CONSTANT)
-    Q_PROPERTY(bool         isIronHand                              READ isIronHand                                     CONSTANT)
-    Q_PROPERTY(bool         isViewCoinShow                          READ isViewCoinShow         WRITE setIsViewCoinShow NOTIFY isViewCoinShowChanged)
-    Q_PROPERTY(QString      coinFlow                                READ coinFlow               WRITE setCoinFlow       NOTIFY coinFlowChanged)
-    Q_PROPERTY(QUTXOListModel* utxoList                             READ utxoList                                       NOTIFY utxoListChanged)
-    Q_PROPERTY(UTXO*        utxoInfo                                READ utxoInfo                                       NOTIFY utxoInfoChanged)
-    Q_PROPERTY(QUTXOListModel* utxoFilterTag                        READ utxoFilterTag                                  NOTIFY utxoFilterTagChanged)
-    Q_PROPERTY(QUTXOListModel* utxoFilterCollection                 READ utxoFilterCollection                           NOTIFY utxoFilterCollectionChanged)
-    Q_PROPERTY(QCoinCollectionsModel* coinCollections               READ coinCollections                                NOTIFY coinCollectionsChanged)
-    Q_PROPERTY(QCoinTagsModel* coinTags                             READ coinTags                                       NOTIFY coinTagsChanged)
-    Q_PROPERTY(QString      searchText                              READ searchText            WRITE setSearchText      NOTIFY searchTextChanged)
-    Q_PROPERTY(QUTXOListModel* utxoListLocked                       READ utxoListLocked                                 NOTIFY utxoListChanged)
-    Q_PROPERTY(QList<QUTXOListModel *> ancestryList                 READ ancestryList                                   NOTIFY ancestryListChanged)
-    Q_PROPERTY(QCoinTagsModel* coinTagsFilter                       READ coinTagsFilter                                 NOTIFY coinTagsFilterChanged)
+    Q_PROPERTY(QString      walletId                                READ walletId                   WRITE setWalletId           NOTIFY walletChanged)
+    Q_PROPERTY(int          walletM                                 READ walletM                    WRITE setWalletM            NOTIFY walletChanged)
+    Q_PROPERTY(int          walletN                                 READ walletN                    WRITE setWalletN            NOTIFY walletChanged)
+    Q_PROPERTY(int          collabWalletN                           READ collabWalletN              WRITE setCollabWalletN      NOTIFY walletChanged)
+    // Name
+    Q_PROPERTY(QString      walletName                              READ walletNameDisplay          WRITE setWalletName         NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletOriginName                        READ walletName                                             NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletAliasName                         READ walletAliasName                                        NOTIFY walletChanged)
+    // Type
+    Q_PROPERTY(int          walletAddressType                       READ walletAddressType          WRITE setWalletAddressType  NOTIFY walletChanged)
+    Q_PROPERTY(int          walletType                              READ walletType                 WRITE setWalletType         NOTIFY walletChanged)
+    Q_PROPERTY(bool         walletEscrow                            READ walletEscrow                                           NOTIFY walletChanged)
+    // Ballance
+    Q_PROPERTY(QString      walletBalance                           READ balanceDisplay                                         NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletBalanceBTC                        READ balanceBTC                                             NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletBalanceSats                       READ balanceSats                                            NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletBalanceCurrency                   READ balanceCurrency                                        NOTIFY walletChanged)
+    // Create date
+    Q_PROPERTY(QString      walletCreateDate                        READ walletCreateDateDisp                                   NOTIFY walletChanged)
+    // Signer/Keys/Keyset
+    Q_PROPERTY(SingleSignerListModel* walletSingleSignerAssigned    READ singleSignersAssigned                                  NOTIFY walletSignersChanged)
+    // Tx history
+    Q_PROPERTY(TransactionListModel*  transactionHistory            READ transactionHistory                                     NOTIFY transactionHistoryChanged)
+    // Others
+    Q_PROPERTY(int          walletGapLimit                 			READ walletGapLimit                                         NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletDescription                       READ walletDescription                                      NOTIFY walletChanged)
+    Q_PROPERTY(QString      walletDescriptior                       READ descriptior                                            NOTIFY walletChanged)
+    // Address
+    Q_PROPERTY(QString      unUseAddress                            READ unUseAddress                                           CONSTANT)
+    Q_PROPERTY(QString      walletAddress                           READ address                    WRITE setAddress            NOTIFY addressChanged)
+    Q_PROPERTY(QStringList  walletusedAddressList                   READ usedAddressList                                        NOTIFY usedAddressChanged)
+    Q_PROPERTY(QStringList  walletunUsedAddressList                 READ unUsedAddressList                                      NOTIFY unUsedAddressChanged)
+    Q_PROPERTY(QStringList  walletusedChangedAddressList            READ usedChangeAddressList                                  NOTIFY usedChangeAddressChanged)
+    Q_PROPERTY(QStringList  walletunUsedChangedAddressList          READ unUsedChangeddAddressList                              NOTIFY unUsedChangeAddressChanged)
+
+    Q_PROPERTY(bool         capableCreate                           READ capableCreate                                          NOTIFY capableCreateChanged)
+    Q_PROPERTY(int          creationMode                            READ getCreationMode                                        NOTIFY creationModeChanged)
+    Q_PROPERTY(int          containsHWSigner                        READ getContainsHWSigner                                    NOTIFY containsHWSignerChanged)
+    Q_PROPERTY(bool         isSharedWallet                          READ isSharedWallet                                         NOTIFY isSharedWalletChanged)
+    Q_PROPERTY(bool         isAssistedWallet                        READ isAssistedWallet                                       NOTIFY isAssistedWalletChanged)
+
+    // Paid wallet
+    Q_PROPERTY(QString      groupId                 			    READ groupId                                                NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     dashboardInfo                 			READ dashboardInfo                                          NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     serverKeyInfo                 			READ serverKeyInfo                                          NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     inheritancePlanInfo                 	READ inheritancePlanInfo                                    NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant     dummyTx                                 READ dummyTx                                                CONSTANT)
+    Q_PROPERTY(QVariant     recurringPayment                        READ recurringPayment                                       CONSTANT)
+    Q_PROPERTY(QString      myRole                                  READ myRole                                                 NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool         containsColdcard                        READ containsColdcard                                       CONSTANT)
+    Q_PROPERTY(int          flow                                    READ flow                                                   NOTIFY flowChanged)
+    Q_PROPERTY(bool         isDeleting                              READ isDeleting                 WRITE setIsDeleting         NOTIFY isDeletingChanged)
+    Q_PROPERTY(bool         isPro                                   READ isPro                                                  CONSTANT)
+    Q_PROPERTY(QVariantList aliasMembers                            READ aliasMembers                                           NOTIFY aliasMembersChanged)
+    Q_PROPERTY(bool         isByzantineWallet                       READ isByzantineWallet                                      CONSTANT)
+    Q_PROPERTY(bool         isUserWallet                            READ isUserWallet                                           CONSTANT)
+    Q_PROPERTY(bool         isGroupWallet                           READ isGroupWallet                                          CONSTANT)
+    Q_PROPERTY(QVariantList ownerMembers                            READ ownerMembers                                           CONSTANT)
+    Q_PROPERTY(QVariant     ownerPrimary                            READ ownerPrimary                                           CONSTANT)
+    Q_PROPERTY(bool         needBackup                              READ needBackup                 WRITE setNeedBackup         NOTIFY needBackupChanged)
+    Q_PROPERTY(QString      slug                                    READ slug                                                   CONSTANT)
+    Q_PROPERTY(bool         enableCreateChat                        READ enableCreateChat                                       CONSTANT)
+    Q_PROPERTY(bool         isReplaced                              READ isReplaced                                             NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool         isLocked                                READ isLocked                                               NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariantList signerExistList                         READ signerExistList                                        NOTIFY signerExistListChanged)
+    Q_PROPERTY(QString      replaceFlow                             READ replaceFlow                                            NOTIFY replaceFlowChanged)
+    Q_PROPERTY(DeviceListModel*         deviceList                  READ deviceList                                             NOTIFY deviceListChanged)
+    Q_PROPERTY(QString      deviceType                              READ deviceType                                             NOTIFY deviceTypeChanged)
+    Q_PROPERTY(bool         tranReplace                             READ tranReplace                                            NOTIFY tranReplaceChanged)
+    Q_PROPERTY(bool         isHoneyBadger                           READ isHoneyBadger                                          CONSTANT)
+    Q_PROPERTY(bool         isIronHand                              READ isIronHand                                             CONSTANT)
+    Q_PROPERTY(bool         isViewCoinShow                          READ isViewCoinShow             WRITE setIsViewCoinShow     NOTIFY isViewCoinShowChanged)
+    Q_PROPERTY(QString      coinFlow                                READ coinFlow                   WRITE setCoinFlow           NOTIFY coinFlowChanged)
+    Q_PROPERTY(QUTXOListModel* utxoList                             READ utxoList                                               NOTIFY utxoListChanged)
+    Q_PROPERTY(UTXO*        utxoInfo                                READ utxoInfo                                               NOTIFY utxoInfoChanged)
+    Q_PROPERTY(QUTXOListModel* utxoFilterTag                        READ utxoFilterTag                                          NOTIFY utxoFilterTagChanged)
+    Q_PROPERTY(QUTXOListModel* utxoFilterCollection                 READ utxoFilterCollection                                   NOTIFY utxoFilterCollectionChanged)
+    Q_PROPERTY(QCoinCollectionsModel* coinCollections               READ coinCollections                                        NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(QCoinTagsModel* coinTags                             READ coinTags                                               NOTIFY coinTagsChanged)
+    Q_PROPERTY(QString      searchText                              READ searchText                 WRITE setSearchText         NOTIFY searchTextChanged)
+    Q_PROPERTY(QUTXOListModel* utxoListLocked                       READ utxoListLocked                                         NOTIFY utxoListChanged)
+    Q_PROPERTY(QList<QUTXOListModel *> ancestryList                 READ ancestryList                                           NOTIFY ancestryListChanged)
+    Q_PROPERTY(QCoinTagsModel* coinTagsFilter                       READ coinTagsFilter                                         NOTIFY coinTagsFilterChanged)
+    Q_PROPERTY(int walletOptType                                    READ walletOptType              WRITE setWalletOptType      NOTIFY walletOptTypeChanged)
+
+    // Group wallet (global)
+    Q_PROPERTY(bool                 isGlobalGroupWallet             READ isGlobalGroupWallet                                    NOTIFY globalGroupWalletChanged)
+    Q_PROPERTY(QGroupSandbox*       sandbox                         READ groupSandbox                                           NOTIFY groupSandboxChanged)
+    Q_PROPERTY(QGroupMessageModel*  conversations                   READ conversations                                          NOTIFY walletChanged)
+    Q_PROPERTY(int                  retentionDays                   READ retentionDays              WRITE setRetentionDays      NOTIFY walletConfigChanged)
+    Q_PROPERTY(int                  unreadMessage                   READ unreadMessage                                          NOTIFY unreadMessageChanged)
+    Q_PROPERTY(int                  numberOnline                    READ numberOnline                                           NOTIFY numberOnlineChanged)
+    Q_PROPERTY(bool                 showbubbleChat                  READ showbubbleChat             WRITE setShowbubbleChat     NOTIFY showbubbleChatChanged)
 
 public:
     Wallet();
@@ -120,33 +147,54 @@ public:
         CREATE_BY_IMPORT_CONFIGURATION,
         CREATE_BY_IMPORT_QRCODE
     };
-    void init();
-    void convert(const Wallet *w);
-    void convert(const nunchuk::Wallet &w);
 
-    QString id() const;
-    int m() const;
-    int n();
-    QString name();
-    QString walletOriginName() const;
-    QString addressType() const;
-    qint64 balanceSats() const;
+    void init();
+    void convert(const nunchuk::Wallet w);
+
+    QString walletId() const;
+    void    setWalletId(const QString &data);
+
+    int     walletM();
+    void    setWalletM(const int data);
+
+    int     walletN();
+    void    setWalletN(const int data);
+
+    int     collabWalletN() const;
+    void    setCollabWalletN(int data);
+
+    QString walletNameDisplay();
+    QString walletName();
+    QString walletAliasName() const;
+    void    setWalletName(const QString &data);
+
+    int     walletAddressType();
+    void    setWalletAddressType(const int data);
+
+    int     walletType();
+    void    setWalletType(const int data);
+    bool    walletEscrow() const;
+
+    qint64  balanceSats() const;
     QString balanceBTC() const;
     QString balanceDisplay() const;
     QString balanceCurrency() const;
-    QString createDate() const;
-    QDateTime createDateDateTime() const;
-    bool escrow() const;
-    void setEscrow(const bool d);
-    void setId(const QString &d);
-    void setM(const int d);
-    void setN(const int d);
-    void setName(const QString &d);
-    void setAddressType(const QString &d);
-    void setBalance(const qint64 d);
-    void setCreateDate(const QDateTime &d);
+    void    setWalletBalance(const qint64 data);
+
+    QString walletCreateDateDisp() const;
+    QDateTime walletCreateDate() const;
+
+    int walletGapLimit() const;
+    void setWalletGapLimit(const int data);
+
     void setSigners(const QSingleSignerListModelPtr &d);
-    SingleSignerListModel* singleSignersAssigned();
+    SingleSignerListModel *singleSignersAssigned();
+
+    QString walletDescription();
+    void setWalletDescription(const QString& data);
+
+    bool isGlobalGroupWallet() const;
+
     QString address() const;
     void setAddress(const QString& d);
     QStringList usedAddressList() const;
@@ -155,8 +203,6 @@ public:
     void setunUsedAddressList(const QStringList& d);
     bool capableCreate() const;
     void setCapableCreate(bool capableCreate);
-    QString description() const;
-    void setDescription(const QString &description);
     QStringList usedChangeAddressList() const;
     void setUsedChangeAddressList(const QStringList &usedChangeAddressList);
     QStringList unUsedChangeddAddressList() const;
@@ -181,8 +227,6 @@ public:
     int getCreationMode() const;
     void setCreationMode(int creationMode);
     bool getContainsHWSigner() const;
-    int nShared() const;
-    void setNShared(int d);
     bool isSharedWallet() const;
     void setIsSharedWallet(bool isShared);
     QString roomId() const;
@@ -191,9 +235,9 @@ public:
     void setInitEventId(const QString &initEventId);    
     bool isAssistedWallet() const;
     bool containsColdcard();
-    int gapLimit() const;
-    void setGapLimit(int gap_limit);
-    nunchuk::Wallet wallet() const;
+
+    nunchuk::Wallet nunchukWallet() const;
+    void setNunchukWallet(const nunchuk::Wallet &data);
 
     //Collab wallet
     void syncCollabKeyname();
@@ -222,7 +266,6 @@ public:
     void getChatInfo();
 
     QVariantList aliasMembers() const;
-    QString aliasName() const;
     QVariantList ownerMembers() const;
     QVariant ownerPrimary() const;
 
@@ -240,6 +283,14 @@ public:
     int flow() const;
     void setFlow(int flow);
 
+    int walletOptType() const;
+    void setWalletOptType(int optType);
+
+    QGroupSandbox* groupSandbox();
+    QGroupSandboxPtr groupSandboxPtr();
+    void updateGroupSandbox(const nunchuk::GroupSandbox &value);
+    void setGroupSandbox(QGroupSandboxPtr sandbox);
+
     QVariant serverKeyInfo() const;
     QServerKeyPtr serverKeyPtr() const;
     QVariant inheritancePlanInfo() const;
@@ -255,6 +306,22 @@ public:
     bool isLocked() const;
     QWalletServicesTagPtr servicesTagPtr() const;
     QWalletPtr clone() const;
+
+    // Groupwallet
+    std::vector<nunchuk::SingleSigner> localSigners();
+    void GetGroupWalletConfig();
+    int  numberOnline();
+    void setNumberOnline(int number);
+    int  unreadMessage();
+    void setUnreadMessage(int number);
+    int  retentionDays();
+    void setRetentionDays(const int days);
+    QGroupMessageModel *conversations();
+    bool showbubbleChat() const;
+    void setShowbubbleChat(bool data);
+    void markAsReadMessage(const QString&msg_id);
+    Q_INVOKABLE void markFiveMessagesAsRead();
+    Q_INVOKABLE void markAllMessagesAsRead();
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
 
@@ -271,7 +338,7 @@ protected:
     void SignUserTxs(const QString &tx_id, const QString &psbt, const QString &memo);
     void UpdateUserWallet(const QString &name, const QString &description);
 
-    //Group wallet
+    //Group Assisted wallet
     void GetGroupTxs();
     void GetGroupCancelledTxs();
     void GetGroupTxNotes();
@@ -284,15 +351,17 @@ protected:
     void UpdateGroupWallet(const QString &name, const QString &description);
 
 private:
-    QString m_id {};
-    int m_m {};
-    int n_n {};
-    int m_nShared {};
-    QString m_name {};
-    QString m_addressType {};
-    qint64 m_balance {};
-    QDateTime m_createDate {};
-    bool m_escrow {};
+    mutable QString m_id {};
+    mutable QString m_walletName {""};
+    mutable QString m_walletDescription {""};
+    mutable int     m_walletM {0};
+    mutable int     m_walletN {0};
+    mutable int     m_walletAddressType {(int)nunchuk::AddressType::ANY};
+    mutable int     m_walletType {-1};
+    mutable int     m_collabWalletN {0};
+    mutable int     m_numberOnline {0};
+    mutable int     m_unreadMessage {0};
+    mutable bool    m_showbubbleChat{false};
     QSingleSignerListModelPtr m_signers;
     QTransactionListModelPtr  m_transactionHistory;
     bool m_isDeleting {false};
@@ -306,49 +375,46 @@ private:
     // capable to create wallet
 
     bool m_capableCreate {true};
-    QString m_description {};
     QString m_descriptior {};
     int m_creationMode {};
     bool m_isSharedWallet {};
     QString m_roomId {};
     QString m_initEventId {};
-    int m_gapLimit {0};
-    nunchuk::Wallet m_wallet {false};
+    nunchuk::Wallet m_nunchukWallet {false};
     QList<DracoUser> m_roomMembers;
     static int m_flow;
+    static int m_walletOptionType;
+
+    // Groupwallet
+    QGroupSandboxPtr            m_sandbox;
+    nunchuk::GroupWalletConfig  m_nunchukConfig;
+    QGroupMessageModelPtr       m_conversations;
+
+    mutable QMutex m_mutex;
+
 signals:
-    void idChanged();
-    void mChanged();
-    void nChanged();
-    void nameChanged();
-    void addressTypeChanged();
-    void balanceChanged();
-    void createDateChanged();
-    void escrowChanged();
-    void singleSignersAssignedChanged();
+    void walletChanged();
+    void walletSignersChanged();
+    void walletConfigChanged();
     void addressChanged();
     void usedAddressChanged();
     void unUsedAddressChanged();
     void usedChangeAddressChanged();
     void unUsedChangeAddressChanged();
     void capableCreateChanged();
-    void descriptionChanged();
-    void descriptiorChanged();
+    void descriptiowalletNChanged();
     void transactionHistoryChanged();
     void creationModeChanged();
     void containsHWSignerChanged();
-    void nSharedChanged();
     void isSharedWalletChanged();
     void roomIdChanged();
     void initEventIdChanged();
     void isAssistedWalletChanged();
-    void gapLimitChanged();
     void signalSyncCollabKeyname(QList<DracoUser> users);
     void groupInfoChanged();
     void flowChanged();
     void isDeletingChanged();
     void aliasMembersChanged();
-    void aliasNameChanged();
     void signMessageChanged();
     void needBackupChanged();
     void signerExistListChanged() override;
@@ -371,6 +437,14 @@ signals:
     void requestCreateTransaction(const QString& address) override;
     void updateTagNameChanged(bool isError) override;
     void coinTagsFilterChanged() override;
+    void walletOptTypeChanged();
+    void globalGroupWalletChanged();
+    void unreadMessageChanged();
+    void numberOnlineChanged();
+    void groupSandboxChanged();
+
+    void showbubbleChatChanged();
+
 public slots:
     void slotSyncCollabKeyname(QList<DracoUser> users);
     bool isValidAddress(const QString& address);
@@ -388,6 +462,10 @@ public slots:
     QString addressPath(const QString &address);
     QString addressBalance(const QString &address);
     bool    markAddressUsed(const QString &address);
+
+    // Group message
+    void startDownloadConversation();
+    void startSendGroupMessage(const QString &message);
 };
 typedef OurSharedPointer<Wallet> QWalletPtr;
 
@@ -397,9 +475,11 @@ bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2);
 class WalletListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(bool isContainsPremier   READ isContainsPremier  NOTIFY containsGroupChanged)
-    Q_PROPERTY(bool isContainsGroup     READ existGroupWallet   NOTIFY containsGroupChanged)
-    Q_PROPERTY(int count                READ count              NOTIFY containsGroupChanged)
+    Q_PROPERTY(bool isContainsPremier   READ isContainsPremier                              NOTIFY containsGroupChanged)
+    Q_PROPERTY(bool isContainsGroup     READ existGroupWallet                               NOTIFY containsGroupChanged)
+    Q_PROPERTY(int  count               READ count                                          NOTIFY containsGroupChanged)
+    Q_PROPERTY(int  currentIndex        READ currentIndex           WRITE setCurrentIndex   NOTIFY currentIndexChanged)
+    Q_PROPERTY(Wallet* currentWallet    READ currentWallet                                  NOTIFY currentIndexChanged)
 public:
     WalletListModel();
     ~WalletListModel();
@@ -414,6 +494,7 @@ public:
     void addSharedWallet(const QWalletPtr &wallet);
     void updateBalance(const QString &walletId, const qint64 balance);
     void updateName(const QString &walletId, const QString &value);
+    void updateNunchukWallet(const QString &walletId, const nunchuk::Wallet wallet);
     void dataUpdated(const QString &walletId);
     void updateDescription(const QString &walletId, const QString &value);
     QVariantList walletListByMasterSigner(const QString& masterSignerId);
@@ -432,6 +513,9 @@ public:
     bool containsId(const QString& id);
     void updateSharedWalletById(const QString &wallet_id, const QString &room_id, const QString &init_id, const QString &name);
     void updateSignerOfRoomWallet(const QString &wallet_id, const SignerAssigned &signer);
+    void updateGroupMessage(const QString &wallet_id, const nunchuk::GroupMessage data);
+    void updateGroupSandbox(const QString &wallet_id, const nunchuk::GroupSandbox data);
+    void updateUnreadMessage(const QString &wallet_id, int number);
 
     enum WalletRoles {
         wallet_Id_Role,
@@ -458,7 +542,12 @@ public:
         wallet_isHotWallet_Role,
         wallet_slug_Role,
         wallet_isLocked_Role,
-        wallet_isReplaced_Role
+        wallet_isReplaced_Role,
+        wallet_isSanboxWallet_Role,
+        wallet_conversation_Role,
+        wallet_unreadMessage_Role,
+        wallet_numberOnline_Role,
+        wallet_numberSigner_Role,
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();
@@ -467,15 +556,28 @@ public:
     bool isContainsPremier();
     void checkContainsGroup();
 
+    int currentIndex() const;
+    void setCurrentIndex(int newCurrentIndex);
+
+    void startAllConversation();
+
+    Wallet *currentWallet() const;
+    void setCurrentWallet(const QWalletPtr&newCurrentWallet);
+
 public slots:
     QVariant removeOrNot(const QString& masterFingerPrint);
     bool hasAssistedWallet() const;
 
 private:
-    QList<QWalletPtr> d_;
+    QList<QWalletPtr> m_data;
+    int m_currentIndex {0};
+    mutable QReadWriteLock m_lock; // Can be used for multithread read
+
+    QWalletPtr m_currentWallet {nullptr};
 
 signals:
     void containsGroupChanged();
+    void currentIndexChanged();
 };
 typedef OurSharedPointer<WalletListModel> QWalletListModelPtr;
 

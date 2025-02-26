@@ -95,7 +95,7 @@ bool QWalletServicesTag::RequestConfirmationCodeEmergencyLockdown()
     QJsonObject body;
     body["period_id"] = m_period_id;
     body["group_id"] = m_mode == USER_WALLET ? "" : w->groupId();
-    body["wallet"] = w->id();
+    body["wallet"] = w->walletId();
     QJsonObject data;
     data["nonce"] = Draco::instance()->randomNonce();
     data["body"] = body;
@@ -257,14 +257,14 @@ bool QWalletServicesTag::lockdownRequired(const QString &period_id)
     QWalletPtr w = ServiceSetting::instance()->walletInfoPtr();
     if (w.isNull()) return false;
     m_period_id = period_id;
-    DBG_INFO << w->id() << m_period_id;
+    DBG_INFO << w->walletId() << m_period_id;
     QJsonObject output;
     QString errormsg;
     bool ret {false};
     if (m_mode == USER_WALLET) {
-        ret = Draco::instance()->lockdownRequiredSignatures(m_period_id, w->id(), output, errormsg);
+        ret = Draco::instance()->lockdownRequiredSignatures(m_period_id, w->walletId(), output, errormsg);
     } else if (m_mode == GROUP_WALLET) {
-        ret = Byzantine::instance()->lockdownRequiredSignatures(w->groupId(), m_period_id, w->id(), output, errormsg);
+        ret = Byzantine::instance()->lockdownRequiredSignatures(w->groupId(), m_period_id, w->walletId(), output, errormsg);
     }
     else{}
     if (ret) {
@@ -282,10 +282,10 @@ bool QWalletServicesTag::lockdownByAnswerSecQues()
     QString until_time;
     bool ret {false};
     if (m_mode == USER_WALLET) {
-        ret = Draco::instance()->lockdownByAnswerSecQues(m_passwordToken, m_secQuesToken, m_period_id, w->id(), until_time, errormsg);
+        ret = Draco::instance()->lockdownByAnswerSecQues(m_passwordToken, m_secQuesToken, m_period_id, w->walletId(), until_time, errormsg);
     }
     else if (m_mode == GROUP_WALLET) {
-        ret = Byzantine::instance()->lockdownByAnswerSecQues(w->groupId(), m_passwordToken, m_secQuesToken, m_period_id, w->id(), until_time, errormsg);
+        ret = Byzantine::instance()->lockdownByAnswerSecQues(w->groupId(), m_passwordToken, m_secQuesToken, m_period_id, w->walletId(), until_time, errormsg);
     }
     else{}
 
@@ -324,10 +324,10 @@ bool QWalletServicesTag::lockdownBySignDummyTx()
     QString until_time;
     bool ret {false};
     if (m_mode == USER_WALLET) {
-        ret = Draco::instance()->lockdownBySignDummyTx(signatures, m_passwordToken, m_period_id, w->id(), until_time, errormsg);
+        ret = Draco::instance()->lockdownBySignDummyTx(signatures, m_passwordToken, m_period_id, w->walletId(), until_time, errormsg);
     }
     else if (m_mode == GROUP_WALLET) {
-        ret = Byzantine::instance()->lockdownBySignDummyTx(w->groupId(), signatures, m_passwordToken, m_period_id, w->id(), until_time, errormsg);
+        ret = Byzantine::instance()->lockdownBySignDummyTx(w->groupId(), signatures, m_passwordToken, m_period_id, w->walletId(), until_time, errormsg);
     }
     else{}
     if (ret) {
@@ -566,7 +566,7 @@ void QWalletServicesTag::setInheritanceAddress(const QString& to_wallet_id)
     QWalletPtr ptr = AppModel::instance()->walletList()->getWalletById(to_wallet_id);
     if(!ptr.isNull()){
         ServiceSetting::instance()->setWalletInfo(ptr);
-        QString wallet_id = ptr->id();
+        QString wallet_id = ptr->walletId();
         QStringList addrs = bridge::nunchukGetUnusedAddresses(wallet_id, false);
         if (addrs.size() > 0) {
             mInheritance.m_destinationAddress = addrs.first();

@@ -52,7 +52,7 @@ void EVT_TRANSACTION_INFO_ITEM_SELECTED_HANDLER(QVariant msg) {
                     QWarningMessage msgwarning;
                     std::vector<nunchuk::RoomTransaction> results = matrixifaces::instance()->GetPendingTransactions(room_id.toStdString(), msgwarning);
                     foreach (nunchuk::RoomTransaction tx, results) {
-                        if(0 == QString::compare(QString::fromStdString(tx.get_tx_id()), txid, Qt::CaseInsensitive)){
+                        if(qUtils::strCompare(QString::fromStdString(tx.get_tx_id()), txid)){
                             it->setInitEventId(QString::fromStdString(tx.get_init_event_id()));
                         }
                     }

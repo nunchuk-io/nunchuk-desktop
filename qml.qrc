@@ -84,7 +84,6 @@
         <file>Qml/Components/customizes/Chats/QContextMenu.qml</file>
         <file>Qml/Components/customizes/Chats/QConversationInfo.qml</file>
         <file>Qml/Components/customizes/QNotificationToast.qml</file>
-        <file>Qml/Components/customizes/Chats/QTransactionSignerDelegate.qml</file>
         <file>Qml/Global/QGlobal.qml</file>
         <file>Qml/Global/QWalletData.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_UPDATE_PROFILE.qml</file>
@@ -431,7 +430,7 @@
         <file>Qml/Components/customizes/QRCodes/QQrScannerOverlay.qml</file>
         <file>Qml/Components/customizes/Signers/QAddKeySelectType.qml</file>
         <file>Qml/Screens/LocalMode/SCR_SELECT_SERVER.qml</file>
-        <file>Qml/Components/customizes/Popups/QPopupEnterServerAddress.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupEnterTextInput.qml</file>
         <file>Qml/Screens/OnlineMode/Healths/QManageGroupChatHistory.qml</file>
         <file>Qml/Screens/LocalMode/SCR_CHANGE_EMAIL.qml</file>
         <file>Qml/Screens/LocalMode/ChangeEmail/QChangeEmail.qml</file>
@@ -546,6 +545,40 @@
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddJade.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddJadeAsk.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddJadeExist.qml</file>
+        <file>Qml/Components/customizes/Transactions/QMemberKeysAreaTaproot.qml</file>
+        <file>Qml/Components/customizes/Transactions/QMemberKeysDelegateTaproot.qml</file>
+        <file>Qml/Components/customizes/Transactions/QMemberKeysDelegate.qml</file>
+        <file>Qml/Components/customizes/Buttons/QImageState.qml</file>
+        <file>Qml/Components/customizes/Wallets/QAddAddressType.qml</file>
+        <file>Qml/Components/customizes/Wallets/QAddWalletConfig.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRadioButtonTypeG.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QSubscriptionRequired.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupPersonalWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupGroupWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QGroupWalletInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QGroupWalletArea.qml</file>
+        <file>Qml/Components/customizes/Wallets/QGroupWalletKeys.qml</file>
+        <file>Qml/Components/customizes/Signers/QAddGroupKey.qml</file>
+        <file>Qml/Components/customizes/Chats/QMessageBubble.qml</file>
+        <file>Qml/Components/customizes/Wallets/QPendingGroupWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QPendingGroupWalletBackground.qml</file>
+        <file>Qml/Components/customizes/Chats/QConversationText.qml</file>
+        <file>Qml/Components/customizes/Chats/QMessageBubbleDelegate.qml</file>
+        <file>Qml/Screens/OnlineMode/SCR_SETUP_GROUP_WALLET.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSandboxReviewWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSandboxReviewInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSaveYourWalletBSMSFile.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSandBoxReviewKeys.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSandboxKeyDeletage.qml</file>
+        <file>Qml/Components/customizes/Wallets/QRegisterWalletOnHardware.qml</file>
+        <file>Qml/Components/customizes/Wallets/QGroupSandboxSetting.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletConfigCustomize.qml</file>
+        <file>Qml/Components/customizes/QRCodes/QQrExportGroupWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSandboxAddAnExistingKey.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupEditBIP32Path.qml</file>
+        <file>Qml/Components/customizes/Chats/QConversationSandboxPage.qml</file>
+        <file>Qml/Components/customizes/Chats/QRoomSandboxDelegate.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupKeepGroupChatHistorySandBox.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -564,7 +597,6 @@
         <file>Images/Delete.png</file>
         <file>Images/cached_24px.png</file>
         <file>Images/Signer_Level2.png</file>
-        <file>Images/backup.png</file>
         <file>Images/description.png</file>
         <file>Images/fileDownload.png</file>
         <file>Images/SortAscen.png</file>
@@ -859,6 +891,44 @@
         <file>Images/Device_Icons/seedsigner-hardware-light.svg</file>
         <file>Images/Device_Icons/trezor-hardware-light.svg</file>
         <file>Images/Device_Icons/unknown-key-light.svg</file>
+        <file>Images/type-assisted-wallet.svg</file>
+        <file>Images/type-decoy-dark.svg</file>
+        <file>Images/type-decoy-wallet.svg</file>
+        <file>Images/type-free-group-wallet.svg</file>
+        <file>Images/type-group-assisted.svg</file>
+        <file>Images/type-heart.svg</file>
+        <file>Images/type-hot-wallet.svg</file>
+        <file>Images/type-security.svg</file>
+        <file>Images/type-unassisted-wallet.svg</file>
+        <file>Images/expand-less-dark.svg</file>
+        <file>Images/expand-less-light.svg</file>
+        <file>Images/subscription-required.svg</file>
+        <file>Images/PendingSignatures.png</file>
+        <file>Images/link-light.svg</file>
+        <file>Images/setting-light.svg</file>
+        <file>Images/show-qr-light.svg</file>
+        <file>Images/User-dark.svg</file>
+        <file>Images/User-light.svg</file>
+        <file>Images/OtherKeyset.png</file>
+        <file>Images/ValueKeyset.png</file>
+        <file>Images/Encrypted.png</file>
+        <file>Images/CaretDown.png</file>
+        <file>Images/CaretUp.png</file>
+        <file>Images/SendMessage.png</file>
+        <file>Images/message-dark.png</file>
+        <file>Images/SendMessage-dark.png</file>
+        <file>Images/DefautAvatar.png</file>
+        <file>Images/Back-up.svg</file>
+        <file>Images/Wallet-registration.svg</file>
+        <file>Images/expand-more-light.svg</file>
+        <file>Images/ios_share-24px.svg</file>
+        <file>Images/sandboxGroup.svg</file>
+        <file>Images/editBIP32.svg</file>
+        <file>Images/nunchuk_logo_lg_yellow.svg</file>
+        <file>Images/collab-wallet-light.svg</file>
+        <file>Images/backgroundAvatar.svg</file>
+        <file>Images/arrow-right.svg</file>
+        <file>Images/clock-dark.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

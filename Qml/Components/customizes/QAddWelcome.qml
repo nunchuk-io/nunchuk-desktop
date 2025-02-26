@@ -45,7 +45,7 @@ Rectangle {
         visible: !isSubscribedUser
         width: 600
         anchors.centerIn: parent
-        spacing: 12
+        spacing: 24
         QText {
             anchors.horizontalCenter: parent.horizontalCenter
             font.family: "Montserrat"
@@ -54,11 +54,12 @@ Rectangle {
             text: titleWelcome
             color: "#000000"
         }
-        Item {width: parent.width; height: 24}
+
         QEmptyWelcome {
             id: _addKey
             anchors.horizontalCenter: parent.horizontalCenter
         }
+
         QLato {
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width
@@ -67,11 +68,7 @@ Rectangle {
             verticalAlignment: Text.AlignVCenter
             visible: _hotWallet.visible
         }
-        Item {
-            width: parent.width;
-            height: 24
-            visible: _hotWallet.visible
-        }
+
         QEmptyWelcome {
             id: _hotWallet
             anchors.horizontalCenter: parent.horizontalCenter

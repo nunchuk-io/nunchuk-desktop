@@ -283,7 +283,7 @@ void QConversationModel::requestSortByTimeAscending(bool ui_update)
 bool QConversationModel::isWalletCreator(const QString &init_event_id)
 {
     foreach (Conversation it , m_data ){
-        if(0 == QString::compare(init_event_id, it.init_event_id, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(init_event_id, it.init_event_id)){
             return it.sendByMe;
         }
     }
@@ -309,11 +309,11 @@ void QConversationModel::updateTransaction(const Conversation data, const QRoomT
         bool createByMe = true;
         m_pinTransaction = nullptr;
         for (int i = 0; i < m_data.count(); i++) {
-            if(0 != QString::compare(NUNCHUK_EVENT_TRANSACTION, m_data.at(i).matrixType, Qt::CaseInsensitive)){
+            if(!qUtils::strCompare(NUNCHUK_EVENT_TRANSACTION, m_data.at(i).matrixType)){
                 continue;
             }
-            if((0 == QString::compare(data.evtId, m_data.at(i).evtId, Qt::CaseInsensitive))
-                    || (0 == QString::compare(tx.data()->get_init_event_id(), m_data.at(i).init_event_id, Qt::CaseInsensitive)))
+            if((qUtils::strCompare(data.evtId, m_data.at(i).evtId))
+                    || (qUtils::strCompare(tx.data()->get_init_event_id(), m_data.at(i).init_event_id)))
             {
                 if(m_data.at(i).messageType == (int)ENUNCHUCK::ROOM_EVT::TX_INIT){
                     createByMe = m_data.at(i).sendByMe;
@@ -357,7 +357,7 @@ void QConversationModel::updateCancelWallet(const QString &init_event_id)
             continue;
         }
         else{
-            if(0 == QString::compare(init_event_id, m_data.at(i).init_event_id, Qt::CaseInsensitive)){
+            if(qUtils::strCompare(init_event_id, m_data.at(i).init_event_id)){
                 m_data[i].messageType = (int)ENUNCHUCK::ROOM_EVT::WALLET_PAST;
                 emit dataChanged(index(i),index(i));
             }
@@ -368,9 +368,9 @@ void QConversationModel::updateCancelWallet(const QString &init_event_id)
 void QConversationModel::updateCancelTransaction(const Conversation data)
 {
     for (int i = 0; i < m_data.count(); i++) {
-        if(0 == QString::compare(NUNCHUK_EVENT_TRANSACTION, m_data.at(i).matrixType, Qt::CaseInsensitive)){
-            if((0 == QString::compare(data.evtId, m_data.at(i).evtId, Qt::CaseInsensitive))
-                    || (0 == QString::compare(data.init_event_id, m_data.at(i).init_event_id, Qt::CaseInsensitive))){
+        if(qUtils::strCompare(NUNCHUK_EVENT_TRANSACTION, m_data.at(i).matrixType)){
+            if((qUtils::strCompare(data.evtId, m_data.at(i).evtId))
+                    || (qUtils::strCompare(data.init_event_id, m_data.at(i).init_event_id))){
                 if(m_data[i].messageType == (int)ENUNCHUCK::ROOM_EVT::TX_INIT){
                     m_data[i].messageType = (int)ENUNCHUCK::ROOM_EVT::TX_CANCELED;
                     emit dataChanged(index(i),index(i));
@@ -384,7 +384,7 @@ void QConversationModel::transactionChanged(const QString &tx_id, const int stat
 {
     for (int i = 0; i < m_data.count(); i++) {
         if(m_data.at(i).transaction){
-            if(0 == QString::compare(tx_id, m_data.at(i).transaction.data()->get_tx_id(), Qt::CaseInsensitive) && m_data.at(i).transaction.data()->transaction()){
+            if(qUtils::strCompare(tx_id, m_data.at(i).transaction.data()->get_tx_id()) && m_data.at(i).transaction.data()->transaction()){
                 m_data[i].transaction.data()->transaction()->setStatus(status);
                 m_data[i].transaction.data()->transaction()->setHeight(height);
                 emit dataChanged(index(i),index(i));
@@ -398,8 +398,8 @@ bool QConversationModel::isDuplicateTransactionEvent(const QString &tx_id, const
     foreach (Conversation it , m_data ){
         if(it.transaction){
             if(it.messageType == messageType
-                    && (0 == QString::compare(it.transaction.data()->get_tx_id(), tx_id, Qt::CaseInsensitive))
-                    && (0 == QString::compare(it.transaction.data()->get_init_event_id(), init_event_id, Qt::CaseInsensitive)))
+                    && (qUtils::strCompare(it.transaction.data()->get_tx_id(), tx_id))
+                    && (qUtils::strCompare(it.transaction.data()->get_init_event_id(), init_event_id)))
             {
                 return true;
             }
@@ -412,7 +412,7 @@ void QConversationModel::updateTransactionMemo(const QString &tx_id, const QStri
 {
     for (int i = 0; i < m_data.count(); i++) {
         if(m_data.at(i).transaction && m_data.at(i).transaction.data()->transaction()){
-            if(0 == QString::compare(tx_id, m_data.at(i).transaction.data()->get_tx_id(), Qt::CaseInsensitive)){
+            if(qUtils::strCompare(tx_id, m_data.at(i).transaction.data()->get_tx_id())){
                 m_data[i].transaction.data()->transaction()->setMemo(memo);
                 emit dataChanged(index(i),index(i));
             }
@@ -423,7 +423,7 @@ void QConversationModel::updateTransactionMemo(const QString &tx_id, const QStri
 void QConversationModel::updateInitEventId(const Conversation data)
 {
     for (int i = 0; i < m_data.count(); i++) {
-        if(0 == QString::compare(data.evtId, m_data.at(i).evtId, Qt::CaseInsensitive)){
+        if(qUtils::strCompare(data.evtId, m_data.at(i).evtId)){
             m_data[i].init_event_id = data.init_event_id;
             m_data[i].message = data.message;
             emit dataChanged(index(i),index(i));
@@ -434,7 +434,7 @@ void QConversationModel::updateInitEventId(const Conversation data)
 void QConversationModel::messageSent(QString txnId, QString eventId)
 {
     for (int i = 0; i < m_data.count(); i++) {
-        if(m_data.at(i).sendByMe && 0 == QString::compare(txnId, m_data.at(i).txnId, Qt::CaseInsensitive)){
+        if(m_data.at(i).sendByMe && qUtils::strCompare(txnId, m_data.at(i).txnId)){
             m_data[i].evtId = eventId;
             emit dataChanged(index(i),index(i));
         }
@@ -562,7 +562,7 @@ bool QConversationModel::containsTxReadyMessage(const Conversation data)
 {
     if((int)ENUNCHUCK::ROOM_EVT::TX_READY == data.messageType){
         foreach (Conversation it , m_data ){
-            if((it.messageType == data.messageType) && (0 == QString::compare(it.init_event_id, data.init_event_id, Qt::CaseInsensitive))) {
+            if((it.messageType == data.messageType) && (qUtils::strCompare(it.init_event_id, data.init_event_id))) {
                 return true;
             }
         }
@@ -574,7 +574,7 @@ bool QConversationModel::containsWalletReadyMessage(const Conversation data)
 {
     if((int)ENUNCHUCK::ROOM_EVT::WALLET_READY == data.messageType){
         for (int i = 0; i < m_data.count(); i++) {
-            if((data.messageType == m_data.at(i).messageType) && (0 == QString::compare(data.init_event_id, m_data.at(i).init_event_id, Qt::CaseInsensitive))){
+            if((data.messageType == m_data.at(i).messageType) && (qUtils::strCompare(data.init_event_id, m_data.at(i).init_event_id))){
                 m_data[i].timestamp = max(data.timestamp, m_data.at(i).timestamp);
                 return true;
             }

@@ -26,9 +26,9 @@ QString OnBoardingModel::state() const
 
 void OnBoardingModel::setState(const QString &newState)
 {
+    DBG_INFO << newState;
     if (m_state == newState)
         return;
-
     m_state = newState;
     emit stateChanged();
 }
@@ -54,7 +54,7 @@ void OnBoardingModel::requestBackupHotWallet()
     if (auto w = AppModel::instance()->walletInfoPtr()) {
         if (w->needBackup()) {
             w->setNeedBackup(false);
-            nunchukiface::instance()->UpdateWallet(w->wallet(), msg);
+            bridge::UpdateWallet(w->nunchukWallet(), msg);
             if (msg.type() != (int)EWARNING::WarningType::NONE_MSG) {
                 AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
             }

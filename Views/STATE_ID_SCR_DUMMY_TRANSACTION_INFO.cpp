@@ -46,7 +46,7 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
         DBG_INFO << type;
         if (type == "address-to-verify") {
             QString address = maps["address"].toString();
-            AppModel::instance()->startDisplayAddress(w->id(), address);
+            AppModel::instance()->startDisplayAddress(w->walletId(), address);
         }
         else if (type == "memo-notify") {
             //Not use for dummy tx
@@ -130,7 +130,7 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
         }
         else if (type == "force-sync-dummy-tx") {
             if (auto dummy = w->groupDummyTxPtr()) {
-                dummy->requestForceSyncTx(w->groupId(), w->id(), dummy->tx_id());
+                dummy->requestForceSyncTx(w->groupId(), w->walletId(), dummy->tx_id());
             }
         }
         else if (type == "dummy-tx-export-bbqr") {

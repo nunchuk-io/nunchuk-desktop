@@ -112,7 +112,7 @@ Column {
                 wrapMode: Text.WordWrap
             }
 
-            QTextEdit {
+            QTextInput {
                 id: input
                 anchors {
                     fill: parent

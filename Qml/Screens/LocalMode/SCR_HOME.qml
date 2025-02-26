@@ -470,4 +470,8 @@ QScreen {
             }
         }
     }
+
+    QPopupKeepGroupChatHistorySandBox {
+        id: chatHistorySandbox
+    }
 }

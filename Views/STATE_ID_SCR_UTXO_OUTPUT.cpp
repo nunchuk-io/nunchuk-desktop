@@ -29,7 +29,7 @@ void SCR_UTXO_OUTPUT_Entry(QVariant msg) {
 
 void SCR_UTXO_OUTPUT_Exit(QVariant msg) {
     if(auto w = AppModel::instance()->walletInfo()){
-        AppModel::instance()->walletInfo()->setUtxoInfo(QUTXOPtr(new UTXO(w->id())));
+        AppModel::instance()->walletInfo()->setUtxoInfo(QUTXOPtr(new UTXO(w->walletId())));
     }
 }
 

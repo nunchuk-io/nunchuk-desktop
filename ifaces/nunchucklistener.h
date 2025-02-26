@@ -20,7 +20,12 @@
 
 #ifndef NUNCHUCKLISTENER_H
 #define NUNCHUCKLISTENER_H
-
+#include <QCoreApplication>
+#include <QObject>
+#include <QMetaObject>
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
 #include <nunchuk.h>
 
 void balance_listener(std::string id, nunchuk::Amount balance);
@@ -37,5 +42,11 @@ bool create_software_signer_xprv_listener(int progress);
 bool CacheTapsignerMasterSignerXPubProgress(int percent);
 bool CacheDefaultTapsignerMasterSignerXPubProgress(int percent);
 bool ImportTapsignerMasterSignerProgress(int percent);
+
+// For Groupwallet
+void GroupUpdateListener(const nunchuk::GroupSandbox& state);
+void GroupMessageListener(const nunchuk::GroupMessage& msg);
+void GroupOnlineListener(const std::string& groupId, int online);
+void GroupDeleteListener(const std::string& groupId);
 
 #endif // NUNCHUCKLISTENER_H

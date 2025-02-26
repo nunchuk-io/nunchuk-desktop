@@ -118,8 +118,7 @@ void QWalletDummyTx::setTransactionInfo(QDummyTransactionPtr tx)
 void QWalletDummyTx::finishScanDevices()
 {
     if (!m_transaction) return;
-    DBG_INFO << m_transaction->singleSignersAssigned()->rowCount();
-    emit m_transaction->singleSignerAssignedChanged();
+    emit m_transaction->nunchukTransactionChanged();
 }
 
 QString QWalletDummyTx::tx_id() const

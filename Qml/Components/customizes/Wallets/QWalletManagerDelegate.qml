@@ -17,9 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
 import QtQuick 2.12
+import QtGraphicalEffects 1.0
 import DataPool 1.0
 import "../../origins"
 import "../../customizes"
@@ -100,7 +99,8 @@ QWalletDelegateBackground {
             }
             Column {
                 width: 80
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 10
                 spacing: 4
                 Item {
                     width: parent.width
@@ -153,11 +153,10 @@ QWalletDelegateBackground {
                         }
                     }
                 }
-
                 Rectangle {
                     width: parent.width
                     height: 16
-                    visible: isAssisted && !isReplaced
+                    visible: (isAssisted || isSandboxWallet || isReplaced || isShared)
                     radius: 20
                     color: "#EAEAEA"
                     anchors.right: parent.right
@@ -166,57 +165,33 @@ QWalletDelegateBackground {
                         spacing: 4
                         QIcon {
                             iconSize: 12
-                            source: "qrc:/Images/Images/collab-wallet-dark.svg"
+                            source: {
+                                if (isAssisted || isReplaced || isShared)
+                                    return "qrc:/Images/Images/collab-wallet-dark.svg"
+                                else if (isSandboxWallet)
+                                    return "qrc:/Images/Images/sandboxGroup.svg"
+                                else
+                                    return ""
+                            }
                         }
                         QText{
-                            font.family: "Lato"
-                            font.pixelSize: 10
-                            color: "#031F2B"
-                            text: STR.STR_QML_679
-                            font.weight: Font.Bold
-                        }
-                    }
-                }
-                Rectangle {
-                    width: parent.width
-                    height: 16
-                    visible: isReplaced
-                    radius: 20
-                    color: "#EAEAEA"
-                    anchors.right: parent.right
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 4
-                        QText{
-                            font.family: "Lato"
-                            font.pixelSize: 10
-                            color: "#031F2B"
-                            text: STR.STR_QML_1345
-                            font.weight: Font.Bold
-                        }
-                    }
-                }
-                Rectangle {
-                    width: parent.width
-                    height: 16
-                    visible: isShared
-                    radius: 20
-                    color: "#EAEAEA"
-                    anchors.right: parent.right
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 4
-                        QIcon {
-                            iconSize: 12
-                            source: "qrc:/Images/Images/collab-wallet-dark.svg"
-                        }
-                        QText{
-                            font.family: "Lato"
-                            font.pixelSize: 10
-                            color: "#031F2B"
-                            text: STR.STR_QML_438
-                            font.weight: Font.Bold
                             anchors.verticalCenter: parent.verticalCenter
+                            font.family: "Lato"
+                            font.pixelSize: 10
+                            color: "#031F2B"
+                            font.weight: Font.Bold
+                            text: {
+                                if (isAssisted && !isReplaced)
+                                    return STR.STR_QML_679
+                                else if (isSandboxWallet)
+                                    return STR.STR_QML_1675
+                                else if (isReplaced)
+                                    return STR.STR_QML_1345
+                                else if (isShared)
+                                    return STR.STR_QML_438
+                                else
+                                    return ""
+                            }
                         }
                     }
                 }

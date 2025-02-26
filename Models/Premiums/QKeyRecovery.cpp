@@ -293,7 +293,7 @@ QJsonObject QKeyRecovery::JsBody() const
     body["questions_and_answers"] = questionsAndChangeAnswers();
     if (auto w = ServiceSetting::instance()->walletInfoPtr())
     {
-        body["wallet"] = w->id();
+        body["wallet"] = w->walletId();
     }
     return body;
 }
