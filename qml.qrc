@@ -393,7 +393,6 @@
         <file>Qml/Components/customizes/Transactions/QContentCustomizeDestination.qml</file>
         <file>Qml/Components/customizes/Transactions/QNewRecipientAddress.qml</file>
         <file>Qml/Components/customizes/Transactions/QOnScreenCustomizeDestination.qml</file>
-        <file>Qml/Components/customizes/Wallets/QWalletInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletConfig.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletKeyDelegate.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupGapLimit.qml</file>
@@ -566,9 +565,9 @@
         <file>Qml/Components/customizes/Chats/QMessageBubbleDelegate.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SETUP_GROUP_WALLET.qml</file>
         <file>Qml/Components/customizes/Wallets/QSandboxReviewWallet.qml</file>
-        <file>Qml/Components/customizes/Wallets/QSandboxReviewInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QDraftWalletReviewInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QSaveYourWalletBSMSFile.qml</file>
-        <file>Qml/Components/customizes/Wallets/QSandBoxReviewKeys.qml</file>
+        <file>Qml/Components/customizes/Wallets/QDraftWalletReviewKeys.qml</file>
         <file>Qml/Components/customizes/Wallets/QSandboxKeyDeletage.qml</file>
         <file>Qml/Components/customizes/Wallets/QRegisterWalletOnHardware.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupSandboxSetting.qml</file>
@@ -579,6 +578,19 @@
         <file>Qml/Components/customizes/Chats/QConversationSandboxPage.qml</file>
         <file>Qml/Components/customizes/Chats/QRoomSandboxDelegate.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupKeepGroupChatHistorySandBox.qml</file>
+        <file>Qml/Components/customizes/Signers/QDeviceDetailsDelegate.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupGettingPublicKeyLoading.qml</file>
+        <file>Qml/Components/customizes/Wallets/QIntroductionTaprootAddress.qml</file>
+        <file>Qml/Components/customizes/Wallets/QTaprootWarningSupport.qml</file>
+        <file>Qml/Components/customizes/Wallets/QConfigureValueKeyset.qml</file>
+        <file>Qml/Components/customizes/Signers/QSignerConfigureDelegate.qml</file>
+        <file>Qml/Components/customizes/Signers/QSingleSignerData.qml</file>
+        <file>Qml/Components/customizes/Signers/QMasterSignerData.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupOverlayScreen.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupPersonalTaprootWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QEnableValueKeyset.qml</file>
+        <file>Qml/Components/customizes/Lists/QRadioList.qml</file>
+        <file>Qml/Components/customizes/Wallets/QDraftWalletReviewWallet.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -592,8 +604,8 @@
         <file>Images/StepComplete.png</file>
         <file>Images/expand_less_24px.png</file>
         <file>Images/expand_more_24px.png</file>
-        <file>Images/SignerChecked.png</file>
-        <file>Images/SignerUnChecked.png</file>
+        <file>Images/SignerChecked.svg</file>
+        <file>Images/SignerUnChecked.svg</file>
         <file>Images/Delete.png</file>
         <file>Images/cached_24px.png</file>
         <file>Images/Signer_Level2.png</file>
@@ -929,6 +941,7 @@
         <file>Images/backgroundAvatar.svg</file>
         <file>Images/arrow-right.svg</file>
         <file>Images/clock-dark.svg</file>
+        <file>Images/taproot-address.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

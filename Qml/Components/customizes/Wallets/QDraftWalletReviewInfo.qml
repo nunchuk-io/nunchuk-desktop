@@ -19,9 +19,9 @@ Rectangle {
         {type: NUNCHUCKTYPE.ANY,             displayName: STR.STR_QML_065 },
     ]
     property var infos: [
-        {label: STR.STR_QML_025,  labelValue: sandbox.groupName },
-        {label: STR.STR_QML_1639, labelValue: qsTr("%1/%2").arg(sandbox.groupM).arg(sandbox.groupN) },
-        {label: STR.STR_QML_066,  labelValue: types.find(function(e) {return e.type === sandbox.addressType }).displayName },
+        {label: STR.STR_QML_025,  labelValue: newWalletInfo.walletName },
+        {label: STR.STR_QML_1639, labelValue: qsTr("%1/%2").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN) },
+        {label: STR.STR_QML_066,  labelValue: types.find(function(e) {return e.type === newWalletInfo.walletAddressType }).displayName },
     ]
     Column {
         width: 304

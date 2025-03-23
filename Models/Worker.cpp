@@ -67,6 +67,8 @@ void Worker::slotStartCreateMasterSigner(const QString &name,
                                       msg.what(),
                                       msg.type(),
                                       msg.code());
+        AppModel::instance()->requestCreateUserWallets();
+        QGroupWallets::instance()->SyncAllSignerFromDraftWalletInfo();
     }
     else{
         DBG_INFO << "CREATE MASTER SIGNER FAIL" << msg.what() << msg.type() << msg.code();
@@ -398,13 +400,16 @@ void Worker::slotStartCreateSoftwareSignerXprv(const QString name, const QString
 void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
 {
     DBG_INFO << need_backup << file_path;
-    if(AppModel::instance()->newWalletInfo()){
+
+    nunchuk::WalletTemplate walletTemplate = nunchuk::WalletTemplate::DEFAULT;
+
+    if(auto w = AppModel::instance()->newWalletInfo()){
         DBG_INFO << "CREATE"
-                 << AppModel::instance()->newWalletInfo()->walletAddressType()
-                 << AppModel::instance()->newWalletInfo()->walletType()
-                 << AppModel::instance()->newWalletInfo()->walletM()
-                 << AppModel::instance()->newWalletInfo()->walletN();
-        if(AppModel::instance()->newWalletInfo()->walletAddressType() == (int)nunchuk::AddressType::TAPROOT){
+                 << w->walletAddressType()
+                 << w->walletType()
+                 << w->walletM()
+                 << w->walletN();
+        if(w->walletAddressType() == (int)nunchuk::AddressType::TAPROOT){
             QJsonObject data;
             QString     error_msg = "";
             bool get_result = Draco::instance()->GetTaprootSupportedSigners(data, error_msg);
@@ -446,20 +451,27 @@ void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
 
                 QSet<int> unsupported_types = all_types - supported_types;
                 foreach (int unsupported_type, unsupported_types) {
-                    AppModel::instance()->newWalletInfo()->singleSignersAssigned()->removeSingleSignerByType(unsupported_type);
+                    w->singleSignersAssigned()->removeSingleSignerByType(unsupported_type);
                 }
             }
+            if(!w->enableValuekeyset()){
+                walletTemplate = nunchuk::WalletTemplate::DISABLE_KEY_PATH;
+            }
         }
+		nunchuk::WalletType targetWallet = w->walletEscrow() ? 	nunchuk::WalletType::ESCROW : 
+																(w->walletN() == 1 ? nunchuk::WalletType::SINGLE_SIG : nunchuk::WalletType::MULTI_SIG);
+		
         QWarningMessage msgWarning;
-        nunchuk::Wallet ret = bridge::nunchukCreateOriginWallet(AppModel::instance()->newWalletInfo()->walletNameDisplay(),
-                                                                AppModel::instance()->newWalletInfo()->walletM(),
-                                                                AppModel::instance()->newWalletInfo()->walletN(),
-                                                                AppModel::instance()->newWalletInfo()->singleSignersAssigned(),
-                                                                (nunchuk::AddressType)AppModel::instance()->newWalletInfo()->walletAddressType(),
-                                                                nunchuk::WalletType::MULTI_SIG,//(nunchuk::WalletType)AppModel::instance()->newWalletInfo()->walletType(),
-                                                                AppModel::instance()->newWalletInfo()->walletDescription(),
+        nunchuk::Wallet ret = bridge::nunchukCreateOriginWallet(w->walletNameDisplay(),
+                                                                w->walletM(),
+                                                                w->walletN(),
+                                                                w->singleSignersAssigned(),
+                                                                (nunchuk::AddressType)w->walletAddressType(),
+                                                                targetWallet,
+                                                                w->walletDescription(),
                                                                 false /*allow used signer*/,
                                                                 "" /*decoy pin*/,
+                                                                walletTemplate,
                                                                 msgWarning);
 
         DBG_INFO << "CREATE" << ret.get_name() << (int)ret.get_wallet_type() << (int)ret.get_address_type() << ret.get_m() << ret.get_n();
@@ -671,7 +683,6 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
         nunchuk::Wallet origin_wallet = bridge::nunchukGetOriginWallet(wallet_id, msg);
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             AppModel::instance()->walletInfo()->setNunchukWallet(origin_wallet);
-            AppModel::instance()->walletInfo()->startDownloadConversation();
         }
 
         std::vector<nunchuk::Transaction> trans_result = bridge::nunchukGetOriginTransactionHistory(wallet_id);
@@ -864,13 +875,13 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
                                               int type,
                                               int code)
 {
+    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+    AppModel::instance()->setMasterSignerList(mastersigners);
     if(ret && type == (int)EWARNING::WarningType::NONE_MSG){
-        QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
         QString selectFingerPrint = "";
         QString keyName = "";
         QMasterSignerPtr newsigner;
         if(mastersigners){
-            AppModel::instance()->setMasterSignerList(mastersigners);
             newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(ret.data()->fingerPrint());
             AppModel::instance()->setMasterSignerInfo(newsigner);
             selectFingerPrint = newsigner->fingerPrint();
@@ -1162,11 +1173,11 @@ void Controller::slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
                                                 int type,
                                                 int code)
 {
+    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+    AppModel::instance()->setMasterSignerList(mastersigners);
     if(type != (int)EWARNING::WarningType::EXCEPTION_MSG){
-        QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
         QMasterSignerPtr newsigner;
         if(mastersigners){
-            AppModel::instance()->setMasterSignerList(mastersigners);
             newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(QString::fromStdString(ret.get_device().get_master_fingerprint()));
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }
@@ -1236,11 +1247,11 @@ void Controller::slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
 
 void Controller::slotFinishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret, QString what, int type, int code)
 {
+    QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
+    AppModel::instance()->setMasterSignerList(mastersigners);
     if(type != (int)EWARNING::WarningType::EXCEPTION_MSG){
-        QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
         QMasterSignerPtr newsigner;
         if(mastersigners){
-            AppModel::instance()->setMasterSignerList(mastersigners);
             newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(QString::fromStdString(ret.get_device().get_master_fingerprint()));
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }

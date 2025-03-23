@@ -77,6 +77,7 @@ public:
                                  const std::string& description,
                                  bool allow_used_signer,
                                  const std::string& decoy_pin,
+                                 nunchuk::WalletTemplate wallet_template,
                                  QWarningMessage& msg);
 
     std::string DraftWallet(const std::string& name,
@@ -767,6 +768,7 @@ public:
                                       QWarningMessage &msg);
 
     nunchuk::GroupSandbox FinalizeGroup(const std::string& groupId,
+                                        const std::set<size_t>& valueKeyset,
                                         QWarningMessage &msg);
 
     std::vector<nunchuk::Wallet> GetGroupWallets(QWarningMessage &msg);

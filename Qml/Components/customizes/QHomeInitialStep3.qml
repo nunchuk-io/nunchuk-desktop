@@ -413,13 +413,13 @@ Item {
                             true,
                             true,
                             (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
-                            true,
+                            walletIsSandboxWallet,
                         ]
                         visibles: [
                             true,
                             true,
                             (myRole !== "FACILITATOR_ADMIN" && myRole !== "KEYHOLDER_LIMITED"),
-                            true,
+                            walletIsSandboxWallet,
                         ]
                         functions: [
                             function() { // Import PSBT

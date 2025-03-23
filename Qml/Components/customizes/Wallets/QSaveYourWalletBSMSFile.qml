@@ -109,10 +109,7 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
-                var _input = {
-                    type: "register-wallet-on-hardware"
-                }
-                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                nextClicked()
             }
         }
     }

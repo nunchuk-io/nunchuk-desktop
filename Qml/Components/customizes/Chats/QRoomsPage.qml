@@ -86,7 +86,7 @@ Flickable {
                 isCurrentItem: index + roomlist.count === flickerRooms.globalCurrentIndex
                 lasttimestamp: model.wallet_conversation.lasttimestamp
                 lastmessage: model.wallet_conversation.lastMessage
-                isEncrypted: true
+                isEncrypted: false
                 onItemClicked: {
                     flickerRooms.globalCurrentIndex = index + roomlist.count
                     AppModel.groupWalletList.currentIndex = index

@@ -271,7 +271,7 @@ Item {
                         spacing: 16
                         QTextField {
                             id: messageField
-                            width: 301
+                            width: 340
                             height: 40
                             anchors.verticalCenter: parent.verticalCenter
                             placeholderText: "Type your message..."
@@ -291,25 +291,6 @@ Item {
                             function sendRequest(){
                                 sandboxWalletInfo.startSendGroupMessage(messageField.text)
                                 messageField.text = ""
-                            }
-                        }
-                        QImage {
-                            width: 24
-                            height: 24
-                            source: messageField.text === "" ? "qrc:/Images/Images/SendMessage.png" : "qrc:/Images/Images/SendMessage-dark.png"
-                            anchors.verticalCenter: parent.verticalCenter
-                            MouseArea {
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                anchors.fill: parent
-                                onClicked: {
-                                    if(listView.count === 0){
-                                        if(sandboxWalletInfo.conversations){
-                                            sandboxWalletInfo.startDownloadConversation()
-                                        }
-                                    }
-                                    messageField.sendRequest()
-                                }
                             }
                         }
                     }

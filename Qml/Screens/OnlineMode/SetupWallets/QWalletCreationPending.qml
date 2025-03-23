@@ -96,7 +96,7 @@ Item {
                         spacing: 36
                         QLato {
                             width: parent.width
-                            text: STR.STR_QML_939.arg(dashInfo.mInfo).arg(GroupWallet.dashboardInfo.nInfo).arg(GroupWallet.dashboardInfo.mInfo === 2 ? STR.STR_QML_939_two : STR.STR_QML_939_three)
+                            text: STR.STR_QML_939.arg(dashInfo.mInfo).arg(dashInfo.nInfo).arg(dashInfo.mInfo === 2 ? STR.STR_QML_939_two : STR.STR_QML_939_three)
                             lineHeightMode: Text.FixedHeight
                             lineHeight: 28
                             wrapMode: Text.WordWrap
@@ -108,11 +108,20 @@ Item {
                             text: {
                                 if (dashInfo.allowInheritance)
                                 {
+                                    var user = ClientController.user
                                     if (dashInfo.mInfo === 2 && dashInfo.nInfo === 4) {
-                                        return STR.STR_QML_940_one
+                                        if (dashInfo.isPremierGroup) {
+                                            return STR.STR_QML_940_without
+                                        } else {
+                                            return STR.STR_QML_940_one
+                                        }
                                     }
                                     else {
-                                        return STR.STR_QML_940_two
+                                        if (dashInfo.isPremierGroup) {
+                                            return STR.STR_QML_940_without
+                                        } else {
+                                            return STR.STR_QML_940_two
+                                        }
                                     }
                                 }
                                 else {

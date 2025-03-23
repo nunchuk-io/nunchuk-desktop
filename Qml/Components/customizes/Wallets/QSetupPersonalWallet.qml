@@ -154,7 +154,7 @@ QOnScreenContent {
                             }
                             QIcon {
                                 iconSize: 24
-                                source: master_signer_checked ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
+                                source: master_signer_checked ? "qrc:/Images/Images/SignerChecked.svg" : "qrc:/Images/Images/SignerUnChecked.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Column {
@@ -251,7 +251,7 @@ QOnScreenContent {
                             }
                             QIcon {
                                 iconSize: 24
-                                source: single_signer_checked ? "qrc:/Images/Images/SignerChecked.png" : "qrc:/Images/Images/SignerUnChecked.png"
+                                source: single_signer_checked ? "qrc:/Images/Images/SignerChecked.svg" : "qrc:/Images/Images/SignerUnChecked.svg"
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Column {

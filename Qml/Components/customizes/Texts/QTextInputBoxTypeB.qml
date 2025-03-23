@@ -158,7 +158,7 @@ Column {
         QLato {
             id: textErrorItem
             width: myRectangle.width+2
-            font.pixelSize: 12
+            font.pixelSize: 16
             color: "#CF4018"
             anchors {
                 left: alert.right

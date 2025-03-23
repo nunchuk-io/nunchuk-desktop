@@ -124,10 +124,16 @@ bool Draco::getCurrencies(QJsonObject &output, QString &errormsg)
 
 void Draco::btcRates()
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QUrl url = QUrl::fromUserInput("https://api.nunchuk.io/v1/prices");
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    if (m_networkManager.isNull()) {
+        return;
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
+    locker.unlock();
     QEventLoop eventLoop;
     QObject::connect(reply.get(), &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -141,14 +147,22 @@ void Draco::btcRates()
         double rates_double  = btc["USD"].toDouble();
         AppModel::instance()->setBtcRates(rates_double);
     }
+    reply->deleteLater();
+    reply.release();
 }
 
 void Draco::exchangeRates(const QString &currency)
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QUrl url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/forex/rates");
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    if (m_networkManager.isNull()) {
+        return;
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
+    locker.unlock();
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -160,11 +174,13 @@ void Draco::exchangeRates(const QString &currency)
         AppModel::instance()->setExchangeRates(rates_double);
         AppSetting::instance()->updateUnit();
     }
-    reply.release()->deleteLater();
+    reply->deleteLater();
+    reply.release();
 }
 
 void Draco::feeRates()
 {
+    QFunctionTime f(__PRETTY_FUNCTION__);
     QUrl url;
     switch (AppSetting::instance()->primaryServer()) {
     case (int)AppSetting::Chain::TESTNET:
@@ -179,7 +195,12 @@ void Draco::feeRates()
     }
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    if (m_networkManager.isNull()) {
+        return;
+    }
+    QMutexLocker locker(&m_networkManagerMutex);
     std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
+    locker.unlock();
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -193,7 +214,8 @@ void Draco::feeRates()
         AppModel::instance()->setMinFee(jsonObj["minimumFee"].toInt());
         AppModel::instance()->setLasttimeCheckEstimatedFee(QDateTime::currentDateTime());
     }
-    reply.release()->deleteLater();
+    reply->deleteLater();
+    reply.release();
 }
 
 void Draco::verifyNewDevice(const QString &pin)
@@ -4489,7 +4511,9 @@ bool Draco::DraftWalletGetCurrent(QJsonObject &output, QString &errormsg)
         }
         else{
             errormsg = response_msg;
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#if 0
+            // AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
             return false;
         }
     }

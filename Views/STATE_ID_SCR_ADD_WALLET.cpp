@@ -94,10 +94,12 @@ void EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER(QVariant msg) {
     QString walletNameInputted = maps["walletNameInputted"].toString();
     QString walletDescription  = maps["walletDescription"].toString();
     int  addressType = maps["addressType"].toInt();
+    DBG_INFO << maps;
     if(auto nw = AppModel::instance()->newWalletInfo()) {
         nw->setWalletName(walletNameInputted);
         nw->setWalletDescription(walletDescription);
         nw->setWalletAddressType(addressType);
+        nw->CreateAssignAvailableSigners();
     }
 }
 

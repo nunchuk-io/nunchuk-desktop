@@ -597,6 +597,7 @@ nunchuk::Wallet bridge::nunchukCreateOriginWallet(const QString& name,
                                                   const QString& description,
                                                   bool allow_used_signer,
                                                   const QString& decoy_pin,
+                                                  nunchuk::WalletTemplate walletTemplate,
                                                   QWarningMessage &msg)
 {
     return nunchukiface::instance()->CreateWallet(name.toStdString(),
@@ -608,6 +609,7 @@ nunchuk::Wallet bridge::nunchukCreateOriginWallet(const QString& name,
                                                   description.toStdString(),
                                                   allow_used_signer,
                                                   decoy_pin.toStdString(),
+                                                  walletTemplate,
                                                   msg);
 
 }
@@ -1684,7 +1686,9 @@ void bridge::nunchukSetCurrentMode(int mode)
     DBG_INFO << "=========================================" << mode;
     AppModel::instance()->setNunchukMode(mode);
     nunchukiface::instance()->setNunchukMode(mode);
-    CLIENT_INSTANCE->setIsNunchukLoggedIn(ONLINE_MODE == mode ? true : false);
+    if (mode == LOCAL_MODE) {
+        CLIENT_INSTANCE->setIsNunchukLoggedIn(false);
+    }
 }
 
 QString bridge::nunchukParseKeystoneSigner(const QString &qr_data)
@@ -2678,9 +2682,10 @@ nunchuk::GroupSandbox bridge::UpdateGroup(const QString &groupId, const QString 
     return nunchukiface::instance()->UpdateGroup(groupId.toStdString(), name.toStdString(), m, n, addressType, msg);
 }
 
-nunchuk::GroupSandbox bridge::FinalizeGroup(const QString &groupId, QWarningMessage &msg)
+nunchuk::GroupSandbox bridge::FinalizeGroup(const QString &groupId, const QSet<size_t> valuekeyset, QWarningMessage &msg)
 {
-    return nunchukiface::instance()->FinalizeGroup(groupId.toStdString(), msg);
+    std::set<size_t> stdSet(valuekeyset.begin(), valuekeyset.end());
+    return nunchukiface::instance()->FinalizeGroup(groupId.toStdString(), stdSet, msg);
 }
 
 bool bridge::CheckGroupWalletExists(const nunchuk::Wallet &wallet, QWarningMessage &msg)

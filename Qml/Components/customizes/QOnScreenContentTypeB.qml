@@ -40,7 +40,7 @@ QOnScreenContent {
         }
     }
     bottomRight: QTextButton {
-        width: 120
+        width: 99
         height: 48
         label.text: STR.STR_QML_265
         label.font.pixelSize: 16

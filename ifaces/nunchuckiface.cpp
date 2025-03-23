@@ -183,12 +183,13 @@ nunchuk::Wallet nunchukiface::CreateWallet(const std::string &name,
                                            const std::string &description,
                                            bool allow_used_signer,
                                            const std::string &decoy_pin,
+                                           nunchuk::WalletTemplate wallet_template,
                                            QWarningMessage &msg)
 {
     nunchuk::Wallet ret(false);
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->CreateWallet(name, m, n, signers, address_type, wallet_type, description, allow_used_signer, decoy_pin);
+            ret = nunchuk_instance_[nunchukMode()]->CreateWallet(name, m, n, signers, address_type, wallet_type, description, allow_used_signer, decoy_pin, wallet_template);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -3466,12 +3467,12 @@ nunchuk::GroupSandbox nunchukiface::UpdateGroup(const std::string &groupId, cons
     return ret;
 }
 
-nunchuk::GroupSandbox nunchukiface::FinalizeGroup(const std::string &groupId, QWarningMessage &msg)
+nunchuk::GroupSandbox nunchukiface::FinalizeGroup(const std::string &groupId, const std::set<size_t> &valueKeyset, QWarningMessage &msg)
 {
     nunchuk::GroupSandbox ret("");
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->FinalizeGroup(groupId);
+            ret = nunchuk_instance_[nunchukMode()]->FinalizeGroup(groupId, valueKeyset);
         }
     }
     catch (const nunchuk::BaseException &ex) {

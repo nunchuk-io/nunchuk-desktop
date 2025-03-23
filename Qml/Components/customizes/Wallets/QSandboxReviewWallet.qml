@@ -49,10 +49,10 @@ QOnScreenContentTypeA {
         Row {
             height: parent.height
             spacing: 24
-            QSandboxReviewInfo {
+            QDraftWalletReviewInfo {
 
             }
-            QSandBoxReviewKeys {
+            QDraftWalletReviewKeys {
 
             }
         }
@@ -63,6 +63,7 @@ QOnScreenContentTypeA {
             icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: STR.STR_QML_1640
             anchors.bottom: parent.bottom
+            visible: sandbox.addressType === NUNCHUCKTYPE.TAPROOT
         }
     }
     onPrevClicked: sandbox.screenFlow = "setup-group-wallet"

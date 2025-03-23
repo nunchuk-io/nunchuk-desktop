@@ -42,7 +42,7 @@ Rectangle {
         }
         hotWallet {
             btnTextLink: STR.STR_QML_1255
-            titleSuggest: STR.STR_QML_1251
+            titleSuggest: STR.STR_QML_1226
             content: STR.STR_QML_1252
             height: 180
             icon:"qrc:/Images/Images/person-add-24px.svg"

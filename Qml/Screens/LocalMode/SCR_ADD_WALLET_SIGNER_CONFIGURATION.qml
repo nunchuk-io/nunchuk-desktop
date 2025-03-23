@@ -37,8 +37,16 @@ QScreen {
     readonly property var newWalletInfo: AppModel.newWalletInfo
     readonly property int walletOptType: AppModel.newWalletInfo.walletOptType
     readonly property var map_opt: [
-        {walletOptType: NUNCHUCKTYPE.E_PERSONAL_WALLET,     screen_component: personal_Wallet},
+        {walletOptType: NUNCHUCKTYPE.E_PERSONAL_WALLET,     screen_component: funPersonalWallet()},
     ]
+
+    function funPersonalWallet() {
+        if (newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT) {
+            return taproot_personal_Wallet
+        } else {
+            return personal_Wallet
+        }
+    }
 
     Loader {
         width: popupWidth
@@ -50,6 +58,12 @@ QScreen {
     Component {
         id: personal_Wallet
         QSetupPersonalWallet {
+
+        }
+    }
+    Component {
+        id: taproot_personal_Wallet
+        QSetupPersonalTaprootWallet {
 
         }
     }

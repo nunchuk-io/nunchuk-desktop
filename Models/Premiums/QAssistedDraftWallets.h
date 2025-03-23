@@ -88,7 +88,7 @@ public:
 private:
     bool RequestAddOrUpdateAKeyToDraftWallet(StructAddHardware hardware);
     bool RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHardware hardware, nunchuk::SingleSigner keyresued);
-    void addRequest(const QJsonArray& requests, const QString& group_id = "");
+    QMap<Key, StructAddHardware> addRequest(const QJsonArray& requests, const QString& group_id = "");
     void makeListRequests();
     bool getSignerFromMasterSigner(const QString &xfp, const int index);
     bool getSigner(const QString &xfp, const int index);

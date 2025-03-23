@@ -32,7 +32,6 @@
 
 void SCR_SERVICE_SETTINGS_Entry(QVariant msg) {
     ServiceSetting::instance()->setWalletInfo(NULL);
-    ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
     QGroupWallets::instance()->findPermissionAccount();
     AppModel::instance()->setTabIndex((int)ENUNCHUCK::TabSelection::SERVICE_TAB);
     QStringList mnemonics = qUtils::GetBIP39WordList();
@@ -41,6 +40,7 @@ void SCR_SERVICE_SETTINGS_Entry(QVariant msg) {
     if(AppModel::instance()->walletList()){
         AppModel::instance()->walletList()->checkContainsGroup();
     }
+    ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
 }
 
 void SCR_SERVICE_SETTINGS_Exit(QVariant msg) {

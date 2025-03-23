@@ -45,6 +45,9 @@ QScreen {
         {screen: "register-wallet-hardware",  screen_component: register_wallet_hardware},
         {screen: "group-sandbox-setting",     screen_component: group_sandbox_setting},
         {screen: "sandbox-add-existing-key",  screen_component: group_sandbox_add_existing_key},
+        {screen: "sandbox-intro-taproot",     screen_component: introTaproot},
+        {screen: "sandbox-taproot-warning",   screen_component: taprootWarning},
+        {screen: "sandbox-configure-value-keyset",   screen_component: configure_value_keyset},
     ]
 
     Loader {
@@ -68,7 +71,12 @@ QScreen {
     Component {
         id: bsms_file_success
         QSaveYourWalletBSMSFile {
-
+            onNextClicked: {
+                var _input = {
+                    type: "register-wallet-on-hardware"
+                }
+                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            }
         }
     }
     Component {
@@ -89,6 +97,46 @@ QScreen {
 
         }
     }
+    Component {
+        id : introTaproot
+        QIntroductionTaprootAddress {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: sandbox.backScreen()
+            onNextClicked: {
+                var _input = {
+                    type: "switch-to-taproot-warning-support"
+                }
+                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            }
+        }
+    }
+    Component {
+        id : taprootWarning
+        QTaprootWarningSupport {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: sandbox.backScreen()
+            onNextClicked: {
+                var _input = {
+                    type: "switch-to-configure-value-keyset"
+                }
+                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            }
+        }
+    }
+    Component {
+        id: configure_value_keyset
+        QConfigureValueKeyset {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: sandbox.backScreen()
+            onNextClicked: {
+                var _input = {
+                    type: "review-group-sandbox"
+                }
+                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            }
+        }
+    }
+
     Connections {
         target: sandbox
         onFinishSandboxWallet: {

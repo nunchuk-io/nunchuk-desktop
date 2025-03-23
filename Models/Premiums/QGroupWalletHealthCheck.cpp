@@ -22,7 +22,7 @@ void QGroupWalletHealthCheck::GetStatuses()
 {
     if (auto dashboard = dashBoardPtr()) {
         QPointer<QGroupWalletHealthCheck> safeThis(this);
-        runInThread<QJsonArray>([safeThis, dashboard]() ->QJsonArray{
+        runInThread([safeThis, dashboard]() ->QJsonArray{
             QJsonObject output;
             QString errormsg = "";
             if (safeThis && safeThis.data()->isUserWallet()) {
@@ -34,7 +34,7 @@ void QGroupWalletHealthCheck::GetStatuses()
             return output["statuses"].toArray();
         },[safeThis, dashboard](QJsonArray statuses) {
             QJsonArray result;
-            if(safeThis){
+            if(safeThis) {
                 for (auto obj : statuses) {
                     QJsonObject status = obj.toObject();
                     QJsonValue last = status["last_health_check_time_millis"];
@@ -228,7 +228,7 @@ void QGroupWalletHealthCheck::GetKeyHealthReminder()
 {
     if (auto dashboard = dashBoardPtr()) {
         QPointer<QGroupWalletHealthCheck> safeThis(this);
-        runInThread<QJsonArray>([safeThis, dashboard]() ->QJsonArray{
+        runInThread([safeThis, dashboard]() ->QJsonArray{
             QJsonObject output;
             QString errormsg = "";
             bool ret {false};
@@ -241,7 +241,7 @@ void QGroupWalletHealthCheck::GetKeyHealthReminder()
             DBG_INFO << output;
             return output["reminders"].toArray();
         },[safeThis](QJsonArray reminders) {
-            if (reminders.size() > 0) {
+            if (safeThis) {
                 safeThis.data()->m_reminders = reminders;
             }
         });
@@ -252,7 +252,7 @@ void QGroupWalletHealthCheck::AddOrUpdateKeyHealthReminder(const QStringList xfp
 {
     if (auto dashboard = dashBoardPtr()) {
         QPointer<QGroupWalletHealthCheck> safeThis(this);
-        runInThread<bool>([dashboard, xfps, frequency, start_date_millis]() ->bool{
+        runInConcurrent([dashboard, xfps, frequency, start_date_millis]() ->bool{
             QJsonObject requestBody;
             QStringList xfps_list = xfps;
             xfps_list.removeAll("");
@@ -276,8 +276,8 @@ void QGroupWalletHealthCheck::AddOrUpdateKeyHealthReminder(const QStringList xfp
                 ret = Byzantine::instance()->AddOrUpdateKeyHealthReminder(dashboard->groupId(), dashboard->wallet_id(), requestBody, output, errormsg);
             }
             return ret;
-        },[safeThis, dashboard](int ret) {
-            if (ret) {
+        },[safeThis, dashboard](bool ret) {
+            if (safeThis && ret) {
                 safeThis->GetKeyHealthReminder();
                 safeThis->GetStatuses();
                 emit safeThis->isAllReminderChanged();

@@ -865,11 +865,9 @@ var STR_QML_721 = qsTr("The lockdown will last <b>%1</b>.")
 var STR_QML_722 = qsTr("If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \n \
 TAPSIGNER’s private key using the encrypted backup from the server. Please note the \n \
 following:")
-var STR_QML_723 = qsTr("The Backup Password is required, please have it ready. The password is \n \
-printed on the back of the TAPSIGNER. You should have had a copy of \n \
-this when setting up the TAPSIGNER for the first time.")
-var STR_QML_724 = qsTr("This procedure will convert the TAPSIGNER into a software key on this \n \
-device.")
+var STR_QML_723 = qsTr("Once you have entered the lockdown, no one—including yourself—will \n \
+be able to sign in to your account and access your wallet.")
+var STR_QML_724 = qsTr("There is no way to end the lockdown early.")
 
 var STR_QML_725 = qsTr("Enter Backup Password")
 var STR_QML_726 = qsTr("Please enter the Backup Password for [<b>%1</b>] (card ID: <b>••%2</b>).")
@@ -1513,7 +1511,7 @@ var STR_QML_1224 = qsTr("Freely create hot wallets, watch-only wallets, or state
 \n \
 To quickly create a hot wallet for immediate use, click the button below. You can back it up later.")
 var STR_QML_1225 = qsTr("Create hot wallet now")
-var STR_QML_1226 = qsTr("Hot wallet")
+var STR_QML_1226 = qsTr("Create a hot wallet")
 var STR_QML_1227 = qsTr("A hot wallet is a wallet that is frequently connected to the Internet. \n \
 \n \
 For securing large amounts of funds, consider moving to a cold wallet, a multisig wallet or an assisted multisig wallet for better security.")
@@ -1955,3 +1953,27 @@ var STR_QML_1675 = qsTr("Shared")
 var STR_QML_1676 = qsTr("1 day")
 var STR_QML_1677 = qsTr("7 days")
 var STR_QML_1678 = qsTr("14 days")
+var STR_QML_1679 = qsTr("Edit BIP32 path")
+var STR_QML_1680 = qsTr("Current BIP32 path")
+var STR_QML_1681 = qsTr("New BIP32 path")
+var STR_QML_1682 = qsTr("BIP32 path updated.")
+var STR_QML_1683 = qsTr("Getting public key... Please keep your device connected.")
+var STR_QML_1684 = qsTr("Key not found. Please connect the key device to this computer and click Continue.")
+var STR_QML_1685 = qsTr("Signer exists")
+var STR_QML_1686 = qsTr("Taproot address")
+var STR_QML_1687 = qsTr("Enhance your privacy and reduce transaction fees with a Taproot address. Your transactions appear like regular ones, keeping details confidential, and the smaller transaction size lowers your costs.")
+var STR_QML_1688 = qsTr("To use Taproot, please note the following:")
+var STR_QML_1689 = qsTr("Withdraw support")
+var STR_QML_1690 = qsTr("If you’re sending bitcoin from an exchange or service to this wallet, please confirm they support sending to Bech32m (Taproot) addresses. <b>If you’re unsure, you may want to first withdraw to a non-Taproot Nunchuk wallet and then transfer from there to this Taproot wallet to ensure your funds arrive safely.</b>")
+var STR_QML_1691 = qsTr("Hardware support")
+var STR_QML_1692 = qsTr("If you plan to use hardware keys in the wallet, please make sure that they support Taproot as well. If you’re unsure, use software keys only.")
+var STR_QML_1693 = qsTr("Configure Value Keyset")
+var STR_QML_1694 = qsTr("Among the keys assigned to the wallet, please select the keys to create the Value Keyset. Signing transactions with the Value Keyset will help maximize privacy and fee savings.")
+var STR_QML_1695 = qsTr("Value Key")
+var STR_QML_1696 = qsTr("Configure wallet")
+var STR_QML_1697 = qsTr("Keys not yet supporting Taproot")
+var STR_QML_1698 = qsTr("Assign signers")
+var STR_QML_1699 = qsTr("Some worry quantum computers could crack the Value Keyset’s cryptography, but experts see that threat as remote. If you’d rather be cautious, disable the Value Keyset.")
+var STR_QML_1700 = qsTr("A Taproot feature called key path spending allows a specific subset of keys (the Value Keyset) to sign transactions in a way that maximizes privacy and fee savings. Alternatively, you can disable the Value Keyset to use script path spending only.")
+var STR_QML_1701 = qsTr("Enable Value Keyset")
+var STR_QML_1702 = qsTr("Disable Value Keyset")

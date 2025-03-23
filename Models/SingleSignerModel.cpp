@@ -727,7 +727,11 @@ bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &va
     }
     else if(role == single_signer_checked_Role){
         m_data[index.row()]->setChecked(value.toBool());
-        DBG_INFO;
+        emit signerSelectedCountChanged();
+    }
+    else if(role == single_signer_value_key){
+        m_data[index.row()]->setValueKey(value.toBool());
+        emit signerValueKeyCountChanged();
     }
     else{ }
     emit dataChanged(index, index, { role } );
@@ -963,8 +967,12 @@ bool SingleSignerListModel::containsHardwareKey()
 bool SingleSignerListModel::containsSigner(const QString &xfp, const QString &path)
 {
     foreach (QSingleSignerPtr i , m_data ){
-        if(qUtils::strCompare(path, i.data()->derivationPath())
-                && qUtils::strCompare(xfp, i.data()->masterFingerPrint()))
+        if (path.isEmpty() && i.data()->derivationPath().isEmpty()
+            && qUtils::strCompare(xfp, i.data()->masterFingerPrint()))
+        {
+            return true;
+        } else if(qUtils::strCompare(path, i.data()->derivationPath())
+                   && qUtils::strCompare(xfp, i.data()->masterFingerPrint()))
         {
             return true;
         }
@@ -1301,6 +1309,17 @@ int SingleSignerListModel::signerSelectedCount() const
 int SingleSignerListModel::keyinfo() const
 {
     return 0;
+}
+
+int SingleSignerListModel::signerValueKeyCount()
+{
+    int ret = 0;
+    foreach (QSingleSignerPtr it, m_data) {
+        if(it.data()->valueKey()) {
+            ret++;
+        }
+    }
+    return ret;
 }
 
 int SingleSignerListModel::keysetStatus(int keyset_index)

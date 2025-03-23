@@ -43,6 +43,7 @@
 #include "Premiums/QInheritancePlan.h"
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QGroupWalletDummyTx.h"
+#include "QThreadForwarder.h"
 
 QNunchukRoom::QNunchukRoom(Room *r):
     m_room(r),
@@ -1465,20 +1466,26 @@ void QNunchukRoom::addedMessages(int fromIndex, int toIndex)
     DBG_INFO << fromIndex << toIndex << isServerNoticeRoom();
     if(isServerNoticeRoom()){
         emit noticeService();
-        for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
-            if(fromIndex <= e->index() &&  toIndex >= e->index()){
-                const RoomEvent* lastEvent = e->get();
-                nunchukNoticeEvent(*lastEvent);
+        QtConcurrent::run([=, this]() {
+            for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
+                QThreadForwarder::instance()->forwardInQueuedConnection([fromIndex, toIndex, this, e = std::move(e)](){
+                    if(fromIndex <= e->index() &&  toIndex >= e->index()){
+                        const RoomEvent* lastEvent = e->get();
+                        nunchukNoticeEvent(*lastEvent);
+                    }
+                });
             }
-        }
+        });
     }
     else if(isNunchukSyncRoom()){
         QtConcurrent::run([=, this]() {
             for (auto e = m_room->messageEvents().rbegin(); e != m_room->messageEvents().rend(); ++e){
-                if(fromIndex <= e->index() &&  toIndex >= e->index()){
-                    const RoomEvent* lastEvent = e->get();
-                    nunchukConsumeSyncEvent(*lastEvent);
-                }
+                QThreadForwarder::instance()->forwardInQueuedConnection([fromIndex, toIndex, this, e = std::move(e)](){
+                    if(fromIndex <= e->index() &&  toIndex >= e->index()){
+                        const RoomEvent* lastEvent = e->get();
+                        nunchukConsumeSyncEvent(*lastEvent);
+                    }
+                });
             }
         });
     }
@@ -1866,22 +1873,19 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             dashboard = w ? w->dashboard() : dashboard;
             QString msgtype = evt.contentJson()["msgtype"].toString();
             DBG_INFO << msgtype;
+            if (dashboard) {
+                dashboard->GetAlertsInfo();
+            }
             if (msgtype.contains("io.nunchuk.custom.draft_wallet", Qt::CaseInsensitive))
             {
                 QGroupWallets::instance()->GetAllGroups();
                 QUserWallets::instance()->GetListAllRequestAddKey();
-                if (dashboard) {
-                    dashboard->GetAlertsInfo();
-                }
             }
             else if (msgtype.contains("io.nunchuk.custom.wallet_created", Qt::CaseInsensitive) ||
                      msgtype.contains("io.nunchuk.custom.wallet_name_changed", Qt::CaseInsensitive) ||
                      msgtype.contains("io.nunchuk.custom.key_name_changed", Qt::CaseInsensitive) ||
                      msgtype.contains("io.nunchuk.custom.key_updated", Qt::CaseInsensitive))
             {
-                if (dashboard) {
-                    dashboard->GetAlertsInfo();
-                }
                 AppModel::instance()->requestCreateUserWallets();
             }
             else if(msgtype.contains("io.nunchuk.custom.transaction", Qt::CaseInsensitive))
@@ -1926,14 +1930,10 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                         }
                     }
                 }
-                if (dashboard) {
-                    dashboard->GetAlertsInfo();
-                }
             }
             else if (msgtype.contains("io.nunchuk.custom.group", Qt::CaseInsensitive))
             {
                 if (dashboard) {
-                    dashboard->GetAlertsInfo();
                     dashboard->GetHealthCheckInfo();
                 }
                 QGroupWallets::instance()->GetAllGroups();
@@ -1956,7 +1956,6 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                      || msgtype.contains("io.nunchuk.custom.health_check_skipped", Qt::CaseInsensitive))
             {
                 if (dashboard) {
-                    dashboard->GetAlertsInfo();
                     dashboard->GetHealthCheckInfo();
                     if (auto plan = dashboard->inheritancePlanPtr()) {
                         plan->GetInheritancePlan();
@@ -1996,17 +1995,13 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     msgtype.contains("io.nunchuk.custom.wallet_key_replacement_pending", Qt::CaseInsensitive))
 
             {
-                if (dashboard) {
-                    dashboard->GetAlertsInfo();
-                }
+
             }
             else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_completed", Qt::CaseInsensitive) ||
                     msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive))
             {
                 if (msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive)) {
-                    if (dashboard) {
-                        dashboard->GetAlertsInfo();
-                    }
+
                 }
                 if (dashboard) {
                     dashboard->GetWalletInfo();
@@ -2022,7 +2017,6 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             else {
                 // for honey badger
                 if (dashboard) {
-                    dashboard->GetAlertsInfo();
                     dashboard->GetHealthCheckInfo();
                 }
             }

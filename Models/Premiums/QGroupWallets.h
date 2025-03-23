@@ -80,6 +80,7 @@ public:
     bool requestKeyReplacement(QSingleSignerPtr signer) final;
 
 public slots:
+    void SyncAllSignerFromDraftWalletInfo();
     void MakePendingDashboardList(const QJsonArray& groups);
     void dashboard(const QString& group_id, const QString& wallet_id);
     void accept(const QString& group_id);
@@ -94,7 +95,6 @@ public slots:
     void clearDashBoard();
     void requestManageGroupChatHistory();
 signals:
-    void dashboardList(const QJsonArray& array);
     void dashboardListChanged();
     void dashboardInfoChanged();
     void currentIndexChanged();

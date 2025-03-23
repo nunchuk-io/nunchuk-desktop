@@ -51,8 +51,8 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role);
     QHash<int, QByteArray> roleNames() const;
+    void createGroupMessage(const std::vector<nunchuk::GroupMessage> data);
     void appendGroupMessage(const nunchuk::GroupMessage data);
-    void appendGroupMessage(const std::vector<nunchuk::GroupMessage> data);
     void removeGroupMessage(const nunchuk::GroupMessage data);
     Q_INVOKABLE void markAllMessagesAsRead();
     Q_INVOKABLE void markFiveMessagesAsRead();

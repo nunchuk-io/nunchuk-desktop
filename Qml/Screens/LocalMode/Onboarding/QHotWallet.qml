@@ -35,7 +35,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1226
+    label.text: STR.STR_QML_1251
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     content: Item {
         Row {

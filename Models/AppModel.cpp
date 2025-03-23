@@ -33,7 +33,7 @@
 #include "Premiums/QSharedWallets.h"
 #include "ServiceSetting.h"
 #include "OnBoardingModel.h"
-#include "QThreadForwarder.h""
+#include "QThreadForwarder.h"
 
 class QEmpyTask : public QRunnable {
 public:

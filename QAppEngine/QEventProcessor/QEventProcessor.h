@@ -31,26 +31,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include "QAppEngine.h"
-
-template<typename Function>
-void timeoutHandler(int timeoutInterval, Function&& f)
-{
-    QTimer::singleShot(timeoutInterval, std::forward<Function>(f));
-}
-
-template <typename T, typename Func1, typename Func2>
-void runInThread(Func1&& execute, Func2&& ret) {
-    QFuture<T> future = QtConcurrent::run(std::forward<Func1>(execute));
-    QSharedPointer<QFutureWatcher<T>> watcher = QSharedPointer<QFutureWatcher<T>>::create();
-    QObject::connect(watcher.get(), &QFutureWatcher<T>::finished, [watcher, ret]() mutable {
-        try {
-            ret(watcher->result());
-        } catch (...) {
-            DBG_INFO << "Exception in result processing";
-        }
-    });
-    watcher->setFuture(future);
-}
+#include "WorkerThread.h"
 
 class QEventProcessor : public QObject
 {

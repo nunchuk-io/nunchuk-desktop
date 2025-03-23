@@ -36,7 +36,7 @@
 #include "Premiums/GroupSandboxModel.h"
 #include "UTXOModel.h"
 
-class Wallet : public QObject,
+class Wallet : public QStateFlow,
                public Slugs,
                public ReplaceKeyFreeUser,
                public CoinsControl
@@ -135,6 +135,11 @@ class Wallet : public QObject,
     Q_PROPERTY(int                  unreadMessage                   READ unreadMessage                                          NOTIFY unreadMessageChanged)
     Q_PROPERTY(int                  numberOnline                    READ numberOnline                                           NOTIFY numberOnlineChanged)
     Q_PROPERTY(bool                 showbubbleChat                  READ showbubbleChat             WRITE setShowbubbleChat     NOTIFY showbubbleChatChanged)
+    Q_PROPERTY(SingleSignerListModel* assignAvailableSigners        READ assignAvailableSigners                                 NOTIFY assignAvailableSignersChanged)
+    Q_PROPERTY(int                  limitKeySet                     READ limitKeySet                                            NOTIFY limitKeySetChanged)
+
+    // TAPROOT
+    Q_PROPERTY(bool                 enableValuekeyset               READ enableValuekeyset          WRITE setEnableValuekeyset  NOTIFY enableValuekeysetChanged)
 
 public:
     Wallet();
@@ -223,6 +228,8 @@ public:
 
     bool needBackup() const;
     void setNeedBackup(const bool);
+
+    int limitKeySet() const;
 
     int getCreationMode() const;
     void setCreationMode(int creationMode);
@@ -322,6 +329,13 @@ public:
     void markAsReadMessage(const QString&msg_id);
     Q_INVOKABLE void markFiveMessagesAsRead();
     Q_INVOKABLE void markAllMessagesAsRead();
+
+    void CreateSignerListReviewWallet(const std::vector<nunchuk::SingleSigner> &signers);
+    void CreateAssignAvailableSigners();
+    SingleSignerListModel *assignAvailableSigners();
+    bool enableValuekeyset() const;
+    void setEnableValuekeyset(bool newEnableValuekeyset);
+
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
 
@@ -362,8 +376,11 @@ private:
     mutable int     m_numberOnline {0};
     mutable int     m_unreadMessage {0};
     mutable bool    m_showbubbleChat{false};
+    mutable bool    m_enableValuekeyset{false};
+
     QSingleSignerListModelPtr m_signers;
     QTransactionListModelPtr  m_transactionHistory;
+    QSingleSignerListModelPtr m_assignAvailableSigners;
     bool m_isDeleting {false};
     // Additional member
     QString m_address;
@@ -389,7 +406,7 @@ private:
     QGroupSandboxPtr            m_sandbox;
     nunchuk::GroupWalletConfig  m_nunchukConfig;
     QGroupMessageModelPtr       m_conversations;
-
+    int                         m_limitKeySet {0};
     mutable QMutex m_mutex;
 
 signals:
@@ -442,10 +459,13 @@ signals:
     void unreadMessageChanged();
     void numberOnlineChanged();
     void groupSandboxChanged();
-
+    void limitKeySetChanged();
     void showbubbleChatChanged();
+    void assignAvailableSignersChanged();
+    void enableValuekeysetChanged();
 
 public slots:
+    void setValueKeyset(int index);
     void slotSyncCollabKeyname(QList<DracoUser> users);
     bool isValidAddress(const QString& address);
     int  reuseKeyGetCurrentIndex(const QString &xfp) override;
@@ -466,6 +486,10 @@ public slots:
     // Group message
     void startDownloadConversation();
     void startSendGroupMessage(const QString &message);
+
+    void requestExportWalletViaBSMS(const QString &file_path);
+    void requestExportWalletViaQRBCUR2Legacy();
+    void requestExportWalletViaQRBCUR2();
 };
 typedef OurSharedPointer<Wallet> QWalletPtr;
 

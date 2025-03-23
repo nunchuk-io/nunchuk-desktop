@@ -8,7 +8,6 @@ QGroupWallets::QGroupWallets()
     : QAssistedDraftWallets(GROUP_WALLET)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(this, &QGroupWallets::dashboardList, this, &QGroupWallets::MakePendingDashboardList, Qt::QueuedConnection);
     connect(this, &QGroupWallets::acceptChanged, this, &QGroupWallets::slotAcceptChanged, Qt::QueuedConnection);
 }
 
@@ -59,7 +58,8 @@ void QGroupWallets::GetAllGroups()
         return;
     }
     QUserWallets::instance()->GetDraftWallet();
-    QtConcurrent::run([=, this]() {
+    QPointer<QGroupWallets> safeThis(this);
+    runInThread([safeThis]() ->QJsonArray{
         QJsonObject output;
         QString error_msg = "";
         bool ret = Byzantine::instance()->GetAllGroupWallets(output, error_msg);
@@ -75,11 +75,15 @@ void QGroupWallets::GetAllGroups()
                 groupList.append(group);
                 DBG_INFO << group["id"].toString() << group["status"].toString();
             }
-            GetListAllRequestAddKey(groups);
-            emit dashboardList(groupList);
         } else {
             //Show error
             DBG_INFO << error_msg;
+        }
+        return groupList;
+    },[safeThis](QJsonArray groupList) {
+        if(safeThis) {
+            safeThis->GetListAllRequestAddKey(groupList);
+            safeThis->MakePendingDashboardList(groupList);
         }
     });
 }
@@ -425,6 +429,16 @@ bool QGroupWallets::AddOrUpdateAKeyToDraftWallet()
 bool QGroupWallets::requestKeyReplacement(QSingleSignerPtr signer)
 {
     return QAssistedDraftWallets::requestKeyReplacement(signer);
+}
+
+void QGroupWallets::SyncAllSignerFromDraftWalletInfo()
+{
+    for (auto ptr : mPendingWallets) {
+        if (ptr) {
+            ptr->GetDraftWalletInfo();
+        }
+    }
+    QUserWallets::instance()->GetDraftWallet();
 }
 
 

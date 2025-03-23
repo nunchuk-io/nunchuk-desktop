@@ -27,101 +27,262 @@ import EWARNING 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
 import "../../origins"
+import "../../customizes"
+import "../../customizes/Chats"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
+import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
-QPopup {
-    id: enterAddress
+Popup {
+    id: editBIP32
     width: parent.width
     height: parent.height
-    signal confirmSave()
-    signal confirmCancel()
-    offset: 0
-    signal enterText(var str)
-    property string title: STR.STR_QML_1674
-    property var btnLabels: [STR.STR_QML_035, STR.STR_QML_835]
-    property string bip32Path: ""
-    function clearText() {
-        enterAddress.itemInfo.clearText()
-    }
-    function showError() {
-        enterAddress.itemInfo.showError()
-    }
+    modal: true
+    focus: true
+    signal enterText(var pathBip32)
+    property var signer: {type:""; tag:""; signer_type: -1; derivationPath: ""}
+    property string title: STR.STR_QML_1679
+    property bool isShowListDevice: false
+    property int idx: -1
+    property string xfp: ""
+    property string savePath: ""
 
-    content: Item {
-        id: boxmask
-        width: 300
-        height: textInput.isValid ? 252 : 284
-        function clearText() {
-            textInput.textInputted = ""
-        }
-        function showError() {
-            textInput.showError = true
-            textInput.isValid = false
-            textInput.errorText = STR.STR_QML_1673
-        }
-        Column {
-            spacing: 24
-            anchors.fill: parent
-            anchors.margins: 24
-            Column {
-                width: parent.width
-                spacing: 12
-                QLato {
-                    anchors.left: parent.left
-                    font.weight: Font.Bold
-                    text: title
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                QLato {
-                    anchors.left: parent.left
-                    font.weight: Font.Normal
-                    text: qsTr("For example: %1").arg(bip32Path)
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
+    function showError(errorType) {
+        _contentBip.contentItem.showError(errorType)
+    }
+    function closeEdit() {
+        editBIP32.close()
+    }
+    function clearError() {
+        _contentBip.contentItem.clearError()
+    }
+    closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
+    background: Item{}
+    Rectangle {
+        width: popupWidth
+        height: popupHeight
+        radius: 24
+        color: Qt.rgba(255, 255, 255, 0)
+        anchors.centerIn: parent
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                width: popupWidth
+                height: popupHeight
+                radius: 24
             }
+        }
+        QOnScreenContentTypeB {
+            id: _contentBip
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_1679
+            onCloseClicked: closeEdit()
+            content: Item {
+                function showError(errorType) {
+                    switch (errorType) {
+                    case -1: { // Invalid BIP32 path format
+                        newBip32Path.showError = true
+                        newBip32Path.isValid = false
+                        newBip32Path.errorText = STR.STR_QML_1673
+                        break
+                    }
+                    case -2: { // Key not found. Please connect the key device to this computer and click Continue.
+                        newBip32Path.showError = true
+                        newBip32Path.isValid = true
+                        newBip32Path.errorText = ""
+                        break
+                    }
+                    case -3: { // Signer exists
+                        newBip32Path.showError = true
+                        newBip32Path.isValid = false
+                        newBip32Path.errorText = STR.STR_QML_1685
+                        break
+                    }
+                    default: break
+                    }
 
-            Item {
-                width: 252
-                height: textInput.isValid ? 48: 80
-                QTextInputBoxTypeB {
-                    id: textInput
-                    label: ""
-                    boxWidth: 252
-                    boxHeight: 48
-                    onTextInputtedChanged: {
-                        if(!textInput.isValid){
-                            textInput.isValid = true
+
+                }
+
+                function removePrefix(prefix) {
+                    var str = newBip32Path.textInputted
+                    if (newBip32Path.textInputted.startsWith(prefix)) {
+                        str = str.replace(prefix, "");
+                    }
+                    return str
+                }
+                function bip32Path() {
+                    return removePrefix(newBip32Path.fixedText)
+                }
+                function deviceIndex() {
+                    return devicelist.currentIndex
+                }
+
+                function clearError() {
+                    newBip32Path.showError = false
+                    newBip32Path.isValid = true
+                    newBip32Path.errorText = ""
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: 24
+                    Item {
+                        width: parent.width
+                        height: 64
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 12
+                            QCircleIcon {
+                                bgSize: 48
+                                icon.iconSize: 24
+                                icon.typeStr: signer.type
+                                icon.tag: signer.tag
+                                icon.type: signer.signer_type
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: "#F5F5F5"
+                            }
+                            Column {
+                                spacing: 4
+                                anchors.verticalCenter: parent.verticalCenter
+                                QText {
+                                    width: 146
+                                    height: 20
+                                    text: signer.name
+                                    color: "#031F2B"
+                                    font.weight: Font.Normal
+                                    font.family: "Lato"
+                                    font.pixelSize: 16
+                                }
+                                QText {
+                                    width: 146
+                                    height: 20
+                                    text: "XFP: " + signer.xfp
+                                    color: "#595959"
+                                    font.weight: Font.Normal
+                                    font.capitalization: Font.AllUppercase
+                                    font.family: "Lato"
+                                    font.pixelSize: 12
+                                }
+                            }
                         }
-                        textInput.showError = false;
+                    }
+                    QTextInputBoxTypeB {
+                        label: STR.STR_QML_1680
+                        boxWidth: 350
+                        boxHeight: 48
+                        isValid: true
+                        enabled: false
+                        titleFontSize: 12
+                        disabledColor: "#F5F5F5"
+                        textInputted: signer.derivationPath
+                    }
+                    Column {
+                        width: parent.width
+                        spacing: 4
+                        QTextInputBoxTypeB {
+                            id: newBip32Path
+                            label: STR.STR_QML_1681
+                            boxWidth: 350
+                            boxHeight: 48
+                            isValid: true
+                            titleFontSize: 12
+                            property string fixedText: STR.STR_QML_150 + " "
+                            textInputted: fixedText + signer.derivationPath
+                            onTextInputtedChanged: {
+                                if (!textInputted.startsWith(fixedText)) {
+                                    textInputted = fixedText + textInputted.slice(fixedText.length) + derivation32Path // Restore prefix
+                                }
+                                if(!newBip32Path.isValid) {
+                                    newBip32Path.isValid = true
+                                    newBip32Path.errorText = ""
+                                }
+                                newBip32Path.showError = false;
+                            }
+                        }
+                        QLato {
+                            visible: newBip32Path.showError && newBip32Path.errorText == ""
+                            width: newBip32Path.boxWidth
+                            height: 40
+                            text: STR.STR_QML_1684
+                            lineHeightMode: Text.FixedHeight
+                            lineHeight: 20
+                            color: "#CF4018"
+                            wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
+                    Rectangle {
+                        width: 539
+                        height: 195
+                        border.width: 1
+                        border.color: "#EAEAEA"
+                        radius: 8
+                        visible: isShowListDevice
+                        QRefreshButtonA {
+                            width: 175
+                            height: 48
+                            label: STR.STR_QML_105
+                            fontPixelSize: 16
+                            color: "transparent"
+                            border.color: "transparent"
+                            anchors {
+                                right: parent.right
+                                rightMargin: 3
+                                top:  parent.top
+                                topMargin: 6
+                            }
+                            onButtonClicked: {
+                                AppModel.startScanDevices(EVT.STATE_ID_SCR_SETUP_GROUP_WALLET)
+                            }
+                        }
+                        QListView {
+                            id: devicelist
+                            property bool needPin: false
+                            visible: devicelist.count
+                            width: parent.width
+                            height: Math.min(199, (devicelist.count*48) + ((devicelist.count-1)*16))
+                            model: AppModel.deviceList
+                            anchors {
+                                left: parent.left
+                                leftMargin: 12
+                                top: parent.top
+                                topMargin: 12
+                            }
+                            spacing: 16
+                            currentIndex: -1
+                            clip: true
+                            interactive : devicelist.count > 3
+                            ScrollBar.vertical: ScrollBar { active: true }
+                            delegate: QDeviceDetailsDelegate {
+                                isSelected: devicelist.currentIndex == index
+                                device_name_type: device_type
+                                device_fingerprint: device_master_fingerprint
+                                onClickSelected: {
+                                    devicelist.currentIndex = index
+                                }
+                            }
+                        }
                     }
                 }
             }
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: btnLabels[0]
-                    label.font.pixelSize: 16
-                    type: eTypeF
-                    onButtonClicked: {
-                        enterAddress.close()
-                    }
-                }
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: btnLabels[1]
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        enterText(textInput.textInputted)
-                    }
+            onPrevClicked: closeEdit()
+            bottomRight: QTextButton {
+                width: 99
+                height: 48
+                label.text: STR.STR_QML_265
+                label.font.pixelSize: 16
+                type: eTypeE
+                enabled: !isShowListDevice ? true : _contentBip.contentItem.deviceIndex() !== -1 || savePath !== _contentBip.contentItem.bip32Path()
+                onButtonClicked: {
+                    savePath = _contentBip.contentItem.bip32Path()
+                    enterText(savePath)
                 }
             }
         }

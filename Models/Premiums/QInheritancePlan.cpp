@@ -200,7 +200,7 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
 void QInheritancePlan::GetInheritancePlan()
 {
     QPointer<QInheritancePlan> safeThis(this);
-    runInThread<QJsonObject>([safeThis]() ->QJsonObject{
+    runInThread([safeThis]() ->QJsonObject{
         QWalletPtr w = safeThis->walletInfoPtr();
         if (w.isNull() || (w.data()->status() == "REPLACED")) return {};
         QJsonObject response;
@@ -208,13 +208,14 @@ void QInheritancePlan::GetInheritancePlan()
         Draco::instance()->inheritanceGetPlan(w->walletId(), w->groupId(), response, errormsg);
         return response["inheritance"].toObject();
     },[safeThis](QJsonObject inheritance) {
-        if (inheritance.isEmpty()) return;
-        DBG_INFO << inheritance;
-        safeThis->m_planInfoCurrent = safeThis->ConvertToDisplayQml(inheritance);
-        safeThis->setPlanInfo(safeThis->ConvertToDisplayQml(inheritance));
-        if (auto dash = safeThis->dashBoardPtr()) {
-            if (auto tag = dash->servicesTagPtr()) {
-                tag->setListInheritantPlans();
+        if (safeThis && !inheritance.isEmpty()) {
+            DBG_INFO << inheritance;
+            safeThis->m_planInfoCurrent = safeThis->ConvertToDisplayQml(inheritance);
+            safeThis->setPlanInfo(safeThis->ConvertToDisplayQml(inheritance));
+            if (auto dash = safeThis->dashBoardPtr()) {
+                if (auto tag = dash->servicesTagPtr()) {
+                    tag->setListInheritantPlans();
+                }
             }
         }
     });

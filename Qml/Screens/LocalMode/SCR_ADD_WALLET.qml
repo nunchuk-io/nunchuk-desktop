@@ -38,8 +38,8 @@ import "../../../localization/STR_QML.js" as STR
 QScreen {
     id:_screen
     property bool firstEnable: true
-    readonly property int walletOptType: AppModel.newWalletInfo.walletOptType
-    property var sandbox        : AppModel.newWalletInfo.sandbox
+    readonly property int walletOptType : AppModel.newWalletInfo.walletOptType
+    property var sandbox       : AppModel.newWalletInfo.sandbox
     QOnScreenContentTypeB {
         id:_content
         width: popupWidth
@@ -148,6 +148,9 @@ QScreen {
                                     "walletdescription"    : ""};
                 QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
             }
+            function walletType() {
+                return addressTypeSelection.typeOption
+            }
         }
         onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         bottomRight: Row {
@@ -216,11 +219,14 @@ QScreen {
                     if (walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET) {
                         _content.contentItem.createGroupWallet()
                     } else {
-                        _content.contentItem.createWallet()
+                        if (_content.contentItem.walletType() === NUNCHUCKTYPE.TAPROOT) {
+                            _infoPopup.open()
+                        } else {
+                            _content.contentItem.createWallet()
+                        }
                     }
                 }
             }
-
         }
     }
     QPopupToast{
@@ -242,6 +248,45 @@ QScreen {
         fileMode: FileDialog.OpenFile
         onAccepted: {
             _content.contentItem.importFile()
+        }
+    }
+
+    QPopupOverlayScreen {
+        id: _infoPopup
+        property int _INTROTAPROOT: 1
+        property int _TAPROOTWARNING: 2
+        property int nextState: _INTROTAPROOT
+        content: switch(_infoPopup.nextState) {
+                 case _infoPopup._INTROTAPROOT: return introTaproot
+                 case _infoPopup._TAPROOTWARNING: return taprootWarning
+                 default: return null
+              }
+
+        function switchIntroTaproot() {
+            _infoPopup.nextState = _infoPopup._INTROTAPROOT
+        }
+        function switchTaprootWarning() {
+            _infoPopup.nextState = _infoPopup._TAPROOTWARNING
+        }
+    }
+    Component {
+        id : introTaproot
+        QIntroductionTaprootAddress {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: _infoPopup.close()
+            onNextClicked: {
+                _infoPopup.switchTaprootWarning()
+            }
+        }
+    }
+    Component {
+        id : taprootWarning
+        QTaprootWarningSupport {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: _infoPopup.switchIntroTaproot()
+            onNextClicked: {
+                _content.contentItem.createWallet()
+            }
         }
     }
 }

@@ -69,6 +69,7 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                     }
                 } else {
                     sandbox->setScreenFlow("review-wallet");
+                    sandbox->CreateSignerListReviewWallet();
                 }
             }
         }
@@ -88,6 +89,7 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
         }
     }
     else if (type == "setting-sandbox-close") {
+        DBG_INFO << AppModel::instance()->newWalletInfoPtr().isNull();
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
                 sandbox->setScreenFlow("setup-group-wallet");
@@ -131,24 +133,23 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                 sandbox->setScreenFlow("setup-group-wallet");
             }
         }
-    } else if (type == "export-config-as-a-file") {
-        QString file = maps["file"].toString();
-        QString file_path = qUtils::QGetFilePath(file);
+    } else if (type == "switch-to-intro-taproot") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
-                sandbox->ExportWalletViaBSMS(file_path);
+                sandbox->setScreenFlow("sandbox-intro-taproot");
             }
         }
-    } else if (type == "export-config-as-QrCodeBCUR2_Legacy") {
+    } else if (type == "switch-to-taproot-warning-support") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
-                sandbox->ExportWalletViaQRBCUR2Legacy();
+                sandbox->setScreenFlow("sandbox-taproot-warning");
             }
         }
-    } else if (type == "export-config-as-QrCode-BCUR2") {
+    } else if (type == "switch-to-configure-value-keyset") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
-                sandbox->ExportWalletViaQRBCUR2();
+                sandbox->setScreenFlow("sandbox-configure-value-keyset");
+                sandbox->CreateSignerListReviewWallet();
             }
         }
     }

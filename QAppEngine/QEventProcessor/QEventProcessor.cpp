@@ -92,7 +92,8 @@ bool QEventProcessor::registerCtxProperty(const QString &str, const QVariant &va
 {
     if(m_ctxProperties.contains(str)){
         DBG_ERROR << "Property " << str << "Already existed";
-        return false;
+        updateCtxProperty(str, var);
+        return true;
     }
     m_ctxProperties.append(str);
     if(NULL != m_viewer->rootContext()){

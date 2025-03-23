@@ -45,6 +45,7 @@ int Wallet::m_walletOptionType = 0;
 Wallet::Wallet() :
     m_signers(QSingleSignerListModelPtr(new SingleSignerListModel())),
     m_transactionHistory(QTransactionListModelPtr(new TransactionListModel())),
+    m_assignAvailableSigners(QSingleSignerListModelPtr(new SingleSignerListModel())),
     m_creationMode((int)CreationMode::CREATE_NEW_WALLET),
     m_sandbox(QGroupSandboxPtr(new QGroupSandbox())),
     m_conversations(QGroupMessageModelPtr(new QGroupMessageModel()))
@@ -511,6 +512,11 @@ void Wallet::setNeedBackup(const bool bVal)
         m_nunchukWallet.set_need_backup(bVal);
         emit needBackupChanged();
     }
+}
+
+int Wallet::limitKeySet() const
+{
+    return m_limitKeySet;
 }
 
 int Wallet::getCreationMode() const
@@ -1585,6 +1591,19 @@ void Wallet::UpdateGroupWallet(const QString &name, const QString &description)
     }
 }
 
+bool Wallet::enableValuekeyset() const
+{
+    return m_enableValuekeyset;
+}
+
+void Wallet::setEnableValuekeyset(bool newEnableValuekeyset)
+{
+    if (m_enableValuekeyset == newEnableValuekeyset)
+        return;
+    m_enableValuekeyset = newEnableValuekeyset;
+    emit enableValuekeysetChanged();
+}
+
 bool Wallet::showbubbleChat() const
 {
     return m_showbubbleChat;
@@ -1628,6 +1647,54 @@ void Wallet::markAllMessagesAsRead()
             list->updateUnreadMessage(walletId(),0);
         }
     }
+}
+
+void Wallet::CreateSignerListReviewWallet(const std::vector<nunchuk::SingleSigner> &signers)
+{
+    if (auto signersList = singleSignersAssigned()) {
+        if (signersList->rowCount() == walletN()) return;
+        signersList->cleardata();
+        for (int i = 0; i < signers.size(); i++) {
+            nunchuk::SingleSigner signer = signers.at(i);
+            QWarningMessage msg;
+            nunchuk::SingleSigner localSigner = bridge::nunchukGetOriginSingleSigner(signer, msg);
+            if (localSigner.is_visible() && bridge::nunchukHasSinger(localSigner) && (int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+                QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(localSigner));
+                signersList->addSingleSigner(ret);
+            } else {
+                QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
+                ret->setName(QString("Key #%1").arg(i + 1));
+                signersList->addSingleSigner(ret);
+            }
+        }
+    }
+}
+
+void Wallet::CreateAssignAvailableSigners()
+{
+    if (m_assignAvailableSigners.isNull()) return;
+    m_assignAvailableSigners->cleardata();
+    auto masterList = AppModel::instance()->masterSignerList();
+    auto singleList = AppModel::instance()->remoteSignerList();
+    auto nw = AppModel::instance()->newWalletInfo();
+    if (masterList && nw && singleList) {
+        auto signers = nw->assignAvailableSigners();
+        if (signers) {
+            for (auto master : masterList->fullList()) {
+                signers->addSingleSigner(master->cloneSingleSigner());
+            }
+            for (auto single : singleList->fullList()) {
+                signers->addSingleSigner(single);
+            }
+            signers->signers();
+        }
+    }
+    emit assignAvailableSignersChanged();
+}
+
+SingleSignerListModel *Wallet::assignAvailableSigners()
+{
+    return m_assignAvailableSigners.data();
 }
 
 QVariant Wallet::serverKeyInfo() const
@@ -1871,6 +1938,33 @@ QVariant Wallet::dashboardInfo() const
     return QVariant::fromValue(dashboard().data());
 }
 
+void Wallet::setValueKeyset(int index)
+{
+    DBG_INFO << index;
+    if (!singleSignersAssigned()) return;
+    auto signers = singleSignersAssigned();
+    auto list = singleSignersAssigned()->fullList();
+    int count = 0;
+    for (int i = 0; i < list.size(); i++) {
+        auto signer = list.at(i);
+        if (signer->valueKey()) {
+            count++;
+        }
+        if (i == index) {
+            if (count < walletM()) {
+                signer->setValueKey(!signer->valueKey());
+            } else {
+                signer->setValueKey(false);
+            }
+            signers->setUserChecked(signer->valueKey(), i);
+        }
+    }
+    singleSignersAssigned()->requestSort();
+    m_limitKeySet = singleSignersAssigned()->signerSelectedCount();
+    DBG_INFO << m_limitKeySet;
+    emit limitKeySetChanged();
+}
+
 void Wallet::slotSyncCollabKeyname(QList<DracoUser> users){
     DBG_INFO << roomId();
     if(m_signers){
@@ -1992,6 +2086,37 @@ void Wallet::startSendGroupMessage(const QString &message)
     }
     else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+}
+
+void Wallet::requestExportWalletViaBSMS(const QString &file)
+{
+    DBG_INFO << walletId();
+    QString file_path = qUtils::QGetFilePath(file);
+    bridge::nunchukExportWallet(walletId(), file_path, nunchuk::ExportFormat::BSMS);
+}
+
+void Wallet::requestExportWalletViaQRBCUR2Legacy()
+{
+    QWarningMessage msgwarning;
+    QStringList qrtags = bridge::nunchukExportKeystoneWallet(walletId(), msgwarning);
+    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+        AppModel::instance()->setQrExported(qrtags);
+    }
+    else{
+        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
+    }
+}
+
+void Wallet::requestExportWalletViaQRBCUR2()
+{
+    QWarningMessage msgwarning;
+    QStringList qrtags = bridge::nunchukExportBCR2020010Wallet(walletId(), msgwarning);
+    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
+        AppModel::instance()->setQrExported(qrtags);
+    }
+    else{
+        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
     }
 }
 

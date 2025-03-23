@@ -90,7 +90,7 @@ Loader {
                 width: label.paintedWidth + 2*16
                 height: 36
                 type: eTypeB
-                label.text: modelData.isAdded ? STR.STR_QML_104 : STR.STR_QML_106
+                label.text: modelData.isAdded ? STR.STR_QML_104 : STR.STR_QML_941
                 label.font.pixelSize: 12
                 visible: !modelData.isAdded
                 onButtonClicked: {
@@ -198,22 +198,26 @@ Loader {
                         font.pixelSize: 12
                     }
                     QLato {
-                        width: parent.width + 4 + 12
+                        width: paintedWidth + 4 + 12
                         text: qsTr("BIP32 path: %1").arg(modelData.derivationPath)
                         color: "#757575"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: 12
-                        font.underline: sandbox.url !== ""
+                        font.underline: sandbox.url !== "" && _icon.visible
                         QIcon {
+                            id: _icon
                             iconSize: 12
                             source: "qrc:/Images/Images/editBIP32.svg"
                             anchors {
                                 verticalCenter: parent.verticalCenter
                                 right: parent.right
                             }
+                            visible: modelData.signer_type === NUNCHUCKTYPE.SOFTWARE ||
+                                     modelData.signer_type === NUNCHUCKTYPE.HARDWARE
                         }
                         MouseArea {
+                            visible: _icon.visible
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor

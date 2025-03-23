@@ -54,9 +54,15 @@ QVariant QGroupMessageModel::data(const QModelIndex &index, int role) const
     case group_message_sender:
         return QString::fromStdString(m_messages[index.row()].get_sender());
     case group_message_content:
-        return convertLinksToHtml(QString::fromStdString(m_messages[index.row()].get_content()));
+    {
+        QString message = convertLinksToHtml(QString::fromStdString(m_messages[index.row()].get_content()));
+        return message;
+    }
     case group_message_signer:
-        return QString::fromStdString(m_messages[index.row()].get_signer());
+    {
+        QString signer_name = QString::fromStdString(m_messages[index.row()].get_signer()).toUpper();
+        return signer_name;
+    }
     case group_message_time:
     {
         time_t timeInfo = m_messages[index.row()].get_ts();
@@ -123,18 +129,20 @@ void QGroupMessageModel::appendGroupMessage(const nunchuk::GroupMessage data)
     emit groupMessageAdded((m_messages.size() - 1));
 }
 
-void QGroupMessageModel::appendGroupMessage(const std::vector<nunchuk::GroupMessage> data)
+void QGroupMessageModel::createGroupMessage(const std::vector<nunchuk::GroupMessage> data)
 {
     if (data.empty()) {
         return;
     }
-    std::vector<nunchuk::GroupMessage> newmessage = data;
-    std::reverse(newmessage.begin(), newmessage.end());
+    if (!this) {
+        qWarning() << "QGroupMessageModel is null!";
+        return;
+    }
     beginResetModel();
-    m_messages.clear();
-    m_messages.insert(m_messages.begin(), newmessage.begin(), newmessage.end());
+    m_messages = data;
     requestSort();
     endResetModel();
+
     setCurrentIndex((m_messages.size() - 1));
     emit countChanged();
     emit groupMessageDownloaded();
@@ -223,30 +231,37 @@ QString QGroupMessageModel::convertLinksToHtml(const QString &text) const{
     return htmlText;
 }
 
-void QGroupMessageModel::startDownloadConversation(const QString& wallet_id)
+void QGroupMessageModel::startDownloadConversation(const QString &wallet_id)
 {
     m_wallet_id = wallet_id;
-    QtConcurrent::run([wallet_id, this]() {
-        QMutexLocker locker(&m_lock);
+    QPointer<QGroupMessageModel> safeThis(this);
+    runInThread([safeThis, wallet_id]() -> std::vector<nunchuk::GroupMessage> {
         QWarningMessage msg;
         int page_num = 0;
-        int page_size = 100;
-        bool more_data = false;
+        const int page_size = 50;
+        bool more_data = true;
         std::vector<nunchuk::GroupMessage> list;
-        do {
-            std::vector<nunchuk::GroupMessage> ret = bridge::GetGroupMessages(wallet_id.toStdString(), page_num, page_size, true, msg);
-            if (ret.size() < page_size) {
-                more_data = false;
-            } else {
+
+        while (more_data) {
+            auto ret = bridge::GetGroupMessages(wallet_id.toStdString(), page_num, page_size, true, msg);
+            list.insert(list.end(), ret.begin(), ret.end());
+            if (ret.size() == static_cast<size_t>(page_size)) {
                 page_num++;
             }
-            list.insert(list.begin(), ret.begin(), ret.end());
+            else {
+                more_data = false;
+            }
         }
-        while (more_data);
-        DBG_INFO << wallet_id << list.size();
-        QThreadForwarder::instance()->forwardInQueuedConnection([this, list](){
-            appendGroupMessage(list);
+        std::sort(list.begin(), list.end(), [](const nunchuk::GroupMessage &a, const nunchuk::GroupMessage &b) {
+            return a.get_ts() < b.get_ts();
         });
+        return list;
+    },[safeThis](std::vector<nunchuk::GroupMessage> list) {
+        if (safeThis) {
+            if (list.size() > 0) {
+                safeThis->createGroupMessage(list);
+            }
+        }
     });
 }
 
@@ -279,8 +294,9 @@ QString QGroupMessageModel::lastMessage()
 {
     if(m_messages.size() > 0){
         int last_index = min((int)m_messages.size(), max(0, (int)m_messages.size() - 1));
-        QString sender = QString::fromStdString(m_messages[last_index].get_sender());
-        QString message = QString::fromStdString(m_messages[last_index].get_content());
+        auto msg = m_messages.at(last_index);
+        QString sender = QString::fromStdString(msg.get_signer()).toUpper();
+        QString message = QString::fromStdString(msg.get_content());
         return QString("%1: %2").arg(sender).arg(message);
     }
     else {
@@ -290,7 +306,10 @@ QString QGroupMessageModel::lastMessage()
 
 void QGroupMessageModel::requestSort()
 {
-    qSort(m_messages.begin(), m_messages.end(), sortGroupMessageTime);
+    // qSort(m_messages.begin(), m_messages.end(), sortGroupMessageTime);
+    std::sort(m_messages.begin(), m_messages.end(), [](const nunchuk::GroupMessage &a, const nunchuk::GroupMessage &b) {
+        return a.get_ts() < b.get_ts();
+    });
 }
 
 void QGroupMessageModel::clear()

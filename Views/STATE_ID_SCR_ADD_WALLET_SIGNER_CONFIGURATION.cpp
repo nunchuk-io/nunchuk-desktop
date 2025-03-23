@@ -48,17 +48,37 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
 }
 
 void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
-    if(AppModel::instance()->remoteSignerList()){
-        for (int i = 0; i < AppModel::instance()->remoteSignerList()->rowCount(); i++) {
-            QSingleSignerPtr signer = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(i);
-            if(signer && signer.data()->checked()){
-                signer.data()->setSignerType((int)signer.data()->signerType());
-                AppModel::instance()->newWalletInfo()->singleSignersAssigned()->addSingleSigner(signer);
-                AppModel::instance()->newWalletInfo()->singleSignersAssigned()->signers();
+    auto nw = AppModel::instance()->newWalletInfoPtr();
+    if (nw) {
+        if (nw->walletAddressType() == (int)nunchuk::AddressType::TAPROOT) {
+            std::vector<nunchuk::SingleSigner> signerList;
+            nunchuk::WalletType walletType =  nw->walletN() > 1 ? nunchuk::WalletType::MULTI_SIG : nunchuk::WalletType::SINGLE_SIG;
+            nunchuk::AddressType addressType = (nunchuk::AddressType)nw->walletAddressType();
+            QWarningMessage msg;
+            for (QSingleSignerPtr p : nw->assignAvailableSigners()->fullList()) {
+                if (p->checked()) {
+                    auto signer = bridge::nunchukGetUnusedSignerFromMasterSigner(p->masterSignerId(),
+                                                                            (ENUNCHUCK::WalletType)walletType,
+                                                                            (ENUNCHUCK::AddressType)addressType,
+                                                                            msg);
+                    signerList.push_back(signer->originSingleSigner());
+                }
             }
+            nw->CreateSignerListReviewWallet(signerList);
+        } else {
+            if(AppModel::instance()->remoteSignerList()){
+                for (int i = 0; i < AppModel::instance()->remoteSignerList()->rowCount(); i++) {
+                    QSingleSignerPtr signer = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(i);
+                    if(signer && signer.data()->checked()){
+                        signer.data()->setSignerType((int)signer.data()->signerType());
+                        nw->singleSignersAssigned()->addSingleSigner(signer);
+                        nw->singleSignersAssigned()->signers();
+                    }
+                }
+            }
+            emit nw->walletChanged();
         }
     }
-    emit AppModel::instance()->newWalletInfo()->walletChanged();
 }
 
 void EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER_HANDLER(QVariant msg) {

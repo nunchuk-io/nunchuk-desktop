@@ -57,35 +57,40 @@ void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray& groups)
     if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
         return;
     }
-    if (m_mode == USER_WALLET) {
-        QtConcurrent::run([&]() {
+    QPointer<QAssistedDraftWallets> safeThis(this);
+    runInThread([safeThis, groups]() ->QMap<Key, StructAddHardware> {
+        QMap<Key, StructAddHardware> requests;
+        if (safeThis->m_mode == USER_WALLET) {
             QJsonObject data;
             QString error_msg;
-            m_requests.clear();
             Draco::instance()->assistedWalletGetListKey(data, error_msg);
-            addRequest(data.value("requests").toArray());
-            makeListRequests();
+            requests = safeThis->addRequest(data.value("requests").toArray());
             DBG_INFO << data;
-        });
-    }
-    else if (m_mode == GROUP_WALLET) {
-        QJsonObject data;
-        QString error_msg;
-        m_requests.clear();
-        for (QJsonValue js : groups) {
-            QJsonObject group = js.toObject();
-            QString status = group["status"].toString();
-            if (status == "PENDING_WALLET") {
-                QString group_id = group["id"].toString();
-                Byzantine::instance()->GetAllListRequestAddKey(group_id, data, error_msg);
-                addRequest(data.value("requests").toArray(), group_id);
-                DBG_INFO << group_id << data;
+        }
+        else if (safeThis->m_mode == GROUP_WALLET) {
+            QJsonObject data;
+            QString error_msg;
+            for (QJsonValue js : groups) {
+                QJsonObject group = js.toObject();
+                QString status = group["status"].toString();
+                if (status == "PENDING_WALLET") {
+                    QString group_id = group["id"].toString();
+                    Byzantine::instance()->GetAllListRequestAddKey(group_id, data, error_msg);
+                    QMap<Key, StructAddHardware> tmps = safeThis->addRequest(data.value("requests").toArray(), group_id);
+                    for (auto tmp = tmps.begin(); tmp != tmps.end(); ++tmp) {
+                        requests.insertMulti(tmp.key(), tmp.value());
+                    }
+                    DBG_INFO << group_id << data;
+                }
             }
         }
-        makeListRequests();
-    } else {
-        return;
-    }
+        return requests;
+    },[safeThis](QMap<Key, StructAddHardware> requests) {
+        if (safeThis) {
+            safeThis->m_requests = requests;
+            safeThis->makeListRequests();
+        }
+    });
 }
 
 bool QAssistedDraftWallets::AddOrUpdateAKeyToDraftWallet()
@@ -284,9 +289,10 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
     return false;
 }
 
-void QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString& group_id)
+QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString& group_id)
 {
     DBG_INFO << requests;
+    QMap<Key, StructAddHardware> reqs;
     for (QJsonValue request : requests) {
         QJsonObject requestObj = request.toObject();
         QString status = requestObj.value("status").toString();
@@ -304,11 +310,12 @@ void QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString
                     for (auto tag: tags) {
                         hardware.mTags.append(tag.toString());
                     }
-                    m_requests.insert(key, hardware);
+                    reqs.insert(key, hardware);
                 }
             }
         }
     }
+    return reqs;
 }
 
 void QAssistedDraftWallets::makeListRequests()

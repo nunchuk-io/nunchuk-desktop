@@ -173,13 +173,13 @@ void QGroupDashboard::GetMemberInfo()
 {
     if (isUserWallet() || isReplaced() || isUserDraftWallet()) return;
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread<QJsonObject>([safeThis]() ->QJsonObject{
+    runInThread([safeThis]() ->QJsonObject{
         QJsonObject output;
         QString error_msg = "";
         Byzantine::instance()->GetOneGroupWallets(safeThis->groupId(), output, error_msg);
         return output["group"].toObject();
     },[safeThis](QJsonObject group) {
-        if(!group.isEmpty()) {
+        if(safeThis && !group.isEmpty()) {
             safeThis->setGroupInfo(group);
         }
     });
@@ -189,7 +189,7 @@ void QGroupDashboard::GetAlertsInfo()
 {
     if (isReplaced()) return;
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread<QJsonArray>([safeThis]() ->QJsonArray{
+    runInThread([safeThis]() ->QJsonArray{
         QJsonObject output;
         QString error_msg = "";
         bool ret {false};
@@ -205,7 +205,7 @@ void QGroupDashboard::GetAlertsInfo()
         DBG_INFO << ret;
         return output["alerts"].toArray();
     },[safeThis](QJsonArray alerts) {
-        if(!alerts.isEmpty()) {
+        if (safeThis) {
             QJsonArray v_alerts;
             for (auto js : alerts) {
                 QJsonObject alert = js.toObject();
@@ -230,7 +230,7 @@ bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
 {
     if (alert_id.isEmpty()) return false;
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread<bool>([safeThis, alert_id]() ->bool{
+    runInConcurrent([safeThis, alert_id]() ->bool{
         QJsonObject output;
         QString error_msg = "";
         bool ret {false};
@@ -246,7 +246,7 @@ bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
         DBG_INFO << ret << error_msg;
         return ret;
     },[safeThis](bool ret) {
-        if(ret) {
+        if(safeThis && ret) {
             safeThis->GetAlertsInfo();
         }
     });
@@ -256,7 +256,7 @@ bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
 bool QGroupDashboard::DismissAlert(const QString &alert_id)
 {
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread<bool>([safeThis, alert_id]() ->bool{
+    runInConcurrent([safeThis, alert_id]() ->bool{
         QJsonObject output;
         QString error_msg = "";
         bool ret {false};
@@ -272,7 +272,7 @@ bool QGroupDashboard::DismissAlert(const QString &alert_id)
         DBG_INFO << ret << error_msg;
         return ret;
     },[safeThis](bool ret) {
-        if(ret) {
+        if(safeThis && ret) {
             safeThis->GetAlertsInfo();
         }
     });
@@ -287,7 +287,7 @@ bool QGroupDashboard::DismissAlert()
 void QGroupDashboard::GetWalletInfo()
 {
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread<QJsonObject>([safeThis]() ->QJsonObject{
+    runInThread([safeThis]() ->QJsonObject{
         QJsonObject output;
         QString error_msg = "";
         bool ret {false};
@@ -300,15 +300,16 @@ void QGroupDashboard::GetWalletInfo()
         }
         return output["wallet"].toObject();
     },[safeThis](QJsonObject wallet) {
-        if (wallet.isEmpty()) return;
-        safeThis->m_walletInfo = wallet;
-        DBG_INFO << wallet;
-        QJsonArray signers = wallet["signers"].toArray();
-        safeThis->m_signerInfo = signers;
-        safeThis->checkInheritanceWallet();
-        emit safeThis->groupInfoChanged();
-        if (safeThis->walletInfoPtr() && safeThis->walletInfoPtr()->serverKeyPtr()) {
-            safeThis->walletInfoPtr()->serverKeyPtr()->UpdateFromWallet(wallet);
+        if (safeThis && !wallet.isEmpty()) {
+            safeThis->m_walletInfo = wallet;
+            DBG_INFO << wallet;
+            QJsonArray signers = wallet["signers"].toArray();
+            safeThis->m_signerInfo = signers;
+            safeThis->checkInheritanceWallet();
+            emit safeThis->groupInfoChanged();
+            if (safeThis->walletInfoPtr() && safeThis->walletInfoPtr()->serverKeyPtr()) {
+                safeThis->walletInfoPtr()->serverKeyPtr()->UpdateFromWallet(wallet);
+            }
         }
     });
 }
@@ -329,7 +330,7 @@ void QGroupDashboard::checkInheritanceWallet()
 void QGroupDashboard::GetDraftWalletInfo()
 {
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread<QJsonObject>([safeThis]() ->QJsonObject{
+    runInThread([safeThis]() ->QJsonObject{
         QJsonObject output;
         QString error_msg = "";
         bool ret {false};
@@ -340,10 +341,11 @@ void QGroupDashboard::GetDraftWalletInfo()
         }
         return output["draft_wallet"].toObject();
     },[safeThis](QJsonObject draft_wallet) {
-        if (draft_wallet.isEmpty()) return;
-        DBG_INFO << draft_wallet;
-        safeThis->m_walletDraftInfo = draft_wallet;
-        safeThis->UpdateKeys(draft_wallet);
+        if (safeThis && !draft_wallet.isEmpty()) {
+            DBG_INFO << draft_wallet;
+            safeThis->m_walletDraftInfo = draft_wallet;
+            safeThis->UpdateKeys(draft_wallet);
+        }
     });
 }
 

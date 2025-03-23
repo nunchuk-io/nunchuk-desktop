@@ -6,9 +6,10 @@
 #include <nunchuk.h>
 #include "QOutlog.h"
 #include "TypeDefine.h"
+#include "Commons/QStateFlow.h"
 #include <QTimer>
 
-class QGroupSandbox : public QObject
+class QGroupSandbox : public QStateFlow
 {
     Q_OBJECT
     Q_PROPERTY(QString      groupId          READ groupId                                              NOTIFY groupSandboxChanged)
@@ -19,12 +20,13 @@ class QGroupSandbox : public QObject
     Q_PROPERTY(QVariantList groupKeys        READ groupKeys                                            NOTIFY groupSandboxChanged)
     Q_PROPERTY(QString      url              READ url                                                  NOTIFY groupSandboxChanged)
     Q_PROPERTY(int          userCount        READ userCount                                            NOTIFY groupSandboxChanged)
-    Q_PROPERTY(QString screenFlow            READ screenFlow                 WRITE setScreenFlow       NOTIFY screenFlowChanged)
     Q_PROPERTY(bool enoughSigner             READ enoughSigner                                         NOTIFY groupSandboxChanged)
+
 public:
     QGroupSandbox();
     QGroupSandbox(nunchuk::GroupSandbox sandbox);
     ~QGroupSandbox();
+    void initialize();
 
     QString groupId() const;
     int groupM() const;
@@ -39,8 +41,6 @@ public:
     QVariantList groupKeys() const;
     int userCount() const;
 
-    QString screenFlow() const;
-    void setScreenFlow(const QString& flow);
 
     void setUserCount(int number);
 
@@ -49,9 +49,6 @@ public:
     bool HasEnoughSigner();
     bool HasOneKeyRecovery();
     bool FinalizeGroup();
-    void ExportWalletViaBSMS(const QString& file_path);
-    void ExportWalletViaQRBCUR2Legacy();
-    void ExportWalletViaQRBCUR2();
 
 public:
     void CreateAGroup(const QString& name, int m, int n, int addType);
@@ -72,6 +69,8 @@ public:
     QString filePathRecovery() const;
     void setFilePathRecovery(const QString &newFilePathRecovery);
 
+    void CreateSignerListReviewWallet();
+    QSet<size_t> ValueKeyset();
 public slots:
     bool checkWaitingOthers();
     void deleteGroup();
@@ -83,14 +82,13 @@ public slots:
     void slotFinishSandboxWallet();
 signals:
     void groupSandboxChanged();
-    void screenFlowChanged();
     void finishSandboxWallet();
     void recoverKeyError();
+    void editBIP32PathSuccess(int typeError);
 private:
     QVariantList            m_groupKeys {};
     nunchuk::GroupSandbox   m_sandbox {""};
     int                     m_index {0};
-    QString                 m_screenFlow {""};
     int                     m_userCount {1};
     bool                    m_isCreateWallet {false};
     QString                 m_fingerprintRecovery {""};

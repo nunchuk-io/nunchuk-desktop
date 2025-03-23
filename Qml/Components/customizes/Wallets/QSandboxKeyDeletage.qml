@@ -31,193 +31,111 @@ import "../../customizes/Buttons"
 import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
-Loader {
-    sourceComponent: modelData.hisSigner ? hisSigner : notHisSigner
-    Component {
-        id: hisSigner
-        Item {
-            width: 352
-            height: 80
+Item {
+    id: del
+    width: 350
+    height: _column.childrenRect.height + 12*2
+    property alias signerData: data
+
+    QSingleSignerData {
+        id: data
+    }
+
+    Row {
+        anchors {
+            left: parent.left
+            leftMargin: 12
+        }
+        height: parent.height
+        spacing: 12
+        QCircleIcon {
+            bgSize: 48
+            icon.iconSize: 24
+            icon.typeStr: ""
+            icon.type: data.single_type
+            icon.tag: data.single_tag
+            anchors.verticalCenter: parent.verticalCenter
+            color: "#F5F5F5"
+            visible: data.single_is_local
+        }
+        QBadge {
+            width: 48
+            height: 48
+            iconSize: 24
+            radius: 48
+            icon: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+            anchors.verticalCenter: parent.verticalCenter
+            color: "#F5F5F5"
+            visible: !data.single_is_local
+        }
+        Column {
+            id: _column
+            height: childrenRect.height
+            width: 350 - 12 - 48 - 12
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+            QLato {
+                width: parent.width
+                text: data.single_name
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+            }
             Row {
-                anchors {
-                    fill: parent
-                    margins: 12
+                height: 16
+                spacing: 4
+                QBadge {
+                    text: STR.STR_QML_1695
+                    height: 16
+                    color: "#EAEAEA"
+                    visible: data.single_value_key
+                    radius: 8
+                    fontSize: 10
                 }
-                spacing: 12
-                QCircleIcon {
-                    bgSize: 48
-                    icon.iconSize: 18
-                    icon.typeStr: modelData.type
-                    icon.tag: modelData.tag
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: "#F5F5F5"
+                QSignerBadgeName {
+                    typeStr: ""
+                    type: data.single_type
+                    tag: data.single_tag
+                    color: "#DEDEDE"
+                    height: 16
+                    font.weight: Font.Black
+                    font.pixelSize: 10
                 }
-                Column {
-                    height: childrenRect.height
-                    width: 150
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
-                    QLato {
-                        width: parent.width
-                        text: modelData.name
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Row {
-                        spacing: 4
-                        Rectangle {
-                            width: signerTypeText.width + 8
-                            height: 16
-                            color: "#EAEAEA"
-                            radius: 20
-                            QText {
-                                id: signerTypeText
-                                text: GlobalData.signers(modelData.signer_type)
-                                font.family: "Lato"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                color: "#031F2B"
-                            }
-                        }
-                        Rectangle {
-                            width: accttext.width + 10
-                            height: 16
-                            color: "#EAEAEA"
-                            radius: 8
-                            visible: modelData.account_index > 0
-                            QText {
-                                id: accttext
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                font.weight: Font.Bold
-                                text: qsTr("Acct %1").arg(modelData.account_index)
-                            }
-                        }
-                    }
-                    QLato {
-                        width: parent.width
-                        text: {
-                            if (modelData.card_id !== "") {
-                                var card_id_text = modelData.card_id
-                                var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
-                                return "Card ID: ••" + textR
-                            } else {
-                                "XFP: " + modelData.xfp
-                            }
-                        }
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        font.capitalization: Font.AllUppercase
-                        font.pixelSize: 12
-                    }
-                    QLato {
-                        width: parent.width
-                        text: qsTr("BIP32 path: %1").arg(modelData.derivationPath)
-                        color: "#757575"
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: 12
-                    }
+                QBadge {
+                    text: qsTr("Acct %1").arg(data.single_account_index)
+                    height: 16
+                    color: "#EAEAEA"
+                    visible: (data.single_account_index > 0) && (data.single_type !== NUNCHUCKTYPE.SERVER)
+                    radius: 8
+                    fontSize: 10
                 }
             }
-        }
-    }
-    Component {
-        id: notHisSigner
-        Item {
-            width: 352
-            height: 80
-            Row {
-                anchors {
-                    fill: parent
-                    margins: 12
-                }
-                spacing: 12
-                Rectangle {
-                    color: "#F5F5F5"
-                    radius: 48
-                    width: 48
-                    height: 48
-                    anchors.verticalCenter: parent.verticalCenter
-                    QIcon {
-                        iconSize: 24
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/key-dark.svg"
+            QLato {
+                width: 146
+                height: 16
+                text: {
+                    if (data.single_type === NUNCHUCKTYPE.NFC) {
+                        var card_id = data.single_device_cardid
+                        var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
+                        return "Card ID: ••" + textR
+                    }
+                    else {
+                        return "XFP: " + data.single_masterFingerPrint.toUpperCase()
                     }
                 }
-                Column {
-                    height: childrenRect.height
-                    width: 150
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
-                    QLato {
-                        width: parent.width
-                        text: modelData.name !== "" ? modelData.name : STR.STR_QML_1557.arg(modelData.key_index + 1)
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Row {
-                        spacing: 4
-                        Rectangle {
-                            width: signerTypeText.width + 8
-                            height: 16
-                            color: "#EAEAEA"
-                            radius: 20
-                            QText {
-                                id: signerTypeText
-                                text: GlobalData.signers(modelData.signer_type)
-                                font.family: "Lato"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                color: "#031F2B"
-                            }
-                        }
-                        Rectangle {
-                            width: accttext.width + 10
-                            height: 16
-                            color: "#EAEAEA"
-                            radius: 8
-                            visible: modelData.account_index > 0
-                            QText {
-                                id: accttext
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                font.weight: Font.Bold
-                                text: qsTr("Acct %1").arg(modelData.account_index)
-                            }
-                        }
-                    }
-                    QLato {
-                        width: parent.width
-                        text: {
-                            if (modelData.card_id !== "") {
-                                var card_id_text = modelData.card_id
-                                var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
-                                return "Card ID: ••" + textR
-                            } else {
-                                "XFP: " + modelData.xfp
-                            }
-                        }
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        font.capitalization: Font.AllUppercase
-                        font.pixelSize: 12
-                    }
-                    QLato {
-                        width: parent.width
-                        text: qsTr("BIP32 path: %1").arg(modelData.derivationPath)
-                        color: "#757575"
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: 12
-                    }
-                }
+                color: "#595959"
+                font.weight: Font.Normal
+                font.capitalization: Font.AllUppercase
+                font.family: "Lato"
+                font.pixelSize: 12
+            }
+            QLato {
+                height: 16
+                width: parent.width
+                text: qsTr("BIP32 path: %1").arg(data.single_derivationPath)
+                color: "#757575"
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: 12
             }
         }
     }

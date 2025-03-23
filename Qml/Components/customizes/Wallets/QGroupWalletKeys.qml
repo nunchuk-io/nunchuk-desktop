@@ -128,9 +128,10 @@ Column {
                 sandbox.requestAddOrRepaceKey(obj)
             }
             onBip32PathClick: {
-                console.warn("clicked: ",path)
-                editBip32Path.clearText()
-                editBip32Path.bip32Path = path
+                console.warn("clicked: ", path, modelData.type, modelData.tag, modelData.signer_type)
+                editBip32Path.clearError()
+                editBip32Path.isShowListDevice = false
+                editBip32Path.signer = modelData
                 editBip32Path.idx = index
                 editBip32Path.xfp = xfp
                 editBip32Path.open()

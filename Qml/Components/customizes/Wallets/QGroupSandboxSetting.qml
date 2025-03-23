@@ -88,7 +88,6 @@ QOnScreenContentTypeB {
                                 _warning.open()
                             }
                         }
-
                         onTypeOptionChanged: {
                             if (typeOption !== sandbox.addressType) {
                                 _warning.open()
@@ -157,7 +156,7 @@ QOnScreenContentTypeB {
         title: STR.STR_QML_661
         contentText: STR.STR_QML_1650
         labels: [STR.STR_QML_432,STR.STR_QML_097]
-        types: [_btnBase.eTypeP, _btnBase.eTypeB]
+        types: [_btnBase.eTypeP, _btnBase.eTypeE]
         isVertical: false
         funcs: [
             function() {

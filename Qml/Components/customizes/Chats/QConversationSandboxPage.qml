@@ -215,7 +215,7 @@ Rectangle {
                     layoutDirection : isReceive ? Qt.LeftToRight : Qt.RightToLeft
                     isReceive       : model.group_message_receive
                     messageContent  : model.group_message_content
-                    sendername      : model.group_message_sender
+                    sendername      : model.group_message_signer
                 }
                 section
                 {

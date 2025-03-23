@@ -41,7 +41,6 @@ QOnScreenContentTypeB {
     extraHeader: Item {}
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     property var newWalletInfo: AppModel.newWalletInfo
-    property var sandbox: newWalletInfo.sandbox
     Item {
         anchors {
             left: parent.left
@@ -122,12 +121,9 @@ QOnScreenContentTypeB {
                         enable: true,
                         subMenu: null,
                         action: function() {
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(sandbox.groupName) + "_BCUR2_Legacy"
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2_Legacy"
                             qrcodeExportResult.open()
-                            var _input = {
-                                type: "export-config-as-QrCodeBCUR2_Legacy"
-                            }
-                            QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                            newWalletInfo.requestExportWalletViaQRBCUR2Legacy()
                             othersContextMenu.close()
                         }
                     },
@@ -140,12 +136,9 @@ QOnScreenContentTypeB {
                         enable: true,
                         subMenu: null,
                         action: function(){
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(sandbox.groupName) + "_BCUR2"
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2"
                             qrcodeExportResult.open()
-                            var _input = {
-                                type: "export-config-as-QrCode-BCUR2"
-                            }
-                            QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                            newWalletInfo.requestExportWalletViaQRBCUR2()
                             othersContextMenu.close()
                         }
                     },
@@ -161,7 +154,7 @@ QOnScreenContentTypeB {
                         subMenu: null,
                         action: function(){
                             savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                    + RoomWalletData.getValidFilename(sandbox.groupName)
+                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
                                     + ".bsms"
                             savefileDialog.open()
                         }
@@ -192,13 +185,13 @@ QOnScreenContentTypeB {
                 functions: [
                     function() {
                         savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(sandbox.groupName)
+                                + RoomWalletData.getValidFilename(newWalletInfo.walletName)
                                 + ".bsms"
                         savefileDialog.open()
                     },
                     function() {
                         // "Export as QR"
-                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(sandbox.groupName) + "_BCUR2_Legacy"
+                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2_Legacy"
                         qrcodeExportResult.open()
                         var _input = {
                             type: "export-config-as-QrCode"
@@ -216,11 +209,7 @@ QOnScreenContentTypeB {
         id: savefileDialog
         fileMode: FileDialog.SaveFile
         onAccepted: {
-            var _input = {
-                type: "export-config-as-a-file",
-                file: savefileDialog.currentFile
-            }
-            QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            newWalletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
         }
     }
     QQrExportResultPDF {

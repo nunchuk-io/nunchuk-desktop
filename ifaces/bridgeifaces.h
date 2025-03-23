@@ -384,6 +384,7 @@ nunchuk::Wallet nunchukCreateOriginWallet(const QString& name,
                                           const QString& description,
                                           bool allow_used_signer,
                                           const QString& decoy_pin,
+                                          nunchuk::WalletTemplate walletTemplate,
                                           QWarningMessage &msg);
 
 QString nunchukDraftWallet(const QString& name,
@@ -897,6 +898,7 @@ nunchuk::GroupSandbox UpdateGroup(const QString& groupId,
                                   QWarningMessage &msg);
 
 nunchuk::GroupSandbox FinalizeGroup(const QString& groupId,
+                                     const QSet<size_t> valuekeyset,
                                     QWarningMessage &msg);
 
 bool CheckGroupWalletExists(const nunchuk::Wallet& wallet,

@@ -42,12 +42,23 @@ Item {
             QListView {
                 id: signerlist
                 anchors.fill: parent
-                spacing: 20
-                model: sandbox.groupKeys
+                model: newWalletInfo.walletSingleSignerAssigned
                 ScrollBar.vertical: ScrollBar { active: true }
                 delegate: QSandboxKeyDeletage {
                     width: signerlist.width
-
+                    signerData {
+                        single_name: singleSigner_name
+                        single_type: single_signer_type
+                        single_tag: single_signer_tag
+                        single_devicetype: single_signer_devicetype
+                        single_masterFingerPrint: singleSigner_masterFingerPrint
+                        single_account_index: single_signer_account_index
+                        single_checked: single_signer_checked
+                        single_is_local: single_signer_is_local
+                        single_value_key: single_signer_value_key
+                        single_derivationPath: singleSigner_derivationPath
+                        single_device_cardid: single_signer_device_cardid
+                    }
                 }
             }
         }

@@ -350,6 +350,7 @@ QSingleSignerPtr QMasterSigner::cloneSingleSigner()
     signer.data()->setCardId(device()->cardId());
     signer.data()->setMasterFingerPrint(fingerPrint());
     signer.data()->setDerivationPath(device()->path());
+    signer.data()->setSignerTags(masterSigner_.get_tags());
     return signer;
 }
 

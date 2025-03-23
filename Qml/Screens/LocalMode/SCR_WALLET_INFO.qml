@@ -64,12 +64,6 @@ QScreen {
     }
 
     Component {
-        id: wallet_info
-        QWalletInfo {
-        }
-    }
-
-    Component {
         id: wallet_config
         QWalletConfig {
         }

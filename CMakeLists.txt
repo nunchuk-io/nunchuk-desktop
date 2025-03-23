@@ -50,7 +50,8 @@ add_subdirectory(contrib/quotient)
 
 # NO PIE memory
 if(UNIX AND NOT APPLE)
-    set ( CMAKE_CXX_FLAGS "-no-pie -s" )
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -no-pie")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie")
 endif()
 if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE Debug )
@@ -162,11 +163,14 @@ else()
     # Apply flags for else with debug info
 endif()
 
-if(MSVC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    message(STATUS "---------------------------------> MSVC")
     target_compile_options(${PROJECT_NAME} PRIVATE /std:c++20)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    message(STATUS "---------------------------------> AppleClang")
     target_compile_options(${PROJECT_NAME} PRIVATE -std=c++20)
 else()
+    message(STATUS "---------------------------------> GCC and either")
     target_compile_options(${PROJECT_NAME} PRIVATE -std=c++20 -fno-extended-identifiers -fstack-reuse=none)
 endif()
 

@@ -247,7 +247,11 @@ bool sortSingleSignerByKeysetIndexAscending(const QSingleSignerPtr &v1, const QS
 class SingleSignerListModel  : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int  keyinfo READ keyinfo    NOTIFY keyinfoChanged)
+    Q_PROPERTY(int  keyinfo                 READ keyinfo                NOTIFY keyinfoChanged)
+    Q_PROPERTY(int  signerCount             READ signerCount            NOTIFY signerCountChanged)
+    Q_PROPERTY(int  signerSelectedCount     READ signerSelectedCount    NOTIFY signerSelectedCountChanged)
+    Q_PROPERTY(int  signerValueKeyCount     READ signerValueKeyCount    NOTIFY signerValueKeyCountChanged)
+
 public:
     SingleSignerListModel();
     ~SingleSignerListModel();
@@ -335,6 +339,7 @@ public:
 
     // Fortaproot
     int keyinfo() const;
+    int signerValueKeyCount();
 
 public slots:
     int signerCount() const;
@@ -344,6 +349,9 @@ public slots:
 
 signals:
     void keyinfoChanged();
+    void signerCountChanged();
+    void signerSelectedCountChanged();
+    void signerValueKeyCountChanged();
 
 private:
     QList<QSingleSignerPtr> m_data;

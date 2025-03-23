@@ -130,25 +130,54 @@ QOnScreenContentTypeA {
                 if (sandbox.checkWaitingOthers()) {
                     _waiting_for_other.open()
                 } else {
-                    var _input = {
-                        type: "review-group-sandbox"
+                    var _input = {}
+                    if (sandbox.addressType === NUNCHUCKTYPE.TAPROOT) {
+                        if (sandbox.groupN === 1) {
+                            _input = {
+                                type: "review-group-sandbox"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                        } else {
+                            _input = {
+                                type: "switch-to-intro-taproot"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                        }
+                    } else {
+                        _input = {
+                            type: "review-group-sandbox"
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                     }
-                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                 }
             }
         }
     }
-
     QPopupEditBIP32Path {
         id: editBip32Path
-        property int idx: -1
-        property string xfp: ""
         onEnterText: {
-            if (sandbox.editBIP32Path(idx, xfp, str)) {
+            gettingPublicKey.open()
+            sandbox.editBIP32Path(idx, xfp, pathBip32)
+        }
+    }
+    QPopupGettingPublicKeyLoading {
+        id: gettingPublicKey
+    }
+
+    Connections {
+        target: sandbox
+        onEditBIP32PathSuccess: {
+            if (typeError == 1) {
                 editBip32Path.close()
-            } else {
-                editBip32Path.showError()
-            }
+                gettingPublicKey.close()
+            } else if (typeError == -1 || typeError == -3){
+                gettingPublicKey.close()
+                editBip32Path.showError(typeError)
+            } else if (typeError == -2) {
+                gettingPublicKey.close()
+                editBip32Path.isShowListDevice = true
+                editBip32Path.showError(typeError)
+            } else {}
         }
     }
 
