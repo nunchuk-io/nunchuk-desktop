@@ -343,7 +343,7 @@ QOnScreenContentTypeB {
         }
     }
 
-    property var newWalletInfo  : AppModel.newWalletInfo
+    property var newWalletInfo : AppModel.newWalletInfo
     property string flow_screen: newWalletInfo.screenFlow
     readonly property var map_flow: [
         {screen: "value-keyset",              screen_component: valueKeyset},
@@ -353,14 +353,9 @@ QOnScreenContentTypeB {
         {screen: "configure-value-keyset",    screen_component: configure_value_keyset},
     ]
 
-    property var selectedComponent: {
-        var found = map_flow.find(e =>  { return (e.screen === flow_screen)});
-        return found ? found.screen_component : null;
-    }
-
     QPopupOverlayScreen {
         id: _keysetPopup
-        content: selectedComponent
+        content: map_flow.find(function(e) {if (e.screen === flow_screen) return true; else return false}).screen_component
 
         function switchValueKeyset() {
             newWalletInfo.screenFlow = "value-keyset"

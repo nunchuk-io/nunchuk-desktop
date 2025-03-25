@@ -88,7 +88,7 @@ Item {
                     tag: data.single_tag
                     color: "#DEDEDE"
                     height: 16
-                    font.weight: Font.Black
+                    font.weight: Font.Bold
                     font.pixelSize: 10
                 }
                 QBadge {
@@ -97,6 +97,7 @@ Item {
                     color: "#EAEAEA"
                     visible: (data.single_account_index > 0) && (data.single_type !== NUNCHUCKTYPE.SERVER)
                     radius: 8
+                    font.pixelSize: 10
                 }
             }
             QLato {

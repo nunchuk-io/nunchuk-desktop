@@ -54,13 +54,13 @@ Rectangle {
     property int    keysetRemaining: 0
     property int    keysetCount: 1
     property int    keysetM: 1
-
     property string card_id: ""
     property string tag: ""
     property bool   has_sign_btn: true
     property bool   is_cosigning: false
     property string myRole: ""
     property bool   isValueKey: false
+    property bool   enableValuekeyset: AppModel.walletInfo.enableValuekeyset
 
     signal signRequest()
     signal scanRequest()
@@ -80,19 +80,29 @@ Rectangle {
                 }
             }
             sourceComponent: {
-                if(index % keysetM === 0){
-                    if(keysetIndex == 0){
-                        return valueKeyset
-                    }
-                    else if(keysetIndex == 1){
-                        return otherKeyset
+                if(enableValuekeyset){
+                    if(index % keysetM === 0){
+                        if(keysetIndex == 0){
+                            return valueKeyset
+                        }
+                        else if(keysetIndex == 1){
+                            return otherKeyset
+                        }
+                        else {
+                            return otherKeysetElse
+                        }
                     }
                     else {
-                        return otherKeysetElse
+                        return null;
                     }
                 }
                 else {
-                    return null;
+                    if(index % keysetM === 0){
+                        return otherKeysetElse
+                    }
+                    else {
+                        return null;
+                    }
                 }
             }
         }
@@ -137,7 +147,7 @@ Rectangle {
                             width: valuekeytext.width + 10
                             height: 16
                             color: "#D0E2FF"
-                            visible: isValueKey
+                            visible: isValueKey && enableValuekeyset
                             radius: 8
                             QText {
                                 id: valuekeytext
@@ -492,6 +502,7 @@ Rectangle {
                     width: 354
                     height: 1
                     color: "#DEDEDE"
+                    visible: keysetIndex !== 0
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.horizontalCenterOffset: -16
                 }
@@ -653,6 +664,7 @@ Rectangle {
                 width: 326
                 height: 1
                 color: "#DEDEDE"
+                visible: keysetIndex !== 0
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Item {

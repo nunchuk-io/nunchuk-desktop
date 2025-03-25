@@ -54,6 +54,10 @@ class Wallet : public QStateFlow,
     Q_PROPERTY(int          walletAddressType                       READ walletAddressType          WRITE setWalletAddressType  NOTIFY walletChanged)
     Q_PROPERTY(int          walletType                              READ walletType                 WRITE setWalletType         NOTIFY walletChanged)
     Q_PROPERTY(bool         walletEscrow                            READ walletEscrow                                           NOTIFY walletChanged)
+    // Template
+    Q_PROPERTY(int          walletTemplate                          READ walletTemplate             WRITE setWalletTemplate     NOTIFY walletChanged)
+    Q_PROPERTY(bool         enableValuekeyset                       READ enableValuekeyset          WRITE setEnableValuekeyset  NOTIFY walletChanged)
+
     // Ballance
     Q_PROPERTY(QString      walletBalance                           READ balanceDisplay                                         NOTIFY walletChanged)
     Q_PROPERTY(QString      walletBalanceBTC                        READ balanceBTC                                             NOTIFY walletChanged)
@@ -138,9 +142,6 @@ class Wallet : public QStateFlow,
     Q_PROPERTY(SingleSignerListModel* assignAvailableSigners        READ assignAvailableSigners                                 NOTIFY assignAvailableSignersChanged)
     Q_PROPERTY(int                  limitKeySet                     READ limitKeySet                                            NOTIFY limitKeySetChanged)
 
-    // TAPROOT
-    Q_PROPERTY(bool                 enableValuekeyset               READ enableValuekeyset          WRITE setEnableValuekeyset  NOTIFY enableValuekeysetChanged)
-
 public:
     Wallet();
     Wallet(const nunchuk::Wallet &w);
@@ -179,6 +180,11 @@ public:
     int     walletType();
     void    setWalletType(const int data);
     bool    walletEscrow() const;
+
+    bool    enableValuekeyset();
+    void    setEnableValuekeyset(bool data);
+    int     walletTemplate();
+    void    setWalletTemplate(const int data);
 
     qint64  balanceSats() const;
     QString balanceBTC() const;
@@ -333,8 +339,6 @@ public:
     void CreateSignerListReviewWallet(const std::vector<nunchuk::SingleSigner> &signers);
     void CreateAssignAvailableSigners();
     SingleSignerListModel *assignAvailableSigners();
-    bool enableValuekeyset() const;
-    void setEnableValuekeyset(bool newEnableValuekeyset);
 
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
@@ -365,12 +369,13 @@ protected:
     void UpdateGroupWallet(const QString &name, const QString &description);
 
 private:
-    mutable QString m_id {};
+    mutable QString m_id {""};
     mutable QString m_walletName {""};
     mutable QString m_walletDescription {""};
     mutable int     m_walletM {0};
     mutable int     m_walletN {0};
     mutable int     m_walletAddressType {(int)nunchuk::AddressType::ANY};
+    mutable int     m_walletTemplate {(int)nunchuk::WalletTemplate::DEFAULT};
     mutable int     m_walletType {-1};
     mutable int     m_collabWalletN {0};
     mutable int     m_numberOnline {0};
@@ -407,7 +412,7 @@ private:
     nunchuk::GroupWalletConfig  m_nunchukConfig;
     QGroupMessageModelPtr       m_conversations;
     int                         m_limitKeySet {0};
-    mutable QMutex m_mutex;
+    mutable                     QMutex m_mutex;
 
 signals:
     void walletChanged();
@@ -462,7 +467,6 @@ signals:
     void limitKeySetChanged();
     void showbubbleChatChanged();
     void assignAvailableSignersChanged();
-    void enableValuekeysetChanged();
 
 public slots:
     void setValueKeyset(int index);

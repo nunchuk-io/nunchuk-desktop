@@ -1150,10 +1150,21 @@ QList<QSingleSignerPtr > SingleSignerListModel::fullList() const
 
 std::vector<nunchuk::SingleSigner> SingleSignerListModel::signers() const
 {
+    std::vector<QSingleSignerPtr> sortedData(m_data.begin(), m_data.end());
+    std::sort(sortedData.begin(), sortedData.end(), [](const QSingleSignerPtr &a, const QSingleSignerPtr &b) {
+        return a->valueKey() && !b->valueKey(); // valueKey() true thì lên trước
+    });
+    // for (const QSingleSignerPtr &p : sortedData) {
+    //     DBG_INFO << "XFP:" << p->masterFingerPrint() << " ValueKey:" << p->valueKey();
+    // }
     std::vector<nunchuk::SingleSigner> signerList;
-    for (QSingleSignerPtr p : m_data) {
+    signerList.reserve(sortedData.size());
+    for (const QSingleSignerPtr &p : sortedData) {
         signerList.push_back(p->originSingleSigner());
     }
+    // for (const auto &signer : signerList) {
+    //     DBG_INFO << "XFP:" << signer.get_master_fingerprint();
+    // }
     return signerList;
 }
 

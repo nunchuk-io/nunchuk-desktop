@@ -152,7 +152,7 @@ QOnScreenContentTypeB {
                                     QBadge {
                                         color: utxoInfo.outgoing.color
                                         text: utxoInfo.outgoing.label
-                                        font.weight: Font.Black
+                                        font.weight: Font.Bold
                                         font.pixelSize: 10
                                         anchors.verticalCenter: parent.verticalCenter
                                     }

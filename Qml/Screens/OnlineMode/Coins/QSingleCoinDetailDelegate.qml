@@ -166,7 +166,7 @@ Rectangle {
                                     topMargin: 0
                                     color: outgoing_color
                                     text: outgoing_label
-                                    font.weight: Font.Black
+                                    font.weight: Font.Bold
                                     font.pixelSize: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -210,7 +210,7 @@ Rectangle {
                                         topMargin: 0
                                         color: outgoing_color
                                         text: outgoing_label
-                                        font.weight: Font.Black
+                                        font.weight: Font.Bold
                                         font.pixelSize: 10
                                         anchors.verticalCenter: parent.verticalCenter
                                     }

@@ -79,7 +79,7 @@ Rectangle {
                         QLato {
                             color: "#FFFFFF"
                             font.pixelSize: 10
-                            font.weight: Font.Black
+                            font.weight: Font.Bold
                             anchors.centerIn: parent
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignHCenter

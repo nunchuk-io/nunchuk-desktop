@@ -458,9 +458,7 @@ void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
                 walletTemplate = nunchuk::WalletTemplate::DISABLE_KEY_PATH;
             }
         }
-		nunchuk::WalletType targetWallet = w->walletEscrow() ? 	nunchuk::WalletType::ESCROW : 
-																(w->walletN() == 1 ? nunchuk::WalletType::SINGLE_SIG : nunchuk::WalletType::MULTI_SIG);
-		
+        nunchuk::WalletType targetWallet = w->walletEscrow() ? 	nunchuk::WalletType::ESCROW : (w->walletN() == 1 ? nunchuk::WalletType::SINGLE_SIG : nunchuk::WalletType::MULTI_SIG);
         QWarningMessage msgWarning;
         nunchuk::Wallet ret = bridge::nunchukCreateOriginWallet(w->walletNameDisplay(),
                                                                 w->walletM(),

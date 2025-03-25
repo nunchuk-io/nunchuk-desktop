@@ -1,8 +1,8 @@
 cmake_minimum_required( VERSION 3.1 )
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.43)
+    project(Nunchuk VERSION 1.9.44)
 else()
-    project(nunchuk-qt VERSION 1.9.43)
+    project(nunchuk-qt VERSION 1.9.44)
 endif()
 
 
@@ -48,11 +48,11 @@ set(Quotient_ENABLE_E2EE ON CACHE INTERNAL "" FORCE)
 set(BUILD_TESTING OFF)
 add_subdirectory(contrib/quotient)
 
-# NO PIE memory
-if(UNIX AND NOT APPLE)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -no-pie")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie")
+if ((UNIX AND NOT APPLE) OR WIN32)
+    message("---------------------------------> Backward compatibility BOOST_ASIO_NO_DEPRECATED=0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ASIO_NO_DEPRECATED=0")
 endif()
+
 if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE Debug )
 endif()
@@ -165,13 +165,13 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     message(STATUS "---------------------------------> MSVC")
-    target_compile_options(${PROJECT_NAME} PRIVATE /std:c++20)
+    target_compile_options(${PROJECT_NAME} PUBLIC /std:c++20)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     message(STATUS "---------------------------------> AppleClang")
-    target_compile_options(${PROJECT_NAME} PRIVATE -std=c++20)
+    target_compile_options(${PROJECT_NAME} PUBLIC -std=c++20)
 else()
     message(STATUS "---------------------------------> GCC and either")
-    target_compile_options(${PROJECT_NAME} PRIVATE -std=c++20 -fno-extended-identifiers -fstack-reuse=none)
+    target_compile_options(${PROJECT_NAME} PUBLIC -std=c++20 -fno-extended-identifiers -fstack-reuse=none)
 endif()
 
 # Target link options

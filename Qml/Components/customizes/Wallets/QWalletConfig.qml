@@ -263,6 +263,7 @@ QOnScreenContent {
                                 tagType: model.single_signer_tag
                                 card_id: model.single_signer_device_cardid
                                 accountIndex: model.single_signer_account_index
+                                isValueKey: model.single_signer_value_key
                                 onViewPoliciesRequest: {
                                     var objectRequest = {
                                         "requestType": "viewPolicies",

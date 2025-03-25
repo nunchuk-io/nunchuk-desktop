@@ -42,6 +42,8 @@ Item {
     property string tagType: ""
     property string card_id: ""
     property int    accountIndex: 0
+    property bool   isValueKey: false
+    property bool   enableValueKeyset: AppModel.walletInfo.enableValuekeyset
 
     signal viewPoliciesRequest()
 
@@ -92,6 +94,22 @@ Item {
                         } else {
                             return "XFP: " + signerXFP.toUpperCase()
                         }
+                    }
+                }
+                Rectangle {
+                    width: valuekeyText.width + 10
+                    height: 16
+                    color: "#D0E2FF"
+                    radius: 8
+                    visible: isValueKey && enableValueKeyset
+                    QText {
+                        id: valuekeyText
+                        font.family: "Lato"
+                        color: "#031F2B"
+                        font.pixelSize: 10
+                        anchors.centerIn: parent
+                        font.weight: Font.Bold
+                        text: "Value Key"
                     }
                 }
                 Rectangle {

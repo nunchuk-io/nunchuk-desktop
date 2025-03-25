@@ -107,7 +107,7 @@ QOnScreenContentTypeA {
                             QBadge {
                                 color: "#E8DAFF"
                                 text: STR.STR_QML_1419
-                                font.weight: Font.Black
+                                font.weight: Font.Bold
                                 font.pixelSize: 10
                                 anchors.verticalCenter: parent.verticalCenter
                             }

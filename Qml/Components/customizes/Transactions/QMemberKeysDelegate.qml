@@ -55,6 +55,7 @@ Rectangle {
     property bool   is_cosigning: false
     property string myRole: ""
     property bool   isValueKey: false
+    property bool   enableValuekeyset: AppModel.walletInfo.enableValuekeyset
     signal signRequest()
     signal scanRequest()
     signal exportRequest()
@@ -102,7 +103,7 @@ Rectangle {
                         width: valuekeytext.width + 10
                         height: 16
                         color: "#D0E2FF"
-                        visible: isValueKey
+                        visible: isValueKey && enableValuekeyset
                         radius: 8
                         QText {
                             id: valuekeytext

@@ -70,7 +70,7 @@ Row {
                 tag: del.tag
                 color: "#DEDEDE"
                 height: 16
-                font.weight: Font.Black
+                font.weight: Font.Bold
                 font.pixelSize: 10
             }
             Rectangle {
@@ -85,7 +85,7 @@ Row {
                     color: "#031F2B"
                     font.pixelSize: 10
                     anchors.centerIn: parent
-                    font.weight: Font.Black
+                    font.weight: Font.Bold
                     text: qsTr("Acct %1").arg(accountIndex)
                 }
             }

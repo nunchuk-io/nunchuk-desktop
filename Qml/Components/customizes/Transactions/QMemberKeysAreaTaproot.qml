@@ -99,6 +99,7 @@ Item {
                 keysetCount: transactionInfo.keysetsCount
                 keysetM: transactionInfo.m
                 keysetRemaining: model.single_signer_keyset_remaining
+                isValueKey: model.single_signer_value_key
 
                 onSignRequest: {
                     keySignRequest(model)

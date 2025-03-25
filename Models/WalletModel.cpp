@@ -203,7 +203,6 @@ int Wallet::walletAddressType() {
             m_walletAddressType = cdata;
         }
     }
-    DBG_INFO << m_walletAddressType;
     return m_walletAddressType;
 }
 
@@ -238,6 +237,48 @@ void Wallet::setWalletType(const int data)
 
 bool Wallet::walletEscrow() const {
     return ((nunchuk::WalletType::ESCROW == nunchukWallet().get_wallet_type()) ? true : false);
+}
+
+bool Wallet::enableValuekeyset()
+{
+    if((int)nunchuk::AddressType::TAPROOT == walletAddressType() && (int)nunchuk::WalletTemplate::DEFAULT == walletTemplate()){
+        m_enableValuekeyset = true;
+    }
+    return m_enableValuekeyset;
+}
+
+void Wallet::setEnableValuekeyset(bool data)
+{
+    if (m_enableValuekeyset != data){
+        m_enableValuekeyset = data;
+        emit walletChanged();
+    }
+    int template_type = (int)nunchuk::WalletTemplate::DISABLE_KEY_PATH;
+    if(m_enableValuekeyset){
+        template_type = (int)nunchuk::WalletTemplate::DEFAULT;
+    }
+    setWalletTemplate(template_type);
+}
+
+int Wallet::walletTemplate()
+{
+    if(!walletId().isEmpty()){
+        int cdata = (int)nunchukWallet().get_wallet_template();
+        std::set<int> valid_numbers = {(int)nunchuk::WalletTemplate::DEFAULT, (int)nunchuk::WalletTemplate::DISABLE_KEY_PATH};
+        if (valid_numbers.find(cdata) != valid_numbers.end()) {
+            m_walletTemplate = cdata;
+        }
+    }
+    return m_walletTemplate;
+}
+
+void Wallet::setWalletTemplate(const int data)
+{
+    if(data != m_walletTemplate){
+        m_walletTemplate = data;
+        nunchukWallet().set_wallet_template((nunchuk::WalletTemplate)data);
+        emit walletChanged();
+    }
 }
 
 qint64 Wallet::balanceSats() const
@@ -329,8 +370,10 @@ SingleSignerListModel* Wallet::singleSignersAssigned() {
         for (int i = 0; i < signers.size(); i++) {
             nunchuk::SingleSigner signer = signers.at(i);
             QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
-            if(i < m){
-                ret.data()->setValueKey(true);
+            if(enableValuekeyset()){
+                if(i < m){
+                    ret.data()->setValueKey(true);
+                }
             }
             m_signers->addSingleSigner(ret);
         }
@@ -1589,19 +1632,6 @@ void Wallet::UpdateGroupWallet(const QString &name, const QString &description)
             //TBD
         }
     }
-}
-
-bool Wallet::enableValuekeyset() const
-{
-    return m_enableValuekeyset;
-}
-
-void Wallet::setEnableValuekeyset(bool newEnableValuekeyset)
-{
-    if (m_enableValuekeyset == newEnableValuekeyset)
-        return;
-    m_enableValuekeyset = newEnableValuekeyset;
-    emit enableValuekeysetChanged();
 }
 
 bool Wallet::showbubbleChat() const

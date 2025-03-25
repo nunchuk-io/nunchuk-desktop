@@ -63,7 +63,7 @@ Rectangle {
             border.width: 1
             border.color: "#DEDEDE"
             color: "#FFFFFF"
-            font.weight: Font.Black
+            font.weight: Font.Bold
             fontSize: fontBadgePixelSize
             anchors.verticalCenter: parent.verticalCenter
             visible: textBadge !== ""

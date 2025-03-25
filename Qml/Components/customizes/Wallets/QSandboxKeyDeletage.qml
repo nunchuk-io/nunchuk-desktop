@@ -86,7 +86,7 @@ Item {
                 QBadge {
                     text: STR.STR_QML_1695
                     height: 16
-                    color: "#EAEAEA"
+                    color: "#D0E2FF"
                     visible: data.single_value_key
                     radius: 8
                     fontSize: 10
@@ -97,7 +97,6 @@ Item {
                     tag: data.single_tag
                     color: "#DEDEDE"
                     height: 16
-                    font.weight: Font.Black
                     font.pixelSize: 10
                 }
                 QBadge {
