@@ -229,6 +229,7 @@ public:
                                            nunchuk::Amount fee_rate,
                                            bool subtract_fee_from_amount,
                                            const std::string& replace_txid,
+                                           bool anti_fee_sniping,
                                            QWarningMessage& msg);
 
     nunchuk::Transaction DraftTransaction(const std::string& wallet_id,
@@ -410,6 +411,7 @@ public:
     void AddGroupMessageListener(std::function<void(const nunchuk::GroupMessage& msg)> listener);
     void AddGroupOnlineListener(std::function<void(const std::string& groupId, int online)> listener);
     void AddGroupDeleteListener(std::function<void(const std::string& groupId)> listener);
+    void AddReplaceRequestListener(std::function<void(const std::string& walletId, const std::string& replaceGroupId)> listener);
 
     nunchuk::SingleSigner ParseKeystoneSigner(const std::string& qr_data,
                                               QWarningMessage& msg);
@@ -788,6 +790,25 @@ public:
 
     std::string GetGroupDeviceUID(QWarningMessage &msg);
 
+    nunchuk::Amount GetScriptPathFeeRate(const std::string &wallet_id,
+                                         const nunchuk::Transaction &tx,
+                                         QWarningMessage &msg);
+
+    nunchuk::GroupSandbox CreateReplaceGroup(const std::string& walletId,
+                            QWarningMessage &msg);
+
+    std::map<std::string, bool> GetReplaceGroups(const std::string& walletId,
+                                             QWarningMessage &msg);
+
+    nunchuk::GroupSandbox AcceptReplaceGroup(const std::string& walletId,
+                                             const std::string& groupId,
+                                                 QWarningMessage &msg);
+
+    void DeclineReplaceGroup(const std::string& walletId,
+                             const std::string& groupId,
+                             QWarningMessage &msg);
+
+    std::vector<std::string> GetDeprecatedGroupWallets(QWarningMessage &msg) const;
 private:
     nunchukiface();
     ~nunchukiface();

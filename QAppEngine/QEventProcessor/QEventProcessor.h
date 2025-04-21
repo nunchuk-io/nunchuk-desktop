@@ -47,8 +47,7 @@ public:
     void initialized();
     void initFonts(QStringList &fonts);
     void completed();
-    bool registerCtxProperty(const QString &str, const QVariant &var);
-    bool updateCtxProperty(const QString &str, const QVariant &var);
+    bool setContextProperty(const QString &str, const QVariant &var);
     Q_INVOKABLE void doRegisterQML(QObject* objPropose);
     Q_INVOKABLE void unRegisterQML(QObject* objPropose);
     Q_INVOKABLE uint onsRequester() const;
@@ -74,7 +73,6 @@ private:
     QQuickView                                          *m_viewer;
     QScreenDelegate                                     *m_scrMng;
     QPopupDelegate                                      *m_popMng;
-    QList<QString>                                      m_ctxProperties;
     uint                                                m_RootState;
     QList<QObject*>                                     m_qmlObj;
     uint                                                m_popRequester;

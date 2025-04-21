@@ -39,6 +39,7 @@ void QSharedWallets::GetAllGroups()
     if(m_sandboxList.isValid()) {
         m_sandboxList->GetGroups();
     }
+    CreateDeprecatedWallets();
 }
 
 void QSharedWallets::GetGroup(const QString &sandbox_id)
@@ -139,7 +140,7 @@ QWalletPtr QSharedWallets::RecoverSandboxWallet(const QString &file_path)
             QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
         } else {
             QString message = QString("Group wallet not found");
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
         }
     } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
@@ -166,11 +167,67 @@ void QSharedWallets::changeToWallet()
 {
     if (auto groupWalletList = AppModel::instance()->groupWalletList()) {
         if (auto walletList = AppModel::instance()->walletList()) {
-            if (auto currentWallet = groupWalletList->currentWallet()) {
+            if (auto currentWallet = groupWalletList->currentWalletPtr()) {
                 int index = walletList->getWalletIndexById(currentWallet->walletId());
                 AppModel::instance()->setWalletListCurrentIndex(index);
                 QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
             }
         }
     }
+}
+
+bool QSharedWallets::checkSandboxWalletLimit()
+{
+    return QSharedWallets::instance()->CheckGroupConfig();
+}
+
+QStringList QSharedWallets::deprecatedWallets() const
+{
+    return m_deprecatedWallets;
+}
+
+void QSharedWallets::CreateDeprecatedWallets()
+{
+    QWarningMessage msg;
+    m_deprecatedWallets = bridge::GetDeprecatedGroupWallets(msg);
+}
+
+bool QSharedWallets::importQrSandboxWallet(const QStringList qrtags)
+{
+    QStringList in = qrtags;
+    in.removeDuplicates();
+    if(in.isEmpty()){
+        return false;
+    }
+    QWarningMessage msg;
+    nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(),in, msg);
+    QWalletPtr w = QWalletPtr(new Wallet(wallet));
+    if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+        msg.resetWarningMessage();
+        bool isGroupWallet = bridge::CheckGroupWalletExists(wallet, msg);
+        DBG_INFO << "isGroupWallet: " << isGroupWallet;
+        if (isGroupWallet) {
+            w->setWalletName("Group Wallet");
+            AppModel::instance()->setNewWalletInfo(w);
+            if (auto ptr = w->groupSandboxPtr()) {
+                auto sandbox = CreateSandboxFromRecoverWallet(w);
+                ptr->setSandbox(sandbox);
+                ptr->setQrTagsRecovery(in);
+                w->globalGroupWalletChanged();
+                w->groupSandboxPtr()->setScreenFlow("setup-group-wallet");
+            }
+            QJsonObject json;
+            json["type"] = "setup-group-wallet";
+            QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
+        }
+        else {
+            QString message = QString("Group wallet not found");
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
+        }
+        return true;
+    }
+    else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    return false;
 }

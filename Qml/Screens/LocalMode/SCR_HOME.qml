@@ -275,11 +275,11 @@ QScreen {
     }
     Connections {
         target: AppModel
-        onStartDisplayAddress: {
+        function onStartDisplayAddress(wallet_id, address) {
             if(isOnTop) displayAddressBusybox.open()
             else displayAddressBusybox.close()
         }
-        onFinishedDisplayAddress: {
+        function onFinishedDisplayAddress(result) {
             displayAddressBusybox.close()
         }
     }

@@ -39,6 +39,8 @@ Item {
     signal newMemoNotify(var newMemo)
     property string myRole: ""
     property alias new_fee: _rate.new_fee
+    signal typingFinished(var currentText)
+
     /*========================================*/
     Row {
         spacing: 30
@@ -52,6 +54,9 @@ Item {
         QFeeRate {
             id: _rate
             transactionInfo: _send.transactionInfo
+            onTypingFinished: {
+                _send.typingFinished(currentText)
+            }
         }
     }
 }

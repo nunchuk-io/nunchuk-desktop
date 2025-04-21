@@ -131,99 +131,27 @@ QScreen {
                     _warning.open()
                 }
             }
-            function importQRScan() {
-                if(AppModel.parseQRWallet(_walletName.textOutput, "", qrscaner.tags)){
-                    qrscaner.close()
-                    var importData = {  "qrTags"        : qrscaner.tags,
-                                        "importType"    : fileDialog.iType,
-                                        "walletname"    : _walletName.textOutput,
-                                        "walletdescription"    : ""};
-                    QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
-                }
-            }
-            function importFile() {
-                var importData = {  "filePath"      : fileDialog.file,
-                                    "importType"    : fileDialog.iType,
-                                    "walletname"    : _walletName.textOutput,
-                                    "walletdescription"    : ""};
-                QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_IMPORT, importData)
-            }
             function walletType() {
                 return addressTypeSelection.typeOption
             }
         }
         onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-        bottomRight: Row {
-            spacing: 8
-            QButtonLargeTail {
-                id: importwallet
-                width: 159
-                height: 48
-                label: STR.STR_QML_036
-                type: eSECONDARY
-                optionVisible: optionMenu.visible
-                layoutDirection: Qt.RightToLeft
-                visible: walletOptType == NUNCHUCKTYPE.E_PERSONAL_WALLET
-                onButtonClicked: {
-                    optionMenu.x = 20
-                    optionMenu.y = 20 - optionMenu.height
-                    optionMenu.open()
-                }
-                QContextMenu {
-                    id: optionMenu
-                    menuWidth: 350
-                    labels: [
-                        STR.STR_QML_037,
-                        STR.STR_QML_038,
-                        STR.STR_QML_040,
-                        STR.STR_QML_041
-                    ]
-                    icons: [
-                        "qrc:/Images/Images/import.png",
-                        "qrc:/Images/Images/QRCodeScan.png",
-                        "qrc:/Images/Images/import.png",
-                        "qrc:/Images/Images/download.png"
-                    ]
-                    functions: [
-                        function(){
-                            fileDialog.iType = Popup_t.IMPORT_WALLET_DESCRIPTOR
-                            fileDialog.open()
-                        },
-                        function(){
-                            fileDialog.iType = Popup_t.IMPORT_WALLET_QRCODE
-                            qrscaner.open()
-                        },
-                        function(){
-                            fileDialog.iType = Popup_t.IMPORT_WALLET_CONFIGFILE
-                            fileDialog.open()
-                        },
-                        function(){
-                            fileDialog.iType = Popup_t.IMPORT_WALLET_DB
-                            fileDialog.open()
-                        },
-                    ]
-                    onItemClicked: {
-                        functions[index]()
-                    }
-                }
-            }
-            QTextButton {
-                width: 99
-                height: 48
-                label.text: STR.STR_QML_265
-                label.font.pixelSize: 16
-                type: eTypeE
-                enabled: _content.contentItem.isEnable() || firstEnable
-                onButtonClicked: {
-                    firstEnable = false
-                    if (walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET) {
-                        _content.contentItem.createGroupWallet()
+        bottomRight: QTextButton {
+            width: 99
+            height: 48
+            label.text: STR.STR_QML_265
+            label.font.pixelSize: 16
+            type: eTypeE
+            enabled: _content.contentItem.isEnable() || firstEnable
+            onButtonClicked: {
+                firstEnable = false
+                if (walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET) {
+                    _content.contentItem.createGroupWallet()
+                } else {
+                    if (_content.contentItem.walletType() === NUNCHUCKTYPE.TAPROOT) {
+                        _infoPopup.open()
                     } else {
-                        if (_content.contentItem.walletType() === NUNCHUCKTYPE.TAPROOT) {
-                            _infoPopup.open()
-                        } else {
-                            _content.contentItem.createWallet()
-                        }
+                        _content.contentItem.createWallet()
                     }
                 }
             }
@@ -236,21 +164,6 @@ QScreen {
         warningType:EWARNING.WARNING_MSG
         warningExplain:STR.STR_QML_587
     }
-    QQrImportScanner {
-        id: qrscaner
-        onTagFound: {
-            _content.contentItem.importQRScan()
-        }
-    }
-    FileDialog {
-        id: fileDialog
-        property int iType: Popup_t.IMPORT_WALLET_DB
-        fileMode: FileDialog.OpenFile
-        onAccepted: {
-            _content.contentItem.importFile()
-        }
-    }
-
     QPopupOverlayScreen {
         id: _infoPopup
         property int _INTROTAPROOT: 1

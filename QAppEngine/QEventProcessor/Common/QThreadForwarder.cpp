@@ -19,8 +19,5 @@
  **************************************************************************/
 #include "QThreadForwarder.h"
 
-QThreadForwarder *QThreadForwarder::instance() {
-    static QThreadForwarder forwarder;
-    return &forwarder;
-}
+
 

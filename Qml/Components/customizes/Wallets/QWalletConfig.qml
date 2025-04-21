@@ -36,7 +36,7 @@ import "../../../Components/customizes/Popups"
 import "../../../Components/customizes/QRCodes"
 import "../../../../localization/STR_QML.js" as STR
 
-QOnScreenContent {
+QOnScreenContentTypeA {
     id: configWindow
     width: popupWidth
     height: popupHeight
@@ -45,240 +45,34 @@ QOnScreenContent {
     property var walletInfo: AppModel.walletInfo
     property string myRole: walletInfo.groupId !== "" ? walletInfo.myRole : ""
     property bool isAlias: (myRole === "KEYHOLDER" || myRole === "MASTER" || myRole === "ADMIN")
-    extraHeader: Row {
-        spacing: 8
-        QBadge {
-            text: STR.STR_QML_559.arg(walletInfo.walletM).arg(walletInfo.walletN)
-            color: "#EAEAEA"
-            font.weight: Font.Normal
-            anchors.verticalCenter: parent.verticalCenter
-        }
-    }
+    extraHeader: Item {}
     onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     content: Item {
+        anchors {
+            top: parent.top
+            topMargin: 8
+        }
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
             propagateComposedEvents: true
             onClicked: {
-                wlname.typingFinish()
+                configDetails.editFinished()
             }
         }
         Row {
-            anchors.fill: parent
-            spacing: 28
-            Rectangle {
-                width: 350
-                height: 480
-                color: "#F5F5F5"
-                radius: 12
-                Column {
-                    anchors {
-                        fill: parent
-                        topMargin: 18
-                        leftMargin: 18
-                        bottomMargin: 18
-                        rightMargin: 6
-                    }
-                    spacing: 8
-                    Rectangle {
-                        width: 326
-                        height: wlname.childrenRect.height
-                        color: "transparent"
-                        QTextInputBoxTypeA {
-                            id: wlname
-                            width: 326
-                            placeholderText: ""
-                            text: AppModel.walletInfo.walletName
-                            backgroundColor: "Transparent"
-                            borderColor: "Transparent"
-                            color: "#000000"
-                            font.family: "Montserrat"
-                            font.pixelSize: 16
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            showEdit: wlname.enabled
-                            enabled: {
-                                if (AppModel.walletInfo.isGroupWallet) {
-                                    return AppModel.walletInfo.myRole === "MASTER"
-                                }
-                                else {
-                                    return true
-                                }
-                            }
+            height: parent.height
+            spacing: 24
+            QWalletConfigDetails {
+                id: configDetails
 
-                            onTypingFinished: {
-                                if(currentText !== AppModel.walletInfo.walletName) {
-                                    var infoObj = {
-                                        "name"          : currentText,
-                                        "description"   : ""
-                                    };
-                                    QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EDIT_NAME, infoObj)
-                                }
-                            }
-                        }
-                    }
-
-                    Column {
-                        width: 310
-                        height: 300
-                        spacing: 24
-                        Item {
-                            width: parent.width
-                            height: 48
-                            visible: walletInfo.walletAliasName === "" && isAlias
-                            Row {
-                                anchors{
-                                    left: parent.left
-                                    leftMargin: 0
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                spacing: 6
-                                QLato {
-                                    text: STR.STR_QML_1185
-                                    font.weight: Font.Bold
-                                }
-                                QIconButton {
-                                    iconSize: 24
-                                    icon: "qrc:/Images/Images/right-arrow-dark.svg"
-                                    onButtonClicked: {
-                                        eFlow = eWALLET_SET_ALIAS
-                                    }
-                                    bgColor: "transparent"
-                                }
-                            }
-                        }
-                        Item {
-                            width: parent.width
-                            height: 48
-                            visible: walletInfo.walletAliasName !== "" && isAlias
-                            Row {
-                                anchors{
-                                    left: parent.left
-                                    leftMargin: 0
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                spacing: 6
-                                QLato {
-                                    text: STR.STR_QML_1190
-                                    font.weight: Font.Bold
-                                }
-                                QIconButton {
-                                    iconSize: 24
-                                    icon: "qrc:/Images/Images/right-arrow-dark.svg"
-                                    onButtonClicked: {
-                                        eFlow = eWALLET_CHANGE_ALIAS
-                                    }
-                                    bgColor: "transparent"
-                                }
-                            }
-                        }
-                        Item {
-                            width: parent.width
-                            height: 28
-                            QLato {
-                                anchors{
-                                    left: parent.left
-                                    leftMargin: 0
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                text: STR.STR_QML_436
-                                font.weight: Font.Normal
-                            }
-                            QLato {
-                                anchors{
-                                    right: parent.right
-                                    rightMargin: 0
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                text: walletInfo.walletEscrow ? STR.STR_QML_029 : STR.STR_QML_028
-                                font.weight: Font.Bold
-                            }
-                        }
-                        Item {
-                            id: addresstype
-                            width: parent.width
-                            height: 28
-                            readonly property var addressType_Value: [
-                                STR.STR_QML_065,
-                                STR.STR_QML_064,
-                                STR.STR_QML_063,
-                                STR.STR_QML_062,
-                                STR.STR_QML_553
-                            ]
-                            QLato {
-                                anchors{
-                                    left: parent.left
-                                    leftMargin: 0
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                text: STR.STR_QML_319
-                                font.weight: Font.Normal
-                            }
-                            QLato {
-                                anchors{
-                                    right: parent.right
-                                    rightMargin: 0
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                text: addresstype.addressType_Value[walletInfo.walletAddressType]
-                                font.weight: Font.Bold
-                            }
-                        }
-                    }
-                }
             }
-            Item {
-                width: 350
-                height: 480
-                Column {
-                    anchors.fill: parent
-                    spacing: 8
-                    QLato {
-                        width: 97
-                        height: 20
-                        font.weight: Font.Bold
-                        text: STR.STR_QML_289
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Rectangle {
-                        width: 350
-                        height: 452
-                        border.width: 1
-                        border.color: "#EAEAEA"
-                        radius: 12
-                        QListView {
-                            id: signerlist
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 16
-                            model: walletInfo.walletSingleSignerAssigned
-                            ScrollBar.vertical: ScrollBar { active: true }
-                            delegate: QWalletKeyDelegate {
-                                width: signerlist.width
-                                signerName: model.singleSigner_name
-                                signerXFP: model.singleSigner_masterFingerPrint
-                                signerType: model.single_signer_type
-                                deviceType: model.single_signer_devicetype
-                                tagType: model.single_signer_tag
-                                card_id: model.single_signer_device_cardid
-                                accountIndex: model.single_signer_account_index
-                                isValueKey: model.single_signer_value_key
-                                onViewPoliciesRequest: {
-                                    var objectRequest = {
-                                        "requestType": "viewPolicies",
-                                        "requestData": AppModel.walletInfo.walletId
-                                    }
-                                    QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
-                                }
-                            }
-                        }
-                    }
-                }
+            QWalletConfigKeys {
+
             }
         }
     }
-
+    bottomLeft: Item{}
     bottomRight: Row{
         spacing: 12
         QButtonLargeTail {
@@ -398,16 +192,6 @@ QOnScreenContent {
                 mapMenu: [
                     {
                         visible: myRole !== "FACILITATOR_ADMIN",
-                        label: STR.STR_QML_198,
-                        icon: "qrc:/Images/Images/download.png",
-                        iconRight: "",
-                        color: "#031F2B",
-                        enable: myRole !== "FACILITATOR_ADMIN",
-                        subMenu: null,
-                        action: function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST); }
-                    },
-                    {
-                        visible: myRole !== "FACILITATOR_ADMIN",
                         label: STR.STR_QML_532,
                         icon: "qrc:/Images/Images/importFile.svg",
                         iconRight: "",
@@ -445,6 +229,16 @@ QOnScreenContent {
                         enable: myRole !== "FACILITATOR_ADMIN",
                         subMenu: null,
                         action: function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_UTXOS_REQUEST); }
+                    },
+                    {
+                        visible: myRole !== "FACILITATOR_ADMIN",
+                        label: STR.STR_QML_198,
+                        icon: "qrc:/Images/Images/received-dark.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: myRole !== "FACILITATOR_ADMIN",
+                        subMenu: null,
+                        action: function(){ QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_CHANGE_ADDRESS_REQUEST); }
                     },
                     {
                         visible: true,
@@ -493,6 +287,19 @@ QOnScreenContent {
                         }
                     },
                     {
+                        visible: true,
+                        label: (AppModel.walletInfo.isArchived ? STR.STR_QML_1728 : STR.STR_QML_1727),
+                        icon: (AppModel.walletInfo.isArchived ? "qrc:/Images/Images/UnArchiveBox.png" : "qrc:/Images/Images/ArchiveBox.png"),
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            othersContextMenu.close()
+                            AppModel.walletInfo.isArchived = !AppModel.walletInfo.isArchived
+                        }
+                    },
+                    {
                         visible: isCanDeleted,
                         label: STR.STR_QML_332,
                         icon: "qrc:/Images/Images/Delete.svg",
@@ -508,7 +315,7 @@ QOnScreenContent {
                                 modelConfirmDelete.open();
                             }
                         }
-                    },
+                    }
                 ]
             }
         }
@@ -525,111 +332,241 @@ QOnScreenContent {
                 exportContextMenu.y = 20 - exportContextMenu.height
                 exportContextMenu.open()
             }
-            QContextMenu {
+
+            QMultiContextMenu {
                 id: exportContextMenu
-                menuWidth: 320
-                labels: [
-                    STR.STR_QML_324,
-                    STR.STR_QML_325,
-                    STR.STR_QML_326,
-                    STR.STR_QML_327,
-                    STR.STR_QML_328,
-                    STR.STR_QML_1531,
-                    STR.STR_QML_1279,
-                    STR.STR_QML_1280,
-                    STR.STR_QML_674
+                menuWidth: 300
+                subMenuWidth: 300
+                property var exportConfigurationMenu: [
+                    {
+                        visible: true,
+                        label: "As BSMS",
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // Export Wallet BSMS File
+                            exportContextMenu.close()
+                            exportwalletDialog.exportFormat = NUNCHUCKTYPE.DESCRIPTOR
+                            exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                    + ".bsms"
+                            exportwalletDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: "As BBQR",
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            exportContextMenu.close()
+                            // "Export via BBQR"
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BBQR"
+                            qrcodeExportResult.open()
+                            var datalegacy = {
+                                "qrtype": "BBQR-Coldcard"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: "As BC-UR2 QR (legacy)",
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // "Export as BC-UR2 QR (legacy)"
+                            exportContextMenu.close()
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2_Legacy"
+                            qrcodeExportResult.open()
+                            var datalegacy = {
+                                "qrtype": "BC-UR2-QR-Legacy"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: "As BC-UR2 QR",
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // "Export as BC-UR2 QR"
+                            exportContextMenu.close()
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2"
+                            qrcodeExportResult.open()
+                            var data_seedhammer = {
+                                "qrtype": "BC-UR2-QR"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, data_seedhammer)
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: "To COLDCARD",
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            exportContextMenu.close()
+                            // "Export To Coldcard"
+                            exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD
+                            exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                    + "-Coldcard-Config.txt"
+                            exportwalletDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: "To BitBox",
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            //"Export wallet to Bitbox"
+                            exportContextMenu.close()
+                            var addrs = AppModel.walletInfo.walletunUsedAddressList;
+                            if(addrs.length > 0){
+                                displayAddressBusybox.addrToVerify = addrs[0]
+                                AppModel.startDisplayAddress(AppModel.walletInfo.walletId, addrs[0])
+                            }
+                        }
+                    }
                 ]
-                icons: [
-                    "qrc:/Images/Images/description.png",
-                    "qrc:/Images/Images/Backup.png",
-                    "qrc:/Images/Images/Backup.png",
-                    "qrc:/Images/Images/Backup.png",
-                    "qrc:/Images/Images/fileDownload.png",
-                    "qrc:/Images/Images/exportqr.png",
-                    "qrc:/Images/Images/exportqr.png",
-                    "qrc:/Images/Images/exportqr.png",
-                    "qrc:/Images/Images/fileDownload.png"
-                ]
-                functions: [
-                    function() {
-                        // Export Wallet BSMS File
-                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.DESCRIPTOR
-                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
-                                + ".bsms"
-                        exportwalletDialog.open()
-                    },
-                    function() {
-                        // Export Wallet Database
-                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.DB
-                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
-                                + "-database.dat"
-                        exportwalletDialog.open()
-                    },
-                    function() {
-                        // "Export Transaction History (CSV)"
-                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.TRANSACTION_CSV
-                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
-                                + "-tx-history.csv"
-                        exportwalletDialog.open()
-                    },
-                    function() {
-                        // "Export UTXOs (CSV)"
-                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.UTXO_CSV
-                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
-                                + "-utxos.csv"
-                        exportwalletDialog.open()
-                    },
-                    function() {
-                        // "Export To Coldcard"
-                        exportwalletDialog.exportFormat = NUNCHUCKTYPE.COLDCARD
-                        exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
-                                + "-Coldcard-Config.txt"
-                        exportwalletDialog.open()
-                    },
-                    function() {
-                        // "Export via BBQR"
-                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BBQR"
-                        qrcodeExportResult.open()
-                        var datalegacy = {
-                            "qrtype": "BBQR-Coldcard"
+                property var exportTransactionMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1713,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() { // "Export PDF invoices"
+                            exportContextMenu.close()
+                            var currentDate = new Date();
+                            var monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                              "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                            var day = currentDate.getDate();
+                            var month = monthNames[currentDate.getMonth()];
+                            var year = currentDate.getFullYear();
+                            var today = day + '' + month + '' + year;
+                            exportwalletDialog.visible = false
+                            exportwalletDialog.exportFormat = NUNCHUCKTYPE.TRANSACTION_PDF
+                            exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                                            + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                                            + "_transaction_history_"
+                                                            + today
+                                                            + ".pdf"
+                            exportwalletDialog.open()
                         }
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
                     },
-                    function() {
-                        // "Export as BC-UR2 QR (legacy)"
-                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2_Legacy"
-                        qrcodeExportResult.open()
-                        var datalegacy = {
-                            "qrtype": "BC-UR2-QR-Legacy"
-                        }
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, datalegacy)
-                    },
-                    function() {
-                        // "Export as BC-UR2 QR"
-                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(AppModel.walletInfo.walletName) + "_BCUR2"
-                        qrcodeExportResult.open()
-                        var data_seedhammer = {
-                            "qrtype": "BC-UR2-QR"
-                        }
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_QRCODE, data_seedhammer)
-                    },
-                    function() {
-                        //"Export wallet to Bitbox"
-                        var addrs = AppModel.walletInfo.walletunUsedAddressList;
-                        if(addrs.length > 0){
-                            displayAddressBusybox.addrToVerify = addrs[0]
-                            AppModel.startDisplayAddress(AppModel.walletInfo.walletId, addrs[0])
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1714,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            exportContextMenu.close()
+                            var currentDate = new Date();
+                            var monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                              "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                            var day = currentDate.getDate();
+                            var month = monthNames[currentDate.getMonth()];
+                            var year = currentDate.getFullYear();
+                            var today = day + '' + month + '' + year;
+                            exportwalletDialog.visible = false
+                            exportwalletDialog.exportFormat = NUNCHUCKTYPE.TRANSACTION_CSV
+                            exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                                            + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                                            + "_transaction_history_"
+                                                            + today
+                                                            + ".csv"
+                            exportwalletDialog.open()
                         }
                     },
                 ]
-                onItemClicked: {
-                    functions[index]()
-                }
+                mapMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_347,
+                        icon: "qrc:/Images/Images/Backup.png",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: exportConfigurationMenu,
+                        action: function(){
+
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_325,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            // Export Wallet Database
+                            exportwalletDialog.exportFormat = NUNCHUCKTYPE.DB
+                            exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+                                    + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                    + "-database.dat"
+                            exportwalletDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_326,
+                        icon: "qrc:/Images/Images/fileDownload.png",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: exportTransactionMenu,
+                        action: function(){
+
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_327,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            // "Export UTXOs (CSV)"
+                            exportwalletDialog.exportFormat = NUNCHUCKTYPE.UTXO_CSV
+                            exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                    + "-utxos.csv"
+                            exportwalletDialog.open()
+                        }
+                    }
+                ]
             }
         }
     }

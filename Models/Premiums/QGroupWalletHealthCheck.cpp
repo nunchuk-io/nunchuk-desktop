@@ -18,58 +18,66 @@ QGroupWalletHealthCheck::~QGroupWalletHealthCheck()
 {
 }
 
+QString QGroupWalletHealthCheck::groupId() const
+{
+    if (auto dashboard = dashBoardPtr()) {
+        return dashboard->groupId();
+    }
+    return "";
+}
+
 void QGroupWalletHealthCheck::GetStatuses()
 {
     if (auto dashboard = dashBoardPtr()) {
         QPointer<QGroupWalletHealthCheck> safeThis(this);
-        runInThread([safeThis, dashboard]() ->QJsonArray{
+        runInThread([safeThis]() ->QJsonArray{
+            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
             QJsonObject output;
             QString errormsg = "";
-            if (safeThis && safeThis.data()->isUserWallet()) {
-                Draco::instance()->GetWalletHealthStatus(dashboard->wallet_id(), output, errormsg);
+            if (ptrLamda->isUserWallet()) {
+                Draco::instance()->GetWalletHealthStatus(ptrLamda->wallet_id(), output, errormsg);
             }
             else {
-                Byzantine::instance()->GetWalletHealthStatus(dashboard->groupId(), dashboard->wallet_id(), output, errormsg);
+                Byzantine::instance()->GetWalletHealthStatus(ptrLamda->groupId(), ptrLamda->wallet_id(), output, errormsg);
             }
             return output["statuses"].toArray();
         },[safeThis, dashboard](QJsonArray statuses) {
             QJsonArray result;
-            if(safeThis) {
-                for (auto obj : statuses) {
-                    QJsonObject status = obj.toObject();
-                    QJsonValue last = status["last_health_check_time_millis"];
-                    if(last.isNull()){
-                        status["lastState"] = "NotCheckedYet";
-                    }
-                    else{
-                        double last_health_check_time_millis = last.toDouble();
-                        double time_distance = safeThis.data()->CurrentTimeToMillis() - last_health_check_time_millis;
-                        if (time_distance < safeThis.data()->SixMonthToMillis()) {
-                            // Last checked: Less than 6 months ago
-                            status["lastState"] = "LessThan6months";
-                        } else if (time_distance > safeThis.data()->SixMonthToMillis() && time_distance < safeThis.data()->YearToMillis()) {
-                            // Last checked: More than 6 months ago
-                            status["lastState"] = "MoreThan6months";
-                        } else if (time_distance > safeThis.data()->YearToMillis()) {
-                            // Last checked: More than 6 months ago
-                            status["lastState"] = "MoreThan1year";
-                        }
-                    }
-                    QString xfp = status["xfp"].toString();
-                    status["keyinfo"] = dashboard->GetSigner(xfp);
-                    auto reminder = safeThis.data()->GetReminder(xfp);
-                    if (reminder.isEmpty()) {
-                        status["reminder"] = {};
-                    }
-                    else {
-                        status["reminder"] = reminder;
-                    }
-                    result.append(status);
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+            for (auto obj : statuses) {
+                QJsonObject status = obj.toObject();
+                QJsonValue last = status["last_health_check_time_millis"];
+                if(last.isNull()){
+                    status["lastState"] = "NotCheckedYet";
                 }
-                DBG_INFO << "safeThis" << safeThis;
-                safeThis.data()->m_healthStatuses = result;
-                emit safeThis.data()->healthStatusesChanged();
+                else{
+                    double last_health_check_time_millis = last.toDouble();
+                    double time_distance = ptrLamda.data()->CurrentTimeToMillis() - last_health_check_time_millis;
+                    if (time_distance < ptrLamda.data()->SixMonthToMillis()) {
+                        // Last checked: Less than 6 months ago
+                        status["lastState"] = "LessThan6months";
+                    } else if (time_distance > ptrLamda.data()->SixMonthToMillis() && time_distance < ptrLamda.data()->YearToMillis()) {
+                        // Last checked: More than 6 months ago
+                        status["lastState"] = "MoreThan6months";
+                    } else if (time_distance > ptrLamda.data()->YearToMillis()) {
+                        // Last checked: More than 6 months ago
+                        status["lastState"] = "MoreThan1year";
+                    }
+                }
+                QString xfp = status["xfp"].toString();
+                status["keyinfo"] = dashboard->GetSigner(xfp);
+                auto reminder = ptrLamda.data()->GetReminder(xfp);
+                if (reminder.isEmpty()) {
+                    status["reminder"] = {};
+                }
+                else {
+                    status["reminder"] = reminder;
+                }
+                result.append(status);
             }
+            DBG_INFO << "safeThis" << ptrLamda;
+            ptrLamda.data()->m_healthStatuses = result;
+            emit ptrLamda.data()->healthStatusesChanged();
         });
     }
 }
@@ -226,33 +234,32 @@ void QGroupWalletHealthCheck::setReminderKeys(const QList<QVariant> &newReminder
 
 void QGroupWalletHealthCheck::GetKeyHealthReminder()
 {
-    if (auto dashboard = dashBoardPtr()) {
-        QPointer<QGroupWalletHealthCheck> safeThis(this);
-        runInThread([safeThis, dashboard]() ->QJsonArray{
-            QJsonObject output;
-            QString errormsg = "";
-            bool ret {false};
-            if (dashboard->isUserWallet()) {
-                ret = Draco::instance()->GetKeyHealthReminder(dashboard->wallet_id(), output, errormsg);
-            }
-            else {
-                ret = Byzantine::instance()->GetKeyHealthReminder(dashboard->groupId(), dashboard->wallet_id(), output, errormsg);
-            }
-            DBG_INFO << output;
-            return output["reminders"].toArray();
-        },[safeThis](QJsonArray reminders) {
-            if (safeThis) {
-                safeThis.data()->m_reminders = reminders;
-            }
-        });
-    }
+    QPointer<QGroupWalletHealthCheck> safeThis(this);
+    runInThread([safeThis]() ->QJsonArray{
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        QJsonObject output;
+        QString errormsg = "";
+        bool ret {false};
+        if (ptrLamda->isUserWallet()) {
+            ret = Draco::instance()->GetKeyHealthReminder(ptrLamda->wallet_id(), output, errormsg);
+        }
+        else {
+            ret = Byzantine::instance()->GetKeyHealthReminder(ptrLamda->groupId(), ptrLamda->wallet_id(), output, errormsg);
+        }
+        DBG_INFO << output;
+        return output["reminders"].toArray();
+    },[safeThis](QJsonArray reminders) {
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        ptrLamda->m_reminders = reminders;
+    });
 }
 
 void QGroupWalletHealthCheck::AddOrUpdateKeyHealthReminder(const QStringList xfps, const QString frequency, const QString start_date_millis)
 {
     if (auto dashboard = dashBoardPtr()) {
         QPointer<QGroupWalletHealthCheck> safeThis(this);
-        runInConcurrent([dashboard, xfps, frequency, start_date_millis]() ->bool{
+        runInConcurrent([safeThis, xfps, frequency, start_date_millis]() ->bool{
+            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
             QJsonObject requestBody;
             QStringList xfps_list = xfps;
             xfps_list.removeAll("");
@@ -269,18 +276,19 @@ void QGroupWalletHealthCheck::AddOrUpdateKeyHealthReminder(const QStringList xfp
             QJsonObject output;
             QString errormsg = "";
             bool ret {false};
-            if (dashboard->isUserWallet()) {
-                ret = Draco::instance()->AddOrUpdateKeyHealthReminder(dashboard->wallet_id(), requestBody, output, errormsg);
+            if (ptrLamda->isUserWallet()) {
+                ret = Draco::instance()->AddOrUpdateKeyHealthReminder(ptrLamda->wallet_id(), requestBody, output, errormsg);
             }
             else {
-                ret = Byzantine::instance()->AddOrUpdateKeyHealthReminder(dashboard->groupId(), dashboard->wallet_id(), requestBody, output, errormsg);
+                ret = Byzantine::instance()->AddOrUpdateKeyHealthReminder(ptrLamda->groupId(), ptrLamda->wallet_id(), requestBody, output, errormsg);
             }
             return ret;
         },[safeThis, dashboard](bool ret) {
-            if (safeThis && ret) {
-                safeThis->GetKeyHealthReminder();
-                safeThis->GetStatuses();
-                emit safeThis->isAllReminderChanged();
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+            if (ret) {
+                ptrLamda->GetKeyHealthReminder();
+                ptrLamda->GetStatuses();
+                emit ptrLamda->isAllReminderChanged();
                 dashboard->setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_REMINDER_POPULATED);
                 AppModel::instance()->showToast(0, "Reminders updated", EWARNING::WarningType::SUCCESS_MSG);
             }

@@ -159,7 +159,7 @@ public:
 
     bool hasWallet() const;
 
-    bool showDashBoard() const;
+    bool showDashBoard();
     void setShowDashBoard(bool showDashBoard);
     int mInfo() const;
     int nInfo() const;

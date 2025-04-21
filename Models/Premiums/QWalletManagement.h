@@ -17,6 +17,7 @@ public:
     virtual ~QWalletManagement();
     void GetListWallet(int mode);
     void UpdateSigner(const QJsonObject &signer);
+    void SyncDeleteWallets(int mode);
     void UpdateSyncWalletFlows();
     QString UpdateSyncWalletFlows(bool yes, bool no);
     WalletIdList wallets() const;

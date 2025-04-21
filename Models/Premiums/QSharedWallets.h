@@ -13,6 +13,7 @@ class QSharedWallets : public QObject
     Q_OBJECT
     Q_PROPERTY(int                  currentIndex    READ currentIndex   WRITE setCurrentIndex       NOTIFY currentIndexChanged)
     Q_PROPERTY(GroupSandboxModel*   sandboxList     READ sandboxList                                NOTIFY sandboxListChanged)
+
 private:
     QSharedWallets();
     ~QSharedWallets();
@@ -38,8 +39,13 @@ public:
 
     QWalletPtr RecoverSandboxWallet(const QString &file_path);
     nunchuk::GroupSandbox CreateSandboxFromRecoverWallet(const QWalletPtr& wallet);
+
+    QStringList deprecatedWallets() const;
+    void CreateDeprecatedWallets();
 public slots:
+    bool importQrSandboxWallet(const QStringList qrtags);
     void changeToWallet();
+    bool checkSandboxWalletLimit();
 signals:
     void sandboxListChanged();
     void currentIndexChanged();
@@ -50,6 +56,7 @@ private:
     QGroupSandboxModelPtr   m_sandboxList;
     QJsonArray              m_signerExistList;
     QString                 m_uid {""};
+    QStringList             m_deprecatedWallets;
 };
 
 #endif // QSHAREDWALLETS_H

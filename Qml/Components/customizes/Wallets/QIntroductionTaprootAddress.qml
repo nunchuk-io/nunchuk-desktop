@@ -33,7 +33,7 @@ import "../../../Components/customizes/QRCodes"
 import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
 
-QOnScreenContentTypeB {
+QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
@@ -51,9 +51,9 @@ QOnScreenContentTypeB {
                 height: 300
                 radius: 24
                 color: "#D0E2FF"
-                QPicture {
-                    width: 728
-                    height: 300
+                QPictureSmooth {
+                    smWidth: 728
+                    smHeight: 300
                     anchors.centerIn: parent
                     source: "qrc:/Images/Images/taproot-address.svg"
                 }

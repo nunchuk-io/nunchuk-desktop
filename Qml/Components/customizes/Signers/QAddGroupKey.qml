@@ -33,16 +33,36 @@ import "../../../../localization/STR_QML.js" as STR
 
 Loader {
     id: _source
+    property alias signerData: dataSingle
+    QSingleSignerData {
+        id: dataSingle
+    }
+
     signal hardwareClicked()
     signal removeClicked(var idx)
     signal recoverKeyClick(var idx, var xfp)
     signal bip32PathClick(var xfp, var path)
-    sourceComponent: modelData.has ? (modelData.hisSigner ? signerAdded : notMeAdded) : signerAdd
+    sourceComponent: if (newWalletInfo.isReplaceGroupWallet) {
+                         if (dataSingle.single_name === "" || dataSingle.single_name === "ADDED") {
+                            return replaceSignerAdd
+                         } else {
+                             return dataSingle.single_is_local ? replaceSignerAdded : replaceNotMeAdded
+                         }
+                     } else {
+                         return dataSingle.single_masterFingerPrint !== ""
+                                 ? (dataSingle.single_is_local ? signerAdded : notMeAdded)
+                                 : signerAdd
+                     }
+
+    function isAdded() {
+        return dataSingle.single_masterFingerPrint === "" && dataSingle.single_name === "ADDED"
+    }
+
     Component {
         id: signerAdd
         QDashRectangle {
             width: 352
-            height: 72
+            height: Math.max(maxColumn.childrenRect.height + 12*2, 72)
             radius: 8
             borderWitdh: 2
             borderColor: "#031F2B"
@@ -62,12 +82,13 @@ Loader {
                     color: "#F5F5F5"
                 }
                 Column {
+                    id: maxColumn
                     width: 150
                     spacing: 4
                     anchors.verticalCenter: parent.verticalCenter
                     QLato {
                         width: 150
-                        text: STR.STR_QML_1557.arg(modelData.key_index + 1)
+                        text: STR.STR_QML_1557.arg(index + 1)
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -77,7 +98,7 @@ Loader {
                         color: "#A66800"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
-                        visible: modelData.isOccupied
+                        visible: dataSingle.single_isOccupied
                     }
                 }
             }
@@ -90,9 +111,9 @@ Loader {
                 width: label.paintedWidth + 2*16
                 height: 36
                 type: eTypeB
-                label.text: modelData.isAdded ? STR.STR_QML_104 : STR.STR_QML_941
+                label.text: isAdded() ? STR.STR_QML_104 : STR.STR_QML_941
                 label.font.pixelSize: 12
-                visible: !modelData.isAdded
+                visible: !isAdded()
                 onButtonClicked: {
                     hardwareClicked()
                 }
@@ -108,7 +129,7 @@ Loader {
                 font.weight: Font.Bold
                 font.pixelSize: 12
                 text: STR.STR_QML_104
-                visible: modelData.isAdded
+                visible: isAdded()
             }
         }
     }
@@ -130,8 +151,8 @@ Loader {
                 QCircleIcon {
                     bgSize: 48
                     icon.iconSize: 18
-                    icon.typeStr: modelData.type
-                    icon.tag: modelData.tag
+                    icon.type: dataSingle.single_type
+                    icon.tag: dataSingle.single_tag
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#F5F5F5"
                 }
@@ -143,7 +164,7 @@ Loader {
                     spacing: 4
                     QLato {
                         width: parent.width
-                        text: modelData.name
+                        text: dataSingle.single_name
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -156,7 +177,7 @@ Loader {
                             radius: 20
                             QText {
                                 id: signerTypeText
-                                text: GlobalData.signers(modelData.signer_type)
+                                text: GlobalData.signers(dataSingle.single_type)
                                 font.family: "Lato"
                                 font.weight: Font.Bold
                                 font.pixelSize: 10
@@ -169,7 +190,7 @@ Loader {
                             height: 16
                             color: "#EAEAEA"
                             radius: 8
-                            visible: modelData.account_index > 0
+                            visible: dataSingle.single_account_index > 0
                             QText {
                                 id: accttext
                                 font.family: "Lato"
@@ -177,19 +198,19 @@ Loader {
                                 font.pixelSize: 10
                                 anchors.centerIn: parent
                                 font.weight: Font.Bold
-                                text: qsTr("Acct %1").arg(modelData.account_index)
+                                text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                             }
                         }
                     }
                     QLato {
                         width: parent.width
                         text: {
-                            if (modelData.card_id !== "") {
-                                var card_id_text = modelData.card_id
+                            if (dataSingle.single_device_cardid !== "") {
+                                var card_id_text = dataSingle.single_device_cardid
                                 var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
                                 return "Card ID: ••" + textR
                             } else {
-                                "XFP: " + modelData.xfp
+                                "XFP: " + dataSingle.single_masterFingerPrint
                             }
                         }
                         horizontalAlignment: Text.AlignLeft
@@ -197,9 +218,10 @@ Loader {
                         font.capitalization: Font.AllUppercase
                         font.pixelSize: 12
                     }
+
                     QLato {
                         width: paintedWidth + 4 + 12
-                        text: qsTr("BIP32 path: %1").arg(modelData.derivationPath)
+                        text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
                         color: "#757575"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
@@ -213,8 +235,8 @@ Loader {
                                 verticalCenter: parent.verticalCenter
                                 right: parent.right
                             }
-                            visible: modelData.signer_type === NUNCHUCKTYPE.SOFTWARE ||
-                                     modelData.signer_type === NUNCHUCKTYPE.HARDWARE
+                            visible: dataSingle.single_type === NUNCHUCKTYPE.SOFTWARE ||
+                                     dataSingle.single_type === NUNCHUCKTYPE.HARDWARE
                         }
                         MouseArea {
                             visible: _icon.visible
@@ -222,7 +244,7 @@ Loader {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                bip32PathClick(modelData.xfp, modelData.derivationPath)
+                                bip32PathClick(dataSingle.single_masterFingerPrint, dataSingle.single_derivationPath)
                             }
                         }
                     }
@@ -255,7 +277,7 @@ Loader {
             border.width: 1
             color: "transparent"
             radius: 8
-            property var colorData: tmpColors[modelData.colorIndex]
+            property var colorData: tmpColors[index]
             Row {
                 anchors {
                     fill: parent
@@ -295,7 +317,7 @@ Loader {
                     spacing: 4
                     QLato {
                         width: parent.width
-                        text: modelData.name !== "" ? modelData.name : STR.STR_QML_1557.arg(modelData.key_index + 1)
+                        text: STR.STR_QML_1557.arg(index + 1)
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -304,7 +326,7 @@ Loader {
                         height: 16
                         color: "#EAEAEA"
                         radius: 8
-                        visible: modelData.account_index > 0
+                        visible: dataSingle.single_account_index > 0
                         QText {
                             id: accttext
                             font.family: "Lato"
@@ -312,18 +334,18 @@ Loader {
                             font.pixelSize: 10
                             anchors.centerIn: parent
                             font.weight: Font.Bold
-                            text: qsTr("Acct %1").arg(modelData.account_index)
+                            text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                         }
                     }
                     QLato {
                         width: parent.width
                         text: {
-                            if (modelData.card_id !== "") {
-                                var card_id_text = modelData.card_id
+                            if (dataSingle.single_device_cardid !== "") {
+                                var card_id_text = dataSingle.single_device_cardid
                                 var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
                                 return "Card ID: ••" + textR
                             } else {
-                                "XFP: " + modelData.xfp
+                                "XFP: " + dataSingle.single_masterFingerPrint
                             }
                         }
                         horizontalAlignment: Text.AlignLeft
@@ -333,7 +355,7 @@ Loader {
                     }
                     QLato {
                         width: parent.width
-                        text: qsTr("BIP32 path: %1").arg(modelData.derivationPath)
+                        text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
                         color: "#757575"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
@@ -354,7 +376,417 @@ Loader {
                 label.font.pixelSize: 12
                 visible: sandbox.url === ""
                 onButtonClicked: {
-                    recoverKeyClick(index, modelData.xfp)
+                    recoverKeyClick(index, dataSingle.single_masterFingerPrint)
+                }
+            }
+        }
+    }
+    Component {
+        id: replaceSignerAdd
+        QDashRectangle {
+            width: 352
+            height: maxColumn.childrenRect.height + 12*2
+            radius: 8
+            borderWitdh: 2
+            borderColor: "#031F2B"
+            Row {
+                anchors {
+                    fill: parent
+                    margins: 12
+                }
+                spacing: 12
+                QBadge {
+                    width: 48
+                    height: 48
+                    iconSize: 24
+                    radius: 48
+                    icon: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "#F5F5F5"
+                    opacity: 0.4
+                }
+                Column {
+                    id: maxColumn
+                    width: 150
+                    spacing: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    QLato {
+                        width: 150
+                        text: STR.STR_QML_1557.arg(index + 1)
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QLato {
+                        width: parent.width
+                        text: {
+                            if (dataSingle.single_device_cardid !== "") {
+                                var card_id_text = dataSingle.single_device_cardid
+                                var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
+                                return "Card ID: ••" + textR
+                            } else {
+                                "XFP: " + dataSingle.single_masterFingerPrint
+                            }
+                        }
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        font.capitalization: Font.AllUppercase
+                        font.pixelSize: 12
+                    }
+                    QLato {
+                        width: 150
+                        text: STR.STR_QML_1705
+                        font.weight: Font.Normal
+                        font.pixelSize: 12
+                        color: "#A66800"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+            QTextButton {
+                anchors {
+                    verticalCenter: parent.verticalCenter
+                    right: parent.right
+                    rightMargin: 12
+                }
+                width: label.paintedWidth + 2*16
+                height: 36
+                type: eTypeB
+                label.text: STR.STR_QML_1368
+                label.font.pixelSize: 12
+                onButtonClicked: {
+                    hardwareClicked()
+                }
+            }
+        }
+    }
+    Component {
+        id: replaceSignerAdded
+        Column {
+            width: 352
+            spacing: 8
+            Rectangle {
+                width: 352
+                height: maxColumn.childrenRect.height + 12*2
+                color: dataSingle.single_isReplaced ? "#A7F0BA" : "#FDEBD2"
+                radius: 8
+                Row {
+                    anchors {
+                        fill: parent
+                        margins: 12
+                    }
+                    spacing: 12
+                    QCircleIcon {
+                        bgSize: 48
+                        icon.iconSize: 18
+                        icon.type: dataSingle.single_type
+                        icon.tag: dataSingle.single_tag
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: "#F5F5F5"
+                    }
+                    Column {
+                        id: maxColumn
+                        height: childrenRect.height
+                        width: 150
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        QLato {
+                            width: parent.width
+                            text: dataSingle.single_name
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        Row {
+                            spacing: 4
+                            Rectangle {
+                                width: signerTypeText.width + 8
+                                height: 16
+                                color: "#EAEAEA"
+                                radius: 20
+                                QText {
+                                    id: signerTypeText
+                                    text: GlobalData.signers(dataSingle.single_type)
+                                    font.family: "Lato"
+                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    color: "#031F2B"
+                                }
+                            }
+                            Rectangle {
+                                width: accttext.width + 10
+                                height: 16
+                                color: "#EAEAEA"
+                                radius: 8
+                                visible: dataSingle.single_account_index > 0
+                                QText {
+                                    id: accttext
+                                    font.family: "Lato"
+                                    color: "#031F2B"
+                                    font.pixelSize: 10
+                                    anchors.centerIn: parent
+                                    font.weight: Font.Bold
+                                    text: qsTr("Acct %1").arg(dataSingle.single_account_index)
+                                }
+                            }
+                        }
+                        QLato {
+                            width: parent.width
+                            text: {
+                                if (dataSingle.single_device_cardid !== "") {
+                                    var card_id_text = dataSingle.single_device_cardid
+                                    var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
+                                    return "Card ID: ••" + textR
+                                } else {
+                                    "XFP: " + dataSingle.single_masterFingerPrint
+                                }
+                            }
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            font.capitalization: Font.AllUppercase
+                            font.pixelSize: 12
+                        }
+
+                        QLato {
+                            width: paintedWidth + 4 + 12
+                            text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
+                            color: "#757575"
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: 12
+                            font.underline: sandbox.url !== "" && _icon.visible
+                            QIcon {
+                                id: _icon
+                                iconSize: 12
+                                source: "qrc:/Images/Images/editBIP32.svg"
+                                anchors {
+                                    verticalCenter: parent.verticalCenter
+                                    right: parent.right
+                                }
+                                visible: dataSingle.single_type === NUNCHUCKTYPE.SOFTWARE ||
+                                         dataSingle.single_type === NUNCHUCKTYPE.HARDWARE
+                            }
+                            MouseArea {
+                                visible: _icon.visible
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    bip32PathClick(dataSingle.single_masterFingerPrint, dataSingle.single_derivationPath)
+                                }
+                            }
+                        }
+                    }
+                }
+                QTextButton {
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        right: parent.right
+                        rightMargin: 12
+                    }
+                    width: label.paintedWidth + 2*16
+                    height: 36
+                    type: eTypeB
+                    label.text: dataSingle.single_isReplaced ? STR.STR_QML_1134 : STR.STR_QML_1368
+                    label.font.pixelSize: 12
+                    onButtonClicked: {
+                        if (dataSingle.single_isReplaced) {
+                            removeClicked(index)
+                        } else {
+                            hardwareClicked()
+                        }
+                    }
+                }
+            }
+            Item {
+                height: 16
+                width: parent.width
+                visible: dataSingle.single_isReplaced
+                anchors {
+                    left: parent.left
+                    leftMargin: 16
+                }
+                Row {
+                    spacing: 4
+                    QIcon {
+                        iconSize: 16
+                        source: "qrc:/Images/Images/replace.svg"
+                    }
+                    QLato {
+                        height: 16
+                        text: {
+                            if (dataSingle.single_isReplaced === false) {
+                                return ""
+                            }
+                            var keyReplaced = dataSingle.single_keyReplaced
+                            var type = keyReplaced.single_signer_type
+                            var id = ""
+                            if (type === NUNCHUCKTYPE.NFC) {
+                                var card_id = keyReplaced.single_signer_device_cardid
+                                var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
+                                id = "CARD ID: ••" + textR
+                            } else {
+                                id = "XFP: " + keyReplaced.singleSigner_masterFingerPrint.toUpperCase()
+                            }
+                            return STR.STR_QML_1380.arg(keyReplaced.singleSigner_name).arg(id)
+                        }
+                        font.pixelSize: 12
+                        font.weight: Font.Normal
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: replaceNotMeAdded
+        Column {
+            width: 352
+            spacing: 8
+            property var colorData: tmpColors[index]
+            Rectangle {
+                width: 352
+                height: maxColumn.childrenRect.height + 12*2
+                color: dataSingle.single_isReplaced ? "#A7F0BA" : "#FDEBD2"
+                radius: 8
+                Row {
+                    anchors {
+                        fill: parent
+                        margins: 12
+                    }
+                    spacing: 12
+                    QBadge {
+                        width: 48
+                        height: 48
+                        iconSize: 24
+                        radius: 48
+                        icon: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: "#F5F5F5"
+                        visible: sandbox.url === ""
+                    }
+                    Rectangle {
+                        border.width: 1
+                        border.color: "#DEDEDE"
+                        color: colorData.colorStr
+                        radius: 48
+                        width: 48
+                        height: 48
+                        anchors.verticalCenter: parent.verticalCenter
+                        QIcon {
+                            iconSize: 18
+                            anchors.centerIn: parent
+                            source: colorData.url
+                        }
+                        visible: sandbox.url !== ""
+                    }
+                    Column {
+                        id: maxColumn
+                        height: childrenRect.height
+                        width: 150
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        QLato {
+                            width: parent.width
+                            text: STR.STR_QML_1557.arg(index + 1)
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        Rectangle {
+                            width: accttext.width + 10
+                            height: 16
+                            color: "#EAEAEA"
+                            radius: 8
+                            visible: dataSingle.single_account_index > 0
+                            QText {
+                                id: accttext
+                                font.family: "Lato"
+                                color: "#031F2B"
+                                font.pixelSize: 10
+                                anchors.centerIn: parent
+                                font.weight: Font.Bold
+                                text: qsTr("Acct %1").arg(dataSingle.single_account_index)
+                            }
+                        }
+                        QLato {
+                            width: parent.width
+                            text: {
+                                if (dataSingle.single_device_cardid !== "") {
+                                    var card_id_text = dataSingle.single_device_cardid
+                                    var textR = card_id_text.substring(card_id_text.length - 5, card_id_text.length).toUpperCase()
+                                    return "Card ID: ••" + textR
+                                } else {
+                                    "XFP: " + dataSingle.single_masterFingerPrint
+                                }
+                            }
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            font.capitalization: Font.AllUppercase
+                            font.pixelSize: 12
+                        }
+                        QLato {
+                            width: parent.width
+                            text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
+                            color: "#757575"
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: 12
+                        }
+                    }
+                }
+                QTextButton {
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        right: parent.right
+                        rightMargin: 12
+                    }
+                    width: label.paintedWidth + 2*16
+                    height: 36
+                    type: eTypeB
+                    label.text: STR.STR_QML_1368
+                    label.font.pixelSize: 12
+                    visible: !dataSingle.single_isReplaced
+                    onButtonClicked: {
+                        hardwareClicked()
+                    }
+                }
+            }
+            Item {
+                height: 16
+                width: parent.width
+                visible: dataSingle.single_isReplaced
+                anchors {
+                    left: parent.left
+                    leftMargin: 16
+                }
+                Row {
+                    spacing: 4
+                    QIcon {
+                        iconSize: 16
+                        source: "qrc:/Images/Images/replace.svg"
+                    }
+                    QLato {
+                        height: 16
+                        text: {
+                            if (dataSingle.single_isReplaced === false) {
+                                return ""
+                            }
+                            var keyReplaced = dataSingle.single_keyReplaced
+                            var type = keyReplaced.single_signer_type
+                            var id = ""
+                            if (type === NUNCHUCKTYPE.NFC) {
+                                var card_id = keyReplaced.single_signer_device_cardid
+                                var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
+                                id = "CARD ID: ••" + textR
+                            } else {
+                                id = "XFP: " + keyReplaced.singleSigner_masterFingerPrint.toUpperCase()
+                            }
+                            return STR.STR_QML_1380_Other.arg(id)
+                        }
+                        font.pixelSize: 12
+                        font.weight: Font.Normal
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                 }
             }
         }

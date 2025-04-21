@@ -51,10 +51,18 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
     else if (type == "review-group-sandbox") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
-                if (sandbox->groupId().isEmpty()) {
+                if (sandbox->isRecovery()) {
                     QWarningMessage msg;
-                    auto w = bridge::nunchukImportWalletDescriptor(sandbox->filePathRecovery(), sandbox->groupName(), "", msg);
-                    if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+                    QWalletPtr w = NULL;
+                    if (!sandbox->filePathRecovery().isEmpty()) {
+                        w = bridge::nunchukImportWalletDescriptor(sandbox->filePathRecovery(), sandbox->groupName(), "", msg);
+                    } else if (!sandbox->qrTagsRecovery().isEmpty()) {
+                        w = bridge::nunchukImportKeystoneWallet(sandbox->qrTagsRecovery(), "", msg);
+                    } else {
+                        DBG_INFO << "Error not have data";
+                    }
+
+                    if(w && msg.type() == (int)EWARNING::WarningType::NONE_MSG){
                         AppModel::instance()->startReloadUserDb();
                         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                         QString msg_name = QString("%1 has been successfully recovered").arg(sandbox->groupName());
@@ -67,7 +75,8 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                     } else {
                         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
                     }
-                } else {
+                }
+                else {
                     sandbox->setScreenFlow("review-wallet");
                     sandbox->CreateSignerListReviewWallet();
                 }
@@ -133,23 +142,43 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                 sandbox->setScreenFlow("setup-group-wallet");
             }
         }
-    } else if (type == "switch-to-intro-taproot") {
+    }
+    else if (type == "switch-to-intro-taproot") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
                 sandbox->setScreenFlow("sandbox-intro-taproot");
             }
         }
-    } else if (type == "switch-to-taproot-warning-support") {
+    }
+    else if (type == "switch-to-taproot-warning-support") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
                 sandbox->setScreenFlow("sandbox-taproot-warning");
             }
         }
-    } else if (type == "switch-to-configure-value-keyset") {
+    }
+    else if (type == "switch-to-configure-value-keyset") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
                 sandbox->setScreenFlow("sandbox-configure-value-keyset");
                 sandbox->CreateSignerListReviewWallet();
+            }
+        }
+    } else if (type == "switch-to-enable-value-keyset") {
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            if (auto sandbox = w->groupSandboxPtr()) {
+                sandbox->setScreenFlow("value-keyset");
+            }
+        }
+    }
+    else if (type == "create-replace-wallet-sandbox") {
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            if (auto sandbox = w->groupSandboxPtr()) {
+                sandbox->FinalizeGroup();
+                w->setReplaceFlow("congratulation-done");
+                QMap<QString, bool> obj;
+                obj["isFirst"] = false;
+                QEventProcessor::instance()->sendEvent(E::EVT_REPLACE_KEYS_REQUEST, QVariant::fromValue(obj));
             }
         }
     }

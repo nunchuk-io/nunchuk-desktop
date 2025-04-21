@@ -10,6 +10,7 @@ Item {
     property string label: STR.STR_QML_1092
     property string description: "input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input input "
     height: _col.childrenRect.height
+    property bool   expanded: false
     Column {
         id: _col
         spacing: 12
@@ -57,12 +58,13 @@ Item {
                 border.width: 1
                 border.color: "#DEDEDE"
                 color: "#F5F5F5"
-                width: 42
+                width: _more.paintedWidth + 8*2
                 height: 24
                 radius: 24
                 QLato{
-                    anchors.fill: parent
-                    text: STR.STR_QML_1094
+                    id: _more
+                    anchors.centerIn: parent
+                    text: expanded ? STR.STR_QML_1421 : STR.STR_QML_1094
                     font.pixelSize: 12
                     scale: _mouse.pressed ? 1.1 : 1.0
                     verticalAlignment: Text.AlignVCenter
@@ -74,7 +76,13 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     anchors.fill: parent
                     onClicked: {
-                        _txt.maximumLineCount = _txt.lineCount + 1
+                        expanded = !expanded
+                        if(expanded) {
+                            _txt.maximumLineCount = 100
+                        }
+                        else {
+                            _txt.maximumLineCount = 6
+                        }
                     }
                 }
             }

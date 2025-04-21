@@ -233,9 +233,10 @@ QString QGroupMessageModel::convertLinksToHtml(const QString &text) const{
 
 void QGroupMessageModel::startDownloadConversation(const QString &wallet_id)
 {
+    DBG_INFO << "wallet_id";
     m_wallet_id = wallet_id;
     QPointer<QGroupMessageModel> safeThis(this);
-    runInThread([safeThis, wallet_id]() -> std::vector<nunchuk::GroupMessage> {
+    runInThread([wallet_id]() -> std::vector<nunchuk::GroupMessage> {
         QWarningMessage msg;
         int page_num = 0;
         const int page_size = 50;
@@ -257,11 +258,11 @@ void QGroupMessageModel::startDownloadConversation(const QString &wallet_id)
         });
         return list;
     },[safeThis](std::vector<nunchuk::GroupMessage> list) {
-        if (safeThis) {
-            if (list.size() > 0) {
-                safeThis->createGroupMessage(list);
-            }
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        if (list.size() > 0) {
+            ptrLamda->createGroupMessage(list);
         }
+        emit AppModel::instance()->groupWalletList()->unReadMessageCountChanged();
     });
 }
 

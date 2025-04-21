@@ -44,6 +44,7 @@ public:
 
 AppModel::AppModel(): m_inititalized{false},
     m_walletList(QWalletListModelPtr(new WalletListModel())),
+    m_groupWalletList(QWalletListModelPtr(new WalletListModel())),
     m_deviceList(QDeviceListModelPtr(new DeviceListModel())),
     m_masterSignerList(QMasterSignerListModelPtr(new MasterSignerListModel())),
     m_remoteSignerList(QSingleSignerListModelPtr(new SingleSignerListModel())),
@@ -54,7 +55,7 @@ AppModel::AppModel(): m_inititalized{false},
     m_transactionReplaceInfo(NULL),
     m_transactionPending(QTransactionListModelPtr(new TransactionListModel())),
     m_walletListCurrentIndex(-1),
-    m_chainTip(0), m_addSignerStep(-1), m_addSignerPercentage(0), m_txidReplacing(""),
+    m_chainTip(0), m_addSignerStep(-1), m_addSignerPercentage(0),
     m_fastestFee(1000), m_halfHourFee(1000), m_hourFee(1000), m_minFee(1000),
     m_addressBalance(0),m_mnemonic(""),
     m_softwareSignerDeviceList(QDeviceListModelPtr(new DeviceListModel())),
@@ -165,9 +166,10 @@ nunchuk::PrimaryKey AppModel::findPrimaryKey(const QString &fingerprint)
     return nunchuk::PrimaryKey();
 }
 
-void AppModel::clearPrimaryKeyList()
+void AppModel::createPrimaryKeyList()
 {
-    m_primaryKeys.clear();
+    m_primaryKeys = qUtils::GetPrimaryKeys(AppSetting::instance()->storagePath(), (nunchuk::Chain)AppSetting::instance()->primaryServer());
+    AppModel::instance()->setPrimaryKey(Draco::instance()->Uid());
 }
 
 void AppModel::setAddSignerWizard(int index)
@@ -625,17 +627,6 @@ void AppModel::setFastestFee(qint64 fee)
         m_fastestFee = fee;
         emit fastestFeeChanged();
     }
-}
-
-QString AppModel::getTxidReplacing() const
-{
-    return m_txidReplacing;
-}
-
-void AppModel::setTxidReplacing(const QString &txidReplacing)
-{
-    m_txidReplacing = txidReplacing;
-    emit txidReplacingChanged();
 }
 
 int AppModel::getAddSignerPercentage() const

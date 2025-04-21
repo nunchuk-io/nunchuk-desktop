@@ -601,7 +601,8 @@ QScreen {
                             hasOwner: modelData.wallet_hasOwner
                             primaryOwner: modelData.wallet_primaryOwner
                             isHotWallet: modelData.wallet_isHotWallet
-                            isSandboxWallet: model.wallet_isSanboxWallet
+                            isReplaced: modelData.wallet_isReplaced
+                            isSandboxWallet: modelData.wallet_isSanboxWallet
                             visible: modelData.wallet_id !== AppModel.walletInfo.walletId
                             enabled: visible
                             layer.enabled: true

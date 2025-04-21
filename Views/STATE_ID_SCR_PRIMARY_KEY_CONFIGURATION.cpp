@@ -49,21 +49,32 @@ void SCR_PRIMARY_KEY_CONFIGURATION_Exit(QVariant msg) {
 
 void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
     AppModel::instance()->setMasterSignerInfo( QMasterSignerPtr(new QMasterSigner()));
-    QMap<QString,QVariant> maps = msg.toMap();
-    QString mnemonic = maps["mnemonic"].toString();
-    QString username = maps["username"].toString();
-    QString passphrase = maps["passphrase"].toString();
-    DBG_INFO << username;
-    bool isAvail = Draco::instance()->pkey_username_availability(username);
-    if(!isAvail){
-        QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
-        QString nonce = Draco::instance()->get_pkey_nonce(address,username);
-        QString message = QString("%1%2").arg(username).arg(nonce);
-        QString signature = qUtils::SignLoginMessage(mnemonic,passphrase,message);
-        if(Draco::instance()->pkey_signup(address,username,signature)){
+    if (isBusy()) return;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([msg]() -> bool{
+        QMap<QString,QVariant> maps = msg.toMap();
+        QString mnemonic = maps["mnemonic"].toString();
+        QString username = maps["username"].toString();
+        QString passphrase = maps["passphrase"].toString();
+        DBG_INFO << username;
+        bool isAvail = Draco::instance()->pkey_username_availability(username);
+        bool ret {false};
+        if(!isAvail){
+            QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
+            QString nonce = Draco::instance()->get_pkey_nonce(address,username);
+            QString message = QString("%1%2").arg(username).arg(nonce);
+            QString signature = qUtils::SignLoginMessage(mnemonic,passphrase,message);
+            if(Draco::instance()->pkey_signup(address,username,signature)){
+                ret = true;
+            }
+        }
+        return ret;
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+        if (ret) {
             QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_FINISHED);
         }
-    }
+    });
 }
 
 void EVT_PRIMARY_KEY_CONFIGURATION_BACK_HANDLER(QVariant msg) {

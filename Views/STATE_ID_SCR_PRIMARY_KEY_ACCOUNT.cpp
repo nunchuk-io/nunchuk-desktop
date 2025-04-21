@@ -27,6 +27,7 @@
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
 #include "localization/STR_CPP.h"
+#include "Premiums/QSignerManagement.h"
 
 QVariant getPrimaryKey(const nunchuk::PrimaryKey &pkey){
     QVariantMap maps;
@@ -38,7 +39,6 @@ QVariant getPrimaryKey(const nunchuk::PrimaryKey &pkey){
 }
 
 void SCR_PRIMARY_KEY_ACCOUNT_Entry(QVariant msg) {
-    AppModel::instance()->clearPrimaryKeyList();
     std::vector<nunchuk::PrimaryKey> primaryKeys = AppModel::instance()->primaryKeys();
     QVariantList primaryKeyList;
     for(nunchuk::PrimaryKey key: primaryKeys){
@@ -64,6 +64,7 @@ void EVT_PRIMARY_KEY_ACCOUNT_BACK_HANDLER(QVariant msg) {
 
 void EVT_ADD_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
     QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
+    QSignerManagement::instance()->setScreenFlow("add-a-key");
 }
 
 void EVT_SHOW_PRIMARY_KEY_ENTER_PASSPHRASE_REQUEST_HANDLER(QVariant msg) {

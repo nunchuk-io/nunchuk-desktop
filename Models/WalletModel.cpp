@@ -90,12 +90,8 @@ void Wallet::convert(const nunchuk::Wallet w)
 }
 
 QString Wallet::walletId() const {
-    QMutexLocker locker(&m_mutex);
-    if (m_id.isEmpty()) {
-        std::string id = nunchukWallet().get_id();
-        m_id = id.empty() ? "" : QString::fromStdString(id);
-    }
-    return m_id;
+    std::string id = nunchukWallet().get_id();
+    return id.empty() ? m_id: QString::fromStdString(id);
 }
 
 void Wallet::setWalletId(const QString &data)
@@ -115,25 +111,25 @@ int Wallet::walletM() {
 
 void Wallet::setWalletM(const int data) {
     int value = qMax(0, data);
-    if(value != walletM()){
+    if(value != m_walletM){
         m_walletM = value;
-        nunchukWallet().set_m(value);
+        m_nunchukWallet.set_m(value);
         emit walletChanged();
     }
 }
 
 int Wallet::walletN() {
     if(m_walletN == 0){
-        m_walletN = singleSignersAssigned() ? singleSignersAssigned()->rowCount() : qMax(0, nunchukWallet().get_n());
+        m_walletN = qMax(0, nunchukWallet().get_n());
     }
     return m_walletN;
 }
 
 void Wallet::setWalletN(const int data) {
     int value = qMax(0, data);
-    if(value != walletN()){
+    if(value != m_walletN){
         m_walletN = value;
-        nunchukWallet().set_n(value);
+        m_nunchukWallet.set_n(value);
         emit walletChanged();
     }
 }
@@ -172,6 +168,9 @@ QString Wallet::walletName()
     QString data_name = QString::fromStdString(nunchukWallet().get_name());
     if(data_name != ""){
         m_walletName = QString::fromStdString(nunchukWallet().get_name());
+        if (isReplaced() && !data_name.contains("DEPRECATED")) {
+            m_walletName = QString("[DEPRECATED] %1").arg(m_walletName);
+        }
     }
     return m_walletName;
 }
@@ -190,7 +189,7 @@ QString Wallet::walletAliasName() const
 void Wallet::setWalletName(const QString &data) {
     if(!qUtils::strCompare(data, walletName())){
         m_walletName = data;
-        nunchukWallet().set_name(data.toStdString());
+        m_nunchukWallet.set_name(data.toStdString());
         emit walletChanged();
     }
 }
@@ -209,7 +208,7 @@ int Wallet::walletAddressType() {
 void Wallet::setWalletAddressType(const int data) {
     if(data != m_walletAddressType){
         m_walletAddressType = data;
-        nunchukWallet().set_address_type((nunchuk::AddressType)data);
+        m_nunchukWallet.set_address_type((nunchuk::AddressType)data);
         emit walletChanged();
     }
 }
@@ -230,7 +229,7 @@ void Wallet::setWalletType(const int data)
 {
     if(data != m_walletType){
         m_walletType = data;
-        nunchukWallet().set_wallet_type((nunchuk::WalletType)data);
+        m_nunchukWallet.set_wallet_type((nunchuk::WalletType)data);
         emit walletChanged();
     }
 }
@@ -276,7 +275,7 @@ void Wallet::setWalletTemplate(const int data)
 {
     if(data != m_walletTemplate){
         m_walletTemplate = data;
-        nunchukWallet().set_wallet_template((nunchuk::WalletTemplate)data);
+        m_nunchukWallet.set_wallet_template((nunchuk::WalletTemplate)data);
         emit walletChanged();
     }
 }
@@ -309,7 +308,7 @@ QString Wallet::balanceCurrency() const
 
 void Wallet::setWalletBalance(const qint64 data) {
     if(data != balanceSats()){
-        nunchukWallet().set_balance(data);
+        m_nunchukWallet.set_balance(data);
         emit walletChanged();
     }
 }
@@ -338,7 +337,7 @@ int Wallet::walletGapLimit() const
 void Wallet::setWalletGapLimit(const int data)
 {
     if(data != walletGapLimit()){
-        nunchukWallet().set_gap_limit(data);
+        m_nunchukWallet.set_gap_limit(data);
         emit walletChanged();
     }
 }
@@ -398,7 +397,7 @@ void Wallet::setWalletDescription(const QString &data)
 {
     if(!qUtils::strCompare(data, walletDescription())){
         m_walletDescription = data;
-        nunchukWallet().set_description(data.toStdString());
+        m_nunchukWallet.set_description(data.toStdString());
         emit walletChanged();
     }
 }
@@ -544,16 +543,49 @@ void Wallet::setIsDeleting(const bool val)
     emit isDeletingChanged();
 }
 
-bool Wallet::needBackup() const
+bool Wallet::needBackup()
+{
+    if(isGlobalGroupWallet()){
+        bool needBackup = true;
+        QWalletCached<QString, QString, QString, QString, bool> data;
+        bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
+        if(ret){
+            needBackup = !data.backedup;
+        }
+        else {
+            setNeedBackup(needBackup);
+        }
+        return needBackup;
+    }
+    else {
+        return false;
+    }
+}
+
+void Wallet::setNeedBackup(const bool data)
+{
+    if(isGlobalGroupWallet()){
+        QWalletCached<QString, QString, QString, QString, bool> cache;
+        cache.groupId   = groupId();
+        cache.slug      = slug();
+        cache.myRole    = myRole();
+        cache.status    = status();
+        cache.backedup  = !data;
+        AppSetting::instance()->setWalletCached(walletId(), cache);
+        emit needBackupChanged();
+    }
+}
+
+bool Wallet::keyNeedBackup() const
 {
     return m_nunchukWallet.need_backup();
 }
 
-void Wallet::setNeedBackup(const bool bVal)
+void Wallet::setKeyNeedBackup(const bool bVal)
 {
-    if (bVal != needBackup()) {
+    if (bVal != keyNeedBackup()) {
         m_nunchukWallet.set_need_backup(bVal);
-        emit needBackupChanged();
+        emit walletChanged();
     }
 }
 
@@ -630,6 +662,23 @@ bool Wallet::containsColdcard()
         return m_signers.data()->containsColdcard();
     }
     return false;
+}
+
+bool Wallet::isArchived() const
+{
+    return m_nunchukWallet.is_archived();
+}
+
+void Wallet::setArchived(bool archived)
+{
+    m_nunchukWallet.set_archived(archived);
+    QWarningMessage msg;
+    bridge::UpdateWallet(m_nunchukWallet, msg);
+    if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+        QString msg_content = archived ? "Archived wallet" : "Unarchived wallet";
+        AppModel::instance()->showToast(0, msg_content, EWARNING::WarningType::SUCCESS_MSG);
+    }
+    emit walletChanged();
 }
 
 nunchuk::Wallet Wallet::nunchukWallet() const
@@ -802,6 +851,7 @@ void Wallet::UpdateWallet(const QString &name, const QString &description)
         QWarningMessage msg;
         m_nunchukWallet.set_name(name.toStdString());
         bridge::UpdateWallet(m_nunchukWallet, msg);
+        emit walletChanged();
     }
 }
 
@@ -835,9 +885,6 @@ QJsonObject Wallet::GetServerKeyInfo(const QString &txid)
 bool Wallet::DeleteAssistedWallet()
 {
     DBG_INFO << "wallet status:" << status();
-    if(isReplaced()){
-        return false;
-    }
     auto tag = servicesTagPtr();
     QString passwordToken = tag->passwordToken();
     QJsonObject output;
@@ -858,9 +905,6 @@ bool Wallet::DeleteAssistedWallet()
 bool Wallet::DeleteWalletRequiredSignatures()
 {
     DBG_INFO << "wallet status:" << status();
-    if(isReplaced()){
-        return false;
-    }
     auto tag = servicesTagPtr();
     ReqiredSignaturesInfo info;
     QString errormsg = "";
@@ -1083,6 +1127,14 @@ void Wallet::setWalletOptType(int optType)
 {
     m_walletOptionType = optType;
     emit walletOptTypeChanged();
+}
+
+bool Wallet::isReplaceGroupWallet() const
+{
+    if (m_sandbox) {
+        return !m_sandbox->sandbox().get_replace_wallet_id().empty();
+    }
+    return false;
 }
 
 QGroupSandboxPtr Wallet::groupSandboxPtr()
@@ -1727,6 +1779,33 @@ SingleSignerListModel *Wallet::assignAvailableSigners()
     return m_assignAvailableSigners.data();
 }
 
+void Wallet::GetReplaceGroups()
+{
+    QPointer<Wallet> safeThis(this);
+    runInThread([safeThis]() ->QMap<QString, bool>{
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        QWarningMessage msg;
+        return bridge::GetReplaceGroups(ptrLamda->walletId(), msg);
+    },[safeThis](QMap<QString, bool> groups) {
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        QJsonArray array;
+        for (auto it = groups.begin(); it != groups.end(); ++it) {
+            QJsonObject js;
+            js["group_id"] = it.key();
+            js["accepted"] = it.value();
+            array.append(js);
+        }
+        ptrLamda->m_replaceGroups = array;
+        DBG_INFO << array;
+        emit ptrLamda->replaceGroupsChanged();
+    });
+}
+
+QVariantList Wallet::replaceGroups()
+{
+    return m_replaceGroups.toVariantList();
+}
+
 QVariant Wallet::serverKeyInfo() const
 {
     return QVariant::fromValue(serverKeyPtr().data());
@@ -1828,7 +1907,7 @@ void Wallet::exportBitcoinSignedMessage(const QString &xfp, const QString &file_
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream st(&file);
         st.setCodec("UTF-8");
-        st << signMessage << endl;
+        st << signMessage << Qt::endl;
         st.flush();
         file.close();
     }
@@ -1836,7 +1915,8 @@ void Wallet::exportBitcoinSignedMessage(const QString &xfp, const QString &file_
 
 bool Wallet::isReplaced() const
 {
-    return status() == "REPLACED";
+    bool isGlobalReplaced = QSharedWallets::instance()->deprecatedWallets().contains(walletId());
+    return status() == "REPLACED" || isGlobalReplaced;
 }
 
 bool Wallet::isLocked() const
@@ -2020,6 +2100,11 @@ bool Wallet::updateKeyReplace(const QString &xfp, const int index)
     return ReplaceKeyFreeUser::updateKeyReplace(xfp, index);
 }
 
+bool Wallet::removeKeyReplaced(const int index)
+{
+    return ReplaceKeyFreeUser::removeKeyReplaced(index);
+}
+
 void Wallet::requestForAllCoins(const QVariant &act)
 {
     CoinsControl::RequestForAllCoins(act);
@@ -2091,18 +2176,28 @@ bool Wallet::markAddressUsed(const QString &address)
     return ret;
 }
 
+void Wallet::startGetUnreadMessage()
+{
+    QPointer<Wallet> safeThis(this);
+    runInConcurrent([safeThis]() -> int {
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        return bridge::GetUnreadMessagesCount(ptrLamda->walletId());
+    },[safeThis](int number) {
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        ptrLamda->setUnreadMessage(number);
+        if (auto list = AppModel::instance()->groupWalletList()) {
+            list->unReadMessageCountChanged();
+        }
+    });
+
+}
+
 void Wallet::startDownloadConversation()
 {
     if(conversations() && isGlobalGroupWallet()){
         QString wallet_id = walletId();
         conversations()->startDownloadConversation(wallet_id);
-        QtConcurrent::run([this]() {
-            int number = bridge::GetUnreadMessagesCount(walletId());
-            QThreadForwarder::instance()->forwardInQueuedConnection([number, this](){
-                DBG_INFO << number;
-                this->setUnreadMessage(number);
-            });
-        });
+        startGetUnreadMessage();
     }
 }
 
@@ -2150,14 +2245,38 @@ void Wallet::requestExportWalletViaQRBCUR2()
     }
 }
 
+void Wallet::requestAcceptReplaceGroup(const QString &sandbox_id)
+{
+    if (m_sandbox) {
+        if (m_sandbox->AcceptReplaceGroup(walletId(), sandbox_id)) {
+            GetReplaceGroups();
+            m_sandbox->setScreenFlow("setup-group-wallet");
+            AppModel::instance()->setNewWalletInfo(this);
+            QSharedWallets::instance()->GetAllGroups();
+            timeoutHandler(500,[=]{
+                QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST);
+            });
+        }
+    }
+}
+
+void Wallet::requestDeclineReplaceGroup(const QString &sandbox_id)
+{
+    if (m_sandbox) {
+        if (m_sandbox->DeclineReplaceGroup(walletId(), sandbox_id)) {
+            GetReplaceGroups();
+        }
+    }
+}
+
 QString Wallet::groupId() const
 {
     QString group_id = WalletsMng->groupId(walletId());
     if(group_id == ""){
-        QWalletCached<QString, QString, QString, QString> data;
+        QWalletCached<QString, QString, QString, QString, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
-            group_id = data.first;
+            group_id = data.groupId;
         }
     }
     return group_id;
@@ -2172,10 +2291,10 @@ QString Wallet::slug() const
 {
     QString slug = WalletsMng->slugInfo(walletId());
     if(slug == ""){
-        QWalletCached<QString, QString, QString, QString> data;
+        QWalletCached<QString, QString, QString, QString, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
-            slug = data.second;
+            slug = data.slug;
         }
     }
     return slug;
@@ -2188,10 +2307,10 @@ QString Wallet::myRole() const
         role = dashboard().data()->myRole();
     }
     if (role == "") {
-        QWalletCached<QString, QString, QString, QString> data;
+        QWalletCached<QString, QString, QString, QString, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
-            role = data.third;
+            role = data.myRole;
         }
     }
     return role;
@@ -2204,10 +2323,10 @@ QString Wallet::status() const
         status = dashboard().data()->walletStatus();
     }
     if(status == ""){
-        QWalletCached<QString, QString, QString, QString> data;
+        QWalletCached<QString, QString, QString, QString, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
-            status = data.fourth;
+            status = data.status;
         }
     }
     return status;
@@ -2274,15 +2393,15 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
         case wallet_createDate_Role:
             return m_data[index.row()]->walletCreateDate();
         case wallet_Balance_Role:
-            return qVariantFromValue(m_data[index.row()]->balanceDisplay());
+            return QVariant::fromValue(m_data[index.row()]->balanceDisplay());
         case wallet_BalanceBTC_Role:
-            return qVariantFromValue(m_data[index.row()]->balanceBTC());
+            return QVariant::fromValue(m_data[index.row()]->balanceBTC());
         case wallet_BalanceCurrency_Role:
-            return qVariantFromValue(m_data[index.row()]->balanceCurrency());
+            return QVariant::fromValue(m_data[index.row()]->balanceCurrency());
         case wallet_Escrow_Role:
             return m_data[index.row()]->walletEscrow();
         case wallet_SingleSignerList_Role:
-            return qVariantFromValue((SingleSignerListModel*)m_data[index.row()]->singleSignersAssigned());
+            return QVariant::fromValue((SingleSignerListModel*)m_data[index.row()]->singleSignersAssigned());
         case wallet_Address_Role:{
             if(m_data[index.row()]->address().isEmpty()){
                 return m_data[index.row()]->unUseAddress();
@@ -2310,7 +2429,7 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
         case wallet_primaryOwner_Role:
             return m_data[index.row()]->ownerPrimary();
         case wallet_isHotWallet_Role:
-            return m_data[index.row()]->needBackup();
+            return m_data[index.row()]->keyNeedBackup();
         case wallet_slug_Role:
             return m_data[index.row()]->slug();
         case wallet_isLocked_Role:
@@ -2320,7 +2439,7 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
         case wallet_isSanboxWallet_Role:
             return m_data[index.row()]->isGlobalGroupWallet();
         case wallet_conversation_Role:
-            return qVariantFromValue((QGroupMessageModel*)m_data[index.row()]->conversations());
+            return QVariant::fromValue((QGroupMessageModel*)m_data[index.row()]->conversations());
         case wallet_unreadMessage_Role:
             return m_data[index.row()]->unreadMessage();
         case wallet_numberOnline_Role:
@@ -2379,6 +2498,16 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
 int WalletListModel::count() const
 {
     return m_data.count();
+}
+
+int WalletListModel::unReadMessageCount()
+{
+    int count = 0;
+    for (int i = 0; i < m_data.count(); i++) {
+        count += m_data.at(i)->unreadMessage();
+    }
+    DBG_INFO << m_data.count() << count;
+    return count;
 }
 
 QVariant WalletListModel::get(int row)
@@ -2606,7 +2735,9 @@ void WalletListModel::updateHealthCheckTime()
 {
     beginResetModel();
     foreach (QWalletPtr i , m_data ){
-        i.data()->singleSignersAssigned()->updateHealthCheckTime();
+        if (auto signers = i.data()->singleSignersAssigned()) {
+            signers->updateHealthCheckTime();
+        }
     }
     endResetModel();
 }
@@ -2625,10 +2756,10 @@ void WalletListModel::requestSort(int role, int order)
         case wallet_createDate_Role:
         {
             if(Qt::DescendingOrder == order){
-                qSort(m_data.begin(), m_data.end(), sortWalletByNameDescending);
+                std::sort(m_data.begin(), m_data.end(), sortWalletByNameDescending);
             }
             else{
-                qSort(m_data.begin(), m_data.end(), sortWalletByNameAscending);
+                std::sort(m_data.begin(), m_data.end(), sortWalletByNameAscending);
             }
         }
             break;
@@ -2678,7 +2809,7 @@ void WalletListModel::updateGroupMessage(const QString &wallet_id, const nunchuk
 {
     DBG_INFO << wallet_id << data.get_content() << AppModel::instance()->tabIndex();
     if((int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
-        auto wallet = currentWallet();
+        auto wallet = currentWalletPtr();
         if (wallet && qUtils::strCompare(wallet->walletId(), wallet_id)) {
             wallet->markAsReadMessage(QString::fromStdString(data.get_id()));
             wallet->setUnreadMessage(0);
@@ -2708,6 +2839,7 @@ void WalletListModel::updateGroupMessage(const QString &wallet_id, const nunchuk
             m_data.at(i)->conversations()->appendGroupMessage(data);
             emit m_data.at(i)->walletChanged();
             emit dataChanged(index(i),index(i));
+            emit unReadMessageCountChanged();
         }
     }
 }
@@ -2730,6 +2862,7 @@ void WalletListModel::updateUnreadMessage(const QString &wallet_id, int number)
         if(m_data.at(i).data() && qUtils::strCompare(wallet_id, m_data.at(i)->walletId())){
             m_data.at(i)->setUnreadMessage(number);
             emit dataChanged(index(i),index(i));
+            emit unReadMessageCountChanged();
         }
     }
 }
@@ -2857,6 +2990,11 @@ bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2)
 Wallet *WalletListModel::currentWallet() const
 {
     return m_currentWallet.data();
+}
+
+QWalletPtr WalletListModel::currentWalletPtr() const
+{
+    return m_currentWallet;
 }
 
 void WalletListModel::setCurrentWallet(const QWalletPtr& newCurrentWallet)

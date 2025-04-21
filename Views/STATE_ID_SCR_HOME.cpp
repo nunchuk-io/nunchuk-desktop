@@ -46,6 +46,15 @@ void SCR_HOME_Entry(QVariant msg) {
     if(CLIENT_INSTANCE->rooms()){
         CLIENT_INSTANCE->rooms()->stopCountdown();
     }
+    timeoutHandler(3000,[]{
+        auto wallet = AppModel::instance()->walletInfoPtr();
+        if (wallet) {
+            if (wallet.data()->isGlobalGroupWallet()) {
+                wallet.data()->GetReplaceGroups();
+            }
+        }
+    });
+    AppModel::instance()->requestCreateUserWallets();
 }
 
 void SCR_HOME_Exit(QVariant msg) {
@@ -76,24 +85,26 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
         }
         if (auto w = AppModel::instance()->walletInfo()) {
             w->setIsViewCoinShow(false);
+            if (w->isGlobalGroupWallet()) {
+                w->GetReplaceGroups();
+            }
         }
     }
     else if (qUtils::strCompare(type, "dashboard")) {
         QGroupWallets::instance()->dashboard(group_id, wallet_id);
     }
     else if (qUtils::strCompare(type, "wallet_dashboard")) {
+        QGroupWallets::instance()->dashboard(group_id, wallet_id);
         int index = maps["data"].toInt();
         if (index >= 0) {
             AppModel::instance()->setWalletListCurrentIndex(index);
         }
-        QGroupWallets::instance()->dashboard(group_id, wallet_id);
     }
     else if (qUtils::strCompare(type, "deny")) {
         QGroupWallets::instance()->deny(group_id);
     }
     else if (qUtils::strCompare(type, "accept")) {
         QGroupWallets::instance()->accept(group_id);
-        AppModel::instance()->requestCreateUserWallets();
     }
     else if (qUtils::strCompare(type, "reset")) {
         QGroupWallets::instance()->reset(group_id);
@@ -251,12 +262,13 @@ void EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
     if (type == "add-key-free") {
-
+        AppModel::instance()->setNewWalletInfo(nullptr);
     } else if (type == "add-key-shared-group-wallet") {
 
     } else if (type == "request-add-a-key") {
 
     }
+    QSignerManagement::instance()->setScreenFlow("add-a-key");
 }
 
 void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
@@ -285,13 +297,25 @@ void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
         QMap<QString, QVariant> maps = msg.toMap();
         QString export_type = maps["export_type"].toString();
         QString export_path = maps["export_path"].toString();
+        QString file_path = qUtils::QGetFilePath(export_path);
+
         if("bsms" == export_type){
-            if(export_path != ""){
-                bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), export_path, nunchuk::ExportFormat::BSMS);
+            if(file_path != ""){
+                bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), file_path, nunchuk::ExportFormat::BSMS);
+                if(ret){
+                    AppModel::instance()->walletInfo()->setNeedBackup(false);
+                }
+            }
+        }
+        else if("csv" == export_type){
+            if(file_path != ""){
+                bool ret = bridge::nunchukExportTransactionHistory(AppModel::instance()->walletInfo()->walletId(),
+                                                                   file_path,
+                                                                   nunchuk::ExportFormat::CSV);
             }
         }
         else {
-            QtConcurrent::run([maps, export_path]() {
+            QtConcurrent::run([maps, file_path]() {
                 QList<QVariant> export_data = maps["export_data"].toList();
                 QList<QVariant> final_data;
                 final_data.clear();
@@ -312,7 +336,7 @@ void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
                     }
                 }
                 DBG_INFO << final_data.count();
-                QPDFPrinter::instance()->printInvoicesToPdf(export_path, final_data);
+                QPDFPrinter::instance()->printInvoicesToPdf(file_path, final_data);
             });
         }
     }

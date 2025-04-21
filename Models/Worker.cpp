@@ -186,6 +186,35 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
         else{
             if(selectedDv){
                 nunchuk::Transaction trans = bridge::nunchukSignTransaction(walletId, txid, selectedDv, msgwarning);
+                QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId);
+                if(wallet){
+                    int walletAddressType = wallet->walletAddressType();
+                    if(walletAddressType == (int)nunchuk::AddressType::TAPROOT){
+                        std::vector<nunchuk::KeysetStatus> from_keyset_status = transaction.data()->keysetStatus();
+                        std::vector<nunchuk::KeysetStatus> to_keyset_status = trans.get_keyset_status();
+                        if (from_keyset_status.size() == to_keyset_status.size()) {
+                            bool hasChangedToReadyToBroadcast = false;
+                            for (size_t i = 0; i < from_keyset_status.size(); ++i) {
+                                const nunchuk::TransactionStatus& from_tx_status = from_keyset_status[i].first;
+                                const nunchuk::TransactionStatus& to_tx_status = to_keyset_status[i].first;
+                                if (from_tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES && to_tx_status == nunchuk::TransactionStatus::READY_TO_BROADCAST) {
+                                    hasChangedToReadyToBroadcast = true;
+                                }
+                            }
+                            if(!hasChangedToReadyToBroadcast) {
+                                for (size_t i = 0; i < from_keyset_status.size(); ++i) {
+                                    const nunchuk::TransactionStatus& from_tx_status = from_keyset_status[i].first;
+                                    const nunchuk::TransactionStatus& to_tx_status = to_keyset_status[i].first;
+                                    if (from_tx_status == nunchuk::TransactionStatus::PENDING_NONCE && to_tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES) {
+                                        QString msgtoast = QString("Round 1 completed");
+                                        AppModel::instance()->showToast(0, msgtoast, EWARNING::WarningType::SUCCESS_MSG);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 emit finishSigningTransaction(walletId,
                                               trans,
                                               msgwarning.what(),
@@ -290,7 +319,7 @@ void Worker::slotStartDisplayAddress(const QString &wallet_id,
     }
     if(!ret){
         QString msg = QString("Address verification failed");
-        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::EXCEPTION_MSG);
+        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::ERROR_MSG);
     }
     else{
         QString msg = QString("Address successfully verified");
@@ -617,7 +646,6 @@ void Worker::slotStartReloadUserDb()
 {
     QFunctionTime f(__PRETTY_FUNCTION__);
     QWarningMessage msg;
-
     std::vector<nunchuk::Wallet> group_wallets = bridge::nunchukGetOriginGroupWallets(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         emit finishReloadGroupWallets(group_wallets);
@@ -1056,7 +1084,6 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId);
         if(AppModel::instance()->transactionInfo())
             if(qUtils::strCompare(tx_id, AppModel::instance()->transactionInfo()->txid()) && qUtils::strCompare(walletId, AppModel::instance()->transactionInfo()->walletId())){
-                DBG_INFO << "TAPROOT-TEST";
                 AppModel::instance()->transactionInfo()->setNunchukTransaction(result);
                 if(wallet){
                     wallet.data()->SignAsisstedTxs(tx_id, QString::fromStdString(result.get_psbt()), QString::fromStdString(result.get_memo()));
@@ -1565,6 +1592,7 @@ void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
         if(ONLINE_MODE == bridge::nunchukCurrentMode() && CLIENT_INSTANCE->isNunchukLoggedIn()){
             emit WalletsMng->getListWalletFinish();
         }
+        AppModel::instance()->createPrimaryKeyList();
     }
     if(ONLINE_MODE == bridge::nunchukCurrentMode()){
         if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){

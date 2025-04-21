@@ -18,7 +18,7 @@ class QGroupWalletHealthCheck : public QBasePremium
 public:
     QGroupWalletHealthCheck(WalletId wallet_id);
     virtual ~QGroupWalletHealthCheck();
-
+    QString groupId() const;
     QVariantList healthStatuses() const;
 
     void GetStatuses();

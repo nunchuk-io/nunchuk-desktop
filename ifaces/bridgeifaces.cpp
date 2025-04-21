@@ -486,7 +486,7 @@ nunchuk::SingleSigner bridge::nunchukGetOriginSingleSigner(const nunchuk::Single
         return ret;
     }
     else{
-        return nunchuk::SingleSigner("","","","","",0,"");
+        return signer;
     }
 }
 
@@ -752,6 +752,7 @@ QTransactionPtr bridge::nunchukCreateTransaction(const QString &wallet_id,
                                                  const int fee_rate,
                                                  const bool subtract_fee_from_amount,
                                                  const QString &replace_txid,
+                                                 bool anti_fee_sniping,
                                                  QWarningMessage& msg)
 {
     std::map<std::string, nunchuk::Amount> out;
@@ -782,6 +783,7 @@ QTransactionPtr bridge::nunchukCreateTransaction(const QString &wallet_id,
                                                                                     fee_rate,
                                                                                     subtract_fee_from_amount,
                                                                                     replace_txid.toStdString(),
+                                                                                    anti_fee_sniping,
                                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
@@ -799,6 +801,7 @@ QTransactionPtr bridge::nunchukCancelCreateTransaction(const QString &wallet_id,
                                                        const QString &memo,
                                                        const int fee_rate,
                                                        const QString &replace_txid,
+                                                       bool anti_fee_sniping,
                                                        QWarningMessage &msg)
 {
     auto inputs = nunchukiface::instance()->GetUnspentOutputsFromTxInputs(wallet_id.toStdString(), origin_tx.get_inputs(), msg);
@@ -814,6 +817,7 @@ QTransactionPtr bridge::nunchukCancelCreateTransaction(const QString &wallet_id,
                                                                                     fee_rate,
                                                                                     true,
                                                                                     replace_txid.toStdString(),
+                                                                                    anti_fee_sniping,
                                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
@@ -2732,4 +2736,45 @@ QString bridge::GetGroupDeviceUID()
 {
     QWarningMessage msg;
     return QString::fromStdString(nunchukiface::instance()->GetGroupDeviceUID(msg));
+}
+
+int bridge::GetScriptPathFeeRate(const QString &wallet_id, const nunchuk::Transaction &tx)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetScriptPathFeeRate(wallet_id.toStdString(), tx, msg);
+}
+
+nunchuk::GroupSandbox bridge::CreateReplaceGroup(const QString &walletId, QWarningMessage &msg)
+{
+    return nunchukiface::instance()->CreateReplaceGroup(walletId.toStdString(), msg);
+}
+
+QMap<QString, bool> bridge::GetReplaceGroups(const QString &walletId, QWarningMessage &msg)
+{
+    std::map<std::string, bool> replacements = nunchukiface::instance()->GetReplaceGroups(walletId.toStdString(), msg);
+    QMap<QString, bool> maps;
+    for (auto&& [group_id, accepted] : replacements) {
+        maps.insert(QString::fromStdString(group_id), accepted);
+    }
+    return maps;
+}
+
+nunchuk::GroupSandbox bridge::AcceptReplaceGroup(const QString &walletId, const QString &groupId, QWarningMessage &msg)
+{
+    return nunchukiface::instance()->AcceptReplaceGroup(walletId.toStdString(), groupId.toStdString(), msg);
+}
+
+void bridge::DeclineReplaceGroup(const QString &walletId, const QString &groupId, QWarningMessage &msg)
+{
+    nunchukiface::instance()->DeclineReplaceGroup(walletId.toStdString(), groupId.toStdString(), msg);
+}
+
+QStringList bridge::GetDeprecatedGroupWallets(QWarningMessage &msg)
+{
+    auto vec = nunchukiface::instance()->GetDeprecatedGroupWallets(msg);
+    QStringList qlist;
+    for (std::string value : vec) {
+        qlist.append(QString::fromStdString(value));
+    }
+    return qlist;
 }

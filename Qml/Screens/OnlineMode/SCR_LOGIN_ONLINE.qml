@@ -1492,31 +1492,31 @@ QScreen {
     }
     Connections {
         target: Draco
-        onCreateAccountResult: {
+        function onCreateAccountResult(https_code, error_code, error_msg) {
             contentLoader.item.processingCreateAccountResult(https_code, error_code, error_msg)
         }
-        onForgotPasswordResult: {
+        function onForgotPasswordResult(https_code, error_code, error_msg) {
             contentLoader.item.processingResetPasswordResult(https_code, error_code, error_msg)
         }
-        onChangePasswordResult: {
+        function onChangePasswordResult(https_code, error_code, error_msg) {
             contentLoader.item.processingChangePasswordResult(https_code, error_code, error_msg)
         }
-        onSigninResult: {
+        function onSigninResult(https_code, error_code, error_msg) {
             contentLoader.item.processingSigninResult(https_code, error_code, error_msg)
         }
-        onRecoverPasswordResult: {
+        function onRecoverPasswordResult(https_code, error_code, error_msg) {
             contentLoader.item.processingRecoverPasswordResult(https_code, error_code, error_msg)
         }
-        onVerifyNewDeviceResult: {
+        function onVerifyNewDeviceResult(https_code, error_code, error_msg) {
             contentLoader.item.processingVerifyNewDeviceResult(https_code, error_code, error_msg)
         }
-        onResendVerifyNewDeviceCodeResult: {
-            //TBD
+        function onResendVerifyNewDeviceCodeResult(https_code, error_code, error_msg) {
+            console.log("onResendVerifyNewDeviceCodeResult", https_code, error_code, error_msg)
         }
-        onAccountAvailabilityResult: {
+        function onAccountAvailabilityResult(https_code, error_code, error_msg) {
             contentLoader.item.processingAccountAvailabilityResult(https_code, error_code, error_msg)
         }
-        onRequestCreateAccount: {
+        function onRequestCreateAccount() {
             whereAmI = eCREATE_ACCOUNT
         }
     }

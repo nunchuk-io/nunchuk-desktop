@@ -491,7 +491,7 @@ Row {
             }
             Connections{
                 target: RoomWalletData.currentRoom
-                onUnreadCountChanged:{
+                function onUnreadCountChanged(){
                     RoomWalletData.currentRoom.markAllMessagesAsRead()
                 }
             }

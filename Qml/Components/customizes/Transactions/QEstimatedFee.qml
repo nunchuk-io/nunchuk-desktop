@@ -43,7 +43,9 @@ Row {
                 horizontalAlignment: Text.AlignLeft
             }
             QTooltip {
-                tipWidth: 200
+                tipWidth: 300
+                pointerPositionIndex: 6
+                pointerPositionRatio: 10
                 toolTip: STR.STR_QML_807
                 source: "qrc:/Images/Images/help_outline_24px.svg"
             }

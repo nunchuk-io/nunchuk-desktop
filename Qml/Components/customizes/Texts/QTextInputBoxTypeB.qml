@@ -29,6 +29,7 @@ Column {
     property string optional: ""
     property alias  errorText: textErrorItem.text
     property alias  errorTextColor: textErrorItem.color
+    property alias  errorTextPxSize: textErrorItem.font.pixelSize
     property alias  textInputted: _input.text
     property alias validator: _input.validator
     property alias acceptableInput : _input.acceptableInput

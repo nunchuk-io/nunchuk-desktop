@@ -33,12 +33,12 @@ Item {
     id: del
     width: 350
     height: 84
-    property alias signerData: data
-    property bool  isShowCheckBox: true
-    property bool  checkedProperty: data.single_checked
+    property alias signerData: dataSingle
+    property bool isShowCheckBox: true
+    property bool  checkedProperty: dataSingle.single_checked
     signal btnClicked()
     QSingleSignerData {
-        id: data
+        id: dataSingle
     }
     Row {
         anchors {
@@ -52,11 +52,11 @@ Item {
             bgSize: 48
             icon.iconSize: 24
             icon.typeStr: ""
-            icon.type: data.single_type
-            icon.tag: data.single_tag
+            icon.type: dataSingle.single_type
+            icon.tag: dataSingle.single_tag
             anchors.verticalCenter: parent.verticalCenter
             color: "#F5F5F5"
-            visible: data.single_is_local
+            visible: dataSingle.single_is_local
         }
         QBadge {
             width: 48
@@ -66,7 +66,7 @@ Item {
             icon: "qrc:/Images/Images/Device_Icons/key-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
             color: "#F5F5F5"
-            visible: !data.single_is_local
+            visible: !dataSingle.single_is_local
         }
         Column {
             width: 302 - 48 - 12
@@ -76,7 +76,7 @@ Item {
             QLato {
                 width: 146
                 height: 28
-                text: data.single_name
+                text: dataSingle.single_name
                 font.weight: Font.Normal
             }
             Row {
@@ -84,18 +84,18 @@ Item {
                 spacing: 4
                 QSignerBadgeName {
                     typeStr: ""
-                    type: data.single_type
-                    tag: data.single_tag
+                    type: dataSingle.single_type
+                    tag: dataSingle.single_tag
                     color: "#DEDEDE"
                     height: 16
                     font.weight: Font.Bold
                     font.pixelSize: 10
                 }
                 QBadge {
-                    text: qsTr("Acct %1").arg(data.single_account_index)
+                    text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                     height: 16
                     color: "#EAEAEA"
-                    visible: (data.single_account_index > 0) && (data.single_type !== NUNCHUCKTYPE.SERVER)
+                    visible: (dataSingle.single_account_index > 0) && (dataSingle.single_type !== NUNCHUCKTYPE.SERVER)
                     radius: 8
                     font.pixelSize: 10
                 }
@@ -104,12 +104,12 @@ Item {
                 width: 146
                 height: 16
                 text: {
-                    if (data.single_type === NUNCHUCKTYPE.NFC) {
-                        var card_id = data.single_device_cardid
+                    if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
+                        var card_id = dataSingle.single_device_cardid
                         var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
                         return "Card ID: ••" + textR
                     } else {
-                        return "XFP: " + data.single_masterFingerPrint.toUpperCase()
+                        return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
                     }
                 }
                 color: "#595959"

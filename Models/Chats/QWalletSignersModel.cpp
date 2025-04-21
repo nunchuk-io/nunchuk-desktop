@@ -100,10 +100,7 @@ void QWalletSignersModel::addSigner(SignerAssigned signer)
 {
     beginResetModel();
     if(signer.xfp == "" || !constains(signer.xfp)){
-        nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(signer.xfp);
-        if(key.get_master_fingerprint() != ""){
-            signer.isPrimaryKey = true;
-        }
+        signer.isPrimaryKey = qUtils::isPrimaryKey(signer.xfp);
         m_data.append(signer);
     }
     qSort(m_data.begin(), m_data.end(), sortWalletSigners);

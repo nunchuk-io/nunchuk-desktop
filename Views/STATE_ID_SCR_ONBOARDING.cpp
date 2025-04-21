@@ -107,6 +107,9 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
         else if (recoverType == "recover-sandbox-wallet") {
             wallet = QSharedWallets::instance()->RecoverSandboxWallet(file_path);
         }
+        else if (recoverType == "import-db") {
+            wallet = OnBoardingModel::instance()->ImportWalletDB(file_path);
+        }
         if (wallet) {
             if (recoverType == "recover-via-bsms-config-file" || recoverType == "recover-via-coldcard") {
                 QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
@@ -140,7 +143,7 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
         }
         else{
             AppModel::instance()->setMnemonic("-101");
-            AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
         }
     }
     else if (type == "enter-link-url" || type == "enter-link-qr-url") {

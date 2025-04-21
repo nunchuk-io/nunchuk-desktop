@@ -40,7 +40,7 @@ QScreen {
         width: 600
         height: 516
         anchors.centerIn: parent
-        label.text: STR.STR_QML_106
+        label.text: alert.payload.is_inheritance ? STR.STR_QML_1601 : STR.STR_QML_1602
         extraHeader: Item {}
         onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
         content: Item {
@@ -91,7 +91,7 @@ QScreen {
                                     if (!is_inheritance) {
                                         ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
                                     }
-                                    ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "Coldcard" , type: "coldcard", tag: "COLDCARD"})
+                                    ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
                                 }
                                 if (!is_inheritance) {
                                     ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })

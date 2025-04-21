@@ -119,7 +119,6 @@ QOnScreenContentTypeA {
                             }
                             displayText: getDisplay().displayName
                             model: [
-                                { id: NUNCHUCKTYPE.ANY,            displayName: STR.STR_QML_065 },
                                 { id: NUNCHUCKTYPE.LEGACY,         displayName: STR.STR_QML_064 },
                                 { id: NUNCHUCKTYPE.NESTED_SEGWIT,  displayName: STR.STR_QML_063 },
                                 { id: NUNCHUCKTYPE.NATIVE_SEGWIT,  displayName: STR.STR_QML_062 },

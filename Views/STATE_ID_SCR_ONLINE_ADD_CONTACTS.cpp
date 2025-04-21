@@ -23,8 +23,7 @@
 #include "Chats/ClientController.h"
 
 void SCR_ONLINE_ADD_CONTACTS_Entry(QVariant msg) {
-    CLIENT_INSTANCE->syncContactsSent(Draco::instance()->getContactsSent());
-    CLIENT_INSTANCE->syncContactsReceived(Draco::instance()->getContactsReceived());
+    CLIENT_INSTANCE->refreshContacts();
 }
 
 void SCR_ONLINE_ADD_CONTACTS_Exit(QVariant msg) {

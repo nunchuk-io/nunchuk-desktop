@@ -41,14 +41,15 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: rootSettings
-    readonly property int _DISPLAY_UNIT: 0
-    readonly property int _LOCAL_CURRENCY: 1
-    readonly property int _ACCOUNT_SETTINGS: 2
-    readonly property int _NETWORK_SETTINGS: 3
-    readonly property int _HARDWARE_DRIVER: 4
-    readonly property int _DATABASE_ENCRYTION: 5
-    readonly property int _DEVELOPER_SETTINGS: 6
-    readonly property int _ABOUT: 7
+    readonly property int _DISPLAY_UNIT     : 0
+    readonly property int _LOCAL_CURRENCY   : 1
+    readonly property int _ACCOUNT_SETTINGS : 2
+    readonly property int _FEE_SETTINGS     : 3
+    readonly property int _NETWORK_SETTINGS : 4
+    readonly property int _HARDWARE_DRIVER  : 5
+    readonly property int _DATABASE_ENCRYTION   : 6
+    readonly property int _DEVELOPER_SETTINGS   : 7
+    readonly property int _ABOUT            : 8
 
 
     function closeRequest(to) {

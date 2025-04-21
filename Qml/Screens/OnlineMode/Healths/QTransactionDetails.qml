@@ -224,14 +224,17 @@ QOnScreenContentTypeA {
 
     Connections {
         target: AppModel
-        onStartDisplayAddress: {
+        function onStartDisplayAddress(wallet_id, address) {
             if(isOnTop) displayAddressBusybox.open()
             else displayAddressBusybox.close()
         }
-        onFinishedDisplayAddress: {
+        function onFinishedDisplayAddress(result) {
             displayAddressBusybox.close()
         }
-        onFinishedSigningTransaction : {signingBusyBox.close(); signingBusyBox.signerType = -1}
+        function onFinishedSigningTransaction() {
+            signingBusyBox.close()
+            signingBusyBox.signerType = -1
+        }
     }
     Connections {
         target: dummyTx

@@ -1,5 +1,7 @@
 #include "QSignerManagement.h"
 #include "Models/AppModel.h"
+#include "bridgeifaces.h"
+#include "Models/MasterSignerModel.h"
 
 QSignerManagement::QSignerManagement()
 {
@@ -110,6 +112,44 @@ void QSignerManagement::clearExecute()
     }
     if (m_executeSoftXprv != nullptr) {
         m_executeSoftXprv = nullptr;
+    }
+}
+
+void QSignerManagement::createHotKey()
+{
+    auto listSS = AppModel::instance()->masterSignerListPtr()->fullList();
+    QList<int> listId;
+    for (auto signer: listSS) {
+        if (signer->signerType() == (int)nunchuk::SignerType::SOFTWARE) {
+            if (signer->name().startsWith("My key")) {
+                if (qUtils::strCompare(signer->name(), "My key")) {
+                    listId.append(0);
+                } else {
+                    QStringList listName = signer->name().split("My key");
+                    QString lastName = listName.at(1);
+                    lastName.replace("#", "");
+                    bool isOK = false;
+                    int id = lastName.toInt(&isOK);
+                    DBG_INFO << listName << lastName << id << isOK;
+                    if (isOK) {
+                        listId.append(id);
+                    }
+                }
+            }
+        }
+    }
+    std::sort(listId.begin(), listId.end());
+    QString nameKey = listId.isEmpty() ? "My key" : "My key #" + QString::fromStdString(std::to_string(listId.last() + 1));
+    QString mnemonic = qUtils::GenerateMnemonic();
+    QWarningMessage msg;
+    DBG_INFO << nameKey << listId;
+    auto ss = bridge::nunchukCreateSoftwareSigner(nameKey, mnemonic, "", false, false, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        ss->setNeedBackup(true);
+        bridge::nunchukUpdateMasterSigner(ss);
+        emit AppModel::instance()->startReloadMasterSigners();
+        AppModel::instance()->setMasterSignerInfo(ss);
+        QSignerManagement::instance()->finishCreateMasterSigner();
     }
 }
 

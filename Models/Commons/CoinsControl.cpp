@@ -1232,6 +1232,18 @@ bool CoinsControl::CreateDraftTransaction(int successScreenID, const QVariant &m
         DBG_INFO << "Destination : " << outputs;
     }
     qint64 feerate = AppModel::instance()->hourFeeOrigin();
+    if(AppSetting::instance()->feeSetting() == (int)ENUNCHUCK::Fee_Setting::PRIORITY){
+        feerate = AppModel::instance()->fastestFeeOrigin();
+        DBG_INFO << "Fee Setting: PRIORITY";
+    }
+    else if(AppSetting::instance()->feeSetting() == (int)ENUNCHUCK::Fee_Setting::STANDARD){
+        DBG_INFO << "Fee Setting: STANDARD";
+        feerate = AppModel::instance()->halfHourFeeOrigin();
+    }
+    else {
+        DBG_INFO << "Fee Setting: ECONOMICAL";
+        feerate = AppModel::instance()->hourFeeOrigin();
+    }
 
     DBG_INFO << "Fee rate" << feerate;
     DBG_INFO << "Subtract From Amount : " << subtractFromAmount;
@@ -1289,25 +1301,31 @@ bool CoinsControl::UpdateDraftTransaction(const QVariant &msg)
     if (!msg.toMap().isEmpty()) {
         m_draftTransactionInput = msg.toMap();
     }
-    auto walletInfo = (dynamic_cast<Wallet*>(this));
-    QString wallet_id = walletInfo->walletId();
-    bool subtractFromFeeAmout = m_draftTransactionInput.value("subtractFromFeeAmout").toBool();
-    int feeRate = m_draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    bool manualFee = m_draftTransactionInput.value("manualFee").toBool();
-    bool manualOutput = m_draftTransactionInput.value("manualOutput").toBool();
-    if(!manualFee) feeRate = -1;
-    QString replace_txid = AppModel::instance()->getTxidReplacing();
-    DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
 
+    QString replace_txid = "";
+    QString memo = "";
     QUTXOListModelPtr inputs = NULL;
     if (auto trans = AppModel::instance()->transactionInfo()){
         inputs = trans->GetUtxoListSelected();
+        memo   = trans->memo();
     }
+
+    bool subtractFromFeeAmout   = m_draftTransactionInput.value("subtractFromFeeAmout").toBool();
+    int  feeRate                = m_draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+    bool manualFee              = m_draftTransactionInput.value("manualFee").toBool();
+    bool manualOutput           = m_draftTransactionInput.value("manualOutput").toBool();
+    if(!manualFee) {
+        feeRate = -1;
+    }
+    DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
 
     QMap<QString, qint64> outputs;
     if(AppModel::instance()->destinationList()){
         outputs = AppModel::instance()->destinationList()->getOutputs();
     }
+
+    auto walletInfo = (dynamic_cast<Wallet*>(this));
+    QString wallet_id = walletInfo->walletId();
 
     QWarningMessage msgwarning;
     QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
@@ -1319,18 +1337,62 @@ bool CoinsControl::UpdateDraftTransaction(const QVariant &msg)
                                                             msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
         if(trans){
-            if(AppModel::instance()->transactionInfo()){
-                trans.data()->setMemo(AppModel::instance()->transactionInfo()->memo());
-                if(QEventProcessor::instance()->onsRequester() == E::STATE_ID_SCR_TRANSACTION_INFO){
-                    DBG_INFO << "REPLACE BY FEE, KEEP ORIGIN FEE";
-                    trans.data()->setFee(AppModel::instance()->transactionInfo()->feeSats());
-                }
-            }
+            trans.data()->setMemo(memo);
             AppModel::instance()->setTransactionInfo(trans);
         }
     }
     else {
         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+    }
+    return false;
+}
+
+bool CoinsControl::UpdateDraftRBFransaction(const QVariant &msg)
+{
+    QMap<QString, QVariant> inputObj = msg.toMap();
+    if (inputObj.isEmpty()) {
+        return false;
+    }
+
+    if (auto trans = AppModel::instance()->transactionInfo()){
+        qint64 feeRate                          = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+        nunchuk::Transaction origin_tx          = trans->nunchukTransaction();
+        std::vector<nunchuk::TxOutput> outputs  = origin_tx.get_user_outputs();
+        std::vector<nunchuk::TxInput> inputs    = origin_tx.get_inputs();
+        bool subtractFromFeeAmout               = origin_tx.subtract_fee_from_amount();
+        QString memo                            = trans->memo();
+        QString replacing_txid                  = trans->txidReplacing();
+        int     current_status                  = trans->status();
+        qint64  current_fee_rate                = trans->feeRateSats();
+        QString current_tx_id                   = QString::fromStdString(origin_tx.get_txid());
+
+        DBG_INFO << "subtract:" << subtractFromFeeAmout << "| free rate:" << feeRate;
+
+        auto walletInfo = (dynamic_cast<Wallet*>(this));
+        QString wallet_id = walletInfo->walletId();
+
+        QWarningMessage msgwarning;
+        nunchuk::Transaction draftrans = bridge::nunchukDraftOriginTransaction(wallet_id.toStdString(),
+                                                                               outputs,
+                                                                               inputs,
+                                                                               feeRate,
+                                                                               subtractFromFeeAmout,
+                                                                               replacing_txid.toStdString(),
+                                                                               msgwarning);
+        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
+            if(trans){
+                draftrans.set_status((nunchuk::TransactionStatus)current_status); // Keep status is pending confirm while drafting, if not it change to pending signature
+                draftrans.set_fee_rate(current_fee_rate);
+                draftrans.set_memo(memo.toStdString());
+                draftrans.set_txid(current_tx_id.toStdString());
+                draftrans.set_subtract_fee_from_amount(subtractFromFeeAmout);
+                trans->setTxidReplacing(replacing_txid);
+                trans->setNunchukTransaction(draftrans);
+            }
+        }
+        else {
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+        }
     }
     return false;
 }

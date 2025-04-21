@@ -37,14 +37,15 @@
 #define EXPLORER_SIGNNET "https://mempool.space/signet/tx/"
 #define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
 
-template <typename T1, typename T2, typename T3, typename T4>
+template <typename T1, typename T2, typename T3, typename T4, typename T5>
 class QWalletCached {
 public:
     QWalletCached(){}
-    T1 first;
-    T2 second;
-    T3 third;
-    T4 fourth;
+    T1 groupId;
+    T2 slug;
+    T3 myRole;
+    T4 status;
+    T5 backedup;
 };
 
 class  NunchukSettings : public QSettings {
@@ -108,6 +109,7 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(bool isFirstTimeOnboarding       READ isFirstTimeOnboarding      WRITE setIsFirstTimeOnboarding      NOTIFY isFirstTimeOnboardingChanged)
     Q_PROPERTY(bool enableColab                 READ enableColab                WRITE setEnableColab                NOTIFY enableColabChanged)
     Q_PROPERTY(QStringList favoriteAddresses    READ favoriteAddresses                                              NOTIFY favoriteAddressesChanged)
+    Q_PROPERTY(int feeSetting                   READ feeSetting                 WRITE setFeeSetting                 NOTIFY feeSettingChanged)
 
 public:
     enum class Chain : int {
@@ -243,8 +245,17 @@ public:
     QString currency();
     void setCurrency(QString currency);
 
-    void setWalletCached(QString id, QWalletCached<QString /*group id*/, QString /*group slug*/, QString /*group role*/, QString /*wallet status*/> data);
-    bool getwalletCached(QString id, QWalletCached<QString /*group id*/, QString /*group slug*/, QString /*group role*/, QString /*wallet status*/> &result);
+    void setWalletCached(QString id, QWalletCached<QString /*group id*/,
+                                                   QString /*group slug*/,
+                                                   QString /*group role*/,
+                                                   QString /*wallet status*/,
+                                                   bool> input);
+
+    bool getwalletCached(QString id, QWalletCached<QString /*group id*/,
+                                                   QString /*group slug*/,
+                                                   QString /*group role*/,
+                                                   QString /*wallet status*/,
+                                                   bool> &output);
     void deleteWalletCached(QString id);
 
     bool isFirstTimeOnboarding();
@@ -263,6 +274,9 @@ public:
     Q_INVOKABLE void addFavoriteAddress(const QString &label, const QString &address);
     Q_INVOKABLE void updateFavoriteAddress(const QString &label, const QString &address);
     Q_INVOKABLE bool validateAddress(const QString &address);
+
+    int feeSetting();
+    void setFeeSetting(int fee);
 
 private:
     AppSetting();
@@ -304,6 +318,7 @@ private:
     bool isStarted_;
     bool isFirstTimeOnboarding_;
     bool enableColab_ {false};
+    int  feeSetting_;
 
     QStringList m_favoriteAddresses{};
 
@@ -348,6 +363,7 @@ signals:
     void enableColabChanged();
     void favoriteAddressesChanged();
     void mainnetServerSelected(const QString url);
+    void feeSettingChanged();
 };
 
 #endif // APPSETTING_H

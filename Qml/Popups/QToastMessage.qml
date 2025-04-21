@@ -26,6 +26,7 @@ Item {
     property bool isScreenBase: false
     readonly property int bottomMargin: isScreenBase ? 105 : 225
     readonly property int horizontalOffset: isScreenBase ? (width/2 - (width - 386)/2) : 0
+    signal toastVisibleChanged()
 
     Loader {
         anchors.fill: parent
@@ -40,6 +41,7 @@ Item {
                 anchors.fill: parent
                 onClicked: {
                     rootToast.model.clear()
+                    toastVisibleChanged()
                 }
             }
         }
@@ -67,7 +69,10 @@ Item {
             delegate: QToastItem {
                 width: mylist.width
                 onToastExpired: {
-                    rootToast.model.remove(index, 1)
+                    if (index >= 0 && index < rootToast.model.count) {
+                        rootToast.model.remove(index, 1)
+                    }
+                    toastVisibleChanged()
                 }
             }
         }

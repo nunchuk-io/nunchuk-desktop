@@ -48,5 +48,6 @@ void GroupUpdateListener(const nunchuk::GroupSandbox& state);
 void GroupMessageListener(const nunchuk::GroupMessage& msg);
 void GroupOnlineListener(const std::string& groupId, int online);
 void GroupDeleteListener(const std::string& groupId);
+void ReplaceRequestListener(const std::string& walletId, const std::string& replaceGroupId);
 
 #endif // NUNCHUCKLISTENER_H

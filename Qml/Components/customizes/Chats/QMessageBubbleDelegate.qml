@@ -38,6 +38,24 @@ Item {
     property alias  messageContent  : infoText.messageContent
     property alias  sendername      : sendername.text
 
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton  // Chấp nhận chuột phải
+        onClicked: (mouse) => {
+                       if (mouse.button === Qt.RightButton) {
+                           console.log("Right click detected at:", mouse.x, mouse.y)
+                           optionMenu.labels = ["Copy message"]
+                           optionMenu.icons = ["qrc:/Images/Images/copy-dark.svg"]
+                           optionMenu.functions = [function(){
+                               var txt = ClientController.getPlainText(messageContent)
+                               ClientController.copyMessage(txt)
+                           }]
+                           optionMenu.popup()
+                       }
+                   }
+    }
+
     Row {
         id: rowContent
         width: parent.width
@@ -76,6 +94,19 @@ Item {
                 anchors.right: parent.right
                 visible: !isReceive
             }
+        }
+    }
+    QContextMenu {
+        id: optionMenu
+        menuWidth: 180
+        labels: [
+            "Copy message"
+        ]
+        icons: [
+            "qrc:/Images/Images/copy-dark.svg"
+        ]
+        onItemClicked: {
+            functions[index]()
         }
     }
 }

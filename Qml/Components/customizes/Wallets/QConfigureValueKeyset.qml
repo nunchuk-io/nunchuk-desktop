@@ -82,9 +82,9 @@ QOnScreenContentTypeA {
                     }
                     checkedProperty: single_signer_value_key
                     onBtnClicked: {
-                        single_signer_value_key = !single_signer_value_key && !signers.enoughKeyset;
+                        single_signer_value_key = !single_signer_value_key && !signers.enoughKeyset
                     }
-                    opacity: !single_signer_value_key ? 1.0 : 0.4
+                    opacity: _contentBip.nextEnable ? (single_signer_value_key ? 1.0 : 0.4) : 1.0
                 }
             }
         }

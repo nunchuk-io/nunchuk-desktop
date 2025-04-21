@@ -272,20 +272,19 @@ bool QRecurringPayment::importQRWallet(const QStringList qrtags)
         return false;
     }
     QWarningMessage importmsg;
-    nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(),
-                                                         in, importmsg);
+    nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(), in, importmsg);
     if (importmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
         importmsg.resetWarningMessage();
         WalletId walletId = QString::fromStdString(wallet.get_id());
         if (qUtils::strCompare(walletId, wallet_id())) {
             QString message = QString("Destination cannot be the same wallet.");
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
             return false;
         }
         return ConvertWalletToBsmsAndAddress(wallet);
     } else {
         QString message = QString("Invalid QR");
-        AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+        AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
     }
     return false;
 }
@@ -307,7 +306,7 @@ bool QRecurringPayment::isValidDate(const QString& start_date, const QString& en
         ret = (end > start) and (start >= currentDate);
     }
     if (!ret) {
-        AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+        AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
     }
     return ret;
 }
@@ -416,11 +415,11 @@ bool QRecurringPayment::ImportAddressesWallet(const QStringList addresses)
         bool isMyAddress = bridge::IsMyAddress(wallet_id(), addr, msg);
         if (!isValid) {
             QString message = QString("Invalid address: %1").arg(addr);
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
         }
         else if (isMyAddress) {
             QString message = QString("Destination cannot be the same wallet.");
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
         }
         else {
             listValid.append(addr);
@@ -440,7 +439,7 @@ bool QRecurringPayment::ImportWallet(WalletId w_id)
 {
     if (qUtils::strCompare(w_id, wallet_id())) {
         QString message = QString("Destination cannot be the same wallet.");
-        AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+        AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
         return false;
     }
     if (auto w = walletInfoPtr()) {
@@ -481,14 +480,14 @@ bool QRecurringPayment::ImportFileWallet(const QString &filepath, bool bsms)
         WalletId walletId = QString::fromStdString(wallet.get_id());
         if (qUtils::strCompare(walletId, wallet_id())) {
             QString message = QString("Destination cannot be the same wallet.");
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
             return false;
         }
         return ConvertWalletToBsmsAndAddress(wallet);
     }
     else {
         QString message = QString("Invalid wallet configuration");
-        AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+        AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
     }
     return false;
 }

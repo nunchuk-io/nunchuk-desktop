@@ -22,14 +22,15 @@ import "./Setting"
 
 Item {
     readonly property var option_map: [
-        {screen:_DISPLAY_UNIT,         screen_component: _display_unit          },
-        {screen:_LOCAL_CURRENCY,       screen_component: _local_currency        },
-        {screen:_ACCOUNT_SETTINGS,     screen_component: _account_settings      },
-        {screen:_NETWORK_SETTINGS,     screen_component: _network_settings      },
-        {screen:_HARDWARE_DRIVER,      screen_component: _hardware_driver       },
-        {screen:_DATABASE_ENCRYTION,   screen_component: _database_encrytion    },
-        {screen:_DEVELOPER_SETTINGS,   screen_component: _developer_settings    },
-        {screen:_ABOUT,                screen_component: _about                 },
+        {screen:_DISPLAY_UNIT,          screen_component: _display_unit          },
+        {screen:_LOCAL_CURRENCY,        screen_component: _local_currency        },
+        {screen:_ACCOUNT_SETTINGS,      screen_component: _account_settings      },
+        {screen:_FEE_SETTINGS,          screen_component: _fee_settings      },
+        {screen:_NETWORK_SETTINGS,      screen_component: _network_settings      },
+        {screen:_HARDWARE_DRIVER,       screen_component: _hardware_driver       },
+        {screen:_DATABASE_ENCRYTION,    screen_component: _database_encrytion    },
+        {screen:_DEVELOPER_SETTINGS,    screen_component: _developer_settings    },
+        {screen:_ABOUT,                 screen_component: _about                 },
     ]
     readonly property var anyChanged: _loader.item.anyChanged
     property var itemOption: option_map.find(function(e) {if (e.screen === ProfileSetting.optionIndex) return true; else return false})
@@ -54,6 +55,11 @@ Item {
     Component {
         id: _account_settings
         QSettingAccountSettings {
+        }
+    }
+    Component {
+        id: _fee_settings
+        QSettingFee {
         }
     }
     Component {

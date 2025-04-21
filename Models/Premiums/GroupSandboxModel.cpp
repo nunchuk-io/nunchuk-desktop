@@ -154,7 +154,8 @@ bool QGroupSandbox::FinalizeGroup()
     DBG_INFO << groupId() << HasEnoughSigner();
     if (!groupId().isEmpty() && HasEnoughSigner()) {
         QWarningMessage msg;
-        QSet<size_t> valuekeyset = (m_sandbox.get_address_type() == nunchuk::AddressType::TAPROOT) ? ValueKeyset() : QSet<size_t>();
+        DBG_INFO << (int)m_sandbox.get_address_type() << (int)m_sandbox.get_wallet_template();
+        QSet<size_t> valuekeyset = (m_sandbox.get_address_type() == nunchuk::AddressType::TAPROOT && m_sandbox.get_wallet_template() == nunchuk::WalletTemplate::DEFAULT) ? ValueKeyset() : QSet<size_t>();
         auto sandbox = bridge::FinalizeGroup(groupId(), valuekeyset, msg);
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             m_isCreateWallet = true;
@@ -164,9 +165,7 @@ bool QGroupSandbox::FinalizeGroup()
             }
             setScreenFlow("bsms-file-success");
             QSharedWallets::instance()->GetAllGroups();
-            AppModel::instance()->startReloadUserDb();
-            QString msg = "Wallet has been created";
-            AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+            finishSandboxWallet(QString::fromStdString(sandbox.get_wallet_id()), false);
             return true;
         }
         else {
@@ -184,6 +183,21 @@ bool QGroupSandbox::FinalizeGroup()
     return false;
 }
 
+bool QGroupSandbox::isReplace() const
+{
+    return !m_sandbox.get_replace_wallet_id().empty() && !m_sandbox.get_url().empty();
+}
+
+bool QGroupSandbox::isRecovery() const
+{
+    return m_sandbox.get_replace_wallet_id().empty() && m_sandbox.get_url().empty();
+}
+
+bool QGroupSandbox::isCreate() const
+{
+    return m_sandbox.get_replace_wallet_id().empty() && !m_sandbox.get_url().empty();
+}
+
 void QGroupSandbox::CreateAGroup(const QString& name, int m, int n, int addType)
 {
     nunchuk::AddressType addressType = static_cast<nunchuk::AddressType>(addType);
@@ -196,6 +210,8 @@ void QGroupSandbox::CreateAGroup(const QString& name, int m, int n, int addType)
         setSandbox(sandbox);
         QSharedWallets::instance()->GetAllGroups();
         GetNumberForAGroup();
+    } else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
 }
 
@@ -206,26 +222,24 @@ void QGroupSandbox::UpdateGroup(const QString &name, int m, int n, int addType)
     auto sandbox = bridge::UpdateGroup(groupId(), name, m, n, addressType, msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         setSandbox(sandbox);
+    } else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
 }
 
 void QGroupSandbox::setSandbox(const nunchuk::GroupSandbox &sandbox)
 {
     m_sandbox = sandbox;
-    DBG_INFO << sandbox.is_finalized() << m_isCreateWallet;
-    if (sandbox.is_finalized() && !m_isCreateWallet) {
-        emit finishSandboxWallet();
-    }
     QString uid = QSharedWallets::instance()->uid();
-    auto find = [&](const int index) -> QJsonObject {
+    auto find = [&](const int index) -> QSingleSignerPtr {
         if (index < sandbox.get_signers().size()) {
             auto signer = sandbox.get_signers().at(index);
             if (signer.get_master_fingerprint().empty()) {
-                QJsonObject json;
+                QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
                 if (signer.get_name() == "ADDED") {
                     // Signer at this index has been added, but its info is encrypted
                     // Display gray out `placeholder`, don't allow add signer here
-                    json["isAdded"] = true;
+                    return signerPtr;
                 } else if (sandbox.get_occupied().contains(index)) {
                     // Signer at this index has not been added yet
                     std::pair<time_t, std::string> ts_uid = sandbox.get_occupied().at(index);
@@ -233,80 +247,71 @@ void QGroupSandbox::setSandbox(const nunchuk::GroupSandbox &sandbox)
                     if (ts_uid.first + timeout > std::time(0) && ts_uid.second != uid.toStdString()) {
                         // Slot occupied by other device is not timeout
                         // Display `Occupied`, don't allow add signer here
-                        json["isOccupied"] = true;
+                        signerPtr->setIsOccupied(true);
                     } else {
                         // Allow add signer here
-                        json["isOccupied"] = false;
+                        signerPtr->setIsOccupied(false);
                     }
                 }
-                return json;
+                return signerPtr;
             } else {
                 QWarningMessage msg;
                 nunchuk::SingleSigner localSigner = bridge::nunchukGetOriginSingleSigner(signer, msg);
-                DBG_INFO << localSigner.get_name() << msg.type() << localSigner.is_visible();
-                if (localSigner.is_visible() && bridge::nunchukHasSinger(signer) && (int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-                    QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(localSigner));
-                    if (signerPtr->isValid()) {
-                        QJsonObject json;
-                        json["name"] = signerPtr->name();
-                        json["hisSigner"] = true;
-                        json["has"] = true;
-                        json["tag"] = signerPtr->tag();
-                        json["type"] = qUtils::GetSignerTypeString(static_cast<nunchuk::SignerType>(signerPtr->signerType()));
-                        json["signer_type"] = signerPtr->signerType();
-                        json["account_index"] = qUtils::GetIndexFromPath(signerPtr->derivationPath());
-                        json["card_id"] = signerPtr->cardId();
-                        json["xfp"] = signerPtr->fingerPrint();
-                        json["derivationPath"] = signerPtr->derivationPath();
-                        return json;
-                    }
-                } else {
-                    QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
-                    if (signerPtr->isValid()) {
-                        QJsonObject json;
-                        json["name"] = "";
-                        json["hisSigner"] = false;
-                        json["has"] = true;
-                        json["tag"] = signerPtr->tag();
-                        json["type"] = qUtils::GetSignerTypeString(static_cast<nunchuk::SignerType>(signerPtr->signerType()));
-                        json["signer_type"] = signerPtr->signerType();
-                        json["account_index"] = qUtils::GetIndexFromPath(signerPtr->derivationPath());
-                        json["card_id"] = signerPtr->cardId();
-                        json["xfp"] = signerPtr->fingerPrint();
-                        json["derivationPath"] = signerPtr->derivationPath();
-                        return json;
-                    }
-                }
+                return QSingleSignerPtr(new QSingleSigner(localSigner));
             }
         }
         return {};
     };
-    QVariantList groupKeys;
-    for(int i = 0; i < sandbox.get_n(); i++) {
-        QJsonObject obj = find(i);
-        QString xfp = obj["xfp"].toString();
-        if (xfp.isEmpty()) {
-            obj["key_index"] = i;
-            obj["has"] = false;
-            obj["hisSigner"] = false;
-            obj["colorIndex"] = i;
-            if (!obj.contains("isOccupied")) {
-                obj["isOccupied"] = false;
+    if (isReplace()) {
+        if(auto list = AppModel::instance()->walletListPtr()){
+            auto currentWallet = list->getWalletById(QString::fromStdString(m_sandbox.get_replace_wallet_id()));
+            if (currentWallet){
+                if (currentWallet->walletM() != groupM() || currentWallet->walletN() != groupN()) {
+                    return;
+                }
+                auto wallet = currentWallet->nunchukWallet();
+                QVariantList groupKeys;
+                for(int i = 0; i < sandbox.get_n(); i++) {
+                    auto newSigner = sandbox.get_signers().at(i);
+                    auto oldSigner = wallet.get_signers().at(i);
+                    QSingleSignerPtr signerPtr = find(i);
+                    if (newSigner.get_master_fingerprint() == oldSigner.get_master_fingerprint()) {
+                        signerPtr->setIsReplaced(false);
+                    }
+                    else if (newSigner.get_master_fingerprint().empty()) {
+                        signerPtr->setIsReplaced(false);
+                        signerPtr->setMasterFingerPrint(QString::fromStdString(oldSigner.get_master_fingerprint()));
+                    }
+                    else {
+                        signerPtr->setIsReplaced(true);
+                        auto oldPtr = QSingleSignerPtr(new QSingleSigner(oldSigner));
+                        signerPtr->setKeyReplaced(oldPtr);
+                    }
+                    groupKeys.insert(i, SingleSignerListModel::useQml(signerPtr));
+                }
+                m_groupKeys = groupKeys;
             }
-            if (!obj.contains("isAdded")) {
-                obj["isAdded"] = false;
-            }
-        } else {
-            obj["isAdded"] = true;
-            obj["isOccupied"] = false;
-            obj["key_index"] = i;
-            obj["colorIndex"] = i;
         }
-        DBG_INFO << obj;
-        groupKeys.insert(i, QVariant::fromValue(obj));
+    } else {
+        QVariantList groupKeys;
+        for(int i = 0; i < sandbox.get_n(); i++) {
+            QSingleSignerPtr signerPtr = find(i);
+            groupKeys.insert(i, SingleSignerListModel::useQml(signerPtr));
+        }
+        m_groupKeys = groupKeys;
     }
-    m_groupKeys = groupKeys;
     emit groupSandboxChanged();
+
+}
+
+void QGroupSandbox::setCurrentSandbox(const nunchuk::GroupSandbox &sandbox)
+{
+    m_sandbox = sandbox;
+    DBG_INFO << sandbox.is_finalized() << m_isCreateWallet << "wallet_id: " << sandbox.get_wallet_id();
+    if (sandbox.is_finalized() && !m_isCreateWallet) {
+        emit finishSandboxWallet(QString::fromStdString(sandbox.get_wallet_id()), true);
+    }
+    setSandbox(sandbox);
     BackToSetupGroupWallet();
     CreateSignerListReviewWallet();
 }
@@ -378,12 +383,17 @@ bool QGroupSandbox::AddMasterToGroup()
 {
     if (auto key = AppModel::instance()->masterSignerInfoPtr()) {
         QWarningMessage msg;
-        auto signer = bridge::nunchukGetSignerFromMasterSigner(key->id(),ENUNCHUCK::WalletType::MULTI_SIG, static_cast<ENUNCHUCK::AddressType>(addressType()), key->deviceIndex(), msg);
-        if (url().isEmpty() && !qUtils::strCompare(m_fingerprintRecovery, signer->fingerPrint())) {
+        QSingleSignerPtr signer;
+        if (key->signerType() == (int)nunchuk::SignerType::NFC) {
+            signer = bridge::nunchukGetDefaultSignerFromMasterSigner(key->id(), ENUNCHUCK::WalletType::MULTI_SIG, static_cast<ENUNCHUCK::AddressType>(addressType()), msg);
+        } else {
+            signer = bridge::nunchukGetUnusedSignerFromMasterSigner(key->id(), ENUNCHUCK::WalletType::MULTI_SIG, static_cast<ENUNCHUCK::AddressType>(addressType()), msg);
+        }
+        if (!signer.isNull() && url().isEmpty() && !qUtils::strCompare(m_fingerprintRecovery, signer->fingerPrint())) {
             emit recoverKeyError();
             return false; // add same finger print for recovery
         }
-        if((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+        if(!signer.isNull() && (int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             return AddSignerToGroup(signer->originSingleSigner());
         } else {
             AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -477,7 +487,6 @@ void QGroupSandbox::requestAddOrRepaceKey(const QVariant &msg)
 void QGroupSandbox::slotClearOccupied()
 {
     if(QEventProcessor::instance()->getCurrentStates().size() == 1) {
-        DBG_INFO;
         if (m_occupied.isActive()) {
             m_occupied.stop();
         }
@@ -512,12 +521,13 @@ bool QGroupSandbox::editBIP32Path(int index, const QString &master_id, const QSt
         int errorType {0};
     };
     runInConcurrent([safeThis, index, master_id, path]() -> DataStruct {
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
         QWarningMessage msg;
         nunchuk::SingleSigner signer = bridge::GetSignerFromMasterSigner(master_id, path, msg);
         DataStruct data;
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             msg.resetWarningMessage();
-            auto sandbox = bridge::AddSignerToGroup(QString::fromStdString(safeThis->sandbox().get_id()), signer, index, msg);
+            auto sandbox = bridge::AddSignerToGroup(QString::fromStdString(ptrLamda->sandbox().get_id()), signer, index, msg);
             if((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                 QString msg = "BIP32 path updated.";
                 AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
@@ -532,20 +542,42 @@ bool QGroupSandbox::editBIP32Path(int index, const QString &master_id, const QSt
         }
         return data;
     },[safeThis](DataStruct data) {
-        if (safeThis) {
-            if (data.errorType == 1) {
-                safeThis->setSandbox(data.sandbox);
-            }
-            emit safeThis->editBIP32PathSuccess(data.errorType); // -2 Not Found Key
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        if (data.errorType == 1) {
+            ptrLamda->setSandbox(data.sandbox);
         }
+        emit ptrLamda->editBIP32PathSuccess(data.errorType); // -2 Not Found Key
     });
     return false;
 }
 
-void QGroupSandbox::slotFinishSandboxWallet()
+void QGroupSandbox::slotFinishSandboxWallet(const QString &wallet_id, bool reqClose)
 {
-    emit AppModel::instance()->startReloadUserDb();
+    if (!isReplace()) {
+        bridge::nunchukSetSelectedWallet(wallet_id);
+    }
     QSharedWallets::instance()->GetAllGroups();
+    if (reqClose) {
+        CloseCurrentSandboxSetup();
+    }
+    if (!wallet_id.isEmpty()) {
+        QString msg = "The group wallet has been created";
+        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+    }
+    timeoutHandler(1000,[=]{
+        emit AppModel::instance()->startReloadWallets();
+    });
+}
+
+QStringList QGroupSandbox::qrTagsRecovery() const
+{
+    return m_qrTagsRecovery;
+}
+
+void QGroupSandbox::setQrTagsRecovery(const QStringList &newQrTagsRecovery)
+{
+    m_filePathRecovery.clear();
+    m_qrTagsRecovery = newQrTagsRecovery;
 }
 
 QString QGroupSandbox::filePathRecovery() const
@@ -555,6 +587,7 @@ QString QGroupSandbox::filePathRecovery() const
 
 void QGroupSandbox::setFilePathRecovery(const QString &newFilePathRecovery)
 {
+    m_qrTagsRecovery.clear();
     m_filePathRecovery = newFilePathRecovery;
 }
 
@@ -568,6 +601,12 @@ void QGroupSandbox::CreateSignerListReviewWallet()
             w->setWalletName(groupName());
             w->setWalletAddressType(addressType());
             w->CreateSignerListReviewWallet(m_sandbox.get_signers());
+            if (!w->enableValuekeyset()) {
+                for(auto signer: w->singleSignersAssigned()->fullList()) {
+                    signer->setValueKey(false);
+                }
+                w->singleSignersAssigned()->requestSortKeyset();
+            }
         }
     }
 }
@@ -575,19 +614,83 @@ void QGroupSandbox::CreateSignerListReviewWallet()
 QSet<size_t> QGroupSandbox::ValueKeyset()
 {
     QSet<size_t> valuekeyset;
-    if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-        if (auto list = w->singleSignersAssigned()) {
+    if (isReplace()) {
+        auto currentWallet = AppModel::instance()->walletListPtr()->getWalletById(QString::fromStdString(m_sandbox.get_replace_wallet_id()));
+        if (currentWallet.isNull()) return {};
+        if (currentWallet->walletM() != groupM() || currentWallet->walletN() != groupN()) return {};
+        if (auto list = currentWallet->singleSignersAssigned()) {
             std::vector<nunchuk::SingleSigner> signers = m_sandbox.get_signers();
             for (int i = 0; i < signers.size(); i++) {
-                if (auto signer = list->getSingleSignerByFingerPrint(QString::fromStdString(signers.at(i).get_master_fingerprint()))) {
+                if (auto signer = list->getSingleSignerByIndex(i)) {
                     if (signer->valueKey()) {
                         valuekeyset.insert(i);
                     }
                 }
             }
         }
+    } else {
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            if (auto list = w->singleSignersAssigned()) {
+                std::vector<nunchuk::SingleSigner> signers = m_sandbox.get_signers();
+                for (int i = 0; i < signers.size(); i++) {
+                    if (auto signer = list->getSingleSignerByFingerPrint(QString::fromStdString(signers.at(i).get_master_fingerprint()))) {
+                        if (signer->valueKey()) {
+                            valuekeyset.insert(i);
+                        }
+                    }
+                }
+            }
+        }
     }
     return valuekeyset;
+}
+
+bool QGroupSandbox::CreateReplaceGroup(const QString &wallet_id)
+{
+    QWarningMessage msg;
+    auto sandbox = bridge::CreateReplaceGroup(wallet_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        setSandbox(sandbox);
+        return true;
+    } else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    return false;
+}
+
+bool QGroupSandbox::AcceptReplaceGroup(const QString &wallet_id, const QString &sandbox_id)
+{
+    QWarningMessage msg;
+    auto sandbox = bridge::AcceptReplaceGroup(wallet_id, sandbox_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        setSandbox(sandbox);
+        return true;
+    } else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    return false;
+}
+
+bool QGroupSandbox::DeclineReplaceGroup(const QString &wallet_id, const QString &sandbox_id)
+{
+    QWarningMessage msg;
+    bridge::DeclineReplaceGroup(wallet_id, sandbox_id, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return true;
+    } else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    return false;
+}
+
+void QGroupSandbox::CloseCurrentSandboxSetup()
+{
+    if(QEventProcessor::instance()->getCurrentStates().size() == 2) {
+        int last = QEventProcessor::instance()->getCurrentStates().last();
+        if (last == E::STATE_ID_SCR_SETUP_GROUP_WALLET) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+        }
+    }
 }
 
 void QGroupSandbox::setFingerprintRecovery(const QString &newFingerprintRecovery)
@@ -614,7 +717,7 @@ nunchuk::GroupSandbox QGroupSandbox::sandbox() const
 void QGroupSandbox::DeleteGroup(const QString &sandbox_id)
 {
     if (qUtils::strCompare(groupId(), sandbox_id)) {
-        emit finishSandboxWallet();
+        CloseCurrentSandboxSetup();
         timeoutHandler(1000,[=]{
             QSharedWallets::instance()->GetAllGroups();
         });
@@ -698,15 +801,14 @@ void GroupSandboxModel::GetGroups()
         QWarningMessage msg;
         return bridge::GetGroups(msg);
     },[safeThis](std::vector<nunchuk::GroupSandbox> sandboxs) {
-        if (safeThis) {
-            safeThis->beginResetModel();
-            safeThis.data()->m_data.clear();
-            for(auto sandbox : sandboxs) {
-                safeThis.data()->m_data.append(QGroupSandboxPtr(new QGroupSandbox(sandbox)));
-            }
-            safeThis->endResetModel();
-            DBG_INFO << safeThis->count();
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        ptrLamda->beginResetModel();
+        ptrLamda.data()->m_data.clear();
+        for(auto sandbox : sandboxs) {
+            ptrLamda.data()->m_data.append(QGroupSandboxPtr(new QGroupSandbox(sandbox)));
         }
+        ptrLamda->endResetModel();
+        DBG_INFO << ptrLamda->count();
     });
 }
 

@@ -18,6 +18,10 @@
  *                                                                        *
  **************************************************************************/
 import QtQuick 2.4
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.3
+import QtQuick.Controls.Styles 1.4
+import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -32,32 +36,14 @@ Item {
     height: QAPP_DEVICE_HEIGHT
     antialiasing: true
     smooth: true
-    property var screen_layer_base: screen_layer_1
-//    scale: 0.5 // FIXME ~ PLAN USED INSTEAD OF QT_SCALE_FACTOR
     Loader {
-        id: screen_layer_1
+        id: screen_layer
         anchors.fill: parent
         transformOrigin: Item.TopLeft
-        // onLoaded: { switch_screen_layer_base( screen_layer_2, screen_layer_1 ); }
     }
-    // Loader {
-    //     id: screen_layer_2
-    //     anchors.fill: parent
-    //     transformOrigin: Item.TopLeft
-    //     onLoaded: { switch_screen_layer_base( screen_layer_1, screen_layer_2 ); }
-    // }
-    // function switch_screen_layer_base(from, to) {
-    //     if ( from.item !== null ) { from.item.visible = false; from.sourceComponent = null }
-    //     if ( to.item !== null ) { to.item.visible = true }
-    //     screen_layer_base = from;
-    // }
-    // function screen_Transition() {
-    //     screen_layer_base.sourceComponent = null
-    //     screen_layer_base.sourceComponent = QAppScreen
-    // }
     function screen_Transition() {
-        screen_layer_1.sourceComponent = null
-        screen_layer_1.sourceComponent = QAppScreen
+        screen_layer.sourceComponent = null
+        screen_layer.sourceComponent = QAppScreen
     }
 
     ListModel { id: onsDataList }
@@ -95,11 +81,27 @@ Item {
         _checkforupdate.open()
     }
 
-    QToastMessage {
-        id: toastLoader
-        isScreenBase: onsDataList.count == 0 ? true : false
-        anchors.fill: parent
-        model: ListModel { id: toastes}
+    Popup {
+        id: popup
+        width: parent.width
+        height: parent.height
+        modal: true
+        background: Item{}
+        dim: false
+        anchors.centerIn: parent
+        visible: toastLoader.model.count > 0
+        closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
+        QToastMessage {
+            id: toastLoader
+            isScreenBase: onsDataList.count == 0 ? true : false
+            anchors.fill: parent
+            model: ListModel { id: toastes}
+            // onToastVisibleChanged : {
+            //     if(toastLoader.model.count == 0){
+            //         popup.close()
+            //     }
+            // }
+        }
     }
 
     function loadToastMessage(toastObj) {
@@ -107,8 +109,7 @@ Item {
         for(var i = 0; i < toastLoader.model.count; i++){
             console.log(toastLoader.model.get(i).code , toastObj.code, toastObj.type)
             if(toastLoader.model.get(i).code === toastObj.code && (toastObj.type > EWARNING.ERROR_MSG)) {
-                // exception check show already ? (by error code)
-                return false;
+                return;
             }
         }
         var toastItem = {
@@ -120,7 +121,7 @@ Item {
             "popupType"     : toastObj.popupType
         }
         toastLoader.model.append(toastItem)
-        return true;
+        popup.open()
     }
 
     QPopupInfoTwoButtons {
@@ -140,7 +141,7 @@ Item {
     }
     Connections {
         target: AppModel
-        onSyncingWalletFromServer: {
+        function onSyncingWalletFromServer(fingerPrint) {
             _syncing_wallet_from_server.contentText = STR.STR_QML_1289.arg(fingerPrint.toUpperCase())
             _syncing_wallet_from_server.open()
         }

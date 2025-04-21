@@ -2,9 +2,10 @@
 #define QSIGNERMANAGEMENT_H
 
 #include <QObject>
+#include "Commons/QStateFlow.h"
 
 typedef bool (*Execute)();
-class QSignerManagement : public QObject
+class QSignerManagement : public QStateFlow
 {
     Q_OBJECT
 private:
@@ -30,6 +31,8 @@ public:
 
     void clearExecute();
 
+public slots:
+    void createHotKey();
 signals:
 private:
     Execute m_executeMaster {nullptr};

@@ -58,7 +58,6 @@ void EVT_ADD_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
     QMap<QString,QVariant> maps = msg.toMap();
     QString username = maps["username"].toString();
     QString signature = maps["signature"].toString();
-    AppModel::instance()->clearPrimaryKeyList();
     std::vector<nunchuk::PrimaryKey> primaryKeys = AppModel::instance()->primaryKeys();
     nunchuk::PrimaryKey pkey;
     for(nunchuk::PrimaryKey key: primaryKeys){

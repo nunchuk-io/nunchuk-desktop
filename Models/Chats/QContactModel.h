@@ -32,9 +32,9 @@ class QContactModel : public QAbstractListModel
 public:
     QContactModel();
     ~QContactModel();
-    int rowCount(const QModelIndex& parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    QHash<int, QByteArray> roleNames() const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     void syncContacts(QList<DracoUser> data);
     void addContact(const DracoUser user);

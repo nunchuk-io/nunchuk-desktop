@@ -126,7 +126,8 @@ AppSetting::AppSetting() :
     enableDebugMode_(false),
     enableMultiDeviceSync_(false),
     isStarted_(false),
-    isFirstTimeOnboarding_(false)
+    isFirstTimeOnboarding_(false),
+    feeSetting_{(int)ENUNCHUCK::Fee_Setting::ECONOMY}
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     DBG_INFO << "Setting in:" << NunchukSettings::fileName();
@@ -868,24 +869,25 @@ void AppSetting::setCurrency(QString currency)
     emit currencyChanged();
 }
 
-void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString> data)
+void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool> input)
 {
     QByteArray dataByteArray;
     QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
-    stream << data.first << data.second << data.third;
+    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup;
     NunchukSettings::setValue(id, dataByteArray);
 }
 
-bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString> &result)
+bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool> &output)
 {
     if(NunchukSettings::contains(id)){
         QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
         QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
-        stream >> result.first >> result.second >> result.third >> result.fourth;
-        DBG_INFO << "first:" << result.first
-                 << "second:" << result.second
-                 << "third:" << result.third
-                 << "fourth:" << result.fourth;
+        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup;
+        // DBG_INFO << "groupId:" << output.groupId
+        //          << "slug:"    << output.slug
+        //          << "myRole:"  << output.myRole
+        //          << "status:"  << output.status
+        //          << "backedup:"<< output.backedup;
         return true;
     }
     return false;
@@ -1072,7 +1074,27 @@ bool AppSetting::validateAddress(const QString &address)
     bool ret =qUtils::IsValidAddress(address);;
     // if(!ret){
     //     QString message = QString("Invalid address: %1").arg(address);
-    //     AppModel::instance()->showToast(0, message, EWARNING::WarningType::EXCEPTION_MSG);
+    //     AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
     // }
     return ret;
+}
+
+int AppSetting::feeSetting()
+{
+    if(NunchukSettings::contains("feeSetting")){
+        feeSetting_ = NunchukSettings::value("feeSetting").toInt();
+    }
+    else{
+        NunchukSettings::setValue("feeSetting", feeSetting_);
+    }
+    return feeSetting_;
+}
+
+void AppSetting::setFeeSetting(int fee)
+{
+    if (feeSetting_ != fee){
+        feeSetting_ = fee;
+        NunchukSettings::setValue("feeSetting", feeSetting_);
+        emit feeSettingChanged();
+    }
 }

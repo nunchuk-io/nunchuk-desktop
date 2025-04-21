@@ -17,61 +17,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
+import QtQuick 2.12
 import HMIEVENTS 1.0
-import EWARNING 1.0
-import NUNCHUCKTYPE 1.0
-import DataPool 1.0
 import "../../../Components/origins"
-import "../../../Components/customizes"
-import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
-import "../../../Components/customizes/QRCodes"
 import "../../../../localization/STR_QML.js" as STR
 
-QOnScreenContentTypeA {
-    width: popupWidth
-    height: popupHeight
-    anchors.centerIn: parent
-    label.text: STR.STR_QML_1654
-    extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-    property var newWalletInfo  : AppModel.newWalletInfo
-    property var sandbox        : AppModel.newWalletInfo.sandbox
-    content: Item {
-        anchors {
-            top: parent.top
-            topMargin: 8
+Rectangle{
+    width: idRow.childrenRect.width + 8*2
+    height: 16
+    radius: 20
+    color: "#EAEAEA"
+    property alias icon: idIcon
+    property alias label: idLabel
+    Row {
+        id: idRow
+        anchors.centerIn: parent
+        height: parent.height
+        spacing: 4
+        QIcon {
+            id: idIcon
+            iconSize: 12
+            source: "qrc:/Images/Images/collab-wallet-dark.svg"
+            anchors.verticalCenter: parent.verticalCenter
+            visible: idIcon.source != ""
         }
-        Row {
-            height: parent.height
-            spacing: 24
-            QDraftWalletReviewInfo {
-
-            }
-            QDraftWalletReviewKeys {
-
-            }
+        QLato {
+            id: idLabel
+            font.pixelSize: 10
+            text: STR.STR_QML_438
+            font.weight: Font.Bold
+            anchors.verticalCenter: parent.verticalCenter
         }
-        QWarningBgMulti {
-            width: 728
-            height: 80
-            iSize: 36
-            icon: "qrc:/Images/Images/info-60px.svg"
-            txt.text: STR.STR_QML_1640
-            anchors.bottom: parent.bottom
-            visible: sandbox.addressType === NUNCHUCKTYPE.TAPROOT
-        }
-    }
-    onPrevClicked: sandbox.screenFlow = "setup-group-wallet"
-
-    onNextClicked: {
-        var _input = {
-            type: "finalize-group-sandbox"
-        }
-        QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
     }
 }

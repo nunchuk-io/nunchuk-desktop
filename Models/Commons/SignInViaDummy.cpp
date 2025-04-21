@@ -170,7 +170,7 @@ bool SignInViaDummy::SignInRequestSignTx(const QString &xfp)
     }
     else {
         emit AppModel::instance()->finishedSigningTransaction();
-        AppModel::instance()->showToast(0, "There not device", EWARNING::WarningType::EXCEPTION_MSG);
+        AppModel::instance()->showToast(0, "There not device", EWARNING::WarningType::ERROR_MSG);
         return false;
     }
 

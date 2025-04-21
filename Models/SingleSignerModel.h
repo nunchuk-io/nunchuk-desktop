@@ -48,7 +48,7 @@ class QSingleSigner : public QObject, public WalletKeys {
     Q_PROPERTY(bool    isColdCard               READ isColdCard                                     NOTIFY isColdCardChanged)
     Q_PROPERTY(int     signerType               READ signerType                                     NOTIFY signerTypeChanged)
     Q_PROPERTY(QString devicetype               READ devicetype                                     NOTIFY devicetypeChanged)
-    Q_PROPERTY(int     isPrimaryKey             READ isPrimaryKey                                   NOTIFY isPrimaryKeyChanged)
+    Q_PROPERTY(bool     isPrimaryKey            READ isPrimaryKey                                   NOTIFY isPrimaryKeyChanged)
     Q_PROPERTY(QString tag                      READ tag                                            CONSTANT)
     Q_PROPERTY(bool hasSignBtn                  READ hasSignBtn                                     CONSTANT)
     Q_PROPERTY(int  accountIndex                READ accountIndex                                   CONSTANT)
@@ -73,8 +73,7 @@ public:
     nunchuk::SingleSigner originSingleSigner() const;
     void setOriginSingleSigner(const nunchuk::SingleSigner signer);
 
-    nunchuk::PrimaryKey originPrimaryKey() const;
-    void setOriginPrimaryKey(const nunchuk::PrimaryKey key);
+    nunchuk::PrimaryKey originPrimaryKey();
 
     QString name();
     void setName(const QString& d);
@@ -132,7 +131,6 @@ public:
     bool isMine() const;
 
     bool isPrimaryKey() const;
-    void setIsPrimaryKey(bool isPrimaryKey);
 
     QString devicetype() const;
     void setDevicetype(QString devicetype);
@@ -173,6 +171,9 @@ public:
     bool valueKey() const;
     void setValueKey(const bool data);
     bool isValid();
+    bool isOccupied() const;
+    void setIsOccupied(bool newIsOccupied);
+
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -191,7 +192,6 @@ private:
     QString m_email = "";
     nunchuk::PrimaryKey     primaryKey_;
     nunchuk::SingleSigner   singleSigner_;
-    bool isPrimaryKey_;
     bool isDraft = true;
     bool m_hasSignBtn {true};
     // QJsonArray m_healthCheckHistory {};
@@ -204,6 +204,7 @@ private:
     int  m_keyset_status {0};
     int  m_keyset_pendingnumber {0};
     bool m_valuekey {false};
+    bool m_isOccupied {false};
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -281,16 +282,20 @@ public:
         single_signer_account_index_Role,
         single_signer_isReplaced_Role,
         single_signer_keyReplaced_Role,
-        single_signer_taproot_supported,
-        single_signer_keyset_index,
-        single_signer_keyset_status,
-        single_signer_keyset_remaining,
-        single_signer_value_key
+        single_signer_taproot_supported_Role,
+        single_signer_keyset_index_Role,
+        single_signer_keyset_status_Role,
+        single_signer_keyset_remaining_Role,
+        single_signer_value_key_Role,
+        single_signer_isOccupied_Role
     };
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role);
     QHash<int,QByteArray> roleNames() const;
+    static QHash<int,QByteArray> roleSignerNames();
+    static QVariant dataSigner(const QSingleSignerPtr &data, int role);
+    static QVariant useQml(const QSingleSignerPtr &data);
     void replaceSingleSigner(int index, const QSingleSignerPtr &value);
     void addSingleSigner(const QSingleSignerPtr &d);
     void addKeysetSigner(const QSingleSignerPtr &signer, const int keyset_index);

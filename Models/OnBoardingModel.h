@@ -30,6 +30,7 @@ public:
     QString state() const;
     void setState(const QString &newState);
     QWalletPtr ImportWalletDescriptor(const QString &file_path);
+    QWalletPtr ImportWalletDB(const QString &file_path);
 public slots:
     void requestBackupHotWallet();
     bool importQrHotWallet(const QStringList qrtags);

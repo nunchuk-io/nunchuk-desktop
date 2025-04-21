@@ -26,14 +26,15 @@ import "../../../localization/STR_QML.js" as STR
 Item {
     id: settingpanel
     readonly property var option_map: [
-        {screen:_DISPLAY_UNIT,          title:STR.STR_QML_513, icon: "qrc:/Images/Images/display-unit-light.svg"        },
-        {screen:_LOCAL_CURRENCY,        title:STR.STR_QML_741, icon: "qrc:/Images/Images/local-currency-light.svg"      },
-        {screen:_ACCOUNT_SETTINGS,      title:STR.STR_QML_537, icon: "qrc:/Images/Images/accounts-settings-light.svg"   },
-        {screen:_NETWORK_SETTINGS,      title:STR.STR_QML_514, icon: "qrc:/Images/Images/network-settings-light.svg"    },
-        {screen:_HARDWARE_DRIVER,       title:STR.STR_QML_515, icon: "qrc:/Images/Images/hardware-driver-light.svg"     },
-        {screen:_DATABASE_ENCRYTION,    title:STR.STR_QML_530, icon: "qrc:/Images/Images/change-password-light.svg"     },
-        {screen:_DEVELOPER_SETTINGS,    title:STR.STR_QML_588, icon: "qrc:/Images/Images/developer-settings-light.svg"  },
-        {screen:_ABOUT,                 title:STR.STR_QML_518, icon: "qrc:/Images/Images/info-filled-light.svg"         }
+        {screen:_DISPLAY_UNIT,          title:STR.STR_QML_513,  icon: "qrc:/Images/Images/display-unit-light.svg"        },
+        {screen:_LOCAL_CURRENCY,        title:STR.STR_QML_741,  icon: "qrc:/Images/Images/local-currency-light.svg"      },
+        {screen:_ACCOUNT_SETTINGS,      title:STR.STR_QML_537,  icon: "qrc:/Images/Images/accounts-settings-light.svg"   },
+        {screen:_FEE_SETTINGS,          title:STR.STR_QML_1715, icon: "qrc:/Images/Images/fee-setting.svg"},
+        {screen:_NETWORK_SETTINGS,      title:STR.STR_QML_514,  icon: "qrc:/Images/Images/network-settings-light.svg"    },
+        {screen:_HARDWARE_DRIVER,       title:STR.STR_QML_515,  icon: "qrc:/Images/Images/hardware-driver-light.svg"     },
+        {screen:_DATABASE_ENCRYTION,    title:STR.STR_QML_530,  icon: "qrc:/Images/Images/change-password-light.svg"     },
+        {screen:_DEVELOPER_SETTINGS,    title:STR.STR_QML_588,  icon: "qrc:/Images/Images/developer-settings-light.svg"  },
+        {screen:_ABOUT,                 title:STR.STR_QML_518,  icon: "qrc:/Images/Images/info-filled-light.svg"         }
     ]
     property var itemOption: option_map.find(function(e) {if (e.screen === ProfileSetting.optionIndex) return true; else return false})
     Column {

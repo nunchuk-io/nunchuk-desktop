@@ -118,9 +118,7 @@ class Transaction : public QObject {
     Q_PROPERTY(bool                         createByMe              READ createByMe                 NOTIFY createByMeChanged)
     Q_PROPERTY(QString                      psbt                    READ psbt                       NOTIFY psbtChanged)
     Q_PROPERTY(QString                      serverKeyMessage        READ serverKeyMessage           NOTIFY serverKeyMessageChanged)
-    Q_PROPERTY(QString                      packageFeeRate          READ packageFeeRate             NOTIFY packageFeeRateChanged)
     Q_PROPERTY(QString                      destination             READ destination                NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                         isCpfp                  READ isCpfp                     CONSTANT)
     Q_PROPERTY(bool                         isCosigning             READ isCosigning                NOTIFY serverKeyMessageChanged)
     Q_PROPERTY(bool                         enableRequestSignature  READ enableRequestSignature     CONSTANT)
     Q_PROPERTY(bool                         enableScheduleBroadcast READ enableScheduleBroadcast    CONSTANT)
@@ -131,6 +129,11 @@ class Transaction : public QObject {
     Q_PROPERTY(QUTXOListModel*              inputCoins              READ inputCoins                 CONSTANT)
     Q_PROPERTY(QCoinTagsModel*              parentCoinsTag          READ parentCoinsTag             NOTIFY parentCoinsTagChanged)
     Q_PROPERTY(int                          keysetsCount            READ keysetsCount               NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(bool                         isCpfp                  READ isCpfp                     NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      packageFeeRate          READ packageFeeRate             NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      scriptPathFeeRate       READ scriptPathFeeRate          NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      txidReplacing           READ txidReplacing              NOTIFY txidReplacingChanged)
+
 public:
     Transaction();
     Transaction(const nunchuk::Transaction &tx);
@@ -164,6 +167,7 @@ public:
     bool subtractFromFeeAmount() const;
 
     QString feeRate() const;
+    qint64  feeRateSats() const;
 
     QString psbt() const;
 
@@ -194,6 +198,7 @@ public:
 
     QString get_replaced_by_txid() const;
     QString get_replace_txid();
+    void set_replace_txid(const QString &txid);
 
     nunchuk::Transaction nunchukTransaction() const;
     void setNunchukTransaction(const nunchuk::Transaction &tx);
@@ -244,6 +249,10 @@ public:
     // For taproot
     std::map<std::string, bool> taprootFinalSigners();
 
+    QString scriptPathFeeRate();
+    QString txidReplacing() const;
+    void setTxidReplacing(const QString &id);
+
 public slots:
     bool parseQRTransaction(const QStringList& qrtags);
     void copyTransactionID();
@@ -276,6 +285,7 @@ private:
     QJsonObject                 m_txJson = {};
     QMap<QString, QString>      m_signatures = {};
     bool                        m_hasMoreBtn {true};
+    QString                     m_txidReplacing {""};
 
 signals:
     void nunchukTransactionChanged();
@@ -287,11 +297,11 @@ signals:
     void walletIdChanged();
     void psbtChanged();
     void serverKeyMessageChanged();
-    void packageFeeRateChanged();
     void scan_percentChanged();
     void hasMoreBtnChanged();
     void manualCoinsChanged();
     void parentCoinsTagChanged();
+    void txidReplacingChanged();
 };
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 

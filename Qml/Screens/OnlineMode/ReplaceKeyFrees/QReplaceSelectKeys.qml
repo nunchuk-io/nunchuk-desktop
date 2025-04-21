@@ -62,9 +62,29 @@ QOnScreenContentTypeA {
                 ScrollBar.vertical: ScrollBar { active: true }
                 delegate: QReplaceKeyDelegate {
                     width: signerlist.width
+                    signerData {
+                        single_name: model.singleSigner_name
+                        single_type: model.single_signer_type
+                        single_tag: model.single_signer_tag
+                        single_devicetype: model.single_signer_devicetype
+                        single_masterFingerPrint: model.singleSigner_masterFingerPrint
+                        single_account_index: model.single_signer_account_index
+                        single_checked: model.single_signer_checked
+                        single_is_local: model.single_signer_is_local
+                        single_value_key: model.single_signer_value_key
+                        single_derivationPath: model.singleSigner_derivationPath
+                        single_device_cardid: model.single_signer_device_cardid
+                        single_isOccupied: model.single_signer_isOccupied
+                        single_isReplaced: model.single_signer_isReplaced
+                        single_keyReplaced: model.single_signer_keyReplaced
+                    }
                     onReplaceClicked: {
                         setReplaceFlow("replace-existing-key")
                         selectReplaceKey(model.singleSigner_masterFingerPrint, index)
+                    }
+                    onRemoveClicked: {
+                        _confirmRemoveKey.idx = idx
+                        _confirmRemoveKey.open()
                     }
                 }
             }
@@ -146,6 +166,17 @@ QOnScreenContentTypeA {
             }
             QMLHandle.sendEvent(EVT.EVT_REPLACE_KEYS_ENTER, _input)
             closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        }
+    }
+    QConfirmYesNoPopup{
+        id:_confirmRemoveKey
+        property var idx
+        title: STR.STR_QML_661
+        contentText: STR.STR_QML_243
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            walletInfo.removeKeyReplaced(idx)
         }
     }
 }

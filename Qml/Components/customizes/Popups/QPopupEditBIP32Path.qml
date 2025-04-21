@@ -41,7 +41,7 @@ Popup {
     modal: true
     focus: true
     signal enterText(var pathBip32)
-    property var signer: {type:""; tag:""; signer_type: -1; derivationPath: ""}
+    property var signerData
     property string title: STR.STR_QML_1679
     property bool isShowListDevice: false
     property int idx: -1
@@ -140,9 +140,8 @@ Popup {
                             QCircleIcon {
                                 bgSize: 48
                                 icon.iconSize: 24
-                                icon.typeStr: signer.type
-                                icon.tag: signer.tag
-                                icon.type: signer.signer_type
+                                icon.type: signerData.single_type
+                                icon.tag: signerData.single_tag
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: "#F5F5F5"
                             }
@@ -152,7 +151,7 @@ Popup {
                                 QText {
                                     width: 146
                                     height: 20
-                                    text: signer.name
+                                    text: signerData.single_name
                                     color: "#031F2B"
                                     font.weight: Font.Normal
                                     font.family: "Lato"
@@ -161,7 +160,7 @@ Popup {
                                 QText {
                                     width: 146
                                     height: 20
-                                    text: "XFP: " + signer.xfp
+                                    text: "XFP: " + signerData.single_masterFingerPrint
                                     color: "#595959"
                                     font.weight: Font.Normal
                                     font.capitalization: Font.AllUppercase
@@ -179,7 +178,7 @@ Popup {
                         enabled: false
                         titleFontSize: 12
                         disabledColor: "#F5F5F5"
-                        textInputted: signer.derivationPath
+                        textInputted: signerData.single_derivationPath
                     }
                     Column {
                         width: parent.width
@@ -192,7 +191,7 @@ Popup {
                             isValid: true
                             titleFontSize: 12
                             property string fixedText: STR.STR_QML_150 + " "
-                            textInputted: fixedText + signer.derivationPath
+                            textInputted: fixedText + signerData.single_derivationPath
                             onTextInputtedChanged: {
                                 if (!textInputted.startsWith(fixedText)) {
                                     textInputted = fixedText + textInputted.slice(fixedText.length) + derivation32Path // Restore prefix

@@ -74,6 +74,10 @@ QOnScreenContentTypeB {
                             memberEmail = modelData.email_or_username
                             _editMemberSelectARole.open()
                         }
+                        onRemoveClicked: {
+                            memberEmail = modelData.email_or_username
+                            removeMember()
+                        }
                     }
                 }
                 Component {
@@ -102,6 +106,14 @@ QOnScreenContentTypeB {
         }
         QMLHandle.notifySendEvent(EVT.EVT_EDIT_MEMBERS_ENTER_REQUEST, _input)
     }
+    function removeMember() {
+        var _input = {
+            type: "remove-member",
+            email_or_username: memberEmail,
+        }
+        QMLHandle.notifySendEvent(EVT.EVT_EDIT_MEMBERS_ENTER_REQUEST, _input)
+    }
+
     isShowLine: true
     onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     bottomRight: Row {

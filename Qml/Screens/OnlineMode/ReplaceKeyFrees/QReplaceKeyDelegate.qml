@@ -27,8 +27,13 @@ import "../../../Components/customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
-    height: 84 + (model.single_signer_isReplaced ? (16 + 8) : 0)
+    property alias signerData: dataSingle
+    QSingleSignerData {
+        id: dataSingle
+    }
+    height: 84 + (dataSingle.single_isReplaced ? (16 + 8) : 0)
     signal replaceClicked()
+    signal removeClicked(var idx)
     Column {
         id: _col
         width: parent.width
@@ -36,7 +41,7 @@ Item {
         Rectangle {
             height: 84
             width: parent.width
-            color: model.single_signer_isReplaced ? "#A7F0BA" : "#FDEBD2"
+            color: dataSingle.single_isReplaced ? "#A7F0BA" : "#FDEBD2"
             radius: 12
             QSignerDetailDelegate {
                 height: 60
@@ -46,55 +51,37 @@ Item {
                     left: parent.left
                     leftMargin: 12
                 }
-                typeInt: model.single_signer_type
-                tag: model.single_signer_tag
-                signerName: model.singleSigner_name
-                accountIndex: model.single_signer_account_index
-                card_id_or_xfp: model.single_signer_type === NUNCHUCKTYPE.NFC ? model.single_signer_device_cardid : model.singleSigner_masterFingerPrint
+                typeInt: dataSingle.single_type
+                tag: dataSingle.single_tag
+                signerName: dataSingle.single_name
+                accountIndex: dataSingle.single_account_index
+                card_id_or_xfp: dataSingle.single_type === NUNCHUCKTYPE.NFC ? dataSingle.single_device_cardid : dataSingle.single_masterFingerPrint
                 key_color: "#F5F5F5"
             }
             QTextButton {
-                visible: !model.single_signer_isReplaced
-                width: 78
+                width: 79
                 height: 36
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
                     rightMargin: 12
                 }
-                label.text: STR.STR_QML_1368
-                label.font.pixelSize: 16
+                label.text: dataSingle.single_isReplaced ? STR.STR_QML_1134 : STR.STR_QML_1368
+                label.font.pixelSize: 12
                 type: eTypeB
                 onButtonClicked: {
-                    replaceClicked()
-                }
-            }
-            Row {
-                visible: model.single_signer_isReplaced
-                width: 75
-                height: 24
-                anchors {
-                    verticalCenter: parent.verticalCenter
-                    right: parent.right
-                    rightMargin: 12
-                }
-                spacing: 4
-                QIcon {
-                    iconSize: 24
-                    source: "qrc:/Images/Images/check-circle-dark.svg"
-                }
-                QLato {
-                    text: STR.STR_QML_104
-                    font.weight: Font.Normal
-                    font.pixelSize: 16
-                    anchors.verticalCenter: parent.verticalCenter
+                    if (dataSingle.single_isReplaced) {
+                        removeClicked(index)
+                    } else {
+                        replaceClicked()
+                    }
                 }
             }
         }
         Item {
             height: 16
             width: parent.width
-            visible: model.single_signer_isReplaced
+            visible: dataSingle.single_isReplaced
             anchors {
                 left: parent.left
                 leftMargin: 16
@@ -108,19 +95,20 @@ Item {
                 QLato {
                     height: 16
                     text: {
-                        if (model.single_signer_isReplaced === false) {
+                        if (dataSingle.single_isReplaced === false) {
                             return ""
                         }
-                        var type = model.single_signer_keyReplaced.signerType
+                        var keyReplaced = dataSingle.single_keyReplaced
+                        var type = keyReplaced.single_signer_type
                         var id = ""
                         if (type === NUNCHUCKTYPE.NFC) {
-                            var card_id = model.single_signer_keyReplaced.cardId
+                            var card_id = keyReplaced.single_signer_device_cardid
                             var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
                             id = "CARD ID: ••" + textR
                         } else {
-                            id = "XFP: " + model.single_signer_keyReplaced.signerMasterFingerPrint.toUpperCase()
+                            id = "XFP: " + keyReplaced.singleSigner_masterFingerPrint.toUpperCase()
                         }
-                        return STR.STR_QML_1380.arg(model.single_signer_keyReplaced.signerName).arg(id)
+                        return STR.STR_QML_1380.arg(keyReplaced.singleSigner_name).arg(id)
                     }
                     font.pixelSize: 12
                     font.weight: Font.Normal

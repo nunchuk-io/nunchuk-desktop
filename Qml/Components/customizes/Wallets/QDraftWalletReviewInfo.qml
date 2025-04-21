@@ -16,7 +16,6 @@ Rectangle {
         {type: NUNCHUCKTYPE.TAPROOT,         displayName: STR.STR_QML_553 },
         {type: NUNCHUCKTYPE.NESTED_SEGWIT,   displayName: STR.STR_QML_063 },
         {type: NUNCHUCKTYPE.LEGACY,          displayName: STR.STR_QML_064 },
-        {type: NUNCHUCKTYPE.ANY,             displayName: STR.STR_QML_065 },
     ]
     property var infos: [
         {label: STR.STR_QML_025,  labelValue: newWalletInfo.walletName },

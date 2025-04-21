@@ -63,13 +63,14 @@ Item {
     ]
     Rectangle {
         id: content
-        width: toast.width - 4
-        height: contentRow.height + 24
+        implicitWidth: toast.width - 4
+        implicitHeight: contentRow.height + 24
         anchors.horizontalCenter: parent.horizontalCenter
         radius: 8
         color: warningColor[type]
         Row {
             id: contentRow
+            width: parent.width - 24
             anchors.centerIn: parent
             spacing: 8
             QIcon {
@@ -77,15 +78,16 @@ Item {
                 source: warningIcon[type]
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QText {
+            QLato {
                 id: _txt
-                width: 600
+                width: parent.width - 44
                 anchors.verticalCenter: parent.verticalCenter
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
                 wrapMode: Text.WordWrap
                 color: warningTextColor[type]
                 text: contentDisplay
+                font.pixelSize: 16
             }
         }
     }

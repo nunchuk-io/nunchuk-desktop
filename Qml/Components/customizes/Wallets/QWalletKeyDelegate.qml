@@ -32,24 +32,24 @@ import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
-    width: 326
-    height: 48
-    property string signerName: "value"
-    property string signerXFP: "value"
-    property string lastHealthCheck: "value"
-    property int    signerType: 0
-    property string deviceType: ""
-    property string tagType: ""
-    property string card_id: ""
-    property int    accountIndex: 0
-    property bool   isValueKey: false
-    property bool   enableValueKeyset: AppModel.walletInfo.enableValuekeyset
+    id: del
+    width: 350
+    height: _column.childrenRect.height + 12*2
+    property alias signerData: dataSingle
+
+    QSingleSignerData {
+        id: dataSingle
+    }
 
     signal viewPoliciesRequest()
 
     Row {
-        id: roomDelegateContent
-        spacing: 8
+        anchors {
+            left: parent.left
+            leftMargin: 12
+        }
+        height: parent.height
+        spacing: 12
         Rectangle {
             id: _keyIcon
             width: 48
@@ -60,102 +60,95 @@ Item {
             QSignerDarkIcon {
                 iconSize: 24
                 anchors.centerIn: parent
-                device_type: deviceType
-                type: signerType
-                tag: tagType
+                device_type: dataSingle.single_devicetype
+                type: dataSingle.single_type
+                tag: dataSingle.single_tag
             }
         }
         Column {
-            width: 170
-            spacing: 4
+            id: _column
+            height: childrenRect.height
+            width: 350 - 12 - 48 - 12
             anchors.verticalCenter: parent.verticalCenter
-            QText{
+            spacing: 4
+            QLato {
                 width: parent.width
-                height: 28
-                font.family: "Lato"
-                text: signerName
-                font.pixelSize: 16
-                color: "#031F2B"
-                elide: Text.ElideRight
+                text: dataSingle.single_name
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
             }
             Row {
-                spacing: 8
-                visible: signerType !== NUNCHUCKTYPE.SERVER
-                QText {
-                    height: 16
-                    visible: (signerXFP !== "" || card_id !== "")
-                    font.family: "Lato"
-                    font.pixelSize: 12
-                    color: "#031F2B"
-                    text: {
-                        if (signerType === NUNCHUCKTYPE.NFC) {
-                            var textR = card_id.substring(card_id.length - 5,card_id.length).toUpperCase()
-                            return "Card ID: ••" + textR
-                        } else {
-                            return "XFP: " + signerXFP.toUpperCase()
-                        }
-                    }
-                }
-                Rectangle {
-                    width: valuekeyText.width + 10
+                height: 16
+                spacing: 4
+                QBadge {
+                    text: STR.STR_QML_1695
                     height: 16
                     color: "#D0E2FF"
+                    visible: dataSingle.single_value_key
                     radius: 8
-                    visible: isValueKey && enableValueKeyset
-                    QText {
-                        id: valuekeyText
-                        font.family: "Lato"
-                        color: "#031F2B"
-                        font.pixelSize: 10
-                        anchors.centerIn: parent
-                        font.weight: Font.Bold
-                        text: "Value Key"
-                    }
+                    fontSize: 10
                 }
-                Rectangle {
-                    width: typesigner.width + 10
+                QSignerBadgeName {
+                    typeStr: ""
+                    type: dataSingle.single_type
+                    tag: dataSingle.single_tag
+                    color: "#DEDEDE"
+                    height: 16
+                    font.pixelSize: 10
+                }
+                QBadge {
+                    text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                     height: 16
                     color: "#EAEAEA"
+                    visible: dataSingle.single_account_index > 0
                     radius: 8
-                    QText {
-                        id: typesigner
-                        font.family: "Lato"
-                        color: "#031F2B"
-                        font.pixelSize: 10
-                        anchors.centerIn: parent
-                        font.weight: Font.Bold
-                        text: GlobalData.signers(signerType)
+                    fontSize: 10
+                }
+                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+            }
+            QLato {
+                width: 146
+                height: 16
+                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                text: {
+                    if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
+                        var card_id = dataSingle.single_device_cardid
+                        var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
+                        return "Card ID: ••" + textR
+                    }
+                    else {
+                        return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
                     }
                 }
-                Rectangle {
-                    width: accttext.width + 10
-                    height: 16
-                    color: "#EAEAEA"
-                    visible: (accountIndex > 0)
-                    radius: 8
-                    QText {
-                        id: accttext
-                        font.family: "Lato"
-                        color: "#031F2B"
-                        font.pixelSize: 10
-                        anchors.centerIn: parent
-                        font.weight: Font.Bold
-                        text: qsTr("Acct %1").arg(accountIndex)
-                    }
-                }
+                color: "#031F2B"
+                font.weight: Font.Normal
+                font.capitalization: Font.AllUppercase
+                font.family: "Lato"
+                font.pixelSize: 12
+            }
+            QLato {
+                height: 16
+                width: parent.width
+                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
+                color: "#031F2B"
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: 12
             }
         }
     }
+
     QTextButton {
-        width: 108
+        width: label.paintedWidth + 16*2
         height: 36
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         label.text: STR.STR_QML_1348
         label.font.pixelSize: 12
         type: eTypeB
-        enabled: !AppModel.walletInfo.isLocked
-        visible: signerType === NUNCHUCKTYPE.SERVER && !AppModel.walletInfo.isReplaced && myRole !== "FACILITATOR_ADMIN"
+        enabled: !walletInfo.isLocked
+        visible: dataSingle.single_type === NUNCHUCKTYPE.SERVER && !walletInfo.isReplaced && myRole !== "FACILITATOR_ADMIN"
         onButtonClicked: {
             viewPoliciesRequest()
         }

@@ -8,7 +8,6 @@ QGroupWallets::QGroupWallets()
     : QAssistedDraftWallets(GROUP_WALLET)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(this, &QGroupWallets::acceptChanged, this, &QGroupWallets::slotAcceptChanged, Qt::QueuedConnection);
 }
 
 QGroupWallets::~QGroupWallets()
@@ -34,12 +33,6 @@ QGroupDashboardPtr QGroupWallets::dashboardInfoPtr()
     } else {
         mDashboard = AppModel::instance()->walletInfoPtr() ? AppModel::instance()->walletInfoPtr()->dashboard() : nullptr;
     }
-    if (mDashboard) {
-        QString myRole = mDashboard->myRole();
-        if(qUtils::strCompare(myRole, "KEYHOLDER_LIMITED")){
-            mDashboard->setShowDashBoard(true);
-        }
-    }
     return mDashboard;
 }
 
@@ -59,7 +52,7 @@ void QGroupWallets::GetAllGroups()
     }
     QUserWallets::instance()->GetDraftWallet();
     QPointer<QGroupWallets> safeThis(this);
-    runInThread([safeThis]() ->QJsonArray{
+    runInThread([]() ->QJsonArray{
         QJsonObject output;
         QString error_msg = "";
         bool ret = Byzantine::instance()->GetAllGroupWallets(output, error_msg);
@@ -73,66 +66,99 @@ void QGroupWallets::GetAllGroups()
             for (auto v : groups) {
                 QJsonObject group = v.toObject();
                 groupList.append(group);
-                DBG_INFO << group["id"].toString() << group["status"].toString();
             }
-        } else {
-            //Show error
+        }
+        else {
             DBG_INFO << error_msg;
         }
         return groupList;
     },[safeThis](QJsonArray groupList) {
-        if(safeThis) {
-            safeThis->GetListAllRequestAddKey(groupList);
-            safeThis->MakePendingDashboardList(groupList);
-        }
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        ptrLamda->GetListAllRequestAddKey(groupList);
+        ptrLamda->MakePendingDashboardList(groupList);
     });
 }
 
-bool QGroupWallets::AcceptGroupWallet()
+void QGroupWallets::AcceptGroupWallet()
 {
-    if (!mDashboard) return false;
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret = Byzantine::instance()->AcceptGroupWallet(mDashboard->groupId(), output, error_msg);
-    if(ret){
-        DBG_INFO;
-    }
-    else{
-        //Show error
-    }
-    return ret;
+    if (!mDashboard) return;
+    if (isBusy()) return;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    QPointer<QGroupDashboard> safeThis(mDashboard.data());
+    runInThread([safeThis]() ->bool{
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret = Byzantine::instance()->AcceptGroupWallet(ptrLamda->groupId(), output, error_msg);
+        if(ret){
+            DBG_INFO;
+        }
+        else{
+            //Show error
+            AppModel::instance()->showToast(0, error_msg, EWARNING::WarningType::ERROR_MSG);
+        }
+        return ret;
+    },[safeThis](bool ret) {
+        qApp->restoreOverrideCursor();
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        if (ret) {
+            QGroupWallets::instance()->GetAllGroups(); // reset pending wallet
+            AppModel::instance()->requestCreateUserWallets();
+            ptrLamda->GetAlertsInfo();
+            ptrLamda->GetMemberInfo();
+            ptrLamda->GetWalletInfo();
+            ptrLamda->GetHealthCheckInfo();
+        }
+    });
 }
 
 void QGroupWallets::DenyGroupWallet()
 {
     if (!mDashboard) return;
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret = Byzantine::instance()->DenyGroupWallet(mDashboard->groupId(), output, error_msg);
-    if(ret){
-        GetAllGroups();
-    }
-    else{
-        //Show error
-    }
+    if (isBusy()) return;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    QPointer<QGroupDashboard> safeThis(mDashboard.data());
+    runInConcurrent([safeThis]() ->bool{
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret = Byzantine::instance()->DenyGroupWallet(ptrLamda->groupId(), output, error_msg);
+        return ret;
+    },[safeThis](bool ret) {
+        qApp->restoreOverrideCursor();
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        if (ret) {
+            QGroupWallets::instance()->GetAllGroups();
+        }
+    });
 }
 
 void QGroupWallets::ResetGroupWallet()
 {
     if (!mDashboard) return;
-    QJsonObject output;
-    QString error_msg = "";
-    bool ret {false};
-    if (mDashboard->isUserDraftWallet()) {
-        ret = Draco::instance()->DraftWalletResetCurrent(output, error_msg);
-    } else {
-        ret = Byzantine::instance()->ResetGroupWallet(mDashboard->groupId(), output, error_msg);
-    }
-    if(ret){
-        GetAllGroups();
-        QString msg_name = QString("Wallet has been canceled");
-        AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
-    }
+    if (isBusy()) return;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    QPointer<QGroupDashboard> safeThis(mDashboard.data());
+    runInConcurrent([safeThis]() ->bool{
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        QJsonObject output;
+        QString error_msg = "";
+        bool ret {false};
+        if (ptrLamda->isUserDraftWallet()) {
+            ret = Draco::instance()->DraftWalletResetCurrent(output, error_msg);
+        } else {
+            ret = Byzantine::instance()->ResetGroupWallet(ptrLamda->groupId(), output, error_msg);
+        }
+        return ret;
+    },[safeThis](bool ret) {
+        qApp->restoreOverrideCursor();
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        if(ret){
+            QGroupWallets::instance()->GetAllGroups();
+            QString msg_name = QString("Wallet has been canceled");
+            AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
+        }
+    });
 }
 
 void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
@@ -220,15 +246,11 @@ void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
     DBG_INFO << mDashboard;
     if (mDashboard) {
         mDashboard->setShowDashBoard(true);
-        QtConcurrent::run([this]() {
-            if(mDashboard){
-                mDashboard->GetAlertsInfo();
-                mDashboard->GetMemberInfo();
-                mDashboard->GetHealthCheckInfo();
-            }
-        });
+        mDashboard->GetAlertsInfo();
+        mDashboard->GetMemberInfo();
+        mDashboard->GetHealthCheckInfo();
         mDashboard->GetDraftWalletInfo();
-	mDashboard->GetWalletInfo();
+        mDashboard->GetWalletInfo();
     }
 }
 
@@ -237,12 +259,7 @@ void QGroupWallets::accept(const QString &group_id)
     setDashboardInfo(group_id);
     if (!mDashboard) return;
     mDashboard->setShowDashBoard(true);
-    QtConcurrent::run([this, group_id]() {
-        if (AcceptGroupWallet()) {
-            WalletsMng->GetListWallet(GROUP_WALLET); // active wallet
-            emit acceptChanged(group_id);
-        }
-    });
+    AcceptGroupWallet();
 }
 
 void QGroupWallets::deny(const QString &group_id)
@@ -250,9 +267,7 @@ void QGroupWallets::deny(const QString &group_id)
     setDashboardInfo(group_id);
     if (!mDashboard) return;
     mDashboard->setShowDashBoard(false);
-    QtConcurrent::run([this]() {
-        DenyGroupWallet();
-    });
+    DenyGroupWallet();
 }
 
 void QGroupWallets::reset(const QString &group_id)
@@ -260,9 +275,7 @@ void QGroupWallets::reset(const QString &group_id)
     setDashboardInfo(group_id);
     if (!mDashboard) return;
     mDashboard->setShowDashBoard(false);
-    QtConcurrent::run([this]() {
-        ResetGroupWallet();
-    });
+    ResetGroupWallet();
 }
 
 void QGroupWallets::markRead(const QString &alert_id)
@@ -287,11 +300,7 @@ void QGroupWallets::markRead(const QString &alert_id)
             break;
         }
     }
-    QtConcurrent::run([this, alert_id]() {
-        if (mDashboard->MarkAlertAsRead(alert_id)) {
-            mDashboard->GetAlertsInfo();
-        }
-    });
+    mDashboard->MarkAlertAsRead(alert_id);
 }
 
 void QGroupWallets::dismiss(const QString &alert_id)

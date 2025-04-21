@@ -128,7 +128,7 @@ void GroupUpdateListener(const nunchuk::GroupSandbox &state)
             if (auto nw = AppModel::instance()->newWalletInfo()) {
                 if (auto sandbox = nw->groupSandboxPtr()) {
                     if (qUtils::strCompare(sandbox->groupId(), QString::fromStdString(sanbox.get_id()))) {
-                        nw->updateGroupSandbox(sanbox);
+                        sandbox->setCurrentSandbox(sanbox);
                     }
                 }
             }
@@ -180,11 +180,27 @@ void GroupOnlineListener(const std::string &groupId, int online)
 
 void GroupDeleteListener(const std::string &groupId)
 {
-    DBG_INFO;
+    DBG_INFO << groupId;
     QThreadForwarder::instance()->forwardInQueuedConnection([groupId](){
         if (auto nw = AppModel::instance()->newWalletInfo()) {
             if (auto sandbox = nw->groupSandboxPtr()) {
                 sandbox->DeleteGroup(QString::fromStdString(groupId));
+            }
+        }
+        if (auto w = AppModel::instance()->walletInfoPtr()) {
+            w->GetReplaceGroups();
+        }
+    });
+}
+
+void ReplaceRequestListener(const std::string &walletId, const std::string &replaceGroupId)
+{
+    DBG_INFO << walletId << replaceGroupId;
+    QThreadForwarder::instance()->forwardInQueuedConnection([walletId, replaceGroupId](){
+        auto wallet = AppModel::instance()->walletInfoPtr();
+        if (wallet) {
+            if (wallet.data()->isGlobalGroupWallet()) {
+                wallet.data()->GetReplaceGroups();
             }
         }
     });

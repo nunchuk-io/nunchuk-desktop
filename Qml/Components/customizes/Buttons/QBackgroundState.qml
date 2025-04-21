@@ -25,7 +25,7 @@ Rectangle {
     id: _background
     property var backgroundColor: GlobalData.backgroundColor.find(function(e) {return e.id === type})
     property var borderColor: GlobalData.borderColor.find(function(e) {return e.id === type})
-    border.width: 1
+    border.width: 2
     radius: _background.width/2
     state: !enabled ? "disable" : (btnMouse.pressed ? "clicked" : (btnMouse.containsMouse ? "hover" : "default"))
 

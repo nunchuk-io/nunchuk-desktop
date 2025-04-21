@@ -32,7 +32,10 @@ void SCR_CREATE_TRANSACTION_Entry(QVariant msg) {
 }
 
 void SCR_CREATE_TRANSACTION_Exit(QVariant msg) {
-    AppModel::instance()->setTxidReplacing("");
+    QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
+    if(transaction){
+        transaction->setTxidReplacing("");
+    }
 }
 
 void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
@@ -41,13 +44,14 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
     QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
     if(transaction){
         QString wallet_id = transaction.data()->walletId();
-        if(AppModel::instance()->getTxidReplacing() != "") {
+        if(transaction->txidReplacing() != "") {
             DBG_INFO << "REPLACE BY FEE REQUEST " << "new fee: " << feeRate;
-            nunchuk::Transaction current = transaction.data()->nunchukTransaction();
-            std::vector<nunchuk::TxOutput> outputs = current.get_user_outputs();
-            std::vector<nunchuk::TxInput> inputs = current.get_inputs();
-            subtractFromFeeAmout = current.subtract_fee_from_amount();
-            std::string replace_id = current.get_txid();
+            nunchuk::Transaction current            = transaction.data()->nunchukTransaction();
+            std::vector<nunchuk::TxOutput> outputs  = current.get_user_outputs();
+            std::vector<nunchuk::TxInput> inputs    = current.get_inputs();
+            subtractFromFeeAmout                    = current.subtract_fee_from_amount();
+            std::string replace_id                  = current.get_txid();
+            QString memo                            = transaction->memo();
             QWarningMessage msgwarning;
             nunchuk::Transaction draftrans = bridge::nunchukDraftOriginTransaction(wallet_id.toStdString(),
                                                                                    outputs,
@@ -59,17 +63,18 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                 msgwarning.resetWarningMessage();
                 QTransactionPtr trans = bridge::nunchukReplaceTransaction(wallet_id,
-                                                                          AppModel::instance()->getTxidReplacing(),
+                                                                          transaction->txidReplacing(),
                                                                           feeRate,
                                                                           msgwarning);
                 if(trans && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                     if (auto wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
                         wallet->RbfAsisstedTxs(trans->txid(), trans->psbt());
                     }
+                    trans->setMemo(memo);
                     AppModel::instance()->setTransactionInfo(trans);
                     AppModel::instance()->requestSyncWalletDb(wallet_id);
                     QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
-                    AppModel::instance()->setTxidReplacing("");
+                    transaction->setTxidReplacing("");
                     QString msg_name = QString("The transaction has been replaced");
                     AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
                 }
@@ -84,6 +89,18 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
             bool manualOutput = msg.toMap().value("manualOutput").toBool();
             if(!manualFee){ // Auto fee = hourFee by recommendation from API
                 feeRate = AppModel::instance()->hourFeeOrigin();
+                if(AppSetting::instance()->feeSetting() == (int)ENUNCHUCK::Fee_Setting::PRIORITY){
+                    DBG_INFO << "Fee Setting: PRIORITY";
+                    feeRate = AppModel::instance()->fastestFeeOrigin();
+                }
+                else if(AppSetting::instance()->feeSetting() == (int)ENUNCHUCK::Fee_Setting::STANDARD){
+                    DBG_INFO << "Fee Setting: STANDARD";
+                    feeRate = AppModel::instance()->halfHourFeeOrigin();
+                }
+                else {
+                    DBG_INFO << "Fee Setting: ECONOMICAL";
+                    feeRate = AppModel::instance()->hourFeeOrigin();
+                }
             }
             DBG_INFO << "CREATE NEW TRANSACTION"
                      << "subtract:" << subtractFromFeeAmout
@@ -139,6 +156,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     QString unUseAddress = msg.toMap().value("unUseAddress").toString();
                     DBG_INFO << "unUseAddress: " << unUseAddress;
                     QTransactionPtr trans = NULL;
+                    bool anti_fee_sniping = false; // TODO, need mockup UI
                     if (unUseAddress.isEmpty()) {
                         trans = bridge::nunchukCreateTransaction(wallet_id,
                                                                  outputs,
@@ -147,6 +165,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                  feeRate,
                                                                  subtractFromFeeAmout,
                                                                  {},
+                                                                 anti_fee_sniping,
                                                                  msgwarning);
                     }
                     else {
@@ -157,6 +176,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                        memo,
                                                                        feeRate,
                                                                        transaction->txid(),
+                                                                       anti_fee_sniping,
                                                                        msgwarning);
                     }
                     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
@@ -212,7 +232,18 @@ void EVT_CREATE_TRANSACTION_UTXO_SORT_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX_HANDLER(QVariant msg) {
     if (auto w = AppModel::instance()->walletInfo()) {
-        w->UpdateDraftTransaction(msg);
+        QString replacing_txid = "";
+        if(AppModel::instance()->transactionInfo()){
+            replacing_txid = AppModel::instance()->transactionInfo()->txidReplacing();
+        }
+        if(replacing_txid != "") {
+            DBG_INFO << "REPLACE BY FEE REQUEST " << "new fee: " << msg.toMap().value("feeRate").toDouble();
+            w->UpdateDraftRBFransaction(msg);
+        }
+        else{
+            DBG_INFO << "CREATE NEW TRANSACTION";
+            w->UpdateDraftTransaction(msg);
+        }
     }
 }
 

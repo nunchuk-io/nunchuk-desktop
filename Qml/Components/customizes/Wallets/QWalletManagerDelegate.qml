@@ -153,47 +153,21 @@ QWalletDelegateBackground {
                         }
                     }
                 }
-                Rectangle {
-                    width: parent.width
-                    height: 16
-                    visible: (isAssisted || isSandboxWallet || isReplaced || isShared)
-                    radius: 20
-                    color: "#EAEAEA"
+                QTypeWallet {
                     anchors.right: parent.right
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 4
-                        QIcon {
-                            iconSize: 12
-                            source: {
-                                if (isAssisted || isReplaced || isShared)
-                                    return "qrc:/Images/Images/collab-wallet-dark.svg"
-                                else if (isSandboxWallet)
-                                    return "qrc:/Images/Images/sandboxGroup.svg"
-                                else
-                                    return ""
-                            }
-                        }
-                        QText{
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.family: "Lato"
-                            font.pixelSize: 10
-                            color: "#031F2B"
-                            font.weight: Font.Bold
-                            text: {
-                                if (isAssisted && !isReplaced)
-                                    return STR.STR_QML_679
-                                else if (isSandboxWallet)
-                                    return STR.STR_QML_1675
-                                else if (isReplaced)
-                                    return STR.STR_QML_1345
-                                else if (isShared)
-                                    return STR.STR_QML_438
-                                else
-                                    return ""
-                            }
-                        }
-                    }
+                    icon.iconSize: 12
+                    icon.source: if (isShared) return "qrc:/Images/Images/collab-wallet-dark.svg"
+                                 else if (isSandboxWallet && !isReplaced) return "qrc:/Images/Images/sandboxGroup.svg"
+                                 else if (isAssisted && !isReplaced) return "qrc:/Images/Images/collab-wallet-dark.svg"
+                                 else return ""
+                    label.text: if (isShared) return STR.STR_QML_438
+                                else if (isSandboxWallet && !isReplaced) return STR.STR_QML_1675
+                                else if (isAssisted && !isReplaced) return STR.STR_QML_679
+                                else if (isReplaced) return STR.STR_QML_1345
+                                else return ""
+                    label.font.weight: Font.Bold
+                    label.font.pixelSize: 10
+                    visible: label.text !== ""
                 }
                 Rectangle {
                     width: parent.width

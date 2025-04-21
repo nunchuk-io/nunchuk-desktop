@@ -47,6 +47,7 @@ public:
     bool GetListGroupWallets(QJsonObject& output, QString &errormsg);
 
     bool GetAllGroupWallets(QJsonObject& output, QString &errormsg);
+    bool GetAllDeletedGroupWallets(QJsonObject& output, QString &errormsg);
     bool GetOneGroupWallets(const QString group_id, QJsonObject& output, QString &errormsg);
     bool AcceptGroupWallet(const QString group_id, QJsonObject& output, QString &errormsg);
     bool DenyGroupWallet(const QString group_id, QJsonObject& output, QString &errormsg);

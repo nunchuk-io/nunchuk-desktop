@@ -82,6 +82,7 @@ public:
     bool ImportBIP329(const QString& filePath);
     bool CreateDraftTransaction(int successScreenID, const QVariant &msg);
     bool UpdateDraftTransaction(const QVariant &msg);
+    bool UpdateDraftRBFransaction(const QVariant &msg);
     void setReuse(bool newReuse);
     void RequestSyncSelectCoinForMakeTransaction(const QVariant &msg);
 

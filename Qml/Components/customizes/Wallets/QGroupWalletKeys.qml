@@ -112,6 +112,23 @@ Column {
         id: signers
         model: sandbox.groupKeys
         QAddGroupKey {
+            signerData {
+                single_name: modelData.singleSigner_name
+                single_type: modelData.single_signer_type
+                single_tag: modelData.single_signer_tag
+                single_devicetype: modelData.single_signer_devicetype
+                single_masterFingerPrint: modelData.singleSigner_masterFingerPrint
+                single_account_index: modelData.single_signer_account_index
+                single_checked: modelData.single_signer_checked
+                single_is_local: modelData.single_signer_is_local
+                single_value_key: modelData.single_signer_value_key
+                single_derivationPath: modelData.singleSigner_derivationPath
+                single_device_cardid: modelData.single_signer_device_cardid
+                single_isOccupied: modelData.single_signer_isOccupied
+                single_isReplaced: modelData.single_signer_isReplaced
+                single_keyReplaced: modelData.single_signer_keyReplaced
+            }
+
             onHardwareClicked: {
                 sandbox.requestAddOrRepaceKey({ type: "add-key-shared-group-wallet", idx: index })
             }
@@ -128,10 +145,9 @@ Column {
                 sandbox.requestAddOrRepaceKey(obj)
             }
             onBip32PathClick: {
-                console.warn("clicked: ", path, modelData.type, modelData.tag, modelData.signer_type)
                 editBip32Path.clearError()
                 editBip32Path.isShowListDevice = false
-                editBip32Path.signer = modelData
+                editBip32Path.signerData = signerData
                 editBip32Path.idx = index
                 editBip32Path.xfp = xfp
                 editBip32Path.open()

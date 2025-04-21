@@ -110,7 +110,7 @@ Rectangle {
 
             QSignaturesBlock {
                 id: signatures
-                visible: !isDummy
+                visible: !isDummy && (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 

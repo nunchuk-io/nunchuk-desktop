@@ -31,4 +31,5 @@ QtObject {
     property var single_keyset_status
     property var single_keyset_remaining
     property var single_value_key
+    property var single_isOccupied
 }

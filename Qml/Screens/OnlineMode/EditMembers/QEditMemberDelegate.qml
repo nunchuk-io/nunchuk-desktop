@@ -30,13 +30,32 @@ Column {
     property var member
     property int roleHeight: 24
     signal arrowClicked()
-    QLato {
+    signal removeClicked()
+    Item {
+        width: parent.width
         height: 20
-        text: modelData.role === "MASTER" ? STR.STR_QML_949 : STR.STR_QML_1031.arg(1 + index)
-        font.pixelSize: 16
-        font.weight: Font.Bold
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
+        QLato {
+            height: 20
+            text: modelData.role === "MASTER" ? STR.STR_QML_949 : STR.STR_QML_1031.arg(1 + index)
+            font.pixelSize: 16
+            font.weight: Font.Bold
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        QTextLink {
+            visible: modelData.role !== "MASTER"
+            width: paintedWidth
+            height: 20
+            text: STR.STR_QML_1134
+            anchors {
+                verticalCenter: parent.verticalCenter
+                right: parent.right
+                rightMargin: 0
+            }
+            onTextClicked: {
+                removeClicked()
+            }
+        }
     }
     Rectangle {
         color: "#F5F5F5"

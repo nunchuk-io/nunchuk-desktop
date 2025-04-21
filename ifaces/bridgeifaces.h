@@ -59,6 +59,8 @@ class ENUNCHUCK: public QObject
     Q_ENUMS(IN_FLOW)
     Q_ENUMS(ROOM_EVT)
     Q_ENUMS(WalletOptionType_t)
+    Q_ENUMS(Fee_Setting)
+    Q_ENUMS(WalletTemplate)
 public:
     enum class AddHardware : int {
         ADD_INHERITANCE = (int)nunchuk::SignerTag::INHERITANCE,
@@ -139,6 +141,7 @@ public:
         TRANSACTION_CSV,
         QRCODE,
         BSMS,
+        TRANSACTION_PDF,
     };
 
     enum class Unit : int {
@@ -217,6 +220,17 @@ public:
         E_ASSISTED_WALLET,
         E_HOT_WALLET,
     };
+
+    enum class Fee_Setting : int {
+        ECONOMY = 0,
+        STANDARD,
+        PRIORITY
+    };
+
+    enum class WalletTemplate : int {
+        DEFAULT = 0,
+        DISABLE_KEY_PATH,  // Taproot wallet only
+    };
 };
 Q_DECLARE_METATYPE(ENUNCHUCK::AddressType)
 Q_DECLARE_METATYPE(ENUNCHUCK::Chain)
@@ -228,6 +242,9 @@ Q_DECLARE_METATYPE(ENUNCHUCK::ExportFormat)
 Q_DECLARE_METATYPE(ENUNCHUCK::Unit)
 Q_DECLARE_METATYPE(ENUNCHUCK::SignerType)
 Q_DECLARE_METATYPE(ENUNCHUCK::ROOM_EVT)
+Q_DECLARE_METATYPE(ENUNCHUCK::Fee_Setting)
+Q_DECLARE_METATYPE(ENUNCHUCK::WalletTemplate)
+
 
 typedef void (*NunchukType1)(const QString &str);
 Q_DECLARE_METATYPE(NunchukType1)
@@ -419,6 +436,7 @@ QTransactionPtr nunchukCreateTransaction(const QString& wallet_id,
                                          const int fee_rate,
                                          const bool subtract_fee_from_amount,
                                          const QString &replace_txid,
+                                         bool anti_fee_sniping,
                                          QWarningMessage &msg);
 
 QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
@@ -427,6 +445,7 @@ QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
                                                const QString &memo,
                                                const int fee_rate,
                                                const QString &replace_txid,
+                                               bool anti_fee_sniping,
                                                QWarningMessage &msg);
 
 QTransactionPtr nunchukDraftTransaction(const QString& wallet_id,
@@ -914,5 +933,22 @@ int GetUnreadMessagesCount(const QString& walletId);
 
 QString GetGroupDeviceUID();
 
+int GetScriptPathFeeRate(const QString &wallet_id, const nunchuk::Transaction &tx);
+
+nunchuk::GroupSandbox CreateReplaceGroup(const QString& walletId,
+                                         QWarningMessage &msg);
+
+QMap<QString, bool> GetReplaceGroups(const QString& walletId,
+                                             QWarningMessage &msg);
+
+nunchuk::GroupSandbox AcceptReplaceGroup(const QString& walletId,
+                                         const QString& groupId,
+                                         QWarningMessage &msg);
+
+void DeclineReplaceGroup(const QString& walletId,
+                         const QString& groupId,
+                         QWarningMessage &msg);
+
+QStringList GetDeprecatedGroupWallets(QWarningMessage &msg);
 }
 #endif // BRIDGEINTERFACE_H

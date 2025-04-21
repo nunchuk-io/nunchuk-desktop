@@ -81,7 +81,7 @@ QOnScreenContentTypeB {
                         id: addressTypeSelection
                         width: 360
                         typeOption: sandbox.addressType
-                        enabled: sandbox.url !== ""
+                        isEnabled: sandbox.isCreate
                         onSelectTypeOption: {
                             addressTypeSelection.typeOption = type
                             if (type !== sandbox.addressType) {
@@ -101,7 +101,7 @@ QOnScreenContentTypeB {
                         id: walletConfig
                         width: 360
                         isSetting: true
-                        enabled: sandbox.url !== ""
+                        isEnabled: sandbox.isCreate
                         addressType: addressTypeSelection.typeOption
                     }
                 }

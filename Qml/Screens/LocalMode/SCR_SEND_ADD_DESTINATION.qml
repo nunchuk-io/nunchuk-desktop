@@ -638,7 +638,7 @@ QScreen {
                                 cursorShape: Qt.PointingHandCursor
                                 anchors.fill: parent
                                 onClicked: {
-                                    if(favoritesPopup.addressRequestIndex !== -1 && favoritesPopup.addressRequestIndex < destination.model){
+                                    if(favoritesPopup.addressRequestIndex !== -1){
                                         var inputObject = ({
                                                               "toType": "Address",
                                                               "toAddress": savedAddressItem.dataValue,
@@ -701,8 +701,9 @@ QScreen {
                             walletRole: modelData.wallet_role
                             hasOwner: modelData.wallet_hasOwner
                             primaryOwner: modelData.wallet_primaryOwner
+                            isReplaced: modelData.wallet_isReplaced
                             isHotWallet: modelData.wallet_isHotWallet
-                            isSandboxWallet: model.wallet_isSanboxWallet
+                            isSandboxWallet: modelData.wallet_isSanboxWallet
                             visible: modelData.wallet_id !== walletInfo.walletId
                             enabled: visible
                             layer.enabled: true
@@ -714,7 +715,7 @@ QScreen {
                                 }
                             }
                             onButtonClicked: {
-                                if(favoritesPopup.addressRequestIndex !== -1 && favoritesPopup.addressRequestIndex < walletList.count){
+                                if(favoritesPopup.addressRequestIndex !== -1){
                                     var inputObject= ({
                                                           "toType": "Wallet",
                                                           "toAddress": modelData.wallet_Address,

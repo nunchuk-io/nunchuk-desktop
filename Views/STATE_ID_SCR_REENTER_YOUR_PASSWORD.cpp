@@ -70,14 +70,14 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         }
         break;
     case E::STATE_ID_SCR_SELECT_YOUR_LOCKDOWN_PERIOD:
-        ServiceSetting::instance()->setWalletInfo(wallet);
-        if (ServiceSetting::instance()->servicesTagPtr()->requestLockDownVerifyPassword(password)) {
+        if (wallet && wallet->servicesTagPtr()->requestLockDownVerifyPassword(password)) {
+            ServiceSetting::instance()->setWalletInfo(wallet);
             QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
         }
         break;
     case E::STATE_ID_SCR_SERVICE_SETTINGS:
-        ServiceSetting::instance()->setWalletInfo(wallet);
-        if (ServiceSetting::instance()->servicesTagPtr()->requestServerKeyVerifyPassword(password)) {
+        if (wallet && wallet->servicesTagPtr()->requestServerKeyVerifyPassword(password)) {
+            ServiceSetting::instance()->setWalletInfo(wallet);
             if (wallet && wallet->serverKeyPtr()) {
                 QtConcurrent::run([wallet]() {
                     wallet->serverKeyPtr()->serverKeyGetCurrentPolicies();
@@ -88,9 +88,9 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
             });
         }
         break;
-    case E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN: {
-        ServiceSetting::instance()->setWalletInfo(wallet);
-        if (ServiceSetting::instance()->servicesTagPtr()->requestInheritancePlanVerifyPassword(password)) {
+    case E::STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN:
+        if (wallet && wallet->servicesTagPtr()->requestInheritancePlanVerifyPassword(password)) {
+            ServiceSetting::instance()->setWalletInfo(wallet);
             if (wallet && wallet->inheritancePlanPtr()) {
                 wallet->inheritancePlanPtr()->GetInheritancePlan();
             }
@@ -98,41 +98,37 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
                 QEventProcessor::instance()->sendEvent(E::EVT_CLOSE_TO_SERVICE_SETTINGS_REQUEST);
             });
         }
-    }
-    break;
-    case E::STATE_ID_SCR_WALLET_INFO: {
-        if (ServiceSetting::instance()->servicesTagPtr()->requestDeleteWalletVerifyPassword(password)) {
+        break;
+    case E::STATE_ID_SCR_WALLET_INFO:
+        if (wallet && wallet->servicesTagPtr()->requestDeleteWalletVerifyPassword(password)) {
+            ServiceSetting::instance()->setWalletInfo(wallet);
             if (wallet && wallet->DeleteWalletRequiredSignatures()) {
                 AppModel::instance()->walletInfoPtr()->setIsDeleting(wallet->isDeleting());
             }
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_BACK);
         }
-    }
-    break;
-    case E::STATE_ID_SCR_CHANGE_EMAIL: {
+        break;
+    case E::STATE_ID_SCR_CHANGE_EMAIL:
         if (ServiceSetting::instance()->servicesTagPtr()->requestChangeEmailVerifyPassword(password)) {
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             QEventProcessor::instance()->sendEvent(E::EVT_CHANGE_EMAIL_REQUEST);
         }
-    }
-    break;
-    case E::STATE_ID_SCR_DASHBOARD_ALERT_INFO: {
-        ServiceSetting::instance()->setWalletInfo(wallet);
-        if (ServiceSetting::instance()->servicesTagPtr()->requestReplaceKeysVerifyPassword(password)) {
+        break;
+    case E::STATE_ID_SCR_DASHBOARD_ALERT_INFO:
+        if (wallet && wallet->servicesTagPtr()->requestReplaceKeysVerifyPassword(password)) {
+            ServiceSetting::instance()->setWalletInfo(wallet);
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             QEventProcessor::instance()->sendEvent(E::EVT_REPLACE_SELECT_KEY_REQUEST);
         }
-    }
-    break;
-    case E::STATE_ID_SCR_EDIT_MEMBERS: {
+        break;
+    case E::STATE_ID_SCR_EDIT_MEMBERS:
         if (ServiceSetting::instance()->servicesTagPtr()->requestEditMemberVerifyPassword(password)) {
             QEventProcessor::instance()->sendEvent(E::EVT_REENTER_YOUR_PASSWORD_BACK);
             if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
                 dashboard->CalculateRequireSignaturesForEditingMembers();
             }
         }
-    }
-    break;
+        break;
     default:
         break;
     }

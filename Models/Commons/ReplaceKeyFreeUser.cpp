@@ -189,6 +189,19 @@ bool ReplaceKeyFreeUser::updateKeyReplace(const QString &xfp, const int index)
     return false;
 }
 
+bool ReplaceKeyFreeUser::removeKeyReplaced(const int index)
+{
+    auto currentWallet = dynamic_cast<Wallet*>(this)->nunchukWallet();
+    if (index >= currentWallet.get_n()) return false;
+    auto signer = currentWallet.get_signers().at(index);
+    QSingleSignerPtr s = QSingleSignerPtr(new QSingleSigner(signer));
+    s->setIsReplaced(false);
+    if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+        w->singleSignersAssigned()->replaceSingleSigner(index, s);
+    }
+    return true;
+}
+
 bool ReplaceKeyFreeUser::tranReplace() const
 {
     return m_tranReplace;

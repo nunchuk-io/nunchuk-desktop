@@ -43,8 +43,9 @@ void EVT_SIGNER_CONFIGURATION_SELECT_MASTER_SIGNER_HANDLER(QVariant msg) {
                 AppModel::instance()->newWalletInfo()->singleSignersAssigned()->signers();
             }
         }
+        AppModel::instance()->newWalletInfo()->setWalletN(AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount());
+        emit AppModel::instance()->newWalletInfo()->walletChanged();
     }
-    emit AppModel::instance()->newWalletInfo()->walletChanged();
 }
 
 void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
@@ -65,7 +66,8 @@ void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
                 }
             }
             nw->CreateSignerListReviewWallet(signerList);
-        } else {
+        }
+        else {
             if(AppModel::instance()->remoteSignerList()){
                 for (int i = 0; i < AppModel::instance()->remoteSignerList()->rowCount(); i++) {
                     QSingleSignerPtr signer = AppModel::instance()->remoteSignerList()->getSingleSignerByIndex(i);
@@ -76,8 +78,8 @@ void EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER_HANDLER(QVariant msg) {
                     }
                 }
             }
-            emit nw->walletChanged();
         }
+        nw->setWalletN(nw->singleSignersAssigned()->rowCount());
     }
 }
 
@@ -95,8 +97,10 @@ void EVT_SIGNER_CONFIGURATION_REMOVE_SIGNER_HANDLER(QVariant msg) {
         }
     }
     AppModel::instance()->newWalletInfo()->singleSignersAssigned()->removeSingleSignerByIndex(signerIndex);
-    if(AppModel::instance()->newWalletInfo()->walletM() > AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount()){
-        AppModel::instance()->newWalletInfo()->setWalletM(AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount());
+    int wallet_n = AppModel::instance()->newWalletInfo()->singleSignersAssigned()->rowCount();
+    AppModel::instance()->newWalletInfo()->setWalletN(wallet_n);
+    if(AppModel::instance()->newWalletInfo()->walletM() > wallet_n){
+        AppModel::instance()->newWalletInfo()->setWalletM(wallet_n);
     }
     emit AppModel::instance()->newWalletInfo()->walletChanged();
 }
@@ -150,7 +154,6 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
                                                                             warningmsg);
                 }
                 if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
-                    signer.data()->setIsPrimaryKey(it.data()->isPrimaryKey());
                     AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(i, signer);
                 }
                 else{
@@ -163,7 +166,7 @@ void EVT_SIGNER_CONFIGURATION_TRY_REVIEW_HANDLER(QVariant msg) {
         AppModel::instance()->newWalletInfo()->setCapableCreate(!needTopUp);
         QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REVIEW);
         if(needTopUp){
-            AppModel::instance()->showToast(0, STR_CPP_071, EWARNING::WarningType::EXCEPTION_MSG );
+            AppModel::instance()->showToast(0, STR_CPP_071, EWARNING::WarningType::ERROR_MSG );
         }
     }
 }

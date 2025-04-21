@@ -21,12 +21,13 @@ import QtQuick 2.4
 import QtQuick.Controls 2.1
 import "../../origins"
 
-TextField {
+QTextField {
     id: editbox
     property string borderColor: "#FFFFFF"
     property string backgroundColor: "#DEDEDE"
-    property int borderRadius: 8
-    property bool showEdit: true
+    property int    borderRadius: 8
+    property bool   showEdit: true
+
     clip: true
     color: "#031F2B"
     font.family: "Lato"
@@ -61,16 +62,4 @@ TextField {
             }
         }
     }
-    onActiveFocusChanged: { typingFinished(editbox.text) }
-    Keys.onReturnPressed: {
-        typingFinish()
-    }
-    Keys.onEnterPressed:  {
-        typingFinish()
-    }
-    function typingFinish() {
-        focus = false
-        typingFinished(editbox.text)
-    }
-    signal typingFinished(var currentText)
 }

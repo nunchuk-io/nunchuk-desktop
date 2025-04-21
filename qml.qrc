@@ -517,7 +517,7 @@
         <file>Qml/Components/customizes/Transactions/QTransactionInvoicePopup.qml</file>
         <file>Qml/Components/customizes/Buttons/QSwitchTypeIconLabel.qml</file>
         <file>Qml/Components/customizes/Transactions/QManualFeeRate.qml</file>
-        <file>Qml/Components/customizes/Transactions/QSubtractFeeFromSendAmount.qml</file>
+        <file>Qml/Components/customizes/Transactions/QCheckboxTooltip.qml</file>
         <file>Qml/Components/customizes/Transactions/QCoinSelectionTransaction.qml</file>
         <file>Qml/Screens/OnlineMode/Coins/QSelectCoinForTransaction.qml</file>
         <file>Qml/Screens/OnlineMode/Coins/QSearchingBoxTwo.qml</file>
@@ -564,7 +564,6 @@
         <file>Qml/Components/customizes/Chats/QConversationText.qml</file>
         <file>Qml/Components/customizes/Chats/QMessageBubbleDelegate.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_SETUP_GROUP_WALLET.qml</file>
-        <file>Qml/Components/customizes/Wallets/QSandboxReviewWallet.qml</file>
         <file>Qml/Components/customizes/Wallets/QDraftWalletReviewInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QSaveYourWalletBSMSFile.qml</file>
         <file>Qml/Components/customizes/Wallets/QDraftWalletReviewKeys.qml</file>
@@ -591,6 +590,17 @@
         <file>Qml/Components/customizes/Wallets/QEnableValueKeyset.qml</file>
         <file>Qml/Components/customizes/Lists/QRadioList.qml</file>
         <file>Qml/Components/customizes/Wallets/QDraftWalletReviewWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletWarningInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletConfigDetails.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletConfigKeys.qml</file>
+        <file>Qml/Components/customizes/Wallets/QTypeWallet.qml</file>
+        <file>Qml/Components/RightPannel/Setting/QSettingFee.qml</file>
+        <file>Qml/Components/origins/QPictureSmooth.qml</file>
+        <file>Qml/Components/customizes/Wallets/QExportPDF.qml</file>
+        <file>Qml/Components/customizes/Signers/QAddAKey.qml</file>
+        <file>Qml/Components/customizes/Signers/QBeforeStartHardware.qml</file>
+        <file>Qml/Components/customizes/Signers/QBeforeStartSoftware.qml</file>
+        <file>Qml/Components/origins/QTextInput.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -840,7 +850,6 @@
         <file>Images/COLDCARD-desktop-illustration.svg</file>
         <file>Images/bitcoin-light.svg</file>
         <file>Images/received-light.svg</file>
-        <file>Images/received_dark.svg</file>
         <file>Images/spend-light.svg</file>
         <file>Images/bitcoin-disabled.svg</file>
         <file>Images/visibility-disabled.svg</file>
@@ -942,6 +951,11 @@
         <file>Images/arrow-right.svg</file>
         <file>Images/clock-dark.svg</file>
         <file>Images/taproot-address.svg</file>
+        <file>Images/fee-setting.svg</file>
+        <file>Images/ArchiveBox.png</file>
+        <file>Images/UnArchiveBox.png</file>
+        <file>Images/create-soft-key.svg</file>
+        <file>Images/recover.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

@@ -93,7 +93,6 @@ bool QNunchukRoom::isIgnoredCollabWallet() const
 bool QNunchukRoom::isNunchukByzantineRoom() const
 {
     if(m_room){
-        DBG_INFO << m_room->currentState().contentJson(NUNCHUK_ROOM_BYZANTINE) << m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE);
         return m_room->currentState().contains(NUNCHUK_ROOM_BYZANTINE);
     }
     return false;
@@ -1940,7 +1939,8 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
 
                 if (msgtype.contains("io.nunchuk.custom.group_wallet_created", Qt::CaseInsensitive) ||
                     msgtype.contains("io.nunchuk.custom.group_wallet_deleted", Qt::CaseInsensitive) ||
-                    msgtype.contains("io.nunchuk.custom.group_wallet_name_changed", Qt::CaseInsensitive)) {
+                    msgtype.contains("io.nunchuk.custom.group_wallet_name_changed", Qt::CaseInsensitive) ||
+                    msgtype.contains("io.nunchuk.custom.group_membership_request_created", Qt::CaseInsensitive)) {
                     AppModel::instance()->requestCreateUserWallets();
                 }
             }

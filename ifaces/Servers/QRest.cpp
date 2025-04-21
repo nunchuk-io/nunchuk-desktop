@@ -30,9 +30,9 @@
 QString    QRest::m_dracoToken      = "";
 QByteArray QRest::m_machineUniqueId = QSysInfo::machineUniqueId();
 
-QRest::QRest() : m_networkManager(OurSharedPointer(new QNetworkAccessManager()))
+QRest::QRest()
 {
-    m_networkManager->setCookieJar(new QNetworkCookieJar(m_networkManager.data()));
+
 }
 
 QRest::~QRest()
@@ -64,6 +64,15 @@ QString QRest::url() const
     }
 }
 
+OurSharedPointer<QNetworkAccessManager> QRest::networkManager()
+{
+    if (!m_networkManager.hasLocalData()) {
+        OurSharedPointer<QNetworkAccessManager> ptr(new QNetworkAccessManager);
+        m_networkManager.setLocalData(ptr);
+    }
+    return m_networkManager.localData();
+}
+
 QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
@@ -81,16 +90,14 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
-    locker.unlock();
-
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -149,16 +156,14 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     for(QString param : paramsHeader.keys()) {
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
-
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, QJsonDocument(data).toJson()));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -230,15 +235,14 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
         }
     }
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, multiPart));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, multiPart));
 
     multiPart->setParent(reply.get());
     QEventLoop eventLoop;
@@ -324,15 +328,14 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
         }
     }
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->post(requester_, multiPart));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, multiPart));
 
     multiPart->setParent(reply.get());
     QEventLoop eventLoop;
@@ -390,15 +393,14 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &rep
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -460,15 +462,15 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
 
-    if (m_networkManager.isNull()) {
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -516,15 +518,14 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->put(requester_, QJsonDocument(data).toJson()));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -586,15 +587,14 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->put(requester_, QJsonDocument(data).toJson()));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -642,15 +642,14 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     qint64 maximumBufferSize = 1024 * 1024;
     requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -712,15 +711,14 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
         requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
     }
 
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         reply_code = -1;
         reply_msg = "Network manager is not available.";
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);

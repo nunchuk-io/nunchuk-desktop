@@ -35,10 +35,10 @@ Item {
     id: del
     width: 350
     height: _column.childrenRect.height + 12*2
-    property alias signerData: data
+    property alias signerData: dataSingle
 
     QSingleSignerData {
-        id: data
+        id: dataSingle
     }
 
     Row {
@@ -52,11 +52,11 @@ Item {
             bgSize: 48
             icon.iconSize: 24
             icon.typeStr: ""
-            icon.type: data.single_type
-            icon.tag: data.single_tag
+            icon.type: dataSingle.single_type
+            icon.tag: dataSingle.single_tag
             anchors.verticalCenter: parent.verticalCenter
             color: "#F5F5F5"
-            visible: data.single_is_local
+            visible: dataSingle.single_is_local
         }
         QBadge {
             width: 48
@@ -66,7 +66,7 @@ Item {
             icon: "qrc:/Images/Images/Device_Icons/key-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
             color: "#F5F5F5"
-            visible: !data.single_is_local
+            visible: !dataSingle.single_is_local
         }
         Column {
             id: _column
@@ -76,7 +76,7 @@ Item {
             spacing: 4
             QLato {
                 width: parent.width
-                text: data.single_name
+                text: dataSingle.single_name
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
             }
@@ -87,23 +87,23 @@ Item {
                     text: STR.STR_QML_1695
                     height: 16
                     color: "#D0E2FF"
-                    visible: data.single_value_key
+                    visible: dataSingle.single_value_key
                     radius: 8
                     fontSize: 10
                 }
                 QSignerBadgeName {
                     typeStr: ""
-                    type: data.single_type
-                    tag: data.single_tag
+                    type: dataSingle.single_type
+                    tag: dataSingle.single_tag
                     color: "#DEDEDE"
                     height: 16
                     font.pixelSize: 10
                 }
                 QBadge {
-                    text: qsTr("Acct %1").arg(data.single_account_index)
+                    text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                     height: 16
                     color: "#EAEAEA"
-                    visible: (data.single_account_index > 0) && (data.single_type !== NUNCHUCKTYPE.SERVER)
+                    visible: (dataSingle.single_account_index > 0) && (dataSingle.single_type !== NUNCHUCKTYPE.SERVER)
                     radius: 8
                     fontSize: 10
                 }
@@ -112,16 +112,16 @@ Item {
                 width: 146
                 height: 16
                 text: {
-                    if (data.single_type === NUNCHUCKTYPE.NFC) {
-                        var card_id = data.single_device_cardid
+                    if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
+                        var card_id = dataSingle.single_device_cardid
                         var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
                         return "Card ID: ••" + textR
                     }
                     else {
-                        return "XFP: " + data.single_masterFingerPrint.toUpperCase()
+                        return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
                     }
                 }
-                color: "#595959"
+                color: "#031F2B"
                 font.weight: Font.Normal
                 font.capitalization: Font.AllUppercase
                 font.family: "Lato"
@@ -130,8 +130,8 @@ Item {
             QLato {
                 height: 16
                 width: parent.width
-                text: qsTr("BIP32 path: %1").arg(data.single_derivationPath)
-                color: "#757575"
+                text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
+                color: "#031F2B"
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 font.pixelSize: 12

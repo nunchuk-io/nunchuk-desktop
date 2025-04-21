@@ -1,8 +1,8 @@
 cmake_minimum_required( VERSION 3.1 )
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.44)
+    project(Nunchuk VERSION 1.9.45)
 else()
-    project(nunchuk-qt VERSION 1.9.44)
+    project(nunchuk-qt VERSION 1.9.45)
 endif()
 
 

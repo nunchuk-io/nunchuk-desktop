@@ -20,7 +20,6 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.4
 
-
 TextInput {
     id: textEdit
     color: "Black"
@@ -32,9 +31,8 @@ TextInput {
     renderType: Text.QtRendering
 
     signal typingFinished(var currentText)
-    onTextChanged: if(initialized === true) inputIdentify.restart()
-
     property bool initialized: false
+    onTextChanged: if(initialized === true) inputIdentify.restart()
     Timer {
         id: inputIdentify
         interval: 250

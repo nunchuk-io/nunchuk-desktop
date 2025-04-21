@@ -63,6 +63,7 @@ ClientController::ClientController()
     connect(NetworkAccessManager::instance(), &QNetworkAccessManager::proxyAuthenticationRequired, this, &ClientController::proxyAuthenticationRequired);
     connect(NetworkAccessManager::instance(), &QNetworkAccessManager::sslErrors, this, &ClientController::sslErrors);
     setSubscriptions(QJsonArray());
+    qRegisterMetaType<DracoUser>();
 }
 
 ClientController::~ClientController()
@@ -137,8 +138,10 @@ void ClientController::requestLogin()
 
 void ClientController::syncContacts(QList<DracoUser> data)
 {
-    this->contacts()->syncContacts(data);
-    emit contactsChanged();
+    if(contacts()){
+        contacts()->syncContacts(data);
+        emit contactsChanged();
+    }
 }
 
 void ClientController::syncDevices(QList<DracoDevice> data)
@@ -157,16 +160,12 @@ QContactModelPtr ClientController::contactsPtr() const
     return m_contacts;
 }
 
-void ClientController::setContacts(const QContactModelPtr &contacts)
-{
-    m_contacts = contacts;
-    emit contactsChanged();
-}
-
 void ClientController::syncContactsReceived(QList<DracoUser> data)
 {
-    this->contactsReceived()->syncContacts(data);
-    emit contactsReceivedChanged();
+    if(contactsReceived()){
+        contactsReceived()->syncContacts(data);
+        emit contactsReceivedChanged();
+    }
 }
 
 QContactModel *ClientController::contactsReceived() const
@@ -177,12 +176,6 @@ QContactModel *ClientController::contactsReceived() const
 QContactModelPtr ClientController::contactsReceivedPtr() const
 {
     return m_contactsReceived;
-}
-
-void ClientController::setContactsReceived(const QContactModelPtr &contactsReceived)
-{
-    m_contactsReceived = contactsReceived;
-    emit contactsReceivedChanged();
 }
 
 QLoggedInDeviceModel *ClientController::devicesLogged() const
@@ -208,8 +201,10 @@ QNunchukRoom *ClientController::GetRoomById(const QString &id) const
 
 void ClientController::syncContactsSent(QList<DracoUser> data)
 {
-    this->contactsSent()->syncContacts(data);
-    emit contactsSentChanged();
+    if(contactsSent()){
+        contactsSent()->syncContacts(data);
+        emit contactsSentChanged();
+    }
 }
 
 QContactModel *ClientController::contactsSent() const
@@ -220,12 +215,6 @@ QContactModel *ClientController::contactsSent() const
 QContactModelPtr ClientController::contactsSentPtr() const
 {
     return m_contactsSent;
-}
-
-void ClientController::setContactsSent(const QContactModelPtr &contactsSent)
-{
-    m_contactsSent = contactsSent;
-    emit contactsSentChanged();
 }
 
 void ClientController::proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator)

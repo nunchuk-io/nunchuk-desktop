@@ -53,7 +53,7 @@ public:
     QList<QObject *> dashboards() const;
 
     void GetAllGroups();
-    bool AcceptGroupWallet();
+    void AcceptGroupWallet();
     void DenyGroupWallet();
     void ResetGroupWallet();
 
@@ -100,7 +100,6 @@ signals:
     void currentIndexChanged();
     void showDashBoardChanged();
     void highestPermissionAccountChanged();
-    void acceptChanged(const QString& group_id);
     void historyPeriodsChanged();
 private:
     QList<QGroupDashboardPtr>   mPendingWallets {};

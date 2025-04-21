@@ -33,6 +33,31 @@ Item {
     property bool isSandboxWallet: false
     property real ratio: 0.55
     property string myRole: AppModel.walletInfo.myRole
+    readonly property string gradientFrom: {
+        if (isReplaced || isLocked)
+            return "#595959"
+        else if (isHotWallet)
+            return "#A66800";
+        else if (isSandboxWallet)
+            return "#2B74A9";
+        else if (isAssisted)
+            return "#2F766D";
+        else
+            return "#2F466C";
+    }
+
+    readonly property string gradientTo : {
+        if (isReplaced || isLocked)
+            return "#595959"
+        else if (isHotWallet)
+            return "#A66800";
+        else if (isSandboxWallet)
+            return "#084B7B";
+        else if (isAssisted)
+            return "#1C4A21";
+        else
+            return "#031F2B";
+    }
     Item {
         id: area_wldetail
         anchors.fill: parent
@@ -44,16 +69,8 @@ Item {
             start: Qt.point(0, 0)
             end: Qt.point(parent.width, 0)
             gradient: Gradient {
-                GradientStop { position: 0.0; color: isHotWallet ? "#A66800" : isSandboxWallet
-                                                                 ? "#2B74A9" : (isReplaced || isLocked)
-                                                                 ? "#595959" : isAssisted
-                                                                 ? "#2F766D" : "#2F466C"
-                }
-                GradientStop { position: 1.0; color: isHotWallet ? "#A66800" : isSandboxWallet
-                                                                 ? "#084B7B" : (isReplaced || isLocked)
-                                                                 ? "#595959" : isAssisted
-                                                                 ? "#1C4A21" : "#031F2B"
-                }
+                GradientStop { position: 0.0; color: gradientFrom }
+                GradientStop { position: 1.0; color: gradientTo }
             }
         }
     }

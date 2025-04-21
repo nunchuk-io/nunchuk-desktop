@@ -56,6 +56,10 @@ QOnScreenContent {
         onNewMemoNotify: {
             QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo)
         }
+        onTypingFinished: {
+            var feeObj = { "feeRate" : currentText }
+            QMLHandle.sendEvent(EVT.EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX, feeObj)
+        }
     }
     bottomLeft: QButtonTextLink {
         height: 24

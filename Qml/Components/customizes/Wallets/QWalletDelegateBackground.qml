@@ -36,12 +36,12 @@ Item {
     property bool isSandboxWallet: false
     property string walletRole: ""
     readonly property string gradientFrom: {
-        if (isHotWallet)
+        if (isReplaced || isLocked || walletRole === "KEYHOLDER_LIMITED")
+            return "#595959"
+        else if (isHotWallet)
             return "#A66800";
         else if (isSandboxWallet)
             return "#2B74A9";
-        else if (isLocked || walletRole === "KEYHOLDER_LIMITED")
-            return "#595959";
         else if (isAssisted || isDashboard)
             return "#2F766D";
         else
@@ -49,12 +49,12 @@ Item {
     }
 
     readonly property string gradientTo : {
-        if (isHotWallet)
+        if (isReplaced || isLocked || walletRole === "KEYHOLDER_LIMITED")
+            return "#595959"
+        else if (isHotWallet)
             return "#A66800";
         else if (isSandboxWallet)
             return "#031F2B";
-        else if (isLocked || walletRole === "KEYHOLDER_LIMITED")
-            return "#595959";
         else if (isAssisted || isDashboard)
             return "#1C4A21";
         else

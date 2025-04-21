@@ -234,7 +234,7 @@ QScreen {
                     text: STR.STR_QML_654
                     color: "#031F2B"
                     font.weight: Font.Normal
-                    wrapMode: Text.WrapAnywhere
+                    wrapMode: Text.WordWrap
                     font.family: "Lato"
                     font.pixelSize: 16
                 }
@@ -278,7 +278,7 @@ QScreen {
                                     radius: width
                                     color: "#F5F5F5"
                                     anchors.verticalCenter: parent.verticalCenter
-                                    QSignerLightIcon {
+                                    QSignerDarkIcon {
                                         iconSize: 24
                                         anchors.centerIn: parent
                                         device_type: "software"

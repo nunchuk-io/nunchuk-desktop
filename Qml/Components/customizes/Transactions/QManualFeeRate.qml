@@ -18,21 +18,30 @@
  *                                                                        *
  **************************************************************************/
 import QtQuick 2.4
+import HMIEVENTS 1.0
 import DataPool 1.0
+import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
 import "../../../Components/customizes"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Column {
+    id: feeroot
     width: parent.width
     spacing: 12
     property alias isChecked: manualFeeRate.checked
     property alias textOutput: feeinput.text
-    property bool validInput: if(feeinput.text === "") {return true}
-                              else{
-                                  return parseFloat(feeinput.text) >= AppModel.minFee
-                              }
+    property bool  validInput: (feeinput.text === "") ? false : isValidNumber(feeinput.text) ? (parseFloat(feeinput.text) >= parseFloat(AppModel.minFee)) : false
+
+    function isValidNumber(input) {
+        if (input === null || input === undefined)
+            return false;
+        let trimmed = input.trim();
+        let regex = /^[0-9]+(\.[0-9]+)?$/;
+        return regex.test(trimmed);
+    }
 
     QCheckBoxButton {
         id: manualFeeRate
@@ -42,7 +51,7 @@ Column {
         fontWeight: Font.Normal
         onButtonClicked: {
             if(!manualFeeRate.checked) {
-                if(feeinput.text !== ""){
+                if(feeroot.validInput){
                     requestDraftTransaction()
                     feeinput.text = "";
                 }
@@ -56,9 +65,10 @@ Column {
         visible: manualFeeRate.checked
         width: parent.width
         spacing: 4
-        Item {
+        Row {
             width: parent.width
             height: 48
+            spacing: 8
             QTextInputBoxTypeA {
                 id: feeinput
                 width: 280
@@ -71,38 +81,41 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 showEdit: false
                 enabled: true
+
                 onTypingFinished: {
-                    if((feeinput.text !== "")){
-                        if(feeinput.validInput) requestDraftTransaction()
+                    if(currentText !== "" && feeroot.validInput) {
+                        requestDraftTransaction()
                     }
                 }
             }
             QLato {
                 width: 52
                 height: 16
-                anchors {
-                    verticalCenter: parent.verticalCenter
-                    left: feeinput.right
-                    leftMargin: 12
-                }
                 text: "sat/vbyte"
                 font.pixelSize: 12
+                font.weight: Font.Bold
+                anchors.verticalCenter: parent.verticalCenter
             }
         }
         QLato {
             id: errorText
-            anchors.top: parent.bottom
             anchors.left: parent.left
             text: STR.STR_QML_230.arg(AppModel.minFee)
             font.pixelSize: 12
             color: "#E02247"
-            visible: !validInput
+            visible: !feeroot.validInput
         }
-        Item {width: parent.width; height: 12; visible: !feeinput.validInput}
+        QLato {
+            id: scriptPathFee
+            color: "#595959"
+            font.pixelSize: 12
+            text: STR.STR_QML_1709.arg(transactionInfo.scriptPathFeeRate)
+            visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT) && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+        }
         QLato {
             id: cpfptext
             color: "#595959"
-            height: 28
+            font.pixelSize: 12
             text: STR.STR_QML_836.arg(transactionInfo.packageFeeRate)
             visible: transactionInfo.isCpfp
         }

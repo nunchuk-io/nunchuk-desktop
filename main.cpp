@@ -36,6 +36,7 @@
 #include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QSharedWallets.h"
+#include "Premiums/QSignerManagement.h"
 #include "contrib/libnunchuk/src/utils/loguru.hpp"
 #include "RegisterTypes/DashRectangle.h"
 #include "QRScanner/QBarcodeFilter.h"
@@ -188,7 +189,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.44");
+    app.setApplicationVersion("1.9.45");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -202,7 +203,13 @@ int main(int argc, char* argv[])
 //    objTracking.startPing();
 #endif
     DBG_INFO << "Execution Path: " << qApp->applicationDirPath();
+
+
+#ifdef ENABLE_OUTLOG
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
+#else
+    loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
+#endif
 
     QEventProcessor::registerStates(STATE_ALL, ALEN(STATE_ALL));
     qmlRegisterType<E>("HMIEVENTS", 1, 0, "EVT");
@@ -224,9 +231,9 @@ int main(int argc, char* argv[])
 
     // Handle window size
 #if defined(Q_OS_LINUX) || defined (Q_OS_WIN)
-    QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
-    QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
-    QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
+    QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
+    QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
+    QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
     QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
 #else
     DBG_INFO << scale_factor;
@@ -235,43 +242,44 @@ int main(int argc, char* argv[])
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();
         if(screenHeight < QAPP_HEIGHT_EXPECTED){
-            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_MIN);
-            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_MIN);
-            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_MIN/(double)QAPP_HEIGHT_EXPECTED));
+            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_MIN);
+            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_MIN);
+            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_MIN/(double)QAPP_HEIGHT_EXPECTED));
             QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_MIN, QAPP_HEIGHT_MIN);
         }
         else {
-            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
-            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
-            QEventProcessor::instance()->registerCtxProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
+            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_WIDTH", QAPP_WIDTH_EXPECTED);
+            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT", QAPP_HEIGHT_EXPECTED);
+            QEventProcessor::instance()->setContextProperty("QAPP_DEVICE_HEIGHT_RATIO", fmin(1.0, (double)QAPP_HEIGHT_EXPECTED/(double)QAPP_HEIGHT_EXPECTED));
             QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
         }
     }
 #endif
 
-    QEventProcessor::instance()->registerCtxProperty("MAINNET_SERVER", MAINNET_SERVER);
-    QEventProcessor::instance()->registerCtxProperty("TESTNET_SERVER", TESTNET_SERVER);
+    QEventProcessor::instance()->setContextProperty("MAINNET_SERVER", MAINNET_SERVER);
+    QEventProcessor::instance()->setContextProperty("TESTNET_SERVER", TESTNET_SERVER);
 #ifdef SIGNET_SUPPORT
-    QEventProcessor::instance()->registerCtxProperty("SIGNET_SERVER", SIGNET_SERVER);
+    QEventProcessor::instance()->setContextProperty("SIGNET_SERVER", SIGNET_SERVER);
 #else
     QEventProcessor::instance()->registerCtxProperty("SIGNET_SERVER", "");
 #endif
-    QEventProcessor::instance()->registerCtxProperty("EXPLORER_TESTNET", EXPLORER_TESTNET);
-    QEventProcessor::instance()->registerCtxProperty("EXPLORER_MAINNET", EXPLORER_MAINNET);
-    QEventProcessor::instance()->registerCtxProperty("EXPLORER_SIGNNET", EXPLORER_SIGNNET);
-    QEventProcessor::instance()->registerCtxProperty("MAX_UNUSED_ADDR", MAX_UNUSED_ADDR);
-    QEventProcessor::instance()->registerCtxProperty("AppModel", QVariant::fromValue(AppModel::instance()));
-    QEventProcessor::instance()->registerCtxProperty("AppSetting", QVariant::fromValue(AppSetting::instance()));
-    QEventProcessor::instance()->registerCtxProperty("Draco", QVariant::fromValue(Draco::instance()));
-    QEventProcessor::instance()->registerCtxProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
-    QEventProcessor::instance()->registerCtxProperty("qapplicationVersion", app.applicationVersion());
-    QEventProcessor::instance()->registerCtxProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
-    QEventProcessor::instance()->registerCtxProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
-    QEventProcessor::instance()->registerCtxProperty("SharedWallet", QVariant::fromValue(QSharedWallets::instance()));
-    QEventProcessor::instance()->registerCtxProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
-    QEventProcessor::instance()->registerCtxProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
-    QEventProcessor::instance()->registerCtxProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
-    QEventProcessor::instance()->registerCtxProperty("PDFPrinter", QVariant::fromValue(QPDFPrinter::instance()));
+    QEventProcessor::instance()->setContextProperty("EXPLORER_TESTNET", EXPLORER_TESTNET);
+    QEventProcessor::instance()->setContextProperty("EXPLORER_MAINNET", EXPLORER_MAINNET);
+    QEventProcessor::instance()->setContextProperty("EXPLORER_SIGNNET", EXPLORER_SIGNNET);
+    QEventProcessor::instance()->setContextProperty("MAX_UNUSED_ADDR", MAX_UNUSED_ADDR);
+    QEventProcessor::instance()->setContextProperty("AppModel", QVariant::fromValue(AppModel::instance()));
+    QEventProcessor::instance()->setContextProperty("AppSetting", QVariant::fromValue(AppSetting::instance()));
+    QEventProcessor::instance()->setContextProperty("Draco", QVariant::fromValue(Draco::instance()));
+    QEventProcessor::instance()->setContextProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
+    QEventProcessor::instance()->setContextProperty("qapplicationVersion", app.applicationVersion());
+    QEventProcessor::instance()->setContextProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
+    QEventProcessor::instance()->setContextProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
+    QEventProcessor::instance()->setContextProperty("SharedWallet", QVariant::fromValue(QSharedWallets::instance()));
+    QEventProcessor::instance()->setContextProperty("ProfileSetting", QVariant::fromValue(ProfileSetting::instance()));
+    QEventProcessor::instance()->setContextProperty("ServiceSetting", QVariant::fromValue(ServiceSetting::instance()));
+    QEventProcessor::instance()->setContextProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
+    QEventProcessor::instance()->setContextProperty("PDFPrinter", QVariant::fromValue(QPDFPrinter::instance()));
+    QEventProcessor::instance()->setContextProperty("SignerManagement", QVariant::fromValue(QSignerManagement::instance()));
     QEventProcessor::instance()->completed();
     QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);

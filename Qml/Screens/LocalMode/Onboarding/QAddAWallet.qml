@@ -141,7 +141,7 @@ QOnScreenContentTypeA {
         Rectangle {
             width: 215
             height: 48
-            border.width: 1
+            border.width: 2
             border.color: "#031F2B"
             radius: 44
             Row {
@@ -181,7 +181,7 @@ QOnScreenContentTypeA {
                         cursorShape: Qt.PointingHandCursor
                         anchors.fill: parent
                         onClicked: {
-                            qrscanerLink.open()
+                            qrscaner.importUrlLink()
                         }
                     }
                 }
@@ -198,56 +198,162 @@ QOnScreenContentTypeA {
                 optionMenu.y = 20 - optionMenu.height
                 optionMenu.open()
             }
-            QContextMenu {
+            QMultiContextMenu {
                 id: optionMenu
                 menuWidth: 350
-                labels: [
-                    STR.STR_QML_038,
-                    STR.STR_QML_1664,
-                    STR.STR_QML_037,
-                    STR.STR_QML_040,
-                    STR.STR_QML_1254
-                ]
-                icons: [
-                    "qrc:/Images/Images/QRCodeScan.png",
-                    "qrc:/Images/Images/import.png",
-                    "qrc:/Images/Images/import.png",
-                    "qrc:/Images/Images/import.png",
-                    "qrc:/Images/Images/import.png",
-                ]
-                functions: [
-                    function(){
-                        qrscaner.open()
+                property var recoverGroupWalletMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1089,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() { // QR code
+                            if (SharedWallet.checkSandboxWalletLimit()) {
+                                qrscaner.importSandboxWallet()
+                            }
+                        }
                     },
-                    function(){
-                        fileDialog.recoverType = "recover-sandbox-wallet"
-                        fileDialog.open()
-                    },
-                    function(){
-                        fileDialog.recoverType = "recover-via-bsms-config-file"
-                        fileDialog.open()
-                    },
-                    function(){
-                        fileDialog.recoverType = "recover-via-coldcard"
-                        fileDialog.open()
-                    },
-                    function(){
-                        OnBoarding.state = "recoverHotWallet"
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1087,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() { // BSMS/descriptors
+                            if (SharedWallet.checkSandboxWalletLimit()) {
+                                fileDialog.recoverType = "recover-sandbox-wallet"
+                                fileDialog.open()
+                            }
+                        }
                     },
                 ]
-                onItemClicked: {
-                    functions[index]()
-                }
+                mapMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_038,
+                        icon: "qrc:/Images/Images/QR-dark.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            qrscaner.importHotWallet()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_037,
+                        icon: "qrc:/Images/Images/recover.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            fileDialog.recoverType = "recover-via-bsms-config-file"
+                            fileDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1664,
+                        icon: "qrc:/Images/Images/recover.svg",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: recoverGroupWalletMenu,
+                        action: function(){ }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1254,
+                        icon: "qrc:/Images/Images/recover.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            OnBoarding.state = "recoverHotWallet"
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_040,
+                        icon: "qrc:/Images/Images/recover.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            fileDialog.recoverType = "recover-via-coldcard"
+                            fileDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_041,
+                        icon: "qrc:/Images/Images/importFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function(){
+                            fileDialog.recoverType = "import-db"
+                            fileDialog.open()
+                        }
+                    },
+                ]
             }
         }
     }
     QQrImportScanner {
         id: qrscaner
+        property string scanType: ""
         onTagFound: {
-            if(OnBoarding.importQrHotWallet(qrscaner.tags)){
-                qrscaner.close()
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            console.warn("scanType: ",qrscaner.scanType, tag)
+            if (qrscaner.scanType == "import-hot-wallet") {
+                if(qrscaner.complete){
+                    if(OnBoarding.importQrHotWallet(qrscaner.tags)){
+                        qrscaner.close()
+                        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                    }
+                }
             }
+            else if (qrscaner.scanType == "import-url-link") {
+                if (qrscaner.tags.length > 0) {
+                    var _input = {
+                        type: "enter-link-qr-url",
+                        sandboxUrl: tag
+                    }
+                    QMLHandle.notifySendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
+                    qrscaner.close()
+                }
+            }
+            else if (qrscaner.scanType == "import-sandbox-wallet") {
+                if(qrscaner.complete){
+                    if(SharedWallet.importQrSandboxWallet(qrscaner.tags)){
+                        qrscaner.close()
+                        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                    }
+                }
+            }
+            else{}
+        }
+        function importHotWallet() {
+            qrscaner.scanType = "import-hot-wallet"
+            qrscaner.open()
+        }
+        function importUrlLink() {
+            qrscaner.scanType = "import-url-link"
+            qrscaner.open()
+        }
+        function importSandboxWallet() {
+            qrscaner.scanType = "import-sandbox-wallet"
+            qrscaner.open()
         }
     }
     FileDialog {
@@ -297,20 +403,6 @@ QOnScreenContentTypeA {
                 sandboxUrl: str
             }
             QMLHandle.notifySendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
-        }
-    }
-    QQrImportScanner {
-        id: qrscanerLink
-        onTagFound: {
-            console.log(tag)
-            if (qrscanerLink.tags.length > 0) {
-                var _input = {
-                    type: "enter-link-qr-url",
-                    sandboxUrl: tag
-                }
-                QMLHandle.notifySendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
-                qrscanerLink.close()
-            }
         }
     }
     Connections {

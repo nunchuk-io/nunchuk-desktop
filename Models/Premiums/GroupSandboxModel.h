@@ -21,6 +21,9 @@ class QGroupSandbox : public QStateFlow
     Q_PROPERTY(QString      url              READ url                                                  NOTIFY groupSandboxChanged)
     Q_PROPERTY(int          userCount        READ userCount                                            NOTIFY groupSandboxChanged)
     Q_PROPERTY(bool enoughSigner             READ enoughSigner                                         NOTIFY groupSandboxChanged)
+    Q_PROPERTY(bool isReplace                READ isReplace                         CONSTANT)
+    Q_PROPERTY(bool isRecovery               READ isRecovery                        CONSTANT)
+    Q_PROPERTY(bool isCreate                 READ isCreate                        CONSTANT)
 
 public:
     QGroupSandbox();
@@ -50,10 +53,15 @@ public:
     bool HasOneKeyRecovery();
     bool FinalizeGroup();
 
+    bool isReplace() const;
+    bool isRecovery() const;
+    bool isCreate() const;
+
 public:
     void CreateAGroup(const QString& name, int m, int n, int addType);
     void UpdateGroup(const QString& name, int m, int n, int addType);
     void setSandbox(const nunchuk::GroupSandbox& sandbox);
+    void setCurrentSandbox(const nunchuk::GroupSandbox& sandbox);
     bool JoinGroup(const QString& url);
     bool GetGroup(const QString &group_id);
     bool AddSignerToGroup(const nunchuk::SingleSigner& signer);
@@ -71,6 +79,13 @@ public:
 
     void CreateSignerListReviewWallet();
     QSet<size_t> ValueKeyset();
+    bool CreateReplaceGroup(const QString& wallet_id);
+    bool AcceptReplaceGroup(const QString& wallet_id, const QString& sandbox_id);
+    bool DeclineReplaceGroup(const QString& wallet_id, const QString& sandbox_id);
+    void CloseCurrentSandboxSetup();
+    QStringList qrTagsRecovery() const;
+    void setQrTagsRecovery(const QStringList &newQrTagsRecovery);
+
 public slots:
     bool checkWaitingOthers();
     void deleteGroup();
@@ -79,10 +94,10 @@ public slots:
     void slotClearOccupied();
     void clearOccupied();
     bool editBIP32Path(int index, const QString &master_id, const QString& path);
-    void slotFinishSandboxWallet();
+    void slotFinishSandboxWallet(const QString &wallet_id, bool reqClose);
 signals:
     void groupSandboxChanged();
-    void finishSandboxWallet();
+    void finishSandboxWallet(const QString &wallet_id, bool reqClose);
     void recoverKeyError();
     void editBIP32PathSuccess(int typeError);
 private:
@@ -94,6 +109,7 @@ private:
     QString                 m_fingerprintRecovery {""};
     QTimer                  m_occupied;
     QString                 m_filePathRecovery {""};
+    QStringList             m_qrTagsRecovery {};
 };
 
 class GroupSandboxModel : public QAbstractListModel

@@ -748,8 +748,8 @@ Item {
                                 }
                             }
                             onTypingFinished: {
-                                if((feeinput.textOutput !== "")){
-                                    if(feeinput.validInput) requestDraftTransaction()
+                                if((feeinput.textOutput !== "") && feeinput.validInput) {
+                                    requestDraftTransaction()
                                 }
                             }
                             QText {
@@ -768,9 +768,16 @@ Item {
                         }
                         Item {width: parent.width; height: 12; visible: !feeinput.validInput}
                         QLato {
+                            id: scriptPathFee
+                            color: "#595959"
+                            font.pixelSize: 12
+                            text: STR.STR_QML_1709.arg(transactionInfo.scriptPathFeeRate)
+                            visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT) && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+                        }
+                        QLato {
                             id: cpfptext
                             color: "#595959"
-                            height: 28
+                            font.pixelSize: 12
                             text: STR.STR_QML_836.arg(transactionInfo.packageFeeRate)
                             visible: transactionInfo.isCpfp
                         }

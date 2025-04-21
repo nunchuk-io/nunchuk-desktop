@@ -557,7 +557,7 @@ Rectangle {
                             anchors.right: parent.right
                             spacing: 4
                             QLato {
-                                text: GlobalData.showOthersKeyset ? "Hide" : "Show"
+                                text: GlobalData.showOthersKeyset ? "Hide" : "View all"
                                 font.pixelSize: 12
                                 color: "#031F2B"
                                 font.weight: Font.Bold

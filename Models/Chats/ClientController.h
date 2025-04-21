@@ -82,15 +82,12 @@ public:
     void syncDevices(QList<DracoDevice> data);
     QContactModel* contacts() const;
     QContactModelPtr contactsPtr() const;
-    void setContacts(const QContactModelPtr &contacts);
     void syncContactsSent(QList<DracoUser> data);
     QContactModel* contactsSent() const;
     QContactModelPtr contactsSentPtr() const;
-    void setContactsSent(const QContactModelPtr &contactsSent);
     void syncContactsReceived(QList<DracoUser> data);
     QContactModel* contactsReceived() const;
     QContactModelPtr contactsReceivedPtr() const;
-    void setContactsReceived(const QContactModelPtr &contactsReceived);
     QLoggedInDeviceModel *devicesLogged() const;
     QNunchukRoom *currentRoom() const;
     QNunchukRoom *GetRoomById(const QString& id) const;

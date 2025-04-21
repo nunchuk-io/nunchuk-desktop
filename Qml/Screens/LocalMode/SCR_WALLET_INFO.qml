@@ -124,12 +124,19 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_COLDCARD, exportwalletDialog.currentFile)
             }
             else if(exportFormat === NUNCHUCKTYPE.TRANSACTION_CSV){
-                var csvTxObj = { "csv_type"     : 1,
+                var csvTxObj = { "csv_type"     : 0,
                                  "file_path"    : exportwalletDialog.currentFile};
                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_CSV, csvTxObj)
             }
+            else if(exportFormat === NUNCHUCKTYPE.TRANSACTION_PDF){
+                var pdfTxObj = { "csv_type"     : 1,
+                                 "file_path"    : exportwalletDialog.currentFile};
+                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_CSV, pdfTxObj)
+                invoicePopup.open()
+                invoicePopup.startPrintInvoices(exportwalletDialog.currentFile)
+            }
             else if(exportFormat === NUNCHUCKTYPE.UTXO_CSV){
-                var csvUtxoObj = { "csv_type"     : -1,
+                var csvUtxoObj = { "csv_type"     : 2,
                                    "file_path"    : exportwalletDialog.currentFile};
                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_CSV, csvUtxoObj)
             }
@@ -174,14 +181,21 @@ QScreen {
         id: gaplimit
     }
 
+    QExportPDF {
+        id: invoicePopup
+        width: parent.width
+        height: parent.height
+        hCenterOffset: 0
+    }
+
     /*==========================================================*/
     Connections {
         target: AppModel
-        onStartDisplayAddress: {
+        function onStartDisplayAddress(wallet_id, address) {
             if(isOnTop) displayAddressBusybox.open()
             else displayAddressBusybox.close()
         }
-        onFinishedDisplayAddress: {
+        function onFinishedDisplayAddress(result) {
             displayAddressBusybox.close()
         }
     }

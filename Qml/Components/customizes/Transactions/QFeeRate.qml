@@ -35,6 +35,8 @@ Item {
     id: _item
     property var transactionInfo
     property var new_fee: 0
+    signal typingFinished(var currentText)
+
     /*========================================*/
     width: 350
     height: _col.childrenRect.height
@@ -48,13 +50,13 @@ Item {
             color: "#000000"
         }
         Rectangle {
-            width: _item.width
-            height: 275
+            implicitWidth: _item.width
+            implicitHeight: rateColumn.height + 24
             color: "#F5F5F5"
             radius: 12
             Column {
-                anchors.fill: parent
-                anchors.margins: 16
+                id: rateColumn
+                anchors.centerIn: parent
                 spacing: 16
                 Item {
                     width: 318
@@ -137,8 +139,15 @@ Item {
                             input_fee.isValid = (parseFloat(input_fee.textInputted) > parseFloat(transactionInfo.feeRate))
                             input_fee.showError = !input_fee.isValid
                         }
+                        onTypingFinished: {
+                            console.log(parseFloat(input_fee.textInputted) , parseFloat(transactionInfo.feeRate))
+                            if(input_fee.textInputted !== "" && input_fee.isValid){
+                                _item.typingFinished(input_fee.textInputted)
+                            }
+                        }
                         showError: false
                         errorText: STR.STR_QML_1183
+                        errorTextPxSize: 12
                     }
                     QLato {
                         width: 52
@@ -150,6 +159,20 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignRight
                     }
+                }
+                QLato {
+                    id: scriptPathFee
+                    color: "#595959"
+                    font.pixelSize: 12
+                    text: STR.STR_QML_1709.arg(transactionInfo.scriptPathFeeRate)
+                    visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT) && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+                }
+                QLato {
+                    id: cpfptext
+                    color: "#595959"
+                    font.pixelSize: 12
+                    text: STR.STR_QML_836.arg(transactionInfo.packageFeeRate)
+                    visible: transactionInfo.isCpfp
                 }
                 Column {
                     spacing: 4

@@ -37,6 +37,7 @@ public slots:
     virtual int  reuseKeyGetCurrentIndex(const QString &xfp);
     virtual QString bip32path(const QString &xfp, int index);
     virtual bool updateKeyReplace(const QString &xfp, const int index);
+    virtual bool removeKeyReplaced(const int index);
 signals:
     virtual void signerExistListChanged() = 0;
     virtual void replaceFlowChanged() = 0;

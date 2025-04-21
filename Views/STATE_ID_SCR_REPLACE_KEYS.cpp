@@ -24,6 +24,7 @@
 #include "AppModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
+#include "Premiums/QSharedWallets.h"
 
 void SCR_REPLACE_KEYS_Entry(QVariant msg) {
 
@@ -82,6 +83,7 @@ void EVT_REPLACE_KEYS_ENTER_HANDLER(QVariant msg) {
         } else if (type == "replace-transfer-funds") {
             if(auto old_w = AppModel::instance()->walletInfo()){
                 // Check balance > 0
+                DBG_INFO << old_w->walletId() << old_w->walletName() << old_w->balanceSats();
                 if(old_w->balanceSats() > 0){
                     w->setReplaceFlow(type);
                 }
@@ -92,6 +94,23 @@ void EVT_REPLACE_KEYS_ENTER_HANDLER(QVariant msg) {
                         AppModel::instance()->setWalletListCurrentIndex(index);
                     }
                     QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
+                }
+            }
+        } else if (type == "replace-select-keys-sandbox-wallet") {
+            auto w = AppModel::instance()->walletInfoPtr();
+            auto nw = AppModel::instance()->newWalletInfo();
+            if(w && nw) {
+                nw->setWalletName(w->walletName());
+                nw->setWalletDescription(w->walletDescription());
+                nw->setWalletAddressType(w->walletAddressType());
+                if (auto sandbox = nw->groupSandboxPtr()) {
+                    if (sandbox->CreateReplaceGroup(w->walletId())) {
+                        sandbox->setScreenFlow("setup-group-wallet");
+                        QJsonObject json;
+                        json["type"] = "setup-group-wallet";
+                        QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
+                        QSharedWallets::instance()->GetAllGroups();
+                    }
                 }
             }
         } else {

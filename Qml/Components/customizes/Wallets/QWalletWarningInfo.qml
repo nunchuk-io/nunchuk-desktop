@@ -18,43 +18,64 @@
  *                                                                        *
  **************************************************************************/
 import QtQuick 2.4
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
+import HMIEVENTS 1.0
+import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
+import DataPool 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
+import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
-Item {
-    id: _item
-    width: parent.width
-    height: 28
-    property bool checked: transactionInfo.subtractFromFeeAmount
-    QLato {
-        z:1
-        id: textsubtractfee
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        text: STR.STR_QML_226
-        QTooltip {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.right
-            anchors.leftMargin: 8
-            toolTip: STR.STR_QML_227
-            source: "qrc:/Images/Images/help_outline_24px.svg"
-        }
-    }
-    QCheckBox {
-        anchors {
-            verticalCenter: parent.verticalCenter
-            right: parent.right
-        }
-        checked: _item.checked
-        partiallyChecked: false
-        onCheckboxClicked: {
-            _item.checked = !_item.checked
-            buttonClicked()
-        }
-    }
+Rectangle {
+    width: 846
+    height: 60
+    radius: 8
+    color: "#FDEBD2"
 
-    signal buttonClicked()
+    property bool   forceClose  : false
+    property alias  content     : textContent.text
+    signal closeWarning()
+    signal hyperlinkClicked()
+
+    Row {
+        anchors.fill: parent
+        anchors.margins: 12
+        spacing: 8
+        QIcon {
+            iconSize: 36
+            anchors.verticalCenter: parent.verticalCenter
+            source: "qrc:/Images/Images/warning_amber-60px.png"
+        }
+        QLato {
+            id: textContent
+            width: parent.width - 76
+            height: parent.height
+            font.pixelSize: 16
+            textFormat: Text.RichText
+            color: "#031F2B"
+            anchors.verticalCenter: parent.verticalCenter
+            onLinkActivated: {
+                hyperlinkClicked()
+            }
+        }
+        QIcon {
+            iconSize: 24
+            anchors.verticalCenter: parent.verticalCenter
+            source: "qrc:/Images/Images/close_24px.png"
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    forceClose = true
+                    closeWarning()
+                }
+            }
+        }
+    }
 }

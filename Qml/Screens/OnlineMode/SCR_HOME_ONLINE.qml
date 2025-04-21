@@ -217,68 +217,10 @@ QScreen {
                                         }
                                     }
                                 }
-                                Component {
-                                    id: contactEmptyMsgComp
-                                    Column {
-                                        width: parent.width
-                                        spacing: 12
-                                        QText {
-                                            width: parent.width - 32
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            horizontalAlignment: Text.AlignHCenter
-                                            text: STR.STR_QML_368
-                                            color: "#FFFFFF"
-                                            font.family: "Lato"
-                                            font.pixelSize: 16
-                                            lineHeightMode: Text.FixedHeight
-                                            lineHeight: 28
-                                            wrapMode: Text.WordWrap
-                                        }
-                                        QButtonMedium {
-                                            width: 146
-                                            height: 40
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            label: STR.STR_QML_369
-                                            fontPixelSize: 16
-                                            fontWeight: Font.Normal
-                                            type: eOUTLINE_DARK
-                                            enabled: ClientController.isNunchukLoggedIn
-                                            onButtonClicked: {
-                                                QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
-                                            }
-                                        }
-                                    }
-                                }
-                                Component {
-                                    id: roomListComp
-                                    QRoomsPage {
-                                        anchors.fill: parent
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        onItemClicked: {
-                                            conversationContentLoader.isSandboxRoom = false
-                                            conversationContentLoader.changeRoomComponent(false)
-                                        }
-                                        onItemGroupWalletClick: {
-                                            conversationContentLoader.isSandboxRoom = true
-                                            conversationContentLoader.changeRoomComponent(false)
-                                        }
-                                    }
-                                }
-                                Component {
-                                    id: busyRoomsComp
-                                    Item {
-                                        anchors.fill: parent
-                                        BusyIndicator {
-                                            anchors.centerIn: parent
-                                            running: !ClientController.isMatrixLoggedIn
-                                        }
-                                    }
-                                }
                             }
                         }
                         Tab {
                             title: STR.STR_QML_370
-                            enabled: ClientController.isNunchukLoggedIn
                             Column {
                                 width: 305
                                 spacing: 16
@@ -341,7 +283,7 @@ QScreen {
                                             width: parent.width
                                             QListView {
                                                 width: parent.width
-                                                height: count*100
+                                                height: contentHeight
                                                 model: ClientController.contactsReceived
                                                 clip: true
                                                 interactive: false
@@ -350,16 +292,18 @@ QScreen {
                                                     contactname: model.name
                                                     contactmail: model.email
                                                     onItemAcceptClicked: {
+                                                        console.log("Accept friend request")
                                                         ClientController.acceptFriendRequest(model.id)
                                                     }
                                                     onItemIgnoreClicked: {
+                                                        console.log("Ignore friend request")
                                                         ClientController.ignoreFriendRequest(model.id)
                                                     }
                                                 }
                                             }
                                             QListView {
                                                 width: parent.width
-                                                height: count*100
+                                                height: contentHeight
                                                 model: ClientController.contactsSent
                                                 clip: true
                                                 interactive: false
@@ -418,79 +362,6 @@ QScreen {
                                         height: leftSide.height - pendingCtItems.height - 48
                                         sourceComponent: ClientController.contacts.count > 0 ? contactListComp : contactEmptyState
                                     }
-                                    Component {
-                                        id: contactListComp
-                                        QListView {
-                                            id: contactList
-                                            anchors.fill: parent
-                                            model: ClientController.contacts
-                                            clip: true
-                                            currentIndex: ClientController.contacts.currentIndex
-                                            ScrollBar.vertical: ScrollBar { id: scrollContact; active: true ; function wheel(up){if(up){decrease()}else{increase()}}}
-                                            MouseArea { anchors.fill: parent;z: 10;propagateComposedEvents: true;onWheel: { scrollContact.wheel(wheel.angleDelta.y > 0);}}
-                                            delegate: QContactDelegate {
-                                                contactname: model.name
-                                                contactAvt: model.avatar
-                                                isCurrentItem: index === contactList.currentIndex
-                                                onItemLeftClicked: {
-                                                    ClientController.contacts.currentIndex = index
-                                                }
-                                                onItemRightClicked: {
-                                                    optionMenu.popup()
-                                                }
-                                                QContextMenu {
-                                                    id: optionMenu
-                                                    menuWidth: 180
-                                                    icons: [
-                                                        "qrc:/Images/Images/Delete.svg"
-                                                    ]
-                                                    labels: [
-                                                        STR.STR_QML_374
-                                                    ]
-                                                    colors: [
-                                                        "#CF4018"
-                                                    ]
-                                                    onItemClicked: {
-                                                        if(ClientController.rooms.hasContact(model.id)){
-                                                            deleteContactInfo.open()
-                                                        }
-                                                        else{
-                                                            confirmDeleteContact.idContact = model.id
-                                                            confirmDeleteContact.open()
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Component {
-                                        id: contactEmptyState
-                                        Column {
-                                            anchors.fill: parent
-                                            spacing: 12
-                                            QText {
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                horizontalAlignment: Text.AlignHCenter
-                                                text: STR.STR_QML_375
-                                                color: "#FFFFFF"
-                                                font.family: "Lato"
-                                                font.pixelSize: 16
-                                            }
-                                            QButtonMedium {
-                                                width: 146
-                                                height: 40
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                label: STR.STR_QML_369
-                                                fontPixelSize: 16
-                                                fontWeight: Font.Normal
-                                                type: eOUTLINE_DARK
-                                                enabled: ClientController.isNunchukLoggedIn
-                                                onButtonClicked: {
-                                                    QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -547,27 +418,39 @@ QScreen {
                 anchors.fill: parent
                 sourceComponent: {
                     if (!ClientController.isNunchukLoggedIn){
-                        var groupwallet_count = AppModel.groupWalletList ? AppModel.groupWalletList.count : 0
-                        if(groupwallet_count > 0){
-                            return roomSandboxChat
+                        switch (tabselect.currentIndex) {
+                            case 0: // Tab Message (Tab 0)
+                            {
+                                var groupwallet_count = AppModel.groupWalletList ? AppModel.groupWalletList.count : 0
+                                if(groupwallet_count > 0){
+                                    return roomSandboxChat
+                                }
+                                else {
+                                    return requireLogin
+                                }
+                            }
+                            case 1: // Tab Contacts (Tab 1)
+                            {
+                                return requireLogin
+                            }
+                            default:
+                                return emptyroomstate
                         }
-                        else {
-                            return requireLogin
+                    } else {
+                        switch (tabselect.currentIndex) {
+                            case 0: // Tab Message (Tab 0)
+                            {
+                                if (eCURRENT_MODE === eRIGHT_A_NEW_ROOM)
+                                    return sourceItems[eRIGHT_A_NEW_ROOM]()
+                                return sourceItems[isEmptyTabMessage ? eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM]()
+                            }
+                            case 1: // Tab Contacts (Tab 1)
+                            {
+                                return isEmptyTabContact ? emptyroomstate : contactInfo
+                            }
+                            default:
+                                return emptyroomstate
                         }
-                    }
-                    switch (tabselect.currentIndex) {
-                        case 0: // Tab Message (Tab 0)
-                        {
-                            if (eCURRENT_MODE === eRIGHT_A_NEW_ROOM)
-                                return sourceItems[eRIGHT_A_NEW_ROOM]()
-                            return sourceItems[isEmptyTabMessage ? eRIGHT_EMPTY_ROOM : eRIGHT_EXIST_ROOM]()
-                        }
-                        case 1: // Tab Contacts (Tab 1)
-                        {
-                            return isEmptyTabContact ? emptyroomstate : contactInfo
-                        }
-                        default:
-                            return emptyroomstate
                     }
                 }
 
@@ -592,119 +475,6 @@ QScreen {
                 target: ClientController
                 function contactsChanged() {
                     conversationContentLoader.changeRoomComponent(false)
-                }
-            }
-            Component {
-                id: roomChat
-                Item {
-                    anchors.fill: parent
-                    QConversationPage {
-                        anchors.fill: parent
-                        modelCoversation: (RoomWalletData.currentRoom !== null) ? RoomWalletData.currentRoom.conversation : 0
-                        onTriggerEditGroupName: { editRoomnameModal.visible = true}
-                        onTriggerAddMembers: {
-                            addMoreMemberModel.visible = true
-                            suggestItems.userSelected = ""
-                            suggestItems.userSelectedId = ""
-                            addMemberInput.textInputted = ""
-                        }
-                        onTriggerLeaveGroup: {ClientController.leaveCurrentRoom()}
-                        onRequestCancelWallet: {confirmCancelWallet.open()}
-                    }
-                    QBoxWalletInfo{
-                        anchors.left: parent.left
-                        anchors.leftMargin: 20
-                        anchors.top: parent.top
-                        anchors.topMargin: 100
-                        visible: RoomWalletData.roomWalletInitialized && !RoomWalletData.roomWalletCreated
-                    }
-                    QBoxTransactionInfo{
-                        anchors.left: parent.left
-                        anchors.leftMargin: 20
-                        anchors.top: parent.top
-                        anchors.topMargin: 100
-                    }
-                }
-            }
-            Component {
-                id: newroom
-                QConversationPage {
-                    anchors.fill: parent
-                    createRoom: true
-                    modelCoversation: 0
-                    onCreateRoomDone: conversationContentLoader.changeRoomComponent(false)
-                }
-            }
-            Component {
-                id: emptyroomstate // Need fix, update new empty state
-                QAddWelcome{
-                    anchors.fill: parent
-                    titleWelcome: STR.STR_QML_379
-                    addKey {
-                        btnTextLink: STR.STR_QML_369
-                        titleSuggest: STR.STR_QML_369
-                        content: STR.STR_QML_368
-                        height: 180
-                        icon:"qrc:/Images/Images/addContact.svg"
-                        onBtnClicked: {
-                            preventTimer.restart()
-                            QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
-                        }
-                    }
-                    hotWallet {
-                        visible: false
-                        btnTextLink: STR.STR_QML_1255
-                        titleSuggest: STR.STR_QML_1226
-                        content: STR.STR_QML_1252
-                        height: 180
-                        icon:"qrc:/Images/Images/person-add-24px.svg"
-                        onBtnClicked: {
-                            OnBoarding.state = "hotWallet"
-                            QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
-                        }
-                    }
-                    enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
-                    onSupportButtonClicked: {
-                        preventTimer.restart()
-                        QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ)
-                    }
-                    Timer {
-                        id: preventTimer
-                        interval: 5000
-                        repeat: false
-                    }
-                    Component.onCompleted: {if(!ClientController.readySupport) {preventTimer.restart()}}
-                }
-            }
-            Component {
-                id: contactInfo
-                QContactInfoPage{
-                    anchors.fill: parent
-                    onSend_a_messageClicked: {
-                        tabselect.currentIndex = 0
-                        ClientController.createRoomDirectChat(user.chat_id, user.name)
-                        conversationContentLoader.changeRoomComponent(false)
-                    }
-                    onSend_removeContact: {
-                        if(ClientController.rooms.hasContact(id)){
-                            deleteContactInfo.open()
-                        }
-                        else{
-                            confirmDeleteContact.idContact = id
-                            confirmDeleteContact.open()
-                        }
-                    }
-                }
-            }
-            Component {
-                id: requireLogin
-                QRequireLogin {
-                    anchors.fill: parent
-                }
-            }
-            Component {
-                id: roomSandboxChat
-                QConversationSandboxPage {
                 }
             }
         }
@@ -1009,6 +779,261 @@ QScreen {
             }
         }
     }
+
+    Component {
+        id: roomChat
+        Item {
+            anchors.fill: parent
+            QConversationPage {
+                anchors.fill: parent
+                modelCoversation: (RoomWalletData.currentRoom !== null) ? RoomWalletData.currentRoom.conversation : 0
+                onTriggerEditGroupName: { editRoomnameModal.visible = true}
+                onTriggerAddMembers: {
+                    addMoreMemberModel.visible = true
+                    suggestItems.userSelected = ""
+                    suggestItems.userSelectedId = ""
+                    addMemberInput.textInputted = ""
+                }
+                onTriggerLeaveGroup: {ClientController.leaveCurrentRoom()}
+                onRequestCancelWallet: {confirmCancelWallet.open()}
+            }
+            QBoxWalletInfo{
+                anchors.left: parent.left
+                anchors.leftMargin: 20
+                anchors.top: parent.top
+                anchors.topMargin: 100
+                visible: RoomWalletData.roomWalletInitialized && !RoomWalletData.roomWalletCreated
+            }
+            QBoxTransactionInfo{
+                anchors.left: parent.left
+                anchors.leftMargin: 20
+                anchors.top: parent.top
+                anchors.topMargin: 100
+            }
+        }
+    }
+    Component {
+        id: newroom
+        QConversationPage {
+            anchors.fill: parent
+            createRoom: true
+            modelCoversation: 0
+            onCreateRoomDone: conversationContentLoader.changeRoomComponent(false)
+        }
+    }
+    Component {
+        id: emptyroomstate // Need fix, update new empty state
+        QAddWelcome{
+            anchors.fill: parent
+            titleWelcome: STR.STR_QML_379
+            addKey {
+                btnTextLink: STR.STR_QML_369
+                titleSuggest: STR.STR_QML_369
+                content: STR.STR_QML_368
+                height: 180
+                icon:"qrc:/Images/Images/addContact.svg"
+                onBtnClicked: {
+                    preventTimer.restart()
+                    QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
+                }
+            }
+            hotWallet {
+                visible: false
+                btnTextLink: STR.STR_QML_1255
+                titleSuggest: STR.STR_QML_1226
+                content: STR.STR_QML_1252
+                height: 180
+                icon:"qrc:/Images/Images/person-add-24px.svg"
+                onBtnClicked: {
+                    OnBoarding.state = "hotWallet"
+                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+                }
+            }
+            enabled: ClientController.isMatrixLoggedIn && ClientController.readySupport && !preventTimer.running
+            onSupportButtonClicked: {
+                preventTimer.restart()
+                QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_SERVICE_SUPPORT_REQ)
+            }
+            Timer {
+                id: preventTimer
+                interval: 5000
+                repeat: false
+            }
+            Component.onCompleted: {if(!ClientController.readySupport) {preventTimer.restart()}}
+        }
+    }
+    Component {
+        id: contactInfo
+        QContactInfoPage{
+            anchors.fill: parent
+            onSend_a_messageClicked: {
+                tabselect.currentIndex = 0
+                ClientController.createRoomDirectChat(user.chat_id, user.name, "")
+                conversationContentLoader.changeRoomComponent(false)
+            }
+            onSend_removeContact: {
+                if(ClientController.rooms.hasContact(id)){
+                    deleteContactInfo.open()
+                }
+                else{
+                    confirmDeleteContact.idContact = id
+                    confirmDeleteContact.indexRequest = ClientController.contacts.currentIndex
+                    confirmDeleteContact.open()
+                }
+            }
+        }
+    }
+
+    Component {
+        id: requireLogin
+        QRequireLogin {
+            anchors.fill: parent
+        }
+    }
+    Component {
+        id: roomSandboxChat
+        QConversationSandboxPage {
+        }
+    }
+
+    Component {
+        id: contactEmptyMsgComp
+        Column {
+            width: parent.width
+            spacing: 12
+            QText {
+                width: parent.width - 32
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment: Text.AlignHCenter
+                text: STR.STR_QML_368
+                color: "#FFFFFF"
+                font.family: "Lato"
+                font.pixelSize: 16
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 28
+                wrapMode: Text.WordWrap
+            }
+            QButtonMedium {
+                width: 146
+                height: 40
+                anchors.horizontalCenter: parent.horizontalCenter
+                label: STR.STR_QML_369
+                fontPixelSize: 16
+                fontWeight: Font.Normal
+                type: eOUTLINE_DARK
+                enabled: ClientController.isNunchukLoggedIn
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
+                }
+            }
+        }
+    }
+    Component {
+        id: roomListComp
+        QRoomsPage {
+            anchors.fill: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            onItemClicked: {
+                conversationContentLoader.isSandboxRoom = false
+                conversationContentLoader.changeRoomComponent(false)
+            }
+            onItemGroupWalletClick: {
+                conversationContentLoader.isSandboxRoom = true
+                conversationContentLoader.changeRoomComponent(false)
+            }
+        }
+    }
+    Component {
+        id: busyRoomsComp
+        Item {
+            anchors.fill: parent
+            BusyIndicator {
+                anchors.centerIn: parent
+                running: !ClientController.isMatrixLoggedIn
+            }
+        }
+    }
+
+    Component {
+        id: contactListComp
+        QListView {
+            id: contactList
+            anchors.fill: parent
+            model: ClientController.contacts
+            clip: true
+            currentIndex: ClientController.contacts.currentIndex
+            ScrollBar.vertical: ScrollBar { active: true }
+            // ScrollBar.vertical: ScrollBar { id: scrollContact; active: true ; function wheel(up){if(up){decrease()}else{increase()}}}
+            // MouseArea { anchors.fill: parent;z: 10;propagateComposedEvents: true;onWheel: { scrollContact.wheel(wheel.angleDelta.y > 0);}}
+            delegate: QContactDelegate {
+                contactname: model.name
+                contactAvt: model.avatar
+                isCurrentItem: index === contactList.currentIndex
+                onItemLeftClicked: {
+                    ClientController.contacts.currentIndex = index
+                }
+                onItemRightClicked: {
+                    optionMenu.popup()
+                }
+                QContextMenu {
+                    id: optionMenu
+                    menuWidth: 180
+                    icons: [
+                        "qrc:/Images/Images/Delete.svg"
+                    ]
+                    labels: [
+                        STR.STR_QML_374
+                    ]
+                    colors: [
+                        "#CF4018"
+                    ]
+                    onItemClicked: {
+                        if(ClientController.rooms.hasContact(model.id)){
+                            deleteContactInfo.open()
+                        }
+                        else{
+                            confirmDeleteContact.idContact = model.id
+                            confirmDeleteContact.indexRequest = index
+                            confirmDeleteContact.open()
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                console.log("AAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBB")
+            }
+        }
+    }
+
+    Component {
+        id: contactEmptyState
+        Column {
+            anchors.fill: parent
+            spacing: 12
+            QText {
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment: Text.AlignHCenter
+                text: STR.STR_QML_375
+                color: "#FFFFFF"
+                font.family: "Lato"
+                font.pixelSize: 16
+            }
+            QButtonMedium {
+                width: 146
+                height: 40
+                anchors.horizontalCenter: parent.horizontalCenter
+                label: STR.STR_QML_369
+                fontPixelSize: 16
+                fontWeight: Font.Normal
+                type: eOUTLINE_DARK
+                visible: ClientController.isNunchukLoggedIn
+                onButtonClicked: {
+                    QMLHandle.sendEvent(EVT.EVT_HOME_ONLINE_ADD_CONTACT)
+                }
+            }
+        }
+    }
+
     QConfirmYesNoPopup {
         id: confirmCancelWallet
         onConfirmNo: close()
@@ -1033,11 +1058,15 @@ QScreen {
     QConfirmYesNoPopup {
         id: confirmDeleteContact
         property var idContact
+        property int indexRequest: -1
         contentText: STR.STR_QML_609
         onConfirmNo: close()
         onConfirmYes: {
             close()
             ClientController.removeContact(idContact)
+            if(indexRequest === ClientController.contacts.currentIndex){
+                ClientController.contacts.currentIndex = 0
+            }
         }
     }
     QPopupInfo{
@@ -1045,4 +1074,8 @@ QScreen {
         contentText: STR.STR_QML_610
     }
     /*=========================================Delete contact end=========================================*/
+
+    Component.onCompleted: {
+        console.log("AAAAAAAAAAAAAAAAAAAAAA")
+    }
 }

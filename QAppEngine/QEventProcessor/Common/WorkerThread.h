@@ -82,6 +82,10 @@ struct ProgressReporter {
     }
 };
 
+inline bool appShuttingDown() {
+    return !QCoreApplication::instance() || QCoreApplication::closingDown();
+}
+
 // Global function to execute tasks in Singleton Thread
 template <typename Func1, typename Func2>
 void runInThread(Func1&& execute, Func2&& ret) {
@@ -93,12 +97,20 @@ void runInThread(Func1&& execute, Func2&& ret) {
             using ResultType = decltype((*safeExecute)());
             if constexpr (std::is_void_v<ResultType>) {
                 (*safeExecute)();
-                QMetaObject::invokeMethod(qApp, [safeRet]() { (*safeRet)(); }, Qt::QueuedConnection);
+                QMetaObject::invokeMethod(qApp, [safeRet]() {
+                    if (appShuttingDown())
+                        return;
+                    (*safeRet)();
+                }, Qt::QueuedConnection);
             } else {
                 ResultType result = (*safeExecute)();  // Get result
                 QMetaObject::invokeMethod(
                     qApp,
-                    [safeRet, tmp = std::move(result)]() mutable { (*safeRet)(std::move(tmp)); },
+                    [safeRet, tmp = std::move(result)]() mutable {
+                        if (appShuttingDown())
+                            return;
+                        (*safeRet)(std::move(tmp));
+                    },
                     Qt::QueuedConnection
                     );
             }
@@ -115,9 +127,9 @@ static QMutex sMutex;  // Shared mutex for thread safety
 template <typename Func1, typename Func2>
 void runInConcurrent(Func1&& execute, Func2&& ret) {
     using ResultType = decltype(execute());
-    // Run function in a background thread
+
     QFuture<ResultType> future = QtConcurrent::run([execute = std::forward<Func1>(execute)]() -> ResultType {
-        QMutexLocker locker(&sMutex);  // Protect shared data inside execute()
+        QMutexLocker locker(&sMutex);
         try {
             return execute();
         } catch (const std::exception& e) {
@@ -129,20 +141,24 @@ void runInConcurrent(Func1&& execute, Func2&& ret) {
         }
     });
 
-    // Watcher to monitor future completion
     auto watcher = QSharedPointer<QFutureWatcher<ResultType>>::create();
 
     QObject::connect(watcher.get(), &QFutureWatcher<ResultType>::finished, [watcher, ret = std::forward<Func2>(ret)]() mutable {
         try {
-            QMutexLocker locker(&sMutex);  // Protect shared data inside ret()
+            QMutexLocker locker(&sMutex);
+            if (appShuttingDown())
+                return;
+
             if constexpr (!std::is_void_v<ResultType>) {
-                ResultType result = watcher->result();  // Get result safely
+                ResultType result = watcher->result();
                 QMetaObject::invokeMethod(qApp, [ret = std::move(ret), tmp = std::move(result)]() mutable {
-                    ret(std::move(tmp));  // Move to prevent deep copy
+                    if (appShuttingDown()) return;
+                    ret(std::move(tmp));
                 }, Qt::QueuedConnection);
             } else {
                 QMetaObject::invokeMethod(qApp, [ret = std::move(ret)]() {
-                    ret();  // Call function in main thread safely
+                    if (appShuttingDown()) return;
+                    ret();
                 }, Qt::QueuedConnection);
             }
         } catch (const std::exception& e) {
@@ -159,5 +175,25 @@ template<typename Function>
 void timeoutHandler(int timeoutInterval, Function&& f)
 {
     QTimer::singleShot(timeoutInterval, std::forward<Function>(f));
+}
+
+#define SAFE_QPOINTER_CHECK(objName, ptr) \
+if (!(ptr)) return {};                    \
+    auto objName = (ptr);                 \
+if (!(objName)) return {};
+
+
+#define SAFE_QPOINTER_CHECK_RETURN_VOID(objName, ptr) \
+if (!(ptr)) return;                            \
+    auto objName = (ptr);                      \
+    if (!(objName)) return;
+
+
+inline bool isBusy() {
+    if (QGuiApplication::overrideCursor() && QGuiApplication::overrideCursor()->shape() == Qt::WaitCursor) {
+        qDebug() << "Cursor is currently in wait state.";
+        return true;
+    }
+    return false;
 }
 #endif // WORKERTHREAD_H

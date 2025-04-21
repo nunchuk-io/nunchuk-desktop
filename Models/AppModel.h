@@ -79,7 +79,6 @@ class AppModel final : public Controller,
     Q_PROPERTY(QString                  newKeySignMessage               READ newKeySignMessage                                              NOTIFY newKeySignMessageChanged)
     Q_PROPERTY(QString                  newKeySignMessageSHA256         READ newKeySignMessageSHA256                                        NOTIFY newKeySignMessageChanged)
     Q_PROPERTY(int                      addSignerWizard                 READ addSignerWizard            WRITE setAddSignerWizard            NOTIFY addSignerWizardChanged)
-    Q_PROPERTY(QString                  txidReplacing                   READ getTxidReplacing                                               NOTIFY txidReplacingChanged)
 
 public:
     static AppModel *instance();
@@ -168,9 +167,6 @@ public:
     int getAddSignerPercentage() const;
     void setAddSignerPercentage(int addSignerPercentage);
 
-    QString getTxidReplacing() const;
-    void setTxidReplacing(const QString &txidReplacing);
-
     qint64  fastestFeeOrigin() const;
     QString fastestFeeCurrency() const;
     QString fastestFee() const;
@@ -248,7 +244,8 @@ public:
 
     const std::vector<nunchuk::PrimaryKey> &primaryKeys();
     nunchuk::PrimaryKey findPrimaryKey(const QString& fingerprint);
-    void clearPrimaryKeyList();
+
+    void createPrimaryKeyList();
 
     void setAddSignerWizard(int index);
     int addSignerWizard() const;
@@ -278,7 +275,6 @@ private:
     int                 m_chainTip;
     int                 m_addSignerStep;
     int                 m_addSignerPercentage;
-    QString             m_txidReplacing;
 
     // Fee
     qint64              m_fastestFee;
@@ -349,7 +345,6 @@ signals:
     void addSignerWizardChanged();
     void forwardToast(int code, const QString &what, EWARNING::WarningType type);
     void listMessagesChanged();
-    void txidReplacingChanged();
     void notifySignerExist(bool isSoftware, const QString fingerPrint);
     void syncingWalletFromServer(const QString fingerPrint);
     void syncingConfirmWalletRemoveKey(const QString fingerPrint);

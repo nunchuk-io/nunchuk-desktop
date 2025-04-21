@@ -23,18 +23,14 @@
 #include "Servers/Draco.h"
 #include "ViewsEnums.h"
 
-QMasterSigner::QMasterSigner(): isPrimaryKey_(false), isDraft(true)
+QMasterSigner::QMasterSigner()
+    : isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 QMasterSigner::QMasterSigner(const nunchuk::MasterSigner &signer): masterSigner_(signer)
 {
-    nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(QString::fromStdString(signer.get_device().get_master_fingerprint()));
-    if(key.get_master_fingerprint() != ""){
-        isPrimaryKey_ = true;
-        primaryKey_ = key;
-    }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -265,16 +261,7 @@ void QMasterSigner::setPassphrase(const QString &passphrase){
 
 bool QMasterSigner::isPrimaryKey() const
 {
-    return isPrimaryKey_;
-}
-
-void QMasterSigner::setIsPrimaryKey(bool isPrimaryKey)
-{
-    if (isPrimaryKey_ == isPrimaryKey)
-        return;
-
-    isPrimaryKey_ = isPrimaryKey;
-    emit isPrimaryKeyChanged();
+    return qUtils::isPrimaryKey(fingerPrint());
 }
 
 void QMasterSigner::setSignerTags(std::vector<nunchuk::SignerTag> tags)
@@ -284,8 +271,13 @@ void QMasterSigner::setSignerTags(std::vector<nunchuk::SignerTag> tags)
     }
 }
 
-nunchuk::PrimaryKey QMasterSigner::originPrimaryKey() const
+nunchuk::PrimaryKey QMasterSigner::originPrimaryKey()
 {
+    if (isPrimaryKey()) {
+        if (primaryKey_.get_master_fingerprint().empty()) {
+            primaryKey_ = AppModel::instance()->findPrimaryKey(fingerPrint());
+        }
+    }
     return primaryKey_;
 }
 
@@ -383,6 +375,16 @@ void QMasterSigner::setDeviceIndex(int newDeviceIndex)
 int QMasterSigner::deviceIndex() const
 {
     return m_deviceIndex;
+}
+
+bool QMasterSigner::needBackup()
+{
+    return masterSigner_.need_backup();
+}
+
+void QMasterSigner::setNeedBackup(bool val)
+{
+    masterSigner_.set_need_backup(val);
 }
 
 MasterSignerListModel::MasterSignerListModel() {

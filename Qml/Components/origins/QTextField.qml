@@ -50,5 +50,9 @@ TextField {
         interval: 250
         onTriggered: { if(textEdit.text !== "") typingFinished(textEdit.text) }
     }
+    onActiveFocusChanged: { typingFinished(textEdit.text) }
+    Keys.onReturnPressed: { typingFinished(textEdit.text) }
+    Keys.onEnterPressed:  { typingFinished(textEdit.text) }
+
     Component.onCompleted: initialized = true
 }

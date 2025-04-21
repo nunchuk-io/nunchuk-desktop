@@ -28,22 +28,15 @@
 #include "ViewsEnums.h"
 
 QSingleSigner::QSingleSigner()
-    : isPrimaryKey_(false)
-    , isDraft(true)
+    : isDraft(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey):
     singleSigner_(singleKey),
-    isPrimaryKey_(false),
     isDraft(false)
 {
-    nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(QString::fromStdString(singleKey.get_master_fingerprint()));
-    if(key.get_master_fingerprint() != ""){
-        isPrimaryKey_ = true;
-        primaryKey_ = key;
-    }
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -65,15 +58,14 @@ void QSingleSigner::setOriginSingleSigner(const nunchuk::SingleSigner signer)
     singleSigner_ = signer;
 }
 
-nunchuk::PrimaryKey QSingleSigner::originPrimaryKey() const
+nunchuk::PrimaryKey QSingleSigner::originPrimaryKey()
 {
+    if (isPrimaryKey()) {
+        if (primaryKey_.get_master_fingerprint().empty()) {
+            primaryKey_ = AppModel::instance()->findPrimaryKey(fingerPrint());
+        }
+    }
     return primaryKey_;
-}
-
-void QSingleSigner::setOriginPrimaryKey(const nunchuk::PrimaryKey key)
-{
-    primaryKey_ = key;
-    setIsPrimaryKey(true);
 }
 
 QString QSingleSigner::name() {
@@ -145,7 +137,7 @@ QString QSingleSigner::fingerPrint() const
 }
 
 QString QSingleSigner::masterFingerPrint() const {
-    if(isDraft){
+    if(!master_fingerprint_.isEmpty()){
         return  master_fingerprint_;
     }
     else{
@@ -154,7 +146,7 @@ QString QSingleSigner::masterFingerPrint() const {
 }
 
 void QSingleSigner::setMasterFingerPrint(const QString &d) {
-    if(isDraft && d != master_fingerprint_){
+    if(d != master_fingerprint_){
         master_fingerprint_ = d;
         emit masterFingerPrintChanged();
     }
@@ -360,13 +352,7 @@ bool QSingleSigner::isMine() const
 
 bool QSingleSigner::isPrimaryKey() const
 {
-    return isPrimaryKey_;
-}
-
-void QSingleSigner::setIsPrimaryKey(bool isPrimaryKey)
-{
-    isPrimaryKey_ = isPrimaryKey;
-    emit isPrimaryKeyChanged();
+    return qUtils::isPrimaryKey(fingerPrint());
 }
 
 QString QSingleSigner::devicetype() const
@@ -638,6 +624,16 @@ bool QSingleSigner::isValid()
     return !masterFingerPrint().isEmpty();
 }
 
+bool QSingleSigner::isOccupied() const
+{
+    return m_isOccupied;
+}
+
+void QSingleSigner::setIsOccupied(bool newIsOccupied)
+{
+    m_isOccupied = newIsOccupied;
+}
+
 SingleSignerListModel::SingleSignerListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -651,70 +647,7 @@ int SingleSignerListModel::rowCount(const QModelIndex &parent) const {
 
 QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
 {
-    switch (role) {
-    case single_signer_name_Role:
-        return m_data[index.row()]->name();
-    case single_signer_xpub_Role:
-        return m_data[index.row()]->xpub();
-    case single_signer_public_key_Role:
-        return m_data[index.row()]->publickey();
-    case single_signer_derivation_path_Role:
-        return m_data[index.row()]->derivationPath();
-    case single_signer_master_fingerprint_Role:
-        return m_data[index.row()]->masterFingerPrint();
-    case single_signer_master_signer_id_Role:
-        return m_data[index.row()]->masterSignerId();
-    case single_signer_last_health_check_Role:
-        return m_data[index.row()]->lastHealthCheck();
-    case single_signer_signed_status_Role:
-        return m_data[index.row()]->signerSigned();
-    case single_signer_type_Role:
-        return m_data[index.row()]->signerType();
-    case single_signer_need_Topup_Xpub_Role:
-        return m_data[index.row()]->needTopUpXpub();
-    case single_signer_signed_message_Role:
-        return m_data[index.row()]->message();
-    case single_signer_signed_signature_Role:
-        return m_data[index.row()]->signature();
-    case single_signer_health_Role:
-        return m_data[index.row()]->health();
-    case single_signer_isColdcard_Role:
-        return m_data[index.row()]->isColdCard();
-    case single_signer_checked_Role:
-        return m_data[index.row()]->checked();
-    case single_signer_readyToSign_Role:
-        return m_data[index.row()]->readyToSign();
-    case single_signer_is_local_Role:
-        return m_data[index.row()]->isLocalSigner();
-    case single_signer_primary_key_Role:
-        return m_data[index.row()]->isPrimaryKey();
-    case single_signer_devicetype_Role:
-        return m_data[index.row()]->devicetype();
-    case single_signer_device_cardid_Role:
-        return m_data[index.row()]->cardId();
-    case single_signer_tag_Role:
-        return m_data[index.row()]->tag();
-    case single_signer_has_sign_btn_Role:
-        return m_data[index.row()]->hasSignBtn();
-    case single_signer_account_index_Role:
-        return m_data[index.row()]->accountIndex();
-    case single_signer_isReplaced_Role:
-        return m_data[index.row()]->isReplaced();
-    case single_signer_keyReplaced_Role:
-        return QVariant::fromValue(m_data[index.row()]->keyReplaced().data());
-    case single_signer_taproot_supported:
-        return m_data[index.row()]->taprootSupported();
-    case single_signer_keyset_index:
-        return m_data[index.row()]->keysetIndex();
-    case single_signer_keyset_status:
-        return m_data[index.row()]->keysetStatus();
-    case single_signer_keyset_remaining:
-        return m_data[index.row()]->keysetPendingNumber();
-    case single_signer_value_key:
-        return m_data[index.row()]->valueKey();
-    default:
-        return QVariant();
-    }
+    return dataSigner(m_data[index.row()], role);
 }
 
 bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -729,7 +662,7 @@ bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &va
         m_data[index.row()]->setChecked(value.toBool());
         emit signerSelectedCountChanged();
     }
-    else if(role == single_signer_value_key){
+    else if(role == single_signer_value_key_Role){
         m_data[index.row()]->setValueKey(value.toBool());
         emit signerValueKeyCountChanged();
     }
@@ -739,6 +672,11 @@ bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &va
 }
 
 QHash<int, QByteArray> SingleSignerListModel::roleNames() const
+{
+    return roleSignerNames();
+}
+
+QHash<int, QByteArray> SingleSignerListModel::roleSignerNames()
 {
     QHash<int, QByteArray> roles;
     roles[single_signer_name_Role]                = "singleSigner_name";
@@ -766,12 +704,97 @@ QHash<int, QByteArray> SingleSignerListModel::roleNames() const
     roles[single_signer_account_index_Role]       = "single_signer_account_index";
     roles[single_signer_isReplaced_Role]          = "single_signer_isReplaced";
     roles[single_signer_keyReplaced_Role]         = "single_signer_keyReplaced";
-    roles[single_signer_taproot_supported]        = "single_signer_taproot_supported";
-    roles[single_signer_keyset_index]             = "single_signer_keyset_index";
-    roles[single_signer_keyset_status]            = "single_signer_keyset_status";
-    roles[single_signer_keyset_remaining]         = "single_signer_keyset_remaining";
-    roles[single_signer_value_key]                = "single_signer_value_key";
+    roles[single_signer_taproot_supported_Role]   = "single_signer_taproot_supported";
+    roles[single_signer_keyset_index_Role]        = "single_signer_keyset_index";
+    roles[single_signer_keyset_status_Role]       = "single_signer_keyset_status";
+    roles[single_signer_keyset_remaining_Role]    = "single_signer_keyset_remaining";
+    roles[single_signer_value_key_Role]           = "single_signer_value_key";
+    roles[single_signer_isOccupied_Role]          = "single_signer_isOccupied";
     return roles;
+}
+
+QVariant SingleSignerListModel::dataSigner(const QSingleSignerPtr &data, int role)
+{
+    if (data.isNull()) return QVariant();
+    switch (role) {
+    case single_signer_name_Role:
+        return data->name();
+    case single_signer_xpub_Role:
+        return data->xpub();
+    case single_signer_public_key_Role:
+        return data->publickey();
+    case single_signer_derivation_path_Role:
+        return data->derivationPath();
+    case single_signer_master_fingerprint_Role:
+        return data->masterFingerPrint();
+    case single_signer_master_signer_id_Role:
+        return data->masterSignerId();
+    case single_signer_last_health_check_Role:
+        return data->lastHealthCheck();
+    case single_signer_signed_status_Role:
+        return data->signerSigned();
+    case single_signer_type_Role:
+        return data->signerType();
+    case single_signer_need_Topup_Xpub_Role:
+        return data->needTopUpXpub();
+    case single_signer_signed_message_Role:
+        return data->message();
+    case single_signer_signed_signature_Role:
+        return data->signature();
+    case single_signer_health_Role:
+        return data->health();
+    case single_signer_isColdcard_Role:
+        return data->isColdCard();
+    case single_signer_checked_Role:
+        return data->checked();
+    case single_signer_readyToSign_Role:
+        return data->readyToSign();
+    case single_signer_is_local_Role:
+        return data->isLocalSigner();
+    case single_signer_primary_key_Role:
+        return data->isPrimaryKey();
+    case single_signer_devicetype_Role:
+        return data->devicetype();
+    case single_signer_device_cardid_Role:
+        return data->cardId();
+    case single_signer_tag_Role:
+        return data->tag();
+    case single_signer_has_sign_btn_Role:
+        return data->hasSignBtn();
+    case single_signer_account_index_Role:
+        return data->accountIndex();
+    case single_signer_isReplaced_Role:
+        return data->isReplaced();
+    case single_signer_keyReplaced_Role:
+        return SingleSignerListModel::useQml(data->keyReplaced());
+    case single_signer_taproot_supported_Role:
+        return data->taprootSupported();
+    case single_signer_keyset_index_Role:
+        return data->keysetIndex();
+    case single_signer_keyset_status_Role:
+        return data->keysetStatus();
+    case single_signer_keyset_remaining_Role:
+        return data->keysetPendingNumber();
+    case single_signer_value_key_Role:
+        return data->valueKey();
+    case single_signer_isOccupied_Role:
+        return data->isOccupied();
+    default:
+        return QVariant();
+    }
+}
+
+QVariant SingleSignerListModel::useQml(const QSingleSignerPtr &data)
+{
+    QHash<int,QByteArray> names = roleSignerNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap res;
+    while (i.hasNext()) {
+        i.next();
+        QVariant tmp = dataSigner(data, i.key());
+        res[i.value()] = tmp;
+    }
+    return QVariant::fromValue(res);
 }
 
 void SingleSignerListModel::replaceSingleSigner(int index, const QSingleSignerPtr &value)
@@ -789,10 +812,6 @@ void SingleSignerListModel::replaceSingleSigner(int index, const QSingleSignerPt
 void SingleSignerListModel::addSingleSigner(const QSingleSignerPtr &d)
 {
     if(d && !containsSigner(d.data()->masterFingerPrint(), d.data()->derivationPath())){
-        nunchuk::PrimaryKey key = AppModel::instance()->findPrimaryKey(d->masterFingerPrint());
-        if(key.get_master_fingerprint() != ""){
-            d->setOriginPrimaryKey(key);
-        }
         beginResetModel();
         m_data.append(d);
         endResetModel();
@@ -1095,7 +1114,9 @@ void SingleSignerListModel::updateHealthCheckTime()
 {
     beginResetModel();
     foreach (QSingleSignerPtr it, m_data) {
-        it.data()->lastHealthCheckChanged();
+        if (it) {
+            it->lastHealthCheckChanged();
+        }
     }
     endResetModel();
 }
@@ -1189,8 +1210,6 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
             ret.data()->setEmail(signer.data()->email());
             // tapsigner
             ret.data()->setCardId(signer.data()->cardId());
-            //primary key
-            ret.data()->setOriginPrimaryKey(signer.data()->originPrimaryKey());
             // Add to data
             clone.data()->addSingleSigner(ret);
         }
@@ -1227,8 +1246,6 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneKeysets(std::v
                         ret.data()->setEmail(signer.data()->email());
                         // tapsigner
                         ret.data()->setCardId(signer.data()->cardId());
-                        //primary key
-                        ret.data()->setOriginPrimaryKey(signer.data()->originPrimaryKey());
                         // keyset
                         ret.data()->setSignerSigned(signedStatus);
                         ret.data()->setKeysetIndex(i);
@@ -1260,8 +1277,6 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneFinalSigners(s
                     ret.data()->setEmail(signer.data()->email());
                     // tapsigner
                     ret.data()->setCardId(signer.data()->cardId());
-                    //primary key
-                    ret.data()->setOriginPrimaryKey(signer.data()->originPrimaryKey());
                     // sign status
                     ret.data()->setSignerSigned(signedStatus);
                     ret.data()->setValueKey(signer.data()->valueKey());

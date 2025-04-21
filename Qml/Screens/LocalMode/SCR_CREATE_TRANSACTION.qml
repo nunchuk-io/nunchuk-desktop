@@ -36,6 +36,7 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     property var txInfo: AppModel.transactionInfo
+    onTxInfoChanged: console.log("AAAAAAAAAAAAAAAAAAAA")
     property bool isCustomize: false
     property int new_fee_rate: 0
     Loader {
@@ -44,8 +45,7 @@ QScreen {
         anchors.centerIn: parent
         sourceComponent: {
             if (txInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION) {
-                return AppModel.txidReplacing !== "" ? replace_tx :
-                                                       isCustomize ? customize_dest: cancel_pc_tx
+                return txInfo.txidReplacing !== "" ? replace_tx : isCustomize ? customize_dest: cancel_pc_tx
             }
             else {
                 return create_tx

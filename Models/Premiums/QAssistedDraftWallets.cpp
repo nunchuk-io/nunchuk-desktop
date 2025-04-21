@@ -60,14 +60,15 @@ void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray& groups)
     QPointer<QAssistedDraftWallets> safeThis(this);
     runInThread([safeThis, groups]() ->QMap<Key, StructAddHardware> {
         QMap<Key, StructAddHardware> requests;
-        if (safeThis->m_mode == USER_WALLET) {
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+        if (ptrLamda->m_mode == USER_WALLET) {
             QJsonObject data;
             QString error_msg;
             Draco::instance()->assistedWalletGetListKey(data, error_msg);
-            requests = safeThis->addRequest(data.value("requests").toArray());
+            requests = ptrLamda->addRequest(data.value("requests").toArray());
             DBG_INFO << data;
         }
-        else if (safeThis->m_mode == GROUP_WALLET) {
+        else if (ptrLamda->m_mode == GROUP_WALLET) {
             QJsonObject data;
             QString error_msg;
             for (QJsonValue js : groups) {
@@ -76,7 +77,7 @@ void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray& groups)
                 if (status == "PENDING_WALLET") {
                     QString group_id = group["id"].toString();
                     Byzantine::instance()->GetAllListRequestAddKey(group_id, data, error_msg);
-                    QMap<Key, StructAddHardware> tmps = safeThis->addRequest(data.value("requests").toArray(), group_id);
+                    QMap<Key, StructAddHardware> tmps = ptrLamda->addRequest(data.value("requests").toArray(), group_id);
                     for (auto tmp = tmps.begin(); tmp != tmps.end(); ++tmp) {
                         requests.insertMulti(tmp.key(), tmp.value());
                     }
@@ -86,10 +87,9 @@ void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray& groups)
         }
         return requests;
     },[safeThis](QMap<Key, StructAddHardware> requests) {
-        if (safeThis) {
-            safeThis->m_requests = requests;
-            safeThis->makeListRequests();
-        }
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        ptrLamda->m_requests = requests;
+        ptrLamda->makeListRequests();
     });
 }
 
@@ -465,7 +465,7 @@ bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
             return false;
         }
 
-        DBG_INFO << single->tag() << "tag:" << single->tag() << m_mode << hardware.mGroupId;
+        DBG_INFO << "tag:" << single->tag() << m_mode << hardware.mGroupId;
         if (warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
             QJsonArray tags;
             if (!single->tags().isEmpty()) {

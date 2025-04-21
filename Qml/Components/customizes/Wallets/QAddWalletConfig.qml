@@ -37,6 +37,7 @@ import "../../../../localization/STR_QML.js" as STR
 Column {
     id: _walletConfig
     spacing: 8
+    property bool isEnabled: true
     property int addressType: 0
     property int customizeM: sandbox.groupM
     property int customizeN: sandbox.groupN
@@ -89,7 +90,8 @@ Column {
                             fontWeight: Font.Normal
                             selected: option === modelData.id
                             color: btn.selected ? "#66D0E2FF" : "#FFFFFF"
-                            opacity: _walletConfig.enabled ? 1.0 : (btn.selected ? 1.0 : 0.4)
+                            opacity: isEnabled ? 1.0 : (btn.selected ? 1.0 : 0.4)
+                            enabled: isEnabled
                             onButtonClicked: {
                                 option = modelData.id
                             }
@@ -103,7 +105,8 @@ Column {
                             height: 192
                             radius: 8
                             selected: option === modelData.id
-                            opacity: _walletConfig.enabled ? 1.0 : (btn.selected ? 1.0 : 0.4)
+                            opacity: isEnabled ? 1.0 : (btn.selected ? 1.0 : 0.4)
+                            enabled: isEnabled
                         }
                     }
                 }

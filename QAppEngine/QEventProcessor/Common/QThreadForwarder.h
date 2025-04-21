@@ -28,7 +28,10 @@ class QThreadForwarder : public QObject
 {
     Q_OBJECT
 public:
-    static QThreadForwarder* instance();
+    static QThreadForwarder* instance() {
+        static QThreadForwarder forwarder;
+        return &forwarder;
+    }
 
     template <typename Func>
     void forwardInQueuedConnection(Func func) {

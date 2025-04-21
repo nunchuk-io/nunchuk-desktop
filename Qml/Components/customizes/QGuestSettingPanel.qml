@@ -54,7 +54,7 @@ Column {
             font.pixelSize: 20
         }
         QText {
-            width: 304
+            width: 289
             height: paintedHeight
             anchors.horizontalCenter: parent.horizontalCenter
             horizontalAlignment: Text.AlignHCenter
@@ -63,6 +63,8 @@ Column {
             color: "#FFFFFF"
             font.family: "Lato"
             font.pixelSize: 16
+            lineHeightMode: Text.FixedHeight
+            lineHeight: 28
         }
     }
     QTextButton {

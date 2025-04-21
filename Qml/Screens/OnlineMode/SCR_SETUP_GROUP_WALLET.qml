@@ -48,6 +48,7 @@ QScreen {
         {screen: "sandbox-intro-taproot",     screen_component: introTaproot},
         {screen: "sandbox-taproot-warning",   screen_component: taprootWarning},
         {screen: "sandbox-configure-value-keyset",   screen_component: configure_value_keyset},
+        {screen: "value-keyset",              screen_component: valueKeyset},
     ]
 
     Loader {
@@ -64,8 +65,14 @@ QScreen {
     }
     Component {
         id: review_wallet
-        QSandboxReviewWallet {
-
+        QDraftWalletReviewWallet {
+            onPrevClicked: sandbox.backScreen()
+            onNextClicked: {
+                var _input = {
+                    type: "finalize-group-sandbox"
+                }
+                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            }
         }
     }
     Component {
@@ -117,9 +124,33 @@ QScreen {
             onPrevClicked: sandbox.backScreen()
             onNextClicked: {
                 var _input = {
-                    type: "switch-to-configure-value-keyset"
+                    type: "switch-to-enable-value-keyset"
                 }
                 QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+            }
+        }
+    }
+    Component {
+        id : valueKeyset
+        QEnableValueKeyset {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: sandbox.backScreen()
+            onNextClicked: {
+                var _input = {}
+                if (enableValueKeyset === "enable-value-keyset") {
+                    newWalletInfo.enableValuekeyset = true
+                    _input = {
+                        type: "switch-to-configure-value-keyset"
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                }
+                else {
+                    newWalletInfo.enableValuekeyset = false
+                    _input = {
+                        type: "review-group-sandbox"
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                }
             }
         }
     }
@@ -139,9 +170,6 @@ QScreen {
 
     Connections {
         target: sandbox
-        onFinishSandboxWallet: {
-            errorConfirm.open()
-        }
         onRecoverKeyError: {
             _error.open()
         }
@@ -151,14 +179,6 @@ QScreen {
         id:_error
         title: STR.STR_QML_1668
         contentText: STR.STR_QML_1669
-    }
-
-    QPopupInfo{
-        id: errorConfirm
-        title: STR.STR_QML_1662
-        contentText: STR.STR_QML_1663
-        btnLabel: STR.STR_QML_1661
-        action: function() { closeTo(NUNCHUCKTYPE.WALLET_TAB) }
     }
 
     QPopupInfo {

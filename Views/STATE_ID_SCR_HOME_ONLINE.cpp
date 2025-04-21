@@ -37,6 +37,7 @@ void SCR_HOME_ONLINE_Entry(QVariant msg) {
     if(CLIENT_INSTANCE->rooms()){
         CLIENT_INSTANCE->rooms()->startCountdown();
     }
+    CLIENT_INSTANCE->refreshContacts();
 }
 
 void SCR_HOME_ONLINE_Exit(QVariant msg) {

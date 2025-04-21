@@ -62,7 +62,7 @@ QOnScreenContentTypeA {
             icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: STR.STR_QML_1640
             anchors.bottom: parent.bottom
-            visible: newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT
+            visible: newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT && newWalletInfo.walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET
         }
     }
 }

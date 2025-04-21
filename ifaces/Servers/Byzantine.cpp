@@ -98,6 +98,35 @@ bool Byzantine::GetAllGroupWallets(QJsonObject &output, QString &errormsg)
     return false;
 }
 
+bool Byzantine::GetAllDeletedGroupWallets(QJsonObject &output, QString &errormsg)
+{
+    DBG_INFO;
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+
+    QJsonObject jsonObj = getSync(commands[Group::CMD_IDX::GROUP_WALLETS_LIST_DELETED], data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+#if 0 //NO NEED
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
 bool Byzantine::GetOneGroupWallets(const QString group_id, QJsonObject &output, QString &errormsg)
 {
     if (group_id.isEmpty()) return false;

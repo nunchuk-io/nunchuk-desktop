@@ -29,6 +29,7 @@
 #include "localization/STR_CPP.h"
 #include <QSysInfo>
 #include "ServiceSetting.h"
+#include "QThreadForwarder.h"
 
 using namespace Command;
 Draco* Draco::m_instance = NULL;
@@ -67,11 +68,22 @@ void Draco::refreshDevices()
 
 void Draco::refreshContacts()
 {
-    if(CLIENT_INSTANCE->isNunchukLoggedIn() && (int)ENUNCHUCK::TabSelection::CHAT_TAB == AppModel::instance()->tabIndex()){
+    if(CLIENT_INSTANCE->isNunchukLoggedIn()){
         QtConcurrent::run([this]() {
-            CLIENT_INSTANCE->syncContacts(getContacts());
-            CLIENT_INSTANCE->syncContactsSent(getContactsSent());
-            CLIENT_INSTANCE->syncContactsReceived(getContactsReceived());
+            QList<DracoUser> contacts = getContacts();
+            QList<DracoUser> contactsSent = getContactsSent();
+            QList<DracoUser> contactsReceived = getContactsReceived();
+
+            DBG_INFO << "contacts size: " << contacts.size();
+            QThreadForwarder::instance()->forwardInQueuedConnection([contacts](){
+                CLIENT_INSTANCE->syncContacts(contacts);
+            });
+            QThreadForwarder::instance()->forwardInQueuedConnection([contactsSent](){
+                CLIENT_INSTANCE->syncContactsSent(contactsSent);
+            });
+            QThreadForwarder::instance()->forwardInQueuedConnection([contactsReceived](){
+                CLIENT_INSTANCE->syncContactsReceived(contactsReceived);
+            });
         });
     }
 }
@@ -128,12 +140,12 @@ void Draco::btcRates()
     QUrl url = QUrl::fromUserInput("https://api.nunchuk.io/v1/prices");
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    if (m_networkManager.isNull()) {
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         return;
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(), &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -157,12 +169,11 @@ void Draco::exchangeRates(const QString &currency)
     QUrl url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/forex/rates");
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    if (m_networkManager.isNull()) {
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         return;
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -195,12 +206,12 @@ void Draco::feeRates()
     }
     QNetworkRequest requester_(url);
     requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    if (m_networkManager.isNull()) {
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
         return;
     }
-    QMutexLocker locker(&m_networkManagerMutex);
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(m_networkManager->get(requester_));
-    locker.unlock();
+    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -298,10 +309,7 @@ void Draco::removeContact(const QString &contact_id)
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
-        if(response_code == DRACO_CODE::RESPONSE_OK){
-            refreshContacts();
-        }
-        else {
+        if(response_code != DRACO_CODE::RESPONSE_OK){
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
@@ -1005,9 +1013,7 @@ void Draco::accecptFriendRequest(const QString &id)
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
-        if(response_code == DRACO_CODE::RESPONSE_OK){
-        }
-        else {
+        if(response_code != DRACO_CODE::RESPONSE_OK){
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }
@@ -1024,10 +1030,7 @@ void Draco::ignoreFriendRequest(const QString &id)
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
-        if(response_code == DRACO_CODE::RESPONSE_OK){
-
-        }
-        else {
+        if(response_code != DRACO_CODE::RESPONSE_OK){
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
     }

@@ -34,9 +34,16 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: rootWalletConfirmation
+    property var newWalletInfo: AppModel.newWalletInfo
     property string masterSignerName: AppModel.masterSignerInfo.masterSignername
     property string masterSignerSpec: AppModel.masterSignerInfo.masterSignerDevice.deviceMasterFingerPrint
     property int masterSignerHealth: AppModel.masterSignerInfo.masterSignerHealth
+    readonly property var types: [
+        {type: NUNCHUCKTYPE.NATIVE_SEGWIT,   displayName: STR.STR_QML_062 },
+        {type: NUNCHUCKTYPE.TAPROOT,         displayName: STR.STR_QML_553 },
+        {type: NUNCHUCKTYPE.NESTED_SEGWIT,   displayName: STR.STR_QML_063 },
+        {type: NUNCHUCKTYPE.LEGACY,          displayName: STR.STR_QML_064 },
+    ]
 
     QOnScreenContent {
         width: popupWidth
@@ -118,7 +125,7 @@ QScreen {
                 color: "Transparent"
                 mode: eREADONLY_MODE
                 placeholder.text: STR.STR_QML_025
-                textOutput: AppModel.newWalletInfo.walletName
+                textOutput: newWalletInfo.walletName
             }
             QTextInputBox {
                 id: mandn
@@ -127,23 +134,16 @@ QScreen {
                 color: "Transparent"
                 mode: eREADONLY_MODE
                 placeholder.text: STR.STR_QML_027
-                textOutput: AppModel.newWalletInfo.walletEscrow ? STR.STR_QML_029 : STR.STR_QML_028
+                textOutput: newWalletInfo.walletEscrow ? STR.STR_QML_029 : STR.STR_QML_028
             }
             QTextInputBox {
                 id: addresstype
-                readonly property var addressType_Value: [
-                    STR.STR_QML_065,
-                    STR.STR_QML_064,
-                    STR.STR_QML_063,
-                    STR.STR_QML_062,
-                    STR.STR_QML_553
-                ]
                 width: 269
                 heightMin: 54
                 color: "Transparent"
                 mode: eREADONLY_MODE
                 placeholder.text: STR.STR_QML_066
-                textOutput: addresstype.addressType_Value[AppModel.newWalletInfo.walletAddressType]
+                textOutput: types.find(function(e) {return e.type === newWalletInfo.walletAddressType }).displayName
             }
             QTextInputBox {
                 id: createdate
@@ -152,7 +152,7 @@ QScreen {
                 color: "Transparent"
                 mode: eREADONLY_MODE
                 placeholder.text: STR.STR_QML_067
-                textOutput: AppModel.newWalletInfo.walletCreateDate
+                textOutput: newWalletInfo.walletCreateDate
             }
         }
 
@@ -172,9 +172,9 @@ QScreen {
             placeholder.font.pixelSize: 14
             placeholder.font.capitalization:Font.MixedCase
             textOutput: qsTr("%1 Of %2 %3")
-                        .arg(AppModel.newWalletInfo.walletM)
-                        .arg(AppModel.newWalletInfo.walletN)
-                        .arg( AppModel.newWalletInfo.walletN > 1 ? STR.STR_QML_069 : STR.STR_QML_070)
+                        .arg(newWalletInfo.walletM)
+                        .arg(newWalletInfo.walletN)
+                        .arg( newWalletInfo.walletN > 1 ? STR.STR_QML_069 : STR.STR_QML_070)
         }
         QText {
             anchors {
@@ -202,7 +202,7 @@ QScreen {
                 topMargin: 364
             }
             ScrollBar.vertical: ScrollBar { active: true }
-            model: AppModel.newWalletInfo.walletSingleSignerAssigned
+            model: newWalletInfo.walletSingleSignerAssigned
             delegate: Item {
                 id: signerAssigneddlg
                 property int      signerType: model.single_signer_type
@@ -311,7 +311,7 @@ QScreen {
             }
         }
         QText {
-            visible: !AppModel.newWalletInfo.capableCreate
+            visible: !newWalletInfo.capableCreate
             width: 344
             height: 48
             font.pixelSize: 12
@@ -360,7 +360,7 @@ QScreen {
             label.text: STR.STR_QML_073
             label.font.pixelSize: 16
             type: eTypeE
-            enabled: AppModel.newWalletInfo.capableCreate
+            enabled: newWalletInfo.capableCreate
             anchors {
                 right: parent.right
                 rightMargin: 40
@@ -489,7 +489,7 @@ QScreen {
                     type: eTypeA
                     onButtonClicked: {
                         savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(AppModel.newWalletInfo.walletName)
+                                + RoomWalletData.getValidFilename(newWalletInfo.walletName)
                                 + ".bsms"
                         savefileDialog.open()
                     }

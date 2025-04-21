@@ -27,21 +27,10 @@ Rectangle {
     property bool isTinyShow: false
     property bool isCurrentItem: false
     property alias icon: iconsource.source
+    property int tabId: 0
     property var backgroundColor: Qt.rgba(255, 255, 255, 0.3)
     color: isCurrentItem ? backgroundColor : "transparent"
     border.color: mouse.containsMouse ? backgroundColor : "transparent"
-    Rectangle{
-        width: 8
-        height: 8
-        radius: 4
-        visible: isTinyShow
-        color: "#CF4018"
-        anchors{
-            left:iconsource.right
-            top:iconsource.top
-            topMargin: -4
-        }
-    }
 
     QIcon {
         id: iconsource
@@ -49,6 +38,22 @@ Rectangle {
         anchors.centerIn: parent
         scale: mouse.pressed && !isCurrentItem ? 0.9 : 1
         transformOrigin: Item.Center
+
+        Rectangle{
+            width: 12
+            height: 12
+            radius: 12
+            visible: isTinyShow
+            color: "#CF4018"
+            border.color: "#FFFFFF"
+            border.width: 1
+            anchors{
+                left: parent.right
+                bottom: parent.top
+                bottomMargin: -6
+                leftMargin: -6
+            }
+        }
     }
 
     signal buttonClicked()

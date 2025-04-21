@@ -45,6 +45,7 @@ Rectangle {
         ls.push({id:NUNCHUCKTYPE.CHAT_TAB,icon:"qrc:/Images/Images/message-light.svg"})
         return ls
     }
+
     signal onlineModeRequest()
     signal localModeRequest()
     signal serviceRequest()
@@ -53,6 +54,12 @@ Rectangle {
     signal signinRequest()
     signal updateProfileRequest()
     signal createAccountRequest()
+
+    property int matrixUnread: ClientController.rooms.totalUnread
+    property int contactReceived: ClientController.contactsReceived.count
+    property int groupWalletUnread: AppModel.groupWalletList.unReadMessageCount
+    property int totalUnread: matrixUnread + contactReceived + groupWalletUnread
+
     Rectangle {
         width: 2
         height: menubarroot.height
@@ -73,21 +80,15 @@ Rectangle {
         anchors.top: logo.bottom
         anchors.topMargin: 35
         Repeater {
-            id: chatlist
+            id: tablist
             model: icons.length
             QMenuBarItem {
                 width: 48
                 height: 48
-                isTinyShow: {
-                    var show = false
-                    try{
-                        show = ClientController.rooms.totalUnread > 0 || ClientController.contactsReceived.count > 0
-                    }catch(e){}
-                    return icons[index].id === NUNCHUCKTYPE.CHAT_TAB && show
-                }
-
+                isTinyShow: (icons[index].id === NUNCHUCKTYPE.CHAT_TAB) ? menubarroot.totalUnread : false
                 icon: icons[index].icon
                 isCurrentItem: currentId === icons[index].id
+                tabId: icons[index].id
                 onButtonClicked: {
                     switch (icons[index].id) {
                     case NUNCHUCKTYPE.CHAT_TAB:
@@ -106,6 +107,7 @@ Rectangle {
             }
         }
     }
+
     Rectangle {
         id: avatarRect
         width: 48

@@ -113,7 +113,7 @@ QScreen {
                     "username": primaryKey.textInputted,
                     "passphrase": primaryKeyPassphrase
                 }
-                QMLHandle.sendEvent(EVT.EVT_PRIMARY_KEY_SIGN_IN_REQUEST,signUp)
+                QMLHandle.notifySendEvent(EVT.EVT_PRIMARY_KEY_SIGN_IN_REQUEST,signUp)
             }
         }
     }

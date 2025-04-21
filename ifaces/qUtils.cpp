@@ -96,7 +96,7 @@ qint64 qUtils::QAmountFromValue(const QString &btcValue, const bool allow_negati
 }
 
 QString qUtils::QValueFromAmount(const qint64 amount) {
-    DBG_INFO << amount << INT64_MAX;
+    // DBG_INFO << amount << INT64_MAX;
     QString ret = "";
     try {
         ret = QString::fromStdString(nunchuk::Utils::ValueFromAmount(amount));
@@ -575,7 +575,7 @@ uint qUtils::GetCurrentTimeSecond()
 
 bool qUtils::strCompare(const QString &str1, const QString &str2)
 {
-    return (0 == QString::compare(str1, str2, Qt::CaseInsensitive)) && !str1.isEmpty();
+    return (0 == QString::compare(str1, str2)) && !str1.isEmpty();
 }
 
 nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags)

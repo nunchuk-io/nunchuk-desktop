@@ -37,14 +37,21 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: sandbox.url !== "" ? STR.STR_QML_1556 : STR.STR_QML_1664
+    label.text: {
+        if (sandbox.isCreate || sandbox.isReplace) {
+            return STR.STR_QML_1556
+        } else if (sandbox.isRecovery) {
+            return STR.STR_QML_1664
+        } else {
+            return ""
+        }
+    }
     extraHeader: Item {}
-    property var newWalletInfo: AppModel.newWalletInfo
     property var sandbox:       AppModel.newWalletInfo.sandbox
     onCloseClicked: {
-        if (sandbox.url !== "") {
+        if (sandbox.isCreate || sandbox.isReplace) {
             closeTo(NUNCHUCKTYPE.WALLET_TAB)
-        } else {
+        } else if (sandbox.isRecovery) {
             _confirm.open()
         }
     }
@@ -91,7 +98,13 @@ QOnScreenContentTypeA {
 
     bottomLeft: Item {}
     onPrevClicked: {
-        QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_BACK)
+        if (sandbox.isCreate) {
+            QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_BACK)
+        } else if (sandbox.isRecovery) {
+
+        } else if (sandbox.isReplace) {
+
+        }
     }
 
     bottomRight: Row {
@@ -112,7 +125,17 @@ QOnScreenContentTypeA {
                 width: _txt.paintedWidth + 2*16
                 height: 20
                 anchors.centerIn: parent
-                text: sandbox.url !== "" ? STR.STR_QML_1644 : STR.STR_QML_245
+                text: {
+                    if (sandbox.isCreate) {
+                        return STR.STR_QML_1644
+                    } else if (sandbox.isRecovery) {
+                        return STR.STR_QML_245
+                    } else if (sandbox.isReplace) {
+                        return STR.STR_QML_1703
+                    } else {
+                        return ""
+                    }
+                }
                 color: "#CF4018"
                 font.weight: Font.Bold
                 verticalAlignment: Text.AlignVCenter
@@ -120,34 +143,59 @@ QOnScreenContentTypeA {
             }
         }
         QTextButton {
-            width: 129
+            width: label.paintedWidth + 16*2
             height: 48
-            label.text: sandbox.url !== "" ? STR.STR_QML_1249 : STR.STR_QML_1670
+            label.text: {
+                if (sandbox.isCreate) {
+                    return STR.STR_QML_1249
+                }
+                else if (sandbox.isRecovery) {
+                    return STR.STR_QML_1670
+                }
+                else if (sandbox.isReplace) {
+                    return STR.STR_QML_1704
+                }
+                else {
+                    return ""
+                }
+            }
             label.font.pixelSize: 16
             type: eTypeE
             enabled: sandbox.enoughSigner
             onButtonClicked: {
-                if (sandbox.checkWaitingOthers()) {
-                    _waiting_for_other.open()
+                var _input = {}
+                if (sandbox.isReplace) {
+                    _input = {
+                        type: "create-replace-wallet-sandbox"
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                } else if (sandbox.isRecovery) {
+                    _input = {
+                        type: "review-group-sandbox"
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                 } else {
-                    var _input = {}
-                    if (sandbox.addressType === NUNCHUCKTYPE.TAPROOT) {
-                        if (sandbox.groupN === 1) {
+                    if (sandbox.checkWaitingOthers()) {
+                        _waiting_for_other.open()
+                    } else {
+                        if (sandbox.addressType === NUNCHUCKTYPE.TAPROOT) {
+                            if (sandbox.groupN === 1) {
+                                _input = {
+                                    type: "review-group-sandbox"
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                            } else {
+                                _input = {
+                                    type: "switch-to-intro-taproot"
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                            }
+                        } else {
                             _input = {
                                 type: "review-group-sandbox"
                             }
                             QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                        } else {
-                            _input = {
-                                type: "switch-to-intro-taproot"
-                            }
-                            QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                         }
-                    } else {
-                        _input = {
-                            type: "review-group-sandbox"
-                        }
-                        QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                     }
                 }
             }
@@ -184,14 +232,27 @@ QOnScreenContentTypeA {
     QConfirmYesNoPopup {
         id: _confirm
         title: STR.STR_QML_334
-        contentText: sandbox.url !== "" ? STR.STR_QML_1645 : STR.STR_QML_1666
+        contentText: {
+            if (sandbox.isCreate) {
+                return STR.STR_QML_1645
+            } else if (sandbox.isRecovery) {
+                return STR.STR_QML_1666
+            } else if (sandbox.isReplace) {
+                return STR.STR_QML_1379
+            } else {
+                return ""
+            }
+        }
+
         onConfirmNo: close()
         onConfirmYes: {
             close()
-            if (sandbox.url !== "") {
+            if (sandbox.isCreate) {
                 sandbox.deleteGroup()
-            } else {
+            } else if (sandbox.isRecovery) {
                 closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            } else if (sandbox.isReplace) {
+                sandbox.deleteGroup()
             }
         }
     }

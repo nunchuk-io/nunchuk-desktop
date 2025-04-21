@@ -111,13 +111,11 @@ Column {
                 font.pixelSize: 16
                 clip: true
                 onTypingFinished: textipboxType.typingFinished(currentText)
-
                 Keys.onDownPressed: {downKeyRequest()}
                 Keys.onUpPressed: {upKeyRequest()}
                 Keys.onReturnPressed: { enterKeyRequest()}
                 Keys.onEnterPressed:  { enterKeyRequest()}
                 wrapMode:Text.WrapAnywhere
-
             }
         }
 

@@ -39,6 +39,9 @@ Rectangle {
     color: "#FFFFFF"
     property var curUser: {
         var index = ClientController.contacts.currentIndex
+        if(index > (ClientController.contacts.count - 1) || index < 0){
+            index = 0
+        }
         return ClientController.contacts.get(index)
     }
     signal send_a_messageClicked(var user)

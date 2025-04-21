@@ -20,6 +20,7 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
+import Qt.labs.platform 1.1
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
@@ -32,7 +33,7 @@ import "../../customizes/Popups"
 import "../../customizes/Signers"
 import "../../../../localization/STR_QML.js" as STR
 
-QOnScreenContentTypeB {
+QOnScreenContentTypeA {
     id: signerConfigRoot
     width: popupWidth
     height: popupHeight
@@ -157,10 +158,11 @@ QOnScreenContentTypeB {
                     width: 350
                     spacing: 16
                     Column {
+                        visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
                         width: 350
                         QLato {
                             height: 20
-                            text: STR.STR_QML_337
+                            text: STR.STR_QML_1711
                             font.weight: Font.Bold
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignLeft
@@ -198,6 +200,7 @@ QOnScreenContentTypeB {
                     }
                     QLine {
                         width: 350
+                        visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
                     }
                     Column {
                         width: 350
@@ -213,9 +216,9 @@ QOnScreenContentTypeB {
                                 horizontalAlignment: Text.AlignLeft
                             }
                             QLato {
-                                height: 20
+                                height: 16
                                 text: STR.STR_QML_1653
-                                font.weight: Font.Bold
+                                font.weight: Font.Medium
                                 font.pixelSize: 12
                                 color: "#757575"
                                 verticalAlignment: Text.AlignVCenter
@@ -306,9 +309,10 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_BACK)
     bottomRight: Row {
-        spacing: 28
+        height: 48
+        spacing: 23
         Row {
             spacing: 8
             height: 28
@@ -317,20 +321,33 @@ QOnScreenContentTypeB {
                 text: STR.STR_QML_353
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
+                anchors.verticalCenter: parent.verticalCenter
             }
             QBadge {
-                text: (newWalletInfo.walletN === 1) ? STR.STR_QML_070 :
-                                                      qsTr("%1/%2 %3").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN).arg(STR.STR_QML_069);
-
+                text: {
+                    var ret = ""
+                    if(newWalletInfo.walletM === 0){
+                        ret = STR.STR_QML_557
+                    }
+                    else if(newWalletInfo.walletN === 1 && newWalletInfo.walletM === 1){
+                        ret = STR.STR_QML_558
+                    }
+                    else if(newWalletInfo.walletN > 1 && newWalletInfo.walletM >= 1){
+                        ret = qsTr("%1/%2 %3").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN).arg(STR.STR_QML_069)
+                    }
+                    return ret;
+                }
                 color: "#EAEAEA"
                 font.weight: Font.Normal
                 anchors.verticalCenter: parent.verticalCenter
             }
+            anchors.verticalCenter: parent.verticalCenter
         }
 
         QTextButton {
             width: 133
             height: 48
+            anchors.verticalCenter: parent.verticalCenter
             label.text: STR.STR_QML_1698
             label.font.pixelSize: 16
             type: eTypeE
@@ -349,7 +366,6 @@ QOnScreenContentTypeB {
         {screen: "value-keyset",              screen_component: valueKeyset},
         {screen: "review-wallet",             screen_component: review_wallet},
         {screen: "bsms-file-success",         screen_component: bsms_file_success},
-        {screen: "register-wallet-hardware",  screen_component: register_wallet_hardware},
         {screen: "configure-value-keyset",    screen_component: configure_value_keyset},
     ]
 
@@ -369,11 +385,7 @@ QOnScreenContentTypeB {
         function switchBsmsFileSuccess() {
             newWalletInfo.screenFlow = "bsms-file-success"
         }
-        function switchRegisterWalletHardware() {
-            newWalletInfo.screenFlow = "register-wallet-hardware"
-        }
     }
-    property string saveKeyset: ""
     Component {
         id : valueKeyset
         QEnableValueKeyset {
@@ -383,10 +395,13 @@ QOnScreenContentTypeB {
                 newWalletInfo.backScreen()
             }
             onNextClicked: {
-                saveKeyset = enableValueKeyset
                 if (enableValueKeyset === "enable-value-keyset") {
                     newWalletInfo.enableValuekeyset = true
-                    _keysetPopup.switchConfigValueKeyset()
+                    if (newWalletInfo.walletN === 1) {
+                        _keysetPopup.switchReviewWallet()
+                    } else {
+                        _keysetPopup.switchConfigValueKeyset()
+                    }
                 }
                 else {
                     newWalletInfo.enableValuekeyset = false
@@ -420,14 +435,18 @@ QOnScreenContentTypeB {
         id: bsms_file_success
         QSaveYourWalletBSMSFile {
             onNextClicked: {
-                _keysetPopup.switchRegisterWalletHardware()
+                savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                        + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                        + ".bsms"
+                savefileDialog.open()
             }
         }
     }
-    Component {
-        id: register_wallet_hardware
-        QRegisterWalletOnHardware {
-
+    FileDialog {
+        id: savefileDialog
+        fileMode: FileDialog.SaveFile
+        onAccepted: {
+            newWalletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
         }
     }
 }

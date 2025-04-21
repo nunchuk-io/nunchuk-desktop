@@ -323,8 +323,12 @@ bool Transaction::subtractFromFeeAmount() const
 
 QString Transaction::feeRate() const
 {
-    quint32 rate = m_transaction.get_fee_rate();
-    return QString::number((double)rate/1000, 'f', 2);
+    return QString::number((double)feeRateSats()/1000, 'f', 2);
+}
+
+qint64 Transaction::feeRateSats() const
+{
+    return m_transaction.get_fee_rate();
 }
 
 QString Transaction::psbt() const
@@ -452,6 +456,19 @@ bool Transaction::ImportQRTransaction(const QStringList& qrtags)
     }
 }
 
+QString Transaction::txidReplacing() const
+{
+    return m_txidReplacing;
+}
+
+void Transaction::setTxidReplacing(const QString &id)
+{
+    if (m_txidReplacing == id)
+        return;
+    m_txidReplacing = id;
+    emit txidReplacingChanged();
+}
+
 QUTXOListModel* Transaction::inputCoins()
 {
     if(!m_inputCoins){
@@ -510,6 +527,13 @@ std::map<string, bool> Transaction::taprootFinalSigners()
 {
     std::map<std::string, bool> ret = m_transaction.get_signers();
     return ret;
+}
+
+QString Transaction::scriptPathFeeRate()
+{
+    int fee_rate = bridge::GetScriptPathFeeRate(walletId(), nunchukTransaction());
+    QString script_path_fee = QString::number((double)fee_rate/1000, 'f', 2);
+    return script_path_fee;
 }
 
 void Transaction::setTxJson(const QJsonObject &txJs)
@@ -843,9 +867,17 @@ QString Transaction::totalDisplay() const
     }
 }
 
-qint64 Transaction::totalSats() const
-{
-    return (subtotalSats() + feeSats());
+qint64 Transaction::totalSats() const {
+    qint64 subtotal = subtotalSats();
+    qint64 fee = feeSats();
+
+    if ((fee > 0 && subtotal > INT64_MAX - fee) ||
+        (fee < 0 && subtotal < INT64_MIN - fee)) {
+        DBG_INFO << "Overflow detected!";
+        return 0;
+    }
+
+    return subtotal + fee;
 }
 
 QString Transaction::totalBTC() const
@@ -982,7 +1014,7 @@ void Transaction::setPackageFeeRate(int satvKB)
         return;
 
     m_packageFeeRate = satvKB;
-    emit packageFeeRateChanged();
+    emit nunchukTransactionChanged();
 }
 
 QString Transaction::destination()
@@ -1006,13 +1038,12 @@ QString Transaction::destination()
 
 bool Transaction::isCpfp()
 {
-    bool ret = false;
     QWarningMessage msg;
     nunchuk::Amount packageFeeRate{0};
-    if (bridge::IsCPFP(walletId(), nunchukTransaction(), packageFeeRate, msg)) {
-        ret = true;
+    bool ret = bridge::IsCPFP(walletId(), nunchukTransaction(), packageFeeRate, msg);
+    if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
+        setPackageFeeRate(packageFeeRate);
     }
-    setPackageFeeRate(packageFeeRate);
     DBG_INFO << ret << packageFeeRate;
     return ret;
 }

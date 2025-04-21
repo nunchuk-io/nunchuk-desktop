@@ -46,7 +46,7 @@ void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
         }
         else{
             AppModel::instance()->setMnemonic("-101");
-            AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::EXCEPTION_MSG);
+            AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
         }
     }
     else if(recover_type == "xprv"){

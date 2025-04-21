@@ -83,8 +83,15 @@ QOnScreenContentTypeA {
 
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST)
     onNextClicked: {
-        setReplaceFlow("replace-select-keys")
+        if (AppModel.walletInfo.isGlobalGroupWallet) {
+            var _input = {
+                type: "replace-select-keys-sandbox-wallet",
+            }
+            QMLHandle.sendEvent(EVT.EVT_REPLACE_KEYS_ENTER, _input)
+        } else {
+            setReplaceFlow("replace-select-keys")
+        }
     }
 }

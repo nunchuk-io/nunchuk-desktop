@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1693
+    label.text: STR.STR_QML_1712
     property var newWalletInfo: AppModel.newWalletInfo
     property string enableValueKeyset: "enable-value-keyset"
     property var listEnable: [
@@ -55,7 +55,7 @@ QOnScreenContentTypeA {
                 width: 539
                 height: 84
                 anchors.left: parent.left
-                text: STR.STR_QML_1694
+                text: STR.STR_QML_1700
                 lineHeightMode: Text.FixedHeight
                 lineHeight: 28
                 wrapMode: Text.WordWrap

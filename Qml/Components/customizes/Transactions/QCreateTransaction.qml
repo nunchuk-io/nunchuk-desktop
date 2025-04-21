@@ -140,7 +140,7 @@ QOnScreenContent {
                     }
                     QSignaturesBlock {
                         id: signatures
-                        visible: transactionInfo.hasChange
+                        visible: (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
 
@@ -173,18 +173,34 @@ QOnScreenContent {
                         visible: manualfeesetting.getValue()
                         width: parent.width
                         spacing: 12
-                        QSubtractFeeFromSendAmount {
+                        QCheckboxTooltip {
                             id: subtract
                             anchors.horizontalCenter: parent.horizontalCenter
+                            text: STR.STR_QML_226
+                            tooltip: STR.STR_QML_227
+                            checked: transactionInfo.subtractFromFeeAmount
+                            rightOfParent: true
+                            pointerPositionIndex: 6
+                            pointerPositionRatio: 10
                             onButtonClicked: {
                                 requestDraftTransaction()
                             }
                         }
-
                         QManualFeeRate {
                             id: manualfee
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
+                        // QCheckboxTooltip {
+                        //     id: antisnipfee
+                        //     anchors.horizontalCenter: parent.horizontalCenter
+                        //     text: STR.STR_QML_1729
+                        //     tooltip: STR.STR_QML_1730
+                        //     pointerPositionIndex: 6
+                        //     pointerPositionRatio: 10
+                        //     onButtonClicked: {
+
+                        //     }
+                        // }
                     }
                 }
                 QCoinSelectionTransaction {
@@ -216,6 +232,7 @@ QOnScreenContent {
             }
         }
     }
+
     QTextButton {
         width: 265
         height: 48

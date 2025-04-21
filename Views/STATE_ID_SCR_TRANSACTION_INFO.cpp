@@ -184,7 +184,7 @@ void EVT_TRANSACTION_BROADCAST_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_TRANSACTION_REPLACE_BY_FEE_REQUEST_HANDLER(QVariant msg) {
     if(AppModel::instance()->transactionInfo()){
-        AppModel::instance()->setTxidReplacing(AppModel::instance()->transactionInfo()->txid());
+        AppModel::instance()->transactionInfo()->setTxidReplacing(AppModel::instance()->transactionInfo()->txid());
     }
 }
 

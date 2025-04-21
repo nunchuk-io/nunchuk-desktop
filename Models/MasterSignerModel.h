@@ -48,7 +48,7 @@ class QMasterSigner : public QObject, public WalletKeys {
     Q_PROPERTY(bool needXpub               READ needXpub                                NOTIFY isNeedXpubChanged)
     Q_PROPERTY(int  signerType             READ signerType                              NOTIFY signerTypeChanged)
     Q_PROPERTY(QString passphrase          READ passphrase                              NOTIFY passphraseChanged)
-    Q_PROPERTY(bool isPrimaryKey           READ isPrimaryKey    WRITE setIsPrimaryKey   NOTIFY isPrimaryKeyChanged)
+    Q_PROPERTY(bool isPrimaryKey           READ isPrimaryKey                            NOTIFY isPrimaryKeyChanged)
     Q_PROPERTY(QVariantList healthCheckHistory READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
     Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
     Q_PROPERTY(bool isMine                 READ isMine                                  CONSTANT)
@@ -107,11 +107,10 @@ public:
     void setPassphrase(const QString &passphrase);
 
     bool isPrimaryKey() const;
-    void setIsPrimaryKey(bool isPrimaryKey);
 
     void setSignerTags(std::vector<nunchuk::SignerTag> tags);
 
-    nunchuk::PrimaryKey originPrimaryKey() const;
+    nunchuk::PrimaryKey originPrimaryKey();
 
     nunchuk::MasterSigner originMasterSigner() const;
     void setOriginMasterSigner(const nunchuk::MasterSigner &signer);
@@ -132,6 +131,8 @@ public:
 
     int deviceIndex() const;
 
+    bool needBackup();
+    void setNeedBackup(bool val);
 private:
     QString id_ = "";
     QString name_ = "";
@@ -148,7 +149,6 @@ private:
     QString passphrase_ = "";
     nunchuk::PrimaryKey primaryKey_;
     nunchuk::MasterSigner masterSigner_;
-    bool isPrimaryKey_ = false;
     bool isDraft = false;
     QString m_address;
     int m_deviceIndex {0};

@@ -37,13 +37,12 @@ import "../../../../localization/STR_QML.js" as STR
 Column {
     id: _addressType
     spacing: 8
-
+    property bool isEnabled: true
     property var types: [
         {badge_txt: STR.STR_QML_1547,  type: NUNCHUCKTYPE.NATIVE_SEGWIT,   displayName: STR.STR_QML_062 },
         {badge_txt: STR.STR_QML_1548,  type: NUNCHUCKTYPE.TAPROOT,         displayName: STR.STR_QML_553 },
         {badge_txt: "", type: NUNCHUCKTYPE.NESTED_SEGWIT,   displayName: STR.STR_QML_063 },
         {badge_txt: "", type: NUNCHUCKTYPE.LEGACY,          displayName: STR.STR_QML_064 },
-        {badge_txt: "", type: NUNCHUCKTYPE.ANY,             displayName: STR.STR_QML_065 },
     ]
 
     property int typeOption: NUNCHUCKTYPE.NATIVE_SEGWIT
@@ -73,7 +72,8 @@ Column {
             selected: typeOption === itemData.type
             textBadge: itemData.badge_txt
             fontBadgePixelSize: 10
-            opacity: _addressType.enabled ? 1.0 : (btn.selected ? 1.0 : 0.4)
+            opacity: btn.enabled ? 1.0 : (btn.selected ? 1.0 : 0.4)
+            enabled: isEnabled
             onButtonClicked: {
                 selectTypeOption(itemData.type)
             }

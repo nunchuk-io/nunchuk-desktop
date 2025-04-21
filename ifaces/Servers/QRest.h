@@ -29,6 +29,7 @@
 #include <QEventLoop>
 #include <QUrlQuery>
 #include <QSysInfo>
+#include <QThreadStorage>
 #include "localization/STR_CPP.h"
 #include <QSysInfo>
 #include <QNetworkAccessManager>
@@ -51,7 +52,8 @@ public:
     static QByteArray machineUniqueId();
     QString url() const;
 protected:
-    OurSharedPointer<QNetworkAccessManager> m_networkManager;
+    QThreadStorage<OurSharedPointer<QNetworkAccessManager>> m_networkManager;
+    OurSharedPointer<QNetworkAccessManager> networkManager();
     QJsonObject postSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
@@ -62,9 +64,6 @@ protected:
     QJsonObject putSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject deleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
-
-protected:
-    QMutex              m_networkManagerMutex;
 
 private:
     static QString      m_dracoToken;

@@ -20,6 +20,7 @@
 #include "Premiums/QGroupWalletHealthCheck.h"
 #include "Premiums/QRecurringPayment.h"
 #include "utils/enumconverter.hpp"
+#include "QThreadForwarder.h"
 
 QWalletManagement *QWalletManagement::instance()
 {
@@ -110,11 +111,12 @@ void QWalletManagement::GetListWallet(int mode)
                         }
                     }
                 }
-                QWalletCached<QString, QString, QString, QString> cachedData;
-                cachedData.first  = group_id;
-                cachedData.second = slug;
-                cachedData.third  = myRole;
-                cachedData.fourth = status;
+                QWalletCached<QString, QString, QString, QString, bool> cachedData;
+                cachedData.groupId  = group_id;
+                cachedData.slug = slug;
+                cachedData.myRole  = myRole;
+                cachedData.status = status;
+                cachedData.backedup = true;
                 AppSetting::instance()->setWalletCached(wallet_id, cachedData);
 
                 QString wallet_name = wallet_obj["name"].toString();
@@ -260,14 +262,17 @@ void QWalletManagement::GetListWallet(int mode)
                 QWarningMessage msgwarning;
                 bridge::nunchukDeleteWallet(wallet_id, msgwarning);
                 if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                    AppModel::instance()->removeWallet(wallet_id);
-                    AppModel::instance()->setWalletListCurrentIndex(0);
-                    AppSetting::instance()->deleteWalletCached(wallet_id);
+                    QThreadForwarder::instance()->forwardInQueuedConnection([wallet_id](){
+                        AppModel::instance()->removeWallet(wallet_id);
+                        AppModel::instance()->setWalletListCurrentIndex(0);
+                        AppSetting::instance()->deleteWalletCached(wallet_id);
+                    });
                 }
             }
             else{}
         }
     }
+    SyncDeleteWallets(mode);
     UpdateSyncWalletFlows();
 }
 
@@ -292,6 +297,35 @@ void QWalletManagement::UpdateSigner(const QJsonObject &signer)
         master_signer.set_visible(is_visible);
         msgIn.resetWarningMessage();
         bridge::UpdateMasterSigner(master_signer, msgIn);
+    }
+}
+
+void QWalletManagement::SyncDeleteWallets(int mode)
+{
+    QJsonObject data;
+    QString error_msg;
+    bool ret {false};
+    if (!mode == USER_WALLET) {
+        ret = Byzantine::instance()->GetAllDeletedGroupWallets(data, error_msg);
+    }
+    DBG_INFO << data;
+    if(!data.isEmpty()){
+        QJsonArray wallet_local_ids = data["wallet_local_ids"].toArray();
+        for(QJsonValue json : wallet_local_ids){
+            QString wallet_id   = json.toString();
+            DBG_INFO << wallet_id;
+            if (bridge::nunchukHasWallet(wallet_id)){
+                QWarningMessage msgwarning;
+                bridge::nunchukDeleteWallet(wallet_id, msgwarning);
+                if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
+                    QThreadForwarder::instance()->forwardInQueuedConnection([wallet_id](){
+                        AppModel::instance()->removeWallet(wallet_id);
+                        AppModel::instance()->setWalletListCurrentIndex(0);
+                        AppSetting::instance()->deleteWalletCached(wallet_id);
+                    });
+                }
+            }
+        }
     }
 }
 

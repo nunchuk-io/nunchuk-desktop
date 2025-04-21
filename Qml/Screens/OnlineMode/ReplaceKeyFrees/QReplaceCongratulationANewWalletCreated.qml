@@ -85,7 +85,7 @@ QOnScreenContentTypeB {
             }
         }
     }
-    bottomLeft: Item{}
+    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
     onNextClicked: {
         var _input = {
             type: "replace-transfer-funds"

@@ -126,6 +126,7 @@ bool QWalletServicesTag::verifyConfirmationCode(const QString &code)
 
 QVariantList QWalletServicesTag::securityQuestions()
 {
+    DBG_INFO << QString().sprintf("%p", this);
     return m_questions.toVariantList();
 }
 
@@ -174,7 +175,7 @@ bool QWalletServicesTag::CreateSecurityQuestionsAnswered()
             m_quesAnswers.append(answer);
             DBG_INFO << ques;
         }
-        DBG_INFO << questions_required;
+        DBG_INFO << QString().sprintf("%p", this) << questions_required;
         setQuestions(questions_required);
     }
     return ret;

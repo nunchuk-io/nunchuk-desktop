@@ -41,6 +41,9 @@ Menu {
     }
     property int menuWidth: 250
     property int menuHeight: 48
+    property int subMenuWidth: 250
+    property int subMenuHeight: 48
+
     property var mapMenu: [
         {
             visible: true,
@@ -99,7 +102,8 @@ Menu {
     Component {
         id: subContextMenu
         QSubContextMenu {
-
+            menuWidth: optionMenu.subMenuWidth
+            menuHeight: optionMenu.subMenuHeight
         }
     }
 }

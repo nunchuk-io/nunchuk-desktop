@@ -303,6 +303,7 @@ enum CMD_IDX {
     //Groups Management
     GROUP_WALLETS_ONE = Premium::CMD_IDX::CMD_MAX + 1,
     GROUP_WALLETS_LIST,
+    GROUP_WALLETS_LIST_DELETED,
     GROUP_WALLETS_ACCEPT,
     GROUP_WALLETS_DENY,
     GROUP_WALLET_LIST_WALLETS,
@@ -655,6 +656,7 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLET_LIST_WALLETS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("wallets") },
     { Group::CMD_IDX::GROUP_WALLETS_ONE                 , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}") },
     { Group::CMD_IDX::GROUP_WALLETS_LIST                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups") },
+    { Group::CMD_IDX::GROUP_WALLETS_LIST_DELETED        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("wallets/deleted") },
     { Group::CMD_IDX::GROUP_WALLETS_ACCEPT              , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members/accept") },
     { Group::CMD_IDX::GROUP_WALLETS_DENY                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members/deny") },
     { Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS                       , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/members") },

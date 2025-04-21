@@ -45,6 +45,13 @@ void EVT_EDIT_MEMBERS_ENTER_REQUEST_HANDLER(QVariant msg) {
             member["role"] = roleId;
             member["permissions"] = {};
             dashboard->addMember(member);
+        } else if (type == "remove-member") {
+            QString email_or_username = maps["email_or_username"].toString();
+            QJsonObject member;
+            member["email_or_username"] = email_or_username;
+            member["role"] = {};
+            member["permissions"] = {};
+            dashboard->removeMember(member);
         } else if (type == "replace-new-member") {
             QString roleId = maps["roleId"].toString();
             QString email_or_username = maps["email_or_username"].toString();

@@ -77,7 +77,6 @@ QHash<int, QByteArray> QContactModel::roleNames() const
 void QContactModel::syncContacts(QList<DracoUser> data)
 {
     beginResetModel();
-    m_data.clear();
     m_data = data;
     endResetModel();
     emit countChanged();
@@ -85,9 +84,10 @@ void QContactModel::syncContacts(QList<DracoUser> data)
 
 void QContactModel::addContact(const DracoUser user)
 {
-    beginResetModel();
+    const int index = m_data.count();
+    beginInsertRows(QModelIndex(), index, index);
     m_data.append(user);
-    endResetModel();
+    endInsertRows();
     emit countChanged();
 }
 
@@ -201,8 +201,10 @@ int QContactModel::currentIndex() const
 
 void QContactModel::setCurrentIndex(int currentIndex)
 {
-    if(m_currentIndex != currentIndex){
-        m_currentIndex = currentIndex;
+    int temp = qMax(0, currentIndex);
+    if(m_currentIndex != temp){
+        m_currentIndex = temp;
+
         emit currentIndexChanged();
     }
 }
