@@ -48,6 +48,7 @@ QScreenAdd {
     readonly property int _IMPORTANT_NOTICE: 2
     readonly property int _BACKUP_PASSPHRASE: 3
     readonly property int _PASSPHRASE_DONE: 4
+    readonly property int _BACKUP_COLDCARD: 5
     property int _passPhrase: _ASK_PASSPHRASE
 
     Component.onCompleted: {
@@ -74,6 +75,7 @@ QScreenAdd {
                          case _ASK_PASSPHRASE: return _passPhraseSelect
                          case _IMPORTANT_NOTICE: return _importantNotice
                          case _BACKUP_PASSPHRASE: return _passPhraseBackup
+                         case _BACKUP_COLDCARD: return _backupCOLDCARD
                          default: return null
                          }
     }
@@ -124,7 +126,17 @@ QScreenAdd {
             }
         }
     }
+    Component {
+        id: _backupCOLDCARD
+        QBackupCOLDCARD {
+            inputFingerPrint: inputtingIndex.device_xfp
+            onPrevClicked: {
+                eADD_STEP = eREUSE_RESULT
+                _passPhrase = _PASSPHRASE_DONE
+            }
 
+        }
+    }
     QOnScreenContentTypeB {
         id:_content
         visible: eADD_STEP === eREUSE_LIST_KEYS
@@ -166,6 +178,7 @@ QScreenAdd {
                     inputtingIndex.device_xfp = _content.contentItem.fingerPrint
                     inputtingIndex.device_bip32_path = draftWallet.bip32path(inputtingIndex.device_xfp, inputtingIndex.current_index)
                     eADD_STEP = eREUSE_INPUT_INDEX
+                    _passPhrase = _ASK_PASSPHRASE
                 }
             }
         }
@@ -332,6 +345,7 @@ QScreenAdd {
             ]
         }
     }
+
     QOnScreenContentTypeA {
         id: scanDevices
         visible: eADD_STEP === eREUSE_SCAN_DEVICE
@@ -455,7 +469,15 @@ QScreenAdd {
                 label.text: STR.STR_QML_777
                 label.font.pixelSize: 16
                 type: eTypeE
-                onButtonClicked: doneAddHardwareKey()
+                onButtonClicked: {
+                    var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
+                    if (is_inheritance) {
+                        eADD_STEP = eREUSE_INPUT_INDEX
+                        _passPhrase = _BACKUP_COLDCARD
+                    } else {
+                        doneAddHardwareKey()
+                    }
+                }
             }
         }
     }
@@ -489,8 +511,15 @@ QScreenAdd {
             if (inputtingIndex.signer_type == NUNCHUCKTYPE.COLDCARD_NFC)
             {
                 if(result == 1){
-                    GroupWallet.refresh()
-                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                    var canReplaceKey = GroupWallet.dashboardInfo.canReplaceKey()
+                    if (canReplaceKey) {
+                        eADD_STEP = eREUSE_RESULT
+                    } else {
+                        GroupWallet.refresh()
+                        GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                    }
+                } else {
+                    eADD_STEP = eREUSE_SCAN_DEVICE
                 }
             }
             else {

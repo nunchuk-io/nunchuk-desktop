@@ -1927,6 +1927,7 @@ QSingleSignerPtr bridge::nunchukParseJSONSigners(const QString &filePathName, EN
             }
         }
         if (signer.get_derivation_path() != "") {
+            signer.set_tags({nunchuk::SignerTag::COLDCARD});
             QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
             ret->setName("Coldcard");
             DBG_INFO << ret->name();

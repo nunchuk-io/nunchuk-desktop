@@ -1,0 +1,13 @@
+#!/bin/bash
+BASE_DIR="$(dirname "$(readlink -f "${0}")")"
+export QT_QPA_PLATFORMTHEME=gtk3
+export LD_LIBRARY_PATH="$BASE_DIR"/appdir/lib/:"$BASE_DIR"/appdir:$LD_LIBRARY_PATH
+export QML_IMPORT_PATH="$BASE_DIR"/appdir/qml/:$QML_IMPORT_PATH
+export QML2_IMPORT_PATH="$BASE_DIR"/appdir/qml/:$QML2_IMPORT_PATH
+export QT_PLUGIN_PATH="$BASE_DIR"/appdir/plugins/:$QT_PLUGIN_PATH
+#export QTWEBENGINEPROCESS_PATH="$BASE_DIR"/appdir/bin/QtWebEngineProcess
+export QTDIR="$BASE_DIR"/appdir
+export CQT_PKG_ROOT="$BASE_DIR"/appdir
+export QT_QPA_PLATFORM_PLUGIN_PATH="$BASE_DIR"/appdir/plugins/platforms:$QT_QPA_PLATFORM_PLUGIN_PATH
+exec "$BASE_DIR/appdir/bin/nunchuk-qt" "$@"
+

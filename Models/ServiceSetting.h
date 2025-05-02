@@ -56,6 +56,7 @@ public slots:
     void requestStartAddHardwareKey(const QString &tag);
     void clearWalletInfo();
 signals:
+    void verifyPasswordTokenAlert(const QString& errormsg);
     void claimInheritanceFlowChanged();
     void optionIndexChanged();
     void walletInfoChanged();

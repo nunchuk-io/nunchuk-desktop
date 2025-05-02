@@ -601,6 +601,7 @@
         <file>Qml/Components/customizes/Signers/QBeforeStartHardware.qml</file>
         <file>Qml/Components/customizes/Signers/QBeforeStartSoftware.qml</file>
         <file>Qml/Components/origins/QTextInput.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QBackupCOLDCARD.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/services-light.svg</file>
@@ -956,6 +957,7 @@
         <file>Images/UnArchiveBox.png</file>
         <file>Images/create-soft-key.svg</file>
         <file>Images/recover.svg</file>
+        <file>Images/backup-coldcard.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

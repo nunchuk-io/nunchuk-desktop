@@ -52,8 +52,8 @@ QOnScreenContentTypeA {
                 radius: 24
                 color: "#D0E2FF"
                 QPictureSmooth {
-                    smWidth: 728
-                    smHeight: 300
+                    width: 728
+                    height: 300
                     anchors.centerIn: parent
                     source: "qrc:/Images/Images/taproot-address.svg"
                 }

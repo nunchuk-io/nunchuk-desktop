@@ -199,7 +199,7 @@ public:
     bool CancelKeyReplacement();
     bool FinishKeyReplacement(const QJsonObject &requestBody);
 
-    bool canReplaceKey();
+    Q_INVOKABLE bool canReplaceKey();
     Q_INVOKABLE bool isInheritance();
 
     QStringList getNameSameTag(const QString &tag);
@@ -249,6 +249,7 @@ public slots:
     void updateSuccess();
     void updateFail();
     void markRead();
+    void requestBackupColdcard(QVariant msg);
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);

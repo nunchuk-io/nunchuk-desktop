@@ -538,7 +538,6 @@ bool QGroupDashboard::GetKeyReplacementStatus()
 QMap<QString, QVariant> QGroupDashboard::requestBodyUploadBackupFile(const QString &xfp, const QString &filePath)
 {
     QString file_path = qUtils::QGetFilePath(filePath);
-    DBG_INFO << file_path;
     QMap<QString, QVariant> body;
     QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
     if (single.isNull()) {
@@ -569,7 +568,13 @@ QMap<QString, QVariant> QGroupDashboard::requestBodyUploadBackupFile(const QStri
         body["card_id"] = single->cardId();
         body["file"] = file_path;
     }
-    return body;
+    QMap<QString, QVariant> filteredMap;
+    for (auto it = body.constBegin(); it != body.constEnd(); ++it) {
+        if (it.value().isValid() && !it.value().toString().isEmpty()) {
+            filteredMap.insert(it.key(), it.value());
+        }
+    }
+    return filteredMap;
 }
 
 bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QString &filePath)
@@ -578,9 +583,11 @@ bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QStr
         AppModel::instance()->setAddSignerPercentage(1);
         mTimer->start(100);
     }
+    DBG_INFO << xfp << filePath;
     QJsonObject output;
     QString error_msg = "";
     QMap<QString, QVariant> body = requestBodyUploadBackupFile(xfp, filePath);
+    DBG_INFO << wallet_id() << servicesTagPtr()->passwordToken() << body;
     bool ret {false};
     if (isUserWallet()) {
         ret = Draco::instance()->ReplacementUploadBackupFile(wallet_id(), servicesTagPtr()->passwordToken(), body, output, error_msg);
@@ -601,6 +608,7 @@ bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QStr
         AppModel::instance()->setAddSignerPercentage(1);
         mTimer->start(100);
     }
+    DBG_INFO << xfp << filePath;
     QJsonObject output;
     QString error_msg = "";
     QMap<QString, QVariant> body = requestBodyUploadBackupFile(xfp, filePath);
@@ -1084,6 +1092,31 @@ void QGroupDashboard::updateFail()
 void QGroupDashboard::markRead()
 {
     MarkAlertAsRead(alertId());
+}
+
+void QGroupDashboard::requestBackupColdcard(QVariant msg)
+{
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    DBG_INFO << maps;
+    if (type == "import-encrypted-backup") {
+        QString currentFile = maps["currentFile"].toString();
+        QString xfp = maps["fingerPrint"].toString();
+        if (xfp.isEmpty()) {
+            if (QAssistedDraftWallets::IsByzantine()) {
+                xfp = QGroupWallets::instance()->selectFingerPrint();
+            } else {
+                QUserWallets::instance()->selectFingerPrint();
+            }
+        }
+        if (canReplaceKey()) {
+            ReplacementUploadBackupFile(xfp, currentFile);
+        } else {
+            DraftWalletUploadBackupFile(xfp, currentFile);
+        }
+    } else if (type == "open-import-encrypted-backup") {
+        AppModel::instance()->setAddSignerPercentage(0);
+    }
 }
 
 bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type)

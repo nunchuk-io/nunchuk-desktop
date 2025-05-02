@@ -272,7 +272,7 @@ QScreenAdd {
                 label.text: STR.STR_QML_777
                 label.font.pixelSize: 16
                 type: eTypeE
-                onButtonClicked: doneOrTryAgainAddHardwareKey(AppModel.addSignerWizard === eADD_SUCCESSFULLY)
+                onButtonClicked: doneOrTryAgainAddColdcardKey(AppModel.addSignerWizard === eADD_SUCCESSFULLY)
             }
         }
     }

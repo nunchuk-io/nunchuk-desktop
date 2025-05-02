@@ -20,9 +20,5 @@
 import QtQuick 2.4
 
 QSvgImage {
-    property int smWidth: 24
-    property int smHeight: 24
-    width: smWidth
-    height: smHeight
     transformOrigin: Item.Center
 }

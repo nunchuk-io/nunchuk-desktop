@@ -4588,8 +4588,7 @@ bool Draco::ReplacementUploadBackupFile(const QString& wallet_id, const QString&
     QString reply_msg  = "";
     QString cmd = commands[Premium::CMD_IDX::ASSISTED_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT];
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-
-    QJsonObject jsonObj = postMultiPartSync(cmd,{}, params, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = postMultiPartSync(cmd,{}, params, requestBody, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -4599,6 +4598,7 @@ bool Draco::ReplacementUploadBackupFile(const QString& wallet_id, const QString&
             return true;
         }
         else{
+            DBG_INFO << jsonObj;
             errormsg = response_msg;
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;

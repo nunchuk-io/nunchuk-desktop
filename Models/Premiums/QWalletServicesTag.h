@@ -178,7 +178,6 @@ public slots:
     void clearInheritance();
 
 signals:
-    void verifyPasswordTokenAlert(const QString& errormsg);
     void lockdownPeriodsAlert(const QString& errormsg);
     void untilTimeChanged();
     void answerErrorAlert(const QString& errormsg);

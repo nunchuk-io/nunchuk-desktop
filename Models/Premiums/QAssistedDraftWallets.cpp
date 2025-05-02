@@ -421,6 +421,12 @@ bool QAssistedDraftWallets::getSigner(const QString &xfp, const int index)
                                                                      index,
                                                                      msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        if (ret.get_type() == nunchuk::SignerType::COLDCARD_NFC) {
+            bool existTag = std::find(ret.get_tags().begin(), ret.get_tags().end(), nunchuk::SignerTag::COLDCARD) != ret.get_tags().end();
+            if (!existTag) {
+                ret.set_tags({nunchuk::SignerTag::COLDCARD});
+            }
+        }
         setSelectFingerPrint(xfp);
         return canReplaceKey() ? requestKeyReplacement(QSingleSignerPtr(new QSingleSigner(ret))) : AddOrUpdateReuseKeyToDraftWallet(ret);
     }
@@ -474,6 +480,9 @@ bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
                 for (auto tag : list) {
                     tags.append(tag);
                 }
+            }
+            if (!tags.contains(single->tag())) {
+                tags.append(single->tag());
             }
             auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
             data["name"] = dashboard.isNull() ? (single->name() != "" ? single->name() : titleCase(single->tag())) : dashboard->generateName({single->tag()});
@@ -581,6 +590,11 @@ QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardVia
         AppModel::instance()->showToast(msg.code(), "XPUBs file is invalid", EWARNING::WarningType::EXCEPTION_MSG);
         return Enum::eError_Keep_Screen;
     }
+}
+
+QString QAssistedDraftWallets::selectFingerPrint() const
+{
+    return m_selectFingerPrint;
 }
 
 void QAssistedDraftWallets::setSelectFingerPrint(const QString &selectFingerPrint)

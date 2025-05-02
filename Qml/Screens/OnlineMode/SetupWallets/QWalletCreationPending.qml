@@ -216,7 +216,7 @@ Item {
                                                 type: "open-import-encrypted-backup",
                                                 fingerPrint: modelData.xfp,
                                             }
-                                            QMLHandle.sendEvent(EVT.EVT_DASHBOARD_ALERT_INFO_ENTER, _input)
+                                            dashInfo.requestBackupColdcard(_input)
                                         }
                                     }
                                 }
@@ -238,6 +238,15 @@ Item {
     QPopupInfo{
         id:_info
         contentText: STR.STR_QML_961
+    }
+
+    function importEncryptedBackup(xfp, file) {
+        var _input = {
+            type: "import-encrypted-backup",
+            fingerPrint: xfp,
+            currentFile: file
+        }
+        dashInfo.requestBackupColdcard(_input)
     }
 
     QPopupImportColdcardBackup {

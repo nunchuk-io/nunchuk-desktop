@@ -25,6 +25,7 @@ import EWARNING 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../OnlineMode/AddHardwareKeys"
+import "../OnlineMode/SetupWallets"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -33,6 +34,7 @@ QScreen {
     readonly property int _IMPORTANT_NOTICE: 2
     readonly property int _BACKUP_PASSPHRASE: 3
     readonly property int _PASSPHRASE_DONE: 4
+    readonly property int _BACKUP_COLDCARD: 5
     property int _passPhrase: _ASK_PASSPHRASE
     Loader {
         width: popupWidth
@@ -43,14 +45,14 @@ QScreen {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
             case NUNCHUCKTYPE.ADD_COLDCARD: return function() {
-                var dashboard = GroupWallet.qIsByzantine ? GroupWallet.dashboardInfo : UserWallet.dashboardInfo
-                var is_inheritance = dashboard.isInheritance()
+                var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
                 if (is_inheritance) {
                     switch(_passPhrase) {
                         case _ASK_PASSPHRASE: return _passPhraseSelect
                         case _IMPORTANT_NOTICE: return _importantNotice
                         case _BACKUP_PASSPHRASE: return _passPhraseBackup
                         case _PASSPHRASE_DONE: return _Coldcard
+                        case _BACKUP_COLDCARD: return _backupCOLDCARD
                         default: return null
                     }
                 } else {
@@ -129,11 +131,31 @@ QScreen {
             }
         }
     }
+    Component {
+        id: _backupCOLDCARD
+        QBackupCOLDCARD {
+            inputFingerPrint: AppModel.masterSignerInfo.fingerPrint
+            onPrevClicked: _passPhrase = _PASSPHRASE_DONE
+        }
+    }
 
     function doneOrTryAgainAddHardwareKey(isSuccess) {
         if (isSuccess) {
             AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
             closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        } else {
+            GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+        }
+    }
+    function doneOrTryAgainAddColdcardKey(isSuccess) {
+        if (isSuccess) {
+            var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
+            if (is_inheritance) {
+                _passPhrase = _BACKUP_COLDCARD
+            } else {
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            }
         } else {
             GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
         }

@@ -2006,3 +2006,6 @@ var STR_QML_1727 = qsTr("Archived wallet")
 var STR_QML_1728 = qsTr("Unarchive wallet")
 var STR_QML_1729 = qsTr("Anti-fee sniping")
 var STR_QML_1730 = qsTr("Adds the latest block height to the PSBT to prevent fee sniping attacks.")
+var STR_QML_1731 = qsTr("Back up COLDCARD")
+var STR_QML_1732 = qsTr("In the upcoming steps, you’ll use your COLDCARD to back up the key and encrypt the backup file. Once encrypted, the file can be uploaded to our server. \n
+The encrypted backup will later be used to recover the inheritance key on the Beneficiary’s device when they claim the inheritance.")

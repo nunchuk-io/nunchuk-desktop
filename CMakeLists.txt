@@ -1,10 +1,9 @@
 cmake_minimum_required( VERSION 3.1 )
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.45)
+    project(Nunchuk VERSION 1.9.46)
 else()
-    project(nunchuk-qt VERSION 1.9.45)
+    project(nunchuk-qt VERSION 1.9.46)
 endif()
-
 
 # nunchuk
 if(WIN32)
@@ -21,11 +20,6 @@ if(WIN32)
 endif()
 
 add_subdirectory(contrib/libnunchuk)
-
-if(APPLE)
-    find_package(OpenSSL REQUIRED)
-    include_directories("${PROJECT_SOURCE_DIR}/contrib/libnunchuk/contrib/openssl/lib/include")
-endif()
 
 # Compiler Opt
 set(CMAKE_CXX_STANDARD 20)
@@ -71,7 +65,12 @@ find_package(Qt5Keychain REQUIRED)
 if (Qt5Keychain_FOUND)
     message( STATUS "Using Qt Keychain ${Qt5Keychain_VERSION} at ${Qt5Keychain_DIR}")
 endif()
-find_package(Boost REQUIRED COMPONENTS filesystem)
+
+if(WIN32)
+    find_package(Boost REQUIRED COMPONENTS filesystem)
+else()
+    find_package(Boost REQUIRED )
+endif()
 
 FIND_PACKAGE(OpenGL REQUIRED)
 if(OPENGL_FOUND) # never true, but printed as true
@@ -116,7 +115,6 @@ QT5_ADD_RESOURCES(SOURCE_RSCS
 # Add include path
 include_directories(${Nunchuk_INC_PATH})
 include_directories("${PROJECT_SOURCE_DIR}/contrib/quotient/lib")
-include_directories("${PROJECT_SOURCE_DIR}/contrib/libnunchuk/src")
 include_directories(${QTKEYCHAIN_INCLUDE_DIRS})
 
 # Executable
@@ -177,8 +175,6 @@ endif()
 # Target link options
 if(WIN32)
     target_link_options(${PROJECT_NAME} PUBLIC /INCREMENTAL:NO /NODEFAULTLIB:MSVCRT)
-else()
-    target_link_options(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++)
 endif()
 
 # Target link libraries
@@ -187,10 +183,9 @@ if (WIN32)
     target_link_libraries (${PROJECT_NAME} PUBLIC Boost::filesystem Boost::system)
 endif()
 
-
 target_link_libraries (${PROJECT_NAME} PUBLIC nunchuk)
 target_include_directories("${PROJECT_NAME}" PUBLIC
-    "${PROJECT_SOURCE_DIR}/contrib/libnunchuk/src"
+    "${PROJECT_SOURCE_DIR}/contrib/libnunchuk/include"
     ${Boost_INCLUDE_DIRS}
 )
 

@@ -32,7 +32,7 @@ bool QWalletServicesTag::requestVerifyPassword(const QString &password, const in
     QString errormsg = "";
     bool ret = Draco::instance()->verifyPasswordToken(password, action, token, errormsg);
     if(!ret){
-        emit verifyPasswordTokenAlert(errormsg);
+        ServiceSetting::instance()->verifyPasswordTokenAlert(errormsg);
     }
     else{
         m_passwordToken = token;

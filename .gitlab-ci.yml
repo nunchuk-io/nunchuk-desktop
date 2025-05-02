@@ -1,33 +1,78 @@
-before_script:
-  - git submodule update --init --recursive
-  - echo "Build Bitcoin Core"
-  - pushd contrib/libnunchuk/contrib/bitcoin
-  - ./autogen.sh
-  - ./configure --without-gui --disable-zmq --with-miniupnpc=no --with-incompatible-bdb --disable-bench --disable-tests
-  - make -j8
-  - popd
-  #- mkdir -p contrib/libnunchuk/contrib/sqlcipher/.libs
-  #- cp /usr/local/lib/libsqlcipher.a contrib/libnunchuk/contrib/sqlcipher/.libs/libsqlcipher.a
+image: docker:latest
 
-build_mac:
-  interruptible: true
-  stage: build
+services:
+  - docker:dind
+
+stages:
+  - build-image
+  - build-app
+
+variables:
+  #GIT_SUBMODULE_STRATEGY: recursive
+  DOCKER_TLS_CERTDIR: "/certs"
+  REPO_DIR: /nunchuk-desktop
+
+before_script:
+  - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com".insteadOf "https://gitlab.com"
+  - git submodule sync
+  - git submodule update --init --recursive --depth=1
+
+.build_template:
+  stage: build-image
   script:
-    - rm -rf build
-    - mkdir build && cd build
-    - cmake .. -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5/lib/cmake -DUR__DISABLE_TESTS=ON
-    # - cmake --build . --config Release -j8
-    # - cp ../../../../../../manually/macdeploynunchuk/hwi nunchuck-client-qt.app/Contents/MacOS
-    - export PATH="/usr/local/opt/qt@5/bin:$PATH"
-    # - pwd
-    # - ls -la
-    # - macdeployqt nunchuck-client-qt.app
-    # - macdeployqt nunchuck-client-qt.app -qmldir=..
-    - for i in 1 2 3 4 5; do rm -rf nunchuck-client-qt.app nunchuck-client-qt.dmg;cmake --build . --config Release -j8;cp ../../../../../../manually/macdeploynunchuk/hwi nunchuck-client-qt.app/Contents/MacOS;macdeployqt nunchuck-client-qt.app -qmldir=.. -dmg && break || sleep 15; done
-  tags:
-    - build, macos, ci
-  only:
-    - ci
+    - cd $CI_PROJECT_DIR/reproducible-builds
+    - docker buildx build --platform $PLATFORM --build-arg ARCH=$ARCH -f $DOCKERFILE -t registry.gitlab.com/$CI_PROJECT_PATH/$IMAGE_TAG --cache-to type=inline --cache-from type=registry,ref=registry.gitlab.com/$CI_PROJECT_PATH/$IMAGE_TAG --push .
+    - docker run --platform $PLATFORM --rm -v "$CI_PROJECT_DIR:$REPO_DIR" -w $REPO_DIR registry.gitlab.com/$CI_PROJECT_PATH/$IMAGE_TAG bash $SCRIPT
   artifacts:
-   paths:
-     - build/nunchuck-client-qt.dmg
+    paths:
+      - build/artifacts
+  rules:
+    - when: on_success
+
+# --- Linux build ---
+build-linux-amd64:
+  extends: .build_template
+  variables:
+    DOCKERFILE: linux.Dockerfile
+    PLATFORM: linux/amd64
+    IMAGE_TAG: nunchuk-builder-linux-amd64
+    SCRIPT: /nunchuk-desktop/reproducible-builds/linux.sh
+    ARCH: x86_64
+
+build-linux-aarch64:
+  extends: .build_template
+  variables:
+    DOCKERFILE: linux.Dockerfile
+    PLATFORM: linux/aarch64
+    IMAGE_TAG: nunchuk-builder-linux-aarch64
+    SCRIPT: /nunchuk-desktop/reproducible-builds/linux.sh
+    ARCH: aarch64
+
+# --- Windows build ---
+#build-image-windows-amd64:
+#  extends: .buildx_build_template
+#  variables:
+#    DOCKERFILE: Dockerfile.windows
+#    PLATFORM: windows/amd64
+#    IMAGE_TAG: cpp-builder-windows-amd64
+#
+#build-app-windows-amd64:
+#  extends: .build_app_template
+#  variables:
+#    IMAGE_TAG: cpp-builder-windows-amd64
+#
+## --- macOS build ---
+#build-image-mac-amd64:
+#  extends: .buildx_build_template
+#  variables:
+#    DOCKERFILE: Dockerfile.mac
+#    PLATFORM: darwin/amd64
+#    IMAGE_TAG: cpp-builder-mac-amd64
+#
+#build-app-mac-amd64:
+#  extends: .build_app_template
+#  variables:
+#    IMAGE_TAG: cpp-builder-mac-amd64
+#

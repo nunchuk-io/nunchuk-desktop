@@ -168,12 +168,7 @@ QOnScreenContentTypeA {
         id: fileDialog
         fileMode: FileDialog.OpenFile
         onAccepted: {
-            var _input = {
-                type: "import-encrypted-backup",
-                fingerPrint: xfp,
-                currentFile: fileDialog.currentFile
-            }
-            QMLHandle.sendEvent(EVT.EVT_DASHBOARD_ALERT_INFO_ENTER, _input)
+            importEncryptedBackup(xfp, fileDialog.currentFile)
         }
     }
 }

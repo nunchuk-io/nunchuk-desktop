@@ -48,11 +48,14 @@ QScreen {
         visible: passphraseModel.processing
     }
     Connections {
-        target: ServiceSetting.servicesTag
+        target: ServiceSetting
         onVerifyPasswordTokenAlert: {
             passphraseModel.processing = false
             passphraseModel.setErrorText(errormsg)
         }
+    }
+    Connections {
+        target: ServiceSetting.servicesTag
         onLockdownPeriodsAlert: {
             passphraseModel.processing = false
             passphraseModel.setErrorText(errormsg)

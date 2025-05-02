@@ -41,7 +41,7 @@ void SCR_ADD_HARDWARE_Exit(QVariant msg) {
 
 void EVT_SCAN_HARDWARE_DEVICE_REQUEST_HANDLER(QVariant msg)
 {
-    Q_UNUSED(msg);
+
 }
 
 void EVT_ADD_HARDWARE_DEVICE_REQUEST_HANDLER(QVariant msg)

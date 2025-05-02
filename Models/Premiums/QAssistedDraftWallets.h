@@ -74,6 +74,7 @@ public:
     QVariantList signerExistList() const;
     void setSignerExistList(QJsonArray signerExistList);
 
+    QString selectFingerPrint() const;
     void setSelectFingerPrint(const QString &selectFingerPrint);
     enum class ImportColdcard_t : int {
         eNone,
@@ -84,6 +85,7 @@ public:
     ImportColdcard_t ImportColdcardViaFile(const QString &fileName, int new_index = -1);
     virtual bool requestKeyReplacement(QSingleSignerPtr signer);
     StructAddHardware request() const;
+
 
 private:
     bool RequestAddOrUpdateAKeyToDraftWallet(StructAddHardware hardware);

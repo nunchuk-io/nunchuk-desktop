@@ -115,3 +115,6 @@ Commands:
 brew install libusb
 brew install python
 ```
+
+# Reproducible builds
+See [instructions](./reproducible-builds/README.md)

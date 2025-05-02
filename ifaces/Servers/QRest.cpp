@@ -108,10 +108,15 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -175,10 +180,15 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -255,10 +265,15 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -348,10 +363,15 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -413,10 +433,15 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &rep
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -483,10 +508,15 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -538,10 +568,15 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -607,10 +642,15 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -662,10 +702,15 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
@@ -731,10 +776,15 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
     else{
         reply_code = reply->error();
         reply_msg  = reply->errorString();
-        if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
-            reply_msg = STR_CPP_111;
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
         }
-        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
     }
     QByteArray response_data = reply->readAll();
     QJsonDocument json = QJsonDocument::fromJson(response_data);
