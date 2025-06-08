@@ -35,7 +35,6 @@ import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id:_withdraw
-    visible: ServiceSetting.claimInheritanceFlow === ServiceType.WITHDRAW_TO_NUNCHUK_WALLET
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
@@ -43,7 +42,7 @@ QOnScreenContentTypeB {
     extraHeader: Item {}
     property string walletId: ""
     property int currentSelect: -1
-    onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         id: _item
         Column {
@@ -90,7 +89,7 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     onNextClicked: {
         if (isValid()) {
             AppModel.showToast(-1, STR.STR_QML_816, EWARNING.ERROR_MSG);

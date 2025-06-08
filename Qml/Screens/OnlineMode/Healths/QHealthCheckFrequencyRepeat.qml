@@ -54,7 +54,7 @@ QOnScreenContentTypeA {
     ]
     onCloseClicked: {
         dashboardInfo.health.resetScreen()
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     signal healthCheckBack(var obj)
     signal healthCheckSave(var obj)

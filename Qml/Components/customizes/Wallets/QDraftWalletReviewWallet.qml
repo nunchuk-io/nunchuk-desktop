@@ -38,8 +38,9 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1654
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var newWalletInfo  : AppModel.newWalletInfo
+    property bool nextEnabled: true
     content: Item {
         anchors {
             top: parent.top
@@ -63,6 +64,17 @@ QOnScreenContentTypeA {
             txt.text: STR.STR_QML_1640
             anchors.bottom: parent.bottom
             visible: newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT && newWalletInfo.walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET
+        }
+    }
+    bottomRight: QTextButton {
+        width: label.paintedWidth + 16 * 2
+        height: 48
+        label.text: STR.STR_QML_1249
+        label.font.pixelSize: 16
+        type: eTypeE
+        enabled: nextEnabled
+        onButtonClicked: {
+            nextClicked()
         }
     }
 }

@@ -24,21 +24,20 @@ import EWARNING 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
-import "../origins"
-import "../customizes/Texts"
-import "../customizes/Buttons"
-import "../customizes/Signers"
-import "../../../localization/STR_QML.js" as STR
+import "../../../Components/origins"
+import "../../../Components/customizes/Texts"
+import "../../../Components/customizes/Buttons"
+import "../../../Components/customizes/Signers"
+import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: signermanagerdlg
-    property alias  nameWidth: text.width
-    property alias  signername: id_signername.text
-    property string  card_id_or_xfp: ""
-    property string devicetype: ""
-    property int    signerType : 0
-    property bool   isPrimaryKey: false
-    property string signerTag: ""
+    property alias signerData: dataSingle
+    QSingleSignerData {
+        id: dataSingle
+    }
+    height: singleColumn.childrenRect.height + 10 * 2
+
     property int    accountIndex: 0
     color: mastersignerMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
     Rectangle {
@@ -51,25 +50,24 @@ Rectangle {
     QSignerLightIcon {
         id: indicator
         iconSize: 24
-        device_type: devicetype
-        type: signerType
-        tag: signerTag
+        device_type: dataSingle.single_devicetype
+        type: dataSingle.single_type
+        tag: dataSingle.single_tag
         anchors.left: parent.left
         anchors.leftMargin: 13
         anchors.verticalCenter: parent.verticalCenter
     }
     Column {
-        id: text
+        id: singleColumn
         anchors.left: indicator.right
         anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        width: 160
-        height: 37
-        QText {
+        width: 170
+        QMontserrat {
             id: id_signername
             width: parent.width
             height: paintedHeight
-            font.family: "Montserrat"
+            text: dataSingle.single_name
             color: "#F1FAFE"
             elide: Text.ElideRight
             font.pixelSize: 14
@@ -83,11 +81,12 @@ Rectangle {
             height: 16
             color: "#F1FAFE"
             text: {
-                if (signerTag == "NFC" || signerType === NUNCHUCKTYPE.NFC) {
-                    var textR = card_id_or_xfp.substring(card_id_or_xfp.length - 5, card_id_or_xfp.length).toUpperCase()
+                if (dataSingle.master_type === NUNCHUCKTYPE.NFC) {
+                    var card_id = dataSingle.single_device_cardid
+                    var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
                     return "Card ID: ••" + textR
                 } else {
-                    return "XFP: " + card_id_or_xfp.toUpperCase()
+                    return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
                 }
             }
             elide: Text.ElideRight
@@ -113,12 +112,11 @@ Rectangle {
                 height: parent.height
                 anchors.verticalCenter: parent.verticalCenter
                 color: "#FDD95C"
-                visible: isPrimaryKey
+                visible: dataSingle.single_primary_key
                 radius: 20
-                QText {
+                QLato {
                     id: primaryText
                     text: STR.STR_QML_641
-                    font.family: "Lato"
                     font.weight: Font.Bold
                     font.pixelSize: 10
                     anchors.centerIn: parent
@@ -131,11 +129,10 @@ Rectangle {
                 width: accText.width + 16
                 color: "#EAEAEA"
                 radius: 20
-                visible: accountIndex > 0
-                QText {
+                visible: dataSingle.single_account_index > 0
+                QLato {
                     id: accText
-                    text: qsTr("Acct %1").arg(accountIndex)
-                    font.family: "Lato"
+                    text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                     font.weight: Font.Bold
                     font.pixelSize: 10
                     anchors.centerIn: parent
@@ -153,12 +150,11 @@ Rectangle {
                 height: parent.height
                 width: typeText.width + 16
                 color: "#EAEAEA"
-                visible: signerType !== NUNCHUCKTYPE.SERVER
+                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
                 radius: 20
-                QText {
+                QLato {
                     id: typeText
-                    text: GlobalData.signers(signerType)
-                    font.family: "Lato"
+                    text: GlobalData.signers(dataSingle.single_type)
                     font.weight: Font.Bold
                     font.pixelSize: 10
                     anchors.centerIn: parent

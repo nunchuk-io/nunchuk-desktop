@@ -40,6 +40,7 @@ Item {
     property string tag: ""
     property string device_type: ""
     property string bip32_path: ""
+    property var modelKey
     property var existList: draftWallet.signerExistList
 
     onVisibleChanged: {
@@ -154,6 +155,7 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         anchors.fill: parent
                         onClicked: {
+                            modelKey = modelData
                             fingerPrint = modelData.signer_fingerPrint
                             type = modelData.signer_type
                             tag = modelData.signer_tag

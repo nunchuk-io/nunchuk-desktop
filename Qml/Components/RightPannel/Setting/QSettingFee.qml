@@ -37,8 +37,8 @@ import "../../../../localization/STR_QML.js" as STR
 Item {
     id: feeSettingItem
     anchors.fill: parent
-    property int    feeValue: AppSetting.feeSetting
-    property bool   anyChanged: AppSetting.feeSetting !== feeValue
+
+    property bool anyChanged: defaultFeeRate.anyChanged || automaticFeeSelection.anyChanged || antiFeeSniping.anyChanged
 
     Flickable {
         anchors.fill: parent
@@ -64,163 +64,313 @@ Item {
                 font.weight: Font.Bold
                 text: STR.STR_QML_1715
             }
+
             Column {
-                spacing: 0
-                QLato {
-                    font.pixelSize: 12
-                    font.weight: Font.Bold
-                    text: STR.STR_QML_1716
-                }
-                Item {
-                    width: 2
-                    height: 8
-                }
-                Item {
-                    id: economyitem
-                    property bool selected: feeSettingItem.feeValue === NUNCHUCKTYPE.ECONOMY
-                    width: 375
-                    height: 62
+                spacing: 16
+                Column {
+                    id: defaultFeeRate
+                    spacing: 0
                     Column {
-                        width: parent.width
-                        anchors.verticalCenter: parent.verticalCenter
-                        Row {
-                            spacing: 8
-                            height: 24
-                            QLato {
-                                text: "Economy"
-                                font.pixelSize: 16
-                                font.weight: Font.Normal
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            Rectangle {
-                                width: 91
-                                height: 16
-                                radius: 20
-                                color: "#EAEAEA"
-                                anchors.verticalCenter: parent.verticalCenter
-                                QText {
-                                    text: "Recommended"
-                                    font.pixelSize: 10
-                                    font.weight: Font.Bold
-                                    anchors.centerIn: parent
+                        QLato {
+                            font.pixelSize: 16
+                            text: STR.STR_QML_1752
+                            color: "#000000"
+                        }
+                        QLato {
+                            font.pixelSize: 12
+                            text: STR.STR_QML_1753
+                            color: "#757575"
+                            lineHeight: 16
+                            lineHeightMode: Text.FixedHeight
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+                    Item {
+                        width: 2
+                        height: 8
+                    }
+                    Item {
+                        id: economyitem
+                        property bool selected: defaultFeeRate.feeValue === NUNCHUCKTYPE.ECONOMY
+                        width: 450
+                        height: 62
+                        Column {
+                            width: parent.width
+                            anchors.verticalCenter: parent.verticalCenter
+                            Row {
+                                spacing: 8
+                                height: 24
+                                QLato {
+                                    text: "Economy"
+                                    font.pixelSize: 16
+                                    font.weight: Font.Normal
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Rectangle {
+                                    width: 91
+                                    height: 16
+                                    radius: 20
+                                    color: "#EAEAEA"
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    QText {
+                                        text: "Recommended"
+                                        font.pixelSize: 10
+                                        font.weight: Font.Bold
+                                        anchors.centerIn: parent
+                                    }
                                 }
                             }
+                            QLato {
+                                text: STR.STR_QML_1717
+                                font.pixelSize: 12
+                                font.weight: Font.Normal
+                                color: "#757575"
+                                height: 16
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
-                        QLato {
-                            text: STR.STR_QML_1717
-                            font.pixelSize: 12
-                            font.weight: Font.Normal
-                            color: "#757575"
-                            height: 16
-                            verticalAlignment: Text.AlignVCenter
+                        ColorOverlay {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                            width: 24
+                            height: 24
+                            source: QIcon {
+                                iconSize: 24
+                                source: economyitem.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                            }
+                            color: economyitem.enabled ? "#031F2B" : "#666666"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                defaultFeeRate.feeValue = NUNCHUCKTYPE.ECONOMY
+                            }
                         }
                     }
-                    ColorOverlay {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        width: 24
-                        height: 24
-                        source: QIcon {
-                            iconSize: 24
-                            source: economyitem.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                    Item {
+                        id: standarditem
+                        property bool selected: defaultFeeRate.feeValue === NUNCHUCKTYPE.STANDARD
+                        width: 450
+                        height: 62
+                        Column {
+                            width: parent.width
+                            anchors.verticalCenter: parent.verticalCenter
+                            QLato {
+                                height: 24
+                                verticalAlignment: Text.AlignVCenter
+                                text: "Standard"
+                                font.pixelSize: 16
+                                font.weight: Font.Normal
+                            }
+                            QLato {
+                                text: STR.STR_QML_1718
+                                font.pixelSize: 12
+                                font.weight: Font.Normal
+                                color: "#757575"
+                                height: 16
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
-                        color: economyitem.enabled ? "#031F2B" : "#666666"
+                        ColorOverlay {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                            width: 24
+                            height: 24
+                            source: QIcon {
+                                iconSize: 24
+                                source: standarditem.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                            }
+                            color: standarditem.enabled ? "#031F2B" : "#666666"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                defaultFeeRate.feeValue = NUNCHUCKTYPE.STANDARD
+                            }
+                        }
                     }
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            feeSettingItem.feeValue = NUNCHUCKTYPE.ECONOMY
+                    Item {
+                        id: priorityitem
+                        property bool selected: defaultFeeRate.feeValue === NUNCHUCKTYPE.PRIORITY
+                        width: 450
+                        height: 62
+                        Column {
+                            width: parent.width
+                            anchors.verticalCenter: parent.verticalCenter
+                            QLato {
+                                height: 24
+                                verticalAlignment: Text.AlignVCenter
+                                text: "Priority"
+                                font.pixelSize: 16
+                                font.weight: Font.Normal
+                            }
+                            QLato {
+                                text: STR.STR_QML_1719
+                                font.pixelSize: 12
+                                font.weight: Font.Normal
+                                color: "#757575"
+                                height: 16
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
+                        ColorOverlay {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                            width: 24
+                            height: 24
+                            source: QIcon {
+                                iconSize: 24
+                                source: priorityitem.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                            }
+                            color: priorityitem.enabled ? "#031F2B" : "#666666"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                defaultFeeRate.feeValue = NUNCHUCKTYPE.PRIORITY
+                            }
+                        }
+                    }
+
+                    property int  feeValue: AppSetting.feeSetting
+                    property bool anyChanged: AppSetting.feeSetting !== feeValue
+                    function applySettings(){
+                        AppSetting.feeSetting = defaultFeeRate.feeValue
                     }
                 }
-                Item {
-                    id: standarditem
-                    property bool selected: feeSettingItem.feeValue === NUNCHUCKTYPE.STANDARD
-                    width: 375
-                    height: 62
+                Column {
+                    id: automaticFeeSelection
+                    visible: false // TBD 0206
+                    spacing: 16
+                    Row {
+                        spacing: 0
+                        Column {
+                            spacing: 4
+                            QLato {
+                                font.pixelSize: 16
+                                text: STR.STR_QML_1754
+                                color: "#000000"
+                            }
+                            QLato {
+                                width: 350
+                                font.pixelSize: 12
+                                text: STR.STR_QML_1755
+                                color: "#757575"
+                                wrapMode: Text.WordWrap
+                                lineHeight: 16
+                                lineHeightMode: Text.FixedHeight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+                        QSwitchTypeB {
+                            id: autoFeeSwitcher
+                            width: 84
+                            height: 48
+                            switchOn: AppSetting.enableAutoFeeSelection
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
                     Column {
-                        width: parent.width
-                        anchors.verticalCenter: parent.verticalCenter
-                        QLato {
-                            height: 24
-                            verticalAlignment: Text.AlignVCenter
-                            text: "Standard"
-                            font.pixelSize: 16
-                            font.weight: Font.Normal
+                        visible: autoFeeSwitcher.switchOn
+                        spacing: 16
+                        QTextInputBoxTypeB {
+                            id: thresholdPercent
+                            label: STR.STR_QML_1758
+                            boxWidth: 450
+                            boxHeight: 48
+                            isValid: true
+                            validator: RegExpValidator { regExp: /[0-9]*/ }
+                            textInputted: AppSetting.thresholdPercentDisplay
                         }
-                        QLato {
-                            text: STR.STR_QML_1718
-                            font.pixelSize: 12
-                            font.weight: Font.Normal
-                            color: "#757575"
-                            height: 16
-                            verticalAlignment: Text.AlignVCenter
+                        QTextInputBoxTypeB {
+                            id: thresholdAmount
+                            label: STR.STR_QML_1759
+                            boxWidth: 450
+                            boxHeight: 48
+                            isValid: true
+                            validator: DoubleValidator {
+                                bottom: 0.00
+                                top: 1.00
+                                decimals: 2
+                            }
+                            textInputted: AppSetting.thresholdAmountDisplay
                         }
                     }
-                    ColorOverlay {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        width: 24
-                        height: 24
-                        source: QIcon {
-                            iconSize: 24
-                            source: standarditem.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                    property bool anyChanged: !autoFeeSwitcher.switchOn ? (autoFeeSwitcher.switchOn !== AppSetting.enableAutoFeeSelection) : (autoFeeSwitcher.switchOn !== AppSetting.enableAutoFeeSelection)
+                                                                                                                                              || (thresholdPercent.textInputted !== AppSetting.thresholdPercentDisplay)
+                                                                                                                                              || (thresholdAmount.textInputted !== AppSetting.thresholdAmountDisplay)
+                    function applySettings(){
+                        if(autoFeeSwitcher.switchOn !== AppSetting.enableAutoFeeSelection) {
+                            AppSetting.enableAutoFeeSelection = autoFeeSwitcher.switchOn
                         }
-                        color: standarditem.enabled ? "#031F2B" : "#666666"
+                        if(thresholdPercent.textInputted !== AppSetting.thresholdPercentDisplay) {
+                            AppSetting.thresholdPercentDisplay = thresholdPercent.textInputted
+                        }
+                        if(thresholdAmount.textInputted !== AppSetting.thresholdAmountDisplay) {
+                            AppSetting.thresholdAmountDisplay = thresholdAmount.textInputted
+                        }
+                        var valid_percent = isGreaterThanZero(thresholdPercent.textInputted);
+                        var valid_amount = isGreaterThanZero(thresholdAmount.textInputted);
+                        if(!valid_percent || !valid_amount) {
+                            AppModel.showToast(0, STR.STR_QML_1763, EWARNING.ERROR_MSG)
+                        }
                     }
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            feeSettingItem.feeValue = NUNCHUCKTYPE.STANDARD
-                        }
+                    function isGreaterThanZero(input) {
+                        var cleaned = input.toString().replace(/["%\s]/g, "");
+                        var number = Number(cleaned);
+                        return (number > 0);
                     }
                 }
-                Item {
-                    id: priorityitem
-                    property bool selected: feeSettingItem.feeValue === NUNCHUCKTYPE.PRIORITY
-                    width: 375
-                    height: 62
+                Rectangle {
+                    width: 450
+                    height: 1
+                    color: "#DEDEDE"
+                }
+                Column {
+                    id: antiFeeSniping
+                    spacing: 16
+                    Row {
+                        spacing: 0
+                        Column {
+                            spacing: 4
+                            QLato {
+                                font.pixelSize: 16
+                                text: STR.STR_QML_1756
+                                color: "#000000"
+                            }
+                            QLato {
+                                width: 350
+                                font.pixelSize: 12
+                                text: STR.STR_QML_1757
+                                color: "#757575"
+                                wrapMode: Text.WordWrap
+                                lineHeight: 16
+                                lineHeightMode: Text.FixedHeight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+                        QSwitchTypeB {
+                            id: antiFeeSwitcher
+                            width: 84
+                            height: 48
+                            switchOn: AppSetting.enableAntiFeeSniping
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
                     Column {
-                        width: parent.width
-                        anchors.verticalCenter: parent.verticalCenter
-                        QLato {
-                            height: 24
-                            verticalAlignment: Text.AlignVCenter
-                            text: "Priority"
-                            font.pixelSize: 16
-                            font.weight: Font.Normal
-                        }
-                        QLato {
-                            text: STR.STR_QML_1719
-                            font.pixelSize: 12
-                            font.weight: Font.Normal
-                            color: "#757575"
-                            height: 16
-                            verticalAlignment: Text.AlignVCenter
-                        }
+                        visible: false
+                        spacing: 16
                     }
-                    ColorOverlay {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        width: 24
-                        height: 24
-                        source: QIcon {
-                            iconSize: 24
-                            source: priorityitem.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-                        }
-                        color: priorityitem.enabled ? "#031F2B" : "#666666"
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            feeSettingItem.feeValue = NUNCHUCKTYPE.PRIORITY
-                        }
+
+                    property bool anyChanged: (antiFeeSwitcher.switchOn !== AppSetting.enableAntiFeeSniping)
+                    function applySettings(){
+                        AppSetting.enableAntiFeeSniping = antiFeeSwitcher.switchOn
                     }
                 }
             }
@@ -247,8 +397,27 @@ Item {
     }
     function saveFeeSettings() {
         if(feeSettingItem.anyChanged) {
-            AppSetting.feeSetting = feeSettingItem.feeValue
-            AppModel.showToast(0, "Fee settings updated", EWARNING.SUCCESS_MSG);
+            if(defaultFeeRate.anyChanged) {
+                defaultFeeRate.applySettings();
+            }
+            if(automaticFeeSelection.anyChanged) {
+                automaticFeeSelection.applySettings();
+            }
+            if(antiFeeSniping.anyChanged) {
+                antiFeeSniping.applySettings();
+            }
+
+            var threadHold = true;
+            if(thresholdPercent.textInputted !== AppSetting.thresholdPercentDisplay) {
+                threadHold = false;
+            }
+            if(thresholdAmount.textInputted !== AppSetting.thresholdAmountDisplay) {
+                threadHold = false;
+            }
+
+            if(threadHold){
+                AppModel.showToast(0, "Fee settings updated", EWARNING.SUCCESS_MSG);
+            }
         }
     }
 }

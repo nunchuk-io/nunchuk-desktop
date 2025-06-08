@@ -82,7 +82,7 @@ QScreen {
                     }
                 }
                 QTextButton {
-                    width: 200
+                    width: label.paintedWidth + 16*2
                     height: 48
                     anchors {
                         right: parent.right
@@ -204,7 +204,7 @@ QScreen {
                         bottomMargin: 32
                     }
                     QTextButton {
-                        width: 200
+                        width: label.paintedWidth + 16*2
                         height: 48
                         label.text: STR.STR_QML_273
                         label.font.pixelSize: 16
@@ -225,7 +225,7 @@ QScreen {
                     }
 
                     QTextButton {
-                        width: 230
+                        width: label.paintedWidth + 16*2
                         height: 48
                         label.text: STR.STR_QML_275
                         label.font.pixelSize: 16
@@ -378,7 +378,7 @@ QScreen {
                         bottomMargin: 32
                     }
                     QTextButton {
-                        width: 230
+                        width: label.paintedWidth + 16*2
                         height: 48
                         label.text: STR.STR_QML_275
                         label.font.pixelSize: 16
@@ -389,7 +389,7 @@ QScreen {
                         }
                     }
                     QTextButton {
-                        width: 200
+                        width: label.paintedWidth + 16*2
                         height: 48
                         label.text: STR.STR_QML_273
                         label.font.pixelSize: 16
@@ -401,10 +401,10 @@ QScreen {
                                 confirmpassphrases.errorText = STR.STR_QML_274
                             }
                             else{
+                                stateAddSigner.visible = true
                                 var signerObj = { "signername"    : rootAddsignerToWallet.signerNameInputted,
                                                   "passphrase"    : passphrase.textInputted};
                                 QMLHandle.sendEvent(EVT.EVT_SOFTWARE_SIGNER_REQUEST_CREATE, signerObj)
-                                stateAddSigner.visible = true
                             }
                         }
                     }
@@ -502,6 +502,7 @@ QScreen {
             ]
         }
         function showPopupInfo(isSoftware, fingerPrint){
+            stateAddSigner.visible = false
             _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
             _info.contentTextTwo = ""
             _info.open()

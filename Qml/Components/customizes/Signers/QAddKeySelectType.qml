@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: STR.STR_QML_106
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     signal keyTypeSelected(var hardware)
     property string hardwareTag: ""
     content: Item {

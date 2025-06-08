@@ -38,6 +38,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
+#include <QHttpPart>
 #include "DracoDefines.h"
 
 class QRest : public QObject
@@ -69,5 +70,12 @@ private:
     static QString      m_dracoToken;
     static QByteArray   m_machineUniqueId;
 };
+
+struct QReplyDeleter {
+    void operator()(QNetworkReply* ptr) const {
+        if (ptr) ptr->deleteLater();
+    }
+};
+using QNetworkReplyPtr = std::unique_ptr<QNetworkReply, QReplyDeleter>;
 
 #endif // QREST_H

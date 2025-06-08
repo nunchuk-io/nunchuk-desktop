@@ -32,12 +32,7 @@ Item {
         sourceComponent: {
             var user = ClientController.user
             if (user.isMultiSubscriptions) {
-                if (hasGroupWallet) {
-                    return isObserver ? observer_subscriber() : b_subscriber
-                }
-                else {
-                    return observer_subscriber()
-                }
+                return isObserver ? observer_subscriber() : b_subscriber
             }
             else if (user.isIronHandUser) {
                 return hb_ih_subscriber

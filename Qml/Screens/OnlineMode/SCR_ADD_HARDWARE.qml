@@ -89,7 +89,7 @@ QScreen {
         id: _passPhraseSelect
         QSelectPassPhraseQuestion {
             onRequestBack: {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
             onRequestNext: {
                 if (option === "not-have-a-passphrase") {
@@ -142,7 +142,7 @@ QScreen {
     function doneOrTryAgainAddHardwareKey(isSuccess) {
         if (isSuccess) {
             AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
-            closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         } else {
             GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
         }
@@ -154,7 +154,7 @@ QScreen {
                 _passPhrase = _BACKUP_COLDCARD
             } else {
                 AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         } else {
             GroupWallet.dashboardInfo.requestShowLetAddYourKeys();

@@ -33,7 +33,6 @@ QIcon {
     property string tag: "" //"COLDCARD"
     source: {
         var img = ""
-        console.warn("nunchuk: device_type:", device_type,"- type:", type,"- typeStr:", typeStr,"-tag:", tag)
         switch(type) {
         case NUNCHUCKTYPE.HARDWARE: img = ""; break
         // case NUNCHUCKTYPE.AIRGAP:   img = "qrc:/Images/Images/Device_Icons/air-gapped-key-dark.svg"; break

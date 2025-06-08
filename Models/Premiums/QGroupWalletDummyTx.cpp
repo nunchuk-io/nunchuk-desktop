@@ -270,9 +270,9 @@ void QGroupWalletDummyTx::requestUpdateDummyTx(const QMap<QString, QString> &sig
                     || dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_INHERITANCE_PLAN_CANCEL
                     || dashBoardPtr()->flow() == (int)AlertEnum::E_Alert_t::SERVICE_TAG_UPDATE_SECURITY_QUESTION) {
                     QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
-                    dashBoardPtr()->setShowDashBoard(true);
                     int wallet_index = AppModel::instance()->walletListPtr()->getWalletIndexById(dashBoardPtr()->wallet_id());
                     AppModel::instance()->setWalletListCurrentIndex(wallet_index);
+                    dashBoardPtr()->setShowDashBoard(true);
                 }
                 else {
                     QEventProcessor::instance()->sendEvent(E::EVT_DUMMY_TRANSACTION_INFO_BACK);

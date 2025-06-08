@@ -485,6 +485,7 @@ void QEventProcessor::collectGarbage()
 
 void QEventProcessor::onVisibleChanged(bool state)
 {
+    DBG_INFO << "Visibility changed to" << state;
     Q_UNUSED(state);
 }
 

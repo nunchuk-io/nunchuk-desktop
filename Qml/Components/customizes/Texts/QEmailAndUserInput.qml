@@ -158,6 +158,10 @@ Column {
         return ret;
     }
 
+    function requestFinishInputEmail() {
+        emailinput.finishInputEmail()
+    }
+
     Row{
         id: _ErrorAlert
         spacing: 6

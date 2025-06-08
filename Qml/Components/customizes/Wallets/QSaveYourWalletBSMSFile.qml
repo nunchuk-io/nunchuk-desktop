@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: ""
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     Item {
         anchors {
             left: parent.left
@@ -88,7 +88,7 @@ QOnScreenContentTypeB {
         }
     }
     onPrevClicked: {
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     bottomRight: Row {
         spacing: 12
@@ -99,7 +99,7 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
         QTextButton {

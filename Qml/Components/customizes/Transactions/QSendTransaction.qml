@@ -36,6 +36,7 @@ Item {
     id: _send
     property var  transactionInfo
     property bool isTaproot: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
+    property bool isMultisig: (AppModel.walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG)
     property int  pendingSignatue: 0
     property bool isDummy: false
     signal addrToVerify(var addr)
@@ -56,7 +57,7 @@ Item {
             onNewMemoNotify: _send.newMemoNotify(newMemo)
         }
         Loader {
-            sourceComponent: _send.isTaproot ? taprootWalletKeys : standardWalletKeys
+            sourceComponent: (_send.isTaproot && _send.isMultisig) ? taprootWalletKeys : standardWalletKeys
         }
     }
     QChangeTagsInTransaction {

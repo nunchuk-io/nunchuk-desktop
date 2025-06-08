@@ -23,10 +23,8 @@
 
 #include <QObject>
 #include <QSettings>
+#include <QMap>
 
-#define MAINNET_SERVER  "mainnet.nunchuk.io:51001"
-#define TESTNET_SERVER  "testnet.nunchuk.io:50001"
-#define SIGNET_SERVER   "signet.nunchuk.io:50002"
 #define HWI_PATH        "hwi"
 #define LOCAL_ADDRESS   "127.0.0.1"
 #define TOR_PORT        9050
@@ -35,7 +33,9 @@
 #define EXPLORER_MAINNET "https://mempool.space/tx/"
 #define EXPLORER_TESTNET "https://mempool.space/testnet4/tx/"
 #define EXPLORER_SIGNNET "https://mempool.space/signet/tx/"
-#define GLOBAL_SIGNET_EXPLORER "https://explorer.bc-2.jp/"
+#define MAINNET_SERVER   "mainnet.nunchuk.io:51001"
+#define TESTNET_SERVER   "testnet.nunchuk.io:50001"
+#define SIGNET_SERVER    "ssl://mempool.space:60602"
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 class QWalletCached {
@@ -71,9 +71,8 @@ private:
 class AppSetting : public NunchukSettings
 {
     Q_OBJECT
-
     Q_PROPERTY( int unit                        READ unit                       WRITE setUnit                       NOTIFY unitChanged)
-    Q_PROPERTY( QString mainnetServer           READ mainnetServer              WRITE setMainnetServer              NOTIFY mainnetServerChanged)
+    Q_PROPERTY( QVariant mainnetServer          READ mainnetServer                                                  NOTIFY mainnetServerChanged)
     Q_PROPERTY( QString testnetServer           READ testnetServer              WRITE setTestnetServer              NOTIFY testnetServerChanged)
     Q_PROPERTY( QString signetServer            READ signetServer               WRITE setSignetServer               NOTIFY signetServerChanged)
     Q_PROPERTY( bool enableDualServer           READ enableDualServer           WRITE setEnableDualServer           NOTIFY enableDualServerChanged)
@@ -110,6 +109,12 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(bool enableColab                 READ enableColab                WRITE setEnableColab                NOTIFY enableColabChanged)
     Q_PROPERTY(QStringList favoriteAddresses    READ favoriteAddresses                                              NOTIFY favoriteAddressesChanged)
     Q_PROPERTY(int feeSetting                   READ feeSetting                 WRITE setFeeSetting                 NOTIFY feeSettingChanged)
+    Q_PROPERTY(bool enableAntiFeeSniping        READ enableAntiFeeSniping       WRITE setEnableAntiFeeSniping       NOTIFY enableAntiFeeSnipingChanged)
+    Q_PROPERTY(bool enableAutoFeeSelection      READ enableAutoFeeSelection     WRITE setEnableAutoFeeSelection     NOTIFY enableAutoFeeSelectionChanged)
+    Q_PROPERTY(QString thresholdPercentDisplay  READ thresholdPercentDisplay    WRITE setthresholdPercentDisplay    NOTIFY thresholdPercentChanged)
+    Q_PROPERTY(int thresholdPercent             READ thresholdPercent           WRITE setthresholdPercent           NOTIFY thresholdPercentChanged)
+    Q_PROPERTY(double thresholdAmount           READ thresholdAmount            WRITE setthresholdAmount            NOTIFY thresholdAmountChanged)
+    Q_PROPERTY(QString thresholdAmountDisplay   READ thresholdAmountDisplay     WRITE setthresholdAmountDisplay     NOTIFY thresholdAmountChanged)
 
 public:
     enum class Chain : int {
@@ -139,15 +144,15 @@ public:
 
     void setGroupSetting(QString group);
     void resetSetting();
-//    QSettings getSetting();
+    Q_INVOKABLE void resetNetworkSetting(bool forceReset = false);
 
     int unit();
     void setUnit(int unit);
     // Settings
     void updateUnit();
 
-    QString mainnetServer();
-    void setMainnetServer(const QString &mainnetServer);
+    QVariant mainnetServer();
+    Q_INVOKABLE void setMainnetServer(const QVariant& value);
 
     QString testnetServer();
     void setTestnetServer(const QString &testnetServer);
@@ -278,12 +283,29 @@ public:
     int feeSetting();
     void setFeeSetting(int fee);
 
+    bool enableAntiFeeSniping();
+    void setEnableAntiFeeSniping(bool enable);
+
+    bool enableAutoFeeSelection();
+    void setEnableAutoFeeSelection(bool newEnableAutoFeeSelection);
+
+    int thresholdPercent();
+    void setthresholdPercent(int newthresholdPercent);
+    QString thresholdPercentDisplay();
+    void setthresholdPercentDisplay(const QString &newthresholdPercentDisplay);
+
+    double thresholdAmount();
+    void setthresholdAmount(double newthresholdAmount);
+    QString thresholdAmountDisplay();
+    void setthresholdAmountDisplay(const QString &newthresholdAmountDisplay);
+
 private:
     AppSetting();
     ~AppSetting();
 
+    QJsonArray sortJsonArrayById(const QJsonArray& array);
     int unit_;
-    QString mainnetServer_;
+    QMap<QString, QVariant> mainnetServer_;
     QString testnetServer_;
     QString signetServer_;
     bool enableDualServer_;
@@ -318,9 +340,13 @@ private:
     bool isStarted_;
     bool isFirstTimeOnboarding_;
     bool enableColab_ {false};
-    int  feeSetting_;
-
     QStringList m_favoriteAddresses{};
+
+    int  feeSetting_;
+    bool enableAntiFeeSniping_{false};
+    bool enableAutoFeeSelection_{false};
+    int  thresholdPercent_{10};
+    double  thresholdAmount_{0.20};
 
 signals:
     void unitChanged();
@@ -362,8 +388,12 @@ signals:
     void isFirstTimeOnboardingChanged();
     void enableColabChanged();
     void favoriteAddressesChanged();
-    void mainnetServerSelected(const QString url);
+    void mainnetServerSelected(const QVariant network);
     void feeSettingChanged();
+    void enableAntiFeeSnipingChanged();
+    void enableAutoFeeSelectionChanged();
+    void thresholdPercentChanged();
+    void thresholdAmountChanged();
 };
 
 #endif // APPSETTING_H

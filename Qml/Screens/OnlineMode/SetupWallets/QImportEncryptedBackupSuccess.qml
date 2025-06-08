@@ -36,7 +36,7 @@ QOnScreenContent {
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Column {
         anchors.fill: parent
         anchors.margins: 36
@@ -81,7 +81,7 @@ QOnScreenContent {
             label.text: STR.STR_QML_777
             label.font.pixelSize: 16
             type: eTypeE
-            onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 }

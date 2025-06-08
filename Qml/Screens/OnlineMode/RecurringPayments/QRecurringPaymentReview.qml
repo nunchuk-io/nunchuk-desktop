@@ -42,7 +42,7 @@ QOnScreenContentTypeA {
     property bool isCancel: false
     property bool isAlert: false
     property string option: STR.STR_QML_881
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property int left_width: 344
     property int right_width: 344
     property bool enableFixedPrecision: AppSetting.enableFixedPrecision
@@ -224,7 +224,7 @@ QOnScreenContentTypeA {
         if (!isAlert) {
             requestBack()
         } else {
-            closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
     bottomRight: {

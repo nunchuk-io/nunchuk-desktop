@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1221
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
             spacing: 36
@@ -86,7 +86,7 @@ QOnScreenContentTypeA {
 
     }
 
-    onPrevClicked: OnBoarding.state = "onboarding"
+    onPrevClicked: OnBoarding.screenFlow = "onboarding"
     bottomRight: QTextButton {
         width: 187
         height: 48

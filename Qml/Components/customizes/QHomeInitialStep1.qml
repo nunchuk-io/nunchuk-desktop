@@ -37,7 +37,7 @@ Rectangle {
             height: 152
             icon:"qrc:/Images/Images/keys.svg"
             onBtnClicked: {
-                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST, { type: "add-key-free" })
+                SignerManagement.requestCreateSignerFromHomeScreen()
             }
         }
         hotWallet {
@@ -47,7 +47,7 @@ Rectangle {
             height: 180
             icon:"qrc:/Images/Images/person-add-24px.svg"
             onBtnClicked: {
-                OnBoarding.state = "hotWallet"
+                OnBoarding.screenFlow = "hotWallet"
                 QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
             }
         }

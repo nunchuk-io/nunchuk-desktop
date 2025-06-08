@@ -25,8 +25,8 @@
 #include <QJsonArray>
 #include "TransactionModel.h"
 #include "ServiceSetting.h"
-#include "QSwitchAPI.h"
 #include "WalletModel.h"
+#include "Commons/QStateFlow.h"
 
 class InheritanceEnum : public QObject
 {
@@ -47,8 +47,8 @@ public:
         IE_NOTIFICATION
     };
 };
-//QWalletServicesTag
-class QWalletServicesTag : public QSwitchAPI
+
+class QWalletServicesTag : public QStateFlow
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList securityQuestions   READ securityQuestions      NOTIFY securityQuestionChanged)
@@ -66,11 +66,13 @@ class QWalletServicesTag : public QSwitchAPI
     Q_PROPERTY(QVariant inheritanceClaimPlan    READ inheritanceClaimPlan   NOTIFY inheritanceClaimPlanChanged)
     Q_PROPERTY(QVariant walletConfig            READ walletConfig           NOTIFY walletConfigChanged)
     Q_PROPERTY(QVariant reqiredSignatures       READ reqiredSignatures      NOTIFY reqiredSignaturesChanged)
+    Q_PROPERTY(qint64 claimInheritanceCustomAmount READ claimInheritanceCustomAmount  NOTIFY claimInheritanceCustomAmountChanged)
 
     Q_PROPERTY(QVariant keyRecovery             READ keyRecovery        CONSTANT)
 
 public:
-    QWalletServicesTag(int mode);
+    static QWalletServicesTagPtr instance();
+    QWalletServicesTag();
     virtual ~QWalletServicesTag();
     struct inheritance_t
     {
@@ -119,7 +121,7 @@ public:
     bool inheritanceCreateTx(const QJsonObject& data, const QStringList& authos);
     void setInheritanceAddress(const QString& to_wallet_id);
     void setInheritanceAddressNewTransaction(const QString& address);
-    bool inheritanceCreateDraftTransaction(double fee_rate = 1000.0);
+    bool inheritanceCreateDraftTransaction(double fee_rate = 1000.0, bool anti_fee_sniping = false);
     Q_INVOKABLE bool inheritanceSignTransaction();
 
     // Get additional wallet
@@ -146,6 +148,9 @@ public:
 
     QVariant inheritanceCheckStatus() const;
     void setInheritanceCheckStatus(const QJsonObject& status);
+    Q_INVOKABLE void updateInheritanceCheckStatus(const QString &key, const QVariant &value);
+    void updateInheritanceCheckStatus(const QJsonObject& status);
+    void clearInheritanceCheckStatus();
 
     QVariant inheritanceClaimPlan() const;
     void setInheritanceClaimPlan(const QJsonObject& claim);
@@ -171,12 +176,15 @@ public:
     QJsonObject confirmCodeNonceBody() const;
     void setConfirmCodeNonceBody(const QJsonObject& nonceBody);
 
+    qint64 claimInheritanceCustomAmount() const;
+
     // For change Email
     bool RequestConfirmationChangeEmail(const QString &new_email);
+
 public slots:
+    void setClaimInheritanceCustomAmount(qint64 amountSats);
     void clearBufferPeriodCountdown();
     void clearInheritance();
-
 signals:
     void lockdownPeriodsAlert(const QString& errormsg);
     void untilTimeChanged();
@@ -198,7 +206,7 @@ signals:
     void confirmCodeVerified();
     void walletConfigChanged();
     void reqiredSignaturesChanged();
-
+    void claimInheritanceCustomAmountChanged();
 private:
     QString m_passwordToken {""};
     QString m_secQuesToken {""};
@@ -226,6 +234,8 @@ private:
     QStringList m_listPolicy;
     QStringList m_list2FA;
     QString m_code_id {};
+
+    int64_t m_claimInheritanceCustomAmount = {0};
 
     std::vector<nunchuk::SingleSigner> single_signers;
     std::vector<nunchuk::MasterSigner> master_signers;

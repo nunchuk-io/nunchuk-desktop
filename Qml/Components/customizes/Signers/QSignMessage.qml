@@ -47,7 +47,7 @@ QOnScreenContentTypeA {
 
     property string message_input: ""
     property string path_input: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Flickable {
             anchors.fill: parent
@@ -208,7 +208,7 @@ QOnScreenContentTypeA {
         label.text: STR.STR_QML_035
         label.font.pixelSize: 16
         type: eTypeF
-        onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     bottomRight: QTextButton {
         width: 63

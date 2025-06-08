@@ -10,8 +10,8 @@ class SignInViaDummy
 public:
     bool SignInUsingXPUBorWallet(const QString &bsms);
     void initWallet();
-    void convertWalelt();
-    WalletId walletId() const;
+    void initializeWalletData(const QString& walletId);
+    void convertWallet();
     QGroupDashboardPtr dashboard() const;
     bool isSignIn() const;
     QJsonObject getSigner(const QString& xfp);

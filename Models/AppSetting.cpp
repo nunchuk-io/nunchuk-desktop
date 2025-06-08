@@ -96,9 +96,6 @@ QVariant NunchukSettings::commonValue(const QString &key, const QVariant &defaul
 
 AppSetting::AppSetting() :
     unit_((int)Unit::BTC),
-    mainnetServer_(MAINNET_SERVER),
-    testnetServer_(TESTNET_SERVER),
-    signetServer_(SIGNET_SERVER),
     enableDualServer_(false),
     enableCustomizeHWIDriver_(false),
     hwiPath_(HWI_PATH),
@@ -122,7 +119,7 @@ AppSetting::AppSetting() :
     coreRPCName_(""),
     coreRPCPassword_(""),
     enableSignetStream_(false),
-    signetStream_(GLOBAL_SIGNET_EXPLORER),
+    signetStream_(EXPLORER_SIGNNET),
     enableDebugMode_(false),
     enableMultiDeviceSync_(false),
     isStarted_(false),
@@ -131,7 +128,6 @@ AppSetting::AppSetting() :
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     DBG_INFO << "Setting in:" << NunchukSettings::fileName();
-    this->disconnect();
 }
 
 AppSetting::~AppSetting() {
@@ -157,10 +153,8 @@ void AppSetting::setGroupSetting(QString group) {
 
 void AppSetting::resetSetting()
 {
+    this->resetNetworkSetting();
     this->setUnit((int)Unit::BTC);
-    this->setMainnetServer(MAINNET_SERVER);
-    this->setTestnetServer(TESTNET_SERVER);
-    this->setSignetServer(SIGNET_SERVER);
     this->setEnableDualServer(false);
     this->setEnableCustomizeHWIDriver(false);
     this->setHwiPath(HWI_PATH);
@@ -180,10 +174,61 @@ void AppSetting::resetSetting()
     this->setCoreRPCPort(primaryServer_ == (int)Chain::TESTNET ? CORERPC_TESTNET_PORT : CORERPC_MAINNET_PORT);
     this->setCoreRPCName("");
     this->setCoreRPCPassword("");
-    this->setSignetStream(GLOBAL_SIGNET_EXPLORER);
+    this->setSignetStream(EXPLORER_SIGNNET);
     this->setEnableMultiDeviceSync(false);
     this->setCurrency("USD");
 }
+
+void AppSetting::resetNetworkSetting(bool forceReset)
+{
+    QJsonObject output;
+    QString errormsg;
+    // Fetch the default Electrum servers from Draco
+    bool ret = Draco::instance()->GetElectrumServers(output, errormsg);
+    if (ret) {
+        QJsonArray default_mainnetServers = output["mainnet"].toArray();
+        QJsonArray default_testnetServers = output["testnet"].toArray();
+        QJsonArray default_signetServers = output["signet"].toArray();
+        QMap<QString, QVariant> tmp_mainnetServer = mainnetServer().toMap();
+        auto tmp_testnetServer = testnetServer();
+        auto tmp_signetServer = signetServer();
+        if(tmp_mainnetServer.isEmpty() || forceReset) {
+            if (!default_mainnetServers.isEmpty()) {
+                tmp_mainnetServer = default_mainnetServers.first().toObject().toVariantMap();
+                setMainnetServer(QVariant::fromValue(tmp_mainnetServer));               
+            }
+        }
+        if(tmp_testnetServer.isEmpty() || forceReset) {
+            if (!default_testnetServers.isEmpty()) {
+                setTestnetServer(default_testnetServers.first().toObject().toVariantMap()["url"].toString());
+            }
+        }
+        if(tmp_signetServer.isEmpty() || forceReset) {
+            if (!default_signetServers.isEmpty()) {
+                setSignetServer(default_signetServers.first().toObject().toVariantMap()["url"].toString());
+            }
+        }
+    }
+}
+
+QJsonArray AppSetting::sortJsonArrayById(const QJsonArray& array) {
+    QList<QJsonObject> objects;
+    for (const QJsonValue& value : array) {
+        if (value.isObject())
+            objects.append(value.toObject());
+    }
+
+    std::sort(objects.begin(), objects.end(), [](const QJsonObject& a, const QJsonObject& b) {
+        return a["id"].toString().toInt() < b["id"].toString().toInt();
+    });
+
+    QJsonArray sortedArray;
+    for (const QJsonObject& obj : objects) {
+        sortedArray.append(obj);
+    }
+    return sortedArray;
+}
+
 
 void AppSetting::updateUnit()
 {
@@ -222,24 +267,25 @@ void AppSetting::setUnit(int unit)
     }
 }
 
-QString AppSetting::mainnetServer()
+QVariant AppSetting::mainnetServer()
 {
     if(NunchukSettings::contains("mainnestServer")){
-        mainnetServer_ = NunchukSettings::value("mainnestServer").toString();
+        mainnetServer_ = NunchukSettings::value("mainnestServer").toMap();
     }
     else{
         NunchukSettings::setValue("mainnestServer", mainnetServer_);
     }
-    return mainnetServer_;
+    return QVariant::fromValue(mainnetServer_);
 }
 
-void AppSetting::setMainnetServer(const QString &mainnestServer)
+void AppSetting::setMainnetServer(const QVariant& value)
 {
-    if(mainnetServer_ != mainnestServer){
-        mainnetServer_ = mainnestServer;
-        NunchukSettings::setValue("mainnestServer", mainnetServer_);
-        emit mainnetServerChanged();
-    }
+    QMap<QString, QVariant> dataMap = value.toMap();
+    if (mainnetServer_ == dataMap)
+        return;
+    mainnetServer_ = dataMap;
+    NunchukSettings::setValue("mainnestServer", mainnetServer_);
+    emit mainnetServerChanged();
 }
 
 QString AppSetting::testnetServer()
@@ -1097,4 +1143,122 @@ void AppSetting::setFeeSetting(int fee)
         NunchukSettings::setValue("feeSetting", feeSetting_);
         emit feeSettingChanged();
     }
+}
+
+bool AppSetting::enableAntiFeeSniping()
+{
+    if(NunchukSettings::contains("enableAntiFeeSniping")){
+        enableAntiFeeSniping_ = NunchukSettings::value("enableAntiFeeSniping").toBool();
+    }
+    else{
+        NunchukSettings::setValue("enableAntiFeeSniping", enableAntiFeeSniping_);
+    }
+    return enableAntiFeeSniping_;
+}
+
+void AppSetting::setEnableAntiFeeSniping(bool enable)
+{
+    if (enableAntiFeeSniping_ != enable){
+        enableAntiFeeSniping_ = enable;
+        NunchukSettings::setValue("enableAntiFeeSniping", enableAntiFeeSniping_);
+        emit enableAntiFeeSnipingChanged();
+    }
+}
+
+bool AppSetting::enableAutoFeeSelection()
+{
+    if(NunchukSettings::contains("enableAutoFeeSelection")){
+        enableAutoFeeSelection_ = NunchukSettings::value("enableAutoFeeSelection").toBool();
+    }
+    else{
+        NunchukSettings::setValue("enableAutoFeeSelection", enableAutoFeeSelection_);
+    }
+    return enableAutoFeeSelection_;
+}
+
+void AppSetting::setEnableAutoFeeSelection(bool newEnableAutoFeeSelection)
+{
+    if (enableAutoFeeSelection_ == newEnableAutoFeeSelection)
+        return;
+    enableAutoFeeSelection_ = newEnableAutoFeeSelection;
+    NunchukSettings::setValue("enableAutoFeeSelection", enableAutoFeeSelection_);
+    emit enableAutoFeeSelectionChanged();
+}
+
+int AppSetting::thresholdPercent()
+{
+    if(NunchukSettings::contains("thresholdPercent")){
+        thresholdPercent_ = NunchukSettings::value("thresholdPercent").toInt();
+    }
+    else{
+        NunchukSettings::setValue("thresholdPercent", thresholdPercent_);
+    }
+    return thresholdPercent_;
+}
+
+void AppSetting::setthresholdPercent(int newthresholdPercent)
+{
+    if (thresholdPercent_ == newthresholdPercent)
+        return;
+    thresholdPercent_ = newthresholdPercent;
+    NunchukSettings::setValue("thresholdPercent", thresholdPercent_);
+    emit thresholdPercentChanged();
+}
+
+QString AppSetting::thresholdPercentDisplay()
+{
+    int percent = thresholdPercent();
+    return QString("%1%").arg(percent);
+}
+
+void AppSetting::setthresholdPercentDisplay(const QString &newthresholdPercentDisplay)
+{
+    QString temp = newthresholdPercentDisplay.trimmed();
+    temp.remove("%");
+    temp.remove(" ");
+    int realPercent = temp.toInt();
+    if(realPercent <= 0){
+        // AppModel::instance()->showToast(0, "Threshold must be greater than 0", EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
+    setthresholdPercent(realPercent);
+}
+
+double AppSetting::thresholdAmount()
+{
+    if(NunchukSettings::contains("thresholdAmount")){
+        thresholdAmount_ = NunchukSettings::value("thresholdAmount").toDouble();
+    }
+    else{
+        NunchukSettings::setValue("thresholdAmount", thresholdAmount_);
+    }
+    return thresholdAmount_;
+}
+
+void AppSetting::setthresholdAmount(double newthresholdAmount)
+{
+    if (thresholdAmount_ == newthresholdAmount)
+        return;
+    thresholdAmount_ = newthresholdAmount;
+    NunchukSettings::setValue("thresholdAmount", thresholdAmount_);
+    emit thresholdAmountChanged();
+}
+
+QString AppSetting::thresholdAmountDisplay()
+{
+    double amount = thresholdAmount();
+    QString result = QString::number(amount, 'f', 2);
+    return result;
+}
+
+void AppSetting::setthresholdAmountDisplay(const QString &newthresholdAmountDisplay)
+{
+    QString temp = newthresholdAmountDisplay.trimmed();
+    temp.remove(" ");
+    double realAmount = temp.toDouble();
+    if(realAmount == 0){
+        // AppModel::instance()->showToast(0, "Threshold must be greater than 0", EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
+    setthresholdAmount(realAmount);
 }

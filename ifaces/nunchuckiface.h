@@ -238,11 +238,13 @@ public:
                                           nunchuk::Amount fee_rate,
                                           const bool subtract_fee_from_amount,
                                           const std::string &replace_txid,
+                                          bool use_script_path,
                                           QWarningMessage& msg);
 
     nunchuk::Transaction ReplaceTransaction(const std::string &wallet_id,
                                             const std::string& tx_id,
                                             nunchuk::Amount new_fee_rate,
+                                            bool anti_fee_sniping,
                                             QWarningMessage& msg);
 
     bool UpdateTransactionMemo(const std::string& wallet_id,
@@ -809,6 +811,8 @@ public:
                              QWarningMessage &msg);
 
     std::vector<std::string> GetDeprecatedGroupWallets(QWarningMessage &msg) const;
+
+    std::string GetHotKeyMnemonic(const std::string& signer_id, const std::string& passphrase, QWarningMessage &msg);
 private:
     nunchukiface();
     ~nunchukiface();

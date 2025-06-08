@@ -584,6 +584,6 @@ void QKeyRecovery::createUserCustomizedQuestion(const QString &question)
 
 QWalletServicesTagPtr QKeyRecovery::servicesTagPtr() const
 {
-    return ServiceSetting::instance()->servicesTagPtr();
+    return QWalletServicesTag::instance();
 }
 

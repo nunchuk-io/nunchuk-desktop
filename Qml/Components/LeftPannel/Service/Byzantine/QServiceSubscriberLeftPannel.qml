@@ -46,7 +46,7 @@ Item {
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),         enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
         {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
-        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: true,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: hasReplaceKeys,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
         {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return rollOverNewAssistedWallet() } },
         {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return manageSubscription() }}
     ]
@@ -60,7 +60,7 @@ Item {
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),         enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
         {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
-        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: true,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: hasReplaceKeys,               enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
         {screen:_ORDER_NEW_HARDWARE,                 visible: hasOrderNewHardware,          enable:true,   title:STR.STR_QML_700, icon: ""                                          ,action: function(){ return orderNewHardware() } },
         {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return rollOverNewAssistedWallet() } },
         {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return manageSubscription() } }
@@ -76,16 +76,17 @@ Item {
     property bool hasViewInheritancePlan: ServiceSetting.servicesTag.listInheritantPlans.length > 0 && hasPro && (role === "KEYHOLDER" || role === "MASTER" || role === "ADMIN")
     property bool hasPlatformKeyCoSign: ServiceSetting.servicesTag.listPolicy.length > 0 && hasPro && (role === "KEYHOLDER" ||  role === "MASTER" || role === "ADMIN")
     property bool hasGetAdditionalWallet: role === "MASTER"
-    property bool hasOrderNewHardware: role === "KEYHOLDER" || role === "KEYHOLDER_LIMITED" || role === "MASTER" || role === "ADMIN"
+    property bool hasOrderNewHardware: role === "MASTER" || role === "ADMIN"
     property bool hasRollOverNewAssistedWallet: role === "MASTER"
     property bool hasManageSubscription: role === "MASTER"
+    property bool hasReplaceKeys: role === "MASTER"
 
     function hasYourSubsciption() {
         if (isPremierUser || isContainsPremierWallet) {
-            return hasPlatformKeyCoSign || hasGetAdditionalWallet || hasRollOverNewAssistedWallet || hasManageSubscription
+            return hasPlatformKeyCoSign || hasGetAdditionalWallet || hasRollOverNewAssistedWallet || hasManageSubscription || hasReplaceKeys
         }
         else {
-            return hasPlatformKeyCoSign || hasGetAdditionalWallet || hasOrderNewHardware || hasRollOverNewAssistedWallet || hasManageSubscription
+            return hasPlatformKeyCoSign || hasGetAdditionalWallet || hasOrderNewHardware || hasRollOverNewAssistedWallet || hasManageSubscription || hasReplaceKeys
         }
     }
 

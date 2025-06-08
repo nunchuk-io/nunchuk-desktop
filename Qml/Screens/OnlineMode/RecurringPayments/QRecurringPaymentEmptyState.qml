@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1065
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Item {
             anchors{
@@ -75,7 +75,7 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: QTextButton {
         width: 196
         height: 48

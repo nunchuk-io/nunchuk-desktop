@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1251
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
             spacing: 36
@@ -73,7 +73,7 @@ QOnScreenContentTypeA {
 
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QTextButton {
@@ -90,7 +90,7 @@ QOnScreenContentTypeA {
                 return !asissted
             }
             onButtonClicked: {
-                OnBoarding.state = "getMore"
+                OnBoarding.screenFlow = "getMore"
             }
         }
         QTextButton {

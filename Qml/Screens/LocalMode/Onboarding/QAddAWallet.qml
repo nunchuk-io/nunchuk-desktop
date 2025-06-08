@@ -38,8 +38,9 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1249
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    property bool hasWallet: false
+    label.text: hasWallet ? STR.STR_QML_1249: STR.STR_QML_1742
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property bool isPaidSubscription: ClientController.user.isSubscribedUser
     content: Item {
         Column {
@@ -49,87 +50,120 @@ QOnScreenContentTypeA {
             anchors.topMargin: - 16 + 20
             width: 550
             spacing: 16
-            QCreateHotWallet {
+            QLato {
                 width: _list.width
-                height: 136
-                anchors.left: parent.left
-                isPaid: true
-                color: "#F5F5F5"
-                title: STR.STR_QML_1553
-                optional: "(1 remaining)"
-                description: STR.STR_QML_1554
-                note: STR.STR_QML_1555
-                desImg: "qrc:/Images/Images/type-assisted-wallet.svg"
-                onItemclicked: {
-                }
-                QSubscriptionRequired {
-                    width: 150
-                    height: 20
-                    anchors {
+                height: 20
+                visible: !hasWallet
+                text: STR.STR_QML_1746
+                font.pixelSize: 16
+                font.weight: Font.Normal
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Flickable {
+                height: 480
+                width: _list.width + 4
+                anchors.horizontalCenter: parent.horizontalCenter
+                flickableDirection: Flickable.VerticalFlick
+                clip: true
+                interactive: true
+                contentHeight: contentWallet.childrenRect.height
+                ScrollBar.vertical: ScrollBar { active: true }
+                Column {
+                    id: contentWallet
+                    anchors{
+                        horizontalCenter: parent.horizontalCenter
                         top: parent.top
-                        right: parent.right
+                        topMargin: 2
+                    }                    
+                    spacing: 16
+                    QCreateHotWallet {
+                        width: _list.width
+                        height: 136
+                        anchors.left: parent.left
+                        isPaid: true
+                        color: "#F5F5F5"
+                        title: STR.STR_QML_1553
+                        optional: {
+                            var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count
+                            return qsTr("(%1 remaining)").arg(remainCount)
+                        }
+                        description: STR.STR_QML_1554
+                        note: STR.STR_QML_1555
+                        desImg: "qrc:/Images/Images/type-assisted-wallet.svg"
+                        onItemclicked: {
+                        }
+                        QSubscriptionRequired {
+                            width: 150
+                            height: 20
+                            anchors {
+                                top: parent.top
+                                right: parent.right
+                            }
+                        }
+                        enabled: false
+                        visible: isPaidSubscription
                     }
-                }
-                enabled: false
-                visible: isPaidSubscription
-            }
-            QCreateHotWallet {
-                width: _list.width
-                height: 108
-                anchors.left: parent.left
-                color: "#FFFFFF"
-                title: STR.STR_QML_1262
-                description: STR.STR_QML_1405
-                desImg: "qrc:/Images/Images/type-unassisted-wallet.svg"
-                onItemclicked: {
-                    var _input = {
-                        type: "create-new-wallet"
+                    QCreateHotWallet {
+                        width: _list.width
+                        height: 108
+                        anchors.left: parent.left
+                        color: "#FFFFFF"
+                        title: STR.STR_QML_1262
+                        description: STR.STR_QML_1405
+                        desImg: "qrc:/Images/Images/type-unassisted-wallet.svg"
+                        onItemclicked: {
+                            var _input = {
+                                type: "create-new-wallet"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
+                        }
                     }
-                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
-                }
-            }
-            QCreateHotWallet {
-                width: _list.width
-                height: 108
-                anchors.left: parent.left
-                color: "#FFFFFF"
-                title: STR.STR_QML_1543
-                description: STR.STR_QML_1544
-                desImg: "qrc:/Images/Images/type-free-group-wallet.svg"
-                onItemclicked: {
-                    var _input = {
-                        type: "create-new-group-wallet"
+                    QCreateHotWallet {
+                        width: _list.width
+                        height: 108
+                        anchors.left: parent.left
+                        color: "#FFFFFF"
+                        title: STR.STR_QML_1543
+                        description: STR.STR_QML_1544
+                        desImg: "qrc:/Images/Images/type-free-group-wallet.svg"
+                        onItemclicked: {
+                            var _input = {
+                                type: "create-new-group-wallet"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
+                        }
                     }
-                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
-                }
-            }
-            QCreateHotWallet {
-                width: _list.width
-                height: 108
-                anchors.left: parent.left
-                color: "#FFFFFF"
-                title: STR.STR_QML_1251
-                description: STR.STR_QML_1252
-                desImg: "qrc:/Images/Images/type-hot-wallet.svg"
-                onItemclicked: {
-                    OnBoarding.state = "hotWallet"
-                }
-            }
-            QLine {
-                width: _list.width
-                visible: !isPaidSubscription
-            }
-            QCreateHotWallet {
-                width: _list.width
-                height: 80
-                anchors.left: parent.left
-                color: "#F5F5F5"
-                title: ""
-                description: STR.STR_QML_1545
-                desImg: "qrc:/Images/Images/type-assisted-wallet.svg"
-                visible: !isPaidSubscription
-                onItemclicked: {
+                    QCreateHotWallet {
+                        width: _list.width
+                        height: 108
+                        anchors.left: parent.left
+                        color: "#FFFFFF"
+                        title: STR.STR_QML_1251
+                        description: STR.STR_QML_1252
+                        desImg: "qrc:/Images/Images/type-hot-wallet.svg"
+                        onItemclicked: {
+                            OnBoarding.screenFlow = "hotWallet"
+                        }
+                    }
+                    QLine {
+                        width: _list.width
+                        visible: !isPaidSubscription
+                    }
+                    QCreateHotWallet {
+                        width: _list.width
+                        height: 80
+                        anchors.left: parent.left
+                        color: "#F5F5F5"
+                        title: ""
+                        description: STR.STR_QML_1545
+                        desImg: "qrc:/Images/Images/type-assisted-wallet.svg"
+                        visible: !isPaidSubscription
+                        onItemclicked: {
 
+                        }
+                    }
                 }
             }
         }
@@ -277,7 +311,7 @@ QOnScreenContentTypeA {
                         enable: true,
                         subMenu: null,
                         action: function(){
-                            OnBoarding.state = "recoverHotWallet"
+                            OnBoarding.screenFlow = "recoverHotWallet"
                         }
                     },
                     {
@@ -319,7 +353,7 @@ QOnScreenContentTypeA {
                 if(qrscaner.complete){
                     if(OnBoarding.importQrHotWallet(qrscaner.tags)){
                         qrscaner.close()
-                        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                        OnBoarding.screenFlow = "updateWalletName"
                     }
                 }
             }
@@ -337,7 +371,7 @@ QOnScreenContentTypeA {
                 if(qrscaner.complete){
                     if(SharedWallet.importQrSandboxWallet(qrscaner.tags)){
                         qrscaner.close()
-                        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
                     }
                 }
             }

@@ -36,10 +36,6 @@ void EVT_ADD_NEW_SIGNER_BACK_REQUEST_HANDLER(QVariant msg) {
 
 }
 
-void EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_NEW_SEED_HANDLER(QVariant msg) {
-    AppModel::instance()->setMnemonic("");
-}
-
 void EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED_HANDLER(QVariant msg) {
 
 }

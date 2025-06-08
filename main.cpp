@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QScreen>
 #include <QDir>
@@ -36,7 +36,7 @@
 #include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QSharedWallets.h"
-#include "Premiums/QSignerManagement.h"
+#include "Signers/QSignerManagement.h"
 #include "contrib/libnunchuk/src/utils/loguru.hpp"
 #include "RegisterTypes/DashRectangle.h"
 #include "QRScanner/QBarcodeFilter.h"
@@ -142,8 +142,8 @@ inline double calculateScaleFactor()
     // assumes that the default desktop resolution is 1080 (scale of 1)
     double scalePref = 1.0;
 
-    QGuiApplication* temp = new QGuiApplication(temp_argc, &temp_argv);
-    QScreen* primaryScr = QGuiApplication::primaryScreen();
+    QApplication* temp = new QApplication(temp_argc, &temp_argv);
+    QScreen* primaryScr = QApplication::primaryScreen();
     if (primaryScr) {
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();
@@ -171,25 +171,26 @@ int main(int argc, char* argv[])
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-
 #ifdef ENABLE_BACKTRACE
     signal(SIGSEGV, signalHandler);  // Segmentation fault
     signal(SIGABRT, signalHandler);  // Abort signal
 #endif
 
-    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     double scale_factor = calculateScaleFactor();
-    static char  qt_arg[] = "";
-    static char* qt_argv = qt_arg;
-    static int   argc_own = 1;
+    // static char  qt_arg[] = "";
+    // static char* qt_argv = qt_arg;
+    // static int   argc_own = 1;
+    // QApplication app(argc_own, &qt_argv);
 
-    QGuiApplication app(argc_own, &qt_argv);
+    QApplication app(argc, argv);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
     app.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.46");
+    app.setApplicationVersion("1.9.47");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();
@@ -199,11 +200,9 @@ int main(int argc, char* argv[])
     QSharedWallets::instance();
 
 #ifdef ENABLE_THREAD_MONITOR
-//    QPingThread objTracking;
-//    objTracking.startPing();
+   QPingThread objTracking;
+   objTracking.startPing();
 #endif
-    DBG_INFO << "Execution Path: " << qApp->applicationDirPath();
-
 
 #ifdef ENABLE_OUTLOG
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
@@ -237,7 +236,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
 #else
     DBG_INFO << scale_factor;
-    QScreen* primaryScr = QGuiApplication::primaryScreen();
+    QScreen* primaryScr = QApplication::primaryScreen();
     if (primaryScr) {
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();
@@ -255,6 +254,7 @@ int main(int argc, char* argv[])
         }
     }
 #endif
+    AppSetting::instance();
 
     QEventProcessor::instance()->setContextProperty("MAINNET_SERVER", MAINNET_SERVER);
     QEventProcessor::instance()->setContextProperty("TESTNET_SERVER", TESTNET_SERVER);

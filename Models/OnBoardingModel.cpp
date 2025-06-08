@@ -19,33 +19,20 @@ OnBoardingModel::~OnBoardingModel()
 
 }
 
-QString OnBoardingModel::state() const
+bool OnBoardingModel::ImportWalletDescriptor(const QString &file_path)
 {
-    return m_state;
-}
-
-void OnBoardingModel::setState(const QString &newState)
-{
-    DBG_INFO << newState;
-    if (m_state == newState)
-        return;
-    m_state = newState;
-    emit stateChanged();
-}
-
-QWalletPtr OnBoardingModel::ImportWalletDescriptor(const QString &file_path)
-{
+    QString fileContent = qUtils::ImportDataViaFile(file_path);
     QWarningMessage msg;
-    QString walletName = "Imported";
-    auto w = bridge::nunchukImportWalletDescriptor(file_path, walletName, "", msg);
+    nunchuk::Wallet wallet = qUtils::ParseWalletDescriptor(fileContent, msg);
+    QWalletPtr w = QWalletPtr(new Wallet(wallet));
     if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
-        AppModel::instance()->startReloadUserDb();
-        return w;
+        AppModel::instance()->setNewWalletInfo(w);
+        return true;
     }
-    if (msg.type() != (int)EWARNING::WarningType::NONE_MSG) {
+    else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
     }
-    return w;
+    return false;
 }
 
 QWalletPtr OnBoardingModel::ImportWalletDB(const QString &file_path)
@@ -87,13 +74,14 @@ bool OnBoardingModel::importQrHotWallet(const QStringList qrtags)
         return false;
     }
     QWarningMessage msg;
-    bridge::nunchukImportKeystoneWallet(in, "", msg);
+    nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(),in, msg);
+    QWalletPtr w = QWalletPtr(new Wallet(wallet));
     if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
-        msg.resetWarningMessage();
-        if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
-            AppModel::instance()->startReloadUserDb();
-            return true;
-        }
+        AppModel::instance()->setNewWalletInfo(w);
+        return true;
+    }
+    else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
     }
     return false;
 }

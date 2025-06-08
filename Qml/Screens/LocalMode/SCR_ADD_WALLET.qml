@@ -47,7 +47,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: STR.STR_QML_073
         extraHeader: Item {}
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             clip: true
             Column {
@@ -135,7 +135,7 @@ QScreen {
                 return addressTypeSelection.typeOption
             }
         }
-        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         bottomRight: QTextButton {
             width: 99
             height: 48
@@ -185,7 +185,7 @@ QScreen {
     Component {
         id : introTaproot
         QIntroductionTaprootAddress {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: _infoPopup.close()
             onNextClicked: {
                 _infoPopup.switchTaprootWarning()
@@ -195,7 +195,7 @@ QScreen {
     Component {
         id : taprootWarning
         QTaprootWarningSupport {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: _infoPopup.switchIntroTaproot()
             onNextClicked: {
                 _content.contentItem.createWallet()

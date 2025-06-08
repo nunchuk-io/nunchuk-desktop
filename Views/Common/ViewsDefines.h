@@ -31,7 +31,6 @@ namespace LocalMode {
 #define SCR_ADD_NEW_SOFTWARE_SIGNER         	 "qrc:/Qml/Screens/LocalMode/SCR_ADD_NEW_SOFTWARE_SIGNER.qml"
 #define SCR_ADD_REMOTE_SIGNER_RESULT        	 "qrc:/Qml/Screens/LocalMode/SCR_ADD_REMOTE_SIGNER_RESULT.qml"
 #define SCR_ADD_WALLET                      	 "qrc:/Qml/Screens/LocalMode/SCR_ADD_WALLET.qml"
-#define SCR_ADD_WALLET_CONFIRMATION         	 "qrc:/Qml/Screens/LocalMode/SCR_ADD_WALLET_CONFIRMATION.qml"
 #define SCR_ADD_WALLET_SIGNER_CONFIGURATION 	 "qrc:/Qml/Screens/LocalMode/SCR_ADD_WALLET_SIGNER_CONFIGURATION.qml"
 #define SCR_APP_SETTINGS                    	 "qrc:/Qml/Screens/LocalMode/SCR_APP_SETTINGS.qml"
 #define SCR_CONSOLIDATE_OUTPUT              	 "qrc:/Qml/Screens/LocalMode/SCR_UTXO_CONSOLIDATE.qml"

@@ -29,6 +29,7 @@ import "../../Components/customizes"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Transactions"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -38,10 +39,9 @@ QScreen {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_211
-        onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: QCreateTransactionClaimInheritance {
             transactionInfo: AppModel.transactionInfo
-            pendingSignatureShow: false
             onSignalDraftTransaction: {
                 var input = { type: "update-fee",
                             fee: msg}
@@ -115,19 +115,17 @@ QScreen {
                     height: 70
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-                QText {
+                QLato {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
                     font.pixelSize: 16
                     font.weight: Font.Bold
-                    text: STR.STR_QML_236
+                    text: STR.STR_QML_122
                 }
-                QText {
+                QLato {
                     width: 252
                     anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
                     font.pixelSize: 16
-                    text: STR.STR_QML_122
+                    text: STR.STR_QML_1800
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                 }

@@ -22,7 +22,7 @@
 #define QEVENTPROCESSOR_H
 
 #include <QObject>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQuickView>
 #include <QQmlEngine>
 #include <QQmlContext>

@@ -39,7 +39,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_811
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Row {
                 spacing: 36
@@ -126,7 +126,7 @@ QScreenAdd {
 
         }
 
-        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         onNextClicked: {
             AppModel.addSignerWizard = eADD_REFRESH_DEVICE
         }
@@ -138,7 +138,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_811
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: QAddKeyRefreshDevices {
             title: STR.STR_QML_824
             state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
@@ -165,7 +165,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         enableHeader: false
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Column {
                 width: 400
@@ -193,7 +193,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         label.text: ""
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         Column {
             anchors.fill: parent
             anchors.margins: 36

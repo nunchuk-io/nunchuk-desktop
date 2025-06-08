@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         property bool anyChanged: _repeat.option !== "" || _date.start_date !== "" || _date.end_date !== ""
         Column {

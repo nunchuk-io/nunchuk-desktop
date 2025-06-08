@@ -24,6 +24,7 @@
 #include "Models/WalletModel.h"
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
+#include "Signers/QSignerManagement.h"
 
 void SCR_RECOVER_SOFTWARE_SIGNER_Entry(QVariant msg) {
     AppModel::instance()->setAddSignerPercentage(0);
@@ -52,7 +53,7 @@ void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
     else if(recover_type == "xprv"){
         DBG_INFO << msg;
         QString recover_name = msg.toMap().value("recover_name").toString();
-        AppModel::instance()->startCreateSoftwareSignerXprv(recover_name, recover_data);
+        QSignerManagement::instance()->requestCreateSoftwareSignerXprv(recover_name, recover_data);
     }
     else{
         DBG_INFO << msg;

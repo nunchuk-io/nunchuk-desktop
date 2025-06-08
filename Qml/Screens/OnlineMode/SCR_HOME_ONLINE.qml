@@ -794,7 +794,14 @@ QScreen {
                     suggestItems.userSelectedId = ""
                     addMemberInput.textInputted = ""
                 }
-                onTriggerLeaveGroup: {ClientController.leaveCurrentRoom()}
+                onTriggerLeaveGroup: {
+                    if (RoomWalletData.roomWalletReady) {
+                        confirmDeleteRoom.indexRequest = -1
+                        confirmDeleteRoom.open()
+                    } else {
+                        ClientController.leaveCurrentRoom()
+                    }                    
+                }
                 onRequestCancelWallet: {confirmCancelWallet.open()}
             }
             QBoxWalletInfo{
@@ -845,7 +852,7 @@ QScreen {
                 height: 180
                 icon:"qrc:/Images/Images/person-add-24px.svg"
                 onBtnClicked: {
-                    OnBoarding.state = "hotWallet"
+                    OnBoarding.screenFlow = "hotWallet"
                     QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
                 }
             }
@@ -999,9 +1006,6 @@ QScreen {
                     }
                 }
             }
-            Component.onCompleted: {
-                console.log("AAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBB")
-            }
         }
     }
 
@@ -1073,9 +1077,23 @@ QScreen {
         id: deleteContactInfo
         contentText: STR.STR_QML_610
     }
-    /*=========================================Delete contact end=========================================*/
 
-    Component.onCompleted: {
-        console.log("AAAAAAAAAAAAAAAAAAAAAA")
+    /*=========================================Delete contact end=========================================*/
+    /*=========================================Delete room============================================*/
+    QConfirmYesNoPopup {
+        id: confirmDeleteRoom
+        property int indexRequest: -1
+        contentText: STR.STR_QML_1799
+        leftBtnLabel: STR.STR_QML_035
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            if (indexRequest === - 1) {
+                ClientController.leaveCurrentRoom()
+            } else {
+                ClientController.leaveRoom(indexRequest)
+            }
+        }
     }
+    /*=========================================Delete room end============================================*/
 }

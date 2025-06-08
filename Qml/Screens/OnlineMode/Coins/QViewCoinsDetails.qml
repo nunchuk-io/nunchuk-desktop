@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1412
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var utxoInfo: walletInfo.utxoInfo
     property var coinTags: utxoInfo.coinTags
     property var coinCollections: utxoInfo.coinCollections
@@ -482,7 +482,7 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QBtnOptions {

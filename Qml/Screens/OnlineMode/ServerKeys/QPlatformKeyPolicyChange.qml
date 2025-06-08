@@ -41,8 +41,8 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: alert.title
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Column {
             anchors.fill: parent

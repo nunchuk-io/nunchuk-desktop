@@ -94,13 +94,15 @@ Item {
                 visible: electrumSwitcher.switchOn
                 enabled: visible
                 property int primaryServer: AppSetting.primaryServer
-                property string mainnetServer: AppSetting.mainnetServer
+                property string mainnetServer: AppSetting.mainnetServer.name
                 property string testnetServer: AppSetting.testnetServer
                 property string signetServer: AppSetting.signetServer
+                property var networkSave
                 Connections {
                     target: AppSetting
                     onMainnetServerSelected: {
-                        mainnetsever.text.textOutput = url
+                        mainnetsever.text.textOutput = network.name
+                        devselection.networkSave = network
                     }
                 }
 
@@ -135,12 +137,12 @@ Item {
                     visible: SIGNET_SERVER != ""
                 }
                 property bool anyChanged: (AppSetting.primaryServer !== devselection.primaryServer)
-                                          || (AppSetting.mainnetServer !== mainnetsever.text.textOutput)
+                                          || (AppSetting.mainnetServer.name !== mainnetsever.text.textOutput)
                                           || (AppSetting.testnetServer !== testnetsever.text.textOutput)
                                           || (AppSetting.signetServer !== signetsever.text.textOutput)
                 function applySettings(){
                     AppSetting.primaryServer = devselection.primaryServer
-                    AppSetting.mainnetServer = mainnetsever.text.textOutput
+                    AppSetting.setMainnetServer(networkSave)
                     AppSetting.testnetServer = testnetsever.text.textOutput
                     AppSetting.signetServer = signetsever.text.textOutput
                 }
@@ -442,17 +444,18 @@ Item {
                 if(certPath.anyChanged){ certPath.applySettings() }
                 if(_streamLink.anyChanged){_streamLink.applySettings() }
                 if(_streamEnable.anyChanged){_streamEnable.applySettings() }
-                if(AppModel.updateSettingRestartRequired()){
+                if(AppModel.updateSettingRestartRequired()) {
                     modelRestartApp.open()
                 }
             }
 
             function resetNetworkSettings() {
+                AppSetting.resetNetworkSetting(true)
                 corerpcSwitcher.switchOn = false
                 devselection.primaryServer = NUNCHUCKTYPE.MAIN
-                mainnetsever.text.textOutput = "mainnet.nunchuk.io:51001"
-                testnetsever.text.textOutput = "testnet.nunchuk.io:50001"
-                signetsever.text.textOutput  = "signet.nunchuk.io:50002"
+                mainnetsever.text.textOutput = AppSetting.mainnetServer.name
+                testnetsever.text.textOutput = AppSetting.testnetServer
+                signetsever.text.textOutput  = AppSetting.signetServer
                 streamswitch.switchOn = false
                 streamLinkText.textInputted = "https://explorer.bc-2.jp/"
 
@@ -487,6 +490,7 @@ Item {
             rightMargin: 24
         }
     }
+    property var requestReset: false
     Rectangle {
         id: normalRect
         height: 80
@@ -511,6 +515,7 @@ Item {
                 label.font.family: "Lato"
                 type: eTypeB
                 onButtonClicked: {
+                    requestReset = true
                     _netCol.resetNetworkSettings()
                     _netCol.saveNetworkSettings()
                 }
@@ -531,7 +536,9 @@ Item {
                          || certPath.anyChanged
                          || _streamLink.anyChanged
                          || _streamEnable.anyChanged
+                         || requestReset
                 onButtonClicked: {
+                    requestReset = false
                     _netCol.saveNetworkSettings()
                 }
             }

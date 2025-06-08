@@ -115,7 +115,7 @@ void QSharedWallets::GetGroupDeviceUID()
     m_uid = bridge::GetGroupDeviceUID();
 }
 
-QWalletPtr QSharedWallets::RecoverSandboxWallet(const QString &file_path)
+bool QSharedWallets::RecoverSandboxWallet(const QString &file_path)
 {
     QString fileContent = qUtils::ImportDataViaFile(file_path);
     QWarningMessage msg;
@@ -138,6 +138,7 @@ QWalletPtr QSharedWallets::RecoverSandboxWallet(const QString &file_path)
             QJsonObject json;
             json["type"] = "setup-group-wallet";
             QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
+            return true;
         } else {
             QString message = QString("Group wallet not found");
             AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
@@ -145,7 +146,7 @@ QWalletPtr QSharedWallets::RecoverSandboxWallet(const QString &file_path)
     } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
     }
-    return w;
+    return false;
 }
 
 nunchuk::GroupSandbox QSharedWallets::CreateSandboxFromRecoverWallet(const QWalletPtr& wallet)

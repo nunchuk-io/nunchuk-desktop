@@ -32,4 +32,5 @@ QtObject {
     property var single_keyset_remaining
     property var single_value_key
     property var single_isOccupied
+    property var single_needPassphrase
 }

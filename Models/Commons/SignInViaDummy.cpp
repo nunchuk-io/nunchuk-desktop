@@ -20,7 +20,7 @@ bool SignInViaDummy::SignInUsingXPUBorWallet(const QString &bsms)
     if(ret){
         QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
         m_dummy_SignIn = output;
-        convertWalelt();
+        convertWallet();
         if (dashboard()) {
             dashboard()->setFlow((int)AlertEnum::E_Alert_t::WELCOME_SIGN_IN_SIGNATURE_XPUB);
             if (auto dummy = dashboard()->groupDummyTxPtr()) {
@@ -36,15 +36,18 @@ void SignInViaDummy::initWallet()
 {
     qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
     AppModel::instance()->setWalletInfo(QWalletPtr(new Wallet()), true);
-    AppModel::instance()->walletInfoPtr()->setWalletId(walletId());
-    WalletsMng->CreateData<QGroupWalletHealthCheckPtr>(walletId());
-    WalletsMng->CreateData<QWalletDummyTxPtr>(walletId());
-    WalletsMng->initSignInWallet(walletId());
-    auto dash = WalletsMng->data<QGroupDashboardPtr>(walletId());
+}
+
+void SignInViaDummy::initializeWalletData(const QString& walletId)
+{
+    WalletsMng->CreateData<QGroupWalletHealthCheckPtr>(walletId);
+    WalletsMng->CreateData<QWalletDummyTxPtr>(walletId);
+    WalletsMng->initSignInWallet(walletId);
+    auto dash = WalletsMng->data<QGroupDashboardPtr>(walletId);
     QGroupWallets::instance()->SignInDashBoard(dash);
 }
 
-void SignInViaDummy::convertWalelt()
+void SignInViaDummy::convertWallet()
 {
     AppModel::instance()->timerFeeRatesHandle();
     m_card_ids.clear();
@@ -84,16 +87,11 @@ void SignInViaDummy::convertWalelt()
     m_wallet.set_signers(signers);
     if (auto w = AppModel::instance()->walletInfoPtr()) {
         w->convert(m_wallet);
-        w->setWalletId(walletId());
         if (auto signers = w->singleSignersAssigned()) {
             signers->setCardIDList(m_card_ids);
         }
+        initializeWalletData(w->walletId());
     }
-}
-
-WalletId SignInViaDummy::walletId() const
-{
-    return "sign-in-dummy";
 }
 
 QGroupDashboardPtr SignInViaDummy::dashboard() const
@@ -129,7 +127,7 @@ void SignInViaDummy::SignInCreateDummyTransaction()
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QDummyTransactionPtr trans = QDummyTransactionPtr(new QDummyTransaction());
         trans->setNunchukTransaction(tx);
-        trans->setWalletId(walletId());
+        trans->setWalletId(QString::fromStdString(m_wallet.get_id()));
         trans->setTxJson(dummy_transaction);
         if (auto signers = trans->singleSignersAssigned()) {
             signers->setCardIDList(m_card_ids);
@@ -232,7 +230,7 @@ bool SignInViaDummy::SignInRequestSignTxViaQR(const QStringList &qrtags)
                     nunchuk::Transaction tx = qUtils::DecodeDummyTx(m_wallet, psbt, warningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                         trans->setNunchukTransaction(tx);
-                        trans->setWalletId(walletId());
+                        trans->setWalletId(QString::fromStdString(m_wallet.get_id()));
                         trans->setTxJson(dummy_transaction);
                         auto signers = trans->singleSignersAssigned();
                         for (auto ptr: signers->fullList()) {
@@ -273,7 +271,7 @@ bool SignInViaDummy::SignInRequestSignTxViaFile(const QString &filepath)
                     nunchuk::Transaction tx = qUtils::DecodeDummyTx(m_wallet, psbt, warningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                         trans->setNunchukTransaction(tx);
-                        trans->setWalletId(walletId());
+                        trans->setWalletId(QString::fromStdString(m_wallet.get_id()));
                         trans->setTxJson(dummy_transaction);
                         auto signers = trans->singleSignersAssigned();
                         for (auto ptr: signers->fullList()) {

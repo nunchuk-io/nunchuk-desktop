@@ -47,6 +47,7 @@ void EVT_PRIMARY_KEY_SIGNIN_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
         QVariantMap primary_key = maps["primary_key"].toMap();
         QString account = primary_key["account"].toString();
         QString address = primary_key["address"].toString();
+        DBG_INFO << "Primary Key Signin Account Request" << passphrase << account << address;
         AppModel::instance()->setPrimaryKey(account);
         QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
         if(pKey){

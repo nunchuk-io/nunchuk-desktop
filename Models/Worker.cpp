@@ -28,7 +28,7 @@
 #include "Premiums/QGroupWallets.h"
 #include "ServiceSetting.h"
 #include "Premiums/QWalletServicesTag.h"
-#include "Premiums/QSignerManagement.h"
+#include "Signers/QSignerManagement.h"
 
 Worker *Worker::mInstance = NULL;
 Worker::Worker()
@@ -353,6 +353,7 @@ void Worker::slotStartCreateSoftwareSigner(const QString name,
                                                                msg);
     AppModel::instance()->setAddSignerPercentage(100);
     AppModel::instance()->setWalletsUsingSigner({});
+    DBG_INFO << name << msg.type() << replace;
     if((int)EWARNING::WarningType::NONE_MSG == msg.type() && ret){
         if (replace) {
             nunchuk::SingleSigner singlesinger(ret->name().toStdString(),
@@ -433,12 +434,14 @@ void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
     nunchuk::WalletTemplate walletTemplate = nunchuk::WalletTemplate::DEFAULT;
 
     if(auto w = AppModel::instance()->newWalletInfo()){
+        int walletAddress_Type = w->walletAddressType();
+        int wallet_Type = w->walletType();
         DBG_INFO << "CREATE"
                  << w->walletAddressType()
                  << w->walletType()
                  << w->walletM()
                  << w->walletN();
-        if(w->walletAddressType() == (int)nunchuk::AddressType::TAPROOT){
+        if((walletAddress_Type == (int)nunchuk::AddressType::TAPROOT) && (wallet_Type == (int)nunchuk::WalletType::MULTI_SIG)){
             QJsonObject data;
             QString     error_msg = "";
             bool get_result = Draco::instance()->GetTaprootSupportedSigners(data, error_msg);
@@ -886,14 +889,18 @@ Controller::~Controller() {
     this->disconnect();
 }
 
-void Controller::scanDevicesSync()
+bool Controller::scanDevicesSync()
 {
     QWarningMessage msg;
     QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
-    if(msg.type() != (int)EWARNING::WarningType::NONE_MSG){
-        AppModel::instance()->showToast(msg.code(),msg.what(), (EWARNING::WarningType)msg.type());
+    if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+        AppModel::instance()->setDeviceList(deviceList);
+        return true;
     }
-    AppModel::instance()->deviceList()->updateDeviceList(deviceList);
+    else{
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+    }
+    return false;
 }
 
 void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
@@ -1200,70 +1207,19 @@ void Controller::slotFinishCreateSoftwareSigner(nunchuk::MasterSigner ret,
 {
     QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
     AppModel::instance()->setMasterSignerList(mastersigners);
+    DBG_INFO << type << ret.get_name();
     if(type != (int)EWARNING::WarningType::EXCEPTION_MSG){
         QMasterSignerPtr newsigner;
         if(mastersigners){
             newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(QString::fromStdString(ret.get_device().get_master_fingerprint()));
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }
-
+        DBG_INFO << ret.get_device().get_master_fingerprint() << ret.get_name();
         if (QSignerManagement::instance()->finishCreateSoftwareSigner()) {
             return;
         }
-
-        switch (QEventProcessor::instance()->currentFlow()) {
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY:
-        {
-            uint last = QEventProcessor::instance()->getCurrentStates().last();
-            if(last == (int)E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION){
-                AppModel::instance()->showToast(0, STR_CPP_102.arg(QString::fromStdString(ret.get_name())), EWARNING::WarningType::SUCCESS_MSG);
-            }
-            else if(last == (int)E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY){
-                QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED);
-            }
-            else if(last == (int)E::STATE_ID_SCR_UNLOCK_DB){
-                QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
-                AppModel::instance()->makeMatrixInstanceForAccount();
-                QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
-                if(pKey){
-                    timeoutHandler(3000,[pKey](){
-                        AppModel::instance()->showToast(0,STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
-                        QWarningMessage msg;
-                        bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
-                    });
-                }
-            }
-            else{}
-            break;
-        }
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY:
-        {
-            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
-            AppModel::instance()->setPrimaryKey(ClientController::instance()->getMe().username);
-            break;
-        }
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER:
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET:
-        {
-            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
-            QString message = QString("<b>%1</b> has been added").arg(newsigner->name());
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::SUCCESS_MSG);
-
-            break;
-        }
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_USER_FREE: {
-            if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-                if (newsigner) {
-                    w->updateNewKeyReplace(newsigner->fingerPrint());
-                    AppModel::instance()->showToast(0, STR_CPP_062, EWARNING::WarningType::SUCCESS_MSG);
-                }
-            }
-            break;
-        }
-        default:
-            QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
-            break;
-        }
+        DBG_INFO << "Not Progress Key: " << ret.get_name();
+        QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
     }
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
@@ -1280,64 +1236,12 @@ void Controller::slotFinishCreateSoftwareSignerXprv(nunchuk::MasterSigner ret, Q
             newsigner =  AppModel::instance()->masterSignerList()->getMasterSignerByXfp(QString::fromStdString(ret.get_device().get_master_fingerprint()));
             AppModel::instance()->setMasterSignerInfo(newsigner);
         }
-
+        DBG_INFO << ret.get_device().get_master_fingerprint() << ret.get_name();
         if (QSignerManagement::instance()->finishCreateSoftwareSignerXprv()) {
             return;
         }
-
-        switch (QEventProcessor::instance()->currentFlow()) {
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY:
-        {
-            uint last = QEventProcessor::instance()->getCurrentStates().last();
-            if(last == (int)E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION){
-                AppModel::instance()->showToast(0, STR_CPP_102.arg(QString::fromStdString(ret.get_name())), EWARNING::WarningType::SUCCESS_MSG);
-            }
-            else if(last == (int)E::STATE_ID_SCR_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY){
-                QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_ENTER_PASSPHRASE_SUCCEED);
-            }
-            else if(last == (int)E::STATE_ID_SCR_UNLOCK_DB){
-                QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
-                AppModel::instance()->makeMatrixInstanceForAccount();
-                QMasterSignerPtr pKey = AppModel::instance()->getPrimaryKey();
-                if(pKey){
-                    timeoutHandler(3000,[pKey](){
-                        AppModel::instance()->showToast(0,STR_CPP_108.arg(pKey->name()), EWARNING::WarningType::SUCCESS_MSG);
-                        QWarningMessage msg;
-                        bridge::nunchukClearSignerPassphrase(pKey->fingerPrint(),msg);
-                    });
-                }
-            }
-            else{}
-            break;
-        }
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY:
-        {
-            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
-            AppModel::instance()->setPrimaryKey(ClientController::instance()->getMe().username);
-            break;
-        }
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER:
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET:
-        {
-            QEventProcessor::instance()->sendEvent(E::EVT_ADD_SOFTWARE_SIGNER_RESULT);
-            QString message = QString("<b>%1</b> has been added").arg(newsigner->name());
-            AppModel::instance()->showToast(0, message, EWARNING::WarningType::SUCCESS_MSG);
-
-            break;
-        }
-        case (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_USER_FREE: {
-            if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-                if (newsigner) {
-                    w->updateNewKeyReplace(newsigner->fingerPrint());
-                    AppModel::instance()->showToast(0, STR_CPP_062, EWARNING::WarningType::SUCCESS_MSG);
-                }
-            }
-            break;
-        }
-        default:
-            QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
-            break;
-        }
+        DBG_INFO << "Not Progress Key: " << ret.get_name();
+        QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_NONE);
     }
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
@@ -1364,13 +1268,13 @@ void Controller::slotFinishCreateWallet(nunchuk::Wallet ret,
         if(-1 != index && replaceFree == false){
             AppModel::instance()->setWalletListCurrentIndex(index);
         }
-        QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_SUCCESSFULLY);
         AppModel::instance()->showToast(0, STR_CPP_064, EWARNING::WarningType::SUCCESS_MSG);
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             w->walletCreateDone();
             QString replaceFlow = w->replaceFlow();
             auto newWallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
             newWallet->setReplaceFlow(replaceFlow);
+            newWallet->setScreenFlow(w->screenFlow());
             AppModel::instance()->setNewWalletInfo(newWallet);
         }
     }

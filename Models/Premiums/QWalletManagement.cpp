@@ -492,8 +492,9 @@ WalletId QWalletManagement::walletId(GroupId group_id) const
 
 QString QWalletManagement::slugInfo(WalletId wallet_id) const
 {
-    if(mWalletsInfo.contains(wallet_id)){
-        return mWalletsInfo.value(wallet_id)["slug"].toString();
+    auto localMap = mWalletsInfo;
+    if(localMap.contains(wallet_id)){
+        return localMap.value(wallet_id)["slug"].toString();
     }
     return "";
 }

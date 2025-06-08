@@ -86,7 +86,7 @@ QScreen {
     Component {
         id: _coin_tags
         QViewCoinTags {
-            onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 
@@ -99,7 +99,7 @@ QScreen {
         id: _edit_coin_tags
         QViewCoinTags {
             isEdit: true
-            onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 
@@ -115,7 +115,7 @@ QScreen {
         QViewCoinTags {
             isEdit: true
             inputType: "add-multi-coin-tags-to-wallet"
-            onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 
@@ -133,7 +133,7 @@ QScreen {
         QViewCoinTags {
             isEdit: true
             inputType: "add-locked-multi-coin-tags-to-wallet"
-            onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 
@@ -158,10 +158,10 @@ QScreen {
             filterData: walletInfo.utxoList.filter
             includeLockedCoins: true
             onCloseClicked: {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
             onApplyClicked: {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
     }

@@ -35,8 +35,8 @@
 #include "Premiums/QGroupWalletHealthCheck.h"
 #include "Premiums/QGroupWalletDummyTx.h"
 #include "Premiums/QRecurringPayment.h"
-#include "Premiums/QSignerManagement.h"
 #include "Premiums/GroupSandboxModel.h"
+#include "Signers/QSignerManagement.h"
 #include "QPDFPrinter.h"
 
 void SCR_HOME_Entry(QVariant msg) {
@@ -118,16 +118,6 @@ void EVT_HOME_WALLET_SELECTED_HANDLER(QVariant msg) {
         }
     }
     else{}
-}
-
-void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
-    QWalletPtr newWallet(new Wallet());
-    newWallet.data()->setCapableCreate(false);
-    newWallet.data()->setWalletAddressType((int)nunchuk::AddressType::NATIVE_SEGWIT);
-    AppModel::instance()->setNewWalletInfo(newWallet);
-    AppModel::instance()->resetSignersChecked();
-    AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
-    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET);
 }
 
 void EVT_HOME_MASTER_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
@@ -255,20 +245,6 @@ void EVT_HOME_DISPLAY_ADDRESS_HANDLER(QVariant msg) {
         AppModel::instance()->startDisplayAddress(AppModel::instance()->walletInfo()->walletId(),
                                                   msg.toString());
     }
-}
-
-void EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER(QVariant msg) {
-    QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_SIGNER);
-    QMap<QString, QVariant> maps = msg.toMap();
-    QString type = maps["type"].toString();
-    if (type == "add-key-free") {
-        AppModel::instance()->setNewWalletInfo(nullptr);
-    } else if (type == "add-key-shared-group-wallet") {
-
-    } else if (type == "request-add-a-key") {
-
-    }
-    QSignerManagement::instance()->setScreenFlow("add-a-key");
 }
 
 void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {

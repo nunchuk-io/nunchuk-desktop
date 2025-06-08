@@ -126,53 +126,19 @@ void EVT_WALLET_INFO_REMOTE_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_WALLET_INFO_EXPORT_DB_HANDLER(QVariant msg) {
-    QString file_path = qUtils::QGetFilePath(msg.toString());
-    if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(),
-                                                file_path,
-                                                nunchuk::ExportFormat::DB);
-        DBG_INFO << file_path << ret;
-    }
+    
 }
 
 void EVT_WALLET_INFO_EXPORT_CSV_HANDLER(QVariant msg) {
-    int csv_type = msg.toMap().value("csv_type").toInt();
-    QString file = msg.toMap().value("file_path").toString();
-    QString file_path = qUtils::QGetFilePath(file);
-    if(AppModel::instance()->walletInfo() && (file_path != "")){
-        if(csv_type == 0 ){
-            bool ret = bridge::nunchukExportTransactionHistory(AppModel::instance()->walletInfo()->walletId(),
-                                                                file_path,
-                                                                nunchuk::ExportFormat::CSV);
-            DBG_INFO << file_path << ret;
-        }
-        else if(csv_type == 1 ){
-            // PDF
-            DBG_INFO << file_path;
-        }
-        else{
-            bool ret = bridge::nunchukExportUnspentOutputs(AppModel::instance()->walletInfo()->walletId(),
-                                                            file_path,
-                                                            nunchuk::ExportFormat::CSV);
-            DBG_INFO << file_path << ret;
-        }
-    }
+    
 }
 
 void EVT_WALLET_INFO_EXPORT_DESCRIPTOR_HANDLER(QVariant msg) {
-    QString file_path = qUtils::QGetFilePath(msg.toString());
-    if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), file_path, nunchuk::ExportFormat::BSMS);
-        DBG_INFO << file_path << ret;
-    }
+    
 }
 
 void EVT_WALLET_INFO_EXPORT_COLDCARD_HANDLER(QVariant msg) {
-    QString file_path = qUtils::QGetFilePath(msg.toString());
-    if(AppModel::instance()->walletInfo() && (file_path != "")){
-        bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), file_path, nunchuk::ExportFormat::COLDCARD);
-        DBG_INFO << file_path << ret;
-    }
+    
 }
 
 void EVT_WALLET_INFO_SIGNER_INFO_REQUEST_HANDLER(QVariant msg) {

@@ -1,0 +1,36 @@
+1 ICON "Nunchuk.ico"
+
+#include <windows.h>
+
+#define STRINGIZE_HELPER(x) #x
+#define STRINGIZE(x) STRINGIZE_HELPER(x)
+
+#define VER_NUMERIC PROJECT_VERSION_MAJOR,PROJECT_VERSION_MINOR,PROJECT_VERSION_PATCH
+#define VER_STRING  STRINGIZE(PROJECT_VERSION_MAJOR) "." STRINGIZE(PROJECT_VERSION_MINOR) "." STRINGIZE(PROJECT_VERSION_PATCH)
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VER_NUMERIC
+PRODUCTVERSION  VER_NUMERIC
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",        "Nunchuk Inc."
+            VALUE "FileDescription",    "Nunchuk Application"
+            VALUE "FileVersion",        VER_STRING
+            VALUE "InternalName",       "Nunchuk"
+            VALUE "LegalCopyright",     "Copyright (C) 2020-2025 Nunchuk Inc."
+            VALUE "OriginalFilename",   "nunchuk-qt.exe"
+            VALUE "ProductName",        "Nunchuk"
+            VALUE "ProductVersion",     VER_STRING
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END

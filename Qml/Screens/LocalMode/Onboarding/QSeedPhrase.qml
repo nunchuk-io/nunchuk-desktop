@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1266
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string mnemonicstr: ""
     content: Item {
         height: 496
@@ -123,7 +123,7 @@ QOnScreenContentTypeA {
         }
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QTextButton {
@@ -134,7 +134,7 @@ QOnScreenContentTypeA {
             type: eTypeE
             enabled: (textMnemonic !== "")
             onButtonClicked: {
-                OnBoarding.state = "confirmSeedPhrase"
+                OnBoarding.screenFlow = "confirmSeedPhrase"
             }
         }
     }

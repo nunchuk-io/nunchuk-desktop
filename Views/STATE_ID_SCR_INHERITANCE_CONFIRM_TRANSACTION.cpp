@@ -49,13 +49,15 @@ void EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ_HANDLER(QVariant msg)
     QString type = maps["type"].toString();
     QVariant fee_input = maps["fee"];
     auto draft_tx_fee = [](QVariant msg) ->bool{
-        bool subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
-        int feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-        bool manualFee = msg.toMap().value("manualFee").toBool();
-        bool manualOutput = msg.toMap().value("manualOutput").toBool();
+        auto maps = msg.toMap();
+        bool subtractFromFeeAmout = maps.value("subtractFromFeeAmout").toBool();
+        int feeRate = maps.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+        bool manualFee = maps.value("manualFee").toBool();
+        bool manualOutput = maps.value("manualOutput").toBool();
         if(!manualFee) feeRate = AppModel::instance()->fastestFeeOrigin();//default value
+        bool antiFeeSnipping = maps.value("antiFeeSnipping").toBool();
         DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
-        return ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction(feeRate);
+        return ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction(feeRate, antiFeeSnipping);
     };
     if (type == "update-fee") {
         draft_tx_fee(fee_input);

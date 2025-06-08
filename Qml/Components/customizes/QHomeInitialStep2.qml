@@ -47,7 +47,7 @@ Rectangle {
             height: 180
             icon:"qrc:/Images/Images/person-add-24px.svg"
             onBtnClicked: {
-                OnBoarding.state = "hotWallet"
+                OnBoarding.screenFlow = "hotWallet"
                 QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
             }
         }

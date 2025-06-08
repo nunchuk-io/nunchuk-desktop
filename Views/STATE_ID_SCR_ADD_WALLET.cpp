@@ -35,54 +35,7 @@ void SCR_ADD_WALLET_Exit(QVariant msg) {
 }
 
 void EVT_ADD_WALLET_IMPORT_HANDLER(QVariant msg) {
-    int importType = msg.toMap().value("importType").toInt();
-    QString walletname = msg.toMap().value("walletname").toString();
-    QString walletdescription = msg.toMap().value("walletdescription").toString();
-    QWalletPtr walletImported = NULL;
-    QWarningMessage importmsg;
 
-    if ((int)POPUP::WalletImportType::IMPORT_WALLET_QRCODE == importType) {
-        QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
-        AppModel::instance()->showToast(0, STR_CPP_067, EWARNING::WarningType::SUCCESS_MSG);
-    }
-    else {
-        QString fileSelected = msg.toMap().value("filePath").toString();
-        QString file_path = qUtils::QGetFilePath(fileSelected);
-        if(file_path != ""){
-            if((int)POPUP::WalletImportType::IMPORT_WALLET_DB == importType){
-                walletImported = bridge::nunchukImportWallet(file_path, importmsg);
-                if(walletImported){
-                    walletImported.data()->setCreationMode((int)Wallet::CreationMode::CREATE_BY_IMPORT_DB);
-                }
-            }
-            else if((int)POPUP::WalletImportType::IMPORT_WALLET_DESCRIPTOR == importType){
-                walletImported = bridge::nunchukImportWalletDescriptor(file_path, walletname, walletdescription, importmsg);
-                if(walletImported){
-                    walletImported.data()->setCreationMode((int)Wallet::CreationMode::CREATE_BY_IMPORT_DESCRIPTOR);
-                }
-            }
-            else{
-                walletImported = bridge::nunchukImportWalletDescriptor(file_path, walletname, walletdescription, importmsg);
-                if(walletImported){
-                    walletImported.data()->setCreationMode((int)Wallet::CreationMode::CREATE_BY_IMPORT_CONFIGURATION);
-                }
-            }
-            if(walletImported && importmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
-                AppModel::instance()->walletList()->addWallet(walletImported);
-                AppModel::instance()->resetSignersChecked();
-                AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
-                int index = AppModel::instance()->walletList()->getWalletIndexById(walletImported.data()->walletId());
-                if(-1 != index){
-                    AppModel::instance()->setWalletListCurrentIndex(index);
-                }
-                QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_IMPORT_SUCCEED);
-                AppModel::instance()->showToast(0, STR_CPP_067, EWARNING::WarningType::SUCCESS_MSG);
-            }
-            else{
-                AppModel::instance()->showToast(importmsg.code(), importmsg.what(), (EWARNING::WarningType)importmsg.type());
-            }
-        }
-    }
 }
 
 void EVT_ADD_WALLET_BACK_REQUEST_HANDLER(QVariant msg) {

@@ -127,12 +127,17 @@ void EVT_INPUT_PASSPHRASE_SEND_PASSPHRASE_HANDLER(QVariant msg) {
     case E::STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION:
     {
         QString mastersigner_id = passPhraseObject.toMap().value("mastersigner_id").toString();
-        int mastersigner_index = passPhraseObject.toMap().value("mastersigner_index").toInt();
         QWarningMessage msgwarning;
         bridge::nunchukSendSignerPassphrase( mastersigner_id, passphraseInput, msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-            if(AppModel::instance()->masterSignerList()){
-                AppModel::instance()->masterSignerList()->setUserChecked(true, mastersigner_index);
+            if (auto nw = AppModel::instance()->newWalletInfoPtr()) {
+                const auto available_signers = nw->assignAvailableSigners();
+                if (!available_signers) {
+                    DBG_WARN << "assignAvailableSigners() returned null";
+                    return;
+                }
+                auto mastersigner_index = available_signers->getIndexByFingerPrint(mastersigner_id);
+                nw->assignAvailableSigners()->setUserChecked(true, mastersigner_index);
             }
         }
         QEventProcessor::instance()->sendEvent(E::EVT_INPUT_PASSPHRASE_CLOSE);

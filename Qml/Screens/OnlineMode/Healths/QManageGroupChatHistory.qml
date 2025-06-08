@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: STR.STR_QML_970
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var dashboardInfo: GroupWallet.dashboardInfo
     property string select_period_id: dashboardInfo.historyPeriodId
     content: Item {
@@ -92,7 +92,7 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     nextEnable: select_period_id !== dashboardInfo.historyPeriodId
     bottomRight: QTextButton {
         width: 66
@@ -106,7 +106,7 @@ QOnScreenContentTypeB {
                 history_period_id: select_period_id
             }
             QMLHandle.sendEvent(EVT.EVT_DASHBOARD_ALERT_INFO_ENTER, _input)
-            closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
 }

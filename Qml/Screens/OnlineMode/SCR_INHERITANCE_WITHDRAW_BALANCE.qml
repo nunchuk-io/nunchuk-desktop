@@ -34,10 +34,12 @@ import "../OnlineMode/Inheritances"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property int flow: ServiceSetting.claimInheritanceFlow
+    property string flow: ServiceSetting.screenFlow
     readonly property var map_flow: [
-        {flow_action: ServiceType.WITHDRAW_TO_ADDRESS,               screen_component: _widthdraw_to_address},
-        {flow_action: ServiceType.WITHDRAW_TO_NUNCHUK_WALLET,        screen_component: _widthdraw_to_wallet},
+        {flow_action: "withdraw-to-address",               screen_component: _widthdraw_to_address},
+        {flow_action: "withdraw-to-a-nunchuk-wallet",      screen_component: _widthdraw_to_wallet},
+        {flow_action: "withdraw-a-custom-amount",          screen_component: _widthdraw_a_custom_amount},
+        {flow_action: "inheritance-claim-empty-key",       screen_component: _empty_key_screen}
     ]
     property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
     function isValid()
@@ -62,6 +64,20 @@ QScreen {
     Component {
         id: _widthdraw_to_wallet
         QInheritanceWidthdrawToWallet {
+
+        }
+    }
+
+    Component {
+        id: _widthdraw_a_custom_amount
+        QInheritanceWidthdrawACustomAmount {
+
+        }
+    }
+
+    Component {
+        id: _empty_key_screen
+        QInheritanceClaimEmptyKey {
 
         }
     }

@@ -30,11 +30,12 @@ import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Signers"
+import "../../Components/customizes/Wallets"
 import "../LocalMode/Onboarding"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property string screen_state: OnBoarding.state
+    property string screen_state: OnBoarding.screenFlow
     readonly property var map_screens: [
         {screen_name: "onboarding",                 screen_component: _onboarding},
         {screen_name: "unassistedWallet",           screen_component: _unassistedWallet},
@@ -46,7 +47,9 @@ QScreen {
         {screen_name: "haveAnAdvisor",              screen_component: _haveAnAdvisor},
         {screen_name: "dontHaveAnAdvisor",          screen_component: _dontHaveAnAdvisor},
         {screen_name: "seedPhrase",                 screen_component: _seedPhrase},
-        {screen_name: "confirmSeedPhrase",          screen_component: _confirmSeedPhrase}
+        {screen_name: "confirmSeedPhrase",          screen_component: _confirmSeedPhrase},
+        {screen_name: "claimAddAWallet",            screen_component: _claimAddAWallet},
+        {screen_name: "updateWalletName",           screen_component: _updateWalletName}
     ]
 
     Loader {
@@ -77,7 +80,15 @@ QScreen {
     }
     Component {
         id: _addAWallet
-        QAddAWallet {}
+        QAddAWallet {
+            hasWallet: true
+        }
+    }
+    Component {
+        id: _claimAddAWallet
+        QAddAWallet {
+            hasWallet: false
+        }
     }
     Component {
         id: _recoverHotWallet
@@ -98,5 +109,17 @@ QScreen {
     Component {
         id: _confirmSeedPhrase
         QConfirmSeedPhrase {}
+    }
+    Component {
+        id: _updateWalletName
+        QRecoverWalletNameEdit {
+            onNextClicked: {
+                var _input = {
+                    type: "update-new-wallet-name",
+                    new_wallet_name: newWalletName,
+                }
+                QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
+            }
+        }
     }
 }

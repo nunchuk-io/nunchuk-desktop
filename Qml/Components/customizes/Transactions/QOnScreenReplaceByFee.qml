@@ -45,7 +45,7 @@ QOnScreenContent {
     label.font.pixelSize: 32
     label.font.weight: Font.Medium
     extraHeader: Row {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: QContentReplaceByFee {
         transactionInfo: AppModel.transactionInfo
         myRole: AppModel.walletInfo.myRole
@@ -64,7 +64,7 @@ QOnScreenContent {
     bottomLeft: QButtonTextLink {
         height: 24
         label: STR.STR_QML_059
-        onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     bottomRight: QTextButton {
         width: 293
@@ -85,9 +85,12 @@ QOnScreenContent {
         }
     }
     function requestCreateTransaction() {
-        var msg = { "feeRate"                : contenCenter.contentItem.new_fee,
-                    "manualFee"              : true,
-                    "manualOutput"           : true};
+        var msg = {
+            "feeRate"                : contenCenter.contentItem.new_fee,
+            "manualFee"              : true,
+            "manualOutput"           : true,
+            "antiFeeSnipping"        : contenCenter.contentItem.antiFeeSniping
+        };
         timerCreateTx.destinationData = msg
         timerCreateTx.restart()
     }

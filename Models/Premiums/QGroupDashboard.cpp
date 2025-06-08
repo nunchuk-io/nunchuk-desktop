@@ -14,7 +14,7 @@
 #include "Premiums/QRecurringPayment.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QUserWallets.h"
-#include "Premiums/QSignerManagement.h"
+#include "Signers/QSignerManagement.h"
 
 int StringToInt(const QString &type) {
     const QMetaObject &mo = AlertEnum::staticMetaObject;

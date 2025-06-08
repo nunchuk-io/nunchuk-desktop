@@ -44,9 +44,15 @@ QScreen {
             color: "#E8DAFF"
             text: STR.STR_QML_286
         }
-        onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+        onCloseClicked: {
+            if (ServiceSetting.screenFlow === "withdraw-to-address") {
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            } else {
+                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            }            
+        }
         content: Item {
-            QSendAddressArea {
+            QSendAddressAreaClaimInheritance {
                 transactionInfo: AppModel.transactionInfo
                 onAddrToVerify: {
                     displayAddressBusybox.addrToVerify = addr
@@ -93,7 +99,7 @@ QScreen {
             activeLink = EXPLORER_TESTNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.SIGNET:
-            activeLink = AppSetting.signetStream + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_SIGNNET + AppModel.transactionInfo.txid
             break
         default: break
         }

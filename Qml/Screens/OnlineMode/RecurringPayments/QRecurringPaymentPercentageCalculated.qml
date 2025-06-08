@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
     property string option: payment.payment_payload.calculation_method
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var percentages: [
         {id: "RUNNING_AVERAGE"},
         {id: "JUST_IN_TIME"}

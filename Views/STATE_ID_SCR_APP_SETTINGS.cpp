@@ -26,6 +26,7 @@
 #include <QProcess>
 #include "Servers/Draco.h"
 #include "ProfileSetting.h"
+#include "Signers/QSignerManagement.h"
 
 void SCR_APP_SETTING_Entry(QVariant msg) {
     AppModel::instance()->setTabIndex(-1);
@@ -98,7 +99,9 @@ void EVT_APP_SETTING_BACK_TO_ONLINE_MODE_HANDLER(QVariant msg) {
 
 void EVT_SHOW_REPLACE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg)
 {
+    QSignerManagement::instance()->requestReplacePrimaryKey();
     QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY);
+    QSignerManagement::instance()->setScreenFlow("add-a-key");
 }
 
 void EVT_SELECT_SERVER_REQUEST_HANDLER(QVariant msg) {

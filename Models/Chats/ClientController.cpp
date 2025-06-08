@@ -316,6 +316,9 @@ QStringList ClientController::contactsByStringList()
 
 void ClientController::requestSignout()
 {
+    if (!isNunchukLoggedIn()){
+        return;
+    }
     bridge::StopConsumeGroupEvent();
     if(m_loginHandler){
         m_loginHandler.data()->requestLogout();
@@ -392,15 +395,26 @@ void ClientController::setUserAvatar(const QString &url)
     if(connection()){
         if(url != ""){
             QString file_path = qUtils::QGetFilePath(url);
-            if(connection()->user()->setAvatar(file_path)){
-                timeoutHandler(1000,[=]{
-                    connection()->user()->load();
-                });
-            }
-        }else{
+            connection()->user()->setAvatar(file_path);
+            timeoutHandler(1000,[=, this]{
+                connection()->user()->load();
+                QString errormsg = "";
+                bool ret = Draco::instance()->changeAvatar(file_path, errormsg);
+                if(ret){
+                    Draco::instance()->getMe();
+                }
+            });
+        }
+        else{
             connection()->user()->removeAvatar();
-            timeoutHandler(1000,[=]{
-                Draco::instance()->setUserProfile(m_me.name,"");
+            timeoutHandler(1000,[=, this]{
+                connection()->user()->load();
+                QJsonObject output;
+                QString errormsg = "";
+                bool ret = Draco::instance()->removeAvatar(output, errormsg);
+                if(ret){
+                    Draco::instance()->getMe();
+                }
             });
         }
     }
@@ -500,6 +514,7 @@ QVariant ClientController::user() const
         maps["isMultiSubscriptions"] = isMultiSubscriptions();
         maps["isGroupWallet"]       = isGroupWallet();
         maps["isUserWallet"]        = isUserWallet();
+        maps["slugs"] = slugs();
     }
     else{
         maps["isSubscribedUser"] = false;
@@ -517,6 +532,7 @@ QVariant ClientController::user() const
         maps["isMultiSubscriptions"] = false;
         maps["isGroupWallet"]       = false;
         maps["isUserWallet"]        = false;
+        maps["slugs"] = "";
     }
     if(AppModel::instance()->getPrimaryKey()){
         maps["master_fingerprint"] = AppModel::instance()->getPrimaryKey()->fingerPrint();
@@ -651,7 +667,7 @@ QStringList ClientController::slugs() const
         return m_slugs;
     }
     else {
-        return {};
+        return QStringList();
     }
 }
 
@@ -754,7 +770,7 @@ void ClientController::UploadFile(const QString &file_name,
         if(file.error() == QFileDevice::NoError){
             auto job = connection()->uploadFile(filename);
             job->setMaxRetries(std::numeric_limits<int>::max());
-            connect(job, &BaseJob::success, this, [job, json_info,filename] {
+            connect(job, &BaseJob::success, this, [job, json_info,filename]() {
                 QString targetUri = job->contentUri().toString();
                 DBG_INFO << "ClientController::UploadFile::success" << targetUri;
                 QtConcurrent::run([targetUri, json_info, filename]() {

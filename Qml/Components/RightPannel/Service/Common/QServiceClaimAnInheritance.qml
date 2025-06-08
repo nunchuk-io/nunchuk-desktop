@@ -47,17 +47,28 @@ Item {
             var is_valid = inheritanceCheckStatus.is_valid
             var is_paid = inheritanceCheckStatus.is_paid
             var is_expired = inheritanceCheckStatus.is_expired
+            
             if (buffer_period_countdown) {
                 return _buffer_period_has_started
             }
             if (inheritance) {
-                return _your_inheritance
+                return your_inheritance()
             }
             if (is_valid || !is_paid || !inheritanceCheckStatus) {
                 return _magic_phrase_and_backup_password
             }
         }
     }
+
+    function your_inheritance() {
+        var isWithdrawBitcoin = inheritanceCheckStatus.isWithdrawBitcoin
+        if (isWithdrawBitcoin) {
+            return _your_inheritance_withdraw_bitcoin
+        } else {
+            return _your_inheritance_congratulations
+        }
+    }
+
     Connections {
         target: ServiceSetting.servicesTag
         onNotPaidAlert: {
@@ -84,8 +95,13 @@ Item {
         }
     }
     Component {
-        id: _your_inheritance
+        id: _your_inheritance_congratulations
         QServiceClaimInheritanceYourInheritance {
+        }
+    }
+    Component {
+        id: _your_inheritance_withdraw_bitcoin
+        QServiceClaimInheritanceWithdrawBitcoin {
         }
     }
     Component {

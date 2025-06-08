@@ -53,11 +53,6 @@ nunchuk::SingleSigner QSingleSigner::originSingleSigner() const
     return singleSigner_;
 }
 
-void QSingleSigner::setOriginSingleSigner(const nunchuk::SingleSigner signer)
-{
-    singleSigner_ = signer;
-}
-
 nunchuk::PrimaryKey QSingleSigner::originPrimaryKey()
 {
     if (isPrimaryKey()) {
@@ -530,7 +525,7 @@ QVariantList QSingleSigner::getWalletList()
 {
     QVariantList ret;
     for (auto wallet : AppModel::instance()->walletListPtr()->fullList()) {
-        if (wallet->isContainKey(masterFingerPrint())) {
+        if (wallet->isContainKey(masterFingerPrint()) && wallet->isAssistedWallet()) {
             ret.append(QVariant::fromValue(wallet.data()));
         }
     }
@@ -560,9 +555,21 @@ void QSingleSigner::setKeyReplaced(const QSingleSignerPtr &keyReplaced)
 bool QSingleSigner::taprootSupported()
 {
     bool ret = true;
-    QSet<int> types = Draco::instance()->GetTaprootSupportedCached();
-    if(types.size() > 0){
-        ret = types.contains(signerType());
+    QJsonArray types = Draco::instance()->GetTaprootSupportedCached();
+    if (types.size() > 0) {
+        QSet<int> supported_types;
+        QSet<QString> supported_tags;
+        foreach (const QJsonValue &value, types) {
+            QJsonObject obj = value.toObject();
+            QString type = obj["signer_type"].toString();
+            QString tag = obj["signer_tag"].toString();
+            nunchuk::SignerType type_enum = qUtils::GetSignerType(type);
+            supported_types.insert((int)type_enum);
+            supported_tags.insert(tag);
+        }
+
+        ret = supported_types.contains(signerType()) &&
+              supported_tags.contains(tag());
     }
     return ret;
 }
@@ -634,6 +641,41 @@ void QSingleSigner::setIsOccupied(bool newIsOccupied)
     m_isOccupied = newIsOccupied;
 }
 
+bool QSingleSigner::needPassphrase() const
+{
+    return m_need_passphrase;
+}
+
+void QSingleSigner::setNeedPassphrase(bool newNeed_passphrase)
+{
+    m_need_passphrase = newNeed_passphrase;
+}
+
+bool QSingleSigner::needBackup() {
+    return m_need_backup;
+}
+void QSingleSigner::setNeedBackup(bool val)
+{
+    if (m_need_backup != val) {
+        m_need_backup = val;
+    }
+}
+
+bool QSingleSigner::allowAssignToWallet() const {
+    auto walletList = AppModel::instance()->walletListPtr();
+    if (!walletList) {
+        return true;
+    }
+    for (const auto& wallet : walletList->fullList()) {
+        bool isContain = wallet->isContainKey(masterFingerPrint());
+        bool needBackup = wallet->keyNeedBackup();
+        if (isContain && needBackup) {
+            return false;
+        }
+    }
+    return true;
+}
+
 SingleSignerListModel::SingleSignerListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -650,25 +692,49 @@ QVariant SingleSignerListModel::data(const QModelIndex &index, int role) const
     return dataSigner(m_data[index.row()], role);
 }
 
-bool SingleSignerListModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    if(role == single_signer_signed_message_Role) {
-        m_data[index.row()]->setMessage(value.toString());
+bool SingleSignerListModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_data.size()) {
+        return false;
     }
-    else if(role == single_signer_signed_signature_Role){
-        m_data[index.row()]->setSignature(value.toString());
+
+    const auto& signerPtr = m_data.at(index.row());
+    if (!signerPtr) {
+        return false;
     }
-    else if(role == single_signer_checked_Role){
-        m_data[index.row()]->setChecked(value.toBool());
+
+    bool modified = false;
+
+    switch (role) {
+    case single_signer_signed_message_Role:
+        signerPtr->setMessage(value.toString());
+        modified = true;
+        break;
+    case single_signer_signed_signature_Role:
+        signerPtr->setSignature(value.toString());
+        modified = true;
+        break;
+    case single_signer_checked_Role:
+        signerPtr->setChecked(value.toBool());
         emit signerSelectedCountChanged();
-    }
-    else if(role == single_signer_value_key_Role){
-        m_data[index.row()]->setValueKey(value.toBool());
+        modified = true;
+        break;
+    case single_signer_value_key_Role:
+        signerPtr->setValueKey(value.toBool());
         emit signerValueKeyCountChanged();
+        modified = true;
+        break;
+    case single_signer_need_Topup_Xpub_Role:
+        signerPtr->setNeedTopUpXpub(value.toBool());
+        modified = true;
+        break;
+    default:
+        break;
     }
-    else{ }
-    emit dataChanged(index, index, { role } );
-    return true;
+
+    if (modified) {
+        emit dataChanged(index, index, {role});
+    }
+    return modified;
 }
 
 QHash<int, QByteArray> SingleSignerListModel::roleNames() const
@@ -710,6 +776,9 @@ QHash<int, QByteArray> SingleSignerListModel::roleSignerNames()
     roles[single_signer_keyset_remaining_Role]    = "single_signer_keyset_remaining";
     roles[single_signer_value_key_Role]           = "single_signer_value_key";
     roles[single_signer_isOccupied_Role]          = "single_signer_isOccupied";
+    roles[single_signer_needPassphrase_Role]      = "single_signer_needPassphrase";
+    roles[single_signer_needBackup_Role]          = "single_signer_needBackup";
+    roles[single_signer_allowAssignToWallet_Role] = "single_signer_allowAssignToWallet";
     return roles;
 }
 
@@ -779,6 +848,12 @@ QVariant SingleSignerListModel::dataSigner(const QSingleSignerPtr &data, int rol
         return data->valueKey();
     case single_signer_isOccupied_Role:
         return data->isOccupied();
+    case single_signer_needPassphrase_Role:
+        return data->needPassphrase();
+    case single_signer_needBackup_Role:
+        return data->needBackup();
+    case single_signer_allowAssignToWallet_Role:
+        return data->allowAssignToWallet();
     default:
         return QVariant();
     }
@@ -842,11 +917,9 @@ void SingleSignerListModel::updateKeysetPendingnumber(const int keyset_index, co
 
 void SingleSignerListModel::initSignatures()
 {
-    beginResetModel();
     for (int var = 0; var < m_data.count(); var++) {
         m_data[var]->setSignerSigned(false);
     }
-    endResetModel();
 }
 
 
@@ -872,7 +945,7 @@ bool SingleSignerListModel::needTopUpXpubs() const
 
 QSingleSignerPtr SingleSignerListModel::getSingleSignerByIndex(const int index) {
     if(index < 0 || index >= m_data.count()){
-        DBG_INFO << "Index out of range";
+        DBG_INFO << "Index out of range " << index;
         return NULL;
     }
     else {
@@ -1146,13 +1219,36 @@ bool SingleSignerListModel::needSyncNunchukEmail()
     return ret;
 }
 
-void SingleSignerListModel::requestSort()
+void SingleSignerListModel::requestSort(bool force)
 {
-    beginResetModel();
-    if(m_data.count() > 1){
-        qSort(m_data.begin(), m_data.end(), sortSingleSignerByNameAscending);
+    if (m_data.size() <= 1) {
+        if (force) {
+            // If force is true, we reset the model to ensure it reflects the current state
+            // even if no sorting is needed.
+            beginResetModel();
+            endResetModel();
+        }
+        return;
     }
-    endResetModel();
+
+    // Create a copy of the current list
+    QList<QSingleSignerPtr> sortedData = m_data;
+    std::sort(sortedData.begin(), sortedData.end(), sortSingleSignerByNameAscending);
+
+    // Check if the order is different (by pointer or by name)
+    bool needsSort = false;
+    for (int i = 0; i < m_data.size(); ++i) {
+        if (sortedData[i]->name() != m_data[i]->name()) {
+            needsSort = true;
+            break;
+        }
+    }
+
+    if (needsSort || force) {
+        beginResetModel();
+        m_data = std::move(sortedData);
+        endResetModel();
+    }
 }
 
 void SingleSignerListModel::requestSortKeyset()

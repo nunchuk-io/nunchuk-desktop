@@ -42,7 +42,7 @@ QScreen {
         anchors.centerIn: parent
         label.text: alert.payload.is_inheritance ? STR.STR_QML_1601 : STR.STR_QML_1602
         extraHeader: Item {}
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Column {
                 anchors {
@@ -149,7 +149,7 @@ QScreen {
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_TREZOR ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
-        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         onNextClicked: {
             dashInfo.requestStartKeyReplacement(hardware)
         }

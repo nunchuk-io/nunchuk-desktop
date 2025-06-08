@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string payment_currency: payment.payment_payload.currency
     property var payment_amount: payment.payment_payload.value
     function isNumeric(str) {

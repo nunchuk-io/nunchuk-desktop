@@ -107,7 +107,7 @@ QScreen {
     Component {
         id : introTaproot
         QIntroductionTaprootAddress {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: sandbox.backScreen()
             onNextClicked: {
                 var _input = {
@@ -120,7 +120,7 @@ QScreen {
     Component {
         id : taprootWarning
         QTaprootWarningSupport {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: sandbox.backScreen()
             onNextClicked: {
                 var _input = {
@@ -133,7 +133,7 @@ QScreen {
     Component {
         id : valueKeyset
         QEnableValueKeyset {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: sandbox.backScreen()
             onNextClicked: {
                 var _input = {}
@@ -157,7 +157,7 @@ QScreen {
     Component {
         id: configure_value_keyset
         QConfigureValueKeyset {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: sandbox.backScreen()
             onNextClicked: {
                 var _input = {

@@ -42,7 +42,7 @@ Item {
     property int key_index: -1
     property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
     function closeScreen() {
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         dashInfo.markRead()
     }
 

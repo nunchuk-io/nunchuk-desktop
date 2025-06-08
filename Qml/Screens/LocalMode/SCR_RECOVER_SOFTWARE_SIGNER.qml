@@ -55,7 +55,7 @@ QScreen {
             Item {
                 id: recoverViaExistedSeedItem
                 anchors.fill: parent
-                QText {
+                QLato {
                     width: 540
                     text: STR.STR_QML_251
                     anchors {
@@ -64,8 +64,6 @@ QScreen {
                         top: parent.top
                         topMargin: 84
                     }
-                    color: "#031F2B"
-                    font.family: "Lato"
                     font.pixelSize: 16
                     wrapMode: Text.WordWrap
                     lineHeightMode: Text.FixedHeight
@@ -201,7 +199,7 @@ QScreen {
                                 property bool shown: textsuggest.visible
                                 height: 240/10
                                 color: suggestMouse.containsMouse ? "#F1FAFE" : "#FFFFFF"
-                                QText {
+                                QLato {
                                     id: textsuggest
                                     anchors.centerIn: parent
                                     text: modelData
@@ -306,7 +304,7 @@ QScreen {
             Item {
                 id: recoverViaExistedXPRVItem
                 anchors.fill: parent
-                QText {
+                QLato {
                     width: 540
                     text: STR.STR_QML_1349
                     anchors {
@@ -315,8 +313,6 @@ QScreen {
                         top: parent.top
                         topMargin: 84
                     }
-                    color: "#031F2B"
-                    font.family: "Lato"
                     font.pixelSize: 16
                     wrapMode: Text.WordWrap
                     lineHeightMode: Text.FixedHeight
@@ -495,7 +491,7 @@ QScreen {
                 anchors.horizontalCenter: parent.horizontalCenter
                 percentage: AppModel.addSignerPercentage
             }
-            QText {
+            QMontserrat {
                 width: 186
                 height: 36
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -503,10 +499,9 @@ QScreen {
                 color: "#F6D65D"
                 font.pixelSize: 24
                 font.weight: Font.DemiBold
-                font.family: "Montserrat"
                 text: STR.STR_QML_276
             }
-            QText {
+            QLato {
                 width: 328
                 height: 42
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -514,7 +509,6 @@ QScreen {
                 wrapMode: Text.WordWrap
                 color: "#F6D65D"
                 font.pixelSize: 16
-                font.family: "Lato"
                 text: STR.STR_QML_277
             }
         }

@@ -18,91 +18,34 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION.h"
-#include "QEventProcessor.h"
 #include "Models/AppModel.h"
-#include "Models/SingleSignerModel.h"
-#include "Models/WalletModel.h"
+#include "Signers/QSignerManagement.h"
 #include "bridgeifaces.h"
-#include "localization/STR_CPP.h"
 #include "Servers/Draco.h"
-#include "STATE_ID_SCR_LOGIN_ONLINE.h"
+#include "localization/STR_CPP.h"
 
-void SCR_PRIMARY_KEY_CONFIGURATION_Entry(QVariant msg) {
-    QMap<QString,QVariant> dataMap = msg.toMap();
-    QString signername = dataMap.value("signername").toString();
-    QString passphrase = dataMap.value("passphrase").toString();
-    QString mnemonic = AppModel::instance()->getMnemonic();
-    qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
-    QString fingerprint = qUtils::GetMasterFingerprint(mnemonic,passphrase);
-    QObject *obj = QEventProcessor::instance()->getCurrentScreen();
-    DBG_INFO << fingerprint << dataMap;
-    if(obj){
-        obj->setProperty("primaryKeyUsername",fingerprint);
-        obj->setProperty("primaryKeyPassphrase",passphrase);
-        obj->setProperty("primaryKeySignername",signername);
-    }
-}
+void SCR_PRIMARY_KEY_CONFIGURATION_Entry(QVariant msg) {}
 
-void SCR_PRIMARY_KEY_CONFIGURATION_Exit(QVariant msg) {
-
-}
+void SCR_PRIMARY_KEY_CONFIGURATION_Exit(QVariant msg) {}
 
 void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->setMasterSignerInfo( QMasterSignerPtr(new QMasterSigner()));
-    if (isBusy()) return;
-    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    runInConcurrent([msg]() -> bool{
-        QMap<QString,QVariant> maps = msg.toMap();
-        QString mnemonic = maps["mnemonic"].toString();
-        QString username = maps["username"].toString();
-        QString passphrase = maps["passphrase"].toString();
-        DBG_INFO << username;
-        bool isAvail = Draco::instance()->pkey_username_availability(username);
-        bool ret {false};
-        if(!isAvail){
-            QString address = qUtils::GetPrimaryKeyAddress(mnemonic,passphrase);
-            QString nonce = Draco::instance()->get_pkey_nonce(address,username);
-            QString message = QString("%1%2").arg(username).arg(nonce);
-            QString signature = qUtils::SignLoginMessage(mnemonic,passphrase,message);
-            if(Draco::instance()->pkey_signup(address,username,signature)){
-                ret = true;
-            }
-        }
-        return ret;
-    },[](bool ret) {
-        qApp->restoreOverrideCursor();
-        if (ret) {
-            QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_FINISHED);
-        }
+    timeoutHandler(200, [msg]() {
+        QMap<QString, QVariant> maps = msg.toMap();
+        QSignerManagement::instance()->updatePrimaryKeyData(maps);
+        QSignerManagement::instance()->loginPrimaryKey();
     });
-}
-
-void EVT_PRIMARY_KEY_CONFIGURATION_BACK_HANDLER(QVariant msg) {
-
 }
 
 void EVT_PRIMARY_KEY_CONFIGURATION_FINISHED_HANDLER(QVariant msg) {
     DBG_INFO;
-    timeoutHandler(200,[](){
+    timeoutHandler(200, []() {
         AppModel::instance()->showToast(0, STR_CPP_106, EWARNING::WarningType::SUCCESS_MSG);
         AppModel::instance()->setPrimaryKey(Draco::instance()->Uid());
     });
 }
 
-void EVT_PRIMARY_KEY_SIGN_IN_SUCCEED_HANDLER(QVariant msg)
-{
-    QString signername = msg.toMap().value("signername").toString();
-    QString passphrase = msg.toMap().value("passphrase").toString();
-    QString mnemonic = AppModel::instance()->getMnemonic();
-
-    QMap<QString, QVariant> makeInstanceData;
-    makeInstanceData["state_id"] = E::STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION;
-    makeInstanceData["signername"] = signername;
-    makeInstanceData["passphrase"] = passphrase;
-    makeInstanceData["mnemonic"] = mnemonic;
-
-    bool ret = AppModel::instance()->makeInstanceForAccount(makeInstanceData,"");
-    if(ret){
-        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
-    }
+void EVT_PRIMARY_KEY_SIGN_IN_SUCCEED_HANDLER(QVariant msg) {
+    timeoutHandler(200, []() {
+        QSignerManagement::instance()->loginPrimaryKeySuccess();
+    });
 }

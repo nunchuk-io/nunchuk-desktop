@@ -44,7 +44,7 @@ QOnScreenContentTypeA {
     extraHeader: Item {}
     property string option: ""
     property var recurringPayment: AppModel.walletInfo.recurringPayment
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var formats: [
         {id: "bsms",            description: STR.STR_QML_1087},
         {id: "coldcard-nfc",    description: STR.STR_QML_1088},

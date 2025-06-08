@@ -39,19 +39,29 @@ void SCR_CREATE_TRANSACTION_Exit(QVariant msg) {
 }
 
 void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
-    bool subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
-    qint64 feeRate = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    QTransactionPtr transaction = AppModel::instance()->transactionInfoPtr();
+    bool    subtractFromFeeAmout = msg.toMap().value("subtractFromFeeAmout").toBool();
+    qint64  feeRate              = msg.toMap().value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+    bool    antiFeeSnipping      = msg.toMap().value("antiFeeSnipping").toBool();
+
+    QTransactionPtr transaction  = AppModel::instance()->transactionInfoPtr();
     if(transaction){
-        QString wallet_id = transaction.data()->walletId();
+        QString wallet_id       = transaction.data()->walletId();
+        bool use_script_path    = transaction->useScriptPath();
+        QString memo            = transaction->memo();
+
         if(transaction->txidReplacing() != "") {
-            DBG_INFO << "REPLACE BY FEE REQUEST " << "new fee: " << feeRate;
+            DBG_INFO << "REPLACE BY FEE REQUEST "
+                     << "| wallet_id:" << wallet_id
+                     << "| new fee: " << feeRate
+                     << "| memo:" << memo
+                     << "| subtractFromFeeAmout:" << subtractFromFeeAmout
+                     << "| antiFeeSnipping:" << antiFeeSnipping
+                     << "| use_script_path:" << use_script_path;
             nunchuk::Transaction current            = transaction.data()->nunchukTransaction();
             std::vector<nunchuk::TxOutput> outputs  = current.get_user_outputs();
             std::vector<nunchuk::TxInput> inputs    = current.get_inputs();
             subtractFromFeeAmout                    = current.subtract_fee_from_amount();
             std::string replace_id                  = current.get_txid();
-            QString memo                            = transaction->memo();
             QWarningMessage msgwarning;
             nunchuk::Transaction draftrans = bridge::nunchukDraftOriginTransaction(wallet_id.toStdString(),
                                                                                    outputs,
@@ -59,12 +69,14 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                                    feeRate,
                                                                                    subtractFromFeeAmout,
                                                                                    replace_id,
+                                                                                   use_script_path,
                                                                                    msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                 msgwarning.resetWarningMessage();
                 QTransactionPtr trans = bridge::nunchukReplaceTransaction(wallet_id,
                                                                           transaction->txidReplacing(),
                                                                           feeRate,
+                                                                          antiFeeSnipping,
                                                                           msgwarning);
                 if(trans && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                     if (auto wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
@@ -72,6 +84,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     }
                     trans->setMemo(memo);
                     AppModel::instance()->setTransactionInfo(trans);
+                    AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
                     AppModel::instance()->requestSyncWalletDb(wallet_id);
                     QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                     transaction->setTxidReplacing("");
@@ -106,7 +119,9 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                      << "subtract:" << subtractFromFeeAmout
                      << "| manual Output:" << manualOutput
                      << "| manual Fee:" << manualFee
-                     << "| free rate:" << feeRate;
+                     << "| free rate:" << feeRate
+                     << "| use_script_path:" << use_script_path
+                     << "| antiFeeSnipping:" << antiFeeSnipping;
 
             QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->walletId()));
             if(transaction->inputCoins()){
@@ -123,7 +138,6 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
             if(AppModel::instance()->destinationList()){
                 outputs = AppModel::instance()->destinationList()->getOutputs();
             }
-            QString memo = transaction.data()->memo();
             QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
             if(wallet){
                 if(wallet.data()->isSharedWallet()){
@@ -156,7 +170,6 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     QString unUseAddress = msg.toMap().value("unUseAddress").toString();
                     DBG_INFO << "unUseAddress: " << unUseAddress;
                     QTransactionPtr trans = NULL;
-                    bool anti_fee_sniping = false; // TODO, need mockup UI
                     if (unUseAddress.isEmpty()) {
                         trans = bridge::nunchukCreateTransaction(wallet_id,
                                                                  outputs,
@@ -165,7 +178,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                  feeRate,
                                                                  subtractFromFeeAmout,
                                                                  {},
-                                                                 anti_fee_sniping,
+                                                                 antiFeeSnipping,
                                                                  msgwarning);
                     }
                     else {
@@ -176,12 +189,13 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                        memo,
                                                                        feeRate,
                                                                        transaction->txid(),
-                                                                       anti_fee_sniping,
+                                                                       antiFeeSnipping,
                                                                        msgwarning);
                     }
                     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                         if(trans){
                             AppModel::instance()->setTransactionInfo(trans);
+                            AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
                             wallet.data()->AssignTagsToTxChange();
                             if(wallet.data()->isAssistedWallet()){
                                 wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());

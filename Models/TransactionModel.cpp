@@ -456,6 +456,53 @@ bool Transaction::ImportQRTransaction(const QStringList& qrtags)
     }
 }
 
+QString Transaction::feeOtherKeysetDisplay() const
+{
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+        QLocale locale(QLocale::English);
+        return locale.toString(feeOtherKeyset());
+    }
+    else{
+        return feeOtherKeysetBTC();
+    }
+}
+
+QString Transaction::feeOtherKeysetBTC() const
+{
+    return qUtils::QValueFromAmount(feeOtherKeyset());
+}
+
+QString Transaction::feeOtherKeysetCurrency() const
+{
+    return qUtils::currencyLocale(feeOtherKeyset());
+}
+
+qint64 Transaction::feeOtherKeyset() const
+{
+    return m_fee_otherKeyset;
+}
+
+void Transaction::setFeeOtherKeyset(qint64 data)
+{
+    if (m_fee_otherKeyset == data)
+        return;
+    m_fee_otherKeyset = data;
+    emit feeOtherKeysetChanged();
+}
+
+bool Transaction::useScriptPath() const
+{
+    return m_useScriptPath;
+}
+
+void Transaction::setUseScriptPath(bool newUseScriptPath)
+{
+    if (m_useScriptPath == newUseScriptPath)
+        return;
+    m_useScriptPath = newUseScriptPath;
+    emit useScriptPathChanged();
+}
+
 QString Transaction::txidReplacing() const
 {
     return m_txidReplacing;
@@ -467,6 +514,16 @@ void Transaction::setTxidReplacing(const QString &id)
         return;
     m_txidReplacing = id;
     emit txidReplacingChanged();
+}
+
+bool Transaction::isClaimTx() const {
+    return m_isClaimTx;
+}
+
+void Transaction::setIsClaimTx(bool is_claim_tx) {
+    if (m_isClaimTx == is_claim_tx)
+        return;
+    m_isClaimTx = is_claim_tx;
 }
 
 QUTXOListModel* Transaction::inputCoins()
@@ -531,9 +588,26 @@ std::map<string, bool> Transaction::taprootFinalSigners()
 
 QString Transaction::scriptPathFeeRate()
 {
-    int fee_rate = bridge::GetScriptPathFeeRate(walletId(), nunchukTransaction());
-    QString script_path_fee = QString::number((double)fee_rate/1000, 'f', 2);
-    return script_path_fee;
+    QString wallet_Id = walletId();
+    QWalletPtr wallet = QWalletPtr(NULL);
+    if (AppModel::instance()->walletList()) {
+        wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(wallet_Id) : QWalletPtr(NULL);
+    }
+    if(wallet){
+        setRoomId(wallet->roomId());
+        int walletAddressType = wallet->walletAddressType();
+        int walletTemplateType = wallet->walletTemplate();
+        int walletType        = wallet->walletType();
+        if((walletAddressType == (int)nunchuk::AddressType::TAPROOT)
+            && ((int)nunchuk::WalletType::MULTI_SIG == walletType)
+            && (walletTemplateType == (int)nunchuk::WalletTemplate::DEFAULT))
+        {
+            int fee_rate  = bridge::GetScriptPathFeeRate(wallet_Id, nunchukTransaction());
+            QString script_path_fee = QString::number((double)fee_rate/1000, 'f', 2);
+            return script_path_fee;
+        }
+    }
+    return "";
 }
 
 void Transaction::setTxJson(const QJsonObject &txJs)
@@ -706,9 +780,10 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
     }
     if(wallet){
         setRoomId(wallet->roomId());
-        int walletAddressType = wallet->walletAddressType();
-        int walletType        = wallet->walletType();
-        if(walletAddressType == (int)nunchuk::AddressType::TAPROOT){
+        int walletAddress_Type = wallet->walletAddressType();
+        int wallet_Type        = wallet->walletType();
+        DBG_INFO << wallet_Type << walletAddress_Type;
+        if(walletAddress_Type == (int)nunchuk::AddressType::TAPROOT && wallet_Type == (int)nunchuk::WalletType::MULTI_SIG){
             DBG_INFO << status();
             if(status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::READY_TO_BROADCAST)
             {
@@ -796,7 +871,7 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
                         }
                     }
                 }
-                m_signers.data()->requestSort();
+                m_signers.data()->requestSort(true);
                 return m_signers.data();
             }
             else {
@@ -901,7 +976,8 @@ DestinationListModel *Transaction::destinationList() {
     else{
         addrs = m_transaction.get_outputs();
         int index_change = m_transaction.get_change_index();
-        for (int i = 0; i < (int)addrs.size(); i++){
+        size_t maxSize = m_isClaimTx ? 1 : addrs.size();
+        for (size_t i = 0; i < maxSize; i++){
             if(index_change != i){
                 std::pair<std::string, nunchuk::Amount> item = addrs.at(i);
                 m_destinations.data()->addDestination(QString::fromStdString(item.first), item.second);

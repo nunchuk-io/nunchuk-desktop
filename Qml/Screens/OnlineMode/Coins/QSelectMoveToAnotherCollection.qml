@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1454
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var coinCollections: walletInfo.coinCollections
     property var collection: coinCollections.collection
     property var cur_coin_collection_id: collection.coin_collection_id
@@ -66,7 +66,7 @@ QOnScreenContentTypeA {
         }
     }
     isShowLine: true
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QIconTextButton {

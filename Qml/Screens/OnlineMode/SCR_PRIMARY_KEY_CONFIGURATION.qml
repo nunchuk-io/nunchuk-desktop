@@ -34,9 +34,9 @@ import "../../Components/customizes/Popups"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property var primaryKeyUsername: ""
-    property var primaryKeyPassphrase: ""
-    property var primaryKeySignername: ""
+    property var primaryKeyUsername: SignerManagement.primaryKeyData.username
+    property var primaryKeyPassphrase: SignerManagement.primaryKeyData.passphrase
+    property var primaryKeySignername: SignerManagement.primaryKeyData.signername
 
     QOnScreenContent {
         id:_contentPrimaryKey
@@ -96,7 +96,7 @@ QScreen {
             }
         }
         QTextButton {
-            width: 200
+            width: label.paintedWidth + 32
             height: 48
             anchors {
                 right: parent.right

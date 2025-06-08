@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1470
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     extraHeader: Item{}
     content: Item {
         id: _item
@@ -125,7 +125,7 @@ QOnScreenContentTypeB {
         type: eTypeF
         visible: walletInfo.utxoListLocked.isUnChecked
         onButtonClicked: {
-            closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
     bottomRight: Row {

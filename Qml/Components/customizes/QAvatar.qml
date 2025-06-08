@@ -80,6 +80,7 @@ Rectangle {
                 id:img
                 anchors.fill: parent
                 source: avatarLocal
+                fillMode: Image.PreserveAspectFit
                 layer.enabled: true
                 layer.effect: OpacityMask {
                     maskSource: Rectangle {

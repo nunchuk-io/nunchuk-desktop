@@ -7,21 +7,16 @@
 #include <QJsonObject>
 #include "TypeDefine.h"
 #include "WalletModel.h"
+#include "Commons/QStateFlow.h"
 
-class ServiceSetting : public QObject
+class ServiceSetting : public QStateFlow
 {
     Q_OBJECT
     Q_PROPERTY(int optionIndex                      READ optionIndex                    WRITE setOptionIndex            NOTIFY optionIndexChanged)
-    Q_PROPERTY(int claimInheritanceFlow             READ claimInheritanceFlow           WRITE setClaimInheritanceFlow   NOTIFY claimInheritanceFlowChanged)
     Q_PROPERTY(QVariant servicesTag                 READ servicesTag                                                    NOTIFY walletInfoChanged)
     Q_PROPERTY(Wallet* walletInfo                   READ walletInfo                                                     NOTIFY walletInfoChanged)
 
 public:
-    Q_ENUMS(CIWithDraw)
-    enum class CIWithDraw {
-        WITHDRAW_TO_NUNCHUK_WALLET,
-        WITHDRAW_TO_ADDRESS
-    };
     Q_ENUMS(InheritanceEdit)
     enum class InheritanceEdit {
         IE_NONE,
@@ -35,11 +30,6 @@ public:
     ServiceSetting(ServiceSetting &other) = delete;
     ServiceSetting(ServiceSetting const &other) = delete;
     void operator=(const ServiceSetting &other) = delete;
-
-    int claimInheritanceFlow() const;
-    void setClaimInheritanceFlow(int flow);
-
-    void checkInheritanceDownloadBackup();
 
     bool existHardware(const QString& tag);
 
@@ -55,13 +45,12 @@ public:
 public slots:
     void requestStartAddHardwareKey(const QString &tag);
     void clearWalletInfo();
+    void handleClaimInheritance(const QVariant &msg);
 signals:
     void verifyPasswordTokenAlert(const QString& errormsg);
-    void claimInheritanceFlowChanged();
     void optionIndexChanged();
     void walletInfoChanged();
 private:
-    int m_claimInheritanceFlow {0};
     int m_optionIndex;
     QWalletPtr          walletInfo_;
 };

@@ -7,12 +7,12 @@
 #include <QJsonObject>
 #include <QVariantList>
 #include "TypeDefine.h"
+#include "Commons/QStateFlow.h"
 
-class OnBoardingModel final: public QObject
+class OnBoardingModel final: public QStateFlow
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList countries READ countries NOTIFY countryListChanged)
-    Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
 public:
     static OnBoardingModel *instance();
 
@@ -27,21 +27,17 @@ public:
     bool GetCountryCodeList();
     bool RequestOnboardingNoAdvisor(const QString &country_code, const QString &email, const QString &note);
     QWalletPtr CreateAHotWallet(const QString &mnemonic = "", bool need_backup = true);
-    QString state() const;
-    void setState(const QString &newState);
-    QWalletPtr ImportWalletDescriptor(const QString &file_path);
+    bool ImportWalletDescriptor(const QString &file_path);
     QWalletPtr ImportWalletDB(const QString &file_path);
 public slots:
     void requestBackupHotWallet();
     bool importQrHotWallet(const QStringList qrtags);
 signals:
     void countryListChanged();
-    void stateChanged();
 private:
     OnBoardingModel();
     ~OnBoardingModel();
     QJsonArray m_countries {};
-    QString    m_state {"onboarding"};
 };
 
 #endif // ONBOARDINGMODEL_H

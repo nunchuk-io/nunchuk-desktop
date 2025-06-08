@@ -1,12 +1,12 @@
 cmake_minimum_required( VERSION 3.1 )
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.46)
+    project(Nunchuk VERSION 1.9.47)
 else()
-    project(nunchuk-qt VERSION 1.9.46)
+    project(nunchuk-qt VERSION 1.9.47)
 endif()
 
 # nunchuk
-if(WIN32)
+if(MSVC AND WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "/MT")
     set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
     set(VCPKG_TARGET_ARCHITECTURE x64)
@@ -19,6 +19,10 @@ if(WIN32)
     set(HAVE_EVHTTP_CONNECTION_GET_PEER_CONST_CHAR ON)
 endif()
 
+if (WIN32)
+    add_definitions("-DWIN32")
+    add_definitions("-DBOOST_PROCESS_USE_STD_FS")
+endif()
 add_subdirectory(contrib/libnunchuk)
 
 # Compiler Opt
@@ -28,6 +32,28 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ON )
 set(CMAKE_AUTORCC ON )
 set(CMAKE_AUTOUIC ON )
+
+if(DEFINED ENV{OAUTH_CLIENT_ID})
+    set(OAUTH_CLIENT_ID $ENV{OAUTH_CLIENT_ID})
+else()
+    set(OAUTH_CLIENT_ID "") # fallback to runtime
+endif()
+
+if(DEFINED ENV{OAUTH_CLIENT_SECRET})
+    set(OAUTH_CLIENT_SECRET $ENV{OAUTH_CLIENT_SECRET})
+else()
+    set(OAUTH_CLIENT_SECRET "") # fallback to runtime
+endif()
+
+if(DEFINED ENV{OAUTH_REDIRECT_URI})
+    set(OAUTH_REDIRECT_URI $ENV{OAUTH_REDIRECT_URI})
+else()
+    set(OAUTH_REDIRECT_URI "") # fallback to runtime
+endif()
+
+add_definitions(-DOAUTH_CLIENT_ID="${OAUTH_CLIENT_ID}")
+add_definitions(-DOAUTH_CLIENT_SECRET="${OAUTH_CLIENT_SECRET}")
+add_definitions(-DOAUTH_REDIRECT_URI="${OAUTH_REDIRECT_URI}")
 
 # ZXing Opt
 set(ZXING_UNIT_TESTS OFF)
@@ -50,16 +76,33 @@ endif()
 if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE Debug )
 endif()
+
 # Definations
-set(DQLIMIT_ONE OFF)
-if(DQLIMIT_ONE)
+option(LIMIT_SW_SIGNER "Enable Software signer" OFF)
+option(USING_WEBENGINE "Enable WebEngine" ON)
+
+if(LIMIT_SW_SIGNER)
+    message(STATUS "---------------------------------> USING LIMIT_SW_SIGNER")
     add_definitions (-DENABLE_LIMIT)
-endif(DQLIMIT_ONE)
-add_definitions (-Wall)
+else()
+    message(STATUS "---------------------------------> DISABLE LIMIT_SW_SIGNER")
+endif()
 add_definitions (-DSIGNET_SUPPORT)
 
 # Dependences mandatory
-find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Sql Concurrent Svg PrintSupport REQUIRED)
+find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Concurrent Svg PrintSupport Network REQUIRED)
+if(USING_WEBENGINE)
+    message(STATUS "---------------------------------> USING WEBENGINE")
+    find_package(Qt5 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+    if (Qt5WebEngineWidgets_FOUND)
+        message( STATUS "Using WebEngineWidgets ${Qt5WebEngineWidgets_VERSION} at ${Qt5WebEngineWidgets_DIR}")
+    endif()
+    add_definitions (-DENABLE_WEBVIEW_SIGIN)
+else()
+    message(STATUS "---------------------------------> DISABLE WEBENGINE")
+endif()
+
+
 # Dependences additional
 find_package(Qt5Keychain REQUIRED)
 if (Qt5Keychain_FOUND)
@@ -67,7 +110,7 @@ if (Qt5Keychain_FOUND)
 endif()
 
 if(WIN32)
-    find_package(Boost REQUIRED COMPONENTS filesystem)
+    find_package(Boost REQUIRED)
 else()
     find_package(Boost REQUIRED )
 endif()
@@ -105,6 +148,7 @@ file(GLOB_RECURSE SOURCES_QAPPENGINE	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/QAppE
 file(GLOB_RECURSE SOURCES_QSCANNER	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/QRScanner/*.cpp		${CMAKE_SOURCE_DIR}/QRScanner/*.h)
 file(GLOB_RECURSE SOURCES_REGISTERTYPE	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/RegisterTypes/*.cpp	${CMAKE_SOURCE_DIR}/RegisterTypes/*.h)
 file(GLOB_RECURSE SOURCES_VIEWS		CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Views/*.cpp		${CMAKE_SOURCE_DIR}/Views/*.h)
+file(GLOB_RECURSE FEDERATEDAUTH		CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/FederatedAuth/*.cpp	${CMAKE_SOURCE_DIR}/FederatedAuth/*.h)
 
 QT5_ADD_RESOURCES(SOURCE_RSCS
     qml.qrc
@@ -122,11 +166,20 @@ if(APPLE)
     # And this part tells CMake where to find and install the file itself
     set(APP_ICON_MACOSX ${CMAKE_CURRENT_SOURCE_DIR}/Icon.icns)
     set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    add_executable (${PROJECT_NAME} MACOSX_BUNDLE main.cpp ${SOURCES_IFACES} ${SOURCES_MODELS} ${SOURCES_QAPPENGINE} ${SOURCES_QSCANNER} ${SOURCES_REGISTERTYPE} ${SOURCES_VIEWS} ${SOURCE_RSCS} ${APP_ICON_MACOSX})
+    add_executable (${PROJECT_NAME} MACOSX_BUNDLE main.cpp ${SOURCES_IFACES} ${SOURCES_MODELS} ${SOURCES_QAPPENGINE} ${SOURCES_QSCANNER} ${SOURCES_REGISTERTYPE} ${SOURCES_VIEWS} ${FEDERATEDAUTH} ${SOURCE_RSCS} ${APP_ICON_MACOSX})
 elseif(UNIX AND NOT APPLE)
-    add_executable (${PROJECT_NAME} main.cpp ${SOURCES_IFACES} ${SOURCES_MODELS} ${SOURCES_QAPPENGINE} ${SOURCES_QSCANNER} ${SOURCES_REGISTERTYPE} ${SOURCES_VIEWS} ${SOURCE_RSCS})
+    add_executable (${PROJECT_NAME} main.cpp ${SOURCES_IFACES} ${SOURCES_MODELS} ${SOURCES_QAPPENGINE} ${SOURCES_QSCANNER} ${SOURCES_REGISTERTYPE} ${SOURCES_VIEWS} ${FEDERATEDAUTH} ${SOURCE_RSCS})
 else()
-    add_executable (${PROJECT_NAME} WIN32 main.cpp ${SOURCES_IFACES} ${SOURCES_MODELS} ${SOURCES_QAPPENGINE} ${SOURCES_QSCANNER} ${SOURCES_REGISTERTYPE} ${SOURCES_VIEWS} ${SOURCE_RSCS})
+    add_executable (${PROJECT_NAME} WIN32 main.cpp ${SOURCES_IFACES} ${SOURCES_MODELS} ${SOURCES_QAPPENGINE} ${SOURCES_QSCANNER} ${SOURCES_REGISTERTYPE} ${SOURCES_VIEWS} ${FEDERATEDAUTH} ${SOURCE_RSCS})
+endif()
+
+if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+    )
+    target_sources(${PROJECT_NAME} PRIVATE res/nunchuk.rc)
 endif()
 
 # Target properties
@@ -140,6 +193,7 @@ endif()
 
 # Compile options
 target_compile_definitions(${PROJECT_NAME} PRIVATE USE_KEYCHAIN)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
 if (NOT WIN32)
     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=return-type)
 endif()
@@ -150,6 +204,9 @@ message(STATUS "---------------------------------> CMAKE_OSX_ARCHITECTURES: ${CM
 message(STATUS "---------------------------------> C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "---------------------------------> C++ Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "---------------------------------> C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "---------------------------------> OAUTH_CLIENT_ID = ${OAUTH_CLIENT_ID}")
+message(STATUS "---------------------------------> OAUTH_CLIENT_SECRET = ${OAUTH_CLIENT_SECRET}")
+message(STATUS "---------------------------------> OAUTH_REDIRECT_URI = ${OAUTH_REDIRECT_URI}")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DENABLE_OUTLOG)
@@ -173,14 +230,14 @@ else()
 endif()
 
 # Target link options
-if(WIN32)
+if(WIN32 AND MSVC)
     target_link_options(${PROJECT_NAME} PUBLIC /INCREMENTAL:NO /NODEFAULTLIB:MSVCRT)
 endif()
 
 # Target link libraries
-target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg Qt5::PrintSupport Qt5::Sql Qt5::Multimedia Qt5::Widgets)
-if (WIN32)
-    target_link_libraries (${PROJECT_NAME} PUBLIC Boost::filesystem Boost::system)
+target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg Qt5::PrintSupport Qt5::Multimedia Qt5::Network)
+if(USING_WEBENGINE)
+    target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::WebEngineWidgets)
 endif()
 
 target_link_libraries (${PROJECT_NAME} PUBLIC nunchuk)
@@ -188,7 +245,6 @@ target_include_directories("${PROJECT_NAME}" PUBLIC
     "${PROJECT_SOURCE_DIR}/contrib/libnunchuk/include"
     ${Boost_INCLUDE_DIRS}
 )
-
 target_link_libraries (${PROJECT_NAME} PUBLIC ${QTKEYCHAIN_LIBRARIES})
 target_include_directories("${PROJECT_NAME}" PUBLIC "${QTKEYCHAIN_INCLUDE_DIRS}")
 
@@ -196,3 +252,7 @@ target_link_libraries (${PROJECT_NAME} PUBLIC Quotient)
 target_include_directories("${PROJECT_NAME}" PUBLIC "${PROJECT_SOURCE_DIR}/contrib/quotient/lib" )
 
 target_link_libraries (${PROJECT_NAME} PUBLIC ZXing)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    message(STATUS "---------------------------------> MSVC -> link SQLite::SQLite3")
+	target_link_libraries (${PROJECT_NAME} PRIVATE SQLite::SQLite3)
+endif()

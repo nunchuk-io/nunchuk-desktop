@@ -56,11 +56,11 @@ QScreenAdd {
         anchors.centerIn: parent
         label.text: STR.STR_QML_901
         extraHeader: Item {}
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: QAddAnExistingKey {
             notice: STR.STR_QML_925
         }
-        onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         bottomRight: Row {
             spacing: 12
             QTextButton {
@@ -106,7 +106,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_1046
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: Item {
             Column {
                 spacing: 32
@@ -228,7 +228,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         label.text: STR.STR_QML_923
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         content: QAddKeyRefreshDevices {
             title: STR.STR_QML_929
             state_id: EVT.STATE_ID_SCR_ADD_HARDWARE_EXIST
@@ -288,7 +288,7 @@ QScreenAdd {
         height: popupHeight
         anchors.centerIn: parent
         label.text: ""
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         Column {
             anchors.fill: parent
             anchors.margins: 36

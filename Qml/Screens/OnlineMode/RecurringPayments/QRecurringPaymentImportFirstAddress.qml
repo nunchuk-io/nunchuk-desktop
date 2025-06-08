@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string payment_bsms: payment.destination_payload.bsms
     property string payment_first_address: payment.destination_payload.first_address
     content: Item {

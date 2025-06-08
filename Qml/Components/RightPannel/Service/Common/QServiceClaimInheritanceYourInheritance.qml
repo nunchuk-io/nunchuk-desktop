@@ -86,12 +86,12 @@ Item {
                 width: parent.width
                 spacing: 16
                 QText {
-                    width: 627
+                    width: 700
                     text: STR.STR_QML_776
                     color: "#031F2B"
                     font.family: "Montserrat"
                     font.pixelSize: 32
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Medium
                     wrapMode: Text.WordWrap
                 }
                 QText {
@@ -143,31 +143,14 @@ Item {
                         ServiceSetting.servicesTag.clearInheritance()
                     }
                 }
-                QButtonLargeTail {
-                    width: 220
+                QTextButton {
+                    width: 158
                     height: 48
-                    type: eTHIRT
-                    label: STR.STR_QML_778
-                    optionVisible: imExContextMenu.visible
+                    label.text: STR.STR_QML_1735
+                    label.font.pixelSize: 16
+                    type: eTypeE
                     onButtonClicked: {
-                        imExContextMenu.x = 20
-                        imExContextMenu.y = 20 - imExContextMenu.height
-                        imExContextMenu.open()
-                    }
-                    QContextMenu {
-                        id: imExContextMenu
-                        menuWidth: 320
-                        labels: [
-                            STR.STR_QML_779,
-                            STR.STR_QML_780,
-                        ]
-                        icons: [
-                            "qrc:/Images/Images/wallet-dark.svg",
-                            "qrc:/Images/Images/spend-dark.svg",
-                        ]
-                        onItemClicked: {
-                            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST,index)
-                        }
+                        ServiceSetting.servicesTag.updateInheritanceCheckStatus("isWithdrawBitcoin", true)
                     }
                 }
             }

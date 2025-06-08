@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1366
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Column {
             anchors.fill: parent
@@ -92,7 +92,7 @@ QOnScreenContentTypeA {
 
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row{
         spacing: 12
         QButtonLargeTail {
@@ -165,7 +165,7 @@ QOnScreenContentTypeA {
                 type: "replace-cancel",
             }
             QMLHandle.sendEvent(EVT.EVT_REPLACE_KEYS_ENTER, _input)
-            closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         }
     }
     QConfirmYesNoPopup{

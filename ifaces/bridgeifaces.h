@@ -454,6 +454,7 @@ QTransactionPtr nunchukDraftTransaction(const QString& wallet_id,
                                         const int fee_rate,
                                         const bool subtract_fee_from_amount,
                                         const QString &replace_txid,
+                                        bool use_script_path,
                                         QWarningMessage &msg);
 
 nunchuk::Transaction nunchukDraftOriginTransaction(const string &wallet_id,
@@ -462,12 +463,14 @@ nunchuk::Transaction nunchukDraftOriginTransaction(const string &wallet_id,
                                                    nunchuk::Amount fee_rate,
                                                    const bool subtract_fee_from_amount,
                                                    const string &replace_txid,
+                                                   bool use_script_path,
                                                    QWarningMessage &msg);
 
 
 QTransactionPtr nunchukReplaceTransaction(const QString &wallet_id,
                                           const QString& tx_id,
                                           const int new_fee_rate,
+                                          bool anti_fee_sniping,
                                           QWarningMessage &msg);
 
 void nunchukUpdateTransactionMemo(const QString &wallet_id,
@@ -950,5 +953,7 @@ void DeclineReplaceGroup(const QString& walletId,
                          QWarningMessage &msg);
 
 QStringList GetDeprecatedGroupWallets(QWarningMessage &msg);
+
+QString GetHotKeyMnemonic(const QString &signer_id, const QString &passphrase = {});
 }
 #endif // BRIDGEINTERFACE_H

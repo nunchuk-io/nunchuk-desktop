@@ -47,7 +47,7 @@ Row {
     QTextInputBox {
         id: text
         width: radioRoot.width - icon.width - 8
-        rightPading: 78
+        rightPadding: 78
         heightMin: 56
         fontPixelSize: 14
         anchors.verticalCenter: parent.verticalCenter

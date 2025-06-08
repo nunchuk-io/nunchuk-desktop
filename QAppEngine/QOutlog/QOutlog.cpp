@@ -19,6 +19,28 @@
  **************************************************************************/
 #include "QOutlog.h"
 #include <iostream>
+#include <QFileInfo>
+
+#ifdef Q_OS_UNIX
+#include <unistd.h>
+#endif
+
+#ifdef ENABLE_OUTLOG
+const char *debugForDev = "debugForDev";
+static const QString logfilePath = []() -> QString {
+    QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(logDir);
+
+#ifdef Q_OS_UNIX
+    bool debugFileExists = (access(debugForDev, F_OK) == 0);
+#else
+    bool debugFileExists = QFileInfo(QString::fromUtf8(debugForDev)).exists();
+#endif
+    return debugFileExists ? "logfile_nunchuck-client-qt.log" : logDir + "/logfile_nunchuck-client-qt.log";
+}();
+
+static LogWriteToFile g_writer(logfilePath);
+#endif
 
 QOutlog::QOutlog()
 {
@@ -33,8 +55,8 @@ QOutlog::~QOutlog()
     }
     if (!mLogString.contains("QCoreApplication")) {
         std::cout << mLogString.toStdString() << std::endl;
+        g_writer.writeLog(mLogString);
     }
-    g_writer.writeLog(mLogString);
 #endif
 }
 
@@ -83,8 +105,13 @@ void LogWriteToFile::writeLog(const QString &log)
 LogWriteToFile::LogWriteToFile(const QString &file)
 {
 #ifdef ENABLE_OUTLOG
+    QFile::remove(file);
     logfile = QSharedPointer<QFile>(new QFile(file));
-    logfile.data()->open(QIODevice::WriteOnly);
+    if (!logfile->open(QIODevice::WriteOnly)) {
+        qWarning() << "Cannot open log file" << file << logfile->errorString();
+    } else {
+        qDebug() << "Log file created fresh:" << file;
+    }
 #endif
 }
 

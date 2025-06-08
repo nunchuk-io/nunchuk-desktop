@@ -6,7 +6,7 @@
 #include "Models/AppModel.h"
 #include "Chats/ClientController.h"
 #include "Premiums/QSharedWallets.h"
-#include "Premiums/QSignerManagement.h"
+#include "Signers/QSignerManagement.h"
 
 
 QGroupSandbox::QGroupSandbox()
@@ -436,14 +436,7 @@ void QGroupSandbox::removeKey(int index)
     }
 }
 
-void QGroupSandbox::requestAddOrRepaceKey(const QVariant &msg)
-{
-    QSignerManagement::instance()->clearExecute();
-    QMap<QString, QVariant> maps = msg.toMap();
-    int index = maps["idx"].toInt();
-    QString fingerPrint = maps["fingerPrint"].toString();
-    setIndex(index);
-    setFingerprintRecovery(fingerPrint);
+void QGroupSandbox::registerSigners() {
     auto masterFunc = []()->bool {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
@@ -454,6 +447,8 @@ void QGroupSandbox::requestAddOrRepaceKey(const QVariant &msg)
         }
         return true;
     };
+    QString mnemonic = qUtils::GenerateMnemonic();
+    AppModel::instance()->setMnemonic(mnemonic);
     QSignerManagement::instance()->registerCreateMasterSigner(masterFunc);
     QSignerManagement::instance()->registerCreateSoftwareSigner(masterFunc);
     QSignerManagement::instance()->registerCreateSoftwareSignerXprv(masterFunc);
@@ -471,6 +466,17 @@ void QGroupSandbox::requestAddOrRepaceKey(const QVariant &msg)
         }
         return true;
     });
+}
+
+void QGroupSandbox::requestAddOrRepaceKey(const QVariant &msg)
+{
+    QSignerManagement::instance()->clearExecute();
+    QMap<QString, QVariant> maps = msg.toMap();
+    int index = maps["idx"].toInt();
+    QString fingerPrint = maps["fingerPrint"].toString();
+    setIndex(index);
+    setFingerprintRecovery(fingerPrint);
+    registerSigners();
     if (auto w = AppModel::instance()->newWalletInfoPtr()) {
         w->MixMasterSignerAndSingleSignerAll();
         bool existSigner = w->signerExistList().size() > 0;
@@ -482,6 +488,11 @@ void QGroupSandbox::requestAddOrRepaceKey(const QVariant &msg)
             QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST, msg);
         }
     }
+}
+
+void QGroupSandbox::requestAddNewKey() {
+    registerSigners();
+    QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST);
 }
 
 void QGroupSandbox::slotClearOccupied()

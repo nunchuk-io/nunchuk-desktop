@@ -26,15 +26,19 @@ import "../customizes/Texts"
 import "../customizes/Buttons"
 
 Item {
-    property bool isAssisted: false
-    property bool isHotWallet: false
-    property bool isLocked: false
-    property bool isReplaced: false
-    property bool isSandboxWallet: false
-    property real ratio: 0.55
-    property string myRole: AppModel.walletInfo.myRole
+    property bool   isAssisted          : false
+    property bool   isHotWallet         : false
+    property bool   isLocked            : false
+    property bool   isReplaced          : false
+    property bool   isSandboxWallet     : false
+    property real   ratio               : 0.55
+    property string myRole              : AppModel.walletInfo.myRole
+    property bool   walletIsArchived    : AppModel.walletInfo.isArchived
+
     readonly property string gradientFrom: {
-        if (isReplaced || isLocked)
+        if (walletIsArchived)
+            return "#595959"
+        else if (isReplaced || isLocked)
             return "#595959"
         else if (isHotWallet)
             return "#A66800";
@@ -47,7 +51,9 @@ Item {
     }
 
     readonly property string gradientTo : {
-        if (isReplaced || isLocked)
+        if (walletIsArchived)
+            return "#595959"
+        else if (isReplaced || isLocked)
             return "#595959"
         else if (isHotWallet)
             return "#A66800";

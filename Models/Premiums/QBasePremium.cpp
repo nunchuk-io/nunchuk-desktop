@@ -27,13 +27,14 @@ QString QBasePremium::wallet_id() const
 
 QWalletPtr QBasePremium::walletInfoPtr() const
 {
-    if(AppModel::instance()->walletListPtr()){
-        QWalletPtr wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_id());
-        if (wallet) {
-            return wallet;
+    return [this]() -> QWalletPtr {
+        if (auto list = AppModel::instance()->walletListPtr()) {
+            if (auto wallet = list->getWalletById(wallet_id())) {
+                return wallet;
+            }
         }
-    }
-    return QWalletPtr(new Wallet);
+        return QWalletPtr(new Wallet); // fallback
+    }();
 }
 
 QGroupDashboardPtr QBasePremium::dashBoardPtr() const
@@ -71,18 +72,15 @@ QRecurringPaymentPtr QBasePremium::recurringPaymentPtr() const
 
 QWalletServicesTagPtr QBasePremium::servicesTagPtr() const
 {
-    if (auto w = walletInfoPtr())
-    {
-        return w->servicesTagPtr();
-    }
-    return {};
+    return QWalletServicesTag::instance();
 }
 
 QWalletServicesTagPtr QBasePremium::accountServicesTagPtr() const
 {
     if (ClientController::instance()->isMultiSubscriptions()) {
         return QGroupWallets::instance()->servicesTagPtr();
-    } else {
+    }
+    else {
         return ClientController::instance()->isUserWallet() ? QUserWallets::instance()->servicesTagPtr() : QGroupWallets::instance()->servicesTagPtr();
     }
 }
@@ -91,14 +89,16 @@ QAssistedDraftWallets* QBasePremium::DraftWallet() const
 {
     if (ClientController::instance()->isMultiSubscriptions()) {
         return dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance());
-    } else {
+    }
+    else {
         return ClientController::instance()->isUserWallet() ? dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance());
     }
 }
 
 QStringList QBasePremium::slugs() const
 {
-    return walletInfoPtr() ? walletInfoPtr()->slugs() : QStringList();
+    auto info = walletInfoPtr();
+    return info ? info->slugs() : QStringList();
 }
 
 bool QBasePremium::isUserDraftWallet() const

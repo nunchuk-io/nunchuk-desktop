@@ -3,7 +3,10 @@ set -e
 
 # Build project
 cd /nunchuk-desktop
-mkdir build && cd build
+git config --global --add safe.directory /nunchuk-desktop
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+mkdir build || { echo "Failed to create build directory"; exit 1; }
+cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=Off -DBUILD_CLI=Off -DCMAKE_AUTORCC_OPTIONS="--format-version;1"
 cmake --build . --parallel $(nproc)
 
@@ -23,7 +26,7 @@ cp /nunchuk-desktop/deploy/nunchuk-qt.desktop output/
 cp /nunchuk-desktop/deploy/nunchuk-qt.png output/
 
 # Copy extra libs
-for lib in libcrypto libssl libolm libqt5keychain libmd4c libpcre2-16 libdouble-conversion; do
+for lib in libcrypto libssl libmd4c libpcre2-16 libdouble-conversion; do
   cp /usr/lib/${ARCH}-linux-gnu/${lib}.so* output/appdir/lib
   chmod 775 output/appdir/lib/${lib}.so*
 done

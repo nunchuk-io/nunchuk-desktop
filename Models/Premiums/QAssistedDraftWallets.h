@@ -116,7 +116,6 @@ private:
     QMap<Key, StructAddHardware> m_requests {};
     StructAddHardware m_request {};
     QVariantList m_hardwareReq {};
-    QWalletServicesTagPtr m_servicesTag;
     QDeviceListModelPtr         mRefreshDeviceList;
     QJsonArray m_signerExistList;
     QString m_selectFingerPrint;

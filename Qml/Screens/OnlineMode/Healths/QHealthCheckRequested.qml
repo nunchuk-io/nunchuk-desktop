@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: alert.title
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Column {
         width: 539
         height: 196
@@ -55,7 +55,7 @@ QOnScreenContentTypeB {
             lineHeightMode: Text.FixedHeight
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomLeft: Item {}
     bottomRight: QTextButton {
         width: 98

@@ -139,17 +139,10 @@ QScreen {
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo)
             }
             onKeySignRequest: {
-                if(signer.single_signer_type === NUNCHUCKTYPE.SOFTWARE){
-                    _confirm.open()
-                    _confirm.signerType = signer.single_signer_type
-                    _confirm.fingerPrint = signer.singleSigner_masterFingerPrint
-                }
-                else{
-                    signingBusyBox.signerType = signer.single_signer_type
-                    signingBusyBox.open()
-                    timerSigningTx.fingerPrint = signer.singleSigner_masterFingerPrint
-                    timerSigningTx.restart()
-                }
+                signingBusyBox.signerType = signer.single_signer_type
+                signingBusyBox.open()
+                timerSigningTx.fingerPrint = signer.singleSigner_masterFingerPrint
+                timerSigningTx.restart()
             }
             onKeyScanRequest: {
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST)
@@ -349,6 +342,7 @@ QScreen {
                 width: 102
                 height: 48
                 enableExportTransaction: true
+                enableCancelTransaction: true
                 onExportToPSBT: {
                     requestExportPSBT()
                 }
@@ -360,6 +354,9 @@ QScreen {
                 }
                 onShowInvoice: {
                     invoice.open()
+                }
+                onCancelTransaction: {
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_REMOVE_REQUEST)
                 }
             }
             QTextButton {
@@ -488,6 +485,22 @@ QScreen {
             }
         }
     }
+
+    Component {
+        id: btnPendingConfirmationRight
+        QTextButton {
+            id: replaceByFeeButton
+            width: 141
+            height: 48
+            label.text: STR.STR_QML_296
+            label.font.pixelSize: 16
+            type: eTypeB
+            onButtonClicked: {
+
+            }
+        }
+    }
+
     QQrImportScanner {
         id: qrcodeImport
         onTagFound: {
@@ -525,20 +538,6 @@ QScreen {
         id: signingBusyBox
         width: parent.width
         height: parent.height
-    }
-    QConfirmYesNoPopup{
-        id:_confirm
-        property int signerType: -1
-        property string fingerPrint : ""
-        contentText:STR.STR_QML_687
-        onConfirmNo: close()
-        onConfirmYes: {
-            close()
-            signingBusyBox.signerType = _confirm.signerType
-            signingBusyBox.open()
-            timerSigningTx.fingerPrint = _confirm.fingerPrint
-            timerSigningTx.restart()
-        }
     }
     Connections {
         target: AppModel
@@ -622,7 +621,7 @@ QScreen {
             activeLink = EXPLORER_TESTNET + AppModel.transactionInfo.txid
             break;
         case NUNCHUCKTYPE.SIGNET:
-            activeLink = AppSetting.signetStream + AppModel.transactionInfo.txid
+            activeLink = EXPLORER_SIGNNET + AppModel.transactionInfo.txid
             break
         default: break
         }

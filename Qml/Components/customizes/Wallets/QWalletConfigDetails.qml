@@ -61,26 +61,11 @@ Rectangle {
                 id: walletCol
                 width: parent.width
                 spacing: 4
-                // QTypeWallet {
-                //     height: label.text == "" ? 0 : 16
-                //     icon.iconSize: 16
-                //     icon.source: if (walletIsShared) return "qrc:/Images/Images/collab-wallet-dark.svg"
-                //                  else if (walletIsSandboxWallet) return "qrc:/Images/Images/sandboxGroup.svg"
-                //                  else if (walletIsAssisted && !walletIsReplaced) return "qrc:/Images/Images/collab-wallet-dark.svg"
-                //                  else return ""
-                //     label.text: if (walletIsShared) return STR.STR_QML_438
-                //                 else if (walletIsSandboxWallet) return STR.STR_QML_1675
-                //                 else if (walletIsAssisted && !walletIsReplaced) return (myRole === "FACILITATOR_ADMIN") ? "••••••" : STR.STR_QML_679
-                //                 else return ""
-                //     label.font.weight: Font.Medium
-                //     label.font.pixelSize: 12
-                //     color: "transparent"
-                // }
                 QTextInputBoxTypeA {
                     id: wlname
                     width: 326
                     placeholderText: ""
-                    text: AppModel.walletInfo.walletName
+                    text: walletInfo.walletName
                     backgroundColor: "Transparent"
                     borderColor: "Transparent"
                     color: "#000000"
@@ -90,15 +75,15 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     showEdit: wlname.enabled
                     enabled: {
-                        if (AppModel.walletInfo.isGroupWallet) {
-                            return AppModel.walletInfo.myRole === "MASTER"
+                        if (walletInfo.isGroupWallet) {
+                            return walletInfo.myRole === "MASTER"
                         }
                         else {
                             return true
                         }
                     }
                     onTypingFinished: {
-                        if(currentText !== AppModel.walletInfo.walletName) {
+                        if(currentText !== walletInfo.walletName) {
                             var infoObj = {
                                 "name"          : currentText,
                                 "description"   : ""
@@ -108,10 +93,32 @@ Rectangle {
                     }
                 }
                 QBadge {
-                    text: STR.STR_QML_559.arg(walletInfo.walletM).arg(walletInfo.walletN)
+                    text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : 
+                            (walletInfo.walletN === 1) ? STR.STR_QML_070 : 
+                            qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069);
+
                     color: "#EAEAEA"
                     font.weight: Font.Medium
                     font.pixelSize: 12
+                }
+                QTypeWallet {
+                    height: label.text == "" ? 0 : 16
+                    icon.iconSize: 16
+                    icon.source: {
+                        if (walletIsShared) return "qrc:/Images/Images/collab-wallet-dark.svg"
+                        else if (walletIsSandboxWallet) return "qrc:/Images/Images/sandboxGroup.svg"
+                        else if (walletIsAssisted && !walletIsReplaced) return "qrc:/Images/Images/collab-wallet-dark.svg"
+                        else return ""
+                    }
+                    label.text: {
+                        if (walletIsShared) return STR.STR_QML_438
+                        else if (walletIsSandboxWallet) return STR.STR_QML_1675
+                        else if (walletIsAssisted && !walletIsReplaced) return (walletInfo.myRole === "FACILITATOR_ADMIN") ? "••••••" : STR.STR_QML_679
+                        else return ""
+                    }
+                    label.font.weight: Font.Medium
+                    label.font.pixelSize: 12
+                    color: "transparent"
                 }
             }
         }

@@ -17,21 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
+// Qt imports
 import QtQuick 2.4
 import QtQuick.Controls 2.3
-import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1
-import HMIEVENTS 1.0
-import EWARNING 1.0
-import NUNCHUCKTYPE 1.0
-import DataPool 1.0
-import "../../origins"
+import QtGraphicalEffects 1.12
+
+// Application-specific imports
+import "../../../../localization/STR_QML.js" as STR
 import "../../customizes"
-import "../../customizes/Texts"
 import "../../customizes/Buttons"
 import "../../customizes/Popups"
 import "../../customizes/Signers"
-import "../../../../localization/STR_QML.js" as STR
+import "../../customizes/Texts"
+import "../../origins"
+
+// Third-party or additional module imports
+import DataPool 1.0
+import EWARNING 1.0
+import HMIEVENTS 1.0
+import NUNCHUCKTYPE 1.0
 
 QOnScreenContentTypeA {
     id: signerConfigRoot
@@ -39,7 +44,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1696
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
             height: 503
@@ -88,7 +93,7 @@ QOnScreenContentTypeA {
                                 visible: single_signer_taproot_supported && !single_signer_checked
                                 height: visible ? 84 : 0
                                 onBtnClicked: {
-                                    model.single_signer_checked = !model.single_signer_checked
+                                    setkeyCheckPassphrase(model)
                                 }
                                 enabled: true
                                 opacity: enabled ? 1.0 : 0.4
@@ -139,8 +144,6 @@ QOnScreenContentTypeA {
                     }
                 }
             }
-
-
             Flickable {
                 id: flickerRight
                 width: 350 + 6
@@ -353,100 +356,8 @@ QOnScreenContentTypeA {
             type: eTypeE
             enabled: newWalletInfo.walletM > 0
             onButtonClicked: {
-                _keysetPopup.open()
-                _keysetPopup.switchValueKeyset()
-                QMLHandle.sendEvent(EVT.EVT_SIGNER_CONFIGURATION_SELECT_REMOTE_SIGNER)
+                nextClicked()
             }
         }
-    }
-
-    property var newWalletInfo : AppModel.newWalletInfo
-    property string flow_screen: newWalletInfo.screenFlow
-    readonly property var map_flow: [
-        {screen: "value-keyset",              screen_component: valueKeyset},
-        {screen: "review-wallet",             screen_component: review_wallet},
-        {screen: "bsms-file-success",         screen_component: bsms_file_success},
-        {screen: "configure-value-keyset",    screen_component: configure_value_keyset},
-    ]
-
-    QPopupOverlayScreen {
-        id: _keysetPopup
-        content: map_flow.find(function(e) {if (e.screen === flow_screen) return true; else return false}).screen_component
-
-        function switchValueKeyset() {
-            newWalletInfo.screenFlow = "value-keyset"
-        }
-        function switchConfigValueKeyset() {
-            newWalletInfo.screenFlow = "configure-value-keyset"
-        }
-        function switchReviewWallet() {
-            newWalletInfo.screenFlow = "review-wallet"
-        }
-        function switchBsmsFileSuccess() {
-            newWalletInfo.screenFlow = "bsms-file-success"
-        }
-    }
-    Component {
-        id : valueKeyset
-        QEnableValueKeyset {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-            onPrevClicked: {
-                _keysetPopup.close()
-                newWalletInfo.backScreen()
-            }
-            onNextClicked: {
-                if (enableValueKeyset === "enable-value-keyset") {
-                    newWalletInfo.enableValuekeyset = true
-                    if (newWalletInfo.walletN === 1) {
-                        _keysetPopup.switchReviewWallet()
-                    } else {
-                        _keysetPopup.switchConfigValueKeyset()
-                    }
-                }
-                else {
-                    newWalletInfo.enableValuekeyset = false
-                    _keysetPopup.switchReviewWallet()
-                }
-            }
-        }
-    }
-    Component {
-        id: configure_value_keyset
-        QConfigureValueKeyset {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-            onPrevClicked: newWalletInfo.backScreen()
-            onNextClicked: {
-                _keysetPopup.switchReviewWallet()
-            }
-        }
-    }
-    Component {
-        id: review_wallet
-        QDraftWalletReviewWallet {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
-            onPrevClicked: newWalletInfo.backScreen()
-            onNextClicked: {
-                AppModel.startCreateWallet(false, "")
-                _keysetPopup.switchBsmsFileSuccess()
-            }
-        }
-    }
-    Component {
-        id: bsms_file_success
-        QSaveYourWalletBSMSFile {
-            onNextClicked: {
-                savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                        + RoomWalletData.getValidFilename(newWalletInfo.walletName)
-                        + ".bsms"
-                savefileDialog.open()
-            }
-        }
-    }
-    FileDialog {
-        id: savefileDialog
-        fileMode: FileDialog.SaveFile
-        onAccepted: {
-            newWalletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
-        }
-    }
+    }    
 }

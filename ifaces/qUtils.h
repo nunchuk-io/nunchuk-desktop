@@ -25,6 +25,9 @@
 #include <string>
 #include <vector>
 #include <QObject>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <QByteArray>
 #include "nunchuk.h"
 #include "utils/enumconverter.hpp"
 #include "utils/bip32.hpp"
@@ -32,6 +35,10 @@
 #include "QWarningMessage.h"
 
 namespace qUtils {
+QByteArray aesEncrypt(const QByteArray &plaintext, const QByteArray &key, const QByteArray &iv);
+
+QByteArray aesDecrypt(const QByteArray &ciphertext, const QByteArray &key, const QByteArray &iv);
+
 QString deviceId();
 
 QString deviceClass();
@@ -182,6 +189,15 @@ QString ImportDataViaFile(const QString &filepath);
 void ExportDataViaFile(const QString &filepath, const QString &data);
 
 bool isValidXPRV(const QString& xprv, QWarningMessage& msg);
+
+QString GetPrimaryKeyAddressFromMasterXprv(
+    const QString& master_xprv);
+
+QString GetMasterFingerprintFromMasterXprv(
+    const QString& master_xprv);
+
+QString SignLoginMessageWithMasterXprv(
+    const QString& master_xprv, const QString& message);
 }
 
 #endif // QUTILS_H

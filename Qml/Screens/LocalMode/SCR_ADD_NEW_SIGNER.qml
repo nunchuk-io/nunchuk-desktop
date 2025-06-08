@@ -72,7 +72,7 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_NEW_SEED)
                 } else if (optionSelected === "create-key-now-back-up_later") {
                     SignerManagement.createHotKey()
-                    closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
                 } if (optionSelected === "recover-exist-seed") {
                     GlobalData.recoverSoftwareType = "seed"
                     QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SIGNER_SOFTWARE_SIGNER_EXIST_SEED)

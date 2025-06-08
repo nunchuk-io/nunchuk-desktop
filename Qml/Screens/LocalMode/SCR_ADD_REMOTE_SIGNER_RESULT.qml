@@ -82,7 +82,6 @@ QScreen {
             messageToSignSHA256: ""
             isTopXPubs: false
             signerInfo: AppModel.singleSignerInfo
-            isConnected: AppModel.masterSignerInfo.masterSignerDevice.deviceConnected
 
             function requestRename(currentText) {
                 QMLHandle.sendEvent(EVT.EVT_REMOTE_SIGNER_INFO_EDIT_NAME, currentText)

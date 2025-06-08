@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var utxoInfo: walletInfo.utxoInfo
     property int maxChar: 1
     function getFistCharterName(label) {
@@ -338,7 +338,7 @@ QOnScreenContentTypeA {
             label: STR.STR_QML_059
             visible: walletInfo.utxoFilterCollection.isUnChecked
             onButtonClicked: {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
         QTextButton {

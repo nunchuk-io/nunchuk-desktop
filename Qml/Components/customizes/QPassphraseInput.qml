@@ -34,7 +34,7 @@ import "../../../localization/STR_QML.js" as STR
 Item {
     id: root
     width: 300
-    height: 250
+    height: 214
     property alias textInputted : confirmpassphrases.textInputted
     property alias valid        : confirmpassphrases.isValid
     property alias errorText    : confirmpassphrases.errorText
@@ -66,24 +66,15 @@ Item {
         color: "#80000000"
         source: mask
     }
-    QText {
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            top: parent.top
-            topMargin: 24
-        }
-        text: "Enter your passphrase"
-        color: "#031F2B"
-        font.family: "Montserrat"
-        font.weight: Font.Bold
-        font.pixelSize: 16
-    }
     QCloseButton {
+        id: _closeBtn
+        bgColor: "transparent"
+        iconWidth: 0
         anchors {
             right: parent.right
-            rightMargin: 16
+            rightMargin: 24
             top: parent.top
-            topMargin: 16
+            topMargin: 24
         }
         onClicked: {
             confirmpassphrases.textInputted = ""
@@ -92,33 +83,37 @@ Item {
             closeClicked()
         }
     }
-    QTextInputBoxTypeB {
-        id: confirmpassphrases
-        label: ""
-        boxWidth: 252
-        boxHeight: 48
-        isPassword: true
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            bottom: parent.bottom
-            bottomMargin: 100
+    Column {
+        anchors.fill: parent
+        anchors.margins: 24
+        spacing: 24
+        QLato {
+            width: 252
+            text: "Enter your passphrase"
+            color: "#031F2B"
+            font.weight: Font.Bold
+            font.pixelSize: 16
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
         }
-        onTypingFinished: {
-            confirmpassphrases.isValid = true
-            confirmpassphrases.errorText = ""
+        QTextInputBoxTypeB {
+            id: confirmpassphrases
+            label: ""
+            boxWidth: 252
+            boxHeight: 48
+            isPassword: true
+            onTypingFinished: {
+                confirmpassphrases.isValid = true
+                confirmpassphrases.errorText = ""
+            }
         }
-    }
-    QTextButton {
-        width: 200
-        height: 48
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            bottom: parent.bottom
-            bottomMargin: 24
+        QTextButton {
+            width: 252
+            height: 48
+            label.text: STR.STR_QML_265
+            label.font.pixelSize: 16
+            type: eTypeE
+            onButtonClicked: sendPassphraseClicked(confirmpassphrases.textInputted)
         }
-        label.text: STR.STR_QML_002
-        label.font.pixelSize: 16
-        type: eTypeA
-        onButtonClicked: sendPassphraseClicked(confirmpassphrases.textInputted)
     }
 }

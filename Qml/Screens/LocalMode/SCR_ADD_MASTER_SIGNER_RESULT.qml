@@ -28,6 +28,7 @@ import DRACO_CODE 1.0
 import "../../Components/customizes"
 import "../../Components/customizes/Signers"
 import "../OnlineMode/Healths"
+import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     readonly property int eKEY_INFO: 1
@@ -35,13 +36,25 @@ QScreen {
     property int action_type: eKEY_INFO
     property int flow: AppModel.walletInfo.flow
 
+    property string flow_screen: SignerManagement.screenFlow
+    readonly property var map_flow: [
+        {screen: "backup-hot-key",                     screen_component: seedPhraseGrid },
+        {screen: "confirm-recovery-phrase",            screen_component: confirmRecoveryPhrase},
+    ]
+
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: {
             if (action_type === eKEY_INFO) {
-                return flow === AlertType.HEALTH_CHECK_FREQUENCY_REPEAT ? _checkFrequencyRepeat : _keyInfo
+                var _screenItem = map_flow.find(function(e) {if (e.screen === flow_screen) return true; else return false})
+                if (_screenItem === undefined) {
+                    return _keyInfo
+                }
+                else {
+                    return _screenItem.screen_component
+                }
             }
             else {
                 return _signMessage
@@ -82,6 +95,8 @@ QScreen {
             messageToSignSHA256: AppModel.masterSignerInfo.messageSHA256
             isConnected: AppModel.masterSignerInfo.masterSignerDevice.deviceConnected
             signerInfo: AppModel.masterSignerInfo
+            masterSignerId: AppModel.masterSignerInfo.masterSignerId
+            needbackup: AppModel.masterSignerInfo.needBackup
 
             function requestRename(currentText) {
                 QMLHandle.sendEvent(EVT.EVT_MASTER_SIGNER_INFO_EDIT_NAME, currentText)
@@ -118,6 +133,40 @@ QScreen {
                         closeTo(NUNCHUCKTYPE.CURRENT_TAB)
                     }
                 }
+            }
+        }
+    }
+
+    Component {
+        id: confirmRecoveryPhrase
+        QSignerSelectSeedWords {
+            id: seedWords
+            label.text: STR.STR_QML_1744
+            description: STR.STR_QML_1743
+            onCloseClicked: {
+                SignerManagement.clearState()
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            }
+            onPrevClicked: SignerManagement.backScreen()
+            onReviewSeedPhrase: {
+                SignerManagement.backScreen()
+            }
+            onBackedItUp: {
+                SignerManagement.finishBackupHotKey()
+            }
+        }
+    }
+
+    Component {
+        id: seedPhraseGrid
+        QSignerSeedPhraseGrid {
+            onCloseClicked: {
+                SignerManagement.clearState()
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)                
+            }
+            onPrevClicked: SignerManagement.clearState()
+            onNextClicked: {
+               SignerManagement.screenFlow = "confirm-recovery-phrase"
             }
         }
     }

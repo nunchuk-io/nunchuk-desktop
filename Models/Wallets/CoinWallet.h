@@ -1,13 +1,27 @@
-#ifndef COINSCONTROL_H
-#define COINSCONTROL_H
-#include <QObject>
-#include "nunchuk.h"
-#include "UTXOModel.h"
+#ifndef COINWALLET_H
+#define COINWALLET_H
 
-class CoinsControl
+#include <QObject>
+#include "ReplacedWallet.h"
+
+class CoinWallet : public ReplacedWallet
 {
+    Q_OBJECT
+    Q_PROPERTY(bool         isViewCoinShow                          READ isViewCoinShow             WRITE setIsViewCoinShow     NOTIFY isViewCoinShowChanged)
+    Q_PROPERTY(QString      coinFlow                                READ coinFlow                   WRITE setCoinFlow           NOTIFY coinFlowChanged)
+    Q_PROPERTY(QUTXOListModel*      utxoList                        READ utxoList                                               NOTIFY utxoListChanged)
+    Q_PROPERTY(UTXO*                utxoInfo                        READ utxoInfo                                               NOTIFY utxoInfoChanged)
+    Q_PROPERTY(QUTXOListModel*      utxoFilterTag                   READ utxoFilterTag                                          NOTIFY utxoFilterTagChanged)
+    Q_PROPERTY(QUTXOListModel*      utxoFilterCollection            READ utxoFilterCollection                                   NOTIFY utxoFilterCollectionChanged)
+    Q_PROPERTY(QCoinCollectionsModel* coinCollections               READ coinCollections                                        NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(QCoinTagsModel*      coinTags                        READ coinTags                                               NOTIFY coinTagsChanged)
+    Q_PROPERTY(QString              searchText                      READ searchText                 WRITE setSearchText         NOTIFY searchTextChanged)
+    Q_PROPERTY(QUTXOListModel*      utxoListLocked                  READ utxoListLocked                                         NOTIFY utxoListChanged)
+    Q_PROPERTY(QList<QUTXOListModel *> ancestryList                 READ ancestryList                                           NOTIFY ancestryListChanged)
+    Q_PROPERTY(QCoinTagsModel*      coinTagsFilter                  READ coinTagsFilter                                         NOTIFY coinTagsFilterChanged)
 public:
-    void init();
+    CoinWallet(const nunchuk::Wallet &w);
+    ~CoinWallet() override = default;
     bool isViewCoinShow() const;
     void setIsViewCoinShow(bool newIsViewCoinShow);
 
@@ -80,7 +94,7 @@ public:
     bool ExportCoinControlData(const QString& filePath);
     bool ExportBIP329(const QString& filePath);
     bool ImportBIP329(const QString& filePath);
-    bool CreateDraftTransaction(int successScreenID, const QVariant &msg);
+    bool CreateDraftTransaction(int successEvtID, const QVariant &msg);
     bool UpdateDraftTransaction(const QVariant &msg);
     bool UpdateDraftRBFransaction(const QVariant &msg);
     void setReuse(bool newReuse);
@@ -89,28 +103,35 @@ public:
     QUTXOListModelPtr GetUtxoListSelected();
     bool AssignTagsToTxChange();
     QList<int> tagsInTxAssigned() const;
-
+public slots:
+    void requestForAllCoins(const QVariant &act);
+    void requestForLockedAllCoins(const QVariant &act);
+    void requestImportCoinControlData(const QString& filePath);
+    void requestExportCoinControlData(const QString& filePath);
+    void requestExportBIP329(const QString& filePath);
+    void requestImportBIP329(const QString& filePath);
+    void requestConsolidateMakeTransaction(const QVariant &msg);
+    void requestSyncSelectCoinForMakeTransaction(const QVariant &msg);
 private:
     void GetCoinControlUserWallet();
     void GetCoinControlGroupWallet();
     void UpdateCoinControlUserWallet();
     void UpdateCoinControlGroupWallet();
-
 signals:
-    virtual void isViewCoinShowChanged() = 0;
-    virtual void coinFlowChanged() = 0;
-    virtual void utxoListChanged() = 0;
-    virtual void utxoInfoChanged() = 0;
-    virtual void utxoFilterTagChanged() = 0;
-    virtual void utxoFilterCollectionChanged() = 0;
-    virtual void coinCollectionsChanged() = 0;
-    virtual void coinTagsChanged() = 0;
-    virtual void searchTextChanged() = 0;
-    virtual void updateCollectionNameChanged(bool isError) = 0;
-    virtual void ancestryListChanged() = 0;
-    virtual void requestCreateTransaction(const QString& address) = 0;
-    virtual void updateTagNameChanged(bool isError) = 0;
-    virtual void coinTagsFilterChanged() = 0;
+    void isViewCoinShowChanged();
+    void coinFlowChanged();
+    void utxoListChanged();
+    void utxoInfoChanged();
+    void utxoFilterTagChanged();
+    void utxoFilterCollectionChanged();
+    void coinCollectionsChanged();
+    void coinTagsChanged();
+    void searchTextChanged();
+    void updateCollectionNameChanged(bool isError);
+    void ancestryListChanged();
+    void requestCreateTransaction(const QString& address);
+    void updateTagNameChanged(bool isError);
+    void coinTagsFilterChanged();
 private:
     QUTXOListModelPtr m_utxoList;
     QUTXOListModelPtr m_utxoListLocked;
@@ -126,9 +147,8 @@ private:
     QList<QUTXOListModel *> m_ancestryList;
     QString m_txid_before_enter_spent_coin {};
     bool m_reuse {false};
-    QMap<QString, QVariant> m_draftTransactionInput;
     QList<int> m_tagsInTxAssigned {};
     QString m_previousViewCollection {};
 };
 
-#endif // COINSCONTROL_H
+#endif // COINWALLET_H

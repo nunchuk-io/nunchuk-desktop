@@ -35,17 +35,17 @@ import "../../Components/customizes/Transactions"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property var txInfo: AppModel.transactionInfo
-    onTxInfoChanged: console.log("AAAAAAAAAAAAAAAAAAAA")
+    property var  txInfo: AppModel.transactionInfo
+    property bool useScriptPaht: txInfo.useScriptPath
     property bool isCustomize: false
-    property int new_fee_rate: 0
+    property int  new_fee_rate: 0
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: {
             if (txInfo.status === NUNCHUCKTYPE.PENDING_CONFIRMATION) {
-                return txInfo.txidReplacing !== "" ? replace_tx : isCustomize ? customize_dest: cancel_pc_tx
+                return (txInfo.txidReplacing !== "") ? replace_tx : (isCustomize ? customize_dest: cancel_pending_tx)
             }
             else {
                 return create_tx
@@ -67,7 +67,7 @@ QScreen {
     }
 
     Component {
-        id: cancel_pc_tx
+        id: cancel_pending_tx
         QOnScreenCancelPendingTransaction {
 
         }

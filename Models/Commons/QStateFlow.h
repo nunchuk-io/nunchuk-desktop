@@ -15,6 +15,8 @@ public:
 public slots:
     void backScreen();
     void clearState();
+    bool isScreenFlow(const QString& flow);
+    bool isEmptyScreenFlow();
 signals:
     void screenFlowChanged();
 private:

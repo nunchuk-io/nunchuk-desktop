@@ -130,7 +130,7 @@ Column {
             }
 
             onHardwareClicked: {
-                sandbox.requestAddOrRepaceKey({ type: "add-key-shared-group-wallet", idx: index })
+                sandbox.requestAddOrRepaceKey({ idx: index })
             }
             onRemoveClicked: {
                 _confirmRemoveKey.idx = idx
@@ -138,7 +138,6 @@ Column {
             }
             onRecoverKeyClick: {
                 var obj = {
-                    type: "add-key-shared-group-wallet",
                     idx: index,
                     fingerPrint: xfp
                 }

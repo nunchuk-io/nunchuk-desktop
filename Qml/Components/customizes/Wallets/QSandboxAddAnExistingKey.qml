@@ -63,7 +63,7 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST)
+                sandbox.requestAddNewKey()
             }
         }
         QTextButton {
@@ -74,6 +74,10 @@ QOnScreenContentTypeB {
             type: eTypeE
             enabled: _content.contentItem.fingerPrint !== ""
             onButtonClicked: {
+                if(!_content.contentItem.modelKey.signer_allowAssignToWallet) {
+                    _infoHotWallet.open()
+                    return
+                }
                 var masterSignerObj = {
                     type: "group-sandbox-add-existing-key",
                     xfp: _content.contentItem.fingerPrint,
@@ -82,5 +86,11 @@ QOnScreenContentTypeB {
                 QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, masterSignerObj)
             }
         }
+    }
+    QPopupInfo{
+        id:_infoHotWallet
+        title: STR.STR_QML_339
+        contentText: STR.STR_QML_1771
+        usingMin: true
     }
 }

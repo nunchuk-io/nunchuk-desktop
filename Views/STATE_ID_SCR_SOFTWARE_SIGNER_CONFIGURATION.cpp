@@ -18,12 +18,8 @@
  *                                                                        *
  **************************************************************************/
 #include "STATE_ID_SCR_SOFTWARE_SIGNER_CONFIGURATION.h"
-#include "QEventProcessor.h"
 #include "Models/AppModel.h"
-#include "Models/SingleSignerModel.h"
-#include "Models/WalletModel.h"
-#include "bridgeifaces.h"
-#include "Servers/Draco.h"
+#include "Signers/QSignerManagement.h"
 
 void SCR_SOFTWARE_SIGNER_CONFIGURATION_Entry(QVariant msg) {
     AppModel::instance()->setQrExported(QStringList());
@@ -34,52 +30,15 @@ void SCR_SOFTWARE_SIGNER_CONFIGURATION_Exit(QVariant msg) {
     AppModel::instance()->setAddSignerPercentage(0);
 }
 
-bool replaceKey(const QString &mnemonic, const QString &passphrase){
-    QMasterSignerPtr curKey = AppModel::instance()->getPrimaryKey();
-    if(!curKey) return false;
-    QString curAddress = QString::fromStdString(curKey->originPrimaryKey().get_address());
-    QString curUsername = QString::fromStdString(curKey->originPrimaryKey().get_account());
-    QString address = qUtils::GetPrimaryKeyAddress(mnemonic, passphrase);
-    QString nonce = Draco::instance()->pkey_manual_nonce(curAddress, curUsername, address,"change_pkey");
-    QString curSignature = bridge::SignLoginMessage(curKey->id(), nonce);
-    QString new_signature = qUtils::SignLoginMessage(mnemonic, passphrase, nonce);
-    return Draco::instance()->pkey_change_pkey(address, curSignature, new_signature);
-}
-
 void EVT_SOFTWARE_SIGNER_REQUEST_CREATE_HANDLER(QVariant msg) {
-    QMap<QString,QVariant> dataMap = msg.toMap();
+    QMap<QString, QVariant> dataMap = msg.toMap();
     QString signername = dataMap.value("signername").toString();
     QString passphrase = dataMap.value("passphrase").toString();
     QString mnemonic = AppModel::instance()->getMnemonic();
-    if(QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY &&
-       QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
-        bool yesBtn = msg.toMap().value("key_yes_accept").toBool();
-        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase, yesBtn);
-    }
-    else{
-        DBG_INFO << QEventProcessor::instance()->currentFlow();
-        if(QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY){
-            if(replaceKey(mnemonic,passphrase)){
-                DBG_INFO << "startCreateSoftwareSigner";
-                AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
-            }
-        }
-        else{
-            DBG_INFO << dataMap;
-            QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_REQUEST,msg);
-        }
-    }
+    bool yesBtn = dataMap.value("key_yes_accept").toBool();
+    QSignerManagement::instance()->requestCreateSoftwareSigner(signername, mnemonic, passphrase, yesBtn);
 }
 
-void EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_HANDLER(QVariant msg) {
+void EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_HANDLER(QVariant msg) {}
 
-}
-
-void EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_TO_WALLET_SIGNER_CONFIGURATION_HANDLER(QVariant msg) {
-
-}
-
-void EVT_PRIMARY_KEY_CONFIGURATION_REQUEST_HANDLER(QVariant msg)
-{
-
-}
+void EVT_SOFTWARE_SIGNER_CONFIGURATION_BACK_TO_WALLET_SIGNER_CONFIGURATION_HANDLER(QVariant msg) {}

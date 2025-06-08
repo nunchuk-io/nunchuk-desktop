@@ -36,8 +36,7 @@ Item {
         sourceComponent: {
             var user = ClientController.user
             if (user.isMultiSubscriptions) {
-                if (hasGroupWallet) { return isFacilitatorAdmin ? b_facilitator_admin_subscriber : isObserver ? b_observer_subscriber : b_subscriber }
-                else { return b_empty_state }
+                return isFacilitatorAdmin ? b_facilitator_admin_subscriber : isObserver ? b_observer_subscriber : b_subscriber
             }
             else if (user.isHoneyBadgerUser) { return hb_subscriber }
             else if (user.isIronHandUser) { return ih_subscriber }

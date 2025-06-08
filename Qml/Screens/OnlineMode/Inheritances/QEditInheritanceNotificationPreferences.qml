@@ -44,6 +44,9 @@ QOnScreenContentTypeB {
     label.text: STR.STR_QML_865
     onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
     content: Item {
+        function requestFinishInputEmail() {
+            _email_user.requestFinishInputEmail()
+        }
         Column {
             anchors.fill: parent
             anchors.top: parent.top
@@ -130,6 +133,7 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
+                _Notification.contentItem.requestFinishInputEmail()
                 _Notification.nextClicked()
             }
         }

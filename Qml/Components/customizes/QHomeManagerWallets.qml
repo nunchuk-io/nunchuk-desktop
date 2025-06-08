@@ -96,7 +96,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 icon:"qrc:/Images/Images/add-light.svg"
                 onClicked: {
-                    OnBoarding.state = "addAWallet"
+                    OnBoarding.screenFlow = "addAWallet"
                     QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
                 }
             }
@@ -249,6 +249,7 @@ Rectangle {
                             isShared: model.wallet_isSharedWallet
                             isAssisted: model.wallet_isAssistedWallet
                             isSandboxWallet: model.wallet_isSanboxWallet
+                            isArchived: model.wallet_isArchived
                             onDashboard: {
                                 GlobalData.listFocusing = _FOCUS_WALLET
                                 var obj = {

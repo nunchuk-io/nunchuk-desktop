@@ -71,7 +71,6 @@ public:
     void convert(const nunchuk::SingleSigner& src);
 
     nunchuk::SingleSigner originSingleSigner() const;
-    void setOriginSingleSigner(const nunchuk::SingleSigner signer);
 
     nunchuk::PrimaryKey originPrimaryKey();
 
@@ -174,6 +173,12 @@ public:
     bool isOccupied() const;
     void setIsOccupied(bool newIsOccupied);
 
+    bool needPassphrase() const;
+    void setNeedPassphrase(bool newNeed_passphrase);
+
+    bool needBackup();
+    void setNeedBackup(bool val);
+    bool allowAssignToWallet() const;
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -205,6 +210,8 @@ private:
     int  m_keyset_pendingnumber {0};
     bool m_valuekey {false};
     bool m_isOccupied {false};
+    bool m_need_passphrase {false};
+    bool m_need_backup {false};
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -252,7 +259,7 @@ class SingleSignerListModel  : public QAbstractListModel
     Q_PROPERTY(int  signerCount             READ signerCount            NOTIFY signerCountChanged)
     Q_PROPERTY(int  signerSelectedCount     READ signerSelectedCount    NOTIFY signerSelectedCountChanged)
     Q_PROPERTY(int  signerValueKeyCount     READ signerValueKeyCount    NOTIFY signerValueKeyCountChanged)
-
+    Q_PROPERTY(bool needTopUpXpubs          READ needTopUpXpubs         NOTIFY needTopUpXpubsChanged)
 public:
     SingleSignerListModel();
     ~SingleSignerListModel();
@@ -287,7 +294,10 @@ public:
         single_signer_keyset_status_Role,
         single_signer_keyset_remaining_Role,
         single_signer_value_key_Role,
-        single_signer_isOccupied_Role
+        single_signer_isOccupied_Role,
+        single_signer_needPassphrase_Role,
+        single_signer_needBackup_Role,
+        single_signer_allowAssignToWallet_Role,
     };
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
@@ -329,7 +339,7 @@ public:
     nunchuk::PrimaryKey containPrimaryKey(const QString& fingerprint);
     void syncNunchukEmail(QList<DracoUser> users);
     bool needSyncNunchukEmail();
-    void requestSort();
+    void requestSort(bool force = false);
     void requestSortKeyset();
     QList<QSingleSignerPtr> fullList() const;
     std::vector<nunchuk::SingleSigner> signers() const;
@@ -357,6 +367,7 @@ signals:
     void signerCountChanged();
     void signerSelectedCountChanged();
     void signerValueKeyCountChanged();
+    void needTopUpXpubsChanged();
 
 private:
     QList<QSingleSignerPtr> m_data;

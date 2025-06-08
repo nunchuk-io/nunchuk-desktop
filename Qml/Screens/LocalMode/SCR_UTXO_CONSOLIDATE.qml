@@ -34,9 +34,11 @@ import "../../Components/customizes/QRCodes"
 import "../../Components/customizes/Wallets"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Popups"
+import "../../Components/customizes/Transactions"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
+    property var    transactionInfo: AppModel.transactionInfo
     Component.onCompleted: {
         requestConsolidateProcess()
         requestFilterOutWallet()
@@ -542,7 +544,7 @@ QScreen {
                                                               "toType": "Address",
                                                               "toAddress": savedAddressItem.dataValue,
                                                               "toAddressDisplay": savedAddressItem.dataLabel,
-                                                              "toAmount": ""
+                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
                                                           })
                                         destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                     }
@@ -619,7 +621,7 @@ QScreen {
                                                           "toType": "Wallet",
                                                           "toAddress": modelData.wallet_Address,
                                                           "toAddressDisplay": modelData.wallet_name,
-                                                          "toAmount": ""
+                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
                                                       })
                                     destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                 }
@@ -661,7 +663,7 @@ QScreen {
         }
     }
     property var filterOutAddress: AppSetting.favoriteAddresses
-    property var filterOutWallet: AppModel.walletList
+    property var filterOutWallet: []//AppModel.walletList
     Popup {
         id: savedAddress
         width: parent.width
@@ -1012,6 +1014,23 @@ QScreen {
             close()
         }
     }
+    // Signing policy
+    QTransactionSigningPolicy {
+        id: signingPolicy
+        width: parent.width
+        height: parent.height
+        // visible: true
+        onCloseClicked : {
+
+        }
+        onContinueClicked : {
+            requestCreateTransaction(use_script_path)
+        }
+        onFeeSettingClicked: {
+            // QMLHandle.sendEvent(EVT.EVT_SEND_FEE_SETTING_REQUEST)
+            console.log("Fee Setting Clicked")
+        }
+    }
     property var destinations: []
     function requestAddMultiDestinations(){
         destinations = []
@@ -1055,7 +1074,6 @@ QScreen {
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
     }
-
     function containAddress(address) {
         for(var i = 0; i < destination.count; i++){
             var current = destination.itemAt(i).inputObject.toAddress
@@ -1065,7 +1083,6 @@ QScreen {
         }
         return false
     }
-
     function requestFilterOutAddress() {
         filterOutAddress = []
         for(var i = 0; i < AppSetting.favoriteAddresses.length; i++) {
@@ -1078,7 +1095,6 @@ QScreen {
         }
         savedAddressList.model = filterOutAddress
     }
-
     function requestFilterOutWallet() {
         filterOutWallet = []
         for(var i = 0; i < AppModel.walletList.count; i++) {
@@ -1092,7 +1108,6 @@ QScreen {
         }
         walletList.model = filterOutWallet
     }
-
     function requestConsolidateProcess() {
         var inputObject = ({
                                "toType": "Input",
@@ -1101,5 +1116,16 @@ QScreen {
                                "toAmount": AppModel.walletInfo.utxoList.amountDisplay
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
+    }
+    function requestCreateTransaction(use_script_path) {
+        createTxBusyBox.open()
+        timerCreateTx.destinationData["use_script_path"] = use_script_path
+        timerCreateTx.restart()
+    }
+    Connections {
+        target: transactionInfo
+        function onRequestFeeSelection() {
+            signingPolicy.open()
+        }
     }
 }

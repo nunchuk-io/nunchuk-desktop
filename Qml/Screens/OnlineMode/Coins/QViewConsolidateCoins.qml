@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1425
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     extraHeader: Item{}
     content: Item {
         id: _item
@@ -78,6 +78,36 @@ QOnScreenContentTypeB {
                 input.wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             }
         }
+
+        // Signing policy
+        QTransactionSigningPolicy {
+            id: signingPolicy
+            width: parent.width
+            height: parent.height
+            // visible: true
+            onCloseClicked : {
+
+            }
+            onContinueClicked : {
+                var saved = [];
+                var savedObj = {
+                    "toAddress": walletInfo.unUseAddress,
+                    "toAmount" : walletInfo.utxoList.amountDisplay
+                };
+                saved[0] = savedObj
+                var destinationObj = {
+                    "destinationList"    : saved,
+                    "destinationMemo"    : _note.textInputted,
+                    "use_script_path"    : use_script_path
+                };
+                walletInfo.requestConsolidateMakeTransaction(destinationObj)
+            }
+            onFeeSettingClicked: {
+                // QMLHandle.sendEvent(EVT.EVT_SEND_FEE_SETTING_REQUEST)
+                console.log("Fee Setting Clicked")
+            }
+        }
+
         function createTransaction() {
             var saved = [];
             var savedObj = {
@@ -91,10 +121,18 @@ QOnScreenContentTypeB {
             };
             walletInfo.requestConsolidateMakeTransaction(destinationObj)
         }
+
+        Connections {
+            target: transactionInfo
+            function onRequestFeeSelection() {
+                signingPolicy.open()
+            }
+        }
+
     }
     isShowLine: true
     onPrevClicked: {
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
 
     onNextClicked: {

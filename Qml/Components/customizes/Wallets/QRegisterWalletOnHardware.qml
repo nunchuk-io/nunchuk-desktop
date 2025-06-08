@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: ""
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var newWalletInfo: AppModel.newWalletInfo
     Item {
         anchors {
@@ -83,7 +83,7 @@ QOnScreenContentTypeB {
         }
     }
     onPrevClicked: {
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     bottomRight: Row {
         spacing: 12
@@ -94,122 +94,271 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
         QButtonLargeTail {
+            id: exportwallet
             width: 211
             height: 48
             type: eTypeE
             label: STR.STR_QML_1649
+            optionVisible: exportContextMenu.visible
             layoutDirection: Qt.RightToLeft
             onButtonClicked: {
-                othersContextMenu.x = 20
-                othersContextMenu.y = 20 - othersContextMenu.height
-                othersContextMenu.open()
+                exportContextMenu.x = 20
+                exportContextMenu.y = 20 - exportContextMenu.height
+                exportContextMenu.open()
             }
+
             QMultiContextMenu {
-                id: othersContextMenu
-                menuWidth: 336
-                property var exportMenu: [
+                id: exportContextMenu
+                menuWidth: 300
+                subMenuWidth: 300
+                property var exportConfigurationMenu: [
                     {
                         visible: true,
-                        label: STR.STR_QML_1659,
-                        icon: "qrc:/Images/Images/QR-dark.svg",
+                        label: STR.STR_QML_324, // As BSMS
+                        icon: "",
                         iconRight: "",
                         color: "#031F2B",
                         enable: true,
                         subMenu: null,
                         action: function() {
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2_Legacy"
-                            qrcodeExportResult.open()
-                            newWalletInfo.requestExportWalletViaQRBCUR2Legacy()
-                            othersContextMenu.close()
+                            // Export Wallet BSMS File
+                            exportContextMenu.close()
+                            exportDialog.action = function(){
+                                newWalletInfo.requestExportWalletViaBSMS(exportDialog.currentFile)
+                            }
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                    + ".bsms"
+                            exportDialog.open()
                         }
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_1660,
-                        icon: "qrc:/Images/Images/QR-dark.svg",
+                        label: STR.STR_QML_1747, // As BBQR
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // "Export via BBQR"
+                            exportContextMenu.close()
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BBQR"
+                            qrcodeExportResult.open()
+                            newWalletInfo.requestExportWalletViaQRBBQRColdcard()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1750, // As BC-UR2 QR (legacy)
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // "Export as BC-UR2 QR (legacy)"
+                            exportContextMenu.close()
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2_Legacy"
+                            qrcodeExportResult.open()
+                            newWalletInfo.requestExportWalletViaQRBCUR2Legacy()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1751, // As BC-UR2 QR
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // "Export as BC-UR2 QR"
+                            exportContextMenu.close()
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2"
+                            qrcodeExportResult.open()
+                            newWalletInfo.requestExportWalletViaQRBCUR2()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1748, // To COLDCARD
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            // "Export To Coldcard"
+                            exportContextMenu.close()
+                            exportDialog.action = function(){
+                                newWalletInfo.requestExportWalletViaCOLDCARD(exportDialog.currentFile)
+                            }
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                    + "-Coldcard-Config.txt"
+                            exportDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1749, // To BitBox
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            //"Export wallet to Bitbox"
+                            exportContextMenu.close()
+                            var addrs = newWalletInfo.walletunUsedAddressList;
+                            if(addrs.length > 0){
+                                displayAddressBusybox.addrToVerify = addrs[0]
+                                AppModel.startDisplayAddress(newWalletInfo.walletId, addrs[0])
+                            }
+                        }
+                    }
+                ]
+                property var exportTransactionMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1713,
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() { // "Export PDF invoices"
+                            var currentDate = new Date();
+                            var monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                              "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                            var day = currentDate.getDate();
+                            var month = monthNames[currentDate.getMonth()];
+                            var year = currentDate.getFullYear();
+                            var today = day + '' + month + '' + year;
+                            exportDialog.action = function(){
+                                newWalletInfo.requestExportTransactionViaPDF(exportDialog.currentFile)
+                            }
+                            exportContextMenu.close()
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                                            + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                                            + "_transaction_history_"
+                                                            + today
+                                                            + ".pdf"
+                            exportDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1714,
+                        icon: "",
                         iconRight: "",
                         color: "#031F2B",
                         enable: true,
                         subMenu: null,
                         action: function(){
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2"
-                            qrcodeExportResult.open()
-                            newWalletInfo.requestExportWalletViaQRBCUR2()
-                            othersContextMenu.close()
+                            var currentDate = new Date();
+                            var monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                              "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                            var day = currentDate.getDate();
+                            var month = monthNames[currentDate.getMonth()];
+                            var year = currentDate.getFullYear();
+                            var today = day + '' + month + '' + year;
+                            exportDialog.action = function(){
+                                newWalletInfo.requestExportTransactionViaCSV(exportDialog.currentFile)
+                            }
+                            exportContextMenu.close()
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                                            + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                                            + "_transaction_history_"
+                                                            + today
+                                                            + ".csv"
+                            exportDialog.open()
                         }
                     },
                 ]
                 mapMenu: [
                     {
                         visible: true,
-                        label: STR.STR_QML_1657,
-                        icon: "qrc:/Images/Images/ios_share-24px.svg",
+                        label: STR.STR_QML_347,
+                        icon: "qrc:/Images/Images/save-backup-dark.svg",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: exportConfigurationMenu,
+                        action: function(){
+
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_325,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "",
                         color: "#031F2B",
                         enable: true,
                         subMenu: null,
                         action: function(){
-                            savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                            // Export Wallet Database
+                            exportDialog.action = function(){
+                                newWalletInfo.requestExportWalletViaDB(exportDialog.currentFile)
+                            }
+                            exportContextMenu.close()
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+                                    + "/"
                                     + RoomWalletData.getValidFilename(newWalletInfo.walletName)
-                                    + ".bsms"
-                            savefileDialog.open()
+                                    + "-database.dat"
+                            exportDialog.open()
                         }
                     },
                     {
                         visible: true,
-                        label: STR.STR_QML_1658,
-                        icon: "qrc:/Images/Images/QR-dark.svg",
+                        label: STR.STR_QML_326,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
                         iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
                         color: "#031F2B",
-                        enable: true,
-                        subMenu: exportMenu,
-                        action: function(){ console.warn("export") }
-                    },
-                ]
-            }
-            QContextMenu {
-                id: imExContextMenu
-                menuWidth: 300
-                labels: [
-                    STR.STR_QML_1657,
-                    STR.STR_QML_1658,
-                ]
-                icons: [
-                    "qrc:/Images/Images/ios_share-24px.svg",
-                    "qrc:/Images/Images/QR-dark.svg",
-                ]
-                functions: [
-                    function() {
-                        savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                + RoomWalletData.getValidFilename(newWalletInfo.walletName)
-                                + ".bsms"
-                        savefileDialog.open()
-                    },
-                    function() {
-                        // "Export as QR"
-                        qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2_Legacy"
-                        qrcodeExportResult.open()
-                        var _input = {
-                            type: "export-config-as-QrCode"
+                        enable: false,
+                        subMenu: exportTransactionMenu,
+                        action: function(){
+
                         }
-                        QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                     },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_327,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: false,
+                        subMenu: null,
+                        action: function(){
+                            // "Export UTXOs (CSV)"
+                            exportDialog.action = function(){
+                                newWalletInfo.requestExportUtxoCSV(exportDialog.currentFile)
+                            }
+                            exportContextMenu.close()
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                    + "-utxos.csv"
+                            exportDialog.open()
+                        }
+                    }
                 ]
-                onItemClicked: {
-                    functions[index]()
-                }
             }
         }
     }
     FileDialog {
-        id: savefileDialog
+        id: exportDialog
+        property var action
         fileMode: FileDialog.SaveFile
         onAccepted: {
-            newWalletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
+            if (action) {
+                action()
+            }
         }
     }
     QQrExportResultPDF {

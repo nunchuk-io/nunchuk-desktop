@@ -941,3 +941,116 @@ bool qUtils::isValidXPRV(const QString &xprv, QWarningMessage &msg)
     }
     return ret;
 }
+
+QString qUtils::GetPrimaryKeyAddressFromMasterXprv(const QString& master_xprv)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::GetPrimaryKeyAddressFromMasterXprv(master_xprv.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
+QString qUtils::GetMasterFingerprintFromMasterXprv(const QString& master_xprv)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::GetMasterFingerprintFromMasterXprv(master_xprv.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
+QString qUtils::SignLoginMessageWithMasterXprv(const QString& master_xprv, const QString& message)
+{
+    QString ret = "";
+    try {
+        ret = QString::fromStdString(nunchuk::Utils::SignLoginMessageWithMasterXprv(master_xprv.toStdString(), message.toStdString()));
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+    return ret;
+}
+
+QByteArray qUtils::aesEncrypt(const QByteArray &plaintext, const QByteArray &key, const QByteArray &iv) {
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    QByteArray ciphertext;
+    int len;
+    int ciphertext_len;
+
+    if(!ctx) return QByteArray();
+
+    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+                                reinterpret_cast<const unsigned char*>(key.constData()),
+                                reinterpret_cast<const unsigned char*>(iv.constData())))
+        return QByteArray();
+
+    ciphertext.resize(plaintext.size() + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
+
+    if(1 != EVP_EncryptUpdate(ctx,
+                               reinterpret_cast<unsigned char*>(ciphertext.data()), &len,
+                               reinterpret_cast<const unsigned char*>(plaintext.constData()), plaintext.size()))
+        return QByteArray();
+
+    ciphertext_len = len;
+
+    if(1 != EVP_EncryptFinal_ex(ctx,
+                                 reinterpret_cast<unsigned char*>(ciphertext.data()) + len, &len))
+        return QByteArray();
+
+    ciphertext_len += len;
+    ciphertext.resize(ciphertext_len);
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    return ciphertext;
+}
+
+QByteArray qUtils::aesDecrypt(const QByteArray &ciphertext, const QByteArray &key, const QByteArray &iv) {
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    QByteArray plaintext;
+    int len;
+    int plaintext_len;
+
+    if(!ctx) return QByteArray();
+
+    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+                                reinterpret_cast<const unsigned char*>(key.constData()),
+                                reinterpret_cast<const unsigned char*>(iv.constData())))
+        return QByteArray();
+
+    plaintext.resize(ciphertext.size());
+
+    if(1 != EVP_DecryptUpdate(ctx,
+                               reinterpret_cast<unsigned char*>(plaintext.data()), &len,
+                               reinterpret_cast<const unsigned char*>(ciphertext.constData()), ciphertext.size()))
+        return QByteArray();
+
+    plaintext_len = len;
+
+    if(1 != EVP_DecryptFinal_ex(ctx,
+                                 reinterpret_cast<unsigned char*>(plaintext.data()) + len, &len))
+        return QByteArray();
+
+    plaintext_len += len;
+    plaintext.resize(plaintext_len);
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    return plaintext;
+}

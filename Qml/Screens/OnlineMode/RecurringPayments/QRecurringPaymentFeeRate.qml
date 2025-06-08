@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
     property string option: "PRIORITY"
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     readonly property var fee_rates: [
         {id: "PRIORITY" , fee_rate: STR.STR_QML_1108},
         {id: "STANDARD" , fee_rate: STR.STR_QML_1110},

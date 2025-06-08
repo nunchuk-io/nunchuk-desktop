@@ -23,7 +23,7 @@
 #include "Premiums/QSharedWallets.h"
 #include "Premiums/GroupSandboxModel.h"
 #include "AppModel.h"
-#include "Premiums/QSignerManagement.h"
+#include "Signers/QSignerManagement.h"
 #include "bridgeifaces.h"
 #include "WalletModel.h"
 

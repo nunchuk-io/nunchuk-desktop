@@ -45,7 +45,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.right
             anchors.leftMargin: 8
-            source: "qrc:/Images/Images/help_outline_24px.svg"
+            source: "qrc:/Images/Images/help_outline_24px.png"
             pointerPositionIndex: _item.pointerPositionIndex
             pointerPositionRatio: _item.pointerPositionRatio
         }

@@ -114,7 +114,7 @@ Rectangle {
                 input.rightPadding: 36
                 textInputted: inputObject.toAddress
                 onTextInputtedChanged: {
-                    if(walletInfo.isValidAddress(addressInput.textInputted)) {
+                    if(AppModel.walletInfo.isValidAddress(addressInput.textInputted)) {
                         addressInput.isValid = true
                         addressInput.errorText = ""
                         addressInput.showError = false;
@@ -198,7 +198,14 @@ Rectangle {
                 boxWidth: 693
                 boxHeight: 48
                 isValid: true
-                validator: (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? intvalidator : doubleValidator
+                validator: {
+                    if(sendDelegateRoot.onCurrency) {
+                        return doubleValidator
+                    }
+                    else{
+                        return (AppSetting.unit === NUNCHUCKTYPE.SATOSHI) ? intvalidator : doubleValidator
+                    }
+                }
             }
             Row {
                 anchors.bottom: amountInput.bottom

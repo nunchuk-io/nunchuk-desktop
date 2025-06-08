@@ -53,6 +53,7 @@ class QMasterSigner : public QObject, public WalletKeys {
     Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
     Q_PROPERTY(bool isMine                 READ isMine                                  CONSTANT)
     Q_PROPERTY(bool taprootSupported       READ taprootSupported                        CONSTANT)
+    Q_PROPERTY(bool needBackup             READ needBackup                              CONSTANT)
 
 public:
     QMasterSigner();
@@ -133,6 +134,7 @@ public:
 
     bool needBackup();
     void setNeedBackup(bool val);
+    bool allowAssignToWallet() const;
 private:
     QString id_ = "";
     QString name_ = "";
@@ -180,6 +182,7 @@ bool sortMasterSignerByNameDescending(const QMasterSignerPtr &v1, const QMasterS
 class MasterSignerListModel  : public QAbstractListModel
 {
     Q_OBJECT
+    Q_PROPERTY(int pendingBackupCount READ pendingBackupCount NOTIFY signerListChanged)
 public:
     MasterSignerListModel();
     ~MasterSignerListModel();
@@ -213,6 +216,7 @@ public:
     void cleardata();
     void reloadOriginMasterSignerById(const QString &id);
     int getHotKeyIndex() const;
+    int pendingBackupCount() const;
 
     enum MasterSignerRoles {
         master_signer_id_Role,
@@ -228,14 +232,17 @@ public:
         master_signer_need_xpub_Role,
         master_signer_primary_key_Role,
         master_signer_tag_Role,
-        master_signer_taproot_supported
-    };
-
+        master_signer_taproot_supported_Role,
+        master_signer_needBackup_Role,
+    };    
 public slots:
     int signerCount() const;
     int signerSelectedCount() const;
+signals:
+    void signerListChanged();
 private:
     QList<QMasterSignerPtr> d_;
+    int m_pendingBackupCount {0};
 };
 typedef QSharedPointer<MasterSignerListModel> QMasterSignerListModelPtr;
 

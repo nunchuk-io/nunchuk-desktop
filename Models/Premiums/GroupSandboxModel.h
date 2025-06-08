@@ -85,12 +85,13 @@ public:
     void CloseCurrentSandboxSetup();
     QStringList qrTagsRecovery() const;
     void setQrTagsRecovery(const QStringList &newQrTagsRecovery);
-
+    void registerSigners();
 public slots:
     bool checkWaitingOthers();
     void deleteGroup();
     void removeKey(int index);
     void requestAddOrRepaceKey(const QVariant& msg);
+    void requestAddNewKey();
     void slotClearOccupied();
     void clearOccupied();
     bool editBIP32Path(int index, const QString &master_id, const QString& path);

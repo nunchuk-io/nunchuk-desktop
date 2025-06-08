@@ -216,7 +216,12 @@ Rectangle {
         onClicked: {
             if (mouse.button === Qt.RightButton) {
                 optionMenu.functions = [function(){
-                    ClientController.leaveCurrentRoom(index)
+                    if (walletReady) {
+                        confirmDeleteRoom.indexRequest = index
+                        confirmDeleteRoom.open()
+                    } else {
+                        ClientController.leaveRoom(index)
+                    }                    
                 }]
                 optionMenu.popup()
             }

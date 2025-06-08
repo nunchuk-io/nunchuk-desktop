@@ -67,10 +67,7 @@ void EVT_SERVICE_SUPPORT_REQUEST_HANDLER(QVariant msg) {
     CLIENT_INSTANCE->createSupportRoom();
 }
 
-void EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST_HANDLER(QVariant msg)
-{
-    ServiceSetting::instance()->setClaimInheritanceFlow(msg.toInt());
-}
+void EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST_HANDLER(QVariant msg) {}
 
 void EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST_HANDLER(QVariant msg)
 {

@@ -210,7 +210,7 @@ void EVT_TRANSACTION_INFO_BACK_REQUEST_HANDLER(QVariant msg) {
 
 }
 
-void EVT_TRANSACTION_INFO_BACK_TO_CREATE_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
+void EVT_TRANSACTION_INFO_CANCEL_PENDING_TRANSACTION_REQUEST_HANDLER(QVariant msg) {
 
 }
 
@@ -222,7 +222,7 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
     if (auto trans = AppModel::instance()->transactionInfo()) {
         if (trans->status() == (int)ENUNCHUCK::TransactionStatus::PENDING_CONFIRMATION) {
             DBG_INFO;
-            QEventProcessor::instance()->sendEvent(E::EVT_TRANSACTION_INFO_BACK_TO_CREATE_TRANSACTION_REQUEST);
+            QEventProcessor::instance()->sendEvent(E::EVT_TRANSACTION_INFO_CANCEL_PENDING_TRANSACTION_REQUEST);
         }
         else {
             QString wallet_id = trans->walletId();

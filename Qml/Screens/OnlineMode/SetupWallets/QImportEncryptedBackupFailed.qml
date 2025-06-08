@@ -36,7 +36,7 @@ QOnScreenContent {
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     Column {
         anchors.fill: parent
         anchors.margins: 36

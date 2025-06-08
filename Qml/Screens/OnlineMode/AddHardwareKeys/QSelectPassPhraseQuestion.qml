@@ -43,7 +43,7 @@ QOnScreenContentTypeA {
     label.text: STR.STR_QML_1606
     extraHeader: Item {}
     property string option: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var formats: [
         {id: "not-have-a-passphrase",   description: STR.STR_QML_1604},
         {id: "have-a-passphrase",       description: STR.STR_QML_1605},

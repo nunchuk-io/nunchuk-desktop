@@ -90,49 +90,54 @@ typedef OurSharedPointer<DestinationListModel> QDestinationListModelPtr;
 
 class Transaction : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString                      txid                    READ txid                       NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      memo                    READ memo                       NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(int                          height                  READ height                     NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(int                          status                  READ status                     NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(int                          m                       READ m                          NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                         hasChange               READ hasChange                  NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      fee                     READ feeDisplay                 NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      feeBTC                  READ feeBTC                     NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      feeCurrency             READ feeCurrency                NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      feeRate                 READ feeRate                    NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(Destination*                 change                  READ change                     NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(DestinationListModel*        destinationList         READ destinationList            NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(SingleSignerListModel*       singleSignersAssigned   READ singleSignersAssigned      NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      subtotal                READ subtotalDisplay            NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      subtotalCurrency        READ subtotalCurrency           NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      total                   READ totalDisplay               NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      totalCurrency           READ totalCurrency              NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(int                          numberSigned            READ numberSigned               NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      blocktime               READ blocktimeDisplay           NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                         isReceiveTx             READ isReceiveTx                NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                         subtractFromFeeAmount   READ subtractFromFeeAmount      NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      replacedByTxid          READ get_replaced_by_txid       NOTIFY replacedTxidChanged)
-    Q_PROPERTY(QString                      replaceTxid             READ get_replace_txid           NOTIFY replacedTxidChanged)
-    Q_PROPERTY(QString                      roomId                  READ roomId                     NOTIFY roomIdChanged)
-    Q_PROPERTY(QString                      initEventId             READ initEventId                NOTIFY initEventIdChanged)
-    Q_PROPERTY(bool                         createByMe              READ createByMe                 NOTIFY createByMeChanged)
-    Q_PROPERTY(QString                      psbt                    READ psbt                       NOTIFY psbtChanged)
-    Q_PROPERTY(QString                      serverKeyMessage        READ serverKeyMessage           NOTIFY serverKeyMessageChanged)
-    Q_PROPERTY(QString                      destination             READ destination                NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                         isCosigning             READ isCosigning                NOTIFY serverKeyMessageChanged)
-    Q_PROPERTY(bool                         enableRequestSignature  READ enableRequestSignature     CONSTANT)
-    Q_PROPERTY(bool                         enableScheduleBroadcast READ enableScheduleBroadcast    CONSTANT)
-    Q_PROPERTY(bool                         enableCancelTransaction READ enableCancelTransaction    CONSTANT)
-    Q_PROPERTY(bool                         hasMoreBtn              READ hasMoreBtn                 NOTIFY hasMoreBtnChanged)
-    Q_PROPERTY(QCoinTagsModel*              changeCoinsTag          READ changeCoinsTag             CONSTANT)
-    Q_PROPERTY(QUTXOListModel*              manualCoins             READ manualCoins                NOTIFY manualCoinsChanged)
-    Q_PROPERTY(QUTXOListModel*              inputCoins              READ inputCoins                 CONSTANT)
-    Q_PROPERTY(QCoinTagsModel*              parentCoinsTag          READ parentCoinsTag             NOTIFY parentCoinsTagChanged)
-    Q_PROPERTY(int                          keysetsCount            READ keysetsCount               NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                         isCpfp                  READ isCpfp                     NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      packageFeeRate          READ packageFeeRate             NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      scriptPathFeeRate       READ scriptPathFeeRate          NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(QString                      txidReplacing           READ txidReplacing              NOTIFY txidReplacingChanged)
+    Q_PROPERTY(QString                      txid                    READ txid                                               NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      memo                    READ memo                                               NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(int                          height                  READ height                                             NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(int                          status                  READ status                                             NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(int                          m                       READ m                                                  NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(bool                         hasChange               READ hasChange                                          NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      fee                     READ feeDisplay                                         NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      feeBTC                  READ feeBTC                                             NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      feeCurrency             READ feeCurrency                                        NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      feeRate                 READ feeRate                                            NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(Destination*                 change                  READ change                                             NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(DestinationListModel*        destinationList         READ destinationList                                    NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(SingleSignerListModel*       singleSignersAssigned   READ singleSignersAssigned                              NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      subtotal                READ subtotalDisplay                                    NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      subtotalCurrency        READ subtotalCurrency                                   NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      total                   READ totalDisplay                                       NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      totalCurrency           READ totalCurrency                                      NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(int                          numberSigned            READ numberSigned                                       NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      blocktime               READ blocktimeDisplay                                   NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(bool                         isReceiveTx             READ isReceiveTx                                        NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(bool                         subtractFromFeeAmount   READ subtractFromFeeAmount                              NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      replacedByTxid          READ get_replaced_by_txid                               NOTIFY replacedTxidChanged)
+    Q_PROPERTY(QString                      replaceTxid             READ get_replace_txid                                   NOTIFY replacedTxidChanged)
+    Q_PROPERTY(QString                      roomId                  READ roomId                                             NOTIFY roomIdChanged)
+    Q_PROPERTY(QString                      initEventId             READ initEventId                                        NOTIFY initEventIdChanged)
+    Q_PROPERTY(bool                         createByMe              READ createByMe                                         NOTIFY createByMeChanged)
+    Q_PROPERTY(QString                      psbt                    READ psbt                                               NOTIFY psbtChanged)
+    Q_PROPERTY(QString                      serverKeyMessage        READ serverKeyMessage                                   NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(QString                      destination             READ destination                                        NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(bool                         isCosigning             READ isCosigning                                        NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(bool                         enableRequestSignature  READ enableRequestSignature                             CONSTANT)
+    Q_PROPERTY(bool                         enableScheduleBroadcast READ enableScheduleBroadcast                            CONSTANT)
+    Q_PROPERTY(bool                         enableCancelTransaction READ enableCancelTransaction                            CONSTANT)
+    Q_PROPERTY(bool                         hasMoreBtn              READ hasMoreBtn                                         NOTIFY hasMoreBtnChanged)
+    Q_PROPERTY(QCoinTagsModel*              changeCoinsTag          READ changeCoinsTag                                     CONSTANT)
+    Q_PROPERTY(QUTXOListModel*              manualCoins             READ manualCoins                                        NOTIFY manualCoinsChanged)
+    Q_PROPERTY(QUTXOListModel*              inputCoins              READ inputCoins                                         CONSTANT)
+    Q_PROPERTY(QCoinTagsModel*              parentCoinsTag          READ parentCoinsTag                                     NOTIFY parentCoinsTagChanged)
+    Q_PROPERTY(int                          keysetsCount            READ keysetsCount                                       NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(bool                         isCpfp                  READ isCpfp                                             NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      packageFeeRate          READ packageFeeRate                                     NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      scriptPathFeeRate       READ scriptPathFeeRate                                  NOTIFY nunchukTransactionChanged)
+    Q_PROPERTY(QString                      txidReplacing           READ txidReplacing                                      NOTIFY txidReplacingChanged)
+    Q_PROPERTY(bool                         useScriptPath           READ useScriptPath                                      NOTIFY useScriptPathChanged)
+    Q_PROPERTY(QString                      feeOtherKeyset          READ feeOtherKeysetDisplay                              NOTIFY feeOtherKeysetChanged)
+    Q_PROPERTY(QString                      feeOtherKeysetBTC       READ feeOtherKeysetBTC                                  NOTIFY feeOtherKeysetChanged)
+    Q_PROPERTY(QString                      feeOtherKeysetCurrency  READ feeOtherKeysetCurrency                             NOTIFY feeOtherKeysetChanged)
+    Q_PROPERTY(qint64                       feeOtherKeysetSats      READ feeOtherKeyset                                     NOTIFY feeOtherKeysetChanged)
 
 public:
     Transaction();
@@ -253,6 +258,18 @@ public:
     QString txidReplacing() const;
     void setTxidReplacing(const QString &id);
 
+    bool isClaimTx() const;
+    void setIsClaimTx(bool is_claim_tx);
+
+    bool useScriptPath() const;
+    void setUseScriptPath(bool newUseScriptPath);
+
+    QString feeOtherKeysetDisplay() const;
+    QString feeOtherKeysetBTC() const;
+    QString feeOtherKeysetCurrency() const;
+    qint64  feeOtherKeyset() const;
+    void setFeeOtherKeyset(qint64 data);
+
 public slots:
     bool parseQRTransaction(const QStringList& qrtags);
     void copyTransactionID();
@@ -286,6 +303,9 @@ private:
     QMap<QString, QString>      m_signatures = {};
     bool                        m_hasMoreBtn {true};
     QString                     m_txidReplacing {""};
+    bool                        m_isClaimTx {false};
+    bool                        m_useScriptPath {false};
+    qint64                      m_fee_otherKeyset {0};
 
 signals:
     void nunchukTransactionChanged();
@@ -302,6 +322,9 @@ signals:
     void manualCoinsChanged();
     void parentCoinsTagChanged();
     void txidReplacingChanged();
+    void requestFeeSelection();
+    void useScriptPathChanged();
+    void feeOtherKeysetChanged();
 };
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 

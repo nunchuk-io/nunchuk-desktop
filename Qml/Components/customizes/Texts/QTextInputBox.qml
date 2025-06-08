@@ -38,8 +38,8 @@ Rectangle {
     property alias botomLineVisible: indicator_bottom.visible
     property string fontFamily: "Lato"
     property int fontPixelSize: 16
-    property int rightPading: 16
-    property int leftPading: 16
+    property int rightPadding: 16
+    property int leftPadding: 16
     property alias  maximumLength : textInputted.maximumLength
     readonly property int eREADONLY_MODE: 0
     readonly property int ePREVIEW_MODE: 1
@@ -64,7 +64,7 @@ Rectangle {
         font.family: fontFamily
         anchors {
             left: parent.left
-            leftMargin: leftPading
+            leftMargin: leftPadding
             top: parent.top
             topMargin: isEditing ? 8 : 16
         }
@@ -79,8 +79,8 @@ Rectangle {
         id: textInputted
         anchors {
             fill: parent
-            leftMargin: leftPading - 10
-            rightMargin: rightPading
+            leftMargin: leftPadding - 10
+            rightMargin: rightPadding
             topMargin: 24
             bottomMargin: 0
         }

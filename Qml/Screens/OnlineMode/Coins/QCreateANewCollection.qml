@@ -40,7 +40,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1449
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var collect: walletInfo.coinCollections.collection
     property var coinTags: walletInfo.coinTagsFilter
     property string strOption: ""

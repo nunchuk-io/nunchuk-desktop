@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_472
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     readonly property var roles: [
         {id: "MASTER",              name: STR.STR_QML_949  },
         {id: "ADMIN",               name: STR.STR_QML_950  },
@@ -115,7 +115,7 @@ QOnScreenContentTypeB {
     }
 
     isShowLine: true
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QIconTextButton {

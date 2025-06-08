@@ -38,7 +38,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1065
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string myRole:         GroupWallet.dashboardInfo.myRole
     property var recurringPayment: AppModel.walletInfo.recurringPayment
     property string option: recurringPayment.sortOption
@@ -71,7 +71,7 @@ QOnScreenContentTypeB {
         }
     }
     isShowLine: true
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QIconTextButton {

@@ -1,25 +1,25 @@
-#include "CoinsControl.h"
+#include "CoinWallet.h"
 #include "ViewsEnums.h"
 #include "bridgeifaces.h"
-#include "Servers/Byzantine.h"
 #include "Servers/Draco.h"
-#include "QEventProcessor.h"
+#include "Servers/Byzantine.h"
+#include "QThreadForwarder.h"
 
-void CoinsControl::init()
-{
-    m_utxoList = QUTXOListModelPtr(new QUTXOListModel((dynamic_cast<Wallet*>(this))->walletId()));
-    m_utxoInfo = QUTXOPtr(new UTXO((dynamic_cast<Wallet*>(this))->walletId()));
-    m_coinCollections = QCoinCollectionsModelPtr(new QCoinCollectionsModel());
-    m_coinTags = QCoinTagsModelPtr(new QCoinTagsModel());
-    m_coinTagsFilter = QCoinTagsModelPtr(new QCoinTagsModel());
-}
+CoinWallet::CoinWallet(const nunchuk::Wallet &w) :
+    ReplacedWallet{w},
+    m_utxoList(QUTXOListModelPtr(new QUTXOListModel(walletId()))),
+    m_utxoInfo(QUTXOPtr(new UTXO(walletId()))),
+    m_coinCollections(QCoinCollectionsModelPtr(new QCoinCollectionsModel())),
+    m_coinTags(QCoinTagsModelPtr(new QCoinTagsModel())),
+    m_coinTagsFilter(QCoinTagsModelPtr(new QCoinTagsModel()))
+{}
 
-bool CoinsControl::isViewCoinShow() const
+bool CoinWallet::isViewCoinShow() const
 {
     return m_isViewCoinShow;
 }
 
-void CoinsControl::setIsViewCoinShow(bool newIsViewCoinShow)
+void CoinWallet::setIsViewCoinShow(bool newIsViewCoinShow)
 {
     if(m_isViewCoinShow == newIsViewCoinShow){
         return;
@@ -32,28 +32,28 @@ void CoinsControl::setIsViewCoinShow(bool newIsViewCoinShow)
     emit isViewCoinShowChanged();
 }
 
-QString CoinsControl::coinFlow() const
+QString CoinWallet::coinFlow() const
 {
     return m_coinFlow;
 }
 
-void CoinsControl::setCoinFlow(const QString &newCoinFlow)
+void CoinWallet::setCoinFlow(const QString &newCoinFlow)
 {
     m_coinFlow = newCoinFlow;
     emit coinFlowChanged();
 }
 
-QUTXOListModel *CoinsControl::utxoList() const
+QUTXOListModel *CoinWallet::utxoList() const
 {
     return m_utxoList.data();
 }
 
-QUTXOListModelPtr CoinsControl::utxoListPtr() const
+QUTXOListModelPtr CoinWallet::utxoListPtr() const
 {
     return m_utxoList;
 }
 
-void CoinsControl::setUtxoList(const QUTXOListModelPtr &utxoList)
+void CoinWallet::setUtxoList(const QUTXOListModelPtr &utxoList)
 {
     m_utxoList = utxoList;
     if(m_utxoList.data()){
@@ -62,23 +62,23 @@ void CoinsControl::setUtxoList(const QUTXOListModelPtr &utxoList)
     emit utxoListChanged();
 }
 
-UTXO *CoinsControl::utxoInfo() const
+UTXO *CoinWallet::utxoInfo() const
 {
     return m_utxoInfo.data();
 }
 
-QUTXOPtr CoinsControl::utxoInfoPtr() const
+QUTXOPtr CoinWallet::utxoInfoPtr() const
 {
     return m_utxoInfo;
 }
 
-void CoinsControl::setUtxoInfo(const QUTXOPtr &utxoInfo)
+void CoinWallet::setUtxoInfo(const QUTXOPtr &utxoInfo)
 {
     m_utxoInfo = utxoInfo;
     emit utxoInfoChanged();
 }
 
-void CoinsControl::setUtxoInfo(const int index)
+void CoinWallet::setUtxoInfo(const int index)
 {
     QUTXOPtr info = utxoList()->getUTXOByIndex(index);
     if(info){
@@ -86,7 +86,7 @@ void CoinsControl::setUtxoInfo(const int index)
     }
 }
 
-void CoinsControl::setUtxoInfo(const QString &tx_id)
+void CoinWallet::setUtxoInfo(const QString &tx_id)
 {
     QUTXOPtr info = utxoList()->getUTXOByTxid(tx_id);
     if(info){
@@ -94,7 +94,7 @@ void CoinsControl::setUtxoInfo(const QString &tx_id)
     }
 }
 
-void CoinsControl::RequestGetCoins()
+void CoinWallet::RequestGetCoins()
 {
     // dynamic cast this to Wallet
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
@@ -125,7 +125,7 @@ void CoinsControl::RequestGetCoins()
     }
 }
 
-void CoinsControl::RequestUpdateCoins()
+void CoinWallet::RequestUpdateCoins()
 {
     bool isReplaced = (dynamic_cast<Wallet*>(this))->isReplaced();
     bool isGroupWallet = (dynamic_cast<Wallet*>(this))->isGroupWallet();
@@ -144,7 +144,7 @@ void CoinsControl::RequestUpdateCoins()
     else{}
 }
 
-void CoinsControl::GetCoinControlFromServer()
+void CoinWallet::GetCoinControlFromServer()
 {
     bool isReplaced = (dynamic_cast<Wallet*>(this))->isReplaced();
     bool isGroupWallet = (dynamic_cast<Wallet*>(this))->isGroupWallet();
@@ -163,19 +163,19 @@ void CoinsControl::GetCoinControlFromServer()
     else{}
 }
 
-QUTXOListModelPtr CoinsControl::GetCoinByTagId(const int tag_id)
+QUTXOListModelPtr CoinWallet::GetCoinByTagId(const int tag_id)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     return bridge::nunckGetCoinByTag(wallet_id, tag_id);
 }
 
-QUTXOListModelPtr CoinsControl::GetCoinByCollectionId(const int collection_id)
+QUTXOListModelPtr CoinWallet::GetCoinByCollectionId(const int collection_id)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     return bridge::nunchukGetCoinInCollection(wallet_id, collection_id);
 }
 
-bool CoinsControl::UpdateCoinTag(const nunchuk::CoinTag &tag, bool force)
+bool CoinWallet::UpdateCoinTag(const nunchuk::CoinTag &tag, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukUpdateCoinTag(wallet_id, tag);
@@ -186,7 +186,7 @@ bool CoinsControl::UpdateCoinTag(const nunchuk::CoinTag &tag, bool force)
     return ret;
 }
 
-bool CoinsControl::DeleteCoinTag(int tag_id, bool force)
+bool CoinWallet::DeleteCoinTag(int tag_id, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukDeleteCoinTag(wallet_id, tag_id);
@@ -197,7 +197,7 @@ bool CoinsControl::DeleteCoinTag(int tag_id, bool force)
     return ret;
 }
 
-bool CoinsControl::AddNewCoinTag(const QString &tag_name, const QString &tag_color, bool force)
+bool CoinWallet::AddNewCoinTag(const QString &tag_name, const QString &tag_color, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukCreateCoinTag(wallet_id, tag_name, tag_color);
@@ -208,7 +208,7 @@ bool CoinsControl::AddNewCoinTag(const QString &tag_name, const QString &tag_col
     return ret;
 }
 
-bool CoinsControl::AddToCoinTag(int tag_id, const QString &tx_id, int vout, bool force)
+bool CoinWallet::AddToCoinTag(int tag_id, const QString &tx_id, int vout, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukAddToCoinTag(wallet_id, tag_id, tx_id, vout);
@@ -219,7 +219,7 @@ bool CoinsControl::AddToCoinTag(int tag_id, const QString &tx_id, int vout, bool
     return ret;
 }
 
-bool CoinsControl::UpdateCoinMemo(const QString &tx_id, int vout, const QString &memo, bool force)
+bool CoinWallet::UpdateCoinMemo(const QString &tx_id, int vout, const QString &memo, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukUpdateCoinMemo(wallet_id, tx_id, vout, memo);
@@ -230,7 +230,7 @@ bool CoinsControl::UpdateCoinMemo(const QString &tx_id, int vout, const QString 
     return ret;
 }
 
-bool CoinsControl::LockCoin(const QString &tx_id, int vout, bool force)
+bool CoinWallet::LockCoin(const QString &tx_id, int vout, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukLockCoin(wallet_id, tx_id, vout);
@@ -242,7 +242,7 @@ bool CoinsControl::LockCoin(const QString &tx_id, int vout, bool force)
     return ret;
 }
 
-void CoinsControl::LockCoins(const std::vector<nunchuk::UnspentOutput> &coins)
+void CoinWallet::LockCoins(const std::vector<nunchuk::UnspentOutput> &coins)
 {
     // Lock one by one
     int count = 0;
@@ -265,7 +265,7 @@ void CoinsControl::LockCoins(const std::vector<nunchuk::UnspentOutput> &coins)
     }
 }
 
-bool CoinsControl::UnlockCoin(const QString &tx_id, int vout, bool force)
+bool CoinWallet::UnlockCoin(const QString &tx_id, int vout, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukUnlockCoin(wallet_id, tx_id, vout);
@@ -277,7 +277,7 @@ bool CoinsControl::UnlockCoin(const QString &tx_id, int vout, bool force)
     return ret;
 }
 
-void CoinsControl::UnlockCoins(const std::vector<nunchuk::UnspentOutput> &coins)
+void CoinWallet::UnlockCoins(const std::vector<nunchuk::UnspentOutput> &coins)
 {
     // Unlock one by one
     int count = 0;
@@ -300,7 +300,7 @@ void CoinsControl::UnlockCoins(const std::vector<nunchuk::UnspentOutput> &coins)
     }
 }
 
-bool CoinsControl::RemoveFromCoinTag(int tag_id, const QString &tx_id, int vout, bool force)
+bool CoinWallet::RemoveFromCoinTag(int tag_id, const QString &tx_id, int vout, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukRemoveFromCoinTag(wallet_id, tag_id, tx_id, vout);
@@ -311,7 +311,7 @@ bool CoinsControl::RemoveFromCoinTag(int tag_id, const QString &tx_id, int vout,
     return ret;
 }
 
-bool CoinsControl::RemoveFromCoinCollection(int collection_id, const QString &tx_id, int vout, bool force)
+bool CoinWallet::RemoveFromCoinCollection(int collection_id, const QString &tx_id, int vout, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukRemoveFromCoinCollection(wallet_id, collection_id, tx_id, vout);
@@ -322,7 +322,7 @@ bool CoinsControl::RemoveFromCoinCollection(int collection_id, const QString &tx
     return ret;
 }
 
-bool CoinsControl::UpdateCoinCollection(const nunchuk::CoinCollection &collection, bool apply_to_existing_coins)
+bool CoinWallet::UpdateCoinCollection(const nunchuk::CoinCollection &collection, bool apply_to_existing_coins)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukUpdateCoinCollection(wallet_id, collection, apply_to_existing_coins);
@@ -333,7 +333,7 @@ bool CoinsControl::UpdateCoinCollection(const nunchuk::CoinCollection &collectio
     return ret;
 }
 
-bool CoinsControl::CreateCoinCollection(const QMap<QString, QVariant> &maps)
+bool CoinWallet::CreateCoinCollection(const QMap<QString, QVariant> &maps)
 {
     DBG_INFO << maps;
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
@@ -345,7 +345,7 @@ bool CoinsControl::CreateCoinCollection(const QMap<QString, QVariant> &maps)
         bool isApplyExistingCoins = maps["isApplyExistingCoins"].toBool();
         bool isAutoLock = maps["isAutoLock"].toBool();
         if (isCheckedWithTags) {
-            std:vector<int> tags;
+        std:vector<int> tags;
             for (auto tag: m_coinTagsFilter->fullList()) {
                 tags.push_back(tag.get_id());
             }
@@ -365,7 +365,7 @@ bool CoinsControl::CreateCoinCollection(const QMap<QString, QVariant> &maps)
     return collection.get_id() > 0;
 }
 
-bool CoinsControl::AddToCoinCollection(int collection_id, const QString &tx_id, int vout, bool force)
+bool CoinWallet::AddToCoinCollection(int collection_id, const QString &tx_id, int vout, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukAddToCoinCollection(wallet_id, collection_id, tx_id, vout);
@@ -376,7 +376,7 @@ bool CoinsControl::AddToCoinCollection(int collection_id, const QString &tx_id, 
     return ret;
 }
 
-bool CoinsControl::DeleteCoinCollection(int collection_id, bool force)
+bool CoinWallet::DeleteCoinCollection(int collection_id, bool force)
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     bool ret = bridge::nunchukDeleteCoinCollection(wallet_id, collection_id);
@@ -387,7 +387,7 @@ bool CoinsControl::DeleteCoinCollection(int collection_id, bool force)
     return ret;
 }
 
-bool CoinsControl::RequestCoinScreen(const QVariant &msg)
+bool CoinWallet::RequestCoinScreen(const QVariant &msg)
 {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
@@ -826,7 +826,7 @@ bool CoinsControl::RequestCoinScreen(const QVariant &msg)
     return true;
 }
 
-void CoinsControl::GetCoinControlUserWallet()
+void CoinWallet::GetCoinControlUserWallet()
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     QJsonObject output;
@@ -854,7 +854,7 @@ void CoinsControl::GetCoinControlUserWallet()
     }
 }
 
-void CoinsControl::GetCoinControlGroupWallet()
+void CoinWallet::GetCoinControlGroupWallet()
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     QString group_id = (dynamic_cast<Wallet*>(this))->groupId();
@@ -883,7 +883,7 @@ void CoinsControl::GetCoinControlGroupWallet()
     }
 }
 
-void CoinsControl::UpdateCoinControlUserWallet()
+void CoinWallet::UpdateCoinControlUserWallet()
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     QWarningMessage msg;
@@ -901,7 +901,7 @@ void CoinsControl::UpdateCoinControlUserWallet()
     }
 }
 
-void CoinsControl::UpdateCoinControlGroupWallet()
+void CoinWallet::UpdateCoinControlGroupWallet()
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     QString group_id = (dynamic_cast<Wallet*>(this))->groupId();
@@ -920,17 +920,57 @@ void CoinsControl::UpdateCoinControlGroupWallet()
     }
 }
 
-QList<int> CoinsControl::tagsInTxAssigned() const
+QList<int> CoinWallet::tagsInTxAssigned() const
 {
     return m_tagsInTxAssigned;
 }
 
-void CoinsControl::setReuse(bool newReuse)
+void CoinWallet::requestForAllCoins(const QVariant &act)
+{
+    RequestForAllCoins(act);
+}
+
+void CoinWallet::requestForLockedAllCoins(const QVariant &act)
+{
+    RequestForLockedAllCoins(act);
+}
+
+void CoinWallet::requestImportCoinControlData(const QString &filePath)
+{
+    ImportCoinControlData(filePath);
+}
+
+void CoinWallet::requestExportCoinControlData(const QString &filePath)
+{
+    ExportCoinControlData(filePath);
+}
+
+void CoinWallet::requestExportBIP329(const QString &filePath)
+{
+    ExportBIP329(filePath);
+}
+
+void CoinWallet::requestImportBIP329(const QString &filePath)
+{
+    ImportBIP329(filePath);
+}
+
+void CoinWallet::requestConsolidateMakeTransaction(const QVariant &msg)
+{
+    CreateDraftTransaction(E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, msg);
+}
+
+void CoinWallet::requestSyncSelectCoinForMakeTransaction(const QVariant &msg)
+{
+    RequestSyncSelectCoinForMakeTransaction(msg);
+}
+
+void CoinWallet::setReuse(bool newReuse)
 {
     m_reuse = newReuse;
 }
 
-void CoinsControl::RequestSyncSelectCoinForMakeTransaction(const QVariant &msg)
+void CoinWallet::RequestSyncSelectCoinForMakeTransaction(const QVariant &msg)
 {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
@@ -1014,7 +1054,7 @@ void CoinsControl::RequestSyncSelectCoinForMakeTransaction(const QVariant &msg)
     }
 }
 
-QUTXOListModelPtr CoinsControl::GetUtxoListSelected()
+QUTXOListModelPtr CoinWallet::GetUtxoListSelected()
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(wallet_id));
@@ -1030,7 +1070,7 @@ QUTXOListModelPtr CoinsControl::GetUtxoListSelected()
     return inputs;
 }
 
-bool CoinsControl::AssignTagsToTxChange()
+bool CoinWallet::AssignTagsToTxChange()
 {
     if (auto trans = AppModel::instance()->transactionInfoPtr()) {
         if (auto parentCoin = trans->parentCoinsTag()) {
@@ -1048,17 +1088,17 @@ bool CoinsControl::AssignTagsToTxChange()
     return false;
 }
 
-QUTXOListModel *CoinsControl::utxoListLocked() const
+QUTXOListModel *CoinWallet::utxoListLocked() const
 {
     return m_utxoListLocked.data();
 }
 
-QUTXOListModelPtr CoinsControl::utxoListLockedPtr() const
+QUTXOListModelPtr CoinWallet::utxoListLockedPtr() const
 {
     return m_utxoListLocked;
 }
 
-void CoinsControl::setUtxoListLocked(const QUTXOListModelPtr &utxoList)
+void CoinWallet::setUtxoListLocked(const QUTXOListModelPtr &utxoList)
 {
     m_utxoListLocked = utxoList;
     if(m_utxoListLocked.data()){
@@ -1067,7 +1107,7 @@ void CoinsControl::setUtxoListLocked(const QUTXOListModelPtr &utxoList)
     emit utxoListChanged();
 }
 
-void CoinsControl::RequestLockedCoins()
+void CoinWallet::RequestLockedCoins()
 {
     // dynamic cast this to Wallet
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
@@ -1077,7 +1117,7 @@ void CoinsControl::RequestLockedCoins()
     }
 }
 
-void CoinsControl::RequestForLockedAllCoins(const QVariant &act)
+void CoinWallet::RequestForLockedAllCoins(const QVariant &act)
 {
     QMap<QString, QVariant> maps = act.toMap();
     QString type = maps["type"].toString();
@@ -1109,7 +1149,7 @@ void CoinsControl::RequestForLockedAllCoins(const QVariant &act)
     }
 }
 
-void CoinsControl::RequestGetCoinAncestry()
+void CoinWallet::RequestGetCoinAncestry()
 {
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
     if (m_utxoInfo.isNull()) {
@@ -1120,12 +1160,12 @@ void CoinsControl::RequestGetCoinAncestry()
     emit ancestryListChanged();
 }
 
-QList<QUTXOListModel *> CoinsControl::ancestryList() const
+QList<QUTXOListModel *> CoinWallet::ancestryList() const
 {
     return m_ancestryList;
 }
 
-bool CoinsControl::ImportCoinControlData(const QString &filePath)
+bool CoinWallet::ImportCoinControlData(const QString &filePath)
 {
     QWarningMessage msg;
     QString file_path = qUtils::QGetFilePath(filePath);
@@ -1142,7 +1182,7 @@ bool CoinsControl::ImportCoinControlData(const QString &filePath)
     return ret;
 }
 
-bool CoinsControl::ExportCoinControlData(const QString &filePath)
+bool CoinWallet::ExportCoinControlData(const QString &filePath)
 {
     QString file_path = qUtils::QGetFilePath(filePath);
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
@@ -1155,7 +1195,7 @@ bool CoinsControl::ExportCoinControlData(const QString &filePath)
     return false;
 }
 
-bool CoinsControl::ExportBIP329(const QString &filePath)
+bool CoinWallet::ExportBIP329(const QString &filePath)
 {
     QString file_path = qUtils::QGetFilePath(filePath);
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
@@ -1168,7 +1208,7 @@ bool CoinsControl::ExportBIP329(const QString &filePath)
     return false;
 }
 
-bool CoinsControl::ImportBIP329(const QString &filePath)
+bool CoinWallet::ImportBIP329(const QString &filePath)
 {
     QWarningMessage msg;
     QString file_path = qUtils::QGetFilePath(filePath);
@@ -1186,11 +1226,19 @@ bool CoinsControl::ImportBIP329(const QString &filePath)
     return false;
 }
 
-bool CoinsControl::CreateDraftTransaction(int successScreenID, const QVariant &msg)
+bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
 {
-    m_draftTransactionInput = msg.toMap();
-    QString memo = m_draftTransactionInput.value("destinationMemo").toString();
-    QList<QVariant> destinationInputed = m_draftTransactionInput.value("destinationList").toList();
+    auto draftTransactionInput = msg.toMap();
+    DBG_INFO << "CreateDraftTransaction called with msg:" << draftTransactionInput;
+    bool contains_use_script_path = draftTransactionInput.contains("use_script_path");
+    bool use_script_path_selected = false;
+    if(contains_use_script_path){
+        DBG_INFO << "Draft transaction input use_script_path" << use_script_path_selected;
+        use_script_path_selected = draftTransactionInput.value("use_script_path").toBool();
+    }
+
+    QString memo = draftTransactionInput.value("destinationMemo").toString();
+    QList<QVariant> destinationInputed = draftTransactionInput.value("destinationList").toList();
     QDestinationListModelPtr destinationList = QDestinationListModelPtr(new DestinationListModel());
     auto walletInfo = (dynamic_cast<Wallet*>(this));
     QString wallet_id = walletInfo->walletId();
@@ -1255,65 +1303,68 @@ bool CoinsControl::CreateDraftTransaction(int successScreenID, const QVariant &m
                                                             feerate,
                                                             subtractFromAmount,
                                                             "",
+                                                            use_script_path_selected,
                                                             msgwarning);
-    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-        if(trans){
-            AppModel::instance()->setTransactionInfo(trans);
-            AppModel::instance()->transactionInfo()->setMemo(memo);
-            QEventProcessor::instance()->sendEvent(successScreenID);
-        }
-    }
-    else {
-        if(((int)EWARNING::WarningType::EXCEPTION_MSG == msgwarning.type()) &&
-            (msgwarning.code() == nunchuk::NunchukException::COIN_SELECTION_ERROR) &&
-            subtractFromAmount == false)
-        {
-            DBG_INFO << "Retry make draft transaction with subtract true";
+    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
+        AppModel::instance()->setTransactionInfo(trans);
+        AppModel::instance()->transactionInfo()->setMemo(memo);
+        AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path_selected);
+#if 0 // TBD TMP 0206
+        if(walletInfo->enableValuekeyset() && AppSetting::instance()->enableAutoFeeSelection() && !contains_use_script_path){
             msgwarning.resetWarningMessage();
-            QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
-                                                                    outputs,
-                                                                    inputs,
-                                                                    feerate,
-                                                                    true,
-                                                                    "",
-                                                                    msgwarning);
-            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                if(trans){
-                    AppModel::instance()->setTransactionInfo(trans);
-                    AppModel::instance()->transactionInfo()->setMemo(memo);
-                    QEventProcessor::instance()->sendEvent(successScreenID);
+            QTransactionPtr trans_script = bridge::nunchukDraftTransaction(wallet_id,
+                                                                           outputs,
+                                                                           inputs,
+                                                                           feerate,
+                                                                           trans.data()->subtractFromFeeAmount(),
+                                                                           "",
+                                                                           true,
+                                                                           msgwarning);
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans_script){
+                double valueKeysetFee = trans.data()->feeCurrency().toDouble();
+                double otherKeysetFee = trans_script.data()->feeCurrency().toDouble();
+                DBG_INFO << "Value keyset fee:" << valueKeysetFee << "Other keyset fee:" << otherKeysetFee;
+
+                double thresholdAmount = AppSetting::instance()->thresholdAmount();
+                int thresholdPercent = AppSetting::instance()->thresholdPercent();
+                double feeDifference = otherKeysetFee - valueKeysetFee;
+                double percentDifference = (std::abs(valueKeysetFee - otherKeysetFee) / ((valueKeysetFee + otherKeysetFee) / 2.0)) * 100.0;
+                if ((feeDifference > thresholdAmount) || percentDifference > thresholdPercent) {
+                    DBG_INFO << "Difference fee between value keyset and other keyset is greater than threshold" << feeDifference << percentDifference;
+                    AppModel::instance()->transactionInfo()->setFeeOtherKeyset(trans_script.data()->feeSats());
+                    emit AppModel::instance()->transactionInfo()->requestFeeSelection();
+                    return false;
                 }
             }
-            else{
-                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
-            }
-
         }
-        else{
-            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
-        }
+#endif
+        QEventProcessor::instance()->sendEvent(successEvtID);
+        return true;
     }
     return false;
 }
 
-bool CoinsControl::UpdateDraftTransaction(const QVariant &msg)
+bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
 {
-    if (!msg.toMap().isEmpty()) {
-        m_draftTransactionInput = msg.toMap();
+    if (msg.toMap().isEmpty()) {
+        return false;
     }
+    auto draftTransactionInput = msg.toMap();
 
     QString replace_txid = "";
     QString memo = "";
+    bool    use_script_path = false;
     QUTXOListModelPtr inputs = NULL;
     if (auto trans = AppModel::instance()->transactionInfo()){
-        inputs = trans->GetUtxoListSelected();
-        memo   = trans->memo();
+        inputs          = trans->GetUtxoListSelected();
+        memo            = trans->memo();
+        use_script_path = trans->useScriptPath();
     }
 
-    bool subtractFromFeeAmout   = m_draftTransactionInput.value("subtractFromFeeAmout").toBool();
-    int  feeRate                = m_draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    bool manualFee              = m_draftTransactionInput.value("manualFee").toBool();
-    bool manualOutput           = m_draftTransactionInput.value("manualOutput").toBool();
+    bool subtractFromFeeAmout   = draftTransactionInput.value("subtractFromFeeAmout").toBool();
+    int  feeRate                = draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+    bool manualFee              = draftTransactionInput.value("manualFee").toBool();
+    bool manualOutput           = draftTransactionInput.value("manualOutput").toBool();
     if(!manualFee) {
         feeRate = -1;
     }
@@ -1334,10 +1385,12 @@ bool CoinsControl::UpdateDraftTransaction(const QVariant &msg)
                                                             feeRate,
                                                             subtractFromFeeAmout,
                                                             replace_txid,
+                                                            use_script_path,
                                                             msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
         if(trans){
             trans.data()->setMemo(memo);
+            trans.data()->setUseScriptPath(use_script_path);
             AppModel::instance()->setTransactionInfo(trans);
         }
     }
@@ -1347,7 +1400,7 @@ bool CoinsControl::UpdateDraftTransaction(const QVariant &msg)
     return false;
 }
 
-bool CoinsControl::UpdateDraftRBFransaction(const QVariant &msg)
+bool CoinWallet::UpdateDraftRBFransaction(const QVariant &msg)
 {
     QMap<QString, QVariant> inputObj = msg.toMap();
     if (inputObj.isEmpty()) {
@@ -1378,6 +1431,7 @@ bool CoinsControl::UpdateDraftRBFransaction(const QVariant &msg)
                                                                                feeRate,
                                                                                subtractFromFeeAmout,
                                                                                replacing_txid.toStdString(),
+                                                                               false,
                                                                                msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){
@@ -1397,12 +1451,12 @@ bool CoinsControl::UpdateDraftRBFransaction(const QVariant &msg)
     return false;
 }
 
-QString CoinsControl::searchText() const
+QString CoinWallet::searchText() const
 {
     return m_searchText;
 }
 
-void CoinsControl::setSearchText(const QString &newSearchText)
+void CoinWallet::setSearchText(const QString &newSearchText)
 {
     m_searchText = newSearchText;
     m_utxoList->searchByString(newSearchText);
@@ -1410,44 +1464,44 @@ void CoinsControl::setSearchText(const QString &newSearchText)
     emit utxoListChanged();
 }
 
-QCoinTagsModel* CoinsControl::coinTags() const
+QCoinTagsModel* CoinWallet::coinTags() const
 {
     return m_coinTags.data();
 }
 
-QCoinTagsModel* CoinsControl::coinTagsFilter() const
+QCoinTagsModel* CoinWallet::coinTagsFilter() const
 {
     return m_coinTagsFilter.data();
 }
 
-QCoinCollectionsModel* CoinsControl::coinCollections() const
+QCoinCollectionsModel* CoinWallet::coinCollections() const
 {
     return m_coinCollections.data();
 }
 
-QUTXOListModel *CoinsControl::utxoFilterTag() const
+QUTXOListModel *CoinWallet::utxoFilterTag() const
 {
     return m_utxoFilterTag.data();
 }
 
-void CoinsControl::setUtxoFilterTag(const int tag_id)
+void CoinWallet::setUtxoFilterTag(const int tag_id)
 {
     m_utxoFilterTag = GetCoinByTagId(tag_id);
     emit utxoFilterTagChanged();
 }
 
-QUTXOListModel *CoinsControl::utxoFilterCollection() const
+QUTXOListModel *CoinWallet::utxoFilterCollection() const
 {
     return m_utxoFilterCollection.data();
 }
 
-void CoinsControl::setUtxoFilterCollection(const int collection_id)
+void CoinWallet::setUtxoFilterCollection(const int collection_id)
 {
     m_utxoFilterCollection = GetCoinByCollectionId(collection_id);
     emit utxoFilterCollectionChanged();
 }
 
-void CoinsControl::RequestForAllCoins(const QVariant &act)
+void CoinWallet::RequestForAllCoins(const QVariant &act)
 {
     QMap<QString, QVariant> maps = act.toMap();
     QString type = maps["type"].toString();

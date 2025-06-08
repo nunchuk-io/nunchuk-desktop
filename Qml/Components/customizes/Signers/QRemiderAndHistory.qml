@@ -113,6 +113,7 @@ Item {
         }
 
         QHealthCheckHistory {
+            parentHeight: _item.height
             hasReminder: keyHealth ? (keyHealth.reminder ? true : false) : false
         }
     }

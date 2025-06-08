@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1219
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     readonly property var option_map: [
         {visible: true,        height: 164, headline:STR.STR_QML_1230, content: STR.STR_QML_1231, icon: "qrc:/Images/Images/mulitsig-dark.svg"             },
         {visible: true,        height: 136, headline:STR.STR_QML_1232, content: STR.STR_QML_1233, icon: "qrc:/Images/Images/inheritance-dark.svg"          },
@@ -144,7 +144,7 @@ QOnScreenContentTypeA {
         }
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QTextButton {
@@ -154,7 +154,7 @@ QOnScreenContentTypeA {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                OnBoarding.state = "dontHaveAnAdvisor"
+                OnBoarding.screenFlow = "dontHaveAnAdvisor"
             }
         }
         QTextButton {
@@ -164,7 +164,7 @@ QOnScreenContentTypeA {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
-                OnBoarding.state = "haveAnAdvisor"
+                OnBoarding.screenFlow = "haveAnAdvisor"
             }
         }
     }

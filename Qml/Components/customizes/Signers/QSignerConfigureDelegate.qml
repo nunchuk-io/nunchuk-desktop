@@ -100,23 +100,25 @@ Item {
                     font.pixelSize: 10
                 }
             }
-            QLato {
-                width: 146
-                height: 16
-                text: {
-                    if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
-                        var card_id = dataSingle.single_device_cardid
-                        var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
-                        return "Card ID: ••" + textR
-                    } else {
-                        return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
+            Row {
+                QLato {
+                    width: 146
+                    height: 16
+                    text: {
+                        if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
+                            var card_id = dataSingle.single_device_cardid
+                            var textR = card_id.substring(card_id.length - 5, card_id.length).toUpperCase()
+                            return "Card ID: ••" + textR
+                        } else {
+                            return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
+                        }
                     }
+                    color: "#595959"
+                    font.weight: Font.Normal
+                    font.capitalization: Font.AllUppercase
+                    font.family: "Lato"
+                    font.pixelSize: 12
                 }
-                color: "#595959"
-                font.weight: Font.Normal
-                font.capitalization: Font.AllUppercase
-                font.family: "Lato"
-                font.pixelSize: 12
             }
         }
         QIcon {

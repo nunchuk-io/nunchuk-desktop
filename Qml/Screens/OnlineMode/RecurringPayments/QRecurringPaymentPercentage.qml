@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var payment_percentage: payment.payment_payload.valuePercent
     function isNumeric(str) {
       if (typeof str != "string") return false // we only process strings!

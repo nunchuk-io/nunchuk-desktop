@@ -50,7 +50,7 @@ QOnScreenContentTypeA {
     property var sandbox:       AppModel.newWalletInfo.sandbox
     onCloseClicked: {
         if (sandbox.isCreate || sandbox.isReplace) {
-            closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         } else if (sandbox.isRecovery) {
             _confirm.open()
         }
@@ -250,7 +250,7 @@ QOnScreenContentTypeA {
             if (sandbox.isCreate) {
                 sandbox.deleteGroup()
             } else if (sandbox.isRecovery) {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             } else if (sandbox.isReplace) {
                 sandbox.deleteGroup()
             }

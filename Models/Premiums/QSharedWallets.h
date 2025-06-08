@@ -37,7 +37,7 @@ public:
     QString uid();
     void GetGroupDeviceUID();
 
-    QWalletPtr RecoverSandboxWallet(const QString &file_path);
+    bool RecoverSandboxWallet(const QString &file_path);
     nunchuk::GroupSandbox CreateSandboxFromRecoverWallet(const QWalletPtr& wallet);
 
     QStringList deprecatedWallets() const;

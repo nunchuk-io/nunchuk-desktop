@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1245
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         QLato {
             width: parent.width
@@ -50,7 +50,7 @@ QOnScreenContentTypeA {
 
     }
 
-    onPrevClicked: OnBoarding.state = "assistedWallet"
+    onPrevClicked: OnBoarding.screenFlow = "assistedWallet"
     bottomRight: Row {
         spacing: 12
         QTextLink {
@@ -76,7 +76,7 @@ QOnScreenContentTypeA {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                OnBoarding.state = "dontHaveAnAdvisor"
+                OnBoarding.screenFlow = "dontHaveAnAdvisor"
             }
         }
         QTextButton {

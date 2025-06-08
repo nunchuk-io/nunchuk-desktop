@@ -18,6 +18,59 @@
  *                                                                        *
  **************************************************************************/
 #include "QThreadForwarder.h"
+#include "Chats/ClientController.h"
+#include "WorkerThread.h"
 
+WorkerThread *WorkerThread::instance() {
+    static WorkerThread mInstance;
+    return &mInstance;
+}
 
+WorkerThread::WorkerThread() {}
 
+WorkerThread::~WorkerThread() { // Correct destructor syntax
+    {
+        QMutexLocker locker(&mutex);
+        stopThread = true;   // Signal the thread to stop
+        condition.wakeOne(); // Wake up the thread so it can exit
+    }
+    wait(); // Ensure thread stops before destruction
+}
+
+void WorkerThread::runTask(Task task) {
+    if (!isRunning()) {
+        stopThread = false;
+        start(); // Start worker thread on creation
+    }
+    QMutexLocker locker(&mutex);
+    taskQueue.enqueue(task);
+    condition.wakeOne(); // Wake up the worker thread
+}
+
+void WorkerThread::run() {
+    while (!stopThread) { // Exit loop when stopping
+        if (!ClientController::instance()->isNunchukLoggedIn()) {
+            QThread::msleep(100);  // Sleep to avoid busy waiting
+            break; // Exit loop if not logged in
+        }
+        Task task;
+        {
+            QMutexLocker locker(&mutex);
+            while (taskQueue.isEmpty() && !stopThread) { // Prevent CPU spinning
+                condition.wait(&mutex);                  // Wait for new tasks
+            }
+            if (stopThread)
+                break; // Exit loop when stopping
+            if (!taskQueue.isEmpty()) {
+                task = taskQueue.dequeue(); // Get next task
+            }
+        }
+        if (task) {
+            try {
+                task(); // Execute task
+            } catch (const std::exception &e) {
+                DBG_ERROR << "Task execution failed: " << e.what();
+            }
+        }
+    }
+}

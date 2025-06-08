@@ -34,31 +34,49 @@ Item {
     property bool isLocked: false
     property bool isReplaced: false
     property bool isSandboxWallet: false
+    property bool isArchived: false
     property string walletRole: ""
+
     readonly property string gradientFrom: {
-        if (isReplaced || isLocked || walletRole === "KEYHOLDER_LIMITED")
+        if(isArchived){
             return "#595959"
-        else if (isHotWallet)
+        }
+        else if (isReplaced || isLocked || walletRole === "KEYHOLDER_LIMITED"){
+            return "#595959"
+        }
+        else if (isHotWallet){
             return "#A66800";
-        else if (isSandboxWallet)
+        }
+        else if (isSandboxWallet){
             return "#2B74A9";
-        else if (isAssisted || isDashboard)
+        }
+        else if (isAssisted || isDashboard){
             return "#2F766D";
-        else
+        }
+        else{
             return "#2F466C";
+        }
     }
 
     readonly property string gradientTo : {
-        if (isReplaced || isLocked || walletRole === "KEYHOLDER_LIMITED")
+        if(isArchived){
             return "#595959"
-        else if (isHotWallet)
+        }
+        else if (isReplaced || isLocked || walletRole === "KEYHOLDER_LIMITED"){
+            return "#595959"
+        }
+        else if (isHotWallet){
             return "#A66800";
-        else if (isSandboxWallet)
+        }
+        else if (isSandboxWallet){
             return "#031F2B";
-        else if (isAssisted || isDashboard)
+        }
+        else if (isAssisted || isDashboard){
             return "#1C4A21";
-        else
+        }
+        else{
             return "#031F2B";
+        }
     }
 
     Item {

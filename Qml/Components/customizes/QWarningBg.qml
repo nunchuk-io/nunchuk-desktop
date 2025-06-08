@@ -37,6 +37,7 @@ Rectangle {
     property string icon: ""
     property alias txt: _txt
     property int iSize: 24
+    signal hyperlinkClicked()
     Row {
         anchors.fill: parent
         anchors.margins: 12
@@ -54,7 +55,13 @@ Rectangle {
             wrapMode: Text.WrapAnywhere
             horizontalAlignment: Text.AlignLeft
             anchors.verticalCenter: parent.verticalCenter
-            onLinkActivated: Qt.openUrlExternally(link)
+            onLinkActivated: {
+                if (link == "dummycode.tbd") {
+                    hyperlinkClicked()
+                } else {
+                    Qt.openUrlExternally(link)
+                }
+            }
             MouseArea {
                 anchors.fill: parent
                 cursorShape: _txt.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor

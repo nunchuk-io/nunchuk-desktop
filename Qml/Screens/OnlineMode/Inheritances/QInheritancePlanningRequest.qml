@@ -42,7 +42,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: alert.title
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Column {
         width: 539
         height: 196

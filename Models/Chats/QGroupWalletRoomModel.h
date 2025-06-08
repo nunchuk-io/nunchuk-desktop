@@ -79,7 +79,6 @@ signals:
 private:
     int m_currentIndex {0};
     std::vector<nunchuk::GroupMessage> m_messages;
-    mutable QMutex m_lock; // Can be used for multithread read
     QString m_wallet_id {};
 };
 typedef OurSharedPointer<QGroupMessageModel> QGroupMessageModelPtr;

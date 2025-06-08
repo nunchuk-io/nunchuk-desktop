@@ -1,16 +1,20 @@
-#include "ReplaceKeyFreeUser.h"
+#include "ReplacedWallet.h"
 #include "ViewsEnums.h"
-#include "AppModel.h"
-#include "SingleSignerModel.h"
-#include "MasterSignerModel.h"
 #include "bridgeifaces.h"
-#include "ServiceSetting.h"
-#include "Premiums/QAssistedDraftWallets.h"
-#include "Premiums/QWalletServicesTag.h"
-#include "Premiums/GroupSandboxModel.h"
+#include "Models/DeviceModel.h"
+#include "QThreadForwarder.h"
 
-bool ReplaceKeyFreeUser::m_tranReplace = false;
-void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
+bool ReplacedWallet::m_tranReplace = false;
+ReplacedWallet::ReplacedWallet(const nunchuk::Wallet &w) :
+    WalletIO{w}
+{}
+
+bool ReplacedWallet::isReplaced() const
+{    
+    return false;
+}
+
+void ReplacedWallet::MixMasterSignerAndSingleSignerAll()
 {
     m_replaceFree = true;
     setReplaceFlow("replace-key-info");
@@ -32,6 +36,7 @@ void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
         signer["signer_is_primary"] = m->isPrimaryKey();
         signer["signer_account_index"] = 0;
         signer["signer_card_id"] = m->device()->cardId();
+        signer["signer_allowAssignToWallet"] = m->allowAssignToWallet();
         if (w && w->groupSandboxPtr() && w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
             if (m->signerType() == (int)nunchuk::SignerType::SOFTWARE && m->tag().isEmpty()) {
                 arrays.append(signer);
@@ -52,6 +57,7 @@ void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
         signer["signer_is_primary"] = s->isPrimaryKey();
         signer["signer_account_index"] = s->accountIndex();
         signer["signer_card_id"] = s->cardId();
+        signer["signer_allowAssignToWallet"] = s->allowAssignToWallet();
         if (w && w->groupSandboxPtr() && w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
             if (s->signerType() == (int)nunchuk::SignerType::SOFTWARE && s->tag().isEmpty()) {
                 arrays.append(signer);
@@ -63,26 +69,12 @@ void ReplaceKeyFreeUser::MixMasterSignerAndSingleSignerAll()
     setSignerExistList(arrays);
 }
 
-QVariantList ReplaceKeyFreeUser::signerExistList() const
-{
-    return m_signerExistList.toVariantList();
-}
-
-void ReplaceKeyFreeUser::setSignerExistList(QJsonArray signerExistList)
-{
-    if (m_signerExistList == signerExistList)
-        return;
-
-    m_signerExistList = signerExistList;
-    emit signerExistListChanged();
-}
-
-QString ReplaceKeyFreeUser::replaceFlow() const
+QString ReplacedWallet::replaceFlow() const
 {
     return m_replaceFlow;
 }
 
-void ReplaceKeyFreeUser::setReplaceFlow(const QString &replaceFlow)
+void ReplacedWallet::setReplaceFlow(const QString &replaceFlow)
 {
     if (m_replaceFlow == replaceFlow)
         return;
@@ -91,7 +83,7 @@ void ReplaceKeyFreeUser::setReplaceFlow(const QString &replaceFlow)
     emit replaceFlowChanged();
 }
 
-void ReplaceKeyFreeUser::SelectKeyToReplace(const QString &xfp, const int index)
+void ReplacedWallet::SelectKeyToReplace(const QString &xfp, const int index)
 {
     DBG_INFO << xfp << index;
     QWarningMessage msg;
@@ -105,12 +97,12 @@ void ReplaceKeyFreeUser::SelectKeyToReplace(const QString &xfp, const int index)
     m_curReplaceKey = signer;
 }
 
-void ReplaceKeyFreeUser::CreateANewWallet()
+void ReplacedWallet::CreateANewWallet()
 {
     AppModel::instance()->startCreateWallet(false, "");
 }
 
-void ReplaceKeyFreeUser::walletCreateDone()
+void ReplacedWallet::walletCreateDone()
 {
     if (m_replaceFree) {
         m_replaceFree = false;
@@ -126,7 +118,7 @@ void ReplaceKeyFreeUser::walletCreateDone()
     }
 }
 
-int ReplaceKeyFreeUser::reuseKeyGetCurrentIndex(const QString &xfp)
+int ReplacedWallet::reuseKeyGetCurrentIndex(const QString &xfp)
 {
     QWarningMessage msg;
     int ret = bridge::nunchukGetLastUsedSignerIndex(xfp,
@@ -139,7 +131,7 @@ int ReplaceKeyFreeUser::reuseKeyGetCurrentIndex(const QString &xfp)
     return ret;
 }
 
-QString ReplaceKeyFreeUser::bip32path(const QString &xfp, int index)
+QString ReplacedWallet::bip32path(const QString &xfp, int index)
 {
     DBG_INFO << xfp << index;
     if(index >= 0){
@@ -159,7 +151,7 @@ QString ReplaceKeyFreeUser::bip32path(const QString &xfp, int index)
     return "";
 }
 
-bool ReplaceKeyFreeUser::updateKeyReplace(const QString &xfp, const int index)
+bool ReplacedWallet::updateKeyReplace(const QString &xfp, const int index)
 {
     DBG_INFO << xfp << index << m_curReplaceKey.index;
     setDeviceType(deviceType(xfp));
@@ -189,7 +181,7 @@ bool ReplaceKeyFreeUser::updateKeyReplace(const QString &xfp, const int index)
     return false;
 }
 
-bool ReplaceKeyFreeUser::removeKeyReplaced(const int index)
+bool ReplacedWallet::removeKeyReplaced(const int index)
 {
     auto currentWallet = dynamic_cast<Wallet*>(this)->nunchukWallet();
     if (index >= currentWallet.get_n()) return false;
@@ -202,12 +194,12 @@ bool ReplaceKeyFreeUser::removeKeyReplaced(const int index)
     return true;
 }
 
-bool ReplaceKeyFreeUser::tranReplace() const
+bool ReplacedWallet::tranReplace() const
 {
     return m_tranReplace;
 }
 
-void ReplaceKeyFreeUser::setTranReplace(bool newTranReplace)
+void ReplacedWallet::setTranReplace(bool newTranReplace)
 {
     if (m_tranReplace == newTranReplace)
         return;
@@ -215,12 +207,12 @@ void ReplaceKeyFreeUser::setTranReplace(bool newTranReplace)
     emit tranReplaceChanged();
 }
 
-bool ReplaceKeyFreeUser::replaceFree() const
+bool ReplacedWallet::replaceFree() const
 {
     return m_replaceFree;
 }
 
-void ReplaceKeyFreeUser::updateNewKeyReplace(const QString &xfp)
+void ReplacedWallet::updateNewKeyReplace(const QString &xfp)
 {
     DBG_INFO << xfp;
     if (updateKeyReplace(xfp, 0)) {
@@ -230,8 +222,9 @@ void ReplaceKeyFreeUser::updateNewKeyReplace(const QString &xfp)
     }
 }
 
-void ReplaceKeyFreeUser::refreshScanDevices()
+void ReplacedWallet::refreshScanDevices()
 {
+    auto m_deviceType = deviceType();
     DBG_INFO << m_replaceFree << m_deviceType;
     if (m_replaceFree) {
         if (!m_deviceType.isEmpty()) {
@@ -248,61 +241,18 @@ void ReplaceKeyFreeUser::refreshScanDevices()
     }
 }
 
-DeviceListModel *ReplaceKeyFreeUser::deviceList() const
+QString ReplacedWallet::walletName()
 {
-    return deviceList_.data();
-}
-
-void ReplaceKeyFreeUser::setDeviceList(const QDeviceListModelPtr &d)
-{
-    if (deviceList_.isNull()) {
-        deviceList_ = d;
-        emit deviceListChanged();
-    } else {
-        deviceList_->updateDeviceList(d);
-        emit deviceListChanged();
-    }
-}
-
-QString ReplaceKeyFreeUser::deviceType() const
-{
-    return m_deviceType;
-}
-
-void ReplaceKeyFreeUser::setDeviceType(const QString &deviceType)
-{
-    if (m_deviceType == deviceType)
-        return;
-    m_deviceType = deviceType;
-    emit deviceTypeChanged();
-}
-
-QString ReplaceKeyFreeUser::deviceType(const QString &xfp)
-{
-    auto m = bridge::nunchukGetMasterSignerFingerprint(xfp);
-    if (m) {
-        return m->devicePtr()->type();
-    } else {
-        auto s = bridge::nunchukGetRemoteSigner(xfp);
-        if (s) {
-            if (!s->tag().isEmpty()) {
-                QMap<QString, QString> tags;
-                tags.insert("LEDGER",   "ledger");
-                tags.insert("TREZOR",   "trezor");
-                tags.insert("COLDCARD", "coldcard");
-                tags.insert("BITBOX",   "bitbox02");
-                return tags.value(s->tag());
-            } else if(s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) {
-                return "coldcard";
-            } else {
-                return s->devicetype();
-            }
+    QString data_name = BaseWallet::walletName();
+    if(data_name != ""){
+        if (isReplaced() && !data_name.contains("DEPRECATED")) {
+            setWalletName(QString("[DEPRECATED] %1").arg(data_name));
         }
     }
-    return "";
+    return BaseWallet::walletName();
 }
 
-bool ReplaceKeyFreeUser::ImportColdcardViaFile(const QString &fileName, int new_index)
+bool ReplacedWallet::ImportColdcardViaFile(const QString &fileName, int new_index)
 {
     QWarningMessage msg;
     QString file_path = qUtils::QGetFilePath(fileName);

@@ -30,6 +30,8 @@
 #include "Chats/ClientController.h"
 #include "DracoDefines.h"
 #include "QRest.h"
+#include "FederatedAuth/QAppleSigninView.h"
+#include "FederatedAuth/QGoogleSigninView.h"
 
 class Draco : public QRest
 {
@@ -71,6 +73,7 @@ public:
     Q_INVOKABLE void markAsCompromised(const QString &device_id);
     Q_INVOKABLE bool pkey_signup(const QString &address,const QString &username,const QString &signature);
     Q_INVOKABLE bool pkey_signin(const QString &address,const QString &username,const QString &signature);
+    Q_INVOKABLE bool pkey_username_availability(const QString &username, QJsonObject &errorObj);
     Q_INVOKABLE bool pkey_username_availability(const QString &username);
     Q_INVOKABLE void changePassword(const QString &oldpassword, const QString &newpassword);
     Q_INVOKABLE QVariant requestFriends(const QVariant emails);
@@ -438,7 +441,18 @@ public:
 
     // Supported signers
     bool GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg);
-    QSet<int> GetTaprootSupportedCached(bool reset = false);
+    QJsonArray GetTaprootSupportedCached(bool reset = false);
+
+    // Apple signin
+    void requestAppleSigin();
+    void requestGoogleSigin();
+    // Electrum
+    bool ElectrumGetPublicServers(QJsonObject &output, QString &errormsg);
+    bool ElectrumGetPaidServers(QJsonObject &output, QString &errormsg);
+
+    //Avatar
+    bool changeAvatar(const QString &filePath, QString &errormsg);
+    bool removeAvatar(QJsonObject &output, QString &errormsg);
 
 private:
     Draco();
@@ -453,7 +467,17 @@ private:
     QString m_deviceId;
     bool m_stayLoggedIn;
     bool m_isSubscribed;
-    QSet<int> m_taproot_support_types {};
+    QJsonArray m_taproot_support_types {};
+
+#if ENABLE_WEBVIEW_SIGIN
+    // Social signin
+    QAppleSigninViewPtr     m_Apple;
+    QGoogleSigninViewPtr    m_Google;
+#endif
+
+public slots:
+    void onAppleSigninSucceeded(QJsonObject result);
+    void onGoogleSigninSucceeded(QJsonObject result);
 
 signals:
     void uidChanged();

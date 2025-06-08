@@ -90,10 +90,17 @@ void QBarcodeFilter::calculateTags(const QString &tag)
         return;
     }
     m_tags.append(tag);
+    m_tags.removeDuplicates();
     nunchuk::AnalyzeQRResult ret = qUtils::AnalyzeQR(m_tags);
-    setScanPercent(ret.estimated_percent_complete*100);
-    setScanComplete(ret.is_complete);
-    DBG_INFO << ret.expected_part_count << ret.processed_parts_count << ret.is_failure << ret.is_success;
+    if(ret.estimated_percent_complete == 0 && ret.expected_part_count == 0){
+        setScanComplete(true);
+        setScanPercent(100);\
+    }
+    else {
+        setScanPercent(ret.estimated_percent_complete*100);
+        setScanComplete(ret.is_complete);
+    }
+    DBG_INFO << ret.expected_part_count << ret.processed_parts_count << ret.is_failure << ret.is_complete << ret.is_success << ret.estimated_percent_complete;
 }
 
 bool QBarcodeFilter::scanComplete() const

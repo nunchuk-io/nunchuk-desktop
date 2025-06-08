@@ -38,3 +38,5 @@ class QGroupSandbox;
 typedef OurSharedPointer<QGroupSandbox> QGroupSandboxPtr;
 class GroupSandboxModel;
 typedef OurSharedPointer<GroupSandboxModel> QGroupSandboxModelPtr;
+class QGroupMessageModel;
+typedef OurSharedPointer<QGroupMessageModel> QGroupMessageModelPtr;

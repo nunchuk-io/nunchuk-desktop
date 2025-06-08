@@ -51,6 +51,8 @@ QOnScreenContentTypeA {
     property bool   isHardwareSigner: (signerType === NUNCHUCKTYPE.HARDWARE)
     property bool isConnected: false
     property bool isTopXPubs: true
+    property string masterSignerId: ""
+    property bool needbackup: false
     property var signerInfo
 
     signal requestGetExpubs()
@@ -80,11 +82,25 @@ QOnScreenContentTypeA {
             }
             QRemiderAndHistory {
                 id: _remider
+                height: needbackup ? 400 : 452
                 onReminderClicked: {
                     healthReminderClicked()
                 }
             }
         }
+        QWarningBg {
+            width: 728
+            iSize: 36
+            icon: "qrc:/Images/Images/warning-dark.svg"
+            txt.text: STR.STR_QML_1733
+            txt.textFormat: Text.RichText
+            anchors.bottom: parent.bottom
+            color: "#FDEBD2"
+            visible: needbackup
+            onHyperlinkClicked: {
+                SignerManagement.requestBackupHotKey(masterSignerId)
+            }
+        }        
     }
 
     property int    state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
@@ -171,18 +187,19 @@ QOnScreenContentTypeA {
                     ls.push(function(){
                         var ret = AppModel.walletList.removeOrNot(signerXfp, signerDerivationPath)
                         if(signerType === NUNCHUCKTYPE.FOREIGN_SOFTWARE){
-                            _info2.open()
+                            _info.use_nfc_to_health_check()
                         }
                         else if(ret.used_in_assisted_wallet) {
-                            _info1.open()
+                            _info.use_key_used_in_assisted()
+                        }
+                        else if (ret.used_in_hot_wallet) {
+                            _confirm.requestDeleteKeyInHotWallet()
                         }
                         else if (ret.used_in_free_wallet) {
-                            _confirm.contentText = STR.STR_QML_243_used
-                            _confirm.open()
+                            _confirm.requestDeleteKeyInFreeWallet()
                         }
                         else {
-                            _confirm.contentText = STR.STR_QML_243
-                            _confirm.open()
+                            _confirm.requestDeleteKeyNotUsedInWallet()
                         }
                     })
 
@@ -237,23 +254,52 @@ QOnScreenContentTypeA {
         title: STR.STR_QML_339
         contentText: STR.STR_QML_998
         usingMin: true
-    }
-    QPopupInfo{
-        id:_info1
-        contentText: STR.STR_QML_554
-    }
-    QPopupInfo{
-        id:_info2
-        contentText: STR.STR_QML_555
+        function use_nfc_to_health_check() {
+            _info.title = STR.STR_QML_339
+            _info.contentText = STR.STR_QML_998
+            _info.open()
+        }
+        function use_key_used_in_assisted() {
+            _info.title = STR.STR_QML_024
+            _info.contentText = STR.STR_QML_554
+            _info.open()
+        }
+        function use_key_is_foreign_software() {
+            _info.title = STR.STR_QML_024
+            _info.contentText = STR.STR_QML_555
+            _info.open()
+        }
     }
 
     QConfirmYesNoPopup{
         id:_confirm
+        property var action: function() { requestDeleteKey() }
         contentText:STR.STR_QML_243
         onConfirmNo: close()
         onConfirmYes: {
             close()
-            requestDeleteKey()
+            if (action) {
+                action()
+            }            
+        }
+        function requestDeleteKeyInHotWallet() {
+            _confirm.contentText = STR.STR_QML_243_used
+            _confirm.action = function() {
+                _confirm.action = function() { requestDeleteKey() }
+                _confirm.contentText = STR.STR.STR_QML_1772
+                _confirm.open()
+            }
+            _confirm.open()
+        }
+        function requestDeleteKeyInFreeWallet() {
+            _confirm.action = function() { requestDeleteKey() }
+            _confirm.contentText = STR.STR_QML_243_used
+            _confirm.open()
+        }
+        function requestDeleteKeyNotUsedInWallet() {
+            _confirm.action = function() { requestDeleteKey() }
+            _confirm.contentText = STR.STR_QML_243
+            _confirm.open()
         }
     }
 

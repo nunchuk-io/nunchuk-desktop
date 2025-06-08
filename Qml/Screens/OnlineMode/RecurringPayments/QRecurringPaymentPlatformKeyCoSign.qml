@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
     property string option: "allow-co-sign"
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var allow_platform_keys: [
         {id: "allow-co-sign"},
         {id: "not-allow-co-sign"}

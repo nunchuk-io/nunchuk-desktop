@@ -45,7 +45,7 @@ QOnScreenContent {
     label.font.pixelSize: 32
     label.font.weight: Font.Medium
     extraHeader: Row {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: QContentCustomizeDestination {
         transactionInfo: AppModel.transactionInfo
         walletInfo: AppModel.walletInfo
@@ -57,7 +57,7 @@ QOnScreenContent {
         label.text: STR.STR_QML_035
         label.font.pixelSize: 16
         type: eTypeF
-        onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     bottomRight: QTextButton {
         width: 254

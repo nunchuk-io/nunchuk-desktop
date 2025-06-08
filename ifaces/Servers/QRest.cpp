@@ -97,7 +97,7 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, QJsonDocument(data).toJson()));
+    QNetworkReplyPtr reply(manager->post(requester_, QJsonDocument(data).toJson()));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -126,8 +126,6 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -168,7 +166,7 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, QJsonDocument(data).toJson()));
+    QNetworkReplyPtr reply(manager->post(requester_, QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -198,8 +196,6 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -252,7 +248,7 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, multiPart));
+    QNetworkReplyPtr reply(manager->post(requester_, multiPart));
 
     multiPart->setParent(reply.get());
     QEventLoop eventLoop;
@@ -283,8 +279,6 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -350,7 +344,7 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->post(requester_, multiPart));
+    QNetworkReplyPtr reply(manager->post(requester_, multiPart));
 
     multiPart->setParent(reply.get());
     QEventLoop eventLoop;
@@ -381,8 +375,6 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -420,8 +412,7 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &rep
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
-
+    QNetworkReplyPtr reply(manager->get(requester_));
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -451,8 +442,6 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &rep
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -495,7 +484,7 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->get(requester_));
+    QNetworkReplyPtr reply(manager->get(requester_));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -526,8 +515,6 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -555,7 +542,7 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
+    QNetworkReplyPtr reply(manager->put(requester_, QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -586,8 +573,6 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -629,7 +614,7 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->put(requester_, QJsonDocument(data).toJson()));
+    QNetworkReplyPtr reply(manager->put(requester_, QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -660,8 +645,6 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -689,7 +672,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+    QNetworkReplyPtr reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -720,8 +703,6 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     else {
         ret = json.object();
     }
-    reply->deleteLater();
-    reply.release();
     return ret;
 }
 
@@ -763,7 +744,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
         AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
         return QJsonObject();
     }
-    std::unique_ptr<QNetworkReply, std::default_delete<QNetworkReply>> reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+    QNetworkReplyPtr reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
 
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
@@ -795,6 +776,5 @@ QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQ
         ret = json.object();
     }
     reply->deleteLater();
-    reply.release();
     return ret;
 }

@@ -382,6 +382,7 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
                                       const QString &device_id,
                                       QWarningMessage &msg)
 {
+    AppSetting::instance()->resetNetworkSetting();
     AppSetting::instance()->setGroupSetting(account);
     qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
     nunchuk::AppSettings setting;
@@ -391,7 +392,7 @@ void matrixbrigde::makeMatrixInstance(const QString &account,
 
     // mainnet sever
     std::vector<std::string> mainnetServer;
-    mainnetServer.push_back(AppSetting::instance()->mainnetServer().toStdString());
+    mainnetServer.push_back(AppSetting::instance()->mainnetServer().toMap()["url"].toString().toStdString());
     mainnetServer.push_back(AppSetting::instance()->secondaryServer().toStdString());
     setting.set_mainnet_servers(mainnetServer);
 

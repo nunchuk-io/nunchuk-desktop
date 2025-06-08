@@ -142,7 +142,7 @@ QScreen {
             }
 
             QTextButton {
-                width: 200
+                width: label.paintedWidth + 32
                 height: 48
                 label.text: STR.STR_QML_265
                 label.font.pixelSize: 16

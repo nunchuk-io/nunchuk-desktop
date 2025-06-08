@@ -29,14 +29,13 @@
 #include "Premiums/GroupSandboxModel.h"
 
 void SCR_ONBOARDING_Entry(QVariant msg) {
-    if (OnBoardingModel::instance()->state() == "seedPhrase") {
+    if (OnBoardingModel::instance()->screenFlow() == "seedPhrase") {
         if (auto w = AppModel::instance()->walletInfoPtr()) {
             DBG_INFO << w->walletId();
             QString mnemonic = bridge::GetHotWalletMnemonic(w->walletId(), "");
             AppModel::instance()->setMnemonic(mnemonic);
         }
-    }
-    else {
+    } else {
         AppModel::instance()->setMnemonic("");
         AppModel::instance()->setSuggestMnemonics(bridge::nunchuckGetBIP39WordList());
         OnBoardingModel::instance()->GetCountryCodeList();
@@ -72,11 +71,11 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
         }
     }
     else if (type == "create-an-account") {
-        OnBoardingModel::instance()->setState("create-account");
+        OnBoardingModel::instance()->setScreenFlow("create-account");
         QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     }
     else if (type == "sign-in-account") {
-        OnBoardingModel::instance()->setState("sign-in");
+        OnBoardingModel::instance()->setScreenFlow("sign-in");
         QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     }
     else if (type == "create-new-wallet") {
@@ -97,31 +96,30 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
         QString filePath = msg.toMap()["filePath"].toString();
         QString file_path = qUtils::QGetFilePath(filePath);
         QString recoverType = msg.toMap()["recoverType"].toString();
-        QWalletPtr wallet {nullptr};
-        if (recoverType == "recover-via-bsms-config-file") {
-            wallet = OnBoardingModel::instance()->ImportWalletDescriptor(file_path);
-        }
-        else if (recoverType == "recover-via-coldcard") {
-            wallet = OnBoardingModel::instance()->ImportWalletDescriptor(file_path);
+        if (recoverType == "recover-via-bsms-config-file" || recoverType == "recover-via-coldcard") {
+            if(OnBoardingModel::instance()->ImportWalletDescriptor(file_path)) {
+                OnBoardingModel::instance()->setScreenFlow("updateWalletName");
+            }
         }
         else if (recoverType == "recover-sandbox-wallet") {
-            wallet = QSharedWallets::instance()->RecoverSandboxWallet(file_path);
+            QSharedWallets::instance()->RecoverSandboxWallet(file_path);
         }
         else if (recoverType == "import-db") {
-            wallet = OnBoardingModel::instance()->ImportWalletDB(file_path);
-        }
-        if (wallet) {
-            if (recoverType == "recover-via-bsms-config-file" || recoverType == "recover-via-coldcard") {
-                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
-            }
+            QWalletPtr wallet = OnBoardingModel::instance()->ImportWalletDB(file_path);
             timeoutHandler(1000, [wallet]() {
+                if (wallet.isNull()) {
+                    return;
+                }
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                 int index = AppModel::instance()->walletListPtr()->getWalletIndexById(wallet->walletId());
                 DBG_INFO << wallet->walletId() << index;
                 if (index >= 0) {
                     AppModel::instance()->setWalletListCurrentIndex(index);
                 }
+                QString msg = QString("%1 has been successfully recovered").arg(wallet->walletName());
+                AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
             });
-        }
+        }        
     }
     else if (type == "recover-hot-wallet") {
         QString mnemonic = msg.toMap()["mnemonic"].toString();
@@ -166,7 +164,25 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
     else if (type == "sign-up") {
         QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     }
-
+    else if (type == "update-new-wallet-name") {
+        QString walletName = msg.toMap()["new_wallet_name"].toString();
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            QWarningMessage msg;
+            nunchuk::Wallet wallet_result = w->nunchukWallet();
+            wallet_result.set_name(walletName.toStdString());
+            bridge::nunchukCreateWallet(wallet_result, true, msg);
+            if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                AppModel::instance()->startReloadUserDb();
+                QString msg = QString("%1 has been successfully recovered").arg(walletName);
+                AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+                return;
+            }
+            else {
+                AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+            }            
+        }
+    }
 }
 
 void EVT_ONBOARDING_CLOSE_HANDLER(QVariant msg) {

@@ -56,6 +56,7 @@ Connection *QLogginManager::connection()
 
 void QLogginManager::invokeLogin(const QString &userid, const QString &password)
 {
+    DBG_INFO << "invokeLogin" << userid << password;
     if(connection()){
         auto url = QUrl::fromUserInput(HOME_SERVER);
         url.setScheme("https"); // Qt defaults to http (or even ftp for some)

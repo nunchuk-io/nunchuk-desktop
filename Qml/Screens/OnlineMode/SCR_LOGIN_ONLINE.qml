@@ -230,6 +230,50 @@ QScreen {
                     }
                 }
                 QTextButton {
+                    id: btnGoogleSignin
+                    width: 338
+                    height: 48
+                    label.text: "Sign in with Google"
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    iconVisible: true
+                    iconSource: [
+                        "qrc:/Images/Images/GoogleLogo.png",
+                        "qrc:/Images/Images/GoogleLogo.png"
+                    ]
+                    onButtonClicked: {
+                        processing = true
+                        var requestBody = {
+                            "action"     : "account-availability-google",
+                            "email"      : emailaddrs.textInputted
+                        };
+                        QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_SIGN_IN, requestBody)
+                        processing = false
+                    }
+                }
+                QTextButton {
+                    id: btnAppleSignin
+                    width: 338
+                    height: 48
+                    label.text: "Sign in with Apple"
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    iconVisible: true
+                    iconSource: [
+                        "qrc:/Images/Images/AppleLogo.png",
+                        "qrc:/Images/Images/AppleLogo.png"
+                    ]
+                    onButtonClicked: {
+                        processing = true
+                        var requestBody = {
+                            "action"     : "account-availability-apple",
+                            "email"      : emailaddrs.textInputted
+                        };
+                        QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_SIGN_IN, requestBody)
+                        processing = false
+                    }
+                }
+                QTextButton {
                     id: btnSigninPrimaryKey
                     width: 338
                     height: 48
@@ -242,6 +286,39 @@ QScreen {
                         processing = false
                     }
                 }
+
+                Item {
+                    height: 24
+                    width: 338
+                    Row {
+                        anchors.centerIn: parent
+                        Rectangle {
+                            height: 1
+                            width: 150
+                            color: "#C4C4C4"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Item {
+                            height: 24
+                            width: 38
+                            anchors.verticalCenter: parent.verticalCenter
+                            QText {
+                                font.family: "Lato"
+                                font.pixelSize: 12
+                                color: "#595959"
+                                text: "OR"
+                                anchors.centerIn: parent
+                            }
+                        }
+                        Rectangle {
+                            height: 1
+                            width: 150
+                            color: "#C4C4C4"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
                 QTextButton {
                     width: 338
                     height: 48
@@ -1529,7 +1606,8 @@ QScreen {
                 break
             case eVERIFY_NEWDEVICE:
             case eRESET_PASSWORD:
-            case eCHANGE_PASSWORD:
+            case eCHANGE_TEMPO_PASSWORD_OLD:
+            case eCHANGE_TEMPO_PASSWORD_NEW:
             case eRECOVER_PASSWORD:
             case eONBOARDING_CREATE_ACCOUNT:
             case eONBOARDING_SIGN_IN:

@@ -40,7 +40,7 @@ QScreenAdd {
         anchors.centerIn: parent
         enableHeader:false
         offset: 24
-        onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         QLato {
             anchors{
                 top: parent.top
@@ -78,7 +78,7 @@ QScreenAdd {
                 label.text: STR.STR_QML_432
                 label.font.pixelSize: 16
                 type: eTypeF
-                onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         }
         bottomRight: Row {

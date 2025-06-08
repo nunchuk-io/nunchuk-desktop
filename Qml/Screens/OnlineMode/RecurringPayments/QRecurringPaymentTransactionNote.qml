@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
     property string transaction_note: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Column {
             anchors {

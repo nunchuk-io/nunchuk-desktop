@@ -27,7 +27,7 @@
 #include "Chats/ClientController.h"
 #include "Chats/matrixbrigde.h"
 #include "localization/STR_CPP.h"
-#include "Premiums/QSignerManagement.h"
+#include "Signers/QSignerManagement.h"
 
 QVariant getPrimaryKey(const nunchuk::PrimaryKey &pkey){
     QVariantMap maps;
@@ -63,6 +63,7 @@ void EVT_PRIMARY_KEY_ACCOUNT_BACK_HANDLER(QVariant msg) {
 }
 
 void EVT_ADD_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
+    QSignerManagement::instance()->requestCreateSignerFromCreatePrimaryKeyScreen();
     QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
     QSignerManagement::instance()->setScreenFlow("add-a-key");
 }
@@ -72,10 +73,12 @@ void EVT_SHOW_PRIMARY_KEY_ENTER_PASSPHRASE_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_SHOW_SIGN_IN_BY_IMPORTING_THE_PRIMARY_KEY_REQUEST_HANDLER(QVariant msg) {
+    QSignerManagement::instance()->requestSignInFromImportPrimaryKey();
     QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
 }
 
 void EVT_SCR_SIGN_IN_MANUALLY_REQUEST_HANDLER(QVariant msg) {
+    QSignerManagement::instance()->requestSignInByManuallyPrimaryKey();
     QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY);
 }
 
@@ -94,7 +97,8 @@ void EVT_PRIMARY_KEY_BACK_TO_SIGN_IN_HANDLER(QVariant msg) {
 void EVT_SELECT_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
     QVariantMap primary_key = msg.toMap();
     QString account = primary_key["account"].toString();
-    bool isAvailable = Draco::instance()->pkey_username_availability(account);
+    QJsonObject errorObj {};
+    bool isAvailable = Draco::instance()->pkey_username_availability(account, errorObj);
     if(isAvailable){
         Draco::instance()->setUid(account);
         primary_key.insert("state_id",E::STATE_ID_SCR_PRIMARY_KEY_ACCOUNT);
@@ -102,6 +106,10 @@ void EVT_SELECT_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
         if(ret){
             QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_WITH_SOFTWARE_KEY_REQUEST,msg);
         }
+    } else {
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
 }
 

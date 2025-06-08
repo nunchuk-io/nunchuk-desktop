@@ -98,6 +98,7 @@ QScreen {
                         fontPixelSize: 16
                         displayIcon: false
                         onButtonClicked: {
+                            avatar.avatarUrl = ""
                             avatar.avatarLocal = ""
                         }
                     }
@@ -125,11 +126,10 @@ QScreen {
                     username.showError = true
                     return
                 }
-                // name
+                console.log("username.textInputted", username.textInputted, ClientController.user.name)
                 if(username.textInputted !== ClientController.user.name){
                     ClientController.setUserDisplayname(username.textInputted)
                 }
-                //avatar
                 if(avatar.avatarLocal !== ClientController.user.avatar){
                     ClientController.setUserAvatar(avatar.avatarLocal)
                 }
@@ -165,14 +165,12 @@ QScreen {
     }
 
     QPopupToast{
-        id:_warning
+        id: _warning
         width: 528
         height: 60
         x:contenCenter.x + 36
         y:contenCenter.y + 318
-        warningType:EWARNING.SUCCESS_MSG
-        warningExplain:STR.STR_QML_586
+        warningType: EWARNING.SUCCESS_MSG
+        warningExplain: STR.STR_QML_586
     }
-
-//    STR_QML_586
 }

@@ -23,6 +23,8 @@
 
 #include <QString>
 #include <QSharedPointer>
+#include <QtCore/qdir.h>
+#include <QtCore/qstandardpaths.h>
 #include <QtMsgHandler>
 #include <QMessageLogContext>
 #include <QFile>
@@ -58,8 +60,6 @@ enum class LOG_LEVEL : int
 #define DBG_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << '[' << __PRETTY_FUNCTION__ << "][" << __LINE__ << ']'
 #define DBG_QT_MSG   QOutlog().begin(LOG_LEVEL::LOG_ERROR)
 #define DBG_FUNCTION_TIME_INFO     QOutlog().begin(LOG_LEVEL::LOG_INFO)  << '[' << QDateTime::currentDateTime() << ']' << "[ Function time ]"
-
-static const QString logfilePath = "logfile_nunchuck-client-qt.log";
 
 class QOutlog
 {
@@ -252,8 +252,6 @@ private:
     QMutex mutex;
     QSharedPointer<QFile> logfile;
 };
-
-static LogWriteToFile g_writer(logfilePath);
 
 #ifndef DEFINE_SAFE_DELETE
 #define DEFINE_SAFE_DELETE

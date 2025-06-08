@@ -71,7 +71,8 @@ void EVT_ADD_PRIMARY_KEY_ACCOUNT_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_PRIMARY_KEY_CHECK_USERNAME_REQUEST_HANDLER(QVariant msg) {
     QString username = msg.toString();
-    bool isAvailable = Draco::instance()->pkey_username_availability(username);
+    QJsonObject errorObj {};
+    bool isAvailable = Draco::instance()->pkey_username_availability(username, errorObj);
     DBG_INFO << isAvailable;
     if(isAvailable){
         QObject *obj = QEventProcessor::instance()->getQmlObj().first();
@@ -82,6 +83,10 @@ void EVT_PRIMARY_KEY_CHECK_USERNAME_REQUEST_HANDLER(QVariant msg) {
                 obj->setProperty("challengemessage", nonce);
             }
         }
+    } else {
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
 }
 

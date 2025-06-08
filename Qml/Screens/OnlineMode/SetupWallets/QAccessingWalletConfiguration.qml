@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     Column {
         anchors{
             fill: parent
@@ -76,13 +76,13 @@ QOnScreenContentTypeB {
             wrapMode: Text.WordWrap
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: QTextButton {
         width: 71
         height: 48
         label.text: STR.STR_QML_777
         label.font.pixelSize: 16
         type: eTypeE
-        onButtonClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        onButtonClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
 }

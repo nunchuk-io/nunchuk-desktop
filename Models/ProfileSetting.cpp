@@ -102,11 +102,10 @@ void ProfileSetting::setOptionIndex(int optionIndex)
 
 void ProfileSetting::GetMainNetServer()
 {
-    QtConcurrent::run([=]() {
+    QtConcurrent::run([=, this]() {
         QJsonObject output;
         QString errormsg;
         bool ret = Draco::instance()->GetElectrumServers(output, errormsg);
-        DBG_INFO << errormsg;
         if (ret) {
             m_mainnetList = output["mainnet"].toArray();
             loadMainnetServers();
@@ -128,7 +127,7 @@ void ProfileSetting::updateMainnetServers()
             m_mainnetServers.append(js);
         }
     }
-    QString urlSelected = AppSetting::instance()->mainnetServer();
+    QString urlSelected = AppSetting::instance()->mainnetServer().toMap()["url"].toString();
     for (int i = 0; i < m_mainnetServers.size(); i++) {
         QJsonObject item = m_mainnetServers[i].toObject();
         if (item["url"].toString() == urlSelected) {
@@ -140,7 +139,7 @@ void ProfileSetting::updateMainnetServers()
 
 void ProfileSetting::resetDefaultMainnetServers()
 {
-    QString urlSelected = AppSetting::instance()->mainnetServer();
+    QString urlSelected = AppSetting::instance()->mainnetServer().toMap()["url"].toString();
     bool isSetIndex {false};
     for (int i = 0; i < m_mainnetServers.size(); i++) {
         QJsonObject item = m_mainnetServers[i].toObject();
@@ -149,11 +148,10 @@ void ProfileSetting::resetDefaultMainnetServers()
             isSetIndex = true;
         }
     }
-    DBG_INFO << isSetIndex;
     if (!isSetIndex) {
         setMainnetIndex(0);
         QJsonObject item = m_mainnetServers[0].toObject();
-        emit AppSetting::instance()->mainnetServerSelected(item["url"].toString());
+        emit AppSetting::instance()->mainnetServerSelected(item.toVariantMap());
     }
 }
 
@@ -311,7 +309,7 @@ bool ProfileSetting::addMainnetServer(const QVariant &server)
         }
     }
     m_storeMainnetServers.append(server.toJsonObject());
-    emit AppSetting::instance()->mainnetServerSelected(url);
+    emit AppSetting::instance()->mainnetServerSelected(server);
     updateMainnetServers();
     saveMainnetServers();
     QString msg = QString("Server added");

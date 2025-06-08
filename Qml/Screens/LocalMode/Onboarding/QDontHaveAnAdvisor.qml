@@ -36,7 +36,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1244
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string email_address: {
         if (ClientController.isNunchukLoggedIn) {
             return ClientController.user.email
@@ -132,7 +132,7 @@ QOnScreenContentTypeA {
         id: _your_country
     }
 
-    onPrevClicked: OnBoarding.state = "assistedWallet"
+    onPrevClicked: OnBoarding.screenFlow = "assistedWallet"
     bottomRight: Row {
         spacing: 12
         QTextButton {

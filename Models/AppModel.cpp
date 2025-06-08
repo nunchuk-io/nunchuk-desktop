@@ -701,6 +701,8 @@ AppModel *AppModel::instance() {
 void AppModel::requestInitialData()
 {
     //For Group wallet
+    DBG_INFO << "Requesting initial data";
+    Draco::instance()->getMe();
     bridge::EnableGroupWallet();
     QSharedWallets::instance()->GetGroupDeviceUID();
     // Order
@@ -798,7 +800,7 @@ void AppModel::requestOnboarding()
         } else {
             DBG_INFO << "Checking Onboarding " << AppSetting::instance()->isFirstTimeOnboarding();
             if (!AppSetting::instance()->isFirstTimeOnboarding()) {
-                OnBoardingModel::instance()->setState("onboarding");
+                OnBoardingModel::instance()->setScreenFlow("onboarding");
                 QEventProcessor::instance()->sendEvent(E::EVT_ONBOARDING_REQUEST);
             }
         }
@@ -1026,6 +1028,7 @@ QWalletPtr AppModel::walletInfoPtr() const
 void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
 {
     bool allow = force || !qUtils::strCompare(d.data()->walletId(), m_walletInfo->walletId());
+    bool isNewWallet = !qUtils::strCompare(d.data()->walletId(), m_walletInfo->walletId());
     if(d && allow){
         m_walletInfo = d;
         if(m_walletInfo){
@@ -1046,8 +1049,10 @@ void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
                  << "Wallet Role:" << m_walletInfo.data()->myRole()
                  << "Wallet Slug:" << m_walletInfo.data()->slug()
                  << "Wallet Status:" << m_walletInfo.data()->status();
-        QGroupWallets::instance()->setDashboardInfo(m_walletInfo);
-        m_walletInfo.data()->RequestGetCoins();
+        if (isNewWallet) {
+            QGroupWallets::instance()->setDashboardInfo(m_walletInfo);
+            m_walletInfo.data()->RequestGetCoins();
+        }        
     }
 }
 

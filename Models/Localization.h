@@ -23,7 +23,7 @@
 
 #include <QObject>
 #include <QTranslator>
-#include <QGuiApplication>
+#include <QApplication>
 
 
 class Localization : public QObject

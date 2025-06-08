@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1412
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var utxoInfo: walletInfo.utxoInfo
     property var tx: utxoInfo.transaction
     extraHeader: Item {

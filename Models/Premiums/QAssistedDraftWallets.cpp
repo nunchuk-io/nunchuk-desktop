@@ -36,7 +36,6 @@ inline QString titleCase(QString str)
 }
 QAssistedDraftWallets::QAssistedDraftWallets(int mode)
     : QSwitchAPI(mode)
-    , m_servicesTag(new QWalletServicesTag(mode))
     , mRefreshDeviceList(QDeviceListModelPtr(new DeviceListModel()))
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -621,7 +620,7 @@ void QAssistedDraftWallets::updateRequestKey()
 
 QWalletServicesTagPtr QAssistedDraftWallets::servicesTagPtr() const
 {
-    return m_servicesTag;
+    return QWalletServicesTag::instance();
 }
 
 void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)

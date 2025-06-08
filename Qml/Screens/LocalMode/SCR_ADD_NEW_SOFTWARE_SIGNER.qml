@@ -29,141 +29,16 @@ import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
+import "../../Components/customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: rootAddsignerToWallet
-    QOnScreenContent {
-        width: popupWidth
-        height: popupHeight
-        anchors.centerIn: parent
-        label.text: STR.STR_QML_142
-        onCloseClicked: {
-            QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
-        }
-        QText {
-            width: 646
-            height: 56
-            text: STR.STR_QML_143
-            anchors {
-                left: parent.left
-                leftMargin: 36
-                top: parent.top
-                topMargin: 65 + 24
-            }
-            verticalAlignment: Text.AlignVCenter
-            color: "#031F2B"
-            font.family: "Lato"
-            font.pixelSize: 16
-            wrapMode: Text.WordWrap
-            lineHeightMode: Text.FixedHeight
-            lineHeight: 28
-        }
-        Grid {
-            id: gridmmonic
-            width: 730
-            height: 500
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 150 + 24
-            columns: 6
-            spacing: 12
-            Repeater {
-                model: 24
-                Item {
-                    width: (gridmmonic.width - gridmmonic.spacing*(gridmmonic.columns-1)) / gridmmonic.columns
-                    height: 48
-                    y: 100
-                    Rectangle {
-                        id: itembg
-                        height: 48
-                        width: parent.width - 4
-                        radius: 8
-                        color: "#FFFFFF"
-                        visible: false
-                    }
-                    DropShadow {
-                        anchors.fill: itembg
-                        horizontalOffset: 3
-                        verticalOffset: 3
-                        radius: 8.0
-                        samples: 17
-                        color: "#80000000"
-                        source: itembg
-                        QLato {
-                            id: nemonictext
-                            anchors {
-                                fill: parent
-                                topMargin: 5
-                                bottomMargin: 5
-                                leftMargin: 10
-                                rightMargin: 5
-                            }
-                            verticalAlignment: Text.AlignVCenter
-                            text: ((index+1) > 9 ? (index+1) : "0"+(index+1)) + ". " + textMnemonic.split(' ')[index];
-                        }
-                    }
-                }
-            }
-        }
-        Rectangle {
-            width: 728
-            height: 60
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 120
-            anchors.horizontalCenter: parent.horizontalCenter
-            radius: 8
-            color: "#EAEAEA"
-            Row {
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
-                QImage {
-                    height: parent.height
-                    width: height
-                    source: "qrc:/Images/Images/info-60px.svg"
-                }
-                QLato {
-                    height: parent.height
-                    text: STR.STR_QML_144
-                }
-            }
-        }
-        QButtonTextLink {
-            height: 24
-            label: STR.STR_QML_059
-            anchors {
-                left: parent.left
-                leftMargin: 40
-                bottom: parent.bottom
-                bottomMargin: 40
-            }
-            onButtonClicked: {
-                if(NUNCHUCKTYPE.FLOW_ADD_WALLET === QMLHandle.currentFlow){
-                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SOFTWARE_SIGNER_TO_WALLET_BACK)
-                }
-                else {
-                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SOFTWARE_SIGNER_BACK)
-                }
-            }
-        }
-        QTextButton {
-            width: 200
-            height: 48
-            label.text: STR.STR_QML_097
-            label.font.pixelSize: 16
-            type: eTypeE
-            enabled: (textMnemonic !== "")
-            anchors {
-                right: parent.right
-                rightMargin: 40
-                bottom: parent.bottom
-                bottomMargin: 32
-            }
-            onButtonClicked: {
-                QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED)
-            }
+    QSignerSeedPhraseGrid {
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+        onPrevClicked: QMLHandle.sendEvent(EVT.EVT_ADD_NEW_SOFTWARE_SIGNER_BACK)
+        onNextClicked: {
+           QMLHandle.sendEvent(EVT.EVT_CREATE_NEW_SEED)
         }
     }
-    property string textMnemonic: AppModel.mnemonic
 }

@@ -25,6 +25,7 @@
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
 #include "Premiums/QSharedWallets.h"
+#include "Signers/QSignerManagement.h"
 
 void SCR_REPLACE_KEYS_Entry(QVariant msg) {
 
@@ -47,7 +48,8 @@ void EVT_REPLACE_KEYS_ENTER_HANDLER(QVariant msg) {
             w->SelectKeyToReplace(maps["fingerXfp"].toString(), maps["indexXfp"].toInt());
             w->setReplaceFlow("replace-existing-key");
         } else if (type == "request-add-a-key") {
-            QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST, msg);
+            QSignerManagement::instance()->requestCreateSignerFromReplaceScreen();
+            QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST);
             QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_USER_FREE);
         } else if (type == "replace-Key-Enter") {
             w->CreateANewWallet();

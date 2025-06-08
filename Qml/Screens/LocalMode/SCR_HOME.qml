@@ -306,7 +306,7 @@ QScreen {
      Component.onCompleted: {
          if (ClientController.isNunchukLoggedIn === false) {
             if (AppSetting.isFirstTimeOnboarding === false) {
-                OnBoarding.state = "onboarding"
+                OnBoarding.screenFlow = "onboarding"
                 QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
             }
          }

@@ -39,7 +39,7 @@ QOnScreenContentTypeA {
     label.text: STR.STR_QML_1068
     extraHeader: Item {}
     property string option: "DESTINATION_WALLET"
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var destinations: [
         {id: "DESTINATION_WALLET"},
         {id: "WHITELISTED_ADDRESSES"}

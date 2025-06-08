@@ -31,6 +31,7 @@ import "../../Components/origins"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Chats"
+import "../../Components/customizes/Signers"
 import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
@@ -56,6 +57,25 @@ Rectangle {
                 color: "#FFFFFF"
                 font.weight: Font.Bold
             }
+            Rectangle {
+                width: 24
+                height: 24
+                radius: 24
+                color: "red"
+                anchors {
+                    left: keysTextTitle.right
+                    leftMargin: 8
+                    verticalCenter: parent.verticalCenter
+                }
+                visible: AppModel.masterSignerList.pendingBackupCount > 0
+                QText {
+                    anchors.centerIn: parent
+                    text: AppModel.masterSignerList.pendingBackupCount
+                    color: "#FFFFFF"
+                    font.family: "Lato"
+                    font.pixelSize: 12
+                }
+            }
             QIconButton{
                 width: 24
                 height: 24
@@ -64,7 +84,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 icon:"qrc:/Images/Images/add-light.svg"
                 onClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_HOME_ADD_NEW_SIGNER_REQUEST, { type: "add-key-free" })
+                    SignerManagement.requestCreateSignerFromHomeScreen()
                 }
             }
         }
@@ -134,18 +154,21 @@ Rectangle {
                     QListView {
                         id: masterList
                         width: parent.width
-                        height: 48*masterList.count
+                        height: masterList.childrenRect.height
                         model: AppModel.masterSignerList
                         interactive: false
                         delegate: QMasterSignerDelegate {
                             width: masterList.width
-                            height: 48
-                            signername : model.master_signer_name
-                            card_id_or_xfp: model.master_signer_type === NUNCHUCKTYPE.NFC ? model.master_signer_device.cardId : model.master_signer_fingerPrint
-                            devicetype: model.master_signer_deviceType
-                            signerType: model.master_signer_type
-                            signerTag: model.master_signer_tag
-                            isPrimaryKey: model.master_signer_primary_key
+                            masterData {
+                                master_name: model.master_signer_name
+                                master_device: model.master_signer_device
+                                master_fingerPrint: model.master_signer_fingerPrint
+                                master_deviceType: model.master_signer_deviceType
+                                master_type: model.master_signer_type
+                                master_tag: model.master_signer_tag
+                                master_primary_key: model.master_signer_primary_key
+                                master_needBackup: model.master_signer_needBackup
+                            }
                             onButtonClicked: {
                                 QMLHandle.sendEvent(EVT.EVT_HOME_MASTER_SIGNER_INFO_REQUEST, model.master_signer_fingerPrint)
                             }
@@ -154,19 +177,22 @@ Rectangle {
                     QListView {
                         id: remoteList
                         width: parent.width
-                        height: 48*remoteList.count
+                        height: remoteList.childrenRect.height
                         model: AppModel.remoteSignerList
                         interactive: false
-                        delegate: QMasterSignerDelegate {
+                        delegate: QSingleSignerDelegate {
                             width: remoteList.width
                             height: visible ? 48 : 0
-                            nameWidth: 170
-                            signername : model.singleSigner_name
-                            devicetype: model.single_signer_devicetype
-                            card_id_or_xfp: model.single_signer_type === NUNCHUCKTYPE.NFC ? model.single_signer_device_cardid : model.singleSigner_masterFingerPrint
-                            signerType: model.single_signer_type
-                            signerTag: model.single_signer_tag
-                            accountIndex: model.single_signer_account_index
+                            signerData {
+                                single_name: model.singleSigner_name
+                                single_type: model.single_signer_type
+                                single_tag: model.single_signer_tag
+                                single_devicetype: model.single_signer_devicetype
+                                single_masterFingerPrint: model.singleSigner_masterFingerPrint
+                                single_account_index: model.single_signer_account_index
+                                single_device_cardid: model.single_signer_device_cardid
+                                single_primary_key: model.single_signer_primary_key
+                            }
                             onButtonClicked: {
                                 if (model.single_signer_type === NUNCHUCKTYPE.COLDCARD_NFC) {
                                     QMLHandle.sendEvent(EVT.EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, model.singleSigner_masterFingerPrint)
@@ -185,13 +211,21 @@ Rectangle {
         id: loadingSignerBusy
         Item {
             anchors.fill: parent
-            QMasterSignerDelegate {
+            QSingleSignerDelegate {
                 width: 304
                 height: 54
                 enabled: false
                 visible: !busyIdct.running
-                signername : STR.STR_QML_016
-                card_id_or_xfp: "DEADBEEF"
+                signerData {
+                    single_name: STR.STR_QML_016
+                    single_type: NUNCHUCKTYPE.HARDWARE
+                    single_tag: ""
+                    single_devicetype: -1
+                    single_masterFingerPrint: "DEADBEEF"
+                    single_account_index: 0
+                    single_device_cardid: "DEADBEEF"
+                    single_primary_key: false
+                }
                 Rectangle {
                     anchors.fill: parent
                     color: "#031F2B"

@@ -3,8 +3,10 @@
 
 Easily verify that the binary you installed **really** comes from the open‑source code on GitHub.
 
-> **Status**: Linux (x86‑64 & ARM64) supported. Windows and macOS instructions coming soon.
-
+> **Status**  
+> **Linux** (x86‑64 & ARM64) — supported from version **1.9.46+**  
+> **Windows** — supported from version **1.9.47+**  
+> **macOS** — support coming soon
 ---
 
 ## 0 — Prerequisites
@@ -40,38 +42,89 @@ git submodule update --init --recursive
 
 ## 3 — Reproducible build inside Docker
 
+### Linux
+
 ```bash
-cd "$PROJECT_DIR/reproducible-builds"
-
-# Build the builder image
 export ARCH=$(uname -m)
-docker buildx build -t nunchuk-builder --build-arg ARCH=$ARCH -f linux.Dockerfile .
-
+# Build the builder image
+docker buildx build -t nunchuk-builder --build-arg ARCH=$ARCH -f reproducible-builds/linux.Dockerfile .
 # Build the app
 docker run --rm -v "$PROJECT_DIR":/nunchuk-desktop -w /nunchuk-desktop nunchuk-builder bash ./reproducible-builds/linux.sh
 ```
+---
 
-When the script completes, your zip lives in:
+### Windows
+```bash
+export ARCH=$(uname -m)
+# Build the builder image
+docker buildx build -t nunchuk-builder --build-arg ARCH=$ARCH -f reproducible-builds/windows.Dockerfile .
+# Build the app
+docker run --rm -v "$PROJECT_DIR":/nunchuk-desktop -w /nunchuk-desktop nunchuk-builder bash ./reproducible-builds/windows.sh
+```
+---
+When the script completes, your build output will be located in:
 
 ```
-$PROJECT_DIR/build/artifacts/nunchuk-linux-v$VERSION-$ARCH.zip
+$PROJECT_DIR/build/artifacts/
 
 # For example:
-/home/ubuntu/nunchuk-desktop/build/artifacts/nunchuk-linux-v1.9.46-x86_64.zip
+~/nunchuk-desktop/build/artifacts/nunchuk-linux-v1.9.46-x86_64.zip
+~/nunchuk-desktop/build/artifacts/nunchuk-windows-v1.9.47-x64-setup-unsigned.exe
 ```
 
 ---
 
-## 4 — Byte‑for‑byte verification
+## 4 — Byte‑for‑byte Verification
 
-1. Download the official release for your platform from the [GitHub releases page](https://github.com/nunchuk-io/nunchuk-desktop/releases).
-2. Compare your locally built ZIP with the one you downloaded:
+Ensure your local build matches the official release exactly by comparing the final output files.
 
-```bash
-diff /path/to/download/nunchuk-linux-v$VERSION-$ARCH.zip "$PROJECT_DIR/build/artifacts/nunchuk-linux-v$VERSION-$ARCH.zip"
-```
+---
 
-If the `diff` command prints **no output**, the builds are identical—congratulations! Any difference indicates something went wrong; see the next section.
+### Linux
+
+1. **Download** the official Linux release from the [GitHub releases page](https://github.com/nunchuk-io/nunchuk-desktop/releases).
+
+2. **Compare** it to your local build:
+
+   ```bash
+   diff /path/to/download/nunchuk-linux-v$VERSION-$ARCH.zip "$PROJECT_DIR/build/artifacts/nunchuk-linux-v$VERSION-$ARCH.zip"
+   ```
+
+---
+
+### Windows
+
+1. **Download** both of the following from the [GitHub releases page](https://github.com/nunchuk-io/nunchuk-desktop/releases):
+
+   * The `.exe` installer (e.g., `nunchuk-windows-v1.9.67-x64-setup.exe`)
+   * Its corresponding **PEM signature file** (e.g., `nunchuk-windows-v1.9.67-x64-setup.exe.pem`)
+
+2. **Attach the signature** to your locally built unsigned executable:
+
+   ```bash
+   docker run --rm \
+     -v "$PROJECT_DIR/build/artifacts:/artifacts" \
+     -v "/path/to/download:/signed" \
+     nunchuk-builder \
+     osslsigncode attach-signature \
+     -in /artifacts/nunchuk-windows-v$VERSION-x64-setup-unsigned.exe \
+     -out /artifacts/nunchuk-windows-v$VERSION-x64-setup.exe \
+     -sigin /signed/nunchuk-windows-v$VERSION-x64-setup.exe.pem
+   ```
+
+3. **Compare** the signed executable with the official release:
+
+   ```bash
+   diff /path/to/download/nunchuk-windows-v$VERSION-x64-setup.exe "$PROJECT_DIR/build/artifacts/nunchuk-windows-v$VERSION-x64-setup.exe"
+   ```
+
+---
+
+### Result
+
+If the `diff` command returns **no output**, your local build is **byte-for-byte identical** to the official release — congratulations!
+
+If you see any differences, something is off — refer to the next section for troubleshooting tips.
 
 ---
 

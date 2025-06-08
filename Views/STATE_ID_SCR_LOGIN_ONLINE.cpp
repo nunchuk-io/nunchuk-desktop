@@ -62,6 +62,12 @@ void EVT_LOGIN_ONLINE_SIGN_IN_HANDLER(QVariant msg) {
         Draco::instance()->forgotPassword(emailInput);
         qApp->restoreOverrideCursor();
     }
+    else if(action == "account-availability-apple"){
+        Draco::instance()->requestAppleSigin();
+    }
+    else if(action == "account-availability-google"){
+        Draco::instance()->requestGoogleSigin();
+    }
     else {}
 }
 

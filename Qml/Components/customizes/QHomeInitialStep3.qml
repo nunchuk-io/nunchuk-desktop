@@ -37,16 +37,16 @@ import "../../../localization/STR_QML.js" as STR
 
 Item {
     id: _item
+    property var walletInfo                 : AppModel.walletInfo
     property bool   existWallet             : false
-    property string myRole                  : AppModel.walletInfo.myRole
-    property bool   walletKeyNeedBackup     : AppModel.walletInfo.keyNeedBackup
-    property bool   walletNeedBackup        : AppModel.walletInfo.needBackup
-    property bool   walletIsReplaced        : AppModel.walletInfo.isReplaced
-    property bool   walletIsAssisted        : AppModel.walletInfo.isAssistedWallet
-    property bool   walletIsShared          : AppModel.walletInfo.isSharedWallet
-    property bool   walletIsLocked          : AppModel.walletInfo.isLocked
-    property bool   walletIsSandboxWallet   : AppModel.walletInfo.isGlobalGroupWallet
-
+    property string myRole                  : walletInfo.myRole
+    property bool   walletKeyNeedBackup     : walletInfo.keyNeedBackup
+    property bool   walletNeedBackup        : walletInfo.needBackup
+    property bool   walletIsReplaced        : walletInfo.isReplaced
+    property bool   walletIsAssisted        : walletInfo.isAssistedWallet
+    property bool   walletIsShared          : walletInfo.isSharedWallet
+    property bool   walletIsLocked          : walletInfo.isLocked
+    property bool   walletIsSandboxWallet   : walletInfo.isGlobalGroupWallet
     anchors.fill: parent
     anchors.margins: 24
     Column {
@@ -70,8 +70,13 @@ Item {
                 _info2.labels = [STR.STR_QML_097,STR.STR_QML_1276]
                 _info2.funcs = [
                             function() {
-                                OnBoarding.state = "seedPhrase"
-                                QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)
+                                if(walletInfo.allowBackup()) {
+                                    OnBoarding.screenFlow = "seedPhrase"
+                                    QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)                                
+                                } else {
+                                    _info1.title = STR.STR_QML_339
+                                    _info1.contentText = STR.STR_QML_1773
+                                }                                
                             },
                             function() {
                                 _info2.close()
@@ -82,7 +87,7 @@ Item {
         }
 
         Repeater {
-            model: AppModel.walletInfo.replaceGroups
+            model: walletInfo.replaceGroups
             Item {
                 width: _item.width
                 height: replaceId.item.height
@@ -134,7 +139,7 @@ Item {
                                     label.text: STR.STR_QML_946
                                     label.font.pixelSize: 12
                                     onButtonClicked: {
-                                        AppModel.walletInfo.requestDeclineReplaceGroup(modelData.group_id)
+                                        walletInfo.requestDeclineReplaceGroup(modelData.group_id)
                                     }
                                 }
                                 QTextButton {
@@ -144,7 +149,7 @@ Item {
                                     label.font.pixelSize: 12
                                     type: eTypeE
                                     onButtonClicked: {
-                                        AppModel.walletInfo.requestAcceptReplaceGroup(modelData.group_id)
+                                        walletInfo.requestAcceptReplaceGroup(modelData.group_id)
                                     }
                                 }
                             }
@@ -211,6 +216,7 @@ Item {
             isLocked: walletIsLocked
             isReplaced: walletIsReplaced
             isSandboxWallet: walletIsSandboxWallet
+
             Row{
                 anchors.fill: parent
                 Item {
@@ -220,7 +226,7 @@ Item {
                         id: displayWalletname
                         width: 380
                         height: 36
-                        text: AppModel.walletInfo.walletName
+                        text: walletInfo.walletName
                         font.weight: Font.Bold
                         font.pixelSize: 28
                         color: "#F1FAFE"
@@ -245,7 +251,7 @@ Item {
                             width: 24
                             height: 24
                             visible: (myRole !== "OBSERVER") && (myRole !== "")
-                            icon: (AppModel.walletInfo.isHoneyBadger || AppModel.walletInfo.isIronHand) ? "qrc:/Images/Images/health-check-light.svg" : "qrc:/Images/Images/groups-dark.svg"
+                            icon: (walletInfo.isHoneyBadger || walletInfo.isIronHand) ? "qrc:/Images/Images/health-check-light.svg" : "qrc:/Images/Images/groups-dark.svg"
                             onClicked: {
                                 GroupWallet.dashboardInfo.isShowDashBoard = true
                             }
@@ -264,7 +270,7 @@ Item {
 
                     QText {
                         id: displayDescription
-                        text: AppModel.walletInfo.walletDescription
+                        text: walletInfo.walletDescription
                         width: displayWalletname.width
                         elide: Text.ElideRight
                         height: displayDescription.text !== "" ? 18 : 0
@@ -286,19 +292,11 @@ Item {
                         width: parent.width
                         height: 16
                         spacing: 8
-                        Rectangle {
-                            width: _txt.paintedWidth + 10*2
-                            height: parent.height
-                            radius: 20
+                        QBadge {
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : (walletInfo.walletN === 1) ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069);
                             color: "#EAEAEA"
-                            QText {
-                                id:_txt
-                                anchors.centerIn: parent
-                                text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : (AppModel.walletInfo.walletN === 1) ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(AppModel.walletInfo.walletM).arg(AppModel.walletInfo.walletN).arg(STR.STR_QML_069);
-                                color: "#031F2B"
-                                font.weight: Font.Bold
-                                font.pixelSize: 10
-                            }
+                            font.weight: Font.Bold
+                            font.pixelSize: 10
                         }
                         QTypeWallet {
                             icon.iconSize: 12
@@ -333,7 +331,7 @@ Item {
                             font.pixelSize: 28
                             font.family: "Lato"
                             font.weight: Font.Bold
-                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1 %2").arg(AppModel.walletInfo.walletBalance).arg(RoomWalletData.unitValue)
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1 %2").arg(walletInfo.walletBalance).arg(RoomWalletData.unitValue)
                         }
                         QText {
                             id: wlBalanceCurrency
@@ -342,7 +340,7 @@ Item {
                             font.pixelSize: 16
                             font.family: "Lato"
                             font.weight: Font.Medium
-                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol).arg(AppModel.walletInfo.walletBalanceCurrency).arg(AppSetting.currency)
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : qsTr("%1%2 %3").arg(AppSetting.currencySymbol).arg(walletInfo.walletBalanceCurrency).arg(AppSetting.currency)
                         }
                     }
                     QButtonTextLink {
@@ -392,7 +390,7 @@ Item {
                             onButtonClicked: {
                                 if(walletIsShared){
                                     QMLHandle.sendEvent(EVT.EVT_GOTO_HOME_CHAT_TAB)
-                                    QMLHandle.sendEvent(EVT.EVT_HOME_SHARED_WL_SEND_REQUEST,AppModel.walletInfo.walletId)
+                                    QMLHandle.sendEvent(EVT.EVT_HOME_SHARED_WL_SEND_REQUEST,walletInfo.walletId)
                                 }
                                 else{
                                     QMLHandle.sendEvent(EVT.EVT_HOME_SEND_REQUEST)
@@ -419,9 +417,9 @@ Item {
                             fontPixelSize: 16
                             iconSize: 24
                             type: eTypeF
-                            enabled: AppModel.walletInfo.utxoList.count > 0
+                            enabled: walletInfo.utxoList.count > 0
                             onButtonClicked: {
-                                AppModel.walletInfo.isViewCoinShow = true
+                                walletInfo.isViewCoinShow = true
                             }
                         }
                     }
@@ -450,7 +448,7 @@ Item {
                                     exportwalletDialog.visible = false
                                     exportwalletDialog.exportFormat = "pdf"
                                     exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
                                                                     + "_transaction_history_"
                                                                     + today
                                                                     + ".pdf"
@@ -477,7 +475,7 @@ Item {
                                     exportwalletDialog.visible = false
                                     exportwalletDialog.exportFormat = "csv"
                                     exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                                                    + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
                                                                     + "_transaction_history_"
                                                                     + today
                                                                     + ".csv"
@@ -511,7 +509,7 @@ Item {
                                     exportwalletDialog.visible = false
                                     exportwalletDialog.exportFormat = "bsms"
                                     exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                            + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                            + RoomWalletData.getValidFilename(walletInfo.walletName)
                                             + ".bsms"
                                     exportwalletDialog.open()
                                 }
@@ -528,7 +526,7 @@ Item {
                                     exportwalletDialog.visible = false
                                     exportwalletDialog.exportFormat = "bsms"
                                     exportwalletDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                            + RoomWalletData.getValidFilename(AppModel.walletInfo.walletName)
+                                            + RoomWalletData.getValidFilename(walletInfo.walletName)
                                             + ".bsms"
                                     exportwalletDialog.open()
                                 }
@@ -581,7 +579,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: 6
                                 borderWitdh: 6
-                                textInput: AppModel.walletInfo.walletAddress
+                                textInput: walletInfo.walletAddress
                             }
                             layer.enabled: true
                             layer.effect: DropShadow {
@@ -654,7 +652,7 @@ Item {
                                 iconSize: 24
                                 type: eTypeB
                                 onButtonClicked: {QMLHandle.sendEvent(EVT.EVT_HOME_DISPLAY_ADDRESS, qrCode.textInput) }
-                                enabled: AppModel.walletInfo.containsHWSigner
+                                enabled: walletInfo.containsHWSigner
                             }
                             QTooltip {
                                 width: 20
@@ -675,7 +673,7 @@ Item {
                 id: trans_lbl
                 height: 24
                 spacing: 8
-                visible: AppModel.walletInfo !== null && AppModel.walletInfo.transactionHistory !== null
+                visible: AppModel.walletInfo !== null && walletInfo.transactionHistory !== null
                 QText {
                     height: 24
                     font.weight: Font.DemiBold
@@ -692,7 +690,7 @@ Item {
                     font.pixelSize: 12
                     color: "#757575";
                     font.family: "Lato"
-                    text: STR.STR_QML_010_number.arg(AppModel.walletInfo && AppModel.walletInfo.transactionHistory ? AppModel.walletInfo.transactionHistory.count : 0)
+                    text: STR.STR_QML_010_number.arg(AppModel.walletInfo && walletInfo.transactionHistory ? walletInfo.transactionHistory.count : 0)
                     verticalAlignment: Text.AlignVCenter
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -728,7 +726,7 @@ Item {
                 id: transaction_lst
                 width: parent.width
                 height: parent.height*(walletKeyNeedBackup ? 0.6 : 0.9)
-                model: AppModel.walletInfo.transactionHistory
+                model: walletInfo.transactionHistory
                 ScrollBar.vertical: ScrollBar { active: transaction_lst.contentHeight > transaction_lst.height }
                 anchors {
                     right: parent.right
@@ -780,7 +778,7 @@ Item {
         anchors.rightMargin: 30
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 30
-        sourceComponent: AppModel.walletInfo.isGlobalGroupWallet ? messageBubble : null
+        sourceComponent: walletInfo.isGlobalGroupWallet ? messageBubble : null
     }
     Component {
         id: messageBubble
@@ -821,7 +819,7 @@ Item {
         }
     }
     enabled: !isLocked
-    property bool isLocked:  AppModel.walletInfo.dashboardInfo ? AppModel.walletInfo.dashboardInfo.isLocked : false
+    property bool isLocked:  walletInfo.dashboardInfo ? walletInfo.dashboardInfo.isLocked : false
     Loader {
         anchors.fill: parent
         sourceComponent: isLocked ? locked : null

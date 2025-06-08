@@ -15,7 +15,6 @@ RUN set -ex; \
     make \
     ninja-build \
     libevent-dev \
-    libssl-dev \
     qtdeclarative5-dev \
     qtquickcontrols2-5-dev \
     qtmultimedia5-dev \
@@ -23,6 +22,8 @@ RUN set -ex; \
     qttools5-dev-tools \
     qt5-qmake \
     qtchooser \
+    qtwebengine5-dev \
+    qtwebengine5-dev-tools \
     qml-module-qtquick2 \
     qml-module-qtquick-controls \
     qml-module-qtquick-controls2 \
@@ -53,29 +54,29 @@ ARG QTKEYCHAIN_VERSION=0.15.0
 RUN set -ex; \
   git clone https://github.com/frankosterfeld/qtkeychain -b $QTKEYCHAIN_VERSION --depth=1 && \
   cd qtkeychain && \
-  cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release && \
+  cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=Off && \
   cmake --build build --parallel $(nproc) && \
   cmake --install build && \
-  rm -rf qtkeychain
+  rm -rf /qtkeychain
 
 # Build & Install Olm
 ARG OLM_VERSION=3.2.16
 RUN set -ex; \
   git clone https://gitlab.matrix.org/matrix-org/olm -b $OLM_VERSION --depth=1 && \
   cd olm && \
-  cmake -S . -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DOLM_TESTS=Off && \
+  cmake -S . -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=Off -DOLM_TESTS=Off && \
   cmake --build build --parallel $(nproc) && \
   cmake --install build && \
-  rm -rf olm
+  rm -rf /olm
 
-# Install boosts
-ARG BOOST_VERSION=1.81.0
-ARG BOOST_TAR_VERSION=1_81_0
+# Install boost
+ARG BOOST_VERSION=1_81_0
 RUN set -ex; \
-  wget https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${BOOST_TAR_VERSION}.tar.gz && \
-  tar -xvzf boost_${BOOST_TAR_VERSION}.tar.gz && \
-  rm boost_${BOOST_TAR_VERSION}.tar.gz
-ENV BOOST_ROOT=/boost_${BOOST_TAR_VERSION}
+  BOOST_VERSION_DOT="$(echo "$BOOST_VERSION" | sed 's/_/./g')" && \
+  wget "https://archives.boost.io/release/$BOOST_VERSION_DOT/source/boost_${BOOST_VERSION}.tar.gz" && \
+  tar -xvzf "boost_${BOOST_VERSION}.tar.gz" && \
+  rm "boost_${BOOST_VERSION}.tar.gz"
+ENV BOOST_ROOT="/boost_${BOOST_VERSION}"
 
 # Download HWI
 ARG HWI_VERSION=3.1.0

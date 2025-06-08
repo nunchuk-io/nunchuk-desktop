@@ -41,7 +41,7 @@ QOnScreenContentTypeB {
     label.text: STR.STR_QML_1725
     extraHeader: Item {}
     property var newWalletInfo: AppModel.newWalletInfo
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
             spacing: 48
@@ -178,7 +178,7 @@ QOnScreenContentTypeB {
     }
     bottomRight: Item { }
     onPrevClicked: {
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
 }
 

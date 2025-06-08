@@ -476,7 +476,7 @@ void QGroupWallets::findPermissionAccount()
     QJsonObject first;
     first["role"] = "MASTER";
     first["hasGroupWallet"] = AppModel::instance()->walletListPtr()->existGroupWallet();
-    first["hasPro"] = true;
+    first["hasPro"] = false;
     first["hasGroupPending"] = existGroupPending();
     setHighestPermissionAccount(first);
 

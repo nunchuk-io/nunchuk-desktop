@@ -22,7 +22,6 @@ import QtQuick 2.4
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
-import DataPool 1.0
 import "../../localization/STR_QML.js" as STR
 
 QtObject {
@@ -46,7 +45,7 @@ QtObject {
         {id: 6, normal: "#FFFFFF",     hover: "#031F2B",                   disable: "#EAEAEA",     clicked: "#1A333D"},
         {id: 7, normal: "#F6D65D",     hover: "#9CAEB8",                   disable: "#96833B",     clicked: "#B8A048"},
         {id: 8, normal: "transparent", hover: "transparent",               disable: "#031F2B",     clicked: "#1A333D"},
-        {id: 9, normal: "#C9DEF1",     hover: "#9CAEB8",                   disable: "#031F2B",     clicked: "#C9DEF1"},
+        {id: 9, normal: "#F5F5F5",     hover: "#F5F5F5",                   disable: "#F5F5F5",     clicked: "#F5F5F5"},
         {id:10, normal: "transparent", hover: "transparent",               disable: "#031F2B",     clicked: "transparent"},
         {id:11, normal: "transparent", hover: "transparent",               disable: "#F1FAFE",     clicked: "transparent"},
         {id:12, normal: "#D0E2FF",     hover: "#FFFFFF",                   disable: "transparent", clicked: "#D0E2FF"},
@@ -84,7 +83,7 @@ QtObject {
         {id: 6, normal: "#031F2B",     hover: "#FFFFFF",     disable: "#595959",     clicked: "#FFFFFF"},
         {id: 7, normal: "#031F2B",     hover: "#C9DEF1",     disable: "#031F2B",     clicked: "#031F2B"},
         {id: 8, normal: "#031F2B",     hover: "#9CAEB8",     disable: "#F1FAFE",     clicked: "#F1FAFE"},
-        {id: 9, normal: "#031F2B",     hover: "#C9DEF1",     disable: "#C9DEF1",     clicked: "#031F2B"},
+        {id: 9, normal: "#031F2B",     hover: "#031F2B",     disable: "#595959",     clicked: "#031F2B"},
         {id:10, normal: "#031F2B",     hover: "#9CAEB8",     disable: "#F1FAFE",     clicked: "#031F2B"},
         {id:11, normal: "#F1FAFE",     hover: "#839096",     disable: "#031F2B",     clicked: "#F1FAFE"},
         {id:12, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},

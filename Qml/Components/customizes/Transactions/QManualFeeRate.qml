@@ -110,7 +110,9 @@ Column {
             color: "#595959"
             font.pixelSize: 12
             text: STR.STR_QML_1709.arg(transactionInfo.scriptPathFeeRate)
-            visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT) && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+            visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
+                     && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+                     && (AppModel.walletInfo.walletType === NUNCHUCKTYPE.MULTISIG)
         }
         QLato {
             id: cpfptext

@@ -36,7 +36,7 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Row {
     id: _row
-    property int limit: 0
+    property real limit: 0.0
     property var currency: ""
     property var interval: ""
     property int titleFontSize: 16

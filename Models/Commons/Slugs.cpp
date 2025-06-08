@@ -1,34 +1,77 @@
 #include "Slugs.h"
 #include "QOutlog.h"
+#include <QMutexLocker>
+
+namespace {
+    inline constexpr auto BYZANTINE = "byzantine";
+    inline constexpr auto BYZANTINE_TESTNET = "byzantine_testnet";
+    inline constexpr auto HONEY_BADGER = "honey_badger";
+    inline constexpr auto HONEY_BADGER_TESTNET = "honey_badger_testnet";
+    inline constexpr auto HONEY_BADGER_PLUS = "honey_badger_plus";
+    inline constexpr auto HONEY_BADGER_PLUS_TESTNET = "honey_badger_plus_testnet";
+    inline constexpr auto HONEY_BADGER_PREMIER = "honey_badger_premier";
+    inline constexpr auto HONEY_BADGER_PREMIER_TESTNET = "honey_badger_premier_testnet";
+    inline constexpr auto IRON_HAND = "iron_hand";
+    inline constexpr auto IRON_HAND_TESTNET = "iron_hand_testnet";
+    inline constexpr auto FINNEY = "finney";
+    inline constexpr auto FINNEY_TESTNET = "finney_testnet";
+    inline constexpr auto FINNEY_PRO = "finney_pro";
+    inline constexpr auto FINNEY_PRO_TESTNET = "finney_pro_testnet";
+    inline constexpr auto BYZANTINE_PRO = "byzantine_pro";
+    inline constexpr auto BYZANTINE_PRO_TESTNET = "byzantine_pro_testnet";
+    inline constexpr auto BYZANTINE_PREMIER = "byzantine_premier";
+    inline constexpr auto BYZANTINE_PREMIER_TESTNET = "byzantine_premier_testnet";
+}
+
+QStringList Slugs::safeSlugs() const
+{
+    auto slugList = slugs();
+    if (slugList.isEmpty()) {
+        DBG_FATAL << "slugs() returned null!";
+        return QStringList();
+    }
+    return slugList;
+}
+
+bool Slugs::containsSlug(const QStringList& slugsToCheck) const
+{
+    const auto& slugList = safeSlugs();
+    for (const auto& slug : slugsToCheck) {
+        if (slugList.contains(slug)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 bool Slugs::isSubscribed() const
 {
-    return slugs().size() > 0;
+    return safeSlugs().size() > 0;
 }
 
 bool Slugs::isByzantineStandard() const
 {
-    return slugs().contains("byzantine") || slugs().contains("byzantine_testnet");
+    return containsSlug({BYZANTINE, BYZANTINE_TESTNET});
 }
 
 bool Slugs::isByzantinePremier() const
 {
-    return slugs().contains("byzantine_premier_testnet") || slugs().contains("byzantine_premier");
+    return containsSlug({BYZANTINE_PREMIER, BYZANTINE_PREMIER_TESTNET});
 }
 
 bool Slugs::isByzantinePro() const
 {
-    return slugs().contains("byzantine_pro_testnet") || slugs().contains("byzantine_pro");
+    return containsSlug({BYZANTINE_PRO, BYZANTINE_PRO_TESTNET});
 }
 
 bool Slugs::isFinneyPro() const
 {
-    return slugs().contains("finney_pro_testnet") || slugs().contains("finney_pro");
+    return containsSlug({FINNEY_PRO, FINNEY_PRO_TESTNET});
 }
 
 bool Slugs::isFinneyStandard() const
 {
-    return slugs().contains("finney_testnet") || slugs().contains("finney");
+    return containsSlug({FINNEY, FINNEY_TESTNET});
 }
 
 bool Slugs::isFinney() const
@@ -43,12 +86,12 @@ bool Slugs::isByzantine() const
 
 bool Slugs::isHoneyBadger() const
 {
-    return slugs().contains("honey_badger_testnet") || slugs().contains("honey_badger");
+    return containsSlug({HONEY_BADGER, HONEY_BADGER_TESTNET});
 }
 
 bool Slugs::isIronHand() const
 {
-    return slugs().contains("iron_hand_testnet") || slugs().contains("iron_hand");
+    return containsSlug({IRON_HAND, IRON_HAND_TESTNET});
 }
 
 bool Slugs::isMultiSubscriptions() const
@@ -73,12 +116,12 @@ bool Slugs::isUserWallet() const
 
 bool Slugs::isHoneyBadgerPlus() const
 {
-    return slugs().contains("honey_badger_plus_testnet") || slugs().contains("honey_badger_plus");
+    return containsSlug({HONEY_BADGER_PLUS, HONEY_BADGER_PLUS_TESTNET});
 }
 
 bool Slugs::isHoneyBadgerPremier() const
 {
-    return slugs().contains("honey_badger_premier_testnet") || slugs().contains("honey_badger_premier");
+    return containsSlug({HONEY_BADGER_PREMIER, HONEY_BADGER_PREMIER_TESTNET});
 }
 
 bool Slugs::isUserDraftWallet() const

@@ -53,7 +53,7 @@ QOnScreenContentTypeA {
             return "Unknown"
         }
     }
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     readonly property string _HARDWARE_TYPE: walletInfo.deviceType
     readonly property string _HARDWARE: {
         var type = _HARDWARE_TYPE
@@ -106,7 +106,7 @@ QOnScreenContentTypeA {
         }
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QIconTextButton {

@@ -34,11 +34,13 @@ import "../../Components/customizes/QRCodes"
 import "../../Components/customizes/Wallets"
 import "../../Components/customizes/Chats"
 import "../../Components/customizes/Popups"
+import "../../Components/customizes/Transactions"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     id: sendRoot
     property var    walletInfo: AppModel.walletInfo
+    property var    transactionInfo: AppModel.transactionInfo
     property bool   sendCoinSelected: false
     property var    totalAmount: sendRoot.sendCoinSelected ? walletInfo.utxoList.amountDisplay : walletInfo.walletBalance
     property var    totalAmountSats: sendRoot.sendCoinSelected ? walletInfo.utxoList.amountSats : walletInfo.walletBalanceSats
@@ -415,7 +417,6 @@ QScreen {
                                            "toAmount": ""
                                        })
                     destination.itemAt(qrscaner.addressRequestIndex).setFavoriteInput(inputObject)
-
                 }
             }
             qrscaner.addressRequestIndex = -1
@@ -1112,6 +1113,25 @@ QScreen {
             close()
         }
     }
+
+    // Signing policy
+    QTransactionSigningPolicy {
+        id: signingPolicy
+        width: parent.width
+        height: parent.height
+        // visible: true
+        onCloseClicked : {
+
+        }
+        onContinueClicked : {
+            requestCreateTransaction(use_script_path)
+        }
+        onFeeSettingClicked: {
+            // QMLHandle.sendEvent(EVT.EVT_SEND_FEE_SETTING_REQUEST)
+            console.log("Fee Setting Clicked")
+        }
+    }
+
     property var destinations: []
     function requestAddMultiDestinations(){
         destinations = []
@@ -1175,7 +1195,6 @@ QScreen {
         }
         return false
     }
-
     function requestFilterOutAddress() {
         AppSetting.loadFavoriteAddresses()
         filterOutAddress = []
@@ -1189,7 +1208,6 @@ QScreen {
         }
         savedAddressList.model = filterOutAddress
     }
-
     function requestFilterOutWallet() {
         filterOutWallet = []
         for(var i = 0; i < AppModel.walletList.count; i++) {
@@ -1203,7 +1221,11 @@ QScreen {
         }
         walletList.model = filterOutWallet
     }
-
+    function requestCreateTransaction(use_script_path) {
+        createTxBusyBox.open()
+        timerCreateTx.destinationData["use_script_path"] = use_script_path
+        timerCreateTx.restart()
+    }
     Connections {
         target: walletInfo
         onRollOverProcess: {
@@ -1211,6 +1233,12 @@ QScreen {
         }
         onRequestCreateTransaction: {
             requestSelectedCoin(address)
+        }
+    }
+    Connections {
+        target: transactionInfo
+        function onRequestFeeSelection() {
+            signingPolicy.open()
         }
     }
 }

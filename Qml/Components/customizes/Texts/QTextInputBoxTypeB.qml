@@ -31,25 +31,25 @@ Column {
     property alias  errorTextColor: textErrorItem.color
     property alias  errorTextPxSize: textErrorItem.font.pixelSize
     property alias  textInputted: _input.text
-    property alias validator: _input.validator
-    property alias acceptableInput : _input.acceptableInput
-    property var   textweight: Font.Bold
-    property alias echoMode: _input.echoMode
-    property alias maxLength: _input.maximumLength
-    property alias length: _input.length
-    property bool enableLengthLimit: false
-    property int boxWidth: 338
-    property int boxHeight: 48
-    property bool isValid: true
-    property bool showError: false
-    property bool showWarning: false
-    property alias textBoxFocus: _input.focus
-    property alias input: _input
-    property bool  isPassword: false
-    property bool  passwordValidate: false
-    property alias passwordValidateResult: validatePassword.isValid
-    property int titleFontSize: 16
-    property var disabledColor: "#EAEAEA"
+    property alias  validator: _input.validator
+    property alias  acceptableInput : _input.acceptableInput
+    property var    textweight: Font.Bold
+    property alias  echoMode: _input.echoMode
+    property alias  maxLength: _input.maximumLength
+    property alias  length: _input.length
+    property bool   enableLengthLimit: false
+    property int    boxWidth: 338
+    property int    boxHeight: 48
+    property bool   isValid: true
+    property bool   showError: false
+    property bool   showWarning: false
+    property alias  textBoxFocus: _input.focus
+    property alias  input: _input
+    property bool   isPassword: false
+    property bool   passwordValidate: false
+    property alias  passwordValidateResult: validatePassword.isValid
+    property int    titleFontSize: 16
+    property var    disabledColor: "#EAEAEA"
 
     signal typingFinished(var currentText)
     signal downKeyRequest()

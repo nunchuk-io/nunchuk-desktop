@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1266
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string mnemonicstr: ""
     content: Item {
         height: 496
@@ -114,7 +114,7 @@ QOnScreenContentTypeA {
         _content.contentItem.randomSeedSelection()
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: Row {
         spacing: 12
         QTextButton {
@@ -145,11 +145,11 @@ QOnScreenContentTypeA {
         types: [_btnBase.eTypeE, _btnBase.eTypeF]
         funcs: [
             function() {
-                OnBoarding.state = "seedPhrase"
+                OnBoarding.screenFlow = "seedPhrase"
             },
             function() {
                 OnBoarding.requestBackupHotWallet()
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
         ]
     }

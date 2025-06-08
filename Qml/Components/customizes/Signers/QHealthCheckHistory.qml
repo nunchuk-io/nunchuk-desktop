@@ -30,7 +30,8 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     width: 350
-    height: hasReminder ? (452 - 48) : 452
+    property int parentHeight: 452
+    height: hasReminder ? (parentHeight - 48) : parentHeight
     property bool hasReminder: false
     property var descriptions: [
         {type: "HEALTH_CHECK",      description: STR.STR_QML_1206 },
@@ -48,7 +49,7 @@ Item {
         }
         Rectangle {
             width: 350
-            height: hasReminder ? (424 - 48) : 424
+            height: hasReminder ? (parentHeight - 28 - 48) : (parentHeight - 28)
             border.color: "#DEDEDE"
             border.width: 1
             color: "transparent"

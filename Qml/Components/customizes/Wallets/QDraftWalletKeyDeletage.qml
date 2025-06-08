@@ -36,7 +36,7 @@ Item {
     width: 350
     height: _column.childrenRect.height + 12*2
     property alias signerData: dataSingle
-
+    signal requestGetXpubs(var num, var name)
     QSingleSignerData {
         id: dataSingle
     }
@@ -71,7 +71,7 @@ Item {
         Column {
             id: _column
             height: childrenRect.height
-            width: 350 - 12 - 48 - 12
+            width: 350 - 12 - 48 - 12 - xpubs_id.width
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
             QLato {
@@ -137,7 +137,18 @@ Item {
                 font.pixelSize: 12
             }
         }
+        QTextButton {
+            id: xpubs_id
+            anchors.verticalCenter: parent.verticalCenter
+            width: label.paintedWidth + 16*2
+            height: 36
+            label.text: STR.STR_QML_071
+            label.font.pixelSize: 12
+            type: eTypeE
+            visible: dataSingle.single_need_Topup_Xpub
+            onButtonClicked: {
+                requestGetXpubs(index, dataSingle.single_need_Topup_Xpub)
+            }
+        }
     }
 }
-
-

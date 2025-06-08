@@ -30,6 +30,7 @@ QListView {
     readonly property int _RadioTypeA: 1
     readonly property int _RadioTypeB: 2
     property int delegateType: _RadioTypeA
+    property int delegateHeight: 48
     delegate: switch(delegateType) {
               case _RadioTypeA: return _TypeA
               case _RadioTypeB: return _TypeB
@@ -50,11 +51,11 @@ QListView {
             border.width: 2
             border.color: btn.selected ? "#031F2B" : "#DEDEDE"
             width: widthDelegate
-            height: 48
+            height: delegateHeight
             radius: 12
             QRadioButtonTypeA {
                 width: widthDelegate - 18*2
-                height: 48
+                height: delegateHeight
                 fontPixelSize: 16
                 fontWeight: Font.Bold
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -73,12 +74,12 @@ QListView {
             border.width: 2
             border.color: btn.selected ? "#031F2B" : "#DEDEDE"
             width: widthDelegate
-            height: 48
+            height: delegateHeight
             radius: 12
             QRadioButtonTypeA {
                 id: btn
                 width: widthDelegate - 18*2
-                height: 48
+                height: delegateHeight
                 fontPixelSize: 16
                 fontWeight: Font.Bold
                 anchors.horizontalCenter: parent.horizontalCenter

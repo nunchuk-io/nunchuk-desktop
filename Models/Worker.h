@@ -259,7 +259,7 @@ class Controller : public QObject
 public:
     Controller();
     virtual ~Controller();
-    void scanDevicesSync();
+    bool scanDevicesSync();
 public slots:
     void slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
                                       QString what,

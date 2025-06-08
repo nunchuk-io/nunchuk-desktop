@@ -1023,6 +1023,7 @@ nunchuk::Transaction nunchukiface::DraftTransaction(const std::string &wallet_id
                                                     nunchuk::Amount fee_rate,
                                                     const bool subtract_fee_from_amount,
                                                     const std::string &replace_txid,
+                                                    bool use_script_path,
                                                     QWarningMessage& msg)
 {
     nunchuk::Transaction ret;
@@ -1033,7 +1034,8 @@ nunchuk::Transaction nunchukiface::DraftTransaction(const std::string &wallet_id
                                                                      inputs,
                                                                      fee_rate,
                                                                      subtract_fee_from_amount,
-                                                                     replace_txid);
+                                                                     replace_txid,
+                                                                     use_script_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1049,6 +1051,7 @@ nunchuk::Transaction nunchukiface::DraftTransaction(const std::string &wallet_id
 nunchuk::Transaction nunchukiface::ReplaceTransaction(const std::string& wallet_id,
                                                       const std::string &tx_id,
                                                       nunchuk::Amount new_fee_rate,
+                                                      bool anti_fee_sniping,
                                                       QWarningMessage& msg)
 {
     nunchuk::Transaction ret;
@@ -1311,6 +1314,7 @@ void nunchukiface::CacheMasterSignerXPub(const std::string &mastersigner_id, QWa
 {
     try {
         if(nunchuk_instance_[nunchukMode()]){
+            DBG_INFO << "CacheMasterSignerXPub for " << mastersigner_id;
             nunchuk_instance_[nunchukMode()]->CacheMasterSignerXPub(mastersigner_id, cache_master_signer_XPub);
         }
     }
@@ -3705,7 +3709,26 @@ std::vector<std::string> nunchukiface::GetDeprecatedGroupWallets(QWarningMessage
         }
     }
     catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what(); msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::string nunchukiface::GetHotKeyMnemonic(const std::string &signer_id, const std::string &passphrase, QWarningMessage &msg) {
+    std::string ret {""};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetHotKeyMnemonic(signer_id, passphrase);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what();

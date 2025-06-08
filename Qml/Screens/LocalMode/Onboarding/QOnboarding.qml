@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     extraHeader: Item {}
     onCloseClicked: {
         AppSetting.isFirstTimeOnboarding = true
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     content: Item {
         Column {
@@ -70,7 +70,7 @@ QOnScreenContentTypeB {
                     color: "#D0E2FF"
                     onBoardingclicked: {
                         AppSetting.isFirstTimeOnboarding = true
-                        OnBoarding.state = "assistedWallet"
+                        OnBoarding.screenFlow = "assistedWallet"
                     }
                 }
                 QOnboardingWallet {
@@ -82,7 +82,7 @@ QOnScreenContentTypeB {
                     color: "#FDEBD2"
                     onBoardingclicked: {
                         AppSetting.isFirstTimeOnboarding = true
-                        OnBoarding.state = "unassistedWallet"
+                        OnBoarding.screenFlow = "unassistedWallet"
                     }
                 }
             }

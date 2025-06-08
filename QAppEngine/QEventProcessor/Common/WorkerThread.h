@@ -7,63 +7,29 @@
 #include <QWaitCondition>
 #include <QSharedPointer>
 #include <functional>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QtConcurrent>
 #include <QDebug>
 
-// Singleton Worker Thread Class
+inline bool appShuttingDown() {
+    return !QCoreApplication::instance() || QCoreApplication::closingDown();
+}
 class WorkerThread : public QThread {
     Q_OBJECT
 
 public:
     using Task = std::function<void()>;
 
-    static WorkerThread& instance() {
-        static WorkerThread instance; // Singleton
-        return instance;
-    }
+    static WorkerThread *instance();
 
-    void runTask(Task task) {
-        QMutexLocker locker(&mutex);
-        taskQueue.enqueue(task);
-        condition.wakeOne();  // Wake up the worker thread
-    }
+    void runTask(Task task);
 
 protected:
-    void run() override {
-        while (true) {
-            Task task;
-            {
-                QMutexLocker locker(&mutex);
-                while (taskQueue.isEmpty() && !stopThread) {  // Prevent CPU spinning
-                    condition.wait(&mutex);  // Wait for new tasks
-                }
-                if (stopThread) break;  // Exit loop when stopping
-                if (!taskQueue.isEmpty()) {
-                    task = taskQueue.dequeue(); // Get next task
-                }
-            }
-            if (task) {
-                task();  // Execute task
-            }
-        }
-    }
+    void run() override;
 
 private:
-    WorkerThread() {
-        stopThread = false;
-        start();  // Start worker thread on creation
-    }
-
-    ~WorkerThread() {
-        {
-            QMutexLocker locker(&mutex);
-            stopThread = true; // Signal the thread to stop
-            condition.wakeOne(); // Wake up the thread so it can exit
-        }
-        wait();  // Ensure thread stops before destruction
-    }
-
+    WorkerThread();
+    ~WorkerThread();
     bool stopThread;  // Flag to stop the loop
     QQueue<Task> taskQueue;
     QMutex mutex;
@@ -82,17 +48,13 @@ struct ProgressReporter {
     }
 };
 
-inline bool appShuttingDown() {
-    return !QCoreApplication::instance() || QCoreApplication::closingDown();
-}
-
 // Global function to execute tasks in Singleton Thread
 template <typename Func1, typename Func2>
 void runInThread(Func1&& execute, Func2&& ret) {
     auto safeExecute = std::make_shared<std::decay_t<Func1>>(std::forward<Func1>(execute));
     auto safeRet = std::make_shared<std::decay_t<Func2>>(std::forward<Func2>(ret));
 
-    WorkerThread::instance().runTask([safeExecute, safeRet]() mutable {
+    WorkerThread::instance()->runTask([safeExecute, safeRet]() mutable {
         try {
             using ResultType = decltype((*safeExecute)());
             if constexpr (std::is_void_v<ResultType>) {
@@ -190,7 +152,7 @@ if (!(ptr)) return;                            \
 
 
 inline bool isBusy() {
-    if (QGuiApplication::overrideCursor() && QGuiApplication::overrideCursor()->shape() == Qt::WaitCursor) {
+    if (QApplication::overrideCursor() && QApplication::overrideCursor()->shape() == Qt::WaitCursor) {
         qDebug() << "Cursor is currently in wait state.";
         return true;
     }

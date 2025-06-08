@@ -20,13 +20,17 @@
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
 import "../../customizes/Texts"
+import "../../origins"
 
 QBaseButton {
     id: rootTextButton
     width: 137
     height: 48
-    property alias label: text
-    property bool processing: false
+    property alias  label: text
+    property bool   processing: false
+    property bool   iconVisible: false
+    property var    iconSource: ["", ""]
+
     QBackgroundState {
         anchors.fill: parent
     }
@@ -38,5 +42,24 @@ QBaseButton {
         font.weight: Font.DemiBold
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
+    }
+
+    Rectangle {
+        width: 2
+        height: 24
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+        anchors.rightMargin: 60
+        color: "#595959"
+        visible: iconVisible
+    }
+    QImage {
+        width: 24
+        height: 24
+        source: btnMouse.containsMouse ? iconSource[0] : iconSource[1]
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+        anchors.rightMargin: 20
+        visible: iconVisible
     }
 }

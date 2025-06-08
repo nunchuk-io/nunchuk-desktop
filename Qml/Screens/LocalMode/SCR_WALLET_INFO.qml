@@ -85,7 +85,7 @@ QScreen {
     Component {
         id: _security_question
         QAnswerSecurityQuestion {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: {
                 AppModel.walletInfo.isDeleting = false
             }
@@ -105,44 +105,7 @@ QScreen {
             QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
         }
     }
-    QQrExportResultPDF {
-        id: qrcodeExportResult
-        model: AppModel.qrExported
-    }
-    FileDialog {
-        id: exportwalletDialog
-        property int exportFormat: -1
-        fileMode: FileDialog.SaveFile
-        onAccepted: {
-            if(exportFormat === NUNCHUCKTYPE.DB){
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_DB, exportwalletDialog.currentFile)
-            }
-            else if(exportFormat === NUNCHUCKTYPE.DESCRIPTOR){
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_DESCRIPTOR, exportwalletDialog.currentFile)
-            }
-            else if(exportFormat === NUNCHUCKTYPE.COLDCARD){
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_COLDCARD, exportwalletDialog.currentFile)
-            }
-            else if(exportFormat === NUNCHUCKTYPE.TRANSACTION_CSV){
-                var csvTxObj = { "csv_type"     : 0,
-                                 "file_path"    : exportwalletDialog.currentFile};
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_CSV, csvTxObj)
-            }
-            else if(exportFormat === NUNCHUCKTYPE.TRANSACTION_PDF){
-                var pdfTxObj = { "csv_type"     : 1,
-                                 "file_path"    : exportwalletDialog.currentFile};
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_CSV, pdfTxObj)
-                invoicePopup.open()
-                invoicePopup.startPrintInvoices(exportwalletDialog.currentFile)
-            }
-            else if(exportFormat === NUNCHUCKTYPE.UTXO_CSV){
-                var csvUtxoObj = { "csv_type"     : 2,
-                                   "file_path"    : exportwalletDialog.currentFile};
-                QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_EXPORT_CSV, csvUtxoObj)
-            }
-            else{}
-        }
-    }
+    
     FileDialog {
         id: openfileDialog
         fileMode: FileDialog.OpenFile

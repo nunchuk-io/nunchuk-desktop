@@ -58,23 +58,21 @@ QOnScreenContent {
                     iconSize: 16
                     source: "qrc:/Images/Images/Escrow Wallet.png"
                 }
-                QText {
+                QLato {
                     text: STR.STR_QML_212
                     color: "#F8D418"
                     width: 49
                     height: 10
                     font.weight: Font.Bold
-                    font.family: "Lato"
                     font.pixelSize: 10
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }
-        QText {
+        QMontserrat {
             text: "(" + AppModel.walletInfo.walletName + ")"
             color: "#031F2B"
             font.weight: Font.DemiBold
-            font.family: "Montserrat"
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -190,17 +188,18 @@ QOnScreenContent {
                             id: manualfee
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
-                        // QCheckboxTooltip {
-                        //     id: antisnipfee
-                        //     anchors.horizontalCenter: parent.horizontalCenter
-                        //     text: STR.STR_QML_1729
-                        //     tooltip: STR.STR_QML_1730
-                        //     pointerPositionIndex: 6
-                        //     pointerPositionRatio: 10
-                        //     onButtonClicked: {
-
-                        //     }
-                        // }
+                        QCheckboxTooltip {
+                            id: antisnipfee
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: STR.STR_QML_1729
+                            tooltip: STR.STR_QML_1730
+                            pointerPositionIndex: 6
+                            pointerPositionRatio: 10
+                            checked: AppSetting.enableAntiFeeSniping
+                            onButtonClicked: {
+                                // DON'T NEED MAKE DRAFT
+                            }
+                        }
                     }
                 }
                 QCoinSelectionTransaction {
@@ -295,17 +294,15 @@ QOnScreenContent {
                     height: 70
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-                QText {
+                QLato {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     text: STR.STR_QML_236
                 }
-                QText {
+                QLato {
                     width: 252
                     anchors.horizontalCenter: parent.horizontalCenter
-                    font.family: "Lato"
                     font.pixelSize: 16
                     text: STR.STR_QML_122
                     wrapMode: Text.WordWrap
@@ -349,17 +346,23 @@ QOnScreenContent {
         }
     }
     function requestDraftTransaction(){
-        var msg = { "subtractFromFeeAmout"   : subtract.checked,
-                    "feeRate"                : manualfee.textOutput,
-                    "manualFee"              : manualfee.isChecked,
-                    "manualOutput"           : false};
+        var msg = {
+            "subtractFromFeeAmout"   : subtract.checked,
+            "feeRate"                : manualfee.textOutput,
+            "manualFee"              : manualfee.isChecked,
+            "manualOutput"           : false,
+            "antiFeeSnipping"        : false, // always false
+        };
         QMLHandle.sendEvent(EVT.EVT_CREATE_TRANSACTION_MAKE_DRAFT_TX, msg)
     }
     function requestCreateTransaction(){
-        var msg = { "subtractFromFeeAmout"   : subtract.checked,
-                    "feeRate"                : manualfee.textOutput,
-                    "manualFee"              : manualfee.isChecked,
-                    "manualOutput"           : false};
+        var msg = {
+            "subtractFromFeeAmout"   : subtract.checked,
+            "feeRate"                : manualfee.textOutput,
+            "manualFee"              : manualfee.isChecked,
+            "manualOutput"           : false,
+            "antiFeeSnipping"        : antisnipfee.checked,
+        };
         createTxBusyBox.open()
         timerCreateTx.destinationData = msg
         timerCreateTx.restart()

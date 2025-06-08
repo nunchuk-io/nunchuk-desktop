@@ -15,4 +15,5 @@ QtObject {
     property var master_primary_key
     property var master_tag
     property var master_taproot_supported
+    property var master_needBackup
 }

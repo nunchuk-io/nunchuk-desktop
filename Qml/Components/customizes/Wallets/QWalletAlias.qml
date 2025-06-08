@@ -38,7 +38,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1187
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var walletInfo: AppModel.walletInfo
     property string wallet_name: eFlow === eWALLET_CHANGE_ALIAS ?  walletInfo.walletAliasName  : ""
     content: Item {

@@ -40,7 +40,7 @@ QOnScreenContentTypeB {
     label.width: parent.width
     label.font.pixelSize: 30
     hasClose: false
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
             spacing: 36
@@ -85,7 +85,7 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     onNextClicked: {
         var _input = {
             type: "replace-transfer-funds"

@@ -39,7 +39,7 @@ QOnScreenContentTypeB {
     anchors.centerIn: parent
     label.text: alert.title
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var payment: AppModel.walletInfo.recurringPayment.payment
     content: Column {
         width: 539

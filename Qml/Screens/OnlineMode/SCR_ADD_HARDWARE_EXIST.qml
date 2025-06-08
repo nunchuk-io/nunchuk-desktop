@@ -66,6 +66,6 @@ QScreen {
     }
     function doneAddHardwareKey() {
         AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
-        closeTo(NUNCHUCKTYPE.WALLET_TAB)
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
 }

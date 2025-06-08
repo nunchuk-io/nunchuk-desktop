@@ -35,6 +35,7 @@ Item {
     id: _item
     property var transactionInfo
     property var new_fee: 0
+    property alias antiFeeSniping: antisnipfee.checked
     signal typingFinished(var currentText)
 
     /*========================================*/
@@ -165,7 +166,9 @@ Item {
                     color: "#595959"
                     font.pixelSize: 12
                     text: STR.STR_QML_1709.arg(transactionInfo.scriptPathFeeRate)
-                    visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT) && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+                    visible: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
+                             && (AppModel.walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT)
+                             && (AppModel.walletInfo.walletType === NUNCHUCKTYPE.MULTISIG)
                 }
                 QLato {
                     id: cpfptext
@@ -239,6 +242,18 @@ Item {
                                 font.family: "Lato"
                             }
                         }
+                    }
+                }
+                QCheckboxTooltip {
+                    id: antisnipfee
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: STR.STR_QML_1729
+                    tooltip: STR.STR_QML_1730
+                    pointerPositionIndex: 6
+                    pointerPositionRatio: 10
+                    checked: AppSetting.enableAntiFeeSniping
+                    onButtonClicked: {
+                        // DON'T NEED MAKE DRAFT
                     }
                 }
             }

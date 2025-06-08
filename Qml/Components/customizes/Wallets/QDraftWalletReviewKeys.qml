@@ -44,7 +44,7 @@ Item {
                 anchors.fill: parent
                 model: newWalletInfo.walletSingleSignerAssigned
                 ScrollBar.vertical: ScrollBar { active: true }
-                delegate: QSandboxKeyDeletage {
+                delegate: QDraftWalletKeyDeletage {
                     width: signerlist.width
                     signerData {
                         single_name: singleSigner_name
@@ -58,6 +58,10 @@ Item {
                         single_value_key: single_signer_value_key
                         single_derivationPath: singleSigner_derivationPath
                         single_device_cardid: single_signer_device_cardid
+                        single_need_Topup_Xpub: single_signer_need_Topup_Xpub
+                    }
+                    onRequestGetXpubs: {
+                        newWalletInfo.startGetXpubs(index)
                     }
                 }
             }

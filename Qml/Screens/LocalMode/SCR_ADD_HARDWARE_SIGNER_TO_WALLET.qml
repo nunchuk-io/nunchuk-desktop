@@ -56,7 +56,7 @@ QScreen {
             height: popupHeight
             anchors.centerIn: parent
             label.text: STR.STR_QML_101
-            onCloseClicked: closeTo(NUNCHUCKTYPE.WALLET_TAB)
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             QTextInputBox {
                 id: signerName
                 mode: eEDIT_MODE
