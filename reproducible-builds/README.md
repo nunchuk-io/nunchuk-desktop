@@ -5,7 +5,7 @@ Easily verify that the binary you installed **really** comes from the open‑sou
 
 > **Status**  
 > **Linux** (x86‑64 & ARM64) — supported from version **1.9.46+**  
-> **Windows** — supported from version **1.9.47+**  
+> **Windows** — support coming soon  
 > **macOS** — support coming soon
 ---
 
@@ -55,23 +55,8 @@ docker run --rm -v "$PROJECT_DIR":/nunchuk-desktop -w /nunchuk-desktop nunchuk-b
 
 ### Windows
 ```bash
-export ARCH=$(uname -m)
-# Build the builder image
-docker buildx build -t nunchuk-builder --build-arg ARCH=$ARCH -f reproducible-builds/windows.Dockerfile .
-# Build the app
-docker run --rm -v "$PROJECT_DIR":/nunchuk-desktop -w /nunchuk-desktop nunchuk-builder bash ./reproducible-builds/windows.sh
+Comming soon
 ```
----
-When the script completes, your build output will be located in:
-
-```
-$PROJECT_DIR/build/artifacts/
-
-# For example:
-~/nunchuk-desktop/build/artifacts/nunchuk-linux-v1.9.46-x86_64.zip
-~/nunchuk-desktop/build/artifacts/nunchuk-windows-v1.9.47-x64-setup-unsigned.exe
-```
-
 ---
 
 ## 4 — Byte‑for‑byte Verification
