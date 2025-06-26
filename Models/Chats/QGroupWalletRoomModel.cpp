@@ -262,7 +262,10 @@ void QGroupMessageModel::startDownloadConversation(const QString &wallet_id)
         if (list.size() > 0) {
             ptrLamda->createGroupMessage(list);
         }
-        emit AppModel::instance()->groupWalletList()->unReadMessageCountChanged();
+        if (auto list = AppModel::instance()->groupWalletList()) {
+            list->unReadMessageCountChanged();
+            list->requestSortLastTimestamp();
+        }
     });
 }
 
@@ -302,6 +305,16 @@ QString QGroupMessageModel::lastMessage()
     }
     else {
         return "";
+    }
+}
+
+nunchuk::GroupMessage QGroupMessageModel::lastGroupMessage() {
+    if(m_messages.size() > 0){
+        int last_index = min((int)m_messages.size(), max(0, (int)m_messages.size() - 1));
+        return m_messages[last_index];
+    }
+    else {
+        return  nunchuk::GroupMessage("", "");
     }
 }
 

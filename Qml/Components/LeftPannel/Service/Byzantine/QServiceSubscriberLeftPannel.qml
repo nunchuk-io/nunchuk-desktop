@@ -45,10 +45,10 @@ Item {
         {screen:_KEY_RECOVERY,                       visible: hasKeyRecovery,               enable:true,   title:STR.STR_QML_698, icon: ""                                          ,action: function(){ return true;} },
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),         enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
-        {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
-        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: hasReplaceKeys,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
-        {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return rollOverNewAssistedWallet() } },
-        {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return manageSubscription() }}
+        {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return _InfoVer.getAdditionalWallets() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: hasReplaceKeys,                         enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return _info1.replace_keys() } },
+        {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return _InfoVer.rollOverNewAssistedWallet() } },
+        {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return _InfoVer.manageSubscription() }}
     ]
     readonly property var option_map_default: [
         {screen:_EMERGENCY,                          visible: hasEmergency,                 enable:false,  title:STR.STR_QML_702, icon: "qrc:/Images/Images/emergency-light.svg"    ,action: function(){ return true; } },
@@ -59,11 +59,11 @@ Item {
         {screen:_CLAIM_AN_INHERITANCE,               visible: true,                         enable:true,   title:STR.STR_QML_737, icon: ""                                          ,action: function(){ ServiceSetting.servicesTag.clearClaimAnInheritance(); return true; }},
         {screen:_YOUR_SUBSCRIPTION,                  visible: hasYourSubsciption(),         enable:false,  title:STR.STR_QML_699, icon: "qrc:/Images/Images/subscription-light.svg" ,action: function(){ return true;} },
         {screen:_PLATFORM_KEY_CO_SIGNING_POLICIES,   visible: hasPlatformKeyCoSign,         enable:true,   title:STR.STR_QML_738, icon: ""                                          ,action: function(){ return platformKeyCosigningPolicies() } },
-        {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return getAdditionalWallets() } },
-        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: hasReplaceKeys,               enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return replace_keys() } },
-        {screen:_ORDER_NEW_HARDWARE,                 visible: hasOrderNewHardware,          enable:true,   title:STR.STR_QML_700, icon: ""                                          ,action: function(){ return orderNewHardware() } },
-        {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return rollOverNewAssistedWallet() } },
-        {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return manageSubscription() } }
+        {screen:_GET_ADDITIONAL_WALLETS,             visible: hasGetAdditionalWallet,       enable:true,   title:STR.STR_QML_707, icon: ""                                          ,action: function(){ return _InfoVer.getAdditionalWallets() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET,  visible: hasReplaceKeys,               enable:true,   title:STR.STR_QML_1352,icon: ""                                          ,action: function(){ return _info1.replace_keys() } },
+        {screen:_ORDER_NEW_HARDWARE,                 visible: hasOrderNewHardware,          enable:true,   title:STR.STR_QML_700, icon: ""                                          ,action: function(){ return _InfoVer.orderNewHardware() } },
+        {screen:_ROLL_OVER_TO_A_NEW_ASSISTED_WALLET, visible: hasRollOverNewAssistedWallet, enable:true,   title:STR.STR_QML_1019,icon: ""                                          ,action: function(){ return _InfoVer.rollOverNewAssistedWallet() } },
+        {screen:_MANAGE_SUBSCRIPTION,                visible: hasManageSubscription,        enable:true,   title:STR.STR_QML_682, icon: ""                                          ,action: function(){ return _InfoVer.manageSubscription() } }
     ]
     readonly property var option_map: isPremierUser || isContainsPremierWallet ? option_map_premier : option_map_default
 
@@ -107,53 +107,14 @@ Item {
     function platformKeyCosigningPolicies(){
         ServiceSetting.clearWalletInfo()
         return true;
-    }
-
-    function orderNewHardware() {
-        _InfoVer.link = "https://nunchuk.io/hardware-replacement";
-        _InfoVer.contentText = STR.STR_QML_735;
-        _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
-        _InfoVer.open();
-        return false;
-    }
-
-    function getAdditionalWallets(){
-        ServiceSetting.servicesTag.additionalGetWalletConfig()
-        _InfoVer.link = "https://nunchuk.io/my-plan";
-        var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count !== undefined ? ServiceSetting.servicesTag.walletConfig.remaining_wallet_count : 0;
-         _InfoVer.contentText = (remainCount === 1 ? STR.STR_QML_842.arg(remainCount) : STR.STR_QML_841.arg(remainCount));
-        _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
-        _InfoVer.open();
-        return false;
-    }
-
-    function rollOverNewAssistedWallet(){
-        _InfoVer.link = "https://nunchuk.io/hardware-replacement";
-        _InfoVer.contentText = STR.STR_QML_735;
-        _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
-        _InfoVer.open();
-        return false;
-    }
-
-    function replace_keys() {
-        _info1.title = STR.STR_QML_339
-        _info1.contentText = STR.STR_QML_1347
-        _info1.open()
-        return true;
-    }
+    }    
 
     function viewInheritancePlan() {
         ServiceSetting.clearWalletInfo()
         return true;
     }
 
-    function manageSubscription() {
-        _InfoVer.link = "https://nunchuk.io/my-plan";
-        _InfoVer.contentText = STR.STR_QML_684;
-        _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
-        _InfoVer.open();
-        return false;
-    }
+    
 
     Column {
         anchors.fill: parent

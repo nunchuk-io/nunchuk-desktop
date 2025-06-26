@@ -230,6 +230,7 @@ public:
                                            bool subtract_fee_from_amount,
                                            const std::string& replace_txid,
                                            bool anti_fee_sniping,
+                                           bool use_script_path,
                                            QWarningMessage& msg);
 
     nunchuk::Transaction DraftTransaction(const std::string& wallet_id,
@@ -245,6 +246,7 @@ public:
                                             const std::string& tx_id,
                                             nunchuk::Amount new_fee_rate,
                                             bool anti_fee_sniping,
+                                            bool use_script_path,
                                             QWarningMessage& msg);
 
     bool UpdateTransactionMemo(const std::string& wallet_id,

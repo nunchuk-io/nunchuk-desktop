@@ -31,6 +31,15 @@ for lib in libcrypto libssl libmd4c libpcre2-16 libdouble-conversion; do
   chmod 775 output/appdir/lib/${lib}.so*
 done
 
+libavcodec_path=$(find /usr/lib /usr/lib64 /usr/local/lib -type f -name "libavcodec.so.58" 2>/dev/null | head -n 1)
+if [ -n "$libavcodec_path" ]; then
+    echo "Found libavcodec.so.58 at: $libavcodec_path"
+    cp "$libavcodec_path" output/appdir/lib/
+    chmod 775 output/appdir/lib/libavcodec.so.58
+else
+    echo "libavcodec.so.58 not found"
+fi
+
 # Copy hwi
 cp /hwi output/appdir/bin
 

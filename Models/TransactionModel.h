@@ -34,6 +34,7 @@ class Wallet;
 class Destination : public QObject {
     Q_OBJECT
 
+    Q_PROPERTY(QString label            READ label          NOTIFY addressChanged)
     Q_PROPERTY(QString address          READ address        NOTIFY addressChanged)
     Q_PROPERTY(QString amount           READ amountDisplay  NOTIFY amountChanged)
     Q_PROPERTY(QString amountBTC        READ amountBTC      NOTIFY amountChanged)
@@ -50,10 +51,11 @@ public:
 
     QString address() const;
     void setAddress(const QString & value);
+
+    QString label();
 private:
     QString address_;
     qint64 amount_;
-
 signals:
     void addressChanged();
     void amountChanged();
@@ -76,6 +78,7 @@ public:
     QMap<QString, qint64> getOutputs() const;
     void notifyUnitChanged();
     enum DestinationRoles {
+        destination_label_role,
         destination_address_role,
         destination_amount_role,
         destination_amount_btc_role,
@@ -138,6 +141,7 @@ class Transaction : public QObject {
     Q_PROPERTY(QString                      feeOtherKeysetBTC       READ feeOtherKeysetBTC                                  NOTIFY feeOtherKeysetChanged)
     Q_PROPERTY(QString                      feeOtherKeysetCurrency  READ feeOtherKeysetCurrency                             NOTIFY feeOtherKeysetChanged)
     Q_PROPERTY(qint64                       feeOtherKeysetSats      READ feeOtherKeyset                                     NOTIFY feeOtherKeysetChanged)
+    Q_PROPERTY(int                          keysetSelected          READ keysetSelected                                     NOTIFY keysetSelectedChanged)
 
 public:
     Transaction();
@@ -187,6 +191,7 @@ public:
     QString totalBTC() const;
 
     DestinationListModel* destinationList();
+    void createDestinationList();
 
     bool hasChange() const;
 
@@ -262,13 +267,15 @@ public:
     void setIsClaimTx(bool is_claim_tx);
 
     bool useScriptPath() const;
-    void setUseScriptPath(bool newUseScriptPath);
+    void setUseScriptPath(bool data, bool cached = false);
 
     QString feeOtherKeysetDisplay() const;
     QString feeOtherKeysetBTC() const;
     QString feeOtherKeysetCurrency() const;
     qint64  feeOtherKeyset() const;
     void setFeeOtherKeyset(qint64 data);
+    int  keysetSelected();
+    void setKeysetSelected(int index, bool cached = false);
 
 public slots:
     bool parseQRTransaction(const QStringList& qrtags);
@@ -306,7 +313,7 @@ private:
     bool                        m_isClaimTx {false};
     bool                        m_useScriptPath {false};
     qint64                      m_fee_otherKeyset {0};
-
+    int                         m_keysetSelected {-1};
 signals:
     void nunchukTransactionChanged();
     void isValidChanged();
@@ -325,6 +332,7 @@ signals:
     void requestFeeSelection();
     void useScriptPathChanged();
     void feeOtherKeysetChanged();
+    void keysetSelectedChanged();
 };
 typedef OurSharedPointer<Transaction> QTransactionPtr;
 

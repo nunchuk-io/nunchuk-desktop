@@ -348,15 +348,13 @@ QWalletPtr WalletListModel::getWalletByIndex(const int index)
 
 QWalletPtr WalletListModel::getWalletById(const QString &walletId)
 {
-    QReadLocker locker(&m_lock); // Multiple thread allowed
-    if (!m_data.isEmpty()) {
-        foreach (QWalletPtr it, m_data) {
-            if(qUtils::strCompare(walletId, it.data()->walletId())){
-                return it;
-            }
+    QReadLocker locker(&m_lock);
+    for (const QWalletPtr &walletPtr : std::as_const(m_data)) {
+        if (walletPtr && qUtils::strCompare(walletId, walletPtr->walletId())) {
+            return walletPtr;
         }
     }
-    return QWalletPtr(NULL);
+    return QWalletPtr();
 }
 
 bool WalletListModel::removeWallet(const QWalletPtr it)
@@ -439,26 +437,32 @@ void WalletListModel::refresh()
     endResetModel();
 }
 
-void WalletListModel::requestSort(int role, int order)
+void WalletListModel::requestSort()
 {
     beginResetModel();
     if(m_data.count() > 1){
-        switch (role) {
-        case wallet_createDate_Role:
-        {
-            if(Qt::DescendingOrder == order){
-                std::sort(m_data.begin(), m_data.end(), sortWalletByNameDescending);
-            }
-            else{
-                std::sort(m_data.begin(), m_data.end(), sortWalletByNameAscending);
-            }
-        }
-            break;
-        default:
-            break;
-        }
+        std::sort(m_data.begin(), m_data.end(), sortWalletByNameDescending);
     }
     endResetModel();
+}
+
+void WalletListModel::requestSortLastTimestamp()
+{
+    if(m_data.count() > 1){
+        QList<QWalletPtr> sortedData = m_data;
+        std::sort(sortedData.begin(), sortedData.end(), sortLastTimestamp);
+        bool needsSort = false;
+        for (int i = 0; i < m_data.size(); ++i) {
+            if (sortedData[i]->lastTime() != m_data[i]->lastTime()) {
+                needsSort = true;
+                break;
+            }
+        }
+        beginResetModel();
+        m_data = sortedData;
+        endResetModel();
+        emit refreshWalletList();
+    }
 }
 
 bool WalletListModel::containsId(const QString &id)
@@ -654,6 +658,24 @@ bool WalletListModel::hasAssistedWallet() const
     return false;
 }
 
+bool WalletListModel::swapWallets(const int from, const int to) {
+    if (from >= 0 && to >= 0 && from < m_data.size() && to < m_data.size()) {
+        std::swap(m_data[from], m_data[to]);
+        return true;
+    }
+    return false;
+}
+
+void WalletListModel::slotsMoveFinished(const QString &oldWalletId)
+{
+    if(oldWalletId.isEmpty()) return;
+    int index = getWalletIndexById(oldWalletId);
+    AppModel::instance()->setWalletListCurrentIndex(index);
+    // Save persistent data
+    AppSetting::instance()->setOrderWalletList(getOrderedWalletIds());
+    refresh();
+}
+
 int WalletListModel::currentIndex() const
 {
     return m_currentIndex;
@@ -671,16 +693,6 @@ void WalletListModel::startAllConversation()
     foreach (QWalletPtr it , m_data ){
         it->startDownloadConversation();
     }
-}
-
-bool sortWalletByNameAscending(const QWalletPtr &v1, const QWalletPtr &v2)
-{
-    return v1.data()->walletCreateDate() < v2.data()->walletCreateDate();
-}
-
-bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2)
-{
-    return v1.data()->walletCreateDate() > v2.data()->walletCreateDate();
 }
 
 Wallet *WalletListModel::currentWallet() const
@@ -701,4 +713,66 @@ void WalletListModel::setCurrentWallet(const QWalletPtr& newCurrentWallet)
         m_currentWallet.data()->conversations()->startDownloadConversation(wallet_id);
     }
     emit currentIndexChanged();
+}
+
+QStringList WalletListModel::getOrderedWalletIds() const {
+    QStringList ids;
+    for (const auto &wallet : m_data) {
+        ids.append(wallet->walletId());
+    }
+    return ids;
+}
+
+void WalletListModel::saveOrderWalletIds() {
+    AppSetting::instance()->setOrderWalletList(getOrderedWalletIds());
+}
+
+bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2)
+{
+    if (!v1 || !v2) {
+        return false;
+    }
+    // Retrieve the specific wallet order
+    QStringList walletIds = AppSetting::instance()->orderWalletList();
+
+    // If a specific wallet order is set, sort according to it
+    if (!walletIds.isEmpty()) {
+        int index1 = walletIds.indexOf(v1->walletId());
+        int index2 = walletIds.indexOf(v2->walletId());
+
+        // Wallets found in the order list are sorted by their positions
+        if (index1 != -1 && index2 != -1) {
+            return index1 < index2;
+        }
+
+        // Wallets not found in the order list are placed after those in the list
+        if (index1 != -1) {
+            return false;
+        }
+        if (index2 != -1) {
+            return true;
+        }
+    }
+
+    // Assisted wallets are placed on top
+    if (v1->isAssistedWallet() && !v2->isAssistedWallet()) {
+        return true;
+    }
+    if (!v1->isAssistedWallet() && v2->isAssistedWallet()) {
+        return false;
+    }
+
+    // Other wallets are ordered by creation time in descending order (newest first)
+    return v1->walletCreateDate().toTime_t() > v2->walletCreateDate().toTime_t();
+}
+
+bool sortLastTimestamp(const QWalletPtr &v1, const QWalletPtr &v2)
+{
+    if (!v1 || !v2 || v1.isNull() || v2.isNull() || !v1.data() || !v2.data()) {
+        return false; // Handle case where pointers are invalid or null
+    }
+    if (v1->lastTime() == 0 || v2->lastTime() == 0) {
+        return false; // Handle case where timestamps are not set
+    }
+    return v1->lastTime() > v2->lastTime();
 }

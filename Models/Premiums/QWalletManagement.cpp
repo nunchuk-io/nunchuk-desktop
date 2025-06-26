@@ -96,6 +96,11 @@ void QWalletManagement::GetListWallet(int mode)
             QString group_id    = wallet_obj["group_id"].toString();
             QString status      = wallet_obj["status"].toString();
             QString slug        = wallet_obj["slug"].toString();
+            bool    hide_fiat_currency = false;
+            if(wallet_obj.contains("hide_fiat_currency")){
+                hide_fiat_currency = wallet_obj["hide_fiat_currency"].toBool();
+            }
+            DBG_INFO << wallet_id << group_id << status << slug << hide_fiat_currency;
             if (status == "ACTIVE" || status == "LOCKED" || status == "REPLACED") {
                 QString myRole = "";
                 if(mode == GROUP_WALLET && group_id != "" && status != "REPLACED"){
@@ -111,12 +116,13 @@ void QWalletManagement::GetListWallet(int mode)
                         }
                     }
                 }
-                QWalletCached<QString, QString, QString, QString, bool> cachedData;
+                QWalletCached<QString, QString, QString, QString, bool, bool> cachedData;
                 cachedData.groupId  = group_id;
                 cachedData.slug = slug;
                 cachedData.myRole  = myRole;
                 cachedData.status = status;
                 cachedData.backedup = true;
+                cachedData.hideFiatCurrency = hide_fiat_currency;
                 AppSetting::instance()->setWalletCached(wallet_id, cachedData);
 
                 QString wallet_name = wallet_obj["name"].toString();

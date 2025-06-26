@@ -835,7 +835,7 @@ QDeviceListModelPtr AppModel::deviceListPtr() const
 void AppModel::setWalletList(const QWalletListModelPtr &d){
     m_walletList = d;
     if(m_walletList){
-        m_walletList.data()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
+        m_walletList.data()->requestSort();
     }
     emit walletListChanged();
 }
@@ -1171,7 +1171,7 @@ bool AppModel::parseQRWallet(const QString name, const QString desc, const QStri
         walletImported.data()->setWalletName(name);
         walletList()->addWallet(walletImported);
         resetSignersChecked();
-        walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
+        walletList()->requestSort();
         int index = walletList()->getWalletIndexById(walletImported.data()->walletId());
         if(-1 != index){
             setWalletListCurrentIndex(index);

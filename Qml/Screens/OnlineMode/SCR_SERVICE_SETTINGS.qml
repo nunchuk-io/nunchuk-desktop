@@ -88,11 +88,94 @@ QScreen {
                     Qt.openUrlExternally(link)
             }
         ]
+
+        function orderNewHardware() {
+            _InfoVer.link = "https://nunchuk.io/hardware-replacement";
+            _InfoVer.contentText = STR.STR_QML_735;
+            _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
+            _InfoVer.open();
+            return false;
+        }
+
+        function getAdditionalWallets() {
+            ServiceSetting.servicesTag.additionalGetWalletConfig()
+            _InfoVer.link = "https://nunchuk.io/my-plan";
+            var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count !== undefined ? ServiceSetting.servicesTag.walletConfig.remaining_wallet_count : 0;
+            _InfoVer.contentText = (remainCount === 1 ? STR.STR_QML_842.arg(remainCount) : STR.STR_QML_841.arg(remainCount));
+            _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
+            _InfoVer.open();
+            return false;
+        }
+
+        function rollOverNewAssistedWallet() {
+            _InfoVer.link = "https://nunchuk.io/hardware-replacement";
+            _InfoVer.contentText = STR.STR_QML_735;
+            _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
+            _InfoVer.open();
+            return false;
+        }
+
+        function manageSubscription() {
+            _InfoVer.link = "https://nunchuk.io/my-plan";
+            _InfoVer.contentText = STR.STR_QML_684;
+            _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
+            _InfoVer.open();
+            return false;
+        }
+
+        function notPaidAlert() {
+            _InfoVer.link = "https://nunchuk.io/claim"
+            _InfoVer.linkTop = true
+            _InfoVer.contentText = STR.STR_QML_771
+            _InfoVer.labels = [STR.STR_QML_772,STR.STR_QML_341]
+            _InfoVer.open();
+        }
+
+        function isExpiredAlert() {
+            _InfoVer.link = "https://nunchuk.io/claim"
+            _InfoVer.linkTop = true
+            _InfoVer.contentText = STR.STR_QML_750
+            _InfoVer.labels = [STR.STR_QML_751,STR.STR_QML_079]
+            _InfoVer.open();
+        }
+
+        function securityDepositRequiredAlert(errormsg) {
+            _InfoVer.link = "https://nunchuk.io/claim"
+            _InfoVer.linkTop = true
+            _InfoVer.title = STR.STR_QML_1823
+            _InfoVer.contentText = errormsg
+            _InfoVer.labels = [STR.STR_QML_1825,STR.STR_QML_341]
+            _InfoVer.open();
+        }
     }
+
     QPopupInfo{
         id:_info1
         contentText: STR.STR_QML_752
+        function replace_keys() {
+            _info1.title = STR.STR_QML_339
+            _info1.contentText = STR.STR_QML_1347
+            _info1.open()
+            return true;
+        }
+        function thereNoWalletAssitedAlert() {
+            _info1.title = STR.STR_QML_339
+            _info1.contentText = STR.STR_QML_839
+            _info1.open()
+        }
+        function securityCoSigningDelayAlert() {
+            _info1.contentText = STR.STR_QML_1344
+            _info1.title = STR.STR_QML_339
+            _info1.open()
+        }
+        function comeBackLaterAlert(errormsg) {
+            _info1.title = STR.STR_QML_1821
+            _info1.contentText = errormsg
+            _info1.open()
+        }        
     }
+    
+    
     QConfirmYesNoPopup{
         id:_confirm
         property var fClose

@@ -23,7 +23,7 @@ bool SandboxWallet::needBackup()
 {
     if(isGlobalGroupWallet()){
         bool needBackup = true;
-        QWalletCached<QString, QString, QString, QString, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             needBackup = !data.backedup;
@@ -41,12 +41,13 @@ bool SandboxWallet::needBackup()
 void SandboxWallet::setNeedBackup(const bool data)
 {
     if(isGlobalGroupWallet()){
-        QWalletCached<QString, QString, QString, QString, bool> cache;
+        QWalletCached<QString, QString, QString, QString, bool, bool> cache;
         cache.groupId   = groupId();
         cache.slug      = slug();
         cache.myRole    = myRole();
         cache.status    = status();
         cache.backedup  = !data;
+        cache.hideFiatCurrency = isByzantineGuardian();
         AppSetting::instance()->setWalletCached(walletId(), cache);
         emit needBackupChanged();
     }
@@ -98,7 +99,7 @@ QGroupSandbox *SandboxWallet::groupSandbox()
 void SandboxWallet::startGetUnreadMessage()
 {
     QPointer<SandboxWallet> safeThis(this);
-    runInConcurrent([safeThis]() -> int {
+    runInThread([safeThis]() -> int {
         SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
         return bridge::GetUnreadMessagesCount(ptrLamda->walletId());
     },[safeThis](int number) {
@@ -106,6 +107,7 @@ void SandboxWallet::startGetUnreadMessage()
                         ptrLamda->setUnreadMessage(number);
                         if (auto list = AppModel::instance()->groupWalletList()) {
                             list->unReadMessageCountChanged();
+                            list->requestSortLastTimestamp();
                         }
                     });
 
@@ -206,6 +208,13 @@ QGroupMessageModel *SandboxWallet::conversations()
     return m_conversations.data();
 }
 
+time_t SandboxWallet::lastTime()
+{
+    if(conversations() && conversations()->rowCount() > 0){
+        return conversations()->lastGroupMessage().get_ts();
+    }
+    return time_t(0);
+}
 
 bool SandboxWallet::showbubbleChat() const
 {

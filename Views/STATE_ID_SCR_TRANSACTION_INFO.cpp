@@ -245,6 +245,7 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
                         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                 }
+                AppSetting::instance()->deleteWalletCached(txid);
                 AppModel::instance()->setTransactionInfo( QTransactionPtr(new Transaction()));
             }
         }

@@ -34,40 +34,41 @@ import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 
-Row {
+Column {
+    property string destination_label: ""
     property string destination_address: ""
     property string destination_amount: ""
     property string destination_amount_currency: ""
-    width: parent.width - 24
-    spacing: 12
     signal addrClicked(var addr)
-    QText {
-        width: 192
-        lineHeightMode: Text.FixedHeight
-        lineHeight: 20
-        wrapMode: Text.WrapAnywhere
-        font.pixelSize: 16
-        font.weight: Font.Bold
-        color: "#031F2B"
-        font.family: "Lato"
-        text: destination_address
-        MouseArea {
-            id: btnMouseVerify
-            visible: useMouseArea
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            anchors.fill: parent
-            onClicked: {
-                addrClicked(destination_address)
-            }
+
+    width: parent.width - 24
+    spacing: 4
+    Row {
+        width: parent.width
+        height: 16
+        spacing: 4
+        visible: destination_label !== ""
+        QIcon {
+            iconSize: 16
+            source: "qrc:/Images/Images/fav_bookmark_24px.svg"
+        }
+        QText {
+            width: parent.width - 20
+            lineHeightMode: Text.FixedHeight
+            lineHeight: 16
+            wrapMode: Text.WrapAnywhere
+            font.pixelSize: 12
+            color: "#031F2B"
+            font.family: "Lato"
+            text: destination_label
+            verticalAlignment: Text.AlignVCenter
         }
     }
-    Column {
-        width: 122
-        spacing: 4
-        anchors.verticalCenter: parent.verticalCenter
+    Row {
+        width: parent.width
+        spacing: 12
         QText {
-            width: parent.width
+            width: 192
             lineHeightMode: Text.FixedHeight
             lineHeight: 20
             wrapMode: Text.WrapAnywhere
@@ -75,22 +76,60 @@ Row {
             font.weight: Font.Bold
             color: "#031F2B"
             font.family: "Lato"
-            text: destination_amount + RoomWalletData.unitValue
-            horizontalAlignment: Text.AlignRight
+            text: destination_address
+            verticalAlignment: Text.AlignVCenter
+            MouseArea {
+                id: btnMouseVerify
+                visible: useMouseArea
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                anchors.fill: parent
+                onClicked: {
+                    addrClicked(destination_address)
+                }
+            }
         }
-        QText {
+        Column {
+            width: 122
+            spacing: 4
+            anchors.bottom: parent.bottom
+            QText {
+                width: parent.width
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 20
+                wrapMode: Text.WrapAnywhere
+                font.pixelSize: 16
+                font.weight: Font.Bold
+                color: "#031F2B"
+                font.family: "Lato"
+                text: destination_amount + RoomWalletData.unitValue
+                horizontalAlignment: Text.AlignRight
+            }
+            QText {
+                width: parent.width
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 16
+                wrapMode: Text.WrapAnywhere
+                font.pixelSize: 12
+                color: "#031F2B"
+                font.family: "Lato"
+                text: qsTr("%1%2 %3")
+                .arg(AppSetting.currencySymbol)
+                .arg(destination_amount_currency)
+                .arg(AppSetting.currency)
+                horizontalAlignment: Text.AlignRight
+                visible: !AppModel.walletInfo.isByzantineGuardian
+            }
+        }
+    }
+    Item {
+        width: parent.width - 24
+        height: 8
+        Rectangle {
             width: parent.width
-            lineHeightMode: Text.FixedHeight
-            lineHeight: 16
-            wrapMode: Text.WrapAnywhere
-            font.pixelSize: 12
-            color: "#031F2B"
-            font.family: "Lato"
-            text: qsTr("%1%2 %3")
-            .arg(AppSetting.currencySymbol)
-            .arg(destination_amount_currency)
-            .arg(AppSetting.currency)
-            horizontalAlignment: Text.AlignRight
+            height: 1
+            color: "#DEDEDE"
+            anchors.bottom: parent.bottom
         }
     }
 }

@@ -85,6 +85,7 @@ Column {
         Column {
             width: 122
             spacing: 4
+            anchors.bottom: parent.bottom
             QText {
                 width: parent.width
                 lineHeightMode: Text.FixedHeight
@@ -110,6 +111,7 @@ Column {
                 .arg(transactionInfo.change.amountCurrency)
                 .arg(AppSetting.currency)
                 horizontalAlignment: Text.AlignRight
+                visible: !AppModel.walletInfo.isByzantineGuardian
             }
         }
     }

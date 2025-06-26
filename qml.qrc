@@ -207,6 +207,7 @@
         <file>Qml/Components/customizes/QHomeFreeRate.qml</file>
         <file>Qml/Components/customizes/QHomeManagerSigners.qml</file>
         <file>Qml/Components/customizes/QHomeManagerWallets.qml</file>
+        <file>Qml/Components/customizes/QManagerActiveWallets.qml</file>
         <file>Qml/Components/customizes/QHomePendingWallet.qml</file>
         <file>Qml/Components/customizes/Buttons/QRefreshButtonA.qml</file>
         <file>Qml/Components/customizes/QWarningBg.qml</file>

@@ -1258,7 +1258,7 @@ void Controller::slotFinishCreateWallet(nunchuk::Wallet ret,
         QString wallet_id = QString::fromStdString(ret.get_id());
         AppModel::instance()->walletList()->addWallet(bridge::convertWallet(ret));
         AppModel::instance()->resetSignersChecked();
-        AppModel::instance()->walletList()->requestSort(WalletListModel::WalletRoles::wallet_createDate_Role, Qt::AscendingOrder);
+        AppModel::instance()->walletList()->requestSort();
         int index = AppModel::instance()->walletList()->getWalletIndexById(wallet_id);
         bool replaceFree = false;
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
@@ -1497,6 +1497,7 @@ void Controller::slotFinishReloadWallets(std::vector<nunchuk::Wallet> wallets)
             emit WalletsMng->getListWalletFinish();
         }
         AppModel::instance()->createPrimaryKeyList();
+        AppModel::instance()->walletList()->requestSort();
     }
     if(ONLINE_MODE == bridge::nunchukCurrentMode()){
         if(CLIENT_INSTANCE->isNunchukLoggedIn() && CLIENT_INSTANCE->isMatrixLoggedIn()){

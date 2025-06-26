@@ -37,16 +37,16 @@ import "../../../localization/STR_QML.js" as STR
 
 Item {
     id: _item
-    property var walletInfo                 : AppModel.walletInfo
-    property bool   existWallet             : false
-    property string myRole                  : walletInfo.myRole
-    property bool   walletKeyNeedBackup     : walletInfo.keyNeedBackup
-    property bool   walletNeedBackup        : walletInfo.needBackup
-    property bool   walletIsReplaced        : walletInfo.isReplaced
-    property bool   walletIsAssisted        : walletInfo.isAssistedWallet
-    property bool   walletIsShared          : walletInfo.isSharedWallet
-    property bool   walletIsLocked          : walletInfo.isLocked
-    property bool   walletIsSandboxWallet   : walletInfo.isGlobalGroupWallet
+    property var walletInfo                     : AppModel.walletInfo
+    property bool   existWallet                 : false
+    property string myRole                      : walletInfo.myRole
+    property bool   walletKeyNeedBackup         : walletInfo.keyNeedBackup
+    property bool   walletNeedBackup            : walletInfo.needBackup
+    property bool   walletIsReplaced            : walletInfo.isReplaced
+    property bool   walletIsAssisted            : walletInfo.isAssistedWallet
+    property bool   walletIsShared              : walletInfo.isSharedWallet
+    property bool   walletIsLocked              : walletInfo.isLocked
+    property bool   walletIsSandboxWallet       : walletInfo.isGlobalGroupWallet
     anchors.fill: parent
     anchors.margins: 24
     Column {
@@ -66,23 +66,24 @@ Item {
             height: 60
             content: STR.STR_QML_1265
             onHyperlinkClicked: {
-                _info2.contentText = STR.STR_QML_1268
-                _info2.labels = [STR.STR_QML_097,STR.STR_QML_1276]
-                _info2.funcs = [
-                            function() {
-                                if(walletInfo.allowBackup()) {
+                if(walletInfo.allowBackup()) {
+                    _info2.contentText = STR.STR_QML_1268
+                    _info2.labels = [STR.STR_QML_097,STR.STR_QML_1276]
+                    _info2.funcs = [
+                                function() {
                                     OnBoarding.screenFlow = "seedPhrase"
                                     QMLHandle.sendEvent(EVT.EVT_ONBOARDING_REQUEST)                                
-                                } else {
-                                    _info1.title = STR.STR_QML_339
-                                    _info1.contentText = STR.STR_QML_1773
-                                }                                
-                            },
-                            function() {
-                                _info2.close()
-                            }
-                        ]
-                _info2.open();
+                                },
+                                function() {
+                                    _info2.close()
+                                }
+                            ]
+                    _info2.open();                            
+                } else {
+                    _info1.title = STR.STR_QML_339
+                    _info1.contentText = STR.STR_QML_1773
+                    _info1.open()
+                }                
             }
         }
 
@@ -753,6 +754,7 @@ Item {
                     memoWidth: width*0.20
                     amountWidth: width*0.25
                     transactionIsRbf: transaction_isRbf
+                    walletIsByzantineGuardian: walletInfo.isByzantineGuardian
                     isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
                     onButtonClicked: {
                         QMLHandle.signalNotifySendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transactiontxid)

@@ -88,7 +88,7 @@ QGoogleSigninView::QGoogleSigninView(QWidget* parent) : QWebEngineView(parent) {
         m_loadingOverlay->hide();
     });
 
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     connect(QEventProcessor::instance(), &QEventProcessor::visibleChanged, this, [this](bool visible) {
         if(!visible){
             close();

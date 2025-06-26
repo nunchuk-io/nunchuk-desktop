@@ -243,7 +243,7 @@ bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHar
         if (hardware.mTags.contains("INHERITANCE") && !tags.contains("INHERITANCE")) { // Request receive from Mobile Banner
             tags.append("INHERITANCE");
         }
-        data["name"] = tags.contains("INHERITANCE") ? data["name"].toString() + "(inh.)" : data["name"].toString();
+        data["name"] = tags.contains("INHERITANCE") && !data["name"].toString().contains("(inh.)") ? data["name"].toString() + "(inh.)" : data["name"].toString();
         data["tags"] = tags;
         data["tapsigner"] = {};
         if (hardware.mKeyIndex >= 0) {

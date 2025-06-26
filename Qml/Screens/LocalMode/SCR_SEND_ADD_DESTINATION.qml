@@ -1119,16 +1119,8 @@ QScreen {
         id: signingPolicy
         width: parent.width
         height: parent.height
-        // visible: true
-        onCloseClicked : {
-
-        }
         onContinueClicked : {
-            requestCreateTransaction(use_script_path)
-        }
-        onFeeSettingClicked: {
-            // QMLHandle.sendEvent(EVT.EVT_SEND_FEE_SETTING_REQUEST)
-            console.log("Fee Setting Clicked")
+            requestCreateTransaction(use_script_path, keyset_index)
         }
     }
 
@@ -1221,9 +1213,10 @@ QScreen {
         }
         walletList.model = filterOutWallet
     }
-    function requestCreateTransaction(use_script_path) {
+    function requestCreateTransaction(use_script_path, keyset_index) {
         createTxBusyBox.open()
         timerCreateTx.destinationData["use_script_path"] = use_script_path
+        timerCreateTx.destinationData["use_keyset_index"] = keyset_index
         timerCreateTx.restart()
     }
     Connections {

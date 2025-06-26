@@ -1260,6 +1260,17 @@ void SingleSignerListModel::requestSortKeyset()
     endResetModel();
 }
 
+void SingleSignerListModel::requestSortKeysetSelected()
+{
+    if(AppModel::instance()->transactionInfo()){
+        beginResetModel();
+        if(m_data.count() > 1){
+            qSort(m_data.begin(), m_data.end(), sortSingleSignerByKetsetSelected);
+        }
+        endResetModel();
+    }
+}
+
 QList<QSingleSignerPtr > SingleSignerListModel::fullList() const
 {
     return m_data;
@@ -1483,4 +1494,20 @@ bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSi
 bool sortSingleSignerByKeysetIndexAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
 {
     return (v1->keysetIndex() < v2->keysetIndex());
+}
+
+bool sortSingleSignerByKetsetSelected(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2)
+{
+    auto txInfo = AppModel::instance()->transactionInfo();
+    if (!txInfo) {
+        return v1->keysetIndex() < v2->keysetIndex();
+    }
+
+    int selected = txInfo->keysetSelected();
+    bool v1_IsSelectedGroup = (v1->keysetIndex() == selected);
+    bool v2_IsSelectedGroup = (v2->keysetIndex() == selected);
+    if (v1_IsSelectedGroup != v2_IsSelectedGroup){
+        return v1_IsSelectedGroup;
+    }
+    return v1->keysetIndex() < v2->keysetIndex();
 }

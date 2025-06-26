@@ -241,6 +241,7 @@ void EVT_SHARE_YOUR_SECRET_REQUEST_HANDLER(QVariant msg) {
 void EVT_REENTER_YOUR_PASSWORD_REQUEST_HANDLER(QVariant msg) {}
 
 void EVT_ONBOARDING_REQUEST_HANDLER(QVariant msg) {
+    AppModel::instance()->walletList()->saveOrderWalletIds();
     QWalletServicesTag::instance()->additionalGetWalletConfig();
 }
 

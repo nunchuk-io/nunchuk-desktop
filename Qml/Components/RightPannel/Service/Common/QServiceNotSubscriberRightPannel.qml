@@ -73,7 +73,7 @@ Item {
                 if (ServiceSetting.servicesTag.inheritanceCheck()) {
                     ServiceSetting.optionIndex = _CLAIM_AN_INHERITANCE
                 } else {
-                    _clainNot.showPopup()
+                    _InfoVer.notPaidAlert()
                 }
             }
             bgColor: "transparent"
@@ -202,14 +202,7 @@ Item {
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {
-            _clainNot.showPopup()
+            _InfoVer.notPaidAlert()
         }
-    }
-    function showPopup() {
-        _InfoVer.link = "https://nunchuk.io/claim"
-        _InfoVer.linkTop = true
-        _InfoVer.contentText = STR.STR_QML_771
-        _InfoVer.labels = [STR.STR_QML_772,STR.STR_QML_341]
-        _InfoVer.open();
     }
 }

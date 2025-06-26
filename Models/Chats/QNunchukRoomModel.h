@@ -309,7 +309,7 @@ public:
     QHash<int, QByteArray> roleNames() const;
     QNunchukRoomPtr getRoomByIndex(const int index) const;
     QNunchukRoomPtr getRoomById(const QString& id) const;
-    int getIndex(const QString& id) const;
+    Q_INVOKABLE int getIndex(const QString& id) const;
     Quotient::Connection *connection();
     void downloadRooms();
     void downloadRoomWallets();
@@ -393,6 +393,7 @@ signals:
     void byzantineRoomCreated(QString room_id, QString group_id, bool existed);
     void byzantineRoomDeleted(QString room_id, QString group_id);
     void byzantineRoomRenamed(QString room_id, QString group_id);
+    void refreshRoomList();
 public slots:
     bool hasContact(const QString &id);
     void newRoom(Quotient::Room* room);

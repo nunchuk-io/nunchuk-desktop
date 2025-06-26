@@ -45,33 +45,6 @@ Flickable {
         id: roomsDisplay
         width: parent.width
         QListView {
-            id: roomlist
-            clip: true
-            width: parent.width
-            height: contentHeight
-            model: ClientController.rooms
-            interactive: false
-            currentIndex: ClientController.rooms ? 0 : ClientController.rooms.currentIndex
-            delegate: QRoomDelegate {
-                contactAvt: model.room_avatar
-                userCount: model.users_count
-                contactname: model.name
-                roomJoinState: model.joinstate
-                unReadCount: model.unreadCount
-                isCurrentItem: index === flickerRooms.globalCurrentIndex
-                lasttimestamp: model.lasttimestamp
-                walletReady: model.wallet_ready
-                usersTyping: model.typing_users
-                lastmessage: model.last_message
-                isEncrypted: model.is_encrypted
-                onItemClicked: {
-                    flickerRooms.globalCurrentIndex = index
-                    ClientController.rooms.currentIndex = index
-                    flickerRooms.itemClicked(index)
-                }
-            }
-        }
-        QListView {
             id: groupwallets
             clip: true
             width: parent.width
@@ -83,14 +56,60 @@ Flickable {
                 userCount: model.wallet_N
                 contactname: model.wallet_name
                 unReadCount: model.wallet_unreadMessage
-                isCurrentItem: index + roomlist.count === flickerRooms.globalCurrentIndex
+                isCurrentItem: index === flickerRooms.globalCurrentIndex
                 lasttimestamp: model.wallet_conversation.lasttimestamp
                 lastmessage: model.wallet_conversation.lastMessage
                 isEncrypted: false
                 onItemClicked: {
-                    flickerRooms.globalCurrentIndex = index + roomlist.count
+                    flickerRooms.globalCurrentIndex = index
                     AppModel.groupWalletList.currentIndex = index
                     itemGroupWalletClick(index)
+                }
+            }
+        }
+        Connections {
+            target: AppModel.groupWalletList
+            onRefreshWalletList: {
+                if (flickerRooms.globalCurrentIndex < groupwallets.count) {
+                    var index = AppModel.groupWalletList.getWalletIndexById(AppModel.groupWalletList.currentWallet.walletId)
+                    flickerRooms.globalCurrentIndex = index
+                    AppModel.groupWalletList.currentIndex = index
+                }                
+            }
+        }
+        QListView {
+            id: roomlist
+            clip: true
+            width: parent.width
+            height: contentHeight
+            model: ClientController.rooms
+            interactive: false
+            delegate: QRoomDelegate {
+                contactAvt: model.room_avatar
+                userCount: model.users_count
+                contactname: model.name
+                roomJoinState: model.joinstate
+                unReadCount: model.unreadCount
+                isCurrentItem: (index + groupwallets.count) === flickerRooms.globalCurrentIndex
+                lasttimestamp: model.lasttimestamp
+                walletReady: model.wallet_ready
+                usersTyping: model.typing_users
+                lastmessage: model.last_message
+                isEncrypted: model.is_encrypted
+                onItemClicked: {
+                    flickerRooms.globalCurrentIndex = index + groupwallets.count
+                    ClientController.rooms.currentIndex = index
+                    flickerRooms.itemClicked(index)
+                }
+            }
+        }
+        Connections {
+            target: ClientController.rooms
+            onRefreshRoomList: {
+                if (flickerRooms.globalCurrentIndex >= groupwallets.count) {
+                    var index = ClientController.rooms.getIndex(ClientController.rooms.currentRoom.roomid)
+                    flickerRooms.globalCurrentIndex = index + groupwallets.count
+                    ClientController.rooms.currentIndex = index
                 }
             }
         }

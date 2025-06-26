@@ -699,6 +699,16 @@ bool BaseWallet::isContainKey(const QString &xfp)
     return false;
 }
 
+bool BaseWallet::isByzantineGuardian()
+{
+    QWalletCached<QString, QString, QString, QString, bool, bool> data;
+    bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
+    if(ret){
+        return data.hideFiatCurrency;
+    }
+    return false;
+}
+
 void BaseWallet::setValueKeyset(int index)
 {
     DBG_INFO << index;

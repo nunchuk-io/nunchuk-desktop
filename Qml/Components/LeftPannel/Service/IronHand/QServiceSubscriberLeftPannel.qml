@@ -51,26 +51,11 @@ Item {
             ServiceSetting.clearWalletInfo()
             return true;
         }},
-        {screen:_GET_ADDITIONAL_WALLETS,            visible: true, enable:true,  title:STR.STR_QML_707, icon: ""   ,action: function(){
-            ServiceSetting.servicesTag.additionalGetWalletConfig()
-            _InfoVer.link = "https://nunchuk.io/my-plan";
-            var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count !== undefined ? ServiceSetting.servicesTag.walletConfig.remaining_wallet_count : 0;
-            _InfoVer.contentText = (remainCount === 1 ? STR.STR_QML_842.arg(remainCount) : STR.STR_QML_841.arg(remainCount));
-            _InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];
-            _InfoVer.open();
-            return false;
-        } },
-        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET, visible: true, enable:true,  title:STR.STR_QML_1352,icon: ""   ,action: function(){ return replace_keys() } },
-        {screen:_ORDER_NEW_HARDWARE,                visible: true, enable:true,  title:STR.STR_QML_700, icon: ""   ,action: function(){_InfoVer.link = "https://nunchuk.io/hardware-replacement";_InfoVer.contentText = STR.STR_QML_735;_InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];_InfoVer.open(); return false;} },
-        {screen:_MANAGE_SUBSCRIPTION,               visible: true, enable:true,  title:STR.STR_QML_682, icon: ""   ,action: function(){_InfoVer.link = "https://nunchuk.io/my-plan";_InfoVer.contentText = STR.STR_QML_684;_InfoVer.labels = [STR.STR_QML_341,STR.STR_QML_683];_InfoVer.open(); return false;}}
+        {screen:_GET_ADDITIONAL_WALLETS,            visible: true, enable:true,  title:STR.STR_QML_707, icon: ""   ,action: function(){ return _InfoVer.getAdditionalWallets() } },
+        {screen:_REPLACE_KEY_IN_AN_ASSISTED_WALLET, visible: true, enable:true,  title:STR.STR_QML_1352,icon: ""   ,action: function(){ return _info1.replace_keys() } },
+        {screen:_ORDER_NEW_HARDWARE,                visible: true, enable:true,  title:STR.STR_QML_700, icon: ""   ,action: function(){ return _InfoVer.orderNewHardware()} },
+        {screen:_MANAGE_SUBSCRIPTION,               visible: true, enable:true,  title:STR.STR_QML_682, icon: ""   ,action: function(){ return _InfoVer.manageSubscription() }}
     ]
-
-    function replace_keys() {
-        _info1.title = STR.STR_QML_339
-        _info1.contentText = STR.STR_QML_1347
-        _info1.open()
-        return true;
-    }
 
     property var itemOption: option_map.find(function(e) {if (e.screen === ServiceSetting.optionIndex) return true; else return false})
     Component.onCompleted: {

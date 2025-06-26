@@ -191,7 +191,7 @@ void QGroupDashboard::GetAlertsInfo()
 {
     if (isReplaced()) return;
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread([safeThis]() ->QJsonArray{
+    runInThread([safeThis]() -> QJsonArray {
         SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
         QJsonObject output;
         QString error_msg = "";
@@ -207,12 +207,12 @@ void QGroupDashboard::GetAlertsInfo()
         }
         DBG_INFO << ret;
         return output["alerts"].toArray();
-    },[safeThis](QJsonArray alerts) {
+    }, [safeThis](QJsonArray alerts) {
         SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
         QJsonArray v_alerts;
         for (auto js : alerts) {
             QJsonObject alert = js.toObject();
-            long int created_time_millis = static_cast<long int>(alert.value("created_time_millis").toDouble()/1000);
+            long int created_time_millis = static_cast<long int>(alert.value("created_time_millis").toDouble() / 1000);
             QDateTime date_time = QDateTime::fromTime_t(created_time_millis);
             alert["created_time_millis"] = QString("%1 at %2")
                                                .arg(date_time.date().toString("MM/dd/yyyy"))
@@ -353,6 +353,8 @@ void QGroupDashboard::GetDraftWalletInfo()
         SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
         if (!draft_wallet.isEmpty()) {
             DBG_INFO << draft_wallet;
+            QJsonArray signers = draft_wallet["signers"].toArray();
+            ptrLamda->m_signerInfo = signers;
             ptrLamda->m_walletDraftInfo = draft_wallet;
             ptrLamda->UpdateKeys(draft_wallet);
         }
@@ -1452,13 +1454,13 @@ QStringList QGroupDashboard::getNameSameTag(const QString &tag)
 QString QGroupDashboard::createName(const QString &tag, int &index)
 {
     QMap<QString, QString> maps;
-    maps["COLDCARD"] = "Coldcard";
+    maps["COLDCARD"] = "COLDCARD";
     maps["BITBOX"] = "BitBox";
     maps["LEDGER"] = "Ledger";
     maps["TREZOR"] = "Trezor";
     maps["JADE"] = "Jade";
     QStringList names = getNameSameTag(tag);
-    QString name = maps[tag] + (index == 0 ? "" : QString("#%1").arg(index));
+    QString name = maps[tag] + (index == 0 ? "" : QString(" #%1").arg(index + 1));
     if (names.contains(name)) {
         index++;
         name = createName(tag, index);

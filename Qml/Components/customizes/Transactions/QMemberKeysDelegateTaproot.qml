@@ -72,10 +72,14 @@ Rectangle {
         width: 326
         spacing: 12
         Loader {
+            sourceComponent: titleOtherKeysets
+            visible: (index == keysetM) && (transactionInfo.keysetsCount > 1)
+        }
+        Loader {
             visible: {
                 if(sourceComponent === null) { return false;}
                 else{
-                    if(keysetIndex === 0 || index <= keysetM) {return true;}
+                    if(index < keysetM) {return true;}
                     else { return GlobalData.showOthersKeyset;}
                 }
             }
@@ -85,11 +89,8 @@ Rectangle {
                         if(keysetIndex == 0){
                             return valueKeyset
                         }
-                        else if(keysetIndex == 1){
-                            return otherKeyset
-                        }
                         else {
-                            return otherKeysetElse
+                            return otherKeyset
                         }
                     }
                     else {
@@ -98,7 +99,7 @@ Rectangle {
                 }
                 else {
                     if(index % keysetM === 0){
-                        return otherKeysetElse
+                        return otherKeyset
                     }
                     else {
                         return null;
@@ -109,7 +110,7 @@ Rectangle {
         Column {
             spacing: 4
             width: parent.width
-            visible: keysetIndex === 0 ? true : GlobalData.showOthersKeyset
+            visible: (index < keysetM) ? true : GlobalData.showOthersKeyset
             Row {
                 spacing: 8
                 Rectangle {
@@ -402,7 +403,14 @@ Rectangle {
             property int keyset_status: keysetStatus
             property int keyset_pending_number: keysetRemaining
             implicitWidth: 326
-            implicitHeight: valueKeysetLayout.height + 24
+            implicitHeight: 36
+            Rectangle {
+                width: 326
+                height: 1
+                color: "#DEDEDE"
+                visible: index !== keysetM && index !== 0
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
             Row {
                 id: valueKeysetLayout
                 anchors.centerIn: parent
@@ -495,97 +503,20 @@ Rectangle {
             property int keyset_status: keysetStatus
             property int keyset_pending_number: keysetRemaining
             width: 326
-            height: 80
+            height: 36
+            Rectangle {
+                width: 326
+                height: 1
+                color: "#DEDEDE"
+                visible: index !== keysetM && index !== 0
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
             Column {
                 id: otherKeysetItemLayout
-                Rectangle {
-                    width: 354
-                    height: 1
-                    color: "#DEDEDE"
-                    visible: keysetIndex !== 0
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.horizontalCenterOffset: -16
-                }
-                Row {
-                    spacing: 8
-                    height: 52
-                    QImage {
-                        width: 20
-                        height: 20
-                        source: "qrc:/Images/Images/OtherKeyset.png"
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    QLato {
-                        width: 81
-                        height: 16
-                        text: "Other Keyset"
-                        font.pixelSize: 12
-                        color: "#031F2B"
-                        font.weight: Font.Bold
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    Rectangle {
-                        width: 22
-                        height: 16
-                        radius: 20
-                        color: "#DEDEDE"
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        QLato {
-                            text: (transactionInfo.keysetsCount -1)
-                            font.pixelSize: 12
-                            color: "#031F2B"
-                            font.weight: Font.Bold
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            anchors.centerIn: parent
-                        }
-                    }
-                    Item {
-                        width: 115
-                        height: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    Item {
-                        width: 48
-                        height: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        Row {
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.right: parent.right
-                            spacing: 4
-                            QLato {
-                                text: GlobalData.showOthersKeyset ? "Hide" : "View all"
-                                font.pixelSize: 12
-                                color: "#031F2B"
-                                font.weight: Font.Bold
-                                horizontalAlignment: Text.AlignLeft
-                                verticalAlignment: Text.AlignVCenter
-                                font.underline: true
-                            }
-                            QImage {
-                                width: 16
-                                height: 16
-                                source: GlobalData.showOthersKeyset ? "qrc:/Images/Images/expand_less_24px.png" : "qrc:/Images/Images/expand_more_24px.png"
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                GlobalData.showOthersKeyset = !GlobalData.showOthersKeyset
-                            }
-                        }
-                    }
-                }
+                anchors.verticalCenter: parent.verticalCenter
                 Item {
                     width: 326
                     height: 16
-                    visible: GlobalData.showOthersKeyset
                     Row {
                         spacing: 4
                         QLato {
@@ -652,83 +583,92 @@ Rectangle {
         }
     }
     Component {
-        id: otherKeysetElse
+        id: titleOtherKeysets
         Item {
-            id: otherKeysetElseItem
+            id: titleOtherKeysetsItem
             property int keyset_index: keysetIndex
             property int keyset_status: keysetStatus
             property int keyset_pending_number: keysetRemaining
             width: 326
-            height: 48
+            height: 36
             Rectangle {
-                width: 326
+                width: 354
                 height: 1
                 color: "#DEDEDE"
-                visible: keysetIndex !== 0
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            Item {
-                width: parent.width
-                height: 16
-                anchors.verticalCenter: parent.verticalCenter
-                Row {
-                    spacing: 4
+            Row {
+                spacing: 8
+                height: 52
+                QImage {
+                    width: 20
+                    height: 20
+                    source: "qrc:/Images/Images/OtherKeyset.png"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QLato {
+                    width: 81
+                    height: 16
+                    text: "Other Keyset"
+                    font.pixelSize: 12
+                    color: "#031F2B"
+                    font.weight: Font.Bold
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Rectangle {
+                    width: 22
+                    height: 16
+                    radius: 20
+                    color: "#DEDEDE"
+                    anchors.verticalCenter: parent.verticalCenter
+
                     QLato {
-                        width: 60
-                        height: 16
-                        text: qsTr("Keyset %1").arg(otherKeysetElseItem.keyset_index+1)
+                        text: (transactionInfo.keysetsCount -1)
                         font.pixelSize: 12
                         color: "#031F2B"
                         font.weight: Font.Bold
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
+                        anchors.centerIn: parent
                     }
-                    Item {
-                        width: 16
-                        height: 16
-                        QImage {
-                            width: 16
-                            height: 16
-                            visible: (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                            source: "qrc:/Images/Images/PendingSignatures.png"
-                        }
-                    }
-                    Item {
-                        width: 155
-                        height: 16
+                }
+                Item {
+                    width: 115
+                    height: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Item {
+                    width: 48
+                    height: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        spacing: 4
                         QLato {
-                            anchors.fill: parent
-                            text: qsTr("Pending %1 %2%3").arg(otherKeysetElseItem.keyset_pending_number)
-                                                         .arg(otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE ? "nonce" : "signature")
-                                                         .arg(otherKeysetElseItem.keyset_pending_number > 1 ? "s" : "")
+                            text: GlobalData.showOthersKeyset ? "Hide" : "View all"
                             font.pixelSize: 12
-                            color: "#757575"
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            visible: (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                        }
-                    }
-                    Rectangle {
-                        width: 76
-                        height: 16
-                        radius: 20
-                        color: {
-                            if (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST) {return "#1C652D"}
-                            else if (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "#FFCB2E"}
-                            else {return "#FDEBD2"}
-                        }
-                        QLato {
-                            anchors.centerIn: parent
-                            text: {
-                                if (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) {return "Round 1/2"}
-                                else if (otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "Round 2/2"}
-                                else {return "Completed"}
-                            }
-                            font.pixelSize: 12
-                            color: otherKeysetElseItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST ? "#FFFFFF" : "#1C1C1C"
+                            color: "#031F2B"
                             font.weight: Font.Bold
                             horizontalAlignment: Text.AlignLeft
                             verticalAlignment: Text.AlignVCenter
+                            font.underline: true
+                        }
+                        QImage {
+                            width: 16
+                            height: 16
+                            source: GlobalData.showOthersKeyset ? "qrc:/Images/Images/expand_less_24px.png" : "qrc:/Images/Images/expand_more_24px.png"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            GlobalData.showOthersKeyset = !GlobalData.showOthersKeyset
                         }
                     }
                 }

@@ -312,7 +312,11 @@ QOnScreenContentTypeA {
                             if (isAssisted) {
                                 QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, walletInfo)
                             } else if (isHotWallet) {
-                                _infoHotWallet.open();
+                                if(walletInfo.allowBackup()) {
+                                    _infoHotWallet.open();
+                                } else {
+                                    modelConfirmDelete.open();
+                                }                                
                             } else {
                                 modelConfirmDelete.open();
                             }

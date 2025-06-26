@@ -246,7 +246,7 @@ Item {
                 }
                 Column {
                     id: automaticFeeSelection
-                    visible: false // TBD 0206
+                    visible: AppSetting.enableAutoFeeFunction
                     spacing: 16
                     Row {
                         spacing: 0
@@ -284,6 +284,8 @@ Item {
                             label: STR.STR_QML_1758
                             boxWidth: 450
                             boxHeight: 48
+                            titleFontSize: 12
+                            textweight: Font.Bold
                             isValid: true
                             validator: RegExpValidator { regExp: /[0-9]*/ }
                             textInputted: AppSetting.thresholdPercentDisplay
@@ -293,6 +295,8 @@ Item {
                             label: STR.STR_QML_1759
                             boxWidth: 450
                             boxHeight: 48
+                            titleFontSize: 12
+                            textweight: Font.Bold
                             isValid: true
                             validator: DoubleValidator {
                                 bottom: 0.00

@@ -427,6 +427,14 @@ int QWalletServicesTag::inheritanceDownloadBackup(const QString &magic, const QS
             // show popup: Your inheritance plan has not been activated yet. Please try again later.
             emit hasNotBeenActivatedYetAlert();
             break;
+        case DRACO_CODE::INHERITANCE_829:
+            // show popup: Please come back later
+            emit comeBackLaterAlert(errormsg);
+            break;
+        case DRACO_CODE::INHERITANCE_830:
+            // show popup: Security deposit required
+            emit securityDepositRequiredAlert(errormsg);
+            break;
         default:
             AppModel::instance()->showToast(response_code, errormsg, EWARNING::WarningType::EXCEPTION_MSG);
             break;

@@ -72,21 +72,19 @@ Item {
     Connections {
         target: ServiceSetting.servicesTag
         onNotPaidAlert: {
-            _InfoVer.link = "https://nunchuk.io/claim"
-            _InfoVer.linkTop = true
-            _InfoVer.contentText = STR.STR_QML_771
-            _InfoVer.labels = [STR.STR_QML_772,STR.STR_QML_341]
-            _InfoVer.open();
+            _InfoVer.notPaidAlert()
         }
         onIsExpiredAlert: {
-            _InfoVer.link = "https://nunchuk.io/claim"
-            _InfoVer.linkTop = true
-            _InfoVer.contentText = STR.STR_QML_750
-            _InfoVer.labels = [STR.STR_QML_751,STR.STR_QML_079]
-            _InfoVer.open();
+            _InfoVer.isExpiredAlert()
         }
         onHasNotBeenActivatedYetAlert: {
             _info1.open()
+        }
+        onComeBackLaterAlert: {
+            _info1.comeBackLaterAlert(errormsg)
+        }
+        onSecurityDepositRequiredAlert:  {
+            _InfoVer.securityDepositRequiredAlert(errormsg)
         }
     }
     Component {

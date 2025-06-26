@@ -112,7 +112,7 @@ Rectangle {
                         anchors {
                             right: parent.right
                             rightMargin: 12
-                            verticalCenter: parent.verticalCenter
+                            bottom: parent.bottom
                         }
                         QLato {
                             width: parent.width
@@ -133,6 +133,7 @@ Rectangle {
                             horizontalAlignment: Text.AlignRight
                             verticalAlignment: Text.AlignVCenter
                             font.pixelSize: 12
+                            visible: !AppModel.walletInfo.isByzantineGuardian
                         }
                     }
                 }

@@ -42,18 +42,19 @@ Row {
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignLeft
             }
-            QTooltip {
-                tipWidth: 300
-                pointerPositionIndex: 6
-                pointerPositionRatio: 10
-                toolTip: STR.STR_QML_807
-                source: "qrc:/Images/Images/help_outline_24px.svg"
-            }
+            // QTooltip {
+            //     tipWidth: 300
+            //     pointerPositionIndex: 6
+            //     pointerPositionRatio: 10
+            //     toolTip: STR.STR_QML_807
+            //     source: "qrc:/Images/Images/help_outline_24px.svg"
+            // }
         }
     }
     Column {
         width: 122
         spacing: 4
+        anchors.bottom: parent.bottom
         QText {
             width: parent.width
             lineHeightMode: Text.FixedHeight
@@ -79,6 +80,7 @@ Row {
             .arg(transactionInfo.feeCurrency)
             .arg(AppSetting.currency)
             horizontalAlignment: Text.AlignRight
+            visible: !AppModel.walletInfo.isByzantineGuardian
         }
     }
 }

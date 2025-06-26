@@ -999,12 +999,13 @@ nunchuk::Transaction nunchukiface::CreateTransaction(const std::string& wallet_i
                                                      bool subtract_fee_from_amount,
                                                      const std::string& replace_txid,
                                                      bool anti_fee_sniping,
+                                                     bool use_script_path,
                                                      QWarningMessage& msg)
 {
     nunchuk::Transaction ret;
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->CreateTransaction(wallet_id, outputs, memo, inputs, fee_rate, subtract_fee_from_amount, replace_txid, anti_fee_sniping);
+            ret = nunchuk_instance_[nunchukMode()]->CreateTransaction(wallet_id, outputs, memo, inputs, fee_rate, subtract_fee_from_amount, replace_txid, anti_fee_sniping, use_script_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {
@@ -1052,12 +1053,13 @@ nunchuk::Transaction nunchukiface::ReplaceTransaction(const std::string& wallet_
                                                       const std::string &tx_id,
                                                       nunchuk::Amount new_fee_rate,
                                                       bool anti_fee_sniping,
+                                                      bool use_script_path,
                                                       QWarningMessage& msg)
 {
     nunchuk::Transaction ret;
     try {
         if(nunchuk_instance_[nunchukMode()]){
-            ret = nunchuk_instance_[nunchukMode()]->ReplaceTransaction(wallet_id, tx_id, new_fee_rate);
+            ret = nunchuk_instance_[nunchukMode()]->ReplaceTransaction(wallet_id, tx_id, new_fee_rate, use_script_path);
         }
     }
     catch (const nunchuk::BaseException &ex) {

@@ -4186,7 +4186,6 @@ bool Draco::SignInUsingXPUBorWallet(const QString &bsms, QJsonObject &output, QS
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
-        emit createAccountResult(reply_code, response_code, response_msg);
         if(response_code == DRACO_CODE::RESPONSE_OK){
             output = jsonObj["data"].toObject();
             return true;

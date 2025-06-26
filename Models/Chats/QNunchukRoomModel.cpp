@@ -2988,10 +2988,14 @@ void QNunchukRoomListModel::refresh(QNunchukRoomPtr room, const QVector<int> &ro
 
 void QNunchukRoomListModel::resort()
 {
+    if (m_data.count() < 2){
+        return;
+    }
     beginResetModel();
     qSort(m_data.begin(), m_data.end(), sortRoomListByTimeDescending);
     endResetModel();
     setCurrentIndex(m_data.indexOf(currentRoomPtr()));
+    emit refreshRoomList();
 }
 
 void QNunchukRoomListModel::roomNeedTobeLeaved(const QString &id)

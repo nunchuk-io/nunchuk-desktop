@@ -31,10 +31,7 @@ public:
     QGroupSandboxPtr groupSandboxPtr();
     void updateGroupSandbox(const nunchuk::GroupSandbox &value);
     void setGroupSandbox(QGroupSandboxPtr sandbox);
-    // Group message
-    void startGetUnreadMessage();
-    void startDownloadConversation();
-    void startSendGroupMessage(const QString &message);
+    
     // Groupwallet
     void GetGroupWalletConfig();
     int  numberOnline();
@@ -44,6 +41,7 @@ public:
     int  retentionDays();
     void setRetentionDays(const int days);
     QGroupMessageModel *conversations();
+    time_t lastTime();
     bool showbubbleChat() const;
     void setShowbubbleChat(bool data);
     void markAsReadMessage(const QString&msg_id);
@@ -53,6 +51,10 @@ public:
     void GetReplaceGroups();
     QVariantList replaceGroups();
 public slots:
+    // Group message
+    void startGetUnreadMessage();
+    void startDownloadConversation();
+    void startSendGroupMessage(const QString &message);
     void requestAcceptReplaceGroup(const QString &sandbox_id);
     void requestDeclineReplaceGroup(const QString &sandbox_id);
 signals:

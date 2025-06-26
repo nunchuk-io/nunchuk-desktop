@@ -37,6 +37,7 @@ Row {
     Column {
         width: 122
         spacing: 4
+        anchors.bottom: parent.bottom
         QLato {
             width: parent.width
             lineHeightMode: Text.FixedHeight
@@ -62,6 +63,7 @@ Row {
             .arg(transactionInfo.totalCurrency)
             .arg(AppSetting.currency)
             horizontalAlignment: Text.AlignRight
+            visible: !AppModel.walletInfo.isByzantineGuardian
         }
     }
 }

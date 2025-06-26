@@ -286,7 +286,7 @@ QOnScreenContentTypeA {
             _confirm.contentText = STR.STR_QML_243_used
             _confirm.action = function() {
                 _confirm.action = function() { requestDeleteKey() }
-                _confirm.contentText = STR.STR.STR_QML_1772
+                _confirm.contentText = STR.STR_QML_1772
                 _confirm.open()
             }
             _confirm.open()

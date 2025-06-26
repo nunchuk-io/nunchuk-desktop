@@ -54,8 +54,7 @@ Item {
             }
         }
         onThereNoAssistedWalletAlert: {
-            _info1.contentText = STR.STR_QML_839
-            _info1.open();
+            _info1.thereNoWalletAssitedAlert()
         }
     }
     Connections {
@@ -188,9 +187,7 @@ Item {
                     var signing_delay_seconds_new = broadcast.signing_delay_seconds
                     var signing_delay_seconds_old = serverKeyInfo.policies.signing_delay_seconds
                     if (signing_delay_seconds_new < signing_delay_seconds_old) {
-                        _info1.contentText = STR.STR_QML_1344
-                        _info1.title = STR.STR_QML_339
-                        _info1.open()
+                        _info1.securityCoSigningDelayAlert()
                         _info1.action = function() {
                             serverKeyInfo.setKeyCoSigning(get_policies())
                             QMLHandle.sendEvent(EVT.EVT_CO_SIGNING_SERVER_KEY_UPDATE_REQUEST)

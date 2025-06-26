@@ -437,6 +437,7 @@ QTransactionPtr nunchukCreateTransaction(const QString& wallet_id,
                                          const bool subtract_fee_from_amount,
                                          const QString &replace_txid,
                                          bool anti_fee_sniping,
+                                         bool use_script_path,
                                          QWarningMessage &msg);
 
 QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
@@ -446,6 +447,7 @@ QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
                                                const int fee_rate,
                                                const QString &replace_txid,
                                                bool anti_fee_sniping,
+                                               bool use_script_path,
                                                QWarningMessage &msg);
 
 QTransactionPtr nunchukDraftTransaction(const QString& wallet_id,
@@ -471,6 +473,7 @@ QTransactionPtr nunchukReplaceTransaction(const QString &wallet_id,
                                           const QString& tx_id,
                                           const int new_fee_rate,
                                           bool anti_fee_sniping,
+                                          bool use_script_path,
                                           QWarningMessage &msg);
 
 void nunchukUpdateTransactionMemo(const QString &wallet_id,

@@ -66,6 +66,7 @@ Column {
                 leftMargin: 12
             }
             width: parent.width
+            destination_label: model.destination_label
             destination_address: model.destination_address
             destination_amount: model.destination_amount
             destination_amount_currency: model.destination_amount_currency
@@ -73,13 +74,6 @@ Column {
                 addressClicked(addr)
             }
         }
-    }
-    Rectangle {
-        anchors {
-            left: parent.left
-            leftMargin: 12
-        }
-        width: parent.width - 12*2; height: 1; color: "#EAEAEA"
     }
     QEstimatedFee {
         anchors.horizontalCenter: parent.horizontalCenter

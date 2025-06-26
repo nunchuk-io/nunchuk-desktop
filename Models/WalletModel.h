@@ -48,6 +48,7 @@ typedef OurSharedPointer<Wallet> QWalletPtr;
 
 bool sortWalletByNameAscending(const QWalletPtr &v1, const QWalletPtr &v2);
 bool sortWalletByNameDescending(const QWalletPtr &v1, const QWalletPtr &v2);
+bool sortLastTimestamp(const QWalletPtr &v1, const QWalletPtr &v2);
 
 class WalletListModel : public QAbstractListModel
 {
@@ -85,10 +86,11 @@ public:
     void notifyUnitChanged();
     void updateSignerHealthStatus(const QString& xfp, const int status, const time_t time);
     void notifyMasterSignerDeleted(const QString& masterSignerId);
-    int getWalletIndexById(const QString& walletId);
+    Q_INVOKABLE int getWalletIndexById(const QString& walletId);
     void updateHealthCheckTime();
     void refresh();
-    void requestSort(int role, int order);
+    void requestSort();
+    void requestSortLastTimestamp();
     bool containsId(const QString& id);
     void updateSharedWalletById(const QString &wallet_id, const QString &room_id, const QString &init_id, const QString &name);
     void updateSignerOfRoomWallet(const QString &wallet_id, const SignerAssigned &signer);
@@ -145,10 +147,14 @@ public:
     QWalletPtr currentWalletPtr() const;
     void setCurrentWallet(const QWalletPtr&newCurrentWallet);
 
+    QStringList getOrderedWalletIds() const;
+    void saveOrderWalletIds();
+
 public slots:
     QVariant removeOrNot(const QString& masterFingerPrint);
     bool hasAssistedWallet() const;
-
+    bool swapWallets(const int from, const int to);
+    void slotsMoveFinished(const QString &oldWalletId);
 private:
     QList<QWalletPtr> m_data;
     int m_currentIndex {0};
@@ -160,6 +166,7 @@ signals:
     void containsGroupChanged();
     void currentIndexChanged();
     void unReadMessageCountChanged();
+    void refreshWalletList();
 };
 typedef OurSharedPointer<WalletListModel> QWalletListModelPtr;
 

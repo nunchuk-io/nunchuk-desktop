@@ -40,8 +40,10 @@ QWalletDelegateBackground {
     property string walletM: "0"
     property string walletN: "0"
     property var    primaryOwner
+    property bool   mouseActive: true
     MouseArea {
         id: walletmouse
+        enabled: mouseActive
         hoverEnabled: true
         propagateComposedEvents: true
         anchors.fill: parent

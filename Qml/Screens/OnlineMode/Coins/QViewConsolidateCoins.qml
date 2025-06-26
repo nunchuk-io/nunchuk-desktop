@@ -84,10 +84,6 @@ QOnScreenContentTypeB {
             id: signingPolicy
             width: parent.width
             height: parent.height
-            // visible: true
-            onCloseClicked : {
-
-            }
             onContinueClicked : {
                 var saved = [];
                 var savedObj = {
@@ -98,13 +94,10 @@ QOnScreenContentTypeB {
                 var destinationObj = {
                     "destinationList"    : saved,
                     "destinationMemo"    : _note.textInputted,
-                    "use_script_path"    : use_script_path
+                    "use_script_path"    : use_script_path,
+                    "use_keyset_index"   : keyset_index,
                 };
                 walletInfo.requestConsolidateMakeTransaction(destinationObj)
-            }
-            onFeeSettingClicked: {
-                // QMLHandle.sendEvent(EVT.EVT_SEND_FEE_SETTING_REQUEST)
-                console.log("Fee Setting Clicked")
             }
         }
 

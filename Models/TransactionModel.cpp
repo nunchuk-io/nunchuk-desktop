@@ -77,6 +77,17 @@ void Destination::setAddress(const QString &value){
     }
 }
 
+QString Destination::label()
+{
+    QStringList fav = AppSetting::instance()->favoriteAddresses();
+    for (const QString &item : fav) {
+        if (item.contains(address_, Qt::CaseInsensitive)) {
+            return item.split("[split]")[0];
+        }
+    }
+    return "";
+}
+
 void Destination::setAmount(const qint64 value){
     if(value != amount_){
         amount_ = value;
@@ -97,6 +108,8 @@ int DestinationListModel::rowCount(const QModelIndex &parent) const {
 
 QVariant DestinationListModel::data(const QModelIndex &index, int role) const {
     switch (role) {
+    case destination_label_role:
+        return m_data[index.row()]->label();
     case destination_address_role:
         return m_data[index.row()]->address();
     case destination_amount_role:
@@ -112,6 +125,7 @@ QVariant DestinationListModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> DestinationListModel::roleNames() const {
     QHash<int, QByteArray> roles;
+    roles[destination_label_role] = "destination_label";
     roles[destination_address_role] = "destination_address";
     roles[destination_amount_role] = "destination_amount";
     roles[destination_amount_btc_role] = "destination_amount_btc";
@@ -121,7 +135,7 @@ QHash<int, QByteArray> DestinationListModel::roleNames() const {
 
 void DestinationListModel::addDestination(const QString &address, const qint64 amount) {
     qint64 am = 0;
-    if(!contains(address, am)){
+    if (!contains(address, am)) {
         beginResetModel();
         m_data.append(QDestinationPtr(new Destination(address, amount)));
         endResetModel();
@@ -139,9 +153,10 @@ QMap<QString, qint64> DestinationListModel::getOutputs() const
 
 bool DestinationListModel::contains(const QString &address, qint64 &amount)
 {
-    foreach (QDestinationPtr i , m_data ){
-        if(address == i.data()->address()){
-            amount = i.data()->amountSats();
+    for (const auto &dest : std::as_const(m_data)) {
+        auto ptr = dest.data();
+        if (qUtils::strCompare(address, ptr->address())) {
+            amount = ptr->amountSats();
             return true;
         }
     }
@@ -150,9 +165,10 @@ bool DestinationListModel::contains(const QString &address, qint64 &amount)
 
 qint64 DestinationListModel::getAmountByAddress(const QString &address)
 {
-    foreach (QDestinationPtr i , m_data ){
-        if(address == i.data()->address()){
-            return i.data()->amountSats();
+    for (const auto &dest : std::as_const(m_data)) {
+        const auto *ptr = dest.data();
+        if (address == ptr->address()) {
+            return ptr->amountSats();
         }
     }
     return 0;
@@ -210,7 +226,7 @@ Transaction::Transaction(const nunchuk::Transaction &tx):
     m_createByMe(true),
     m_serverKeyMessage("")
 {
-
+    createDestinationList();
 }
 
 Transaction::~Transaction()
@@ -492,14 +508,16 @@ void Transaction::setFeeOtherKeyset(qint64 data)
 
 bool Transaction::useScriptPath() const
 {
+    DBG_INFO << "use_script_path" << m_useScriptPath;
     return m_useScriptPath;
 }
 
-void Transaction::setUseScriptPath(bool newUseScriptPath)
+void Transaction::setUseScriptPath(bool data, bool cached)
 {
-    if (m_useScriptPath == newUseScriptPath)
+    DBG_INFO << "use_script_path" << data;
+    if (m_useScriptPath == data)
         return;
-    m_useScriptPath = newUseScriptPath;
+    m_useScriptPath = data;
     emit useScriptPathChanged();
 }
 
@@ -798,7 +816,12 @@ SingleSignerListModel *Transaction::singleSignersAssigned() {
                     }
                 }
                 if(m_keysets){
-                    m_keysets.data()->requestSortKeyset();
+                    if(walletAddress_Type == (int)nunchuk::AddressType::TAPROOT && wallet_Type == (int)nunchuk::WalletType::MULTI_SIG && (keysetSelected() > 0)){
+                        m_keysets.data()->requestSortKeysetSelected();
+                    }
+                    else {
+                        m_keysets.data()->requestSortKeyset();
+                    }
                 }
                 if(m_keysets){
                     emit m_keysets.data()->keyinfoChanged();
@@ -961,30 +984,29 @@ QString Transaction::totalBTC() const
 }
 
 DestinationListModel *Transaction::destinationList() {
-    if(!m_destinations){
-        m_destinations = QDestinationListModelPtr(new DestinationListModel());
-    }
-    m_destinations.data()->clearAll();
+    return m_destinations.data();
+}
 
+void Transaction::createDestinationList() {
+    if(m_destinations.isNull()) return;
+    m_destinations.data()->clearAll();
     std::vector<nunchuk::TxOutput> addrs;
-    if(isReceiveTx()){
+    if (isReceiveTx()) {
         addrs = m_transaction.get_receive_outputs();
         for (std::pair<std::string, nunchuk::Amount> item : addrs) {
             m_destinations.data()->addDestination(QString::fromStdString(item.first), item.second);
         }
-    }
-    else{
+    } else {
         addrs = m_transaction.get_outputs();
         int index_change = m_transaction.get_change_index();
         size_t maxSize = m_isClaimTx ? 1 : addrs.size();
-        for (size_t i = 0; i < maxSize; i++){
-            if(index_change != i){
+        for (size_t i = 0; i < maxSize; i++) {
+            if (index_change != i) {
                 std::pair<std::string, nunchuk::Amount> item = addrs.at(i);
                 m_destinations.data()->addDestination(QString::fromStdString(item.first), item.second);
             }
         }
     }
-    return m_destinations.data();
 }
 
 QString Transaction::get_replaced_by_txid() const
@@ -1006,6 +1028,7 @@ void Transaction::setNunchukTransaction(const nunchuk::Transaction &tx)
 {
     DBG_INFO << "TAPROOT-TEST";
     m_transaction = tx;
+    createDestinationList();
     emit nunchukTransactionChanged();
 }
 
@@ -1122,6 +1145,27 @@ bool Transaction::isCpfp()
     }
     DBG_INFO << ret << packageFeeRate;
     return ret;
+}
+
+int Transaction::keysetSelected()
+{
+    QString tx_id = txid();
+    if(m_keysetSelected == -1){
+        m_keysetSelected = AppSetting::instance()->getTransactionKeysetIndex(tx_id);
+    }
+    return m_keysetSelected;
+}
+
+void Transaction::setKeysetSelected(int index, bool cached)
+{
+    if (m_keysetSelected == index)
+        return;
+    m_keysetSelected = index;
+    if(cached){
+        QString tx_id = txid();
+        AppSetting::instance()->setTransactionKeysetIndex(tx_id, m_keysetSelected);
+    }
+    emit keysetSelectedChanged();
 }
 
 TransactionListModel::TransactionListModel() {
@@ -1417,38 +1461,54 @@ int TransactionListModel::count() const
 
 bool sortTXsByBlocktimeAscending(const QTransactionPtr &v1, const QTransactionPtr &v2)
 {
-    if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() <= 0){
-        if(v1.data()->status() == v2.data()->status()){
-            return (v1.data()->totalSats() > v2.data()->totalSats());
+    const auto d1 = v1.data();
+    const auto d2 = v2.data();
+
+    const qint64 blocktime1 = d1->blocktime();
+    const qint64 blocktime2 = d2->blocktime();
+    const int status1 = d1->status();
+    const int status2 = d2->status();
+    const qint64 sats1 = d1->totalSats();
+    const qint64 sats2 = d2->totalSats();
+
+    if (blocktime1 <= 0 && blocktime2 <= 0) {
+        if (status1 != status2){
+            return status1 < status2;
         }
-        else if(v1.data()->status() < v2.data()->status()){
-            return (true);
+        if (sats1 != sats2){
+            return sats1 > sats2;
         }
-        else{
-            return v1.data()->blocktime() < v2.data()->blocktime();
-        }
+        return false;
     }
-    else if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() > 0){ return true;}
-    else if(v1.data()->blocktime() > 0 && v2.data()->blocktime() <= 0){ return false;}
-    else {return v1.data()->blocktime() < v2.data()->blocktime();}
+    if (blocktime1 <= 0) return true;
+    if (blocktime2 <= 0) return false;
+    return blocktime1 < blocktime2;
 }
 
 bool sortTXsByBlocktimeDescending(const QTransactionPtr &v1, const QTransactionPtr &v2)
 {
-    if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() <= 0){
-        if(v1.data()->status() == v2.data()->status()){
-            return (v1.data()->totalSats() > v2.data()->totalSats());
+    const auto d1 = v1.data();
+    const auto d2 = v2.data();
+
+    const qint64 blocktime1 = d1->blocktime();
+    const qint64 blocktime2 = d2->blocktime();
+    const int status1 = d1->status();
+    const int status2 = d2->status();
+    const qint64 sats1 = d1->totalSats();
+    const qint64 sats2 = d2->totalSats();
+
+    if (blocktime1 <= 0 && blocktime2 <= 0) {
+        if (status1 != status2){
+            return status1 < status2;
         }
-        else if(v1.data()->status() < v2.data()->status()){
-            return (true);
+        if (sats1 != sats2){
+            return sats1 > sats2;
         }
-        else{
-            return v1.data()->blocktime() < v2.data()->blocktime();
-        }
+        return false;
     }
-    else if(v1.data()->blocktime() <= 0 && v2.data()->blocktime() > 0){ return true;}
-    else if(v1.data()->blocktime() > 0 && v2.data()->blocktime() <= 0){ return false;}
-    else {return v1.data()->blocktime() > v2.data()->blocktime();}
+    if (blocktime1 <= 0) return true;
+    if (blocktime2 <= 0) return false;
+    return blocktime1 > blocktime2;
 }
 
 bool sortTXsByAmountAscending(const QTransactionPtr &v1, const QTransactionPtr &v2)

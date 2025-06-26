@@ -217,69 +217,10 @@ Rectangle {
                             }
                         }
                     }
-                    QListView {
+                    QManagerActiveWallets {
                         id: walletList
-                        height: contentHeight
                         width: parent.width - 32
                         anchors.horizontalCenter: parent.horizontalCenter
-                        visible: walletList.count > 0
-                        model: AppModel.walletList
-                        interactive: false
-                        currentIndex: AppModel.walletListCurrentIndex
-                        spacing: 4
-                        delegate: QWalletManagerDelegate {
-                            id: walletListdelegate
-                            width: walletList.width
-                            isCurrentIndex: (!pendingList.visible) ? (walletList.visible) && (index === walletList.currentIndex) :
-                                                                     (walletList.visible) && (index === walletList.currentIndex)
-                                                                     && (GlobalData.listFocusing === _FOCUS_WALLET)
-                            walletCurrency: model.wallet_Balance_Currency
-                            walletName :model.wallet_name
-                            walletBalance: model.wallet_Balance
-                            walletM: model.wallet_M
-                            walletN: model.wallet_N
-                            walletRole: model.wallet_role
-                            hasOwner: model.wallet_hasOwner
-                            primaryOwner: model.wallet_primaryOwner
-                            isHotWallet: model.wallet_isHotWallet
-                            isDashboard: model.wallet_slug !== ""
-                            isLocked: model.wallet_dashboard ? (model.wallet_dashboard.isLocked || model.wallet_isLocked || model.wallet_isReplaced) : false
-                            isReplaced: model.wallet_isReplaced
-                            isEscrow: model.wallet_Escrow
-                            isShared: model.wallet_isSharedWallet
-                            isAssisted: model.wallet_isAssistedWallet
-                            isSandboxWallet: model.wallet_isSanboxWallet
-                            isArchived: model.wallet_isArchived
-                            onDashboard: {
-                                GlobalData.listFocusing = _FOCUS_WALLET
-                                var obj = {
-                                    type: "wallet_dashboard",
-                                    data: index,
-                                    group_id: model.wallet_group_id,
-                                    wallet_id: model.wallet_id
-                                }
-                                QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
-                            }
-                            onButtonClicked: {
-                                GlobalData.listFocusing = _FOCUS_WALLET
-                                var obj = {
-                                    type: "selected",
-                                    data: index,
-                                    group_id: model.wallet_group_id,
-                                    wallet_id: model.wallet_id
-                                }
-                                QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
-                            }
-
-                            layer.enabled: true
-                            layer.effect: OpacityMask {
-                                maskSource: Rectangle {
-                                    width: walletListdelegate.width
-                                    height: walletListdelegate.height
-                                    radius: 8
-                                }
-                            }
-                        }
                     }
                 }
             }

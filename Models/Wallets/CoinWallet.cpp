@@ -1230,11 +1230,18 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
 {
     auto draftTransactionInput = msg.toMap();
     DBG_INFO << "CreateDraftTransaction called with msg:" << draftTransactionInput;
-    bool contains_use_script_path = draftTransactionInput.contains("use_script_path");
-    bool use_script_path_selected = false;
+    bool contains_use_script_path  = draftTransactionInput.contains("use_script_path");
+    bool contains_use_keyset_index = draftTransactionInput.contains("use_keyset_index");
+
+    bool use_script_path = false;
+    int  use_keyset_index = 0;
     if(contains_use_script_path){
-        DBG_INFO << "Draft transaction input use_script_path" << use_script_path_selected;
-        use_script_path_selected = draftTransactionInput.value("use_script_path").toBool();
+        use_script_path = draftTransactionInput.value("use_script_path").toBool();
+        DBG_INFO << "Draft transaction input use_script_path" << use_script_path;
+    }
+    if(contains_use_keyset_index){
+        use_keyset_index = draftTransactionInput.value("use_keyset_index").toInt();
+        DBG_INFO << "Draft transaction input use_keyset_index" << use_keyset_index;
     }
 
     QString memo = draftTransactionInput.value("destinationMemo").toString();
@@ -1303,14 +1310,15 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
                                                             feerate,
                                                             subtractFromAmount,
                                                             "",
-                                                            use_script_path_selected,
+                                                            use_script_path,
                                                             msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
         AppModel::instance()->setTransactionInfo(trans);
         AppModel::instance()->transactionInfo()->setMemo(memo);
-        AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path_selected);
-#if 0 // TBD TMP 0206
-        if(walletInfo->enableValuekeyset() && AppSetting::instance()->enableAutoFeeSelection() && !contains_use_script_path){
+        AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
+        AppModel::instance()->transactionInfo()->setKeysetSelected(use_keyset_index);
+#if ENABLE_AUTO_FEE
+        if(walletInfo->enableValuekeyset() && !contains_use_script_path){
             msgwarning.resetWarningMessage();
             QTransactionPtr trans_script = bridge::nunchukDraftTransaction(wallet_id,
                                                                            outputs,
@@ -1321,19 +1329,27 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
                                                                            true,
                                                                            msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans_script){
-                double valueKeysetFee = trans.data()->feeCurrency().toDouble();
-                double otherKeysetFee = trans_script.data()->feeCurrency().toDouble();
-                DBG_INFO << "Value keyset fee:" << valueKeysetFee << "Other keyset fee:" << otherKeysetFee;
+                AppModel::instance()->transactionInfo()->setFeeOtherKeyset(trans_script.data()->feeSats());
+                if(AppSetting::instance()->enableAutoFeeSelection()){
+                    DBG_INFO << "Enable auto fee selection";
+                    double valueKeysetFee = trans.data()->feeCurrency().toDouble();
+                    double otherKeysetFee = trans_script.data()->feeCurrency().toDouble();
+                    DBG_INFO << "Value keyset fee:" << valueKeysetFee << "Other keyset fee:" << otherKeysetFee;
 
-                double thresholdAmount = AppSetting::instance()->thresholdAmount();
-                int thresholdPercent = AppSetting::instance()->thresholdPercent();
-                double feeDifference = otherKeysetFee - valueKeysetFee;
-                double percentDifference = (std::abs(valueKeysetFee - otherKeysetFee) / ((valueKeysetFee + otherKeysetFee) / 2.0)) * 100.0;
-                if ((feeDifference > thresholdAmount) || percentDifference > thresholdPercent) {
-                    DBG_INFO << "Difference fee between value keyset and other keyset is greater than threshold" << feeDifference << percentDifference;
-                    AppModel::instance()->transactionInfo()->setFeeOtherKeyset(trans_script.data()->feeSats());
+                    double thresholdAmount = AppSetting::instance()->thresholdAmount();
+                    int thresholdPercent = AppSetting::instance()->thresholdPercent();
+                    double feeDifference = otherKeysetFee - valueKeysetFee;
+                    double percentDifference = (std::abs(valueKeysetFee - otherKeysetFee) / ((valueKeysetFee + otherKeysetFee) / 2.0)) * 100.0;
+                    if ((feeDifference > thresholdAmount) || percentDifference > thresholdPercent) {
+                        DBG_INFO << "Difference fee between value keyset and other keyset is greater than threshold" << feeDifference << percentDifference;
+                        emit AppModel::instance()->transactionInfo()->requestFeeSelection();
+                        return true;
+                    }
+                }
+                else {
+                    DBG_INFO << "Disable auto fee selection";
                     emit AppModel::instance()->transactionInfo()->requestFeeSelection();
-                    return false;
+                    return true;
                 }
             }
         }

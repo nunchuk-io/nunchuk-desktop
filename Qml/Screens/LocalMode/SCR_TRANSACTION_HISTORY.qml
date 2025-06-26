@@ -198,6 +198,7 @@ QScreen {
                     confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
                     transactionDate: transaction_blocktime
                     isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
+                    walletIsByzantineGuardian: AppModel.walletInfo.isByzantineGuardian
                     onButtonClicked: {
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_INFO_ITEM_SELECTED, transaction_txid)
                     }

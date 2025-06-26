@@ -763,6 +763,7 @@ QTransactionPtr bridge::nunchukCreateTransaction(const QString &wallet_id,
                                                  const bool subtract_fee_from_amount,
                                                  const QString &replace_txid,
                                                  bool anti_fee_sniping,
+                                                 bool use_script_path,
                                                  QWarningMessage& msg)
 {
     std::map<std::string, nunchuk::Amount> out;
@@ -794,9 +795,13 @@ QTransactionPtr bridge::nunchukCreateTransaction(const QString &wallet_id,
                                                                                     subtract_fee_from_amount,
                                                                                     replace_txid.toStdString(),
                                                                                     anti_fee_sniping,
+                                                                                    use_script_path,
                                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
+        if(final){
+            final.data()->setUseScriptPath(use_script_path);
+        }
         return final;
     }
     else{
@@ -812,6 +817,7 @@ QTransactionPtr bridge::nunchukCancelCreateTransaction(const QString &wallet_id,
                                                        const int fee_rate,
                                                        const QString &replace_txid,
                                                        bool anti_fee_sniping,
+                                                       bool use_script_path,
                                                        QWarningMessage &msg)
 {
     auto inputs = nunchukiface::instance()->GetUnspentOutputsFromTxInputs(wallet_id.toStdString(), origin_tx.get_inputs(), msg);
@@ -828,9 +834,12 @@ QTransactionPtr bridge::nunchukCancelCreateTransaction(const QString &wallet_id,
                                                                                     true,
                                                                                     replace_txid.toStdString(),
                                                                                     anti_fee_sniping,
+                                                                                    use_script_path,
                                                                                     msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
+        QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);        if(final){
+            final.data()->setUseScriptPath(use_script_path);
+        }
         return final;
     }
     else{
@@ -1059,8 +1068,9 @@ void bridge::nunchukUpdateWallet(const QString &wallet_id, const QString &name, 
             QString group_id = AppModel::instance()->walletInfo()->groupId();
             CLIENT_INSTANCE->renameRoomByzantineChat(room_id, group_id, name);
 
-            if(AppModel::instance()->groupWalletList()){
-                AppModel::instance()->groupWalletList()->updateNunchukWallet(wallet_id, wallet);
+            if(auto groupList = AppModel::instance()->groupWalletList()){
+                groupList->updateNunchukWallet(wallet_id, wallet);
+                groupList->requestSortLastTimestamp();
             }
         }
     }
@@ -1183,6 +1193,7 @@ QTransactionPtr bridge::nunchukDraftTransaction(const QString &wallet_id,
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
         final.data()->setStatus((int)nunchuk::TransactionStatus::PENDING_SIGNATURES);
+        final.data()->setUseScriptPath(use_script_path);
         nunchuk::Amount packageFeeRate{0};
         if (nunchukiface::instance()->IsCPFP(wallet_id.toStdString(), trans_result, packageFeeRate, msg)) {
             final.data()->setPackageFeeRate(packageFeeRate);
@@ -1204,6 +1215,7 @@ QTransactionPtr bridge::nunchukDraftTransaction(const QString &wallet_id,
             if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
                 QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
                 final.data()->setStatus((int)nunchuk::TransactionStatus::PENDING_SIGNATURES);
+                final.data()->setUseScriptPath(use_script_path);
                 nunchuk::Amount packageFeeRate{0};
                 if (nunchukiface::instance()->IsCPFP(wallet_id.toStdString(), trans_result, packageFeeRate, msg)) {
                     final.data()->setPackageFeeRate(packageFeeRate);
@@ -1227,7 +1239,6 @@ nunchuk::Transaction bridge::nunchukDraftOriginTransaction(const string &wallet_
                                                            bool use_script_path,
                                                            QWarningMessage &msg)
 {
-
     std::map<std::string, nunchuk::Amount> outputs;
     outputs.clear();
     for (int i = 0; i < tx_outputs.size(); i++) {
@@ -1273,16 +1284,20 @@ QTransactionPtr bridge::nunchukReplaceTransaction(const QString &wallet_id,
                                                   const QString &tx_id,
                                                   const int new_fee_rate,
                                                   bool anti_fee_sniping,
+                                                  bool use_script_path,
                                                   QWarningMessage& msg)
 {
     nunchuk::Transaction trans_result = nunchukiface::instance()->ReplaceTransaction(wallet_id.toStdString(),
                                                                                      tx_id.toStdString(),
                                                                                      new_fee_rate,
                                                                                      anti_fee_sniping,
+                                                                                     use_script_path,
                                                                                      msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QTransactionPtr final = bridge::convertTransaction(trans_result, wallet_id);
-//        final.data()->setStatus((int)nunchuk::TransactionStatus::PENDING_SIGNATURES);
+        if(final){
+            final.data()->setUseScriptPath(use_script_path);
+        }
         return final;
     }
     else{

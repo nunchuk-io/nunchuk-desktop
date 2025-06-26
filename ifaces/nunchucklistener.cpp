@@ -152,6 +152,7 @@ void GroupMessageListener(const nunchuk::GroupMessage &msg)
         }
         if(auto list = AppModel::instance()->groupWalletList()) {
             list->updateGroupMessage(QString::fromStdString(msg.get_wallet_id()), msg);
+            list->requestSortLastTimestamp();
         }
     });
 }

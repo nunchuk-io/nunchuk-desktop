@@ -27,14 +27,15 @@ QString QBasePremium::wallet_id() const
 
 QWalletPtr QBasePremium::walletInfoPtr() const
 {
-    return [this]() -> QWalletPtr {
-        if (auto list = AppModel::instance()->walletListPtr()) {
-            if (auto wallet = list->getWalletById(wallet_id())) {
-                return wallet;
-            }
-        }
-        return QWalletPtr(new Wallet); // fallback
-    }();
+    auto list = AppModel::instance()->walletListPtr();
+    if (!list) {
+        return QWalletPtr();
+    }
+    QWalletPtr wallet = list->getWalletById(wallet_id());
+    if (wallet) {
+        return wallet;
+    }
+    return QWalletPtr();
 }
 
 QGroupDashboardPtr QBasePremium::dashBoardPtr() const

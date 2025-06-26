@@ -42,9 +42,11 @@ void QGroupWalletDummyTx::setDummyTxData(QJsonObject data)
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                 warningmsg.resetWarningMessage();
                 nunchuk::Transaction tx = qUtils::DecodeDummyTx(wallet, tx_to_sign, warningmsg);
-                transactionPtr()->setNunchukTransaction(tx);
-                transactionPtr()->setWalletId(wallet_local_id);
-                transactionPtr()->setTxJson(m_tx);
+                if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type() && transactionPtr()){
+                    transactionPtr()->setNunchukTransaction(tx);
+                    transactionPtr()->setWalletId(wallet_local_id);
+                    transactionPtr()->setTxJson(m_tx);
+                }
             }
         }
         if (transactionPtr()) {
@@ -83,56 +85,58 @@ bool QGroupWalletDummyTx::requestSignTx(const QString &xfp)
         setCurrentXfp(xfp);
         QWarningMessage warningmsg;
         nunchuk::Wallet wallet = bridge::nunchukGetOriginWallet(wallet_id(), warningmsg);
-        nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(), [xfp](const nunchuk::SingleSigner &s) {
-            return s.get_master_fingerprint() == xfp.toStdString();
-        });
-        QMap<QString, QString> signatures;
-        QMap<QString, QString> signers;
         if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-            warningmsg.resetWarningMessage();
             QString request_body    = m_tx["request_body"].toString();
+            warningmsg.resetWarningMessage();
             QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, request_body, warningmsg);
-            QString signature = "";
-            DBG_INFO << (int)signer.get_type();
-            switch (signer.get_type()) {
-            case nunchuk::SignerType::HARDWARE:
-            case nunchuk::SignerType::SOFTWARE:
-            case nunchuk::SignerType::COLDCARD_NFC:
-            {
-                signature = bridge::SignHealthCheckMessage(signer, tx_to_sign, warningmsg);
-                if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
-                    signatures[xfp] = signature;
-                    signers[xfp] = QString::fromStdString(signer.get_name());
+            if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(), [xfp](const nunchuk::SingleSigner &s) {
+                    return s.get_master_fingerprint() == xfp.toStdString();
+                });
+                QMap<QString, QString> signers;
+                QMap<QString, QString> signatures;
+                QString signature = "";
+
+                DBG_INFO << (int)signer.get_type();
+                switch (signer.get_type()) {
+                case nunchuk::SignerType::HARDWARE:
+                case nunchuk::SignerType::SOFTWARE:
+                case nunchuk::SignerType::COLDCARD_NFC:
+                {
+                    warningmsg.resetWarningMessage();
+                    signature = bridge::SignHealthCheckMessage(signer, tx_to_sign, warningmsg);
+                    if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                        signatures[xfp] = signature;
+                        signers[xfp] = QString::fromStdString(signer.get_name());
+                    }
+                    break;
                 }
-                break;
+                default:
+                    // Not support -> Show popup
+                    break;
+                }
+                emit AppModel::instance()->finishedSigningTransaction();
+                if(!signatures.isEmpty()){
+                    requestUpdateDummyTx(signatures, signers);
+                }
+                else {
+                    DBG_INFO << warningmsg.type();
+                    emit registerWalletWithDevice();
+                }
+                return true;
             }
-            default:
-                // Not support -> Show popup
-                break;
-            }
-            emit AppModel::instance()->finishedSigningTransaction();
-            if(!signatures.isEmpty()){
-                requestUpdateDummyTx(signatures, signers);
-            }
-            else {
-                DBG_INFO << warningmsg.type();
-                emit registerWalletWithDevice();
-            }
-            return true;
         }
-        else {
-            emit AppModel::instance()->finishedSigningTransaction();
-            AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
-        }
+        emit AppModel::instance()->finishedSigningTransaction();
+        AppModel::instance()->showToast(warningmsg.code(), warningmsg.what(), (EWARNING::WarningType)warningmsg.type());
+        return false;
     }
+    emit AppModel::instance()->finishedSigningTransaction();
     return false;
 }
 
 bool QGroupWalletDummyTx::requestSignTxViaQR(const QStringList &qrtags)
 {
     QWarningMessage warningmsg;
-    QMap<QString, QString> signatures;
-    QMap<QString, QString> keys;
     QString psbt = qUtils::ParseQRTransaction(qrtags, warningmsg);
     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type() && psbt != "" && dashBoardPtr()){
         warningmsg.resetWarningMessage();
@@ -141,6 +145,8 @@ bool QGroupWalletDummyTx::requestSignTxViaQR(const QStringList &qrtags)
             warningmsg.resetWarningMessage();
             nunchuk::Transaction tx = qUtils::DecodeDummyTx(wallet, psbt, warningmsg);
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                QMap<QString, QString> signatures;
+                QMap<QString, QString> keys;
                 transactionPtr()->setNunchukTransaction(tx);
                 transactionPtr()->setWalletId(dashBoardPtr()->wallet_id());
                 transactionPtr()->setTxJson(m_tx);
@@ -168,8 +174,6 @@ bool QGroupWalletDummyTx::requestSignTxViaQR(const QStringList &qrtags)
 
 bool QGroupWalletDummyTx::requestSignTxViaFile(const QString &filepath)
 {
-    QMap<QString, QString> signatures;
-    QMap<QString, QString> keys;
     QString psbt = ImportPsbtViaFile(filepath);
     if(psbt != "" && dashBoardPtr()){
         // Convert tx
@@ -179,6 +183,8 @@ bool QGroupWalletDummyTx::requestSignTxViaFile(const QString &filepath)
             warningmsg.resetWarningMessage();
             nunchuk::Transaction tx = qUtils::DecodeDummyTx(wallet, psbt, warningmsg);
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                QMap<QString, QString> signatures;
+                QMap<QString, QString> keys;
                 transactionPtr()->setNunchukTransaction(tx);
                 transactionPtr()->setWalletId(dashBoardPtr()->wallet_id());
                 transactionPtr()->setTxJson(m_tx);

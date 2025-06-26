@@ -26,7 +26,7 @@ QPopupInfoVertical {
     property var funcs: []
     property bool isVertical: true
     readonly property QBaseButton _btnBase: QBaseButton{}
-    property var types: isVertical ? [_btnBase.eTypeE, _btnBase.eTypeB] : [_btnBase.eTypeB, _btnBase.eTypeE]
+    property var types: isVertical ? [_btnBase.eTypeE, _btnBase.eTypeF] : [_btnBase.eTypeB, _btnBase.eTypeE]
     buttons: isVertical ? _vertical : _horizontal
     Component {
         id: _vertical

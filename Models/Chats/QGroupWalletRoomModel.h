@@ -63,6 +63,7 @@ public:
     void setCurrentIndex(int index);
     QString lasttimestamp();
     QString lastMessage();
+    nunchuk::GroupMessage lastGroupMessage();
     void requestSort();
     void clear();
 private:

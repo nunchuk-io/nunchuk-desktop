@@ -21,6 +21,8 @@ namespace {
     inline constexpr auto BYZANTINE_PRO_TESTNET = "byzantine_pro_testnet";
     inline constexpr auto BYZANTINE_PREMIER = "byzantine_premier";
     inline constexpr auto BYZANTINE_PREMIER_TESTNET = "byzantine_premier_testnet";
+    inline constexpr auto BYZANTINE_GUARDIAN = "byzantine_premier_testnet"; //TBD
+    inline constexpr auto BYZANTINE_GUARDIAN_TESTNET = "byzantine_premier_testnet"; //TBD
 }
 
 QStringList Slugs::safeSlugs() const

@@ -37,7 +37,7 @@
 #define TESTNET_SERVER   "testnet.nunchuk.io:50001"
 #define SIGNET_SERVER    "ssl://mempool.space:60602"
 
-template <typename T1, typename T2, typename T3, typename T4, typename T5>
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
 class QWalletCached {
 public:
     QWalletCached(){}
@@ -46,6 +46,7 @@ public:
     T3 myRole;
     T4 status;
     T5 backedup;
+    T6 hideFiatCurrency;
 };
 
 class  NunchukSettings : public QSettings {
@@ -110,6 +111,7 @@ class AppSetting : public NunchukSettings
     Q_PROPERTY(QStringList favoriteAddresses    READ favoriteAddresses                                              NOTIFY favoriteAddressesChanged)
     Q_PROPERTY(int feeSetting                   READ feeSetting                 WRITE setFeeSetting                 NOTIFY feeSettingChanged)
     Q_PROPERTY(bool enableAntiFeeSniping        READ enableAntiFeeSniping       WRITE setEnableAntiFeeSniping       NOTIFY enableAntiFeeSnipingChanged)
+    Q_PROPERTY(bool enableAutoFeeFunction       READ enableAutoFeeFunction                                          CONSTANT)
     Q_PROPERTY(bool enableAutoFeeSelection      READ enableAutoFeeSelection     WRITE setEnableAutoFeeSelection     NOTIFY enableAutoFeeSelectionChanged)
     Q_PROPERTY(QString thresholdPercentDisplay  READ thresholdPercentDisplay    WRITE setthresholdPercentDisplay    NOTIFY thresholdPercentChanged)
     Q_PROPERTY(int thresholdPercent             READ thresholdPercent           WRITE setthresholdPercent           NOTIFY thresholdPercentChanged)
@@ -254,14 +256,22 @@ public:
                                                    QString /*group slug*/,
                                                    QString /*group role*/,
                                                    QString /*wallet status*/,
-                                                   bool> input);
+                                                   bool    /*wallet cached*/,
+                                                   bool    /*wallet hide fiat currency*/> input);
 
     bool getwalletCached(QString id, QWalletCached<QString /*group id*/,
                                                    QString /*group slug*/,
                                                    QString /*group role*/,
                                                    QString /*wallet status*/,
-                                                   bool> &output);
+                                                   bool    /*wallet cached*/,
+                                                   bool    /*wallet hide fiat currency*/> &output);
     void deleteWalletCached(QString id);
+
+    void setTransactionKeysetIndex(QString id, const int keyset_index);
+
+    int  getTransactionKeysetIndex(QString id);
+
+    void deleteTransactionKeysetIndex(QString id);
 
     bool isFirstTimeOnboarding();
     void setIsFirstTimeOnboarding(bool isFirstTime);
@@ -286,6 +296,7 @@ public:
     bool enableAntiFeeSniping();
     void setEnableAntiFeeSniping(bool enable);
 
+    bool enableAutoFeeFunction();
     bool enableAutoFeeSelection();
     void setEnableAutoFeeSelection(bool newEnableAutoFeeSelection);
 
@@ -298,6 +309,9 @@ public:
     void setthresholdAmount(double newthresholdAmount);
     QString thresholdAmountDisplay();
     void setthresholdAmountDisplay(const QString &newthresholdAmountDisplay);
+
+    void setOrderWalletList(const QStringList &orderWalletList);
+    QStringList orderWalletList();
 
 private:
     AppSetting();
@@ -347,6 +361,8 @@ private:
     bool enableAutoFeeSelection_{false};
     int  thresholdPercent_{10};
     double  thresholdAmount_{0.20};
+
+    QStringList m_orderWalletList {};
 
 signals:
     void unitChanged();

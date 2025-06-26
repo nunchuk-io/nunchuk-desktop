@@ -176,6 +176,14 @@ int main(int argc, char* argv[])
     signal(SIGABRT, signalHandler);  // Abort signal
 #endif
 
+#ifdef __linux__
+    setenv("QTWEBENGINE_DISABLE_SANDBOX", "1", 1);
+#endif
+
+    DBG_INFO << "Build version:" << QSslSocket::sslLibraryBuildVersionString();
+    DBG_INFO << "Runtime version:" << QSslSocket::sslLibraryVersionString();
+    DBG_INFO << "Support SSL:" << QSslSocket::supportsSsl();
+
     double scale_factor = calculateScaleFactor();
     // static char  qt_arg[] = "";
     // static char* qt_argv = qt_arg;
@@ -190,7 +198,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.47");
+    app.setApplicationVersion("1.9.48");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     AppModel::instance();
     Draco::instance();

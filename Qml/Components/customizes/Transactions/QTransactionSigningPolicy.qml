@@ -43,9 +43,10 @@ Popup {
     background: Item{}
 
     property int currentIndex: 0
+    property int keysetIndex: 0
 
     signal closeClicked()
-    signal continueClicked(var use_script_path)
+    signal continueClicked(var use_script_path, var keyset_index)
     signal feeSettingClicked()
 
     QOnScreenContent {
@@ -77,7 +78,9 @@ Popup {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
-                signingPolicy.continueClicked(signingPolicy.currentIndex !== 0)
+                var use_script_path = (signingPolicy.currentIndex !== 0);
+                var use_keyset_index = signingPolicy.keysetIndex;
+                signingPolicy.continueClicked(use_script_path, use_keyset_index)
             }
         }
         onCloseClicked: {
@@ -120,8 +123,9 @@ Popup {
                                 QLato {
                                     width: parent.width
                                     font.pixelSize: 16
-                                    text: STR.STR_QML_1762
+                                    text: AppSetting.enableAutoFeeSelection ? STR.STR_QML_1764 : STR.STR_QML_1762
                                     color: "#031F2B"
+                                    linkColor: "#031F2B"
                                     wrapMode: Text.WordWrap
                                     lineHeight: 20
                                     lineHeightMode: Text.FixedHeight
@@ -148,7 +152,6 @@ Popup {
                                     radius: 8
                                     border.width: (index == signingPolicy.currentIndex) ? 2 : 1
                                     border.color: (index == signingPolicy.currentIndex) ?"#031F2B" : "#DEDEDE"
-
                                     property int keysetIndex: index
 
                                     Column {
@@ -157,14 +160,6 @@ Popup {
                                         height: childrenRect.height
                                         anchors.centerIn: parent
                                         spacing: 12
-                                        layer.enabled: true
-                                        layer.effect: OpacityMask {
-                                            maskSource: Rectangle {
-                                                width: keysetDelegate.width
-                                                height: keysetDelegate.height
-                                                radius: 8
-                                            }
-                                        }
                                         Loader {
                                             sourceComponent: keysetItemIndex.keysetIndex === 0 ? valueKeyset : otherKeyset
                                         }
@@ -195,14 +190,19 @@ Popup {
                                         Rectangle {
                                             width: parent.width
                                             height: 56
-                                            color: "#D0E2FF"
+                                            color: "#E9F1FF"
+                                            radius: 8
+                                            Rectangle {
+                                                width: parent.width
+                                                height: parent.height/2
+                                                color: "#E9F1FF"
+                                            }
                                             Rectangle {
                                                 width: parent.width
                                                 height: 1
                                                 color: "#DEDEDE"
                                                 anchors.top: parent.top
                                             }
-
                                             Row {
                                                 spacing: 16
                                                 anchors.centerIn: parent
@@ -210,7 +210,6 @@ Popup {
                                                     text: "Estimated fee"
                                                     font.pixelSize: 12
                                                     color: "#031F2B"
-                                                    font.weight: Font.Bold
                                                     horizontalAlignment: Text.AlignLeft
                                                     verticalAlignment: Text.AlignVCenter
                                                     anchors.verticalCenter: parent.verticalCenter
@@ -225,7 +224,7 @@ Popup {
                                                             anchors.fill: parent
                                                             text: (((0 == index) ? transactionInfo.fee : transactionInfo.feeOtherKeyset) + RoomWalletData.unitValue)
                                                             color: "#031F2B"
-                                                            font.weight: Font.Bold
+                                                            font.weight: Font.DemiBold
                                                             font.pixelSize: 12
                                                             horizontalAlignment: Text.AlignRight
                                                             verticalAlignment: Text.AlignVCenter
@@ -270,7 +269,7 @@ Popup {
                                                         text: "Value Keyset"
                                                         font.pixelSize: 12
                                                         color: "#031F2B"
-                                                        font.weight: Font.Bold
+                                                        font.weight: Font.DemiBold
                                                         horizontalAlignment: Text.AlignLeft
                                                         verticalAlignment: Text.AlignVCenter
                                                     }
@@ -299,7 +298,7 @@ Popup {
                                                 text: qsTr("Keyset %1").arg(index+1)
                                                 font.pixelSize: 12
                                                 color: "#031F2B"
-                                                font.weight: Font.Bold
+                                                font.weight: Font.DemiBold
                                                 horizontalAlignment: Text.AlignLeft
                                                 verticalAlignment: Text.AlignVCenter
                                             }
@@ -311,6 +310,8 @@ Popup {
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             signingPolicy.currentIndex = index;
+                                            signingPolicy.keysetIndex = keysetItemIndex.keysetIndex;
+                                            console.log("signingPolicy.keysetIndex", signingPolicy.keysetIndex, keysetItemIndex.keysetIndex)
                                         }
                                     }
                                 }

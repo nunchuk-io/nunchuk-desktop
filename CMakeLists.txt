@@ -1,8 +1,8 @@
 cmake_minimum_required( VERSION 3.1 )
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.47)
+    project(Nunchuk VERSION 1.9.48)
 else()
-    project(nunchuk-qt VERSION 1.9.47)
+    project(nunchuk-qt VERSION 1.9.48)
 endif()
 
 # nunchuk
@@ -70,7 +70,7 @@ add_subdirectory(contrib/quotient)
 
 if ((UNIX AND NOT APPLE) OR WIN32)
     message("---------------------------------> Backward compatibility BOOST_ASIO_NO_DEPRECATED=0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ASIO_NO_DEPRECATED=0")
+    add_compile_definitions(BOOST_ASIO_NO_DEPRECATED=0)
 endif()
 
 if( NOT CMAKE_BUILD_TYPE )
@@ -80,6 +80,14 @@ endif()
 # Definations
 option(LIMIT_SW_SIGNER "Enable Software signer" OFF)
 option(USING_WEBENGINE "Enable WebEngine" ON)
+option(USING_AUTO_FEE  "Enable Auto fee selection" ON)
+
+if(USING_AUTO_FEE)
+    message(STATUS "---------------------------------> USING USING_AUTO_FEE")
+    add_definitions (-DENABLE_AUTO_FEE)
+else()
+    message(STATUS "---------------------------------> DISABLE USING_AUTO_FEE")
+endif()
 
 if(LIMIT_SW_SIGNER)
     message(STATUS "---------------------------------> USING LIMIT_SW_SIGNER")

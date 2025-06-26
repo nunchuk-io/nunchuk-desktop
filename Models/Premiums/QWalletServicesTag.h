@@ -191,6 +191,8 @@ signals:
     void answerErrorAlert(const QString& errormsg);
     void notPaidAlert();
     void isExpiredAlert();
+    void comeBackLaterAlert(const QString& errormsg);
+    void securityDepositRequiredAlert(const QString& errormsg);
     void hasNotBeenActivatedYetAlert();
     void serverKeyVerifyPasswordAlert();
     void securityQuestionChanged();

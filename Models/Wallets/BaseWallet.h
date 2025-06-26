@@ -86,6 +86,7 @@ class BaseWallet : public QStateFlow
     Q_PROPERTY(DeviceListModel* deviceList                          READ deviceList                                             NOTIFY deviceListChanged)
     Q_PROPERTY(QString      deviceType                              READ deviceType                                             NOTIFY deviceTypeChanged)
     Q_PROPERTY(int          limitKeySet                             READ limitKeySet                                            NOTIFY limitKeySetChanged)
+    Q_PROPERTY(bool         isByzantineGuardian                     READ isByzantineGuardian                                    NOTIFY isByzantineGuardianChanged)
 
 public:
     BaseWallet(const nunchuk::Wallet &w);
@@ -199,6 +200,8 @@ public:
     virtual QWalletPtr clone() const;
     std::vector<nunchuk::SingleSigner> localSigners();
     Q_INVOKABLE bool isContainKey(const QString &xfp);
+
+    bool isByzantineGuardian();
 private:
     mutable QString m_id {""};
     mutable QString m_walletName {""};
@@ -229,6 +232,7 @@ private:
     QString m_deviceType {};
     int m_limitKeySet {0};
     static int m_flow;
+
 signals:
     void walletChanged();
     void walletSignersChanged();
@@ -251,6 +255,8 @@ signals:
     void signerExistListChanged();
     void deviceListChanged();
     void deviceTypeChanged();
+    void isByzantineGuardianChanged();
+
 public slots:
     void setValueKeyset(int index);
     bool isValidAddress(const QString& address);

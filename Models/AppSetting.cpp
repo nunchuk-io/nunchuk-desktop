@@ -915,25 +915,20 @@ void AppSetting::setCurrency(QString currency)
     emit currencyChanged();
 }
 
-void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool> input)
+void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool> input)
 {
     QByteArray dataByteArray;
     QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
-    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup;
+    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup << input.hideFiatCurrency;
     NunchukSettings::setValue(id, dataByteArray);
 }
 
-bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool> &output)
+bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool> &output)
 {
     if(NunchukSettings::contains(id)){
         QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
         QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
-        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup;
-        // DBG_INFO << "groupId:" << output.groupId
-        //          << "slug:"    << output.slug
-        //          << "myRole:"  << output.myRole
-        //          << "status:"  << output.status
-        //          << "backedup:"<< output.backedup;
+        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup >> output.hideFiatCurrency;
         return true;
     }
     return false;
@@ -942,6 +937,30 @@ bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QSt
 void AppSetting::deleteWalletCached(QString id)
 {
     NunchukSettings::removeKey(id);
+}
+
+int AppSetting::getTransactionKeysetIndex(QString id)
+{
+    int keyset_index = 0;
+    if(NunchukSettings::contains(id)){
+        QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
+        QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
+        stream >> keyset_index;
+    }
+    return keyset_index;
+}
+
+void AppSetting::deleteTransactionKeysetIndex(QString id)
+{
+    NunchukSettings::removeKey(id);
+}
+
+void AppSetting::setTransactionKeysetIndex(QString id, const int keyset_index)
+{
+    QByteArray dataByteArray;
+    QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
+    stream << keyset_index;
+    NunchukSettings::setValue(id, dataByteArray);
 }
 
 bool AppSetting::isFirstTimeOnboarding()
@@ -987,6 +1006,9 @@ void AppSetting::setReminderStates(const QVariant &states)
 
 QStringList AppSetting::favoriteAddresses()
 {
+    if(m_favoriteAddresses.count() <= 0){
+        loadFavoriteAddresses();
+    }
     return m_favoriteAddresses;
 }
 
@@ -1165,6 +1187,15 @@ void AppSetting::setEnableAntiFeeSniping(bool enable)
     }
 }
 
+bool AppSetting::enableAutoFeeFunction()
+{
+#ifdef ENABLE_AUTO_FEE
+    return true;
+#else
+    return false;
+#endif
+}
+
 bool AppSetting::enableAutoFeeSelection()
 {
     if(NunchukSettings::contains("enableAutoFeeSelection")){
@@ -1261,4 +1292,18 @@ void AppSetting::setthresholdAmountDisplay(const QString &newthresholdAmountDisp
         return;
     }
     setthresholdAmount(realAmount);
+}
+
+void AppSetting::setOrderWalletList(const QStringList &orderWalletList){
+    if (m_orderWalletList != orderWalletList) {
+        m_orderWalletList = orderWalletList;
+        NunchukSettings::setValue("orderWalletList", m_orderWalletList);
+    }
+}
+
+QStringList AppSetting::orderWalletList() {
+    if (NunchukSettings::contains("orderWalletList")) {
+        m_orderWalletList = NunchukSettings::value("orderWalletList").toStringList();
+    }
+    return m_orderWalletList;
 }

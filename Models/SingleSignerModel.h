@@ -52,7 +52,7 @@ class QSingleSigner : public QObject, public WalletKeys {
     Q_PROPERTY(QString tag                      READ tag                                            CONSTANT)
     Q_PROPERTY(bool hasSignBtn                  READ hasSignBtn                                     CONSTANT)
     Q_PROPERTY(int  accountIndex                READ accountIndex                                   CONSTANT)
-    Q_PROPERTY(QVariantList healthCheckHistory  READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
+    Q_PROPERTY(QVariantList healthCheckHistory  READ healthCheckHistory                             NOTIFY healthCheckHistoryChanged)
     Q_PROPERTY(QString address                  READ address            WRITE setAddress            NOTIFY addressChanged)
     Q_PROPERTY(QString descriptor               READ descriptor                                     CONSTANT)
     Q_PROPERTY(bool isMine                      READ isMine                                         CONSTANT)
@@ -179,6 +179,7 @@ public:
     bool needBackup();
     void setNeedBackup(bool val);
     bool allowAssignToWallet() const;
+
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -251,15 +252,17 @@ signals:
 
 bool sortSingleSignerByNameAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
 bool sortSingleSignerByKeysetIndexAscending(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
+bool sortSingleSignerByKetsetSelected(const QSingleSignerPtr &v1, const QSingleSignerPtr &v2);
 
 class SingleSignerListModel  : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int  keyinfo                 READ keyinfo                NOTIFY keyinfoChanged)
-    Q_PROPERTY(int  signerCount             READ signerCount            NOTIFY signerCountChanged)
-    Q_PROPERTY(int  signerSelectedCount     READ signerSelectedCount    NOTIFY signerSelectedCountChanged)
-    Q_PROPERTY(int  signerValueKeyCount     READ signerValueKeyCount    NOTIFY signerValueKeyCountChanged)
-    Q_PROPERTY(bool needTopUpXpubs          READ needTopUpXpubs         NOTIFY needTopUpXpubsChanged)
+    Q_PROPERTY(int  keyinfo                 READ keyinfo                                            NOTIFY keyinfoChanged)
+    Q_PROPERTY(int  signerCount             READ signerCount                                        NOTIFY signerCountChanged)
+    Q_PROPERTY(int  signerSelectedCount     READ signerSelectedCount                                NOTIFY signerSelectedCountChanged)
+    Q_PROPERTY(int  signerValueKeyCount     READ signerValueKeyCount                                NOTIFY signerValueKeyCountChanged)
+    Q_PROPERTY(bool needTopUpXpubs          READ needTopUpXpubs                                     NOTIFY needTopUpXpubsChanged)
+
 public:
     SingleSignerListModel();
     ~SingleSignerListModel();
@@ -341,6 +344,7 @@ public:
     bool needSyncNunchukEmail();
     void requestSort(bool force = false);
     void requestSortKeyset();
+    void requestSortKeysetSelected();
     QList<QSingleSignerPtr> fullList() const;
     std::vector<nunchuk::SingleSigner> signers() const;
     std::vector<nunchuk::SingleSigner> localSigners() const;
@@ -368,6 +372,7 @@ signals:
     void signerSelectedCountChanged();
     void signerValueKeyCountChanged();
     void needTopUpXpubsChanged();
+    void keysetSelectedChanged();
 
 private:
     QList<QSingleSignerPtr> m_data;

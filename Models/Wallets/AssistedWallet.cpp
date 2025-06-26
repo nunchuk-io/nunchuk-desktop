@@ -39,14 +39,14 @@ bool AssistedWallet::isReplaced() const
 
 bool AssistedWallet::isAssistedWallet() const
 {
-    return isUserWallet() || isGroupWallet();
+    return (isUserWallet() || isGroupWallet()) && !isReplaced();
 }
 
 QString AssistedWallet::groupId() const
 {
     QString group_id = WalletsMng->groupId(walletId());
     if(group_id == ""){
-        QWalletCached<QString, QString, QString, QString, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             group_id = data.groupId;
@@ -176,7 +176,7 @@ QString AssistedWallet::slug() const
 {
     QString slug = WalletsMng->slugInfo(walletId());
     if(slug == ""){
-        QWalletCached<QString, QString, QString, QString, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             slug = data.slug;
@@ -192,7 +192,7 @@ QString AssistedWallet::myRole() const
         role = dashboard().data()->myRole();
     }
     if (role == "") {
-        QWalletCached<QString, QString, QString, QString, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             role = data.myRole;
@@ -209,7 +209,7 @@ QString AssistedWallet::status() const
         status = dashboard().data()->walletStatus();
     }
     if(status == ""){
-        QWalletCached<QString, QString, QString, QString, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             status = data.status;

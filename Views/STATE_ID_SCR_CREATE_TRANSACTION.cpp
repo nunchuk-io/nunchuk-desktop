@@ -48,6 +48,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
         QString wallet_id       = transaction.data()->walletId();
         bool use_script_path    = transaction->useScriptPath();
         QString memo            = transaction->memo();
+        int  use_keyset_index   = transaction->keysetSelected();
 
         if(transaction->txidReplacing() != "") {
             DBG_INFO << "REPLACE BY FEE REQUEST "
@@ -56,7 +57,8 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                      << "| memo:" << memo
                      << "| subtractFromFeeAmout:" << subtractFromFeeAmout
                      << "| antiFeeSnipping:" << antiFeeSnipping
-                     << "| use_script_path:" << use_script_path;
+                     << "| use_script_path:" << use_script_path
+                     << "| use_keyset_index:" << use_keyset_index;
             nunchuk::Transaction current            = transaction.data()->nunchukTransaction();
             std::vector<nunchuk::TxOutput> outputs  = current.get_user_outputs();
             std::vector<nunchuk::TxInput> inputs    = current.get_inputs();
@@ -77,14 +79,15 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                           transaction->txidReplacing(),
                                                                           feeRate,
                                                                           antiFeeSnipping,
+                                                                          use_script_path,
                                                                           msgwarning);
                 if(trans && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                     if (auto wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_id)) {
                         wallet->RbfAsisstedTxs(trans->txid(), trans->psbt());
                     }
                     trans->setMemo(memo);
+                    trans->setKeysetSelected(use_keyset_index, true);
                     AppModel::instance()->setTransactionInfo(trans);
-                    AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
                     AppModel::instance()->requestSyncWalletDb(wallet_id);
                     QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                     transaction->setTxidReplacing("");
@@ -121,7 +124,8 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                      << "| manual Fee:" << manualFee
                      << "| free rate:" << feeRate
                      << "| use_script_path:" << use_script_path
-                     << "| antiFeeSnipping:" << antiFeeSnipping;
+                     << "| antiFeeSnipping:" << antiFeeSnipping
+                     << "| use_keyset_index:" << use_keyset_index;
 
             QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->walletId()));
             if(transaction->inputCoins()){
@@ -179,6 +183,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                  subtractFromFeeAmout,
                                                                  {},
                                                                  antiFeeSnipping,
+                                                                 use_script_path,
                                                                  msgwarning);
                     }
                     else {
@@ -190,12 +195,13 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                        feeRate,
                                                                        transaction->txid(),
                                                                        antiFeeSnipping,
+                                                                       use_script_path,
                                                                        msgwarning);
                     }
                     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                         if(trans){
+                            trans->setKeysetSelected(use_keyset_index, true);
                             AppModel::instance()->setTransactionInfo(trans);
-                            AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
                             wallet.data()->AssignTagsToTxChange();
                             if(wallet.data()->isAssistedWallet()){
                                 wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());

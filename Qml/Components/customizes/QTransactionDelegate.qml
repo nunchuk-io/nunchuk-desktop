@@ -29,6 +29,7 @@ import "../../../localization/STR_QML.js" as STR
 Rectangle {
     id: rootDelegate
     property bool transactionisReceiveTx: true
+    property bool walletIsByzantineGuardian: false
     property string transactiondestinationList: ""
     property string transactiontxid: ""
     property int transactionstatus: 0
@@ -44,7 +45,6 @@ Rectangle {
     property int memoWidth: 178
     property int amountWidth: 178
     property int addressWidth: 160
-
     property var parentList
 
     enabled: !isFacilitatorAdmin
@@ -275,6 +275,7 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
+                    visible: !walletIsByzantineGuardian
                 }
             }
             MouseArea {

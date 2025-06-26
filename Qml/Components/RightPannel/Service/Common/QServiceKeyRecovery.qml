@@ -124,9 +124,7 @@ Item {
                             QMLHandle.sendEvent(EVT.EVT_REENTER_YOUR_PASSWORD_REQUEST,screenObj)
                             return;
                         }
-                        _info1.title = STR.STR_QML_339
-                        _info1.contentText = STR.STR_QML_839
-                        _info1.open()
+                        _info1.thereNoWalletAssitedAlert()
                     }
                 }
             }
