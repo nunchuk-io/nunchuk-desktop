@@ -1,83 +1,263 @@
-name: Build linux release
+name: nunchuk-linux-x86_64
 
 on:
   push:
-    branches: [ "*" ]
-    tags:     [ "*" ]
-  pull_request:
+    tags:
+      - '*'
   workflow_dispatch:
-    inputs:
 
 jobs:
-  build-image-and-app:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            platform: linux/amd64
-            arch: x86_64
-            builder_tag: nunchuk-builder-linux-amd64
-            artifacts: linux-x86_64
-          - os: ubuntu-24.04-arm
-            platform: linux/arm64
-            arch: aarch64
-            builder_tag: nunchuk-builder-linux-aarch64
-            artifacts: linux-aarch64
-
-    runs-on: ${{ matrix.os }}
-
-    permissions:
-      contents: read
-      packages: write
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
 
     steps:
-      - name: Configure Git for private GitLab submodules
-        env:
-          GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
-        run: |
-          git config --global url."https://oauth2:${GITLAB_PAT}@gitlab.com/".insteadOf "https://gitlab.com/"
-
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: true
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push builder image
-        working-directory: reproducible-builds
+      - name: Install dependencies
         run: |
-          docker buildx build \
-            --platform ${{ matrix.platform }} \
-            --build-arg ARCH=${{ matrix.arch }} \
-            -f linux.Dockerfile \
-            -t ghcr.io/${{ github.repository }}/${{ matrix.builder_tag }} \
-            --cache-from type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache \
-            --cache-to   type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache,mode=max \
-            --push .
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install -y cmake \
+                              g++ \
+                              make \
+                              ninja-build \
+                              libboost-all-dev \
+                              libzmq3-dev \
+                              libevent-dev \
+                              libdb++-dev \
+                              sqlite3 \
+                              libsqlite3-dev \
+                              libsecret-1-dev \
+                              git \
+                              dpkg-dev \
+                              python3-pip \
+                              fuse \
+                              libgl-dev \
+                              libglu-dev \
+                              mesa-common-dev \
+                              libpulse-dev \
+                              libxcb-xinerama0
 
-      - name: Build application
+      - name: Install aqtinstall
+        run: pip install aqtinstall
+
+      - name: Install Qt 5.15.2
         run: |
-          docker run --platform ${{ matrix.platform }} --rm \
-            -v ${{ github.workspace }}:/nunchuk-desktop \
-            -w /nunchuk-desktop \
-            ghcr.io/${{ github.repository }}/${{ matrix.builder_tag }} \
-            bash reproducible-builds/linux.sh
+          QT_VERSION=5.15.2
+          QT_INSTALL_DIR=$HOME/Qt
+          aqt install-qt linux desktop $QT_VERSION gcc_64 --outputdir "$QT_INSTALL_DIR"
+          aqt install-qt linux desktop $QT_VERSION gcc_64 --outputdir "$QT_INSTALL_DIR" \
+              --modules qtcharts qtdatavis3d qtlottie qtnetworkauth qtpurchasing qtquick3d \
+                        qtquicktimeline qtscript qtvirtualkeyboard qtwaylandcompositor \
+                        qtwebengine qtwebglplugin debug_info
+          echo "QT5_DIR=$QT_INSTALL_DIR/$QT_VERSION/gcc_64/lib/cmake/Qt5" >> $GITHUB_ENV
+          echo "QT_INSTALLED_PREFIX=$QT_INSTALL_DIR/$QT_VERSION/gcc_64" >> $GITHUB_ENV
 
-      - name: Upload build artifacts
+      - name: Build and install qtkeychain
+        working-directory: ${{ runner.temp }}
+        run: |
+          git clone https://github.com/frankosterfeld/qtkeychain.git
+          cd qtkeychain
+          mkdir build && cd build
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DQt5_DIR=${{ env.QT5_DIR }}
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
+
+      - name: Build and install Olm
+        working-directory: ${{ runner.temp }}
+        run: |
+          git clone https://gitlab.matrix.org/matrix-org/olm.git
+          cd olm
+          git checkout 3.2.16
+          mkdir build && cd build
+          cmake .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
+
+      - name: Install CQtDeployer
+        run: |
+          wget https://github.com/QuasarApp/CQtDeployer/releases/download/v1.6.2365/CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb
+          sudo dpkg -i CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb
+
+      - name: Install GCC 14
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt update
+          sudo apt install -y gcc-14 g++-14
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+
+      - name: Set compiler environment
+        run: |
+          echo "CC=gcc-14" >> $GITHUB_ENV
+          echo "CXX=g++-14" >> $GITHUB_ENV
+          echo "RANLIB=gcc-ranlib-14" >> $GITHUB_ENV
+          echo "AR=gcc-ar-14" >> $GITHUB_ENV
+          echo "NM=gcc-nm-14" >> $GITHUB_ENV
+
+      - name: Install OpenSSL 1.1.1g
+        working-directory: ${{ runner.temp }}
+        run: |
+          wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1g/openssl-1.1.1g.tar.gz
+          tar xzf openssl-1.1.1g.tar.gz
+          cd openssl-1.1.1g
+          ./config --prefix="$PWD/lib"
+          make -j$(nproc)
+          make install_dev
+
+      - name: Init and update submodules
+        run: |
+          git fetch --all --tags --force
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+          echo "Latest commit ----->>>>> $(git rev-parse HEAD)"
+          echo "LAST_COMMITID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+          LATEST_TAG=$(git for-each-ref --sort=-taggerdate --format '%(refname:short)' refs/tags | head -n 1 || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "Could not find any tag set to 0.0.0"
+            LATEST_TAG="0.0.0"
+            TAGGED_COMMIT="0000000"
+          else
+            TAGGED_COMMIT=$(git rev-list -n 1 "$LATEST_TAG")
+          fi
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          echo "Latest tag found: $LATEST_TAG (commit $TAGGED_COMMIT)"
+          echo "Current commit: $CURRENT_COMMIT"
+          echo "LATEST_VERSION=$LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Generate build info
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "BUILD_BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+          echo "LAST_COMMITID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          LATEST_TAG=$(git for-each-ref --sort=-taggerdate --format '%(refname:short)' refs/tags | head -n 1)
+          echo "LATEST_VERSION=$LATEST_TAG" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Configure and build project
+        working-directory: ${{ github.workspace }}
+        env:
+          OPENSSL_ROOT_DIR: ${{ runner.temp }}/openssl-1.1.1g/lib
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          OAUTH_REDIRECT_URI: ${{ secrets.OAUTH_REDIRECT_URI }}
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+        run: |
+          mkdir -p build && cd build
+          export LDFLAGS="-L$OPENSSL_ROOT_DIR/lib -lssl -lcrypto -static-libgcc -static-libstdc++"
+          export CPPFLAGS="-I$OPENSSL_ROOT_DIR/include"
+          export CXXFLAGS="-O0 $CPPFLAGS"
+          export CFLAGS="-O0 $CPPFLAGS"
+
+          cmake .. \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DUR__DISABLE_TESTS=ON \
+              -DRANDLIB=$(which gcc-ranlib-14) \
+              -DAR=$(which gcc-ar-14) \
+              -DNM=$(which gcc-nm-14) \
+              -DCMAKE_PREFIX_PATH="$OPENSSL_ROOT_DIR;${{ env.QT_INSTALLED_PREFIX }}" \
+              -DQt5_DIR=${{ env.QT5_DIR }}
+          make -j$(nproc)
+
+      - name: Deploy Qt application
+        working-directory: ${{ github.workspace }}
+        env:
+          NUNCHUK_LOGO: ${{ github.workspace }}/nunchuk-qt.png
+        run: |
+          OUTPUT_DIR="nunchuk-linux-v${{ env.LATEST_VERSION }}/Appdir"
+          EXEC="$PWD/build/nunchuk-qt"
+          mkdir -p "$OUTPUT_DIR"
+
+          cqtdeployer -bin "$EXEC" \
+                      -qmake "${{ env.QT_INSTALLED_PREFIX }}/bin/qmake" \
+                      -qmlDir $PWD \
+                      -targetDir "$OUTPUT_DIR" \
+                      -icon "$NUNCHUK_LOGO" \
+                      noTranslation noStrip
+
+      - name: Copy extra libraries
+        working-directory: ${{ github.workspace }}
+        run: |
+          OUTPUT_DIR="nunchuk-linux-v${{ env.LATEST_VERSION }}/Appdir"
+          BIN="$OUTPUT_DIR/bin/nunchuk-qt"
+          mkdir -p "$OUTPUT_DIR/lib"
+
+          echo "ldd "$BIN" | awk '{print $3}' "
+          ldd "$BIN" | awk '{print $3}' | grep -v '^(' | while read lib; do
+            echo "DEBUG: lib=[$lib]"
+            if [[ -n "$lib" && "$lib" != *"/libQt"* && "$lib" != *"/Qt"* ]]; then
+              echo "copying $lib"
+              cp -L "$lib" "$OUTPUT_DIR/lib/"
+              chmod 775 "$OUTPUT_DIR/lib/$(basename "$lib")"
+            fi
+          done
+
+          for lib_ssl in "${{ runner.temp }}/openssl-1.1.1g/lib/lib"/libssl.so* "${{ runner.temp }}/openssl-1.1.1g/lib/lib"/libcrypto.so*; do
+            echo "copying $lib_ssl"
+            cp -L "$lib_ssl" "$OUTPUT_DIR/lib/"
+            chmod 775 "$OUTPUT_DIR/lib/$(basename "$lib_ssl")"
+          done
+
+          patchelf --set-rpath '$ORIGIN/../lib' "$BIN"
+
+      - name: Install HWI
+        run: |
+          BINDIR="nunchuk-linux-v${{ env.LATEST_VERSION }}/Appdir/bin"
+          wget -q https://github.com/bitcoin-core/HWI/releases/download/3.1.0/hwi-3.1.0-linux-x86_64.tar.gz
+          mkdir -p hwi-extracted && tar -xzf hwi-3.1.0-linux-x86_64.tar.gz -C hwi-extracted
+          cp hwi-extracted/hwi "$BINDIR/"
+          chmod +x "$BINDIR/hwi"
+
+      - name: Create desktop and AppRun files
+        working-directory: ${{ github.workspace }}/nunchuk-linux-v${{ env.LATEST_VERSION }}
+        env:
+          NUNCHUK_LOGO: ${{ github.workspace }}/deploy/nunchuk-qt.png
+        run: |
+          cat <<EOF > Appdir/nunchuk.desktop
+          [Desktop Entry]
+          Type=Application
+          Name=Nunchuk
+          Exec=AppRun
+          Icon=nunchuk-qt
+          Categories=Utility;
+          EOF
+          ls -l ${{ github.workspace }}
+          cp -L "$NUNCHUK_LOGO" Appdir
+
+          cat <<'EOF' > Appdir/AppRun
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export QTWEBENGINE_DISABLE_SANDBOX=1
+          exec "$HERE/nunchuk-qt.sh" "$@"
+          EOF
+
+          chmod +x Appdir/AppRun
+
+      - name: Download appimagetool
+        working-directory: ${{ github.workspace }}
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/latest/download/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+
+      - name: Create AppImage
+        working-directory: ${{ github.workspace }}/nunchuk-linux-v${{ env.LATEST_VERSION }}
+        run: |
+          ARCH=x86_64 "$GITHUB_WORKSPACE/appimagetool-x86_64.AppImage" Appdir "nunchuk-linux-v${{ env.LATEST_VERSION }}.AppImage"
+          mv "nunchuk-linux-v${{ env.LATEST_VERSION }}.AppImage" "${{ github.workspace }}/"
+
+      - name: Zip release folder
+        working-directory: ${{ github.workspace }}
+        run: |
+          zip -r "nunchuk-linux-v${{ env.LATEST_VERSION }}.zip" "nunchuk-linux-v${{ env.LATEST_VERSION }}"
+
+      - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifacts }}
-          path: build/artifacts
-          compression-level: 0
+          name: nunchuk-linux-v${{ env.LATEST_VERSION }}
+          path: "${{ github.workspace }}/nunchuk-linux-v${{ env.LATEST_VERSION }}.AppImage"
