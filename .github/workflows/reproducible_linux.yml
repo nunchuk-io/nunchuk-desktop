@@ -1,0 +1,52 @@
+name: nunchuk-linux-reproducible
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  build-linux-repro:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    environment: GoogleAuth
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Determine Git tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "TAG=0.0.0" >> $GITHUB_ENV
+          fi
+          
+      - name: Build Docker image
+        run: |
+          echo "TAG found: ${{ env.TAG }}"
+          
+          docker build --no-cache \
+            --build-arg TAG=${{ env.TAG }} \
+            -f reproducible-builds/Dockerfile.linux \
+            -t nunchuk-repro .
+
+      - name: Run reproducible build inside Docker
+        run: |
+          docker run --rm \
+            -e TAG=${{ env.TAG }} \
+            -e OAUTH_CLIENT_SECRET=${{ secrets.OAUTH_CLIENT_SECRET }} \
+            -e OAUTH_REDIRECT_URI=${{ secrets.OAUTH_REDIRECT_URI }} \
+            -e OAUTH_CLIENT_ID=${{ secrets.OAUTH_CLIENT_ID }} \
+            -v ${{ github.workspace }}:/project \
+            nunchuk-repro
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunchuk-linux-v${{ env.TAG }}
+          path: nunchuk-linux-v*/nunchuk-linux-*.AppImage
