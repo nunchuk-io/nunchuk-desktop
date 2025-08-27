@@ -40,7 +40,8 @@ cp -L $OPENSSL_ROOT_DIR/lib/libcrypto.so* $OUTDIR/lib/
 patchelf --set-rpath '$ORIGIN/../lib' "$BIN"
 
 # Install HWI
-wget -q https://github.com/bitcoin-core/HWI/releases/download/3.1.0/hwi-3.1.0-linux-x86_64.tar.gz
+#wget -q https://github.com/bitcoin-core/HWI/releases/download/3.1.0/hwi-3.1.0-linux-x86_64.tar.gz
+wget -q https://github.com/giahuy98/HWI/releases/download/3.1.0/hwi-3.1.0-mac-x86_64.tar.gz
 mkdir -p hwi-extracted && tar -xzf hwi-3.1.0-linux-x86_64.tar.gz -C hwi-extracted
 cp hwi-extracted/hwi "$OUTDIR/bin/"
 chmod +x "$OUTDIR/bin/hwi"
