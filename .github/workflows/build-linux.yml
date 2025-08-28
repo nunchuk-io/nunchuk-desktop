@@ -1,9 +1,6 @@
 name: nunchuk-linux-x86_64
 
 on:
-  push:
-    tags:
-      - '*'
   workflow_dispatch:
 
 jobs:
