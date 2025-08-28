@@ -22,19 +22,58 @@ import QtGraphicalEffects 1.0
 import "../../origins"
 import "../../customizes/Texts"
 
-QIcon {
-    id: _radio
+Row {
+    id: radioRoot
+    spacing: 8
     property bool selected: false
-    iconSize: 24
-    source: selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-    signal selectedClicked()
-    MouseArea {
-        id: mouse
-        anchors.fill: _radio
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            selectedClicked()
+    property alias content: loader.sourceComponent
+    readonly property Item contentItem: loader.item
+    property bool isOverlay: false
+    signal buttonClicked()
+    Loader {
+        id: loader
+        width: radioRoot.width - icon.width - 8
+        anchors.verticalCenter: parent.verticalCenter
+        sourceComponent: contentItem
+        MouseArea {
+            anchors.fill: loader
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: { buttonClicked() }
+        }
+    }
+    Loader {
+        id: icon
+        anchors.verticalCenter: parent.verticalCenter
+        width: 24
+        height: 24
+        sourceComponent: isOverlay ? radioOverlay : radioIcon
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: { buttonClicked() }
+        }
+    }
+    function iconSource() {
+        return radioRoot.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+    }
+    Component {
+        id: radioOverlay
+        ColorOverlay {
+            source: QIcon {
+                id: icon
+                iconSize: 24
+                source: iconSource()
+            }
+            color: radioRoot.enabled ? "#031F2B" : "#666666"
+        }
+    }
+    Component {
+        id: radioIcon
+        QIcon {
+            iconSize: 24
+            source: iconSource()
         }
     }
 }

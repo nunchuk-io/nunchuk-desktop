@@ -14,6 +14,7 @@ void WalletIO::requestExportWalletViaBSMS(const QString &file)
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
     bridge::nunchukExportWallet(walletId(), file_path, nunchuk::ExportFormat::BSMS);
+    dynamic_cast<CreatingWallet *>(this)->setNeedBackup(false);
 }
 
 void WalletIO::requestExportWalletViaQRBCUR2Legacy()
@@ -22,6 +23,7 @@ void WalletIO::requestExportWalletViaQRBCUR2Legacy()
     QStringList qrtags = bridge::nunchukExportKeystoneWallet(walletId(), msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
         AppModel::instance()->setQrExported(qrtags);
+        dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
     }
     else{
         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
@@ -34,6 +36,7 @@ void WalletIO::requestExportWalletViaQRBCUR2()
     QStringList qrtags = bridge::nunchukExportBCR2020010Wallet(walletId(), msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
         AppModel::instance()->setQrExported(qrtags);
+        dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
     }
     else{
         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
@@ -45,6 +48,7 @@ void WalletIO::requestExportWalletViaQRBBQRColdcard() {
     QStringList qrtags = qUtils::ExportBBQRWallet(nunchukWallet(), msgwarning);
     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && !qrtags.isEmpty()){
         AppModel::instance()->setQrExported(qrtags);
+        dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
     }
     else{
         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type() );
@@ -70,6 +74,7 @@ void WalletIO::requestExportWalletViaCOLDCARD(const QString &file)
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
     bridge::nunchukExportWallet(walletId(), file_path, nunchuk::ExportFormat::COLDCARD);
+    dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
 }
 
 void WalletIO::requestExportTransactionViaCSV(const QString &file)
@@ -91,4 +96,46 @@ void WalletIO::requestExportUtxoCSV(const QString &file)
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
     bridge::nunchukExportUnspentOutputs(walletId(), file_path, nunchuk::ExportFormat::CSV);
+}
+
+void WalletIO::requestViaDescriptor(const QString &file) {
+    DBG_INFO << walletId();
+    QString file_path = qUtils::QGetFilePath(file);
+    auto descriptor = nunchukWallet().get_descriptor(nunchuk::DescriptorPath::EXTERNAL_ALL);
+    if (descriptor.empty()) {
+        DBG_ERROR << "Descriptor is empty for wallet" << walletId();
+        return;
+    }
+    qUtils::ExportDataViaFile(file_path, QString::fromStdString(descriptor));
+}
+
+bool WalletIO::hasHardwareOrAirgap()
+{
+    set<nunchuk::SignerType> hardware_signers = {
+        nunchuk::SignerType::HARDWARE,
+        nunchuk::SignerType::AIRGAP,
+        nunchuk::SignerType::NFC,
+        nunchuk::SignerType::COLDCARD_NFC,
+        nunchuk::SignerType::PORTAL_NFC,
+    };
+
+    auto signers = singleSignersAssigned()->fullList();
+    for (const auto &signer : signers) {
+        auto signerType = static_cast<nunchuk::SignerType>(signer->signerType());
+        if (hardware_signers.find(signerType) != hardware_signers.end()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool WalletIO::hasNativeSegwitDerivationPath()
+{
+    auto signers = singleSignersAssigned()->fullList();
+    for (const auto &signer : signers) {
+        if (signer->derivationPath().startsWith("m/84h/0h/0h")) {
+            return true;
+        }
+    }
+    return false;
 }

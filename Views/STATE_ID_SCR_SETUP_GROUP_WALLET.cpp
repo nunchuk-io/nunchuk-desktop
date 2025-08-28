@@ -83,13 +83,6 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
             }
         }
     }
-    else if (type == "register-wallet-on-hardware") {
-        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-            if (auto sandbox = w->groupSandboxPtr()) {
-                sandbox->setScreenFlow("register-wallet-hardware");
-            }
-        }
-    }
     else if (type == "setting-group-sandbox") {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
@@ -109,17 +102,27 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             if (auto sandbox = w->groupSandboxPtr()) {
                 QString walletNameInputted = maps["walletNameInputted"].toString();
-                int walletM = maps["walletM"].toInt();
-                int walletN = maps["walletN"].toInt();
                 int  addressType = maps["addressType"].toInt();
                 w->setWalletName(walletNameInputted);
                 if (!w->walletId().isEmpty()) {
-                    QWarningMessage msg;
-                    bridge::UpdateWallet(w->nunchukWallet(), msg);
+                    auto walletType = static_cast<nunchuk::WalletType>(w->walletType());
+                    if (walletType != nunchuk::WalletType::MINISCRIPT) {
+                        QWarningMessage msg;
+                        bridge::UpdateWallet(w->nunchukWallet(), msg);
+                    }
                 }
                 sandbox->setGroupName(walletNameInputted);
                 if (!sandbox->groupId().isEmpty()) {
-                    sandbox->UpdateGroup(walletNameInputted, walletM, walletN, addressType);
+                    auto walletType = static_cast<nunchuk::WalletType>(w->walletType());
+                    if (walletType == nunchuk::WalletType::MINISCRIPT) {
+                        QString script_tmpl = w->customizeMiniscript();
+                        sandbox->UpdateGroup(walletNameInputted, script_tmpl, addressType);
+                    }
+                    else {
+                        int walletM = maps["walletM"].toInt();
+                        int walletN = maps["walletN"].toInt();
+                        sandbox->UpdateGroup(walletNameInputted, walletM, walletN, addressType);
+                    }
                 }
                 sandbox->setScreenFlow("setup-group-wallet");
             }
@@ -130,6 +133,7 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
             if (auto sandbox = w->groupSandboxPtr()) {
                 QString xfp = maps["xfp"].toString();
                 QString name = maps["keyName"].toString();
+                sandbox->registerSigners();
                 auto master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfpName(xfp, name);
                 if (master) {
                     AppModel::instance()->setMasterSignerInfo(master);
@@ -139,7 +143,6 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                     AppModel::instance()->setSingleSignerInfo(single);
                     QSignerManagement::instance()->finishCreateRemoteSigner();
                 }
-                sandbox->setScreenFlow("setup-group-wallet");
             }
         }
     }

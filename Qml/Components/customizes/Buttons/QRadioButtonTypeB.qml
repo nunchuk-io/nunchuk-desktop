@@ -22,51 +22,40 @@ import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
 
-Row {
+QRadioSelect {
     id: radioRoot
     width: 313
     spacing: 8
-    property bool selected: false
-    property alias text: text
-    signal buttonClicked()
+    property string placeholderText: ""
+    property string textOutput: ""
     signal typingFinished(var textOutput)
     property bool showArrow: false
     signal buttonArrowClicked()
-    QIcon {
-        id: icon
-        iconSize: 24
-        source: radioRoot.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-        anchors.verticalCenter: parent.verticalCenter
-        MouseArea {
-            id: mouse
-            anchors.fill: parent
-            onClicked: { buttonClicked()}
-        }
-    }
-
-    QTextInputBox {
-        id: text
-        width: radioRoot.width - icon.width - 8
-        rightPadding: 78
-        heightMin: 56
-        fontPixelSize: 14
-        anchors.verticalCenter: parent.verticalCenter
-        border.color: "#C9DEF1"
-        color: radioRoot.selected && parent.enabled? Qt.rgba(255, 255, 255, 0.3) : Qt.rgba(0, 0, 0, 0.1)
-        enabled: radioRoot.selected && parent.enabled
-        onTypingFinished: radioRoot.typingFinished(currentText)
-
-        QIconButton {
-            iconSize: 24
-            anchors {
-                right: parent.right
-                rightMargin: 6
-                verticalCenter: parent.verticalCenter
+    layoutDirection: Qt.RightToLeft
+    content: Component {
+        QTextInputBox {
+            id: text
+            rightPadding: 78
+            heightMin: 56
+            fontPixelSize: 14
+            border.color: "#C9DEF1"
+            color: radioRoot.selected && radioRoot.enabled? Qt.rgba(255, 255, 255, 0.3) : Qt.rgba(0, 0, 0, 0.1)
+            enabled: radioRoot.selected && radioRoot.enabled
+            onTypingFinished: radioRoot.typingFinished(currentText)
+            placeholder.text: radioRoot.placeholderText
+            textOutput: radioRoot.textOutput
+            QIconButton {
+                iconSize: 24
+                anchors {
+                    right: parent.right
+                    rightMargin: 6
+                    verticalCenter: parent.verticalCenter
+                }
+                visible: showArrow
+                icon: "qrc:/Images/Images/right-arrow-dark.svg"
+                onButtonClicked: { buttonArrowClicked() }
+                bgColor: "transparent"
             }
-            visible: showArrow
-            icon: "qrc:/Images/Images/right-arrow-dark.svg"
-            onButtonClicked: { buttonArrowClicked() }
-            bgColor: "transparent"
         }
-    }
+    }   
 }

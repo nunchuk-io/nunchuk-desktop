@@ -76,7 +76,13 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QBadge {
-                            text: qsTr("%1/%2").arg(modelData.walletM).arg(modelData.walletN)
+                            text: {
+                                if (modelData.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                                    return STR.STR_QML_1801
+                                } else {
+                                    return qsTr("%1/%2").arg(modelData.walletM).arg(modelData.walletN)
+                                }
+                            }
                             color: "#EAEAEA"
                             font.weight: Font.Normal
                             anchors.verticalCenter: parent.verticalCenter

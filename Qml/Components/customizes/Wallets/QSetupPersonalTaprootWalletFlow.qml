@@ -44,7 +44,6 @@ Loader {
     readonly property var map_flow: [
         {screen: "value-keyset",              screen_component: valueKeyset},
         {screen: "review-wallet",             screen_component: review_wallet},
-        {screen: "bsms-file-success",         screen_component: bsms_file_success},
         {screen: "configure-value-keyset",    screen_component: configure_value_keyset},
     ]
     width: popupWidth
@@ -67,9 +66,6 @@ Loader {
     }
     function switchReviewWallet() {
         newWalletInfo.screenFlow = "review-wallet"
-    }
-    function switchBsmsFileSuccess() {
-        newWalletInfo.screenFlow = "bsms-file-success"
     }
 
     Component {
@@ -124,26 +120,8 @@ Loader {
             onPrevClicked: newWalletInfo.backScreen()
             onNextClicked: {
                 AppModel.startCreateWallet(false, "")
-                switchBsmsFileSuccess()
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
-        }
-    }
-    Component {
-        id: bsms_file_success
-        QSaveYourWalletBSMSFile {
-            onNextClicked: {
-                savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                        + RoomWalletData.getValidFilename(newWalletInfo.walletName)
-                        + ".bsms"
-                savefileDialog.open()
-            }
-        }
-    }
-    FileDialog {
-        id: savefileDialog
-        fileMode: FileDialog.SaveFile
-        onAccepted: {
-            newWalletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
         }
     }
 }

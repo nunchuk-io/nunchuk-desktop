@@ -34,7 +34,7 @@ class QDevice : public QObject
     Q_PROPERTY(QString devicePath                 READ path                   NOTIFY pathChanged                 )
     Q_PROPERTY(QString deviceModel                READ model                  NOTIFY modelChanged                )
     Q_PROPERTY(QString deviceMasterFingerPrint    READ masterFingerPrint      NOTIFY masterFingerPrintChanged    )
-    Q_PROPERTY(bool deviceConnected               READ connected              NOTIFY connectedChanged            )
+    Q_PROPERTY(bool deviceConnected               READ connected              CONSTANT            )
     Q_PROPERTY(bool deviceNeedsPassPhraseSent     READ needsPassPhraseSent    NOTIFY needsPassPhraseSentChanged  )
     Q_PROPERTY(bool deviceNeedsPinSent            READ needsPinSent           NOTIFY needsPinSentChanged         )
     Q_PROPERTY(QString masterSignerId             READ masterSignerId         NOTIFY masterSignerIdChanged       )
@@ -48,7 +48,6 @@ public:
     QString model() const;
     QString masterFingerPrint() const;
     bool connected() const;
-    void setConnected(bool);
     bool needsPassPhraseSent() const;
     bool needsPinSent() const;
     bool usableToAdd() const;
@@ -63,7 +62,6 @@ private:
     bool m_isDraft = true;
     QString m_cardId = "";
     nunchuk::Device m_device;
-    bool isConnected {false};
 signals:
     void typeChanged();
     void pathChanged();

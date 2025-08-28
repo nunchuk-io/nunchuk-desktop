@@ -134,6 +134,8 @@ QVariant WalletListModel::data(const QModelIndex &index, int role) const {
             return m_data[index.row()]->numberOnline();
         case wallet_archived_Role:
             return m_data[index.row()]->isArchived();
+        case wallet_walletType_Role:
+            return m_data[index.row()]->walletType();
         default:
             return QVariant();
         }
@@ -183,6 +185,7 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_numberOnline_Role]         = "wallet_numberOnline";
     roles[wallet_numberSigner_Role]         = "wallet_numberSigner";
     roles[wallet_archived_Role]             = "wallet_isArchived";
+    roles[wallet_walletType_Role]           = "wallet_walletType";
     return roles;
 }
 
@@ -310,6 +313,7 @@ QVariantList WalletListModel::walletListByMasterSigner(const QString& masterSign
                 json["name"] = i.data()->walletNameDisplay();
                 json["walletM"] = i.data()->walletM();
                 json["walletN"] = i.data()->walletN();
+                json["walletType"] = i.data()->walletType();
                 ret << QVariant::fromValue(json);
             }
         }
@@ -328,6 +332,7 @@ QVariantList WalletListModel::walletListByFingerPrint(const QString &masterFinge
                 json["name"] = i.data()->walletNameDisplay();
                 json["walletM"] = i.data()->walletM();
                 json["walletN"] = i.data()->walletN();
+                json["walletType"] = i.data()->walletType();
                 ret << QVariant::fromValue(json);
             }
         }

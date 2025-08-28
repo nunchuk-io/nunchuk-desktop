@@ -66,7 +66,7 @@ void ReplacedWallet::MixMasterSignerAndSingleSignerAll()
             arrays.append(signer);
         }
     }
-    setSignerExistList(arrays);
+    setSignerExistList(arrays.toVariantList());
 }
 
 QString ReplacedWallet::replaceFlow() const

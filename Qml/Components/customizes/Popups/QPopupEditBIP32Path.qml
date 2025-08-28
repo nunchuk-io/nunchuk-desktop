@@ -106,16 +106,8 @@ Popup {
 
 
                 }
-
-                function removePrefix(prefix) {
-                    var str = newBip32Path.textInputted
-                    if (newBip32Path.textInputted.startsWith(prefix)) {
-                        str = str.replace(prefix, "");
-                    }
-                    return str
-                }
                 function bip32Path() {
-                    return removePrefix(newBip32Path.fixedText)
+                    return newBip32Path.textInputted
                 }
                 function deviceIndex() {
                     return devicelist.currentIndex
@@ -190,12 +182,8 @@ Popup {
                             boxHeight: 48
                             isValid: true
                             titleFontSize: 12
-                            property string fixedText: STR.STR_QML_150 + " "
-                            textInputted: fixedText + signerData.single_derivationPath
+                            textInputted: signerData.single_derivationPath
                             onTextInputtedChanged: {
-                                if (!textInputted.startsWith(fixedText)) {
-                                    textInputted = fixedText + textInputted.slice(fixedText.length) + derivation32Path // Restore prefix
-                                }
                                 if(!newBip32Path.isValid) {
                                     newBip32Path.isValid = true
                                     newBip32Path.errorText = ""
@@ -239,6 +227,7 @@ Popup {
                             }
                             onButtonClicked: {
                                 AppModel.startScanDevices(EVT.STATE_ID_SCR_SETUP_GROUP_WALLET)
+                                AppModel.rescanOrReCreateSigner(signerData.single_name, signerData.single_masterFingerPrint)
                             }
                         }
                         QListView {

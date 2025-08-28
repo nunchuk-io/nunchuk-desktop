@@ -86,7 +86,7 @@ class BaseWallet : public QStateFlow
     Q_PROPERTY(DeviceListModel* deviceList                          READ deviceList                                             NOTIFY deviceListChanged)
     Q_PROPERTY(QString      deviceType                              READ deviceType                                             NOTIFY deviceTypeChanged)
     Q_PROPERTY(int          limitKeySet                             READ limitKeySet                                            NOTIFY limitKeySetChanged)
-    Q_PROPERTY(bool         isByzantineGuardian                     READ isByzantineGuardian                                    NOTIFY isByzantineGuardianChanged)
+    
 
 public:
     BaseWallet(const nunchuk::Wallet &w);
@@ -189,7 +189,7 @@ public:
     Q_INVOKABLE void exportBitcoinSignedMessage(const QString &xfp, const QString &file_path, int wallet_type);
 
     QVariantList signerExistList() const;
-    void setSignerExistList(QJsonArray signerExistList);
+    void setSignerExistList(QVariantList signerExistList);
 
     DeviceListModel *deviceList() const ;
     void setDeviceList(const QDeviceListModelPtr &d);
@@ -201,7 +201,6 @@ public:
     std::vector<nunchuk::SingleSigner> localSigners();
     Q_INVOKABLE bool isContainKey(const QString &xfp);
 
-    bool isByzantineGuardian();
 private:
     mutable QString m_id {""};
     mutable QString m_walletName {""};
@@ -228,7 +227,7 @@ private:
     QString m_descriptior {};
     int m_creationMode {};
     mutable nunchuk::Wallet m_nunchukWallet {false};
-    QJsonArray m_signerExistList {};
+    QVariantList m_signerExistList {};
     QString m_deviceType {};
     int m_limitKeySet {0};
     static int m_flow;
@@ -255,7 +254,6 @@ signals:
     void signerExistListChanged();
     void deviceListChanged();
     void deviceTypeChanged();
-    void isByzantineGuardianChanged();
 
 public slots:
     void setValueKeyset(int index);

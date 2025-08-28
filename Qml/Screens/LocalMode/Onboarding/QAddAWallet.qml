@@ -62,13 +62,13 @@ QOnScreenContentTypeA {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Flickable {
-                height: 480
+                height: 500
                 width: _list.width + 4
                 anchors.horizontalCenter: parent.horizontalCenter
                 flickableDirection: Flickable.VerticalFlick
                 clip: true
                 interactive: true
-                contentHeight: contentWallet.childrenRect.height
+                contentHeight: contentWallet.childrenRect.height + 10
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
                     id: contentWallet
@@ -78,12 +78,8 @@ QOnScreenContentTypeA {
                         topMargin: 2
                     }                    
                     spacing: 16
-                    QCreateHotWallet {
-                        width: _list.width
-                        height: 136
-                        anchors.left: parent.left
-                        isPaid: true
-                        color: "#F5F5F5"
+                    
+                    QButtonAssistedWallet {
                         title: STR.STR_QML_1553
                         optional: {
                             var remainCount = ServiceSetting.servicesTag.walletConfig.remaining_wallet_count
@@ -92,8 +88,6 @@ QOnScreenContentTypeA {
                         description: STR.STR_QML_1554
                         note: STR.STR_QML_1555
                         desImg: "qrc:/Images/Images/type-assisted-wallet.svg"
-                        onItemclicked: {
-                        }
                         QSubscriptionRequired {
                             width: 150
                             height: 20
@@ -105,14 +99,7 @@ QOnScreenContentTypeA {
                         enabled: false
                         visible: isPaidSubscription
                     }
-                    QCreateHotWallet {
-                        width: _list.width
-                        height: 108
-                        anchors.left: parent.left
-                        color: "#FFFFFF"
-                        title: STR.STR_QML_1262
-                        description: STR.STR_QML_1405
-                        desImg: "qrc:/Images/Images/type-unassisted-wallet.svg"
+                    QButtonCustomWallet {
                         onItemclicked: {
                             var _input = {
                                 type: "create-new-wallet"
@@ -120,14 +107,8 @@ QOnScreenContentTypeA {
                             QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
                         }
                     }
-                    QCreateHotWallet {
-                        width: _list.width
-                        height: 108
-                        anchors.left: parent.left
-                        color: "#FFFFFF"
-                        title: STR.STR_QML_1543
-                        description: STR.STR_QML_1544
-                        desImg: "qrc:/Images/Images/type-free-group-wallet.svg"
+                    
+                    QButtonGroupWallet {
                         onItemclicked: {
                             var _input = {
                                 type: "create-new-group-wallet"
@@ -135,34 +116,27 @@ QOnScreenContentTypeA {
                             QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
                         }
                     }
-                    QCreateHotWallet {
-                        width: _list.width
-                        height: 108
-                        anchors.left: parent.left
-                        color: "#FFFFFF"
-                        title: STR.STR_QML_1251
-                        description: STR.STR_QML_1252
-                        desImg: "qrc:/Images/Images/type-hot-wallet.svg"
+                    QButtonHotWallet {
                         onItemclicked: {
                             OnBoarding.screenFlow = "hotWallet"
+                        }
+                    }
+                    QButtonMiniscript {
+                        onItemclicked: {
+                            var _input = {
+                                type: "create-miniscript-wallet"
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_ONBOARDING_ACTION_REQUEST, _input)
                         }
                     }
                     QLine {
                         width: _list.width
                         visible: !isPaidSubscription
                     }
-                    QCreateHotWallet {
-                        width: _list.width
-                        height: 80
-                        anchors.left: parent.left
-                        color: "#F5F5F5"
-                        title: ""
+                    QButtonRecommended {
                         description: STR.STR_QML_1545
                         desImg: "qrc:/Images/Images/type-assisted-wallet.svg"
                         visible: !isPaidSubscription
-                        onItemclicked: {
-
-                        }
                     }
                 }
             }

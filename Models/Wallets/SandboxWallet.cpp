@@ -19,40 +19,6 @@ bool SandboxWallet::isReplaced() const
     return isGlobalReplaced || AssistedWallet::isReplaced();
 }
 
-bool SandboxWallet::needBackup()
-{
-    if(isGlobalGroupWallet()){
-        bool needBackup = true;
-        QWalletCached<QString, QString, QString, QString, bool, bool> data;
-        bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-        if(ret){
-            needBackup = !data.backedup;
-        }
-        else {
-            setNeedBackup(needBackup);
-        }
-        return needBackup;
-    }
-    else {
-        return false;
-    }
-}
-
-void SandboxWallet::setNeedBackup(const bool data)
-{
-    if(isGlobalGroupWallet()){
-        QWalletCached<QString, QString, QString, QString, bool, bool> cache;
-        cache.groupId   = groupId();
-        cache.slug      = slug();
-        cache.myRole    = myRole();
-        cache.status    = status();
-        cache.backedup  = !data;
-        cache.hideFiatCurrency = isByzantineGuardian();
-        AppSetting::instance()->setWalletCached(walletId(), cache);
-        emit needBackupChanged();
-    }
-}
-
 bool SandboxWallet::isGlobalGroupWallet() const
 {
     if(!AppModel::instance()->groupWalletListPtr()){

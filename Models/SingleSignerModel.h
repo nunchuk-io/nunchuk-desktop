@@ -96,6 +96,7 @@ public:
     int signerType() const;
     void setSignerType(int signer_type);
 
+    nunchuk::SignerTag signerTag() const;
     std::vector<nunchuk::SignerTag> signerTags() const;
     void setSignerTags(const std::vector<nunchuk::SignerTag> signer_tags);
 
@@ -180,6 +181,8 @@ public:
     void setNeedBackup(bool val);
     bool allowAssignToWallet() const;
 
+    QSingleSignerPtr clone();
+
 private:
     QString xpub_ = "";
     QString public_key_ = "";
@@ -203,7 +206,7 @@ private:
     // QJsonArray m_healthCheckHistory {};
     QString m_address;
     bool m_isReplaced {false};
-    QSingleSignerPtr m_keyReplaced;
+    QSingleSignerPtr m_keyReplaced {nullptr};
 
     // Taproot only
     int  m_keyset_index {0};
@@ -324,6 +327,7 @@ public:
     QString getMasterSignerXfpByIndex(const int index);
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp);
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp, const QString& name);
+    QSingleSignerPtr getSingleSignerBy(const QString &xfp, const QString& derivationPath);
     int getIndexByFingerPrint(const QString &fingerprint);
     int getnumberSigned();
     bool containsHardwareKey();

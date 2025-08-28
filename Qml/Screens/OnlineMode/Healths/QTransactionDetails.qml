@@ -56,7 +56,7 @@ QOnScreenContentTypeA {
     content: QSendTransaction {
         isDummy: true
         transactionInfo: _content.transactionInfo
-        pendingSignatue: dummyTx ? dummyTx.pending_signatures : 1
+        pendingSignature: dummyTx ? dummyTx.pending_signatures : 1
         onAddrToVerify: {
             displayAddressBusybox.addrToVerify = addr
             var _address = {

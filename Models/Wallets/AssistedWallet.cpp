@@ -46,7 +46,7 @@ QString AssistedWallet::groupId() const
 {
     QString group_id = WalletsMng->groupId(walletId());
     if(group_id == ""){
-        QWalletCached<QString, QString, QString, QString, bool, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             group_id = data.groupId;
@@ -167,6 +167,16 @@ QString AssistedWallet::walletNameDisplay()
     return ret;
 }
 
+bool AssistedWallet::isByzantineGuardian()
+{
+    QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
+    bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
+    if(ret){
+        return data.hideFiatCurrency;
+    }
+    return false;
+}
+
 QStringList AssistedWallet::slugs() const
 {
     return QStringList{slug()};
@@ -176,7 +186,7 @@ QString AssistedWallet::slug() const
 {
     QString slug = WalletsMng->slugInfo(walletId());
     if(slug == ""){
-        QWalletCached<QString, QString, QString, QString, bool, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             slug = data.slug;
@@ -192,7 +202,7 @@ QString AssistedWallet::myRole() const
         role = dashboard().data()->myRole();
     }
     if (role == "") {
-        QWalletCached<QString, QString, QString, QString, bool, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             role = data.myRole;
@@ -209,7 +219,7 @@ QString AssistedWallet::status() const
         status = dashboard().data()->walletStatus();
     }
     if(status == ""){
-        QWalletCached<QString, QString, QString, QString, bool, bool> data;
+        QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
         bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
         if(ret){
             status = data.status;

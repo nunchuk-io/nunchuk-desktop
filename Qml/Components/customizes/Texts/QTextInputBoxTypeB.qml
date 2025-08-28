@@ -50,6 +50,7 @@ Column {
     property alias  passwordValidateResult: validatePassword.isValid
     property int    titleFontSize: 16
     property var    disabledColor: "#EAEAEA"
+    property alias  labelComponent: txtLabel
 
     signal typingFinished(var currentText)
     signal downKeyRequest()
@@ -63,7 +64,7 @@ Column {
     Row {
         width: parent.width
         QLato {
-            id:txt1
+            id: txtLabel
             width: paintedWidth
             font.pixelSize: titleFontSize
             font.weight: textweight
@@ -72,17 +73,17 @@ Column {
             anchors.bottom: parent.bottom
         }
         QLato {
-            id:txt2
+            id: txt2
             width: paintedWidth
             font.pixelSize: 12
             font.weight: textweight
             color: "#595959"
             text: optional
             visible: optional != ""
-            anchors.verticalCenter: txt1.verticalCenter
+            anchors.verticalCenter: txtLabel.verticalCenter
         }
         QLato {
-            width: textipboxType.width - txt1.width - txt2.width
+            width: textipboxType.width - txtLabel.width - txt2.width
             font.pixelSize: 12
             text: textipboxType.length + "/" + textipboxType.maxLength
             visible: textipboxType.enableLengthLimit

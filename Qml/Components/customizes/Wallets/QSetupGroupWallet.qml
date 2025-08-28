@@ -31,6 +31,7 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/QRCodes"
 import "../../../Components/customizes/Popups"
+import "../../../Components/customizes/Wallets/miniscript"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
@@ -84,13 +85,42 @@ QOnScreenContentTypeA {
                 clip: true
                 width: 352
                 height: 492
-                contentHeight: keylist.implicitHeight
+                contentHeight: keylistLoader.implicitHeight
                 interactive: contentHeight > height
                 flickableDirection: Flickable.VerticalFlick
-                contentY : contentHeight > height ? contentHeight - height : 0
+                contentY : {
+                    if (newWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT ||
+                        sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                        return 0
+                    } else {
+                        return contentHeight > height ? contentHeight - height : 0
+                    }
+                }
                 ScrollBar.vertical: ScrollBar { active: keylistflick.interactive }
-                QGroupWalletKeys {
-                    id: keylist
+
+                Loader {
+                    id: keylistLoader
+                    sourceComponent: {
+                        if (newWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT ||
+                            sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                            return keylistMiniComponent
+                        } else {
+                            return keylistComponent
+                        }
+                    }
+                }
+
+                Component {
+                    id: keylistComponent
+                    QGroupWalletKeys {
+
+                    }
+                }
+                Component {
+                    id: keylistMiniComponent
+                    QGroupWalletMiniscriptKeys {
+
+                    }
                 }
             }
         }
@@ -178,23 +208,30 @@ QOnScreenContentTypeA {
                     if (sandbox.checkWaitingOthers()) {
                         _waiting_for_other.open()
                     } else {
-                        if (sandbox.addressType === NUNCHUCKTYPE.TAPROOT) {
-                            if (sandbox.groupN === 1) {
-                                _input = {
-                                    type: "review-group-sandbox"
-                                }
-                                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                            } else {
-                                _input = {
-                                    type: "switch-to-intro-taproot"
-                                }
-                                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                            }
-                        } else {
+                        if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
                             _input = {
                                 type: "review-group-sandbox"
                             }
                             QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                        } else {
+                            if (sandbox.addressType === NUNCHUCKTYPE.TAPROOT) {
+                                if (sandbox.groupN === 1) {
+                                    _input = {
+                                        type: "review-group-sandbox"
+                                    }
+                                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                                } else {
+                                    _input = {
+                                        type: "switch-to-intro-taproot"
+                                    }
+                                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                                }
+                            } else {
+                                _input = {
+                                    type: "review-group-sandbox"
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
+                            }
                         }
                     }
                 }
@@ -203,15 +240,43 @@ QOnScreenContentTypeA {
     }
     QPopupEditBIP32Path {
         id: editBip32Path
+        property string key: ""
         onEnterText: {
-            gettingPublicKey.open()
-            sandbox.editBIP32Path(idx, xfp, pathBip32)
+            if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                gettingPublicKey.open()
+                sandbox.editBIP32Path(key, xfp, pathBip32)
+            } else {
+                gettingPublicKey.open()
+                sandbox.editBIP32Path(idx, xfp, pathBip32)
+            }
         }
     }
     QPopupGettingPublicKeyLoading {
         id: gettingPublicKey
     }
-
+    QPopupInfoTwoButtons {
+        id: _warningMultiSigner
+        property var key: ""
+        property var xfp: ""
+        property var pathBip32: ""
+        property var signerData: {}
+        isVertical: false
+        title: STR.STR_QML_661
+        contentText: STR.STR_QML_1868
+        labels: [STR.STR_QML_035, STR.STR_QML_1867]
+        funcs: [
+            function() {},
+            function() {
+                editBip32Path.clearError()
+                editBip32Path.isShowListDevice = false
+                editBip32Path.signerData = signerData
+                editBip32Path.idx = 0
+                editBip32Path.xfp = xfp
+                editBip32Path.key = key
+                editBip32Path.open()
+            }
+        ]
+    }
     Connections {
         target: sandbox
         onEditBIP32PathSuccess: {
@@ -227,6 +292,33 @@ QOnScreenContentTypeA {
                 editBip32Path.showError(typeError)
             } else {}
         }
+    }
+    Connections {
+       target: newWalletInfo
+       function onDuplicateKeyError(key, xfp, path, keyObj){
+            if (editBip32Path.opened) return
+           _warningMultiSigner.open()
+           _warningMultiSigner.key = key
+           _warningMultiSigner.xfp = xfp
+           _warningMultiSigner.pathBip32 = path
+           var data = {
+                   single_name: keyObj.singleSigner_name,
+                   single_type: keyObj.single_signer_type,
+                   single_tag: keyObj.single_signer_tag,
+                   single_devicetype: keyObj.single_signer_devicetype,
+                   single_masterFingerPrint: keyObj.singleSigner_masterFingerPrint,
+                   single_account_index: keyObj.single_signer_account_index,
+                   single_checked: keyObj.single_signer_checked,
+                   single_is_local: keyObj.single_signer_is_local,
+                   single_value_key: keyObj.single_signer_value_key,
+                   single_derivationPath: keyObj.singleSigner_derivationPath,
+                   single_device_cardid: keyObj.single_signer_device_cardid,
+                   single_isOccupied: keyObj.single_signer_isOccupied,
+                   single_isReplaced: keyObj.single_signer_isReplaced,
+                   single_keyReplaced: keyObj.single_signer_keyReplaced,
+               }
+           _warningMultiSigner.signerData = data; // Ensure it's an object
+       }
     }
 
     QConfirmYesNoPopup {
@@ -259,12 +351,18 @@ QOnScreenContentTypeA {
     QConfirmYesNoPopup{
         id:_confirmRemoveKey
         property var idx
+        property string key: ""
+        property string firstLine: ""
         title: STR.STR_QML_661
         contentText: STR.STR_QML_243
         onConfirmNo: close()
         onConfirmYes: {
             close()
-            sandbox.removeKey(idx)
+            if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                sandbox.removeKeyName(firstLine, key)
+            } else {
+                sandbox.removeKey(idx)
+            }            
         }
     }
 

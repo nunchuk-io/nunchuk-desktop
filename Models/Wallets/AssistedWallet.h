@@ -32,6 +32,7 @@ class AssistedWallet : public SharedWallet, public Slugs
     Q_PROPERTY(QString      walletAliasName                         READ walletAliasName                                        NOTIFY walletChanged)
     Q_PROPERTY(bool         isHoneyBadger                           READ isHoneyBadger                                          CONSTANT)
     Q_PROPERTY(bool         isIronHand                              READ isIronHand                                             CONSTANT)
+    Q_PROPERTY(bool         isByzantineGuardian                     READ isByzantineGuardian                                    NOTIFY isByzantineGuardianChanged)
 
 public:
     AssistedWallet(const nunchuk::Wallet &w);
@@ -59,6 +60,8 @@ public:
     QWalletServicesTagPtr servicesTagPtr() const;
     QString walletAliasName() const;
     QString walletNameDisplay() override;
+
+    bool isByzantineGuardian();
 public:
     QStringList slugs() const final;
     QString slug() const;
@@ -124,6 +127,7 @@ signals:
     void isAssistedWalletChanged();
     void groupInfoChanged();
     void aliasMembersChanged();
+    void isByzantineGuardianChanged();
 private:
     QJsonArray m_aliasMembers {};
 };

@@ -55,7 +55,7 @@ AppModel::AppModel(): m_inititalized{false},
     m_transactionReplaceInfo(NULL),
     m_transactionPending(QTransactionListModelPtr(new TransactionListModel())),
     m_walletListCurrentIndex(-1),
-    m_chainTip(0), m_addSignerStep(-1), m_addSignerPercentage(0),
+    m_blockheight(0), m_addSignerStep(-1), m_addSignerPercentage(0),
     m_fastestFee(1000), m_halfHourFee(1000), m_hourFee(1000), m_minFee(1000),
     m_addressBalance(0),m_mnemonic(""),
     m_softwareSignerDeviceList(QDeviceListModelPtr(new DeviceListModel())),
@@ -82,8 +82,8 @@ AppModel::AppModel(): m_inititalized{false},
     connect(qApp, &QCoreApplication::aboutToQuit, this, [] {
         DBG_INFO << "APPLICATION ABOUT TO QUIT" << QThreadPool::globalInstance()->activeThreadCount();
         bridge::stopAllNunchuk();
-        QThreadPool::globalInstance()->clear();
-        QThreadPool::globalInstance()->setMaxThreadCount(0);
+        // QThreadPool::globalInstance()->clear();
+        // QThreadPool::globalInstance()->setMaxThreadCount(0);
     });
 }
 
@@ -665,16 +665,16 @@ void AppModel::setTransactionReplaceInfo(const QTransactionPtr &transactionRepla
     m_transactionReplaceInfo = transactionReplaceInfo;
 }
 
-int AppModel::chainTip() const
+int AppModel::blockHeight() const
 {
-    return m_chainTip;
+    return m_blockheight;
 }
 
-void AppModel::setChainTip(int chainTip)
+void AppModel::setBlockHeight(int height)
 {
-    if(m_chainTip != chainTip){
-        m_chainTip = chainTip;
-        emit chainTipChanged();
+    if(m_blockheight != height){
+        m_blockheight = height;
+        emit blockheightChanged();
     }
 }
 
@@ -1374,4 +1374,31 @@ QString AppModel::qCurrencyFromAmount(const qint64 amountSats)
 qint64 AppModel::qAmountFromCurrency(const QString &currency)
 {
     return qUtils::QAmountFromCurrency(currency);
+}
+
+
+void AppModel::rescanOrReCreateSigner(const QString &name, const QString &fingerPrint)
+{
+    emit startTopXPUBsSigner();
+    QtConcurrent::run([name, fingerPrint]() {
+        int deviceIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(fingerPrint);
+        if (deviceIndex < 0) {
+            if(AppModel::instance()->scanDevicesSync()) {
+                deviceIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(fingerPrint);
+            }
+        }
+
+        QWarningMessage msg;
+        QString masterSignerId = fingerPrint;
+        QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, deviceIndex, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+            masterSignerId = ret->id();
+        }
+        msg.resetWarningMessage();
+        bridge::nunchukCacheMasterSignerXPub(masterSignerId, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+            AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+        }
+        emit AppModel::instance()->finishTopXPUBsSigner(); 
+    });
 }

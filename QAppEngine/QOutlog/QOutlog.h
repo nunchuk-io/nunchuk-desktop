@@ -211,7 +211,7 @@ public:
     template <class T>
     inline QOutlog &operator<<(const std::vector<T> &t)
     {
-        for(int i = 0; i < t.size(); i++) {
+        for(int i = 0; i < (int)t.size(); i++) {
             mStream << QString("0x%1 ").arg((uchar)t.at(i), 2, 16, QChar('0'));
         }
         mStream  << ' ';

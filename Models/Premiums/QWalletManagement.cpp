@@ -116,13 +116,14 @@ void QWalletManagement::GetListWallet(int mode)
                         }
                     }
                 }
-                QWalletCached<QString, QString, QString, QString, bool, bool> cachedData;
+                QWalletCached<QString, QString, QString, QString, bool, bool, bool> cachedData;
                 cachedData.groupId  = group_id;
                 cachedData.slug = slug;
                 cachedData.myRole  = myRole;
                 cachedData.status = status;
                 cachedData.backedup = true;
                 cachedData.hideFiatCurrency = hide_fiat_currency;
+                cachedData.registered = true;
                 AppSetting::instance()->setWalletCached(wallet_id, cachedData);
 
                 QString wallet_name = wallet_obj["name"].toString();

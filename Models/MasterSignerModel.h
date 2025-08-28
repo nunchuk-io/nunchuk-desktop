@@ -116,6 +116,8 @@ public:
     nunchuk::MasterSigner originMasterSigner() const;
     void setOriginMasterSigner(const nunchuk::MasterSigner &signer);
 
+    nunchuk::SignerTag signerTag() const;
+
     QString tag() const;
     QStringList tags() const;
 

@@ -605,6 +605,7 @@ QScreen {
                             isHotWallet: modelData.wallet_isHotWallet
                             isReplaced: modelData.wallet_isReplaced
                             isSandboxWallet: modelData.wallet_isSanboxWallet
+                            walletType: modelData.wallet_walletType
                             visible: modelData.wallet_id !== AppModel.walletInfo.walletId
                             enabled: visible
                             layer.enabled: true

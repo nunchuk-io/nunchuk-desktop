@@ -40,6 +40,8 @@ QScreen {
     property bool firstEnable: true
     readonly property int walletOptType : AppModel.newWalletInfo.walletOptType
     property var sandbox       : AppModel.newWalletInfo.sandbox
+    property var newWalletInfo: AppModel.newWalletInfo
+
     QOnScreenContentTypeB {
         id:_content
         width: popupWidth
@@ -64,6 +66,7 @@ QScreen {
                     maxLength: 20
                     textInputted: AppModel.newWalletInfo.walletName
                     onTextInputtedChanged: {
+                        AppModel.newWalletInfo.walletName = textInputted
                         if(!_walletName.isValid){
                             _walletName.isValid = true
                             _walletName.errorText = ""
@@ -85,8 +88,10 @@ QScreen {
                         QAddAddressType {
                             id: addressTypeSelection
                             width: 360
+                            walletConfigType: walletConfig.option
                             onSelectTypeOption: {
                                 addressTypeSelection.typeOption = type
+                                newWalletInfo.customizeMiniscript = ""
                             }
                         }
                         QLine {
@@ -98,12 +103,30 @@ QScreen {
                             width: 360
                             addressType: addressTypeSelection.typeOption
                             visible: walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET
+                            onSelectMiniscriptTemplate: (templateName) => {
+                                updateAddressType()
+                                _miniTmpSwitch.selectedTemplate(templateName)
+                            }
+                            onEnterCustomMiniscript: (option) => {
+                                updateAddressType()
+                                _miniTmpSwitch.enterCustom(option)
+                            }
+                            onMiniscriptEdit: () => {
+                                _miniTmpSwitch.switchEnterMiniScript()
+                            }
+                            onMiniscriptDelete: () => {
+                                newWalletInfo.customizeMiniscript = ""
+                            }
                         }
                     }
                 }
             }
             function isEnable() {
-                return _walletName.textInputted !== ""
+                if (walletConfig.option === "miniscript") {
+                    return _walletName.textInputted !== "" && newWalletInfo.customizeMiniscript !== ""
+                } else {
+                    return _walletName.textInputted !== ""
+                }
             }
 
             function createWallet() {
@@ -112,26 +135,34 @@ QScreen {
                                          "addressType"     : addressTypeSelection.typeOption };
                     QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST, newObj)
                 }
-                else{
-                    _warning.open()
-                }
             }
             function createGroupWallet() {
                 if(_walletName.textInputted !== ""){
                     var config = walletConfig.findOpt()
                     var newObj = {
-                        "type": "create-group-wallet",
+                        "type"              : "create-group-wallet",
                         "walletNameInputted": _walletName.textInputted,
-                        "walletM"         : config.walletM,
-                        "walletN"         : config.walletN,
-                        "addressType"     : addressTypeSelection.typeOption };
+                        "walletM"           : config.walletM,
+                        "walletN"           : config.walletN,
+                        "addressType"       : addressTypeSelection.typeOption };
                     QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_REQUEST, newObj)
                 }
-                else{
-                    _warning.open()
+            }
+            function createGroupWalletMiniscript() {
+                if(_walletName.textInputted !== ""){
+                    var config = walletConfig.findOpt()
+                    var newObj = {
+                        "type": "create-group-wallet",
+                        "walletNameInputted": _walletName.textInputted,
+                        "addressType"       : addressTypeSelection.typeOption };
+                    QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_REQUEST, newObj)
                 }
             }
-            function walletType() {
+            function updateAddressType() {
+                newWalletInfo.walletAddressType = addressTypeSelection.typeOption
+                newWalletInfo.walletType = walletConfig.option === "miniscript" ? NUNCHUCKTYPE.MINISCRIPT : NUNCHUCKTYPE.MULTI_SIG
+            }
+            function addressType() {
                 return addressTypeSelection.typeOption
             }
         }
@@ -144,19 +175,35 @@ QScreen {
             type: eTypeE
             enabled: _content.contentItem.isEnable() || firstEnable
             onButtonClicked: {
+                if(!_content.contentItem.isEnable()){
+                    _warning.open()
+                    return
+                }
+                _content.contentItem.updateAddressType()
                 firstEnable = false
-                if (walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET) {
-                    _content.contentItem.createGroupWallet()
-                } else {
-                    if (_content.contentItem.walletType() === NUNCHUCKTYPE.TAPROOT) {
+                switch (walletOptType) {
+                case NUNCHUCKTYPE.E_GROUP_WALLET:
+                    if (newWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                        _content.contentItem.createGroupWalletMiniscript()
+                    } else {
+                        _content.contentItem.createGroupWallet()
+                    }
+                    break;
+                case NUNCHUCKTYPE.E_MINISCRIPT_WALLET:
+                    _content.contentItem.createWallet()
+                    break;
+                default:
+                    if (_content.contentItem.addressType() === NUNCHUCKTYPE.TAPROOT) {
                         _infoPopup.open()
                     } else {
                         _content.contentItem.createWallet()
                     }
+                    break;
                 }
             }
         }
     }
+
     QPopupToast{
         id:_warning
         x:_content.x + 36
@@ -164,42 +211,12 @@ QScreen {
         warningType:EWARNING.WARNING_MSG
         warningExplain:STR.STR_QML_587
     }
-    QPopupOverlayScreen {
-        id: _infoPopup
-        property int _INTROTAPROOT: 1
-        property int _TAPROOTWARNING: 2
-        property int nextState: _INTROTAPROOT
-        content: switch(_infoPopup.nextState) {
-                 case _infoPopup._INTROTAPROOT: return introTaproot
-                 case _infoPopup._TAPROOTWARNING: return taprootWarning
-                 default: return null
-              }
 
-        function switchIntroTaproot() {
-            _infoPopup.nextState = _infoPopup._INTROTAPROOT
-        }
-        function switchTaprootWarning() {
-            _infoPopup.nextState = _infoPopup._TAPROOTWARNING
-        }
+    QPopupTaprootWarningAndInfo {
+        id: _infoPopup
     }
-    Component {
-        id : introTaproot
-        QIntroductionTaprootAddress {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            onPrevClicked: _infoPopup.close()
-            onNextClicked: {
-                _infoPopup.switchTaprootWarning()
-            }
-        }
-    }
-    Component {
-        id : taprootWarning
-        QTaprootWarningSupport {
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            onPrevClicked: _infoPopup.switchIntroTaproot()
-            onNextClicked: {
-                _content.contentItem.createWallet()
-            }
-        }
+
+    QPopupMiniscriptTemplateSwitch {
+        id: _miniTmpSwitch
     }
 }

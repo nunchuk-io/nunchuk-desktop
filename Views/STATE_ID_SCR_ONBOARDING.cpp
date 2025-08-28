@@ -84,6 +84,12 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
             w->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_PERSONAL_WALLET);
         }
     }
+    else if (type == "create-miniscript-wallet") {
+        QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_WALLET_REQUEST);
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            w->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_MINISCRIPT_WALLET);
+        }
+    }
     else if (type == "create-new-group-wallet") {
         if (QSharedWallets::instance()->CheckGroupConfig()) {
             QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_WALLET_REQUEST);
@@ -182,6 +188,9 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
                 AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
             }            
         }
+    }
+    else{
+        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
     }
 }
 

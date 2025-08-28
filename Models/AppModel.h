@@ -40,7 +40,7 @@ class AppModel final : public Controller,
                        public SignInViaDummy
 {
     Q_OBJECT
-    Q_PROPERTY(int                      chainTip                        READ chainTip                                                       NOTIFY chainTipChanged)
+    Q_PROPERTY(int                      blockHeight                     READ blockHeight                                                    NOTIFY blockheightChanged)
     Q_PROPERTY(Wallet*                  walletInfo                      READ walletInfo                                                     NOTIFY walletInfoChanged)
     Q_PROPERTY(Wallet*                  newWalletInfo                   READ newWalletInfo                                                  NOTIFY newWalletInfoChanged)
     Q_PROPERTY(WalletListModel*         walletList                      READ walletList                                                     NOTIFY walletListChanged)
@@ -155,8 +155,8 @@ public:
     int walletListCurrentIndex() const;
     void setWalletListCurrentIndex(int index, bool force = false);
 
-    int chainTip() const;
-    void setChainTip(int chainTip);
+    int blockHeight() const;
+    void setBlockHeight(int chainTip);
 
     QTransactionPtr getTransactionReplaceInfo() const;
     void setTransactionReplaceInfo(const QTransactionPtr &transactionReplaceInfo);
@@ -272,7 +272,7 @@ private:
     QTransactionListModelPtr m_transactionPending;
     QDestinationListModelPtr m_destinationList;
     int                 m_walletListCurrentIndex;
-    int                 m_chainTip;
+    int                 m_blockheight;
     int                 m_addSignerStep;
     int                 m_addSignerPercentage;
 
@@ -320,7 +320,7 @@ signals:
     void transactionPendingChanged();
     void destinationListChanged();
     void walletListCurrentIndexChanged();
-    void chainTipChanged();
+    void blockheightChanged();
     void addSignerStepChanged();
     void addSignerPercentageChanged();
     void fastestFeeChanged();
@@ -349,6 +349,8 @@ signals:
     void syncingWalletFromServer(const QString fingerPrint);
     void syncingConfirmWalletRemoveKey(const QString fingerPrint);
     void signViaSingature();
+    void startTopXPUBsSigner();
+    void finishTopXPUBsSigner();
 public slots:
     void confirmSyncingWalletFromServer(bool yes, bool no);
     void timerHealthCheckTimeHandle();
@@ -370,6 +372,8 @@ public slots:
     QString qBTCFromAmount(const qint64 amount);
     QString qCurrencyFromAmount(const qint64 amountSats);
     qint64  qAmountFromCurrency(const QString &currency);
+    void rescanOrReCreateSigner(const QString &name,
+                                const QString &fingerPrint);
 };
 
 #endif // APPMODEL_H

@@ -44,22 +44,40 @@ QScreen {
     readonly property int eWALLET_CHANGE_ALIAS: 3
     readonly property int eWALLET_PRIMARY_OWNER: 4
     property int eFlow: 1
+
+    property var walletInfo: AppModel.walletInfo
+    property string flow_screen: walletInfo.screenFlow
+    readonly property var map_flow: [
+        {screen: "",                          screen_component: defaultWalletInfo()},
+        {screen: "bsms-file-success",         screen_component: bsms_file_success},
+        {screen: "register-wallet-hardware",  screen_component: register_wallet_hardware},
+    ]
+
     Loader {
         id: contenCenter
         anchors.centerIn: parent
         sourceComponent: {
-            if (eFlow === eWALLET_CONFIG) {
-                return isDelete ? _security_question : wallet_config
+            var itemScreen = map_flow.find(function(e) {if (e.screen === flow_screen) return true; else return false})
+            if (itemScreen) {
+                return itemScreen.screen_component
+            } else {
+                return defaultWalletInfo()
             }
-            else if (eFlow === eWALLET_SET_ALIAS || eFlow === eWALLET_CHANGE_ALIAS) {
-                return wallet_alias
-            }
-            else if (eFlow === eWALLET_PRIMARY_OWNER) {
-                return wallet_primary_owner
-            }
-            else {
-                return isDelete ? _security_question : wallet_config
-            }
+        }
+    }
+
+    function defaultWalletInfo() {
+        if (eFlow === eWALLET_CONFIG) {
+            return isDelete ? _security_question : wallet_config
+        }
+        else if (eFlow === eWALLET_SET_ALIAS || eFlow === eWALLET_CHANGE_ALIAS) {
+            return wallet_alias
+        }
+        else if (eFlow === eWALLET_PRIMARY_OWNER) {
+            return wallet_primary_owner
+        }
+        else {
+            return isDelete ? _security_question : wallet_config
         }
     }
 
@@ -103,6 +121,41 @@ QScreen {
         onConfirmYes: {
             close()
             QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_REMOVE, AppModel.walletInfo)
+        }
+    }
+
+    Component {
+        id: bsms_file_success
+        QSaveYourWalletBSMSFile {
+            onNextClicked: {
+                savefileDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                            + RoomWalletData.getValidFilename(walletInfo.walletName)
+                            + ".bsms"
+                savefileDialog.open()
+            }
+        }
+    }
+    FileDialog {
+        id: savefileDialog
+        fileMode: FileDialog.SaveFile
+        onAccepted: {
+            if (walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG) {
+                walletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            } else {
+                walletInfo.requestExportWalletViaBSMS(savefileDialog.currentFile)
+                if (walletInfo.hasHardwareOrAirgap()) {
+                    QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST, "register-wallet-hardware")
+                } else {
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                }
+            }
+        }
+    }
+
+    Component {
+        id: register_wallet_hardware
+        QRegisterWalletOnHardware {
         }
     }
     

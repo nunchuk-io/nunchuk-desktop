@@ -36,7 +36,6 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     property var  txInfo: AppModel.transactionInfo
-    property bool useScriptPaht: txInfo.useScriptPath
     property bool isCustomize: false
     property int  new_fee_rate: 0
     Loader {

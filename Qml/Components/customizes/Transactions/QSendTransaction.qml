@@ -34,10 +34,13 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     id: _send
+    property var  walletInfo: AppModel.walletInfo
     property var  transactionInfo
-    property bool isTaproot: (AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
-    property bool isMultisig: (AppModel.walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG)
-    property int  pendingSignatue: 0
+    property bool isTaproot:    (walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT)
+    property bool isMultisig:   (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG)
+    property bool isMiniscript: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
+    property bool hasKeyPath: walletInfo.keyPathActivated
+    property int  pendingSignature: 0
     property bool isDummy: false
     signal addrToVerify(var addr)
     signal newMemoNotify(var newMemo)
@@ -57,7 +60,34 @@ Item {
             onNewMemoNotify: _send.newMemoNotify(newMemo)
         }
         Loader {
-            sourceComponent: (_send.isTaproot && _send.isMultisig) ? taprootWalletKeys : standardWalletKeys
+            sourceComponent: {
+                if (isMiniscript) {
+                    if(isTaproot){
+                        if (transactionInfo.isScriptPath) {
+                            return miniscriptWalletKeys;
+                        }
+                        else {
+                            if((walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT) && (walletInfo.walletM > 1)){
+                                return taprootWalletKeys;
+                            }
+                            else {
+                                return standardWalletKeys
+                            }
+                        }
+                    }
+                    else {
+                        return miniscriptWalletKeys;
+                    }
+                }
+                else {
+                    if (isTaproot && isMultisig) {
+                        return taprootWalletKeys;
+                    }
+                    else {
+                        return standardWalletKeys;
+                    }
+                }
+            }
         }
     }
     QChangeTagsInTransaction {
@@ -67,7 +97,7 @@ Item {
         id: standardWalletKeys
         QMemberKeysArea {
             transactionInfo: _send.transactionInfo
-            pendingSignatue: _send.pendingSignatue
+            pendingSignature: _send.pendingSignature
             myRole: _send.myRole
             isDummy: _send.isDummy
             onKeySignRequest: _send.keySignRequest(signer)
@@ -80,13 +110,23 @@ Item {
         id: taprootWalletKeys
         QMemberKeysAreaTaproot {
             transactionInfo: _send.transactionInfo
-            pendingSignatue: _send.pendingSignatue
+            pendingSignature: _send.pendingSignature
             myRole: _send.myRole
             isDummy: _send.isDummy
             onKeySignRequest: _send.keySignRequest(signer)
             onKeyScanRequest: _send.keyScanRequest()
             onKeyExportRequest: _send.keyExportRequest()
             onKeyImportRequest: _send.keyImportRequest()
+        }
+    }
+    Component {
+        id: miniscriptWalletKeys
+        QMemberKeysAreaMiniscript {
+            transactionInfo: _send.transactionInfo
+            onKeySignRequest: _send.keySignRequest(signer)
+            onKeyScanRequest: _send.keyScanRequest()
+            // onKeyExportRequest: _send.keyExportRequest()
+            // onKeyImportRequest: _send.keyImportRequest()
         }
     }
 }

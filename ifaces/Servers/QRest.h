@@ -52,9 +52,10 @@ public:
     static void setDracoToken(const QString token);
     static QByteArray machineUniqueId();
     QString url() const;
-protected:
+
     QThreadStorage<OurSharedPointer<QNetworkAccessManager>> m_networkManager;
     OurSharedPointer<QNetworkAccessManager> networkManager();
+
     QJsonObject postSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
     QJsonObject postMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
@@ -69,6 +70,19 @@ protected:
 private:
     static QString      m_dracoToken;
     static QByteArray   m_machineUniqueId;
+    QThread             *m_workerThread {nullptr};
+
+private:
+    QJsonObject doPostSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject doPostSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject doPostMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
+    QJsonObject doPostMultiPartSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg);
+    QJsonObject doGetSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
+    QJsonObject doGetSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg);
+    QJsonObject doPutSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject doPutSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject doDeleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
+    QJsonObject doDeleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
 };
 
 struct QReplyDeleter {
@@ -77,5 +91,6 @@ struct QReplyDeleter {
     }
 };
 using QNetworkReplyPtr = std::unique_ptr<QNetworkReply, QReplyDeleter>;
+typedef OurSharedPointer<QRest> QRestPtr;
 
 #endif // QREST_H

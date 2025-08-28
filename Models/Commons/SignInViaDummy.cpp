@@ -83,8 +83,7 @@ void SignInViaDummy::convertWallet()
     for(auto signer : list){
         signers.push_back(getSigner(signer.toObject()));
     }
-    m_wallet = nunchuk::Wallet(false);
-    m_wallet.set_signers(signers);
+    m_wallet = nunchuk::Wallet("", 1, 1, signers, nunchuk::AddressType::NATIVE_SEGWIT, false, 0, true);
     if (auto w = AppModel::instance()->walletInfoPtr()) {
         w->convert(m_wallet);
         if (auto signers = w->singleSignersAssigned()) {
@@ -125,9 +124,19 @@ void SignInViaDummy::SignInCreateDummyTransaction()
     tx = qUtils::DecodeDummyTx(m_wallet, psbt, msg);
     tx.set_status(nunchuk::TransactionStatus::PENDING_SIGNATURES);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        std::string wallet_id = "";
+        try {
+            wallet_id = m_wallet.get_id();
+        }
+        catch (const nunchuk::BaseException &ex) {
+            DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        }
+        catch (std::exception &e) {
+            DBG_INFO << "THROW EXCEPTION" << e.what();
+        }
         QDummyTransactionPtr trans = QDummyTransactionPtr(new QDummyTransaction());
         trans->setNunchukTransaction(tx);
-        trans->setWalletId(QString::fromStdString(m_wallet.get_id()));
+        trans->setWalletId(QString::fromStdString(wallet_id));
         trans->setTxJson(dummy_transaction);
         if (auto signers = trans->singleSignersAssigned()) {
             signers->setCardIDList(m_card_ids);
@@ -225,12 +234,22 @@ bool SignInViaDummy::SignInRequestSignTxViaQR(const QStringList &qrtags)
                     warningmsg.resetWarningMessage();
                     nunchuk::Transaction tx = qUtils::DecodeDummyTx(m_wallet, psbt, warningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                        std::string wallet_id = "";
+                        try {
+                            wallet_id = m_wallet.get_id();
+                        }
+                        catch (const nunchuk::BaseException &ex) {
+                            DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                        }
+                        catch (std::exception &e) {
+                            DBG_INFO << "THROW EXCEPTION" << e.what();
+                        }
                         QJsonObject dummy_transaction = m_dummy_SignIn["dummy_transaction"].toObject();
                         QMap<QString, QString> signatures;
                         QMap<QString, QString> keys;
 
                         trans->setNunchukTransaction(tx);
-                        trans->setWalletId(QString::fromStdString(m_wallet.get_id()));
+                        trans->setWalletId(QString::fromStdString(wallet_id));
                         trans->setTxJson(dummy_transaction);
                         auto signers = trans->singleSignersAssigned();
                         for (auto ptr: signers->fullList()) {
@@ -253,6 +272,7 @@ bool SignInViaDummy::SignInRequestSignTxViaQR(const QStringList &qrtags)
             emit AppModel::instance()->finishedSigningTransaction();
         }
     }
+    emit AppModel::instance()->finishedSigningTransaction();
     return false;
 }
 
@@ -268,11 +288,22 @@ bool SignInViaDummy::SignInRequestSignTxViaFile(const QString &filepath)
                     warningmsg.resetWarningMessage();
                     nunchuk::Transaction tx = qUtils::DecodeDummyTx(m_wallet, psbt, warningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                        std::string wallet_id = "";
+                        try {
+                            wallet_id = m_wallet.get_id();
+                        }
+                        catch (const nunchuk::BaseException &ex) {
+                            DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+                        }
+                        catch (std::exception &e) {
+                            DBG_INFO << "THROW EXCEPTION" << e.what();
+                        }
+
                         QJsonObject dummy_transaction = m_dummy_SignIn["dummy_transaction"].toObject();
                         QMap<QString, QString> signatures;
 
                         trans->setNunchukTransaction(tx);
-                        trans->setWalletId(QString::fromStdString(m_wallet.get_id()));
+                        trans->setWalletId(QString::fromStdString(wallet_id));
                         trans->setTxJson(dummy_transaction);
                         auto signers = trans->singleSignersAssigned();
                         for (auto ptr: signers->fullList()) {

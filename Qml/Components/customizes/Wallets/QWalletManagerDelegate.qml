@@ -20,6 +20,7 @@
 import QtQuick 2.12
 import QtGraphicalEffects 1.0
 import DataPool 1.0
+import NUNCHUCKTYPE 1.0
 import "../../origins"
 import "../../customizes"
 import "../../customizes/Wallets"
@@ -37,10 +38,20 @@ QWalletDelegateBackground {
     property string walletName      : "Name"
     property string walletBalance   : "0.0000000"
     property string walletCurrency  : "0.0000000"
-    property string walletM: "0"
-    property string walletN: "0"
+    property int walletM: 0
+    property int walletN: 0
     property var    primaryOwner
     property bool   mouseActive: true
+    property int walletType: 0
+
+    function getWalletTypeDes() {
+        if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
+            return STR.STR_QML_1801
+        } else {
+            return (walletN === 1) ? STR.STR_QML_070 : 
+                            qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(STR.STR_QML_069)
+        }
+    }
     MouseArea {
         id: walletmouse
         enabled: mouseActive
@@ -178,7 +189,7 @@ QWalletDelegateBackground {
                     color: "#EAEAEA"
                     QText {
                         anchors.centerIn: parent
-                        text: walletN === "1" ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(STR.STR_QML_069);
+                        text: getWalletTypeDes()
                         color: "#031F2B"
                         font.weight: Font.Bold
                         font.pixelSize: 10

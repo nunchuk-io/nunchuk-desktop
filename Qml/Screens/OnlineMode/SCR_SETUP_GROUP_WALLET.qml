@@ -37,12 +37,11 @@ import "../../../localization/STR_QML.js" as STR
 QScreen {
     property var newWalletInfo  : AppModel.newWalletInfo
     property var sandbox        : AppModel.newWalletInfo.sandbox
+    property int walletOptType: AppModel.newWalletInfo.walletOptType
     property string flow_screen: sandbox.screenFlow
     readonly property var map_flow: [
         {screen: "setup-group-wallet",        screen_component: setup_group_Wallet},
-        {screen: "review-wallet",             screen_component: review_wallet},
-        {screen: "bsms-file-success",         screen_component: bsms_file_success},
-        {screen: "register-wallet-hardware",  screen_component: register_wallet_hardware},
+        {screen: "review-wallet",             screen_component: getReviewWalletComponent() },
         {screen: "group-sandbox-setting",     screen_component: group_sandbox_setting},
         {screen: "sandbox-add-existing-key",  screen_component: group_sandbox_add_existing_key},
         {screen: "sandbox-intro-taproot",     screen_component: introTaproot},
@@ -63,6 +62,13 @@ QScreen {
 
         }
     }
+    function getReviewWalletComponent() {
+        if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+            return review_wallet_miniscript;
+        } else {
+            return review_wallet;
+        }
+    }
     Component {
         id: review_wallet
         QDraftWalletReviewWallet {
@@ -76,20 +82,15 @@ QScreen {
         }
     }
     Component {
-        id: bsms_file_success
-        QSaveYourWalletBSMSFile {
+        id: review_wallet_miniscript
+        QDraftWalletReviewMiniscript {
+            onPrevClicked: sandbox.backScreen()
             onNextClicked: {
                 var _input = {
-                    type: "register-wallet-on-hardware"
+                    type: "finalize-group-sandbox"
                 }
                 QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
             }
-        }
-    }
-    Component {
-        id: register_wallet_hardware
-        QRegisterWalletOnHardware {
-
         }
     }
     Component {

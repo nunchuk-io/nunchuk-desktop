@@ -59,6 +59,18 @@ Rectangle {
                 color: selected ? "#D0E2FF" : "#FFFFFF"
                 anchors.bottom: parent.bottom
             }
+            QLato {
+                font.weight: Font.Normal
+                font.pixelSize: 16
+                text: STR.STR_QML_1498
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                anchors {
+                    left: parent.left
+                    leftMargin: 12
+                    verticalCenter: parent.verticalCenter
+                }
+            }            
             QIcon {
                 id: icon
                 iconSize: 24

@@ -461,7 +461,17 @@ bool QWalletServicesTag::inheritanceClaimRequest(const nunchuk::Wallet wallet, c
             QString id = transaction.value("id").toString();
             QString hex = transaction.value("hex").toString();
             QString reject_msg = transaction.value("reject_msg").toString();
-            bridge::nunchukUpdateTransaction(QString::fromStdString(wallet.get_id()), QString::fromStdString(txSigned.get_txid()), id, hex, reject_msg, _msg);
+            std::string walletid = "";
+            try {
+                walletid = wallet.get_id();
+            }
+            catch (const nunchuk::BaseException &ex) {
+                DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+            }
+            catch (std::exception &e) {
+                DBG_INFO << "THROW EXCEPTION" << e.what();
+            }
+            bridge::nunchukUpdateTransaction(QString::fromStdString(walletid), QString::fromStdString(txSigned.get_txid()), id, hex, reject_msg, _msg);
         }
         QJsonObject current = m_inheritanceClaimPlan;
         current["balance"] = 0;
@@ -518,13 +528,24 @@ bool QWalletServicesTag::inheritanceCreateTx(const QJsonObject &data, const QStr
         qint64 tx_fee_rate = qUtils::QAmountFromValue(fee_rate);     // fee_rate in BTC
         qint64 tx_sub_amount = qUtils::QAmountFromValue(sub_amount); // sub amount in BTC
         // HANDLE RESULT
-        //  decode transaction
-        mInheritance.wallet = nunchuk::Wallet(false);
+        mInheritance.wallet = nunchuk::Wallet("", 1, 1, single_signers, nunchuk::AddressType::NATIVE_SEGWIT, false, 0, true);
         QWarningMessage msg;
         mInheritance.tx = qUtils::DecodeTx(mInheritance.wallet, psbt, tx_sub_amount, tx_fee, tx_fee_rate, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-            mInheritance.tx.set_change_index(change_pos); // set change index to i            
-            QTransactionPtr trans = bridge::convertTransaction(mInheritance.tx, QString::fromStdString(mInheritance.wallet.get_id()));
+            mInheritance.tx.set_change_index(change_pos); // set change index to i
+
+            std::string walletid = "";
+            try {
+                walletid = mInheritance.wallet.get_id();
+            }
+            catch (const nunchuk::BaseException &ex) {
+                DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+            }
+            catch (std::exception &e) {
+                DBG_INFO << "THROW EXCEPTION" << e.what();
+            }
+
+            QTransactionPtr trans = bridge::convertTransaction(mInheritance.tx, QString::fromStdString(walletid));
             if (trans) {
                 trans->setIsClaimTx(true);
                 AppModel::instance()->setTransactionInfo(trans);

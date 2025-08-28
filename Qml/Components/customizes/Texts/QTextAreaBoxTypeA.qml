@@ -39,6 +39,7 @@ Column {
     signal typingFinished(var currentText)
     property alias textBoxFocus: _input.focus
     property alias input: _input
+    property string textColor: "#031F2B"
     spacing: 4
 
     signal downKeyRequest()
@@ -49,6 +50,8 @@ Column {
 
     Row {
         width: parent.width
+        visible: label != "" || optional != ""
+        height: visible ? 20 : 0
         QText {
             id:txt1
             width: paintedWidth
@@ -103,7 +106,7 @@ Column {
             id: _input
             anchors.fill: parent
             background: _background
-            color: "#031F2B"
+            color: textColor
             font.pixelSize: 16
             clip: true
             maximumLength: enableLengthLimit ? maxLength : -1

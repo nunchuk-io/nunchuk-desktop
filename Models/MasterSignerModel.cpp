@@ -253,6 +253,20 @@ void QMasterSigner::setOriginMasterSigner(const nunchuk::MasterSigner &signer) {
     masterSigner_ = signer;
 }
 
+nunchuk::SignerTag QMasterSigner::signerTag() const {
+    std::vector<nunchuk::SignerTag> tags = masterSigner_.get_tags();
+    tags.erase(
+        std::remove_if(tags.begin(), tags.end(), [](const nunchuk::SignerTag& tag) {
+            return tag == nunchuk::SignerTag::INHERITANCE;
+        }),
+        tags.end()
+    );
+    if(tags.empty()) {
+        return static_cast<nunchuk::SignerTag>(-1); // Default tag
+    }
+    return tags.front();
+}
+
 QString QMasterSigner::tag() const {
     QStringList list = tags();
     list.removeOne("INHERITANCE");

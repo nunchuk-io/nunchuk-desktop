@@ -102,7 +102,7 @@ QScreen {
                         color: "transparent"
                         placeholder.text: STR.STR_QML_287
                         mode: eREADONLY_MODE
-                        textOutput: Math.max(0, (AppModel.chainTip - AppModel.walletInfo.utxoInfo.height)+1)
+                        textOutput: Math.max(0, (AppModel.blockHeight - AppModel.walletInfo.utxoInfo.height)+1)
                     }
                     QTextInputBox {
                         width: 150

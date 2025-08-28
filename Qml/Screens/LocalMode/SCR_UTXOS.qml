@@ -239,7 +239,7 @@ QScreen {
                     amountWidth: amounttab.width
                     unspentoutput_address: utxo_address
                     unspentoutput_memo: utxo_memo
-                    unspentoutput_confirmation: utxo_confirmed//Math.max(0, (AppModel.chainTip - utxo_height)+1)
+                    unspentoutput_confirmation: utxo_confirmed//Math.max(0, (AppModel.blockHeight - utxo_height)+1)
                     unspentoutput_amount: utxo_amount
                     utxoSelected: utxo_selected
                     onButtonClicked: {QMLHandle.sendEvent(EVT.EVT_UTXOS_ITEM_SELECTED, index) }

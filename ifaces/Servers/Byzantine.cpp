@@ -22,7 +22,7 @@
 #include "Draco.h"
 
 using namespace Command;
-Byzantine::Byzantine()
+Byzantine::Byzantine(): m_rest(new QRest())
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -47,7 +47,7 @@ bool Byzantine::GetListGroupWallets(QJsonObject &output, QString &errormsg)
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_LIST_WALLETS];
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -76,7 +76,7 @@ bool Byzantine::GetAllGroupWallets(QJsonObject &output, QString &errormsg)
     int     reply_code = -1;
     QString reply_msg  = "";
 
-    QJsonObject jsonObj = getSync(commands[Group::CMD_IDX::GROUP_WALLETS_LIST], data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(commands[Group::CMD_IDX::GROUP_WALLETS_LIST], data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -105,7 +105,7 @@ bool Byzantine::GetAllDeletedGroupWallets(QJsonObject &output, QString &errormsg
     int     reply_code = -1;
     QString reply_msg  = "";
 
-    QJsonObject jsonObj = getSync(commands[Group::CMD_IDX::GROUP_WALLETS_LIST_DELETED], data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(commands[Group::CMD_IDX::GROUP_WALLETS_LIST_DELETED], data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -135,7 +135,7 @@ bool Byzantine::GetOneGroupWallets(const QString group_id, QJsonObject &output, 
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_ONE];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -163,7 +163,7 @@ bool Byzantine::AcceptGroupWallet(const QString group_id, QJsonObject &output, Q
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_ACCEPT];
     cmd.replace("{group_id}", group_id);
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -191,7 +191,7 @@ bool Byzantine::DenyGroupWallet(const QString group_id, QJsonObject &output, QSt
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_DENY];
     cmd.replace("{group_id}", group_id);
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -219,7 +219,7 @@ bool Byzantine::ResetGroupWallet(const QString group_id, QJsonObject &output, QS
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_RESET_CURRENT];
     cmd.replace("{group_id}", group_id);
 
-    QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -256,7 +256,7 @@ bool Byzantine::DeleteGroupWallet(const QString &wallet_id, const QString &group
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_REMOVE_WALLET];
     cmd.replace("{wallet_id_or_local_id}",wallet_id);
     cmd.replace("{group_id}",group_id);
-    QJsonObject jsonObj = deleteSync(cmd, {}, params, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, params, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -282,7 +282,7 @@ bool Byzantine::DeleteGroupWalletRequiredSignatures(const QString &wallet_id, co
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_REMOVE_WALLET_REQUIRED_SIGNATURES];
     cmd.replace("{wallet_id_or_local_id}",wallet_id);
     cmd.replace("{group_id}",group_id);
-    QJsonObject jsonObj = postSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -314,7 +314,7 @@ bool Byzantine::GetGroupAlerts(const QString group_id, QJsonObject &output, QStr
         QString reply_msg  = "";
         QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_ALERTS];
         cmd.replace("{group_id}", group_id);
-        QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+        QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
         if(reply_code == DRACO_CODE::SUCCESSFULL){
             QJsonObject errorObj = jsonObj["error"].toObject();
             int response_code = errorObj["code"].toInt();
@@ -364,7 +364,7 @@ bool Byzantine::GetGroupAlertsCount(const QString group_id, QJsonObject &output,
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_ALERTS_COUNT];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -395,7 +395,7 @@ bool Byzantine::DismissGroupAlert(const QString group_id, const QString alert_id
     cmd.replace("{group_id}", group_id);
     cmd.replace("{alert_id}", alert_id);
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -426,7 +426,7 @@ bool Byzantine::MarkGroupAlertAsRead(const QString group_id, const QString alert
     cmd.replace("{group_id}", group_id);
     cmd.replace("{alert_id}", alert_id);
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -453,7 +453,7 @@ bool Byzantine::GetAllPermissions(QJsonObject &output, QString &errormsg)
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_ALL_PERMISSION];
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -479,7 +479,7 @@ bool Byzantine::GetOnePermissions(const QString slug, QJsonObject &output, QStri
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_ONE_PERMISSION];
     cmd.replace("{slug}", slug);
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -508,7 +508,7 @@ bool Byzantine::GetDefaultPermissions(QJsonObject &output, QString &errormsg)
     int     reply_code = -1;
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_ONE_PERMISSION];
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -536,7 +536,7 @@ bool Byzantine::DraftWalletAddKey(const QString group_id, const QString request_
     cmd.replace("{group_id}", group_id);
     QMap<QString, QString> paramsQuery;
     paramsQuery["request_id"] = request_id;
-    QJsonObject jsonObj = postSync(cmd, paramsQuery, {}, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, paramsQuery, {}, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -567,7 +567,7 @@ bool Byzantine::GetCurrentGroupWallet(const QString group_id, QJsonObject &outpu
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_GET_CURRENT];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -597,7 +597,7 @@ bool Byzantine::GetCurrentGroupDraftWallet(const QString group_id, QJsonObject &
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_GET_CURRENT];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -628,7 +628,7 @@ bool Byzantine::GetAllListRequestAddKey(const QString &group_id, QJsonObject &ou
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_REQUEST_ADD_KEY];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -659,7 +659,7 @@ bool Byzantine::DeleteRequestAddKey(const QString &group_id, const QString &requ
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_DELETE_REQUEST_ADD_KEY];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{request_id}", request_id);
-    QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -692,7 +692,7 @@ bool Byzantine::UpdateWallet(const QString &group_id, const QString &wallet_id, 
         data["description"] = description;
     }
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -724,7 +724,7 @@ bool Byzantine::GetWalletAlias(const QString &group_id, const QString &wallet_id
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
     QJsonObject data;
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -757,7 +757,7 @@ bool Byzantine::UpdateWalletAlias(const QString &group_id, const QString &wallet
 
     QJsonObject data;
     data["alias"] = alias;
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -789,7 +789,7 @@ bool Byzantine::DeleteWalletAlias(const QString &group_id, const QString &wallet
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
     QJsonObject data;
-    QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -822,7 +822,7 @@ bool Byzantine::UpdateWalletPrimaryOwner(const QString &group_id, const QString 
 
     QJsonObject data;
     data["primary_membership_id"] = primary_membership_id;
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -853,7 +853,7 @@ bool Byzantine::GetCurrentGroupChat(const QString &group_id, QJsonObject &output
     cmd.replace("{group_id}", group_id);
 
     QJsonObject data;
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -916,7 +916,7 @@ bool Byzantine::RequestHealthCheckForKey(const QString &group_id, const QString 
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
 
-    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -949,7 +949,7 @@ bool Byzantine::HealthCheckForKey(const QString &group_id, const QString &wallet
     data["nonce"] = nonce();
     data["body"] = QJsonObject();
 
-    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -978,7 +978,7 @@ bool Byzantine::GetWalletHealthStatus(const QString &group_id, const QString &wa
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1011,7 +1011,7 @@ bool Byzantine::GetDummyTransaction(const QString &group_id, const QString &wall
     cmd.replace("{dummy_transaction_id}", txid);
 
     QJsonObject data;
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1045,7 +1045,7 @@ bool Byzantine::UpdateDummyTransaction(const QString &group_id, const QString &w
     cmd.replace("{dummy_transaction_id}", txid);
 
     QJsonObject data;
-    QJsonObject jsonObj = putSync(cmd, {}, params, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, {}, params, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1075,7 +1075,7 @@ bool Byzantine::CancelDummyTransaction(const QString &group_id, const QString &w
     cmd.replace("{dummy_transaction_id}", txid);
 
     QJsonObject data;
-    QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1105,7 +1105,7 @@ bool Byzantine::FinalizeDummyTransaction(const QString &group_id, const QString 
     cmd.replace("{dummy_transaction_id}", txid);
 
     QJsonObject data;
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1139,7 +1139,7 @@ bool Byzantine::GetAllTransaction(const QString &group_id, const QString &wallet
     data["statuses"] = "PENDING_SIGNATURES,READY_TO_BROADCAST";
     data["types"] = "STANDARD,SCHEDULED,CLAIMING,ROLLOVER,RECURRING";
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1176,7 +1176,7 @@ bool Byzantine::GetAllCancelledTransaction(const QString &group_id, const QStrin
     data["statuses"] = "CANCELED";
     data["types"] = "STANDARD,SCHEDULED,CLAIMING,ROLLOVER";
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1212,7 +1212,7 @@ bool Byzantine::GetAllTransactionNotes(const QString &group_id, const QString &w
     data["limit"] = "10000";
     data["statuses"] = "PENDING_CONFIRMATION,CONFIRMED,NETWORK_REJECTED";
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1244,7 +1244,7 @@ bool Byzantine::GetOneTransaction(const QString &group_id, const QString &wallet
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{transaction_id}", txid);
 
-    QJsonObject jsonObj = getSync(cmd, QJsonObject(), reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, QJsonObject(), reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1279,7 +1279,7 @@ bool Byzantine::UpdateTransaction(const QString &group_id, const QString &wallet
     QJsonObject data;
     data["note"] = note;
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1311,7 +1311,7 @@ bool Byzantine::CancelTransaction(const QString &group_id, const QString &wallet
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{transaction_id}", txid);
 
-    QJsonObject jsonObj = deleteSync(cmd, QJsonObject(), reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, QJsonObject(), reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1347,7 +1347,7 @@ bool Byzantine::SyncTransaction(const QString &group_id, const QString &wallet_i
     data["psbt"] = psbt;
     data["note"] = note;
 
-    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1382,7 +1382,7 @@ bool Byzantine::RbfTransaction(const QString &group_id, const QString &wallet_id
     QJsonObject data;
     data["psbt"] = psbt;
 
-    QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1418,7 +1418,7 @@ bool Byzantine::SignTransaction(const QString &group_id, const QString &wallet_i
     data["psbt"] = psbt;
     data["note"] = note;
 
-    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1450,7 +1450,7 @@ bool Byzantine::CreateTransaction(const QString &group_id, const QString &wallet
     data["psbt"] = psbt;
     data["note"] = note;
 
-    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1481,7 +1481,7 @@ bool Byzantine::requestSignature(const QString &group_id, const QString &wallet_
     QJsonObject data;
     data["membership_id"] = membership_id;
 
-    QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1511,7 +1511,7 @@ bool Byzantine::ServerKeysGet(const QString &group_id, const QString &key_id_or_
     QJsonObject data;
     data["derivation_path"] = derivation_path;
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1561,7 +1561,7 @@ bool Byzantine::ServerKeysUpdate(const QString &group_id,
     cmd.replace("{group_id}", group_id);
     cmd.replace("{key_id_or_xfp}", key_id_or_xfp);
 
-    QJsonObject jsonObj = putSync(cmd, paramsQuery, params, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, paramsQuery, params, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1596,7 +1596,7 @@ bool Byzantine::ServerKeysRequiredSignature(const QString &group_id,
     QMap<QString, QString> paramsQuery;
     paramsQuery["derivation_path"] = derivation_path;
 
-    QJsonObject jsonObj = postSync(cmd, paramsQuery, {}, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, paramsQuery, {}, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1619,7 +1619,7 @@ bool Byzantine::lockdownPeriods(QJsonArray &output, QString &errormsg)
 {
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = getSync(commands[Group::CMD_IDX::LOCKDOWN_GET_PERIOD], QJsonObject(), reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(commands[Group::CMD_IDX::LOCKDOWN_GET_PERIOD], QJsonObject(), reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1652,7 +1652,7 @@ bool Byzantine::lockdownRequiredSignatures(const QString &group_id,
 
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = postSync(commands[Group::CMD_IDX::LOCKDOWN_REQUIRED_SIGNATURES], data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(commands[Group::CMD_IDX::LOCKDOWN_REQUIRED_SIGNATURES], data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1686,7 +1686,7 @@ bool Byzantine::lockdownByAnswerSecQues(const QString &group_id, const QString &
     params["Security-Question-token"] = secQuesToken;
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = postSync(commands[Group::CMD_IDX::LOCKDOWN_SET_ANSWER_SECURITY_QUESTION], {}, params, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(commands[Group::CMD_IDX::LOCKDOWN_SET_ANSWER_SECURITY_QUESTION], {}, params, data, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1714,7 +1714,7 @@ bool Byzantine::lockdownByConfirmationCode(const QString &passwordToken, const Q
     params["Confirmation-token"] = confirmToken;
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = postSync(commands[Group::CMD_IDX::LOCKDOWN_SET_CONFIRMATION_CODE], {}, params, requestBody, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(commands[Group::CMD_IDX::LOCKDOWN_SET_CONFIRMATION_CODE], {}, params, requestBody, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1753,7 +1753,7 @@ bool Byzantine::lockdownBySignDummyTx(const QString &group_id, const QStringList
 
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = postSync(commands[Group::CMD_IDX::LOCKDOWN_SET_SIGN_DUMMY_TX], {}, params, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(commands[Group::CMD_IDX::LOCKDOWN_SET_SIGN_DUMMY_TX], {}, params, data, reply_code, reply_msg);
     qInfo() << jsonObj;
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
@@ -1780,7 +1780,7 @@ QJsonObject Byzantine::assistedGetWalletConfig()
 {
     int     reply_code = -1;
     QString reply_msg  = "";
-    QJsonObject jsonObj = getSync(commands[Group::CMD_IDX::ASSISTED_WALLET_GET_CONFIG], {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(commands[Group::CMD_IDX::ASSISTED_WALLET_GET_CONFIG], {}, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1807,7 +1807,7 @@ bool Byzantine::GetGroupChat(const QString &group_id, QJsonObject &output, QStri
         QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_CHAT_GET];
         cmd.replace("{group_id}", group_id);
         QJsonObject data;
-        QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+        QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
         if (reply_code == DRACO_CODE::SUCCESSFULL) {
             QJsonObject errorObj = jsonObj["error"].toObject();
             int response_code = errorObj["code"].toInt();
@@ -1838,7 +1838,7 @@ bool Byzantine::UpdateGroupChat(const QString &group_id, const QString &history_
         cmd.replace("{group_id}", group_id);
         QJsonObject data;
         data["history_period_id"] = history_period_id;
-        QJsonObject jsonObj = putSync(cmd, data, reply_code, reply_msg);
+        QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
         if (reply_code == DRACO_CODE::SUCCESSFULL) {
             QJsonObject errorObj = jsonObj["error"].toObject();
             int response_code = errorObj["code"].toInt();
@@ -1868,7 +1868,7 @@ bool Byzantine::DeleteGroupChat(const QString &group_id, QJsonObject &output, QS
         QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_CHAT_DELETE];
         cmd.replace("{group_id}", group_id);
         QJsonObject data;
-        QJsonObject jsonObj = deleteSync(cmd, data, reply_code, reply_msg);
+        QJsonObject jsonObj = m_rest->deleteSync(cmd, data, reply_code, reply_msg);
         if (reply_code == DRACO_CODE::SUCCESSFULL) {
             QJsonObject errorObj = jsonObj["error"].toObject();
             int response_code = errorObj["code"].toInt();
@@ -1902,7 +1902,7 @@ bool Byzantine::CreateGroupChat(const QString &group_id, const QString &room_id,
         QJsonObject data;
         data["room_id"] = room_id;
 
-        QJsonObject jsonObj = postSync(cmd, data, reply_code, reply_msg);
+        QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
         if (reply_code == DRACO_CODE::SUCCESSFULL) {
             QJsonObject errorObj = jsonObj["error"].toObject();
             int response_code = errorObj["code"].toInt();
@@ -1927,7 +1927,7 @@ bool Byzantine::GetAllGroupChat(QJsonObject &output, QString &errormsg)
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_CHAT_GET_ALL];
     QJsonObject data;
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1952,7 +1952,7 @@ bool Byzantine::GetHistoryPeriodsGroupChat(QJsonObject &output, QString &errorms
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_CHAT_GET_HISTORY_PERIODS];
     QJsonObject data;
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -1981,7 +1981,7 @@ bool Byzantine::GetListRecurringPayment(const QString &group_id, const QString &
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2024,7 +2024,7 @@ bool Byzantine::CreateRecurringPayment(const QString &group_id,
     }
     QMap<QString, QString> queries;
     queries["draft"] = isDraft ? "true" : "false";
-    QJsonObject jsonObj = postSync(cmd, queries, headers, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, queries, headers, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2054,7 +2054,7 @@ bool Byzantine::GetOneRecurringPayment(const QString &group_id, const QString &w
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{recurring_payment_id}", recurring_payment_id);
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2100,7 +2100,7 @@ bool Byzantine::CancelRecurringPayment(const QString &group_id,
     QMap<QString, QString> queries;
     queries["draft"] = isDraft ? "true" : "false";
     DBG_INFO << request_body;
-    QJsonObject jsonObj = deleteSync(cmd, queries, headers, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, queries, headers, request_body, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2132,7 +2132,7 @@ bool Byzantine::GetKeyHealthReminder(const QString &group_id, const QString &wal
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2162,7 +2162,7 @@ bool Byzantine::AddOrUpdateKeyHealthReminder(const QString &group_id, const QStr
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_ADD_OR_UPDATE_KEY_HEALTH_REMINDER];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = putSync(cmd, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2193,7 +2193,7 @@ bool Byzantine::DeleteKeyHealthReminder(const QString &group_id, const QString &
     for (int i = 0; i < xfps.count(); i++) {
         paramsQuery.insertMulti("xfps", xfps.at(i));
     }
-    QJsonObject jsonObj = deleteSync(cmd, paramsQuery, {}, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, paramsQuery, {}, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2224,7 +2224,7 @@ bool Byzantine::SkipKeyHealthReminder(const QString &group_id, const QString &wa
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
-    QJsonObject jsonObj = deleteSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2254,7 +2254,7 @@ bool Byzantine::ConfigureWalletReplacement(const QString &group_id, const QStrin
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_CONFIGURE_WALLET_REPLACEMENT];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = putSync(cmd, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2282,7 +2282,7 @@ bool Byzantine::InitiateKeyReplacement(const QString &group_id, const QString &w
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
-    QJsonObject jsonObj = postSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2310,7 +2310,7 @@ bool Byzantine::CancelKeyReplacement(const QString &group_id, const QString &wal
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
-    QJsonObject jsonObj = deleteSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2343,7 +2343,7 @@ bool Byzantine::ReplaceKey(const QString &group_id, const QString &wallet_id, co
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
-    QJsonObject jsonObj = postSync(cmd, {} , params, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {} , params, request_body, reply_code, reply_msg);
     DBG_INFO << jsonObj;
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
@@ -2373,7 +2373,7 @@ bool Byzantine::FinalizeKeyReplacement(const QString &group_id, const QString &w
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_FINALIZE_KEY_REPLACEMENT];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = postSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2403,7 +2403,7 @@ bool Byzantine::GetKeyReplacementStatus(const QString &group_id, const QString &
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_GET_STATUS_KEY_REPLACEMENT];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = getSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2433,7 +2433,7 @@ bool Byzantine::ResetKeyReplacement(const QString &group_id, const QString &wall
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_RESET_KEY_REPLACEMENT];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = deleteSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2473,7 +2473,7 @@ bool Byzantine::EditGroupMembers(const QString &group_id, const QJsonObject &req
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = putSync(cmd, {}, params, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, {}, params, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2499,7 +2499,7 @@ bool Byzantine::CalculateRequireSignaturesForEditingMembers(const QString &group
     QString reply_msg  = "";
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_EDIT_GROUP_MEMBERS_REQUIRED_SIGNATURES];
     cmd.replace("{group_id}", group_id);
-    QJsonObject jsonObj = postSync(cmd, request_body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, request_body, reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2528,7 +2528,7 @@ bool Byzantine::GetCoinControl(const QString &group_id, const QString &wallet_id
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
-    QJsonObject jsonObj = getSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2561,7 +2561,7 @@ bool Byzantine::UpdateCoinControl(const QString &group_id, const QString &wallet
 
     QJsonObject body;
     body["data"] = data;
-    QJsonObject jsonObj = postSync(cmd, body, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, body, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2595,7 +2595,7 @@ bool Byzantine::ReplacementDownloadBackupFile(const QString& group_id, const QSt
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
 
-    QJsonObject jsonObj = postSync(cmd, {}, params, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2623,7 +2623,7 @@ bool Byzantine::ReplacementUploadBackupFile(const QString& group_id, const QStri
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
-    QJsonObject jsonObj = postMultiPartSync(cmd, {}, params, requestBody, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postMultiPartSync(cmd, {}, params, requestBody, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2649,7 +2649,7 @@ bool Byzantine::DraftWalletDownloadBackupFile(const QString& group_id, const QSt
     cmd.replace("{group_id}", group_id);
     cmd.replace("{xfp}", xfp);
 
-    QJsonObject jsonObj = postSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2674,7 +2674,7 @@ bool Byzantine::DraftWalletUploadBackupFile(const QString& group_id, const QMap<
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLETS_UPLOAD_BACKUP];
     cmd.replace("{group_id}", group_id);
 
-    QJsonObject jsonObj = postMultiPartSync(cmd, requestBody, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postMultiPartSync(cmd, requestBody, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();

@@ -26,6 +26,11 @@ public slots:
     void requestExportTransactionViaPDF(const QString &file);
 
     void requestExportUtxoCSV(const QString &file);
+
+    void requestViaDescriptor(const QString &file);
+
+    bool hasHardwareOrAirgap();
+    bool hasNativeSegwitDerivationPath();
 signals:
 private:
 };

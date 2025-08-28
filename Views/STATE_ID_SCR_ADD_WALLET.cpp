@@ -42,20 +42,6 @@ void EVT_ADD_WALLET_BACK_REQUEST_HANDLER(QVariant msg) {
 
 }
 
-void EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER(QVariant msg) {
-    QMap<QString, QVariant> maps = msg.toMap();
-    QString walletNameInputted = maps["walletNameInputted"].toString();
-    QString walletDescription  = maps["walletDescription"].toString();
-    int  addressType = maps["addressType"].toInt();
-    DBG_INFO << maps;
-    if(auto nw = AppModel::instance()->newWalletInfo()) {
-        nw->setWalletName(walletNameInputted);
-        nw->setWalletDescription(walletDescription);
-        nw->setWalletAddressType(addressType);
-        nw->CreateAssignAvailableSigners();
-    }
-}
-
 void EVT_ADD_WALLET_IMPORT_SUCCEED_HANDLER(QVariant msg) {
 
 }

@@ -33,7 +33,13 @@ Column {
     spacing: 12
     property alias isChecked: manualFeeRate.checked
     property alias textOutput: feeinput.text
-    property bool  validInput: (feeinput.text === "") ? false : isValidNumber(feeinput.text) ? (parseFloat(feeinput.text) >= parseFloat(AppModel.minFee)) : false
+    property bool  validInput: {
+        if (isChecked) {
+            return (feeinput.text === "") ? false : isValidNumber(feeinput.text) ? (parseFloat(feeinput.text) >= parseFloat(AppModel.minFee)) : false
+        } else {
+            return true
+        }        
+    }
 
     function isValidNumber(input) {
         if (input === null || input === undefined)

@@ -32,12 +32,20 @@ QByteArray QRest::m_machineUniqueId = QSysInfo::machineUniqueId();
 
 QRest::QRest()
 {
-
+    m_workerThread = new QThread();
+    m_workerThread->setObjectName("QRestWorkerThread");
+    moveToThread(m_workerThread);
+    m_workerThread->start();
 }
 
 QRest::~QRest()
 {
-
+    if (m_workerThread) {
+        m_workerThread->quit();
+        m_workerThread->wait();
+        delete m_workerThread;
+        m_workerThread = nullptr;
+    }
 }
 
 QString QRest::dracoToken()
@@ -380,6 +388,785 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
 
 QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
 {
+#if 0
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("GET %1").arg(command));
+    QJsonObject ret;
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QJsonValue value        = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value.toString());
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->get(requester_));
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+#endif
+
+    if (QThread::currentThread() == this->thread()) {
+        return doGetSync(cmd, paramsQuery, reply_code, reply_msg);
+    }
+    else {
+        QJsonObject ret;
+        QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
+            ret = doGetSync(cmd, paramsQuery, reply_code, reply_msg);
+        }, Qt::BlockingQueuedConnection);
+        return ret;
+    }
+}
+
+QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+{
+#if 0
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("GET %1").arg(command));
+    QJsonObject ret;
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QJsonValue value        = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value.toString());
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    // Add addional params
+    for(QString param : paramsHeader.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
+    }
+
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->get(requester_));
+
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+#endif
+    if (QThread::currentThread() == this->thread()) {
+        return doGetSync(cmd, paramsHeader, paramsQuery, reply_code, reply_msg);
+    }
+    else {
+        QJsonObject ret;
+        QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
+            ret = doGetSync(cmd, paramsHeader, paramsQuery, reply_code, reply_msg);
+        }, Qt::BlockingQueuedConnection);
+        return ret;
+    }
+}
+
+QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+#if 0
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("PUT %1").arg(command));
+    QJsonObject ret;
+    QNetworkRequest requester_(QUrl::fromUserInput(command));
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->put(requester_, QJsonDocument(data).toJson()));
+
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    DBG_INFO << QString(reply->readAll());
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+#endif
+    if (QThread::currentThread() == this->thread()) {
+        return doPutSync(cmd, data, reply_code, reply_msg);
+    }
+    else {
+        QJsonObject ret;
+        QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
+            ret = doPutSync(cmd, data, reply_code, reply_msg);
+        }, Qt::BlockingQueuedConnection);
+        return ret;
+    }
+}
+
+QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+#if 0
+    QString command = commandByNetwork(cmd);
+    QJsonObject ret;
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QFunctionTime f(QString("PUT %1").arg(url.toString()));
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    // Add addional params
+    for(QString param : paramsHeader.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
+    }
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->put(requester_, QJsonDocument(data).toJson()));
+
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+#endif
+    if (QThread::currentThread() == this->thread()) {
+        return doPutSync(cmd, paramsQuery, paramsHeader, data, reply_code, reply_msg);
+    }
+    else {
+        QJsonObject ret;
+        QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
+            ret = doPutSync(cmd, paramsQuery, paramsHeader, data, reply_code, reply_msg);
+        }, Qt::BlockingQueuedConnection);
+        return ret;
+    }
+}
+
+QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+#if 0
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("DELETE %1").arg(command));
+    QJsonObject ret;
+    QNetworkRequest requester_(QUrl::fromUserInput(command));
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+#endif
+    if (QThread::currentThread() == this->thread()) {
+        return doDeleteSync(cmd, data, reply_code, reply_msg);
+    }
+    else {
+        QJsonObject ret;
+        QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
+            ret = doDeleteSync(cmd, data, reply_code, reply_msg);
+        }, Qt::BlockingQueuedConnection);
+        return ret;
+    }
+}
+
+QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+#if 0
+    QString command = commandByNetwork(cmd);
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QFunctionTime f(QString("DELETE %1").arg(url.toString()));
+    QJsonObject ret;
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    // Add addional params
+    for(QString param : paramsHeader.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
+    }
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->sendCustomRequest(requester_, "DELETE", QJsonDocument(data).toJson()));
+
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    DBG_INFO << requester_.url().toString();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    reply->deleteLater();
+    return ret;
+#endif
+    if (QThread::currentThread() == this->thread()) {
+        return doDeleteSync(cmd, paramsQuery, paramsHeader, data, reply_code, reply_msg);
+    }
+    else {
+        QJsonObject ret;
+        QMetaObject::invokeMethod(this, [=, this, &ret, &reply_code, &reply_msg]() mutable {
+            ret = doDeleteSync(cmd, paramsQuery, paramsHeader, data, reply_code, reply_msg);
+        }, Qt::BlockingQueuedConnection);
+        return ret;
+    }
+}
+
+QJsonObject QRest::doPostSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("POST %1").arg(command));
+    QJsonObject ret;
+    QNetworkRequest requester_(QUrl::fromUserInput(command));
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->post(requester_, QJsonDocument(data).toJson()));
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+}
+
+QJsonObject QRest::doPostSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
+{
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("POST %1").arg(command));
+    QJsonObject ret;
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    // Add addional params
+    for(QString param : paramsHeader.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
+    }
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->post(requester_, QJsonDocument(data).toJson()));
+
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+}
+
+QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg)
+{
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("POST %1").arg(command));
+    QJsonObject ret;
+    QNetworkRequest requester_(QUrl::fromUserInput(command));
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    for (auto key : data.keys()) {
+        if (key == "file") {
+            QString filePath = data[key].toString();
+            QFile *file = new QFile(filePath);
+            if (!file->open(QIODevice::ReadOnly)) {
+                DBG_INFO << "Failed to open file:" << filePath;
+                delete file;
+                continue;
+            }
+
+            QHttpPart filePart;
+            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
+            filePart.setBodyDevice(file);
+            file->setParent(multiPart);
+
+            multiPart->append(filePart);
+        } else {
+            QHttpPart textPart;
+            textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
+            textPart.setBody(data[key].toByteArray());
+            multiPart->append(textPart);
+        }
+    }
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->post(requester_, multiPart));
+
+    multiPart->setParent(reply.get());
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+}
+
+QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QMap<QString, QVariant> data, int &reply_code, QString &reply_msg)
+{
+    QString command = commandByNetwork(cmd);
+    QFunctionTime f(QString("POST %1").arg(command));
+    QJsonObject ret;
+    QUrl url = QUrl::fromUserInput(command);
+    if(!paramsQuery.isEmpty()){
+        QUrlQuery params;
+        foreach(const QString& key, paramsQuery.keys()) {
+            QString value           = paramsQuery.value(key);
+            QString encodedValue    = QUrl::toPercentEncoding(value);
+            params.addQueryItem(key, encodedValue);
+        }
+        url.setQuery(params);
+    }
+    QNetworkRequest requester_(url);
+    QString headerData = QString("Bearer %1").arg(dracoToken());
+    requester_.setRawHeader("Authorization", headerData.toLocal8Bit());
+    requester_.setRawHeader("Connection", "keep-alive");
+    requester_.setRawHeader("x-nc-device-id", machineUniqueId());
+    requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
+    requester_.setRawHeader("x-nc-device-class", "Desktop");
+    requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
+    qint64 maximumBufferSize = 1024 * 1024;
+    requester_.setAttribute(QNetworkRequest::MaximumDownloadBufferSizeAttribute, maximumBufferSize);
+    // Add addional params
+    for(QString param : paramsHeader.keys()) {
+        requester_.setRawHeader(QByteArray::fromStdString(param.toStdString()), QByteArray::fromStdString(paramsHeader.value(param).toStdString()));
+    }
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    for (auto key : data.keys()) {
+        if (key == "file") {
+            QString filePath = data[key].toString();
+            QFile *file = new QFile(filePath);
+            if (!file->open(QIODevice::ReadOnly)) {
+                DBG_INFO << "Failed to open file:" << filePath;
+                delete file;
+                continue;
+            }
+
+            QHttpPart filePart;
+            filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                               QVariant("form-data; name=\"file\"; filename=\"" + file->fileName() + "\""));
+            filePart.setBodyDevice(file);
+            file->setParent(multiPart);
+
+            multiPart->append(filePart);
+        } else {
+            QHttpPart textPart;
+            textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"" + key + "\""));
+            textPart.setBody(data[key].toByteArray());
+            multiPart->append(textPart);
+        }
+    }
+
+    OurSharedPointer<QNetworkAccessManager> manager = networkManager();
+    if (manager.isNull()) {
+        reply_code = -1;
+        reply_msg = "Network manager is not available.";
+        AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        return QJsonObject();
+    }
+    QNetworkReplyPtr reply(manager->post(requester_, multiPart));
+
+    multiPart->setParent(reply.get());
+    QEventLoop eventLoop;
+    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply_msg  = reply->errorString();
+    }
+    else{
+        reply_code = reply->error();
+        reply_msg  = reply->errorString();
+        if(reply_code == QNetworkReply::UnknownContentError){
+            DBG_INFO << "Error:" << reply_code << reply_msg;
+        }
+        else {
+            if(reply_code >= QNetworkReply::ConnectionRefusedError && reply_code <= QNetworkReply::UnknownNetworkError){
+                reply_msg = STR_CPP_111;
+            }
+            AppModel::instance()->showToast(reply_code, reply_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    QByteArray response_data = reply->readAll();
+    QJsonDocument json = QJsonDocument::fromJson(response_data);
+    if (json.isNull() || !json.isObject()) {
+        DBG_ERROR << "Invalid JSON response:" << response_data;
+    }
+    else {
+        ret = json.object();
+    }
+    return ret;
+}
+
+QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+{
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("GET %1").arg(command));
     QJsonObject ret;
@@ -445,7 +1232,7 @@ QJsonObject QRest::getSync(const QString &cmd, QJsonObject paramsQuery, int &rep
     return ret;
 }
 
-QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHeader, QJsonObject paramsQuery, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("GET %1").arg(command));
@@ -518,7 +1305,7 @@ QJsonObject QRest::getSync(const QString &cmd, QMap<QString, QString> paramsHead
     return ret;
 }
 
-QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doPutSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("PUT %1").arg(command));
@@ -576,7 +1363,7 @@ QJsonObject QRest::putSync(const QString &cmd, QJsonObject data, int &reply_code
     return ret;
 }
 
-QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doPutSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QJsonObject ret;
@@ -648,7 +1435,7 @@ QJsonObject QRest::putSync(const QString &cmd, QMap<QString, QString> paramsQuer
     return ret;
 }
 
-QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doDeleteSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QFunctionTime f(QString("DELETE %1").arg(command));
@@ -706,7 +1493,7 @@ QJsonObject QRest::deleteSync(const QString &cmd, QJsonObject data, int &reply_c
     return ret;
 }
 
-QJsonObject QRest::deleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
+QJsonObject QRest::doDeleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg)
 {
     QString command = commandByNetwork(cmd);
     QUrl url = QUrl::fromUserInput(command);

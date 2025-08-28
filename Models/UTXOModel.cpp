@@ -652,7 +652,7 @@ int UTXO::confirmedCount()
 {
     qint64 conf = 0;
     if((int)nunchuk::CoinStatus::CONFIRMED == this->status()){
-        conf = std::max(0, (AppModel::instance()->chainTip() - this->height())+1);
+        conf = std::max(0, (AppModel::instance()->blockHeight() - this->height())+1);
     }
     return conf;
 }

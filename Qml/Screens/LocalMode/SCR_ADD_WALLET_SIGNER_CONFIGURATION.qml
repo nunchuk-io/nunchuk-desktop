@@ -38,6 +38,7 @@ QScreen {
     readonly property int walletOptType: AppModel.newWalletInfo.walletOptType
     readonly property var map_opt: [
         {walletOptType: NUNCHUCKTYPE.E_PERSONAL_WALLET,     screen_component: funPersonalWallet()},
+        {walletOptType: NUNCHUCKTYPE.E_MINISCRIPT_WALLET,   screen_component: miniscript_Wallet},
     ]
 
     function funPersonalWallet() {
@@ -72,6 +73,12 @@ QScreen {
     Component {
         id: taproot_personal_Wallet
         QSetupPersonalTaprootWalletFlow {
+
+        }
+    }
+    Component {
+        id: miniscript_Wallet
+        QSetupMiniscriptWalletFlow {
 
         }
     }

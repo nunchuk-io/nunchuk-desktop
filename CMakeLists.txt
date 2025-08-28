@@ -1,8 +1,8 @@
 cmake_minimum_required( VERSION 3.1 )
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.48)
+    project(Nunchuk VERSION 1.9.49)
 else()
-    project(nunchuk-qt VERSION 1.9.48)
+    project(nunchuk-qt VERSION 1.9.49)
 endif()
 
 # nunchuk
@@ -220,6 +220,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DENABLE_OUTLOG)
     # add_definitions(-DENABLE_BACKTRACE)
     # add_definitions(-DENABLE_THREAD_MONITOR)
+
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     # Apply flags for Release with debug info
 else()

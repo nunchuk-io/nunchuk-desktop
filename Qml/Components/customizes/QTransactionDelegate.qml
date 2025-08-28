@@ -28,24 +28,25 @@ import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: rootDelegate
-    property bool transactionisReceiveTx: true
-    property bool walletIsByzantineGuardian: false
+    property bool   transactionisReceiveTx: true
+    property bool   walletIsByzantineGuardian: false
     property string transactiondestinationList: ""
     property string transactiontxid: ""
-    property int transactionstatus: 0
+    property int    transactionstatus: 0
     property string transactionMemo: ""
     property string transactionAmount: "0"
     property string transactiontotalCurrency: "0"
     property string transactionDate: "--/--/---- ##:## ##"
-    property bool transactionIsRbf: false
-    property int confirmation: 1
-    property bool isFacilitatorAdmin: false
-    property int timeWidth: 123
-    property int statusWidth: 166
-    property int memoWidth: 178
-    property int amountWidth: 178
-    property int addressWidth: 160
-    property var parentList
+    property bool   transactionIsRbf: false
+    property int    confirmation: 1
+    property bool   isFacilitatorAdmin: false
+    property int    timeWidth: 123
+    property int    statusWidth: 166
+    property int    memoWidth: 178
+    property int    amountWidth: 178
+    property int    addressWidth: 160
+    property var    parentList
+    property bool   transactionLocked: false
 
     enabled: !isFacilitatorAdmin
     color: btnMouse.containsMouse ?"#C9DEF1" : "transparent"
@@ -111,14 +112,28 @@ Rectangle {
                     width: 120
                     height: 24
                     radius: 20
-                    color: GlobalData.transactionColor(transactionstatus)
+                    color: {
+                        if(AppModel.walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT && transactionLocked) {
+                            return "#FFEAF9"
+                        }
+                        else {
+                            return GlobalData.transactionColor(transactionstatus)
+                        }
+                    }
                     QText {
                         font.pixelSize: 10
                         font.bold: true
                         font.family: "Lato"
                         color: "#031F2B"
                         anchors.centerIn: parent
-                        text: GlobalData.transactionStatus(transactionstatus, confirmation)
+                        text: {
+                            if(AppModel.walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT && transactionLocked) {
+                                return STR.STR_QML_1875
+                            }
+                            else {
+                                return GlobalData.transactionStatus(transactionstatus, confirmation)
+                            }
+                        }
                     }
                 }
                 Rectangle {
@@ -271,7 +286,15 @@ Rectangle {
                     font.family: "Lato"
                     font.pixelSize: 12
                     color:  (transactionstatus === NUNCHUCKTYPE.REPLACED) || (transactionstatus === NUNCHUCKTYPE.NETWORK_REJECTED) ? "#9CAEB8" : "#031F2B"
-                    text: isFacilitatorAdmin ? "••••••" : (transactiontotalCurrency + " " + AppSetting.currency)
+                    text: {
+                        if(isFacilitatorAdmin){
+                            return "••••••"
+                        }
+                        else {
+                            var sign = (transactionisReceiveTx ? "" : "-")
+                            return qsTr("%1 %2 %3").arg(sign).arg(transactiontotalCurrency).arg(AppSetting.currency)
+                        }
+                    }
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight

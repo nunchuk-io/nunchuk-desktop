@@ -971,7 +971,8 @@ Item {
             LayoutMirroring.enabled: isSentByMe
             LayoutMirroring.childrenInherit: true
             property QtObject txObject: model.transaction ? model.transaction.info : null
-            property int tx_status: txObject ? txObject.status : -1
+            property int    tx_status: txObject ? txObject.status : -1
+            property int    confirmations: txObject ? Math.max(0, (AppModel.blockHeight - txObject.height) + 1)  : 0
             property string tx_id: txObject ? txObject.txid : ""
             property string to_addr: txObject ? txObject.destinationList.reciever : ""
             property string tx_amount: txObject ? txObject.total + RoomWalletData.unitValue : ""
@@ -1009,25 +1010,11 @@ Item {
                             width: creatingState.width + 20
                             height: creatingState.height + 8
                             radius: 20
-                            color: {
-                                if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#FFD7D9" }
-                                else if(iteminit.tx_status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FDEBD2" }
-                                else if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "#E8DAFF" }
-                                else if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED){ return "#D0E2FF" }
-                                else if(iteminit.tx_status === NUNCHUCKTYPE.NETWORK_REJECTED){ return "#CF4018" }
-                                else{ return "#FFD7D9" }
-                            }
+                            color: GlobalData.transactionColor(iteminit.tx_status)
                             QText {
                                 id: creatingState
                                 anchors.centerIn: parent
-                                text: {
-                                    if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return STR.STR_QML_283 }
-                                    else if(iteminit.tx_status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return STR.STR_QML_284 }
-                                    else if(iteminit.tx_status === NUNCHUCKTYPE.NETWORK_REJECTED){ return STR.STR_QML_285 }
-                                    else if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return STR.STR_QML_286 }
-                                    else if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED){ return STR.STR_QML_492 }
-                                    else{ return STR.STR_QML_082 }
-                                }
+                                text:  GlobalData.transactionStatus(iteminit.tx_status, iteminit.confirmations)
                                 font.family: "Lato"
                                 font.pixelSize: 14
                                 color: "#031F2B"

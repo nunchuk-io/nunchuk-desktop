@@ -382,26 +382,12 @@ Rectangle {
                                     height: 16
                                     width: currentState.width + 20
                                     radius: 20
-                                    color: {
-                                        if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return "#FFD7D9" }
-                                        else if(iteminit.tx_status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return "#FDEBD2" }
-                                        else if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return "#E8DAFF" }
-                                        else if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED){ return "#D0E2FF" }
-                                        else if(iteminit.tx_status === NUNCHUCKTYPE.NETWORK_REJECTED){ return "#CF4018" }
-                                        else{ return "#EAEAEA" }
-                                    }
+                                    color: GlobalData.transactionColor(AppModel.transactionInfo.status)
                                     QLato {
                                         id: currentState
                                         font.family: "Lato"
                                         font.pixelSize: 10
-                                        text: {
-                                            if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_SIGNATURES){ return STR.STR_QML_283 }
-                                            else if(iteminit.tx_status === NUNCHUCKTYPE.READY_TO_BROADCAST){ return STR.STR_QML_284 }
-                                            else if(iteminit.tx_status === NUNCHUCKTYPE.NETWORK_REJECTED){ return STR.STR_QML_285 }
-                                            else if(iteminit.tx_status === NUNCHUCKTYPE.PENDING_CONFIRMATION){ return STR.STR_QML_286 }
-                                            else if(iteminit.tx_status === NUNCHUCKTYPE.CONFIRMED){ return STR.STR_QML_492 }
-                                            else{ return STR.STR_QML_288 }
-                                        }
+                                        text: GlobalData.transactionStatus(AppModel.transactionInfo.status, Math.max(0, (AppModel.blockHeight - AppModel.transactionInfo.height) + 1))
                                         anchors.centerIn: parent
                                         color: "#031F2B"
                                         font.weight: Font.Bold

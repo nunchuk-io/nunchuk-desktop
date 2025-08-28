@@ -778,11 +778,25 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
         }
     }
     else if (type == "use-selected-coins-create-transaction") {
+        DBG_INFO << "Customize coins";
         timeoutHandler(1000,[=]{
-            auto w = dynamic_cast<Wallet*>(this);
-            QEventProcessor::instance()->sendEvent(E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {});
-            w->UpdateDraftTransaction({});
-            AppModel::instance()->showToast(0, "Coin selection updated", EWARNING::WarningType::SUCCESS_MSG);
+            auto trans = AppModel::instance()->transactionInfoPtr();
+            auto wallet = AppModel::instance()->walletInfoPtr();
+            if (trans && wallet) {
+                QVariantMap draft_data;
+                draft_data["subtractFromFeeAmout"]  = trans->subtractFromFeeAmount();
+                draft_data["feeRate"]               = trans->feeRateSats()/1000; // Convert sats/Byte to sats/kB
+                draft_data["manualFee"]             = true;
+                draft_data["manualOutput"]          = true;
+                // DBG_INFO << "Customize coins" << trans->feeRate() << trans->feeRateSats();
+                // bool subtractFromFeeAmout   = draftTransactionInput.value("subtractFromFeeAmout").toBool();
+                // int  feeRate                = draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
+                // bool manualFee              = draftTransactionInput.value("manualFee").toBool();
+                // bool manualOutput           = draftTransactionInput.value("manualOutput").toBool();
+                wallet->UpdateDraftTransaction(draft_data);
+                QEventProcessor::instance()->sendEvent(E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {});
+                AppModel::instance()->showToast(0, "Coin selection updated", EWARNING::WarningType::SUCCESS_MSG);
+            }
         });
         return true;
     }
@@ -1078,9 +1092,9 @@ bool CoinWallet::AssignTagsToTxChange()
             auto txInput = trans->changeInfo();
             for(auto tag: parentCoin->fullList()) {
                 if (parentCoin->isChecked(tag.get_id())) {
-                    AddToCoinTag(tag.get_id(), QString::fromStdString(txInput.first), txInput.second, false);
+                    AddToCoinTag(tag.get_id(), QString::fromStdString(txInput.txid), txInput.vout, false);
                 } else {
-                    RemoveFromCoinTag(tag.get_id(), QString::fromStdString(txInput.first), txInput.second, false);
+                    RemoveFromCoinTag(tag.get_id(), QString::fromStdString(txInput.txid), txInput.vout, false);
                 }
             }
         }
@@ -1303,61 +1317,107 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
     DBG_INFO << "Fee rate" << feerate;
     DBG_INFO << "Subtract From Amount : " << subtractFromAmount;
 
-    QWarningMessage msgwarning;
-    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
-                                                            outputs,
-                                                            inputs,
-                                                            feerate,
-                                                            subtractFromAmount,
-                                                            "",
-                                                            use_script_path,
-                                                            msgwarning);
-    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
-        AppModel::instance()->setTransactionInfo(trans);
-        AppModel::instance()->transactionInfo()->setMemo(memo);
-        AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
-        AppModel::instance()->transactionInfo()->setKeysetSelected(use_keyset_index);
-#if ENABLE_AUTO_FEE
-        if(walletInfo->enableValuekeyset() && !contains_use_script_path){
-            msgwarning.resetWarningMessage();
-            QTransactionPtr trans_script = bridge::nunchukDraftTransaction(wallet_id,
-                                                                           outputs,
-                                                                           inputs,
-                                                                           feerate,
-                                                                           trans.data()->subtractFromFeeAmount(),
-                                                                           "",
-                                                                           true,
-                                                                           msgwarning);
-            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans_script){
-                AppModel::instance()->transactionInfo()->setFeeOtherKeyset(trans_script.data()->feeSats());
-                if(AppSetting::instance()->enableAutoFeeSelection()){
-                    DBG_INFO << "Enable auto fee selection";
-                    double valueKeysetFee = trans.data()->feeCurrency().toDouble();
-                    double otherKeysetFee = trans_script.data()->feeCurrency().toDouble();
-                    DBG_INFO << "Value keyset fee:" << valueKeysetFee << "Other keyset fee:" << otherKeysetFee;
+    if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+        auto signing_paths = AppModel::instance()->transactionInfo()->signingPaths();
 
-                    double thresholdAmount = AppSetting::instance()->thresholdAmount();
-                    int thresholdPercent = AppSetting::instance()->thresholdPercent();
-                    double feeDifference = otherKeysetFee - valueKeysetFee;
-                    double percentDifference = (std::abs(valueKeysetFee - otherKeysetFee) / ((valueKeysetFee + otherKeysetFee) / 2.0)) * 100.0;
-                    if ((feeDifference > thresholdAmount) || percentDifference > thresholdPercent) {
-                        DBG_INFO << "Difference fee between value keyset and other keyset is greater than threshold" << feeDifference << percentDifference;
+        auto createTransaction = [&]() {
+            DBG_INFO << "Signing paths already exist, using existing signing paths";
+            auto selectedSigningPath = AppModel::instance()->transactionInfo()->signingPathSelected();
+            QWarningMessage msgwarning;
+            QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                                outputs,
+                                                                inputs,
+                                                                feerate,
+                                                                subtractFromAmount,
+                                                                "",
+                                                                use_script_path,
+                                                                selectedSigningPath,
+                                                                msgwarning);
+            if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
+                AppModel::instance()->setTransactionInfo(trans);
+                AppModel::instance()->transactionInfo()->setMemo(memo);
+                AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
+                AppModel::instance()->transactionInfo()->setSigningPathSelected(selectedSigningPath);
+                QEventProcessor::instance()->sendEvent(successEvtID);
+            }
+        };
+        if(signing_paths.empty() && !use_script_path){
+            std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> signing_paths = bridge::nunchukEstimateFeeForSigningPaths(wallet_id,
+                                                                                                                                    outputs,
+                                                                                                                                    inputs,
+                                                                                                                                    feerate,
+                                                                                                                                    subtractFromAmount,
+                                                                                                                                    "");
+            AppModel::instance()->transactionInfo()->setSigningPaths(signing_paths);
+            if (signing_paths.size() == 1) {
+                createTransaction();
+            } else {
+                AppModel::instance()->transactionInfo()->setScreenFlow("choose-signing-policy");
+            }
+        } else {
+            createTransaction();
+        }
+        return true;
+    }
+    else {
+        QWarningMessage msgwarning;
+        QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                                outputs,
+                                                                inputs,
+                                                                feerate,
+                                                                subtractFromAmount,
+                                                                "",
+                                                                use_script_path,
+                                                                {},
+                                                                msgwarning);
+        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
+            AppModel::instance()->setTransactionInfo(trans);
+            AppModel::instance()->transactionInfo()->setMemo(memo);
+            AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
+            AppModel::instance()->transactionInfo()->setKeysetSelected(use_keyset_index);
+#if ENABLE_AUTO_FEE
+            if(walletInfo->enableValuekeyset() && !contains_use_script_path){
+                msgwarning.resetWarningMessage();
+                QTransactionPtr trans_script = bridge::nunchukDraftTransaction(wallet_id,
+                                                                               outputs,
+                                                                               inputs,
+                                                                               feerate,
+                                                                               trans.data()->subtractFromFeeAmount(),
+                                                                               "",
+                                                                               true,
+                                                                               {},
+                                                                               msgwarning);
+                if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans_script){
+                    AppModel::instance()->transactionInfo()->setFeeOtherKeyset(trans_script.data()->feeSats());
+                    if(AppSetting::instance()->enableAutoFeeSelection()){
+                        DBG_INFO << "Enable auto fee selection";
+                        double valueKeysetFee = trans.data()->feeCurrency().toDouble();
+                        double otherKeysetFee = trans_script.data()->feeCurrency().toDouble();
+                        DBG_INFO << "Value keyset fee:" << valueKeysetFee << "Other keyset fee:" << otherKeysetFee;
+
+                        double thresholdAmount = AppSetting::instance()->thresholdAmount();
+                        int thresholdPercent = AppSetting::instance()->thresholdPercent();
+                        double feeDifference = otherKeysetFee - valueKeysetFee;
+                        double percentDifference = (std::abs(valueKeysetFee - otherKeysetFee) / ((valueKeysetFee + otherKeysetFee) / 2.0)) * 100.0;
+                        if ((feeDifference > thresholdAmount) || percentDifference > thresholdPercent) {
+                            DBG_INFO << "Difference fee between value keyset and other keyset is greater than threshold" << feeDifference << percentDifference;
+                            emit AppModel::instance()->transactionInfo()->requestFeeSelection();
+                            return true;
+                        }
+                    }
+                    else {
+                        DBG_INFO << "Disable auto fee selection";
                         emit AppModel::instance()->transactionInfo()->requestFeeSelection();
                         return true;
                     }
                 }
-                else {
-                    DBG_INFO << "Disable auto fee selection";
-                    emit AppModel::instance()->transactionInfo()->requestFeeSelection();
-                    return true;
-                }
             }
-        }
 #endif
-        QEventProcessor::instance()->sendEvent(successEvtID);
-        return true;
+            QEventProcessor::instance()->sendEvent(successEvtID);
+            return true;
+        }
+        return false;
     }
-    return false;
 }
 
 bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
@@ -1377,12 +1437,27 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
         use_script_path = trans->useScriptPath();
     }
 
-    bool subtractFromFeeAmout   = draftTransactionInput.value("subtractFromFeeAmout").toBool();
-    int  feeRate                = draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
-    bool manualFee              = draftTransactionInput.value("manualFee").toBool();
-    bool manualOutput           = draftTransactionInput.value("manualOutput").toBool();
+    qDebug() << "UpdateDraftTransaction" << draftTransactionInput;
+    DBG_INFO <<  draftTransactionInput.value("feeRate");
+
+    bool    subtractFromFeeAmout   = draftTransactionInput.value("subtractFromFeeAmout").toBool();
+    qint64  feeRate                = draftTransactionInput.value("feeRate").toLongLong()*1000; // Convert sats/Byte to sats/kB
+    bool    manualFee              = draftTransactionInput.value("manualFee").toBool();
+    bool    manualOutput           = draftTransactionInput.value("manualOutput").toBool();
     if(!manualFee) {
-        feeRate = -1;
+        feeRate = AppModel::instance()->hourFeeOrigin();
+        if(AppSetting::instance()->feeSetting() == (int)ENUNCHUCK::Fee_Setting::PRIORITY){
+            feeRate = AppModel::instance()->fastestFeeOrigin();
+            DBG_INFO << "Fee Setting: PRIORITY";
+        }
+        else if(AppSetting::instance()->feeSetting() == (int)ENUNCHUCK::Fee_Setting::STANDARD){
+            DBG_INFO << "Fee Setting: STANDARD";
+            feeRate = AppModel::instance()->halfHourFeeOrigin();
+        }
+        else {
+            DBG_INFO << "Fee Setting: ECONOMICAL";
+            feeRate = AppModel::instance()->hourFeeOrigin();
+        }
     }
     DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
 
@@ -1394,25 +1469,48 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
     auto walletInfo = (dynamic_cast<Wallet*>(this));
     QString wallet_id = walletInfo->walletId();
 
-    QWarningMessage msgwarning;
-    QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
-                                                            outputs,
-                                                            inputs,
-                                                            feeRate,
-                                                            subtractFromFeeAmout,
-                                                            replace_txid,
-                                                            use_script_path,
-                                                            msgwarning);
-    if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-        if(trans){
-            trans.data()->setMemo(memo);
-            trans.data()->setUseScriptPath(use_script_path);
+    if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+        auto selectedSigningPath = AppModel::instance()->transactionInfo()->signingPathSelected();
+        QWarningMessage msgwarning;
+        QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                                outputs,
+                                                                inputs,
+                                                                feeRate,
+                                                                subtractFromFeeAmout,
+                                                                replace_txid,
+                                                                use_script_path,
+                                                                selectedSigningPath,
+                                                                msgwarning);
+        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
             AppModel::instance()->setTransactionInfo(trans);
+            AppModel::instance()->transactionInfo()->setMemo(memo);
+            AppModel::instance()->transactionInfo()->setUseScriptPath(use_script_path);
+            AppModel::instance()->transactionInfo()->setSigningPathSelected(selectedSigningPath);
         }
+        return true;
     }
     else {
-        AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
-    }
+        QWarningMessage msgwarning;
+        QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
+                                                                outputs,
+                                                                inputs,
+                                                                feeRate,
+                                                                subtractFromFeeAmout,
+                                                                replace_txid,
+                                                                use_script_path,
+                                                                {},
+                                                                msgwarning);
+        if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
+            if(trans){
+                trans.data()->setMemo(memo);
+                trans.data()->setUseScriptPath(use_script_path);
+                AppModel::instance()->setTransactionInfo(trans);
+            }
+        }
+        else {
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+        }
+    }    
     return false;
 }
 
@@ -1448,6 +1546,7 @@ bool CoinWallet::UpdateDraftRBFransaction(const QVariant &msg)
                                                                                subtractFromFeeAmout,
                                                                                replacing_txid.toStdString(),
                                                                                false,
+                                                                               {},
                                                                                msgwarning);
         if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
             if(trans){

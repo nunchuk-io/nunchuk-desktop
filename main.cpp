@@ -198,10 +198,10 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.48");
+    app.setApplicationVersion("1.9.49");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
-    AppModel::instance();
     Draco::instance();
+    AppModel::instance();
     QWalletManagement::instance();
     QUserWallets::instance();
     QGroupWallets::instance();
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
 #ifdef ENABLE_OUTLOG
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
 #else
-    loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
+    loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
 #endif
 
     QEventProcessor::registerStates(STATE_ALL, ALEN(STATE_ALL));
@@ -231,6 +231,8 @@ int main(int argc, char* argv[])
     qmlRegisterSingletonType(QUrl("qrc:/Qml/Global/QGlobal.qml"), "DataPool", 1, 0, "GlobalData");
     qmlRegisterType<AlertEnum>("NUNCHUCKTYPE", 1, 0, "AlertType");
     qmlRegisterType<QBarcodeFilter>("QBarcodeFilter", 1, 0, "QBarcodeFilter");
+    qmlRegisterType<ScriptNodeHelper>("NUNCHUCKTYPE", 1, 0, "ScriptNodeHelper");
+
     QEventProcessor::instance()->addImageProvider("nunchuk", CLIENT_INSTANCE->imageprovider());
     QEventProcessor::instance()->initialized();
     QEventProcessor::instance()->initFonts(latoFonts);

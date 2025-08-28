@@ -107,6 +107,7 @@ public:
         SINGLE_SIG,
         MULTI_SIG,
         ESCROW,
+        MINISCRIPT,
     };
 
     enum class HealthStatus {
@@ -219,6 +220,7 @@ public:
         E_GROUP_WALLET,
         E_ASSISTED_WALLET,
         E_HOT_WALLET,
+        E_MINISCRIPT_WALLET,
     };
 
     enum class Fee_Setting : int {
@@ -347,6 +349,15 @@ QSingleSignerPtr nunchukGetDefaultSignerFromMasterSigner(const QString& mastersi
                                                         const ENUNCHUCK::AddressType& address_type,
                                                         QWarningMessage &msg);
 
+QSingleSignerPtr nunchukGetAvailableSignerFromMasterSigner(const QMasterSignerPtr &master,
+                                                            const ENUNCHUCK::WalletType& wallet_type,
+                                                            const ENUNCHUCK::AddressType& address_type,
+                                                            QWarningMessage &msg);
+
+QSingleSignerPtr nunchukGetSignerFromMasterSigner(const QString& mastersigner_id,
+                                                            const QString& derivation_path,
+                                                            QWarningMessage& msg);
+
 bool nunchukDeleteMasterSigner(const QString& mastersigner_id);
 
 bool nunchukDeletePrimaryKey();
@@ -438,6 +449,7 @@ QTransactionPtr nunchukCreateTransaction(const QString& wallet_id,
                                          const QString &replace_txid,
                                          bool anti_fee_sniping,
                                          bool use_script_path,
+                                         const nunchuk::SigningPath& signing_path,
                                          QWarningMessage &msg);
 
 QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
@@ -448,15 +460,17 @@ QTransactionPtr nunchukCancelCreateTransaction(const QString &wallet_id,
                                                const QString &replace_txid,
                                                bool anti_fee_sniping,
                                                bool use_script_path,
+                                               const nunchuk::SigningPath& signing_path,
                                                QWarningMessage &msg);
 
 QTransactionPtr nunchukDraftTransaction(const QString& wallet_id,
                                         const QMap<QString, qint64> outputs,
                                         const QUTXOListModelPtr inputs,
-                                        const int fee_rate,
+                                        const qint64 fee_rate,
                                         const bool subtract_fee_from_amount,
                                         const QString &replace_txid,
                                         bool use_script_path,
+                                        const nunchuk::SigningPath& signing_path,
                                         QWarningMessage &msg);
 
 nunchuk::Transaction nunchukDraftOriginTransaction(const string &wallet_id,
@@ -466,6 +480,7 @@ nunchuk::Transaction nunchukDraftOriginTransaction(const string &wallet_id,
                                                    const bool subtract_fee_from_amount,
                                                    const string &replace_txid,
                                                    bool use_script_path,
+                                                   const nunchuk::SigningPath& signing_path,
                                                    QWarningMessage &msg);
 
 
@@ -531,7 +546,7 @@ QUTXOListModelPtr nunchukGetUnspentOutputs(const QString& wallet_id);
 
 QUTXOListModelPtr nunchukLockedGetUnspentOutputs(const QString& wallet_id);
 
-int nunchukGetChainTip();
+int nunchukBlockHeight();
 
 bool nunchukExportHealthCheckMessage(const QString& message, const QString& file_path);
 
@@ -891,6 +906,11 @@ nunchuk::GroupSandbox CreateGroup(const QString& name,
                                   nunchuk::AddressType addressType,
                                   QWarningMessage &msg);
 
+nunchuk::GroupSandbox CreateGroup(const QString& name,
+                                    const QString& script_tmpl,
+                                    nunchuk::AddressType addressType,
+                                    QWarningMessage &msg);
+
 int GetGroupOnline(const QString& groupId);
 
 nunchuk::GroupSandbox GetGroup(const QString& groupId,
@@ -907,18 +927,38 @@ nunchuk::GroupSandbox SetSlotOccupied(const nunchuk::GroupSandbox& sandbox,
                                       int index,
                                       bool value);
 
+nunchuk::GroupSandbox SetSlotOccupied(const nunchuk::GroupSandbox& sandbox,
+                                        const QString& name,
+                                        bool value);
+
 nunchuk::GroupSandbox AddSignerToGroup(const QString& groupId,
                                        const nunchuk::SingleSigner& signer,
-                                       int index, QWarningMessage &msg);
+                                       int index, 
+                                       QWarningMessage &msg);
+
+nunchuk::GroupSandbox AddSignerToGroup(const QString& groupId,
+                                        const nunchuk::SingleSigner& signer,
+                                        const QString& name,
+                                        QWarningMessage &msg);
 
 nunchuk::GroupSandbox RemoveSignerFromGroup(const QString& groupId,
                                             int index,
                                             QWarningMessage &msg);
 
+nunchuk::GroupSandbox RemoveSignerFromGroup(const QString& groupId,
+                                                const QString& name,
+                                                QWarningMessage &msg);
+
 nunchuk::GroupSandbox UpdateGroup(const QString& groupId,
                                   const QString& name,
                                   int m,
                                   int n,
+                                  nunchuk::AddressType addressType,
+                                  QWarningMessage &msg);
+
+nunchuk::GroupSandbox UpdateGroup(const QString& groupId,
+                                  const QString& name,
+                                  const QString& script_tmpl,
                                   nunchuk::AddressType addressType,
                                   QWarningMessage &msg);
 
@@ -958,5 +998,28 @@ void DeclineReplaceGroup(const QString& walletId,
 QStringList GetDeprecatedGroupWallets(QWarningMessage &msg);
 
 QString GetHotKeyMnemonic(const QString &signer_id, const QString &passphrase = {});
+
+// Mini script wallet
+QWalletPtr nunchukCreateMiniscriptWallet(const QString& name, const QString& script_template,
+                                         const std::map<std::string, nunchuk::SingleSigner>& signers,
+                                         nunchuk::AddressType address_type, const QString& description,
+                                         bool allow_used_signer, const QString& decoy_pin, QWarningMessage &msg);
+
+nunchuk::Wallet nunchukCreateOriginMiniscriptWallet(const QString& name, const QString& script_template,
+                                                    const std::map<std::string, nunchuk::SingleSigner>& signers,
+                                                    nunchuk::AddressType address_type, const QString& description,
+                                                    bool allow_used_signer, const QString& decoy_pin, QWarningMessage &msg);
+
+std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> nunchukEstimateFeeForSigningPaths(const QString &wallet_id,
+                                                                                                const QMap<QString, qint64> outputs,
+                                                                                                const QUTXOListModelPtr inputs,
+                                                                                                qint64 fee_rate,
+                                                                                                bool subtract_fee_from_amount,
+                                                                                                const QString &replace_txid);
+
+std::pair<int64_t, nunchuk::Timelock::Based> nunchukGetTimelockedUntil(const QString& wallet_id, const QString& tx_id);
+
+std::vector<nunchuk::SingleSigner> nunchukGetTransactionSigners(const QString& wallet_id, const QString& tx_id);
+
 }
 #endif // BRIDGEINTERFACE_H

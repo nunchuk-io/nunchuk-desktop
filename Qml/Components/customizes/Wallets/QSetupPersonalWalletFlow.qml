@@ -43,8 +43,6 @@ Loader {
     property string flow_screen: newWalletInfo.screenFlow
     readonly property var map_flow: [
         {screen: "review-wallet",             screen_component: review_wallet},
-        {screen: "bsms-file-success",         screen_component: bsms_file_success},
-        {screen: "register-wallet-hardware",  screen_component: register_wallet_hardware},
     ]
     width: popupWidth
     height: popupHeight
@@ -59,12 +57,6 @@ Loader {
     }
     function switchReviewWallet() {
         newWalletInfo.screenFlow = "review-wallet";
-    }   
-    function switchBsmsFileSuccess() {
-        newWalletInfo.screenFlow = "bsms-file-success";
-    }   
-    function switchRegisterWalletHardware() {
-        newWalletInfo.screenFlow = "register-wallet-hardware";
     }
     Component {
         id: personal_Wallet
@@ -86,23 +78,8 @@ Loader {
             nextEnabled: !newWalletInfo.walletSingleSignerAssigned.needTopUpXpubs
             onNextClicked: {
                 AppModel.startCreateWallet(false, "");
-                switchBsmsFileSuccess();
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             }
-        }
-    }
-
-    Component {
-        id: bsms_file_success
-        QSaveYourWalletBSMSFile {
-            onNextClicked: {
-                switchRegisterWalletHardware();
-            }
-        }
-    }
-
-    Component {
-        id: register_wallet_hardware
-        QRegisterWalletOnHardware {
         }
     }
 }

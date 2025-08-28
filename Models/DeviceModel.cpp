@@ -58,16 +58,7 @@ QString QDevice::masterFingerPrint() const {
 }
 
 bool QDevice::connected() const {
-    return isConnected;
-}
-
-void QDevice::setConnected(bool b)
-{
-    if (isConnected == b)
-        return;
-
-    isConnected = b;
-    emit connectedChanged();
+    return AppModel::instance()->deviceList()->contains(masterFingerPrint());
 }
 
 bool QDevice::needsPassPhraseSent() const {

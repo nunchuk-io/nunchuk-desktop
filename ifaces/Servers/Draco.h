@@ -33,7 +33,7 @@
 #include "FederatedAuth/QAppleSigninView.h"
 #include "FederatedAuth/QGoogleSigninView.h"
 
-class Draco : public QRest
+class Draco : public QObject
 {
     Q_OBJECT
     Q_ENUMS(RESPONSE_CODE)
@@ -50,6 +50,9 @@ public:
     Draco(Draco &other) = delete;
     Draco(Draco const &other) = delete;
     void operator=(const Draco &other) = delete;
+    QString dracoToken();
+    void setDracoToken(const QString token);
+    QByteArray machineUniqueId();
     Q_INVOKABLE void refreshDevices();
     Q_INVOKABLE void refreshContacts();
     Q_INVOKABLE void checkAccountAvailability(const QString &email);
@@ -473,6 +476,7 @@ private:
     // Social signin
     QAppleSigninViewPtr     m_Apple;
     QGoogleSigninViewPtr    m_Google;
+    QRestPtr                m_rest;
 #endif
 
 public slots:

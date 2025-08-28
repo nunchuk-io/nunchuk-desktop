@@ -37,11 +37,12 @@ import "../../../localization/STR_QML.js" as STR
 
 Item {
     id: _item
-    property var walletInfo                     : AppModel.walletInfo
+    property var    walletInfo                  : AppModel.walletInfo
     property bool   existWallet                 : false
     property string myRole                      : walletInfo.myRole
     property bool   walletKeyNeedBackup         : walletInfo.keyNeedBackup
     property bool   walletNeedBackup            : walletInfo.needBackup
+    property bool   walletRegistered            : walletInfo.needRegistered
     property bool   walletIsReplaced            : walletInfo.isReplaced
     property bool   walletIsAssisted            : walletInfo.isAssistedWallet
     property bool   walletIsShared              : walletInfo.isSharedWallet
@@ -49,15 +50,45 @@ Item {
     property bool   walletIsSandboxWallet       : walletInfo.isGlobalGroupWallet
     anchors.fill: parent
     anchors.margins: 24
+    function getWalletTypeDes() {
+        if (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+            return STR.STR_QML_1801
+        } else {
+            return (walletInfo.walletN === 1) ? STR.STR_QML_070 : 
+                            qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069)
+        }
+    }
     Column {
         spacing: 24
         QWalletWarningInfo {
-            visible: walletNeedBackup && !forceClose && !walletIsReplaced
+            visible: {
+                var ret = !forceClose && !walletIsReplaced
+                if (walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG) {
+                    return walletNeedBackup && ret && walletInfo.hasNativeSegwitDerivationPath()
+                } else {
+                    return (walletNeedBackup || (walletRegistered && walletInfo.hasHardwareOrAirgap())) && ret
+                }
+            }
             width: _item.width
-            height: 60
-            content: STR.STR_QML_1710
-            onHyperlinkClicked: {
-               optionMenu.mapMenu[1].action()
+            height: 80
+            useDoItNow: true
+            content: {
+                if (walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG) {
+                    return STR.STR_QML_1861
+                } else if (walletNeedBackup) {
+                    return STR.STR_QML_1860
+                } else if (walletRegistered) {
+                    return STR.STR_QML_1862
+                } else {
+                    return ""
+                }
+            }
+            onDoItNow: {
+                if (walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG || walletNeedBackup) {
+                    QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST, "bsms-file-success")
+                } else if (walletRegistered) {
+                    QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST, "register-wallet-hardware")
+                }
             }
         }
         QWalletWarningInfo {
@@ -294,10 +325,11 @@ Item {
                         height: 16
                         spacing: 8
                         QBadge {
-                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : (walletInfo.walletN === 1) ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069);
+                            text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : getWalletTypeDes()
                             color: "#EAEAEA"
                             font.weight: Font.Bold
                             font.pixelSize: 10
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                         QTypeWallet {
                             icon.iconSize: 12
@@ -313,6 +345,7 @@ Item {
                             label.font.weight: Font.Bold
                             label.font.pixelSize: 10
                             visible: label.text !== ""
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                     Column {
@@ -746,7 +779,7 @@ Item {
                     transactionMemo: transaction_memo
                     transactionAmount: (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
                     transactiontotalCurrency: (transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency)
-                    confirmation: Math.max(0, (AppModel.chainTip - transaction_height)+1)
+                    confirmation: Math.max(0, (AppModel.blockHeight - transaction_height)+1)
                     transactionDate: transaction_blocktime
                     addressWidth: width*0.20
                     statusWidth: width*0.20
@@ -756,6 +789,7 @@ Item {
                     transactionIsRbf: transaction_isRbf
                     walletIsByzantineGuardian: walletInfo.isByzantineGuardian
                     isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
+                    transactionLocked: transaction_timelockedUntil.hasLocked
                     onButtonClicked: {
                         QMLHandle.signalNotifySendEvent(EVT.EVT_HOME_TRANSACTION_INFO_REQUEST, transactiontxid)
                     }

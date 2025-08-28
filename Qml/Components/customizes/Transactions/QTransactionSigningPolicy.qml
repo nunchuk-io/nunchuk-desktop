@@ -207,7 +207,7 @@ Popup {
                                                 spacing: 16
                                                 anchors.centerIn: parent
                                                 QLato {
-                                                    text: "Estimated fee"
+                                                    text: STR.STR_QML_1866
                                                     font.pixelSize: 12
                                                     color: "#031F2B"
                                                     horizontalAlignment: Text.AlignLeft

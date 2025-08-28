@@ -68,7 +68,13 @@ QGroupWalletArea {
                         font.weight: Font.Normal
                         font.pixelSize: 16
                         color: "#FFFFFF"
-                        text: qsTr("%1/%2 %3").arg(sandbox.groupM).arg(sandbox.groupN).arg(STR.STR_QML_069)
+                        text: {
+                            if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                                return STR.STR_QML_1801
+                            } else {
+                                return qsTr("%1/%2 %3").arg(sandbox.groupM).arg(sandbox.groupN).arg(STR.STR_QML_069)
+                            }
+                        }
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignLeft
                     }

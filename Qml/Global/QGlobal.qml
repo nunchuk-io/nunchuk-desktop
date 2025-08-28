@@ -137,7 +137,7 @@ QtObject {
         case NUNCHUCKTYPE.READY_TO_BROADCAST:   return STR.STR_QML_284 ;
         case NUNCHUCKTYPE.NETWORK_REJECTED:     return STR.STR_QML_285 ;
         case NUNCHUCKTYPE.PENDING_CONFIRMATION: return STR.STR_QML_286 ;
-        case NUNCHUCKTYPE.CONFIRMED:            return (qsTr("%1 %2").arg(confirmation).arg(STR.STR_QML_287)) ;
+        case NUNCHUCKTYPE.CONFIRMED:            return (qsTr("%1 %2").arg(confirmation).arg(confirmation > 1 ? STR.STR_QML_287 : "Confirmation")) ;
         default:                                return STR.STR_QML_456
         }
     }

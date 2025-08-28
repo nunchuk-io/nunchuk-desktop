@@ -35,23 +35,15 @@ import "../../../../localization/STR_QML.js" as STR
 
 QBoxShadow {
     id: _item
-    width: 500
-    height: 196
+    width: 550
+    height: 112
     color: "#FFFFFF"
     property string title: "Assisted wallet"
     property string optional: ""
     property string description: ""
     property string desImg: ""
     property string note: ""
-    property bool isPaid: false
     radius: 12
-    signal itemclicked
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            itemclicked()
-        }
-    }
     Row {
         anchors {
             left: parent.left
@@ -60,48 +52,34 @@ QBoxShadow {
         }
         spacing: 16
         QIcon {
-            iconSize: 48
+            iconSize: 44
             source: desImg
             anchors.verticalCenter: parent.verticalCenter
         }
         Item {
-            width: isPaid ? 446: 406
+            width: 458
             height: _col.childrenRect.height
             anchors.verticalCenter: parent.verticalCenter
-            QLato {
-                width: parent.width
-                height: paintedHeight
-                text: description
-                font.pixelSize: 16
-                wrapMode: Text.WordWrap
-                verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: Text.AlignLeft
-                lineHeightMode: Text.FixedHeight
-                lineHeight: 28
-                visible: title == ""
-                anchors.verticalCenter: parent.verticalCenter
-            }
             Column {
                 id: _col
                 width: parent.width
-                spacing: 0
-                visible: title != ""
+                spacing: 4
                 Row {
                     width: parent.width
-                    height: 28
+                    height: 20
                     spacing: 4
                     QLato {
                         width: paintedWidth
-                        height: 28
+                        height: 20
                         text: title
-                        font.pixelSize: 20
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignLeft
                     }
                     QLato {
                         width: paintedWidth
-                        height: 28
+                        height: 20
                         text: optional
                         font.pixelSize: 16
                         font.weight: Font.Normal
@@ -119,13 +97,12 @@ QBoxShadow {
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignLeft
                     lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
+                    lineHeight: 20
                 }
                 Row {
                     width: parent.width
-                    height: 28
+                    height: 20
                     spacing: 4
-                    visible: note != ""
                     ColorOverlay {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 20
@@ -139,7 +116,7 @@ QBoxShadow {
                     }
                     QLato {
                         width: parent.width
-                        height: 28
+                        height: 20
                         text: note
                         font.pixelSize: 16
                         font.weight: Font.Normal
@@ -149,16 +126,6 @@ QBoxShadow {
                     }
                 }
             }
-        }
-    }
-    QIcon {
-        visible: !isPaid
-        iconSize: 24
-        source: "qrc:/Images/Images/right-arrow-dark.svg"
-        anchors {
-            verticalCenter: parent.verticalCenter
-            right: parent.right
-            rightMargin: 16
         }
     }
 }

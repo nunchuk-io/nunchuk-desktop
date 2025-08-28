@@ -38,7 +38,7 @@ Item {
     signal keyScanRequest
     signal keyExportRequest
     signal keyImportRequest
-    property int pendingSignatue: 0
+    property int pendingSignature: 0
     property bool isDummy: false
     property string myRole: ""
     /*========================================*/
@@ -70,7 +70,7 @@ Item {
                 font.family: "Lato"
                 font.pixelSize: 12
                 text: {
-                    var pend = isDummy ? pendingSignatue : Math.max(0, transactionInfo.m - transactionInfo.numberSigned)
+                    var pend = isDummy ? pendingSignature : transactionInfo.pendingSignatures
                     return STR.str_QML_220(pend)
                 }
                 anchors.verticalCenter: parent.verticalCenter

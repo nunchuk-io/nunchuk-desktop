@@ -12,7 +12,14 @@ QString QStateFlow::screenFlow() const {
 void QStateFlow::setScreenFlow(const QString &flow) {
     if (screenFlow() != flow && stringQStack.size() > 25)
         stringQStack.pop_front();
-    stringQStack.push(flow);
+    auto pushOrMoveToTop = [this](const QString &value) {
+        int index = stringQStack.indexOf(value);
+        if (index != -1) {
+            stringQStack.remove(index);   // remove old position
+        }
+        stringQStack.push(value);         // push to top
+    };
+    pushOrMoveToTop(flow);
     emit screenFlowChanged();
 }
 
@@ -30,7 +37,7 @@ void QStateFlow::clearState() {
 
 bool QStateFlow::isScreenFlow(const QString &flow) {
     if (stringQStack.isEmpty())
-        false;
+        return false;
     if (stringQStack.top() == flow) {
         return true;
     }

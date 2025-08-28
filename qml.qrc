@@ -190,6 +190,7 @@
         <file>Qml/Components/customizes/services/QInheritanceDetails.qml</file>
         <file>Qml/Screens/OnlineMode/SCR_ADD_HARDWARE_EXIST.qml</file>
         <file>Qml/Components/customizes/QAddAnExistingKey.qml</file>
+        <file>Qml/Components/customizes/QAddExistingKey.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddBitBox.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddBitBoxAsk.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddBitBoxExist.qml</file>
@@ -426,7 +427,6 @@
         <file>Qml/Screens/LocalMode/Onboarding/QHotWallet.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QGetMoreOutOfNunchukWithAnAssistedWallet.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QAddAWallet.qml</file>
-        <file>Qml/Screens/LocalMode/Onboarding/QCreateHotWallet.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QRecoverHotWallet.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QHaveAnAdvisor.qml</file>
         <file>Qml/Screens/LocalMode/Onboarding/QDontHaveAnAdvisor.qml</file>
@@ -567,6 +567,7 @@
         <file>Qml/Components/customizes/Wallets/QGroupWalletInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupWalletArea.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupWalletKeys.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QGroupWalletMiniscriptKeys.qml</file>
         <file>Qml/Components/customizes/Signers/QAddGroupKey.qml</file>
         <file>Qml/Components/customizes/Chats/QMessageBubble.qml</file>
         <file>Qml/Components/customizes/Wallets/QPendingGroupWallet.qml</file>
@@ -616,9 +617,65 @@
         <file>Qml/Components/customizes/Transactions/QTransactionSigningPolicy.qml</file>
         <file>Qml/Components/customizes/Transactions/QSigningPolicyDelegateTaproot.qml</file>
         <file>Qml/Components/customizes/Wallets/QRecoverWalletNameEdit.qml</file>
+        <file>Qml/Components/customizes/Transactions/QMiniscriptTransaction.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupMiniscriptWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QDraftWalletReviewMiniscript.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupMiniscriptWalletFlow.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletEnterMiniscript.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletTemplateMultisig.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletMiniscriptIntroduction.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonAssistedWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonCustomWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonGroupWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonHotWallet.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonMiniscript.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonRecommended.qml</file>
+        <file>Qml/Screens/LocalMode/Onboarding/QButtonWallet.qml</file>
+        <file>Qml/Components/customizes/Chats/QMenuMiniscriptDelegate.qml</file>
+        <file>Qml/Components/customizes/Chats/QMiniscriptMultiContextMenu.qml</file>
+        <file>Qml/Components/customizes/Wallets/QEditNumberKeys.qml</file>
+        <file>Qml/Components/customizes/Wallets/QContractPolicyEdit.qml</file>
+        <file>Qml/Components/customizes/Wallets/QNumberChanged.qml</file>
+        <file>Qml/Components/customizes/Wallets/QMiniscriptEditTimelock.qml</file>
+        <file>Qml/Components/customizes/Wallets/QEditTimelockSelectRadio.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QMiniscriptPolicesAddDelegate.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QMiniscriptPolicesDelegate.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QKeyComponent.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QAfterOlderComponent.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QCommonComponent.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QKeyPath.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QKeyComponentAddRemove.qml</file>
+        <file>Qml/Components/customizes/Wallets/QWalletMiniscriptAddAnExistingKey.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QDraftWalletMiniscriptReviewKeys.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QMiniscriptPolicesDraftReviewDlg.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QDraftWalletMiniscriptReviewInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QWalletConfigCustomizeMiniscript.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QKeyPathReview.qml</file>
+        <file>Qml/Components/customizes/Wallets/miniscript/QWalletMiniscriptConfigKeys.qml</file>
+        <file>Qml/Components/customizes/Signers/QSingleSignerBaseDelegate.qml</file>
+        <file>Qml/Components/customizes/Signers/QSingleSignerExistDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/QTransactionMiniscriptFlow.qml</file>
+        <file>Qml/Components/customizes/Transactions/QTransactionNormalFlow.qml</file>
+        <file>Qml/Components/customizes/Transactions/QNewTransactionAddDestination.qml</file>
+        <file>Qml/Components/customizes/Transactions/QNewTransactionChooseSigningPath.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QKeyComponentTransaction.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QKeyPathTransactionDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QMiniscriptPolicesTransactionDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QScriptPathTransactionDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/QNewTransactionChooseSigningPolicy.qml</file>
+        <file>Qml/Components/customizes/Transactions/QMemberKeysAreaMiniscript.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QKeyComponentTransactionSign.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QMiniscriptPolicesTransactionSignDelegate.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupTimezone.qml</file>
+        <file>Qml/Components/customizes/Popups/QTimePicker.qml</file>
+        <file>Qml/Components/customizes/Wallets/QPopupTaprootWarningAndInfo.qml</file>
+        <file>Qml/Components/customizes/Wallets/QPopupMiniscriptTemplateSwitch.qml</file>
+        <file>Qml/Components/origins/QScreenStateFlow.qml</file>
     </qresource>
     <qresource prefix="/Images">
+        <file>Images/miniscript-introduction.svg</file>
         <file>Images/services-light.svg</file>
+        <file>Images/Trash.svg</file>        
         <file>Images/Close.png</file>
         <file>Images/check_circle_outline_24px.png</file>
         <file>Images/error_outline_24px.png</file>
@@ -979,6 +1036,17 @@
         <file>Images/help_outline_24px.png</file>
         <file>Images/Archived2.png</file>
         <file>Images/Archived1.png</file>
+        <file>Images/type-miniscript-wallet.svg</file>
+        <file>Images/decaying-multisig.svg</file>
+        <file>Images/enter-miniscript.svg</file>
+        <file>Images/expanding-multisig.svg</file>
+        <file>Images/flexible-multisig.svg</file>
+        <file>Images/calendar-light.svg</file>
+        <file>Images/policies_dark.svg</file>
+        <file>Images/tree-atom.svg</file>
+        <file>Images/Timer.svg</file>
+        <file>Images/CurrencyBtc.svg</file>
+        <file>Images/clockEdit.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

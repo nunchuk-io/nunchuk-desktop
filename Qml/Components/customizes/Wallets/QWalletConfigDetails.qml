@@ -44,6 +44,14 @@ Rectangle {
     function editFinished() {
         wlname.typingFinish()
     }
+    function getWalletTypeDes() {
+        if (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+            return STR.STR_QML_1801
+        } else {
+            return (walletInfo.walletN === 1) ? STR.STR_QML_070 : 
+                            qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069)
+        }
+    }
     Column {
         anchors {
             fill: parent
@@ -93,10 +101,7 @@ Rectangle {
                     }
                 }
                 QBadge {
-                    text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : 
-                            (walletInfo.walletN === 1) ? STR.STR_QML_070 : 
-                            qsTr("%1/%2 %3").arg(walletInfo.walletM).arg(walletInfo.walletN).arg(STR.STR_QML_069);
-
+                    text: (myRole === "FACILITATOR_ADMIN") ? "••••••" : getWalletTypeDes()
                     color: "#EAEAEA"
                     font.weight: Font.Medium
                     font.pixelSize: 12

@@ -6,7 +6,7 @@
 
 int CreatingWallet::m_walletOptionType = 0;
 CreatingWallet::CreatingWallet(const nunchuk::Wallet &w) :
-    SandboxWallet{w},
+    MiniscriptWallet{w},
     m_assignAvailableSigners(QSingleSignerListModelPtr(new SingleSignerListModel()))
 {}
 
@@ -20,6 +20,64 @@ void CreatingWallet::setWalletOptType(int optType)
 {
     m_walletOptionType = optType;
     emit walletOptTypeChanged();
+}
+
+bool CreatingWallet::needBackup() const
+{
+    if (isReplaced() || isAssistedWallet()) {
+        return false; // Replaced or assisted wallets do not require backup
+    }
+    QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
+    bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
+    if(ret){
+        return !data.backedup;
+    }
+    return false;
+}
+
+void CreatingWallet::setNeedBackup(const bool data)
+{
+    if (isReplaced() || isAssistedWallet()) {
+        return; // Replaced or assisted wallets do not require backup
+    }
+    QWalletCached<QString, QString, QString, QString, bool, bool, bool> cache;
+    cache.groupId   = groupId();
+    cache.slug      = slug();
+    cache.myRole    = myRole();
+    cache.status    = status();
+    cache.backedup  = !data;
+    cache.hideFiatCurrency = isByzantineGuardian();
+    AppSetting::instance()->setWalletCached(walletId(), cache);
+    emit needBackupChanged();
+}
+
+bool CreatingWallet::needRegistered() const
+{
+    if (isReplaced() || isAssistedWallet()) {
+        return false; // Replaced or assisted wallets do not require registration
+    }
+    QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
+    bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
+    if(ret){
+        return !data.registered;
+    }
+    return false;
+}
+
+void CreatingWallet::setNeedRegistered(const bool data)
+{
+    if (isReplaced() || isAssistedWallet()) {
+        return; // Replaced or assisted wallets do not require registration
+    }
+    QWalletCached<QString, QString, QString, QString, bool, bool, bool> cache;
+    cache.groupId   = groupId();
+    cache.slug      = slug();
+    cache.myRole    = myRole();
+    cache.status    = status();
+    cache.registered = !data;
+    cache.hideFiatCurrency = isByzantineGuardian();
+    AppSetting::instance()->setWalletCached(walletId(), cache);
+    emit needRegisteredChanged();
 }
 
 void CreatingWallet::CreateSignerListReviewWallet(const std::vector<nunchuk::SingleSigner> &signers, const QList<QString>& needTopUps)
@@ -51,27 +109,52 @@ void CreatingWallet::CreateSignerListReviewWallet(const std::vector<nunchuk::Sin
     }
 }
 
-void CreatingWallet::CreateAssignAvailableSigners()
+void CreatingWallet::CreateAssignAvailableSigners(const std::set<nunchuk::SignerType>& types, const std::set<nunchuk::SignerTag>& tags)
 {
-    const auto available_signers = assignAvailableSigners();
+    QSingleSignerListModelPtr available_signers = CreateSupportedSigners(types, tags);
     if (!available_signers) {
-        DBG_WARN << "assignAvailableSigners() returned null";
+        DBG_WARN << "CreateSupportedSigners returned null";
         return;
     }
-    available_signers->cleardata();
+    m_assignAvailableSigners = available_signers;
+    emit assignAvailableSignersChanged();
+}
+
+QSingleSignerListModelPtr CreatingWallet::CreateSupportedSigners(const std::set<nunchuk::SignerType>& types, const std::set<nunchuk::SignerTag>& tags) {
+    QSingleSignerListModelPtr supportedSigners(new SingleSignerListModel());
+    std::set<nunchuk::SignerType> signer_types = types;
+    if (types.empty()) {
+        signer_types.insert(nunchuk::SignerType::HARDWARE);
+        signer_types.insert(nunchuk::SignerType::AIRGAP);
+        signer_types.insert(nunchuk::SignerType::SOFTWARE);
+        signer_types.insert(nunchuk::SignerType::FOREIGN_SOFTWARE);
+        signer_types.insert(nunchuk::SignerType::NFC);
+        signer_types.insert(nunchuk::SignerType::COLDCARD_NFC);
+        signer_types.insert(nunchuk::SignerType::SERVER);
+        signer_types.insert(nunchuk::SignerType::PORTAL_NFC);
+    }
+
     auto masterList = AppModel::instance()->masterSignerList();
     auto singleList = AppModel::instance()->remoteSignerList();
     if (masterList && singleList) {
         for (auto master : masterList->fullList()) {
-            available_signers->addSingleSigner(master->cloneSingleSigner());
+            auto type = master->originMasterSigner().get_type();
+            auto tag = master->signerTag();
+            if (signer_types.contains(type) && (tags.empty() || tags.contains(tag))) {
+                supportedSigners->addSingleSigner(master->cloneSingleSigner());
+            }
         }
         for (auto single : singleList->fullList()) {
-            available_signers->addSingleSigner(single);
+            auto type = single->originSingleSigner().get_type();
+            auto tag = single->signerTag();
+            if (signer_types.contains(type) && (tags.empty() || tags.contains(tag))) {
+                supportedSigners->addSingleSigner(single);
+            }
         }
-        available_signers->signers();
+        supportedSigners->signers();
     }
-    DBG_INFO << "available_signers size:" << available_signers->signerCount();
-    emit assignAvailableSignersChanged();
+    DBG_INFO << "supportedSigners size:" << supportedSigners->signerCount();
+    return supportedSigners;
 }
 
 SingleSignerListModel *CreatingWallet::assignAvailableSigners()
@@ -217,3 +300,44 @@ void CreatingWallet::startGetXpubs(int indexSinger)
         emit AppModel::instance()->finishGenerateSigner();
     });
 }
+
+// void CreatingWallet::editBIP32Path(const QString &master_id, const QString &path) {
+//     DBG_INFO << "master_id: " << master_id << "path: " << path;
+//     if (!qUtils::QIsValidDerivationPath(path)) {
+//         emit editBIP32PathSuccess(-1); // Invalid format
+//         return;
+//     }
+//     QPointer<CreatingWallet> safeThis(this);
+//     struct DataStruct {
+//         nunchuk::SingleSigner signer{};
+//         int errorType{0};
+//     };
+//     runInConcurrent(
+//         [safeThis, master_id, path]() -> DataStruct {
+//             SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+//             QWarningMessage msg;
+//             nunchuk::SingleSigner signer = bridge::GetSignerFromMasterSigner(master_id, path, msg);
+//             DataStruct data;
+//             if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+//                 msg.resetWarningMessage();
+//                 data.signer = signer;
+//                 data.errorType = 1; // Success
+//             } else {
+//                 data.errorType = -2;
+//             }
+//             return data;
+//         },
+//         [safeThis](DataStruct data) {
+//             SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+//             if (data.errorType == 1) {
+//                 auto s = QSingleSignerPtr(new QSingleSigner(data.signer));
+//                 const auto available_signers = safeThis->assignAvailableSigners();
+//                 if (available_signers) {
+//                     auto index = available_signers->getIndexByFingerPrint(s->fingerPrint());
+//                     available_signers->replaceSingleSigner(index, s);
+//                 }   
+//             }
+//             emit ptrLamda->editBIP32PathSuccess(data.errorType); // -2 Not Found Key
+//         });
+//     return;
+// }

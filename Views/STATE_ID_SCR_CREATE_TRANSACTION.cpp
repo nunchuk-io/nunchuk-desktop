@@ -45,10 +45,11 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
 
     QTransactionPtr transaction  = AppModel::instance()->transactionInfoPtr();
     if(transaction){
-        QString wallet_id       = transaction.data()->walletId();
-        bool use_script_path    = transaction->useScriptPath();
-        QString memo            = transaction->memo();
-        int  use_keyset_index   = transaction->keysetSelected();
+        QString wallet_id        = transaction.data()->walletId();
+        bool use_script_path     = transaction->useScriptPath();
+        QString memo             = transaction->memo();
+        int  use_keyset_index    = transaction->keysetSelected();
+        auto selectedSigningPath = transaction->signingPathSelected();
 
         if(transaction->txidReplacing() != "") {
             DBG_INFO << "REPLACE BY FEE REQUEST "
@@ -65,14 +66,15 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
             subtractFromFeeAmout                    = current.subtract_fee_from_amount();
             std::string replace_id                  = current.get_txid();
             QWarningMessage msgwarning;
-            nunchuk::Transaction draftrans = bridge::nunchukDraftOriginTransaction(wallet_id.toStdString(),
-                                                                                   outputs,
-                                                                                   inputs,
-                                                                                   feeRate,
-                                                                                   subtractFromFeeAmout,
-                                                                                   replace_id,
-                                                                                   use_script_path,
-                                                                                   msgwarning);
+            bridge::nunchukDraftOriginTransaction(wallet_id.toStdString(),
+                                                    outputs,
+                                                    inputs,
+                                                    feeRate,
+                                                    subtractFromFeeAmout,
+                                                    replace_id,
+                                                    use_script_path,
+                                                    {},
+                                                    msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                 msgwarning.resetWarningMessage();
                 QTransactionPtr trans = bridge::nunchukReplaceTransaction(wallet_id,
@@ -173,6 +175,18 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                     QWarningMessage msgwarning;
                     QString unUseAddress = msg.toMap().value("unUseAddress").toString();
                     DBG_INFO << "unUseAddress: " << unUseAddress;
+                    QStringList signing_paths;
+                    for (const auto &nodeVec : selectedSigningPath) {
+                        QString s;
+                        for (int i = 0; i < nodeVec.size(); ++i) {
+                            if (!s.isEmpty()) s += ".";
+                            s += QString::number(nodeVec[i]);
+                        }
+                        s += ".";
+                        signing_paths.append(s);
+                    }
+                    DBG_INFO << "signing_paths" << signing_paths;
+
                     QTransactionPtr trans = NULL;
                     if (unUseAddress.isEmpty()) {
                         trans = bridge::nunchukCreateTransaction(wallet_id,
@@ -184,10 +198,10 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                  {},
                                                                  antiFeeSnipping,
                                                                  use_script_path,
+                                                                 selectedSigningPath,
                                                                  msgwarning);
                     }
                     else {
-                        QString unUseAddress = msg.toMap().value("unUseAddress").toString();
                         trans = bridge::nunchukCancelCreateTransaction(wallet_id,
                                                                        transaction->nunchukTransaction(),
                                                                        unUseAddress,
@@ -196,11 +210,14 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                                                                        transaction->txid(),
                                                                        antiFeeSnipping,
                                                                        use_script_path,
+                                                                       selectedSigningPath,
                                                                        msgwarning);
                     }
                     if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
                         if(trans){
                             trans->setKeysetSelected(use_keyset_index, true);
+                            trans->setSigningPathSelected(selectedSigningPath, true);
+                            trans->setUseScriptPath(use_script_path);
                             AppModel::instance()->setTransactionInfo(trans);
                             wallet.data()->AssignTagsToTxChange();
                             if(wallet.data()->isAssistedWallet()){

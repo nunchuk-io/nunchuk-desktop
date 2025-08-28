@@ -58,6 +58,7 @@ QOnScreenContentTypeB {
                 maxLength: 20
                 textInputted: sandbox.groupName
                 onTextInputtedChanged: {
+                    sandbox.groupName = textInputted
                     if(!_walletName.isValid){
                         _walletName.isValid = true
                         _walletName.errorText = ""
@@ -82,8 +83,10 @@ QOnScreenContentTypeB {
                         width: 360
                         typeOption: sandbox.addressType
                         isEnabled: sandbox.isCreate
+                        walletConfigType: walletConfig.option
                         onSelectTypeOption: {
                             addressTypeSelection.typeOption = type
+                            newWalletInfo.customizeMiniscript = ""
                             if (type !== sandbox.addressType) {
                                 _warning.open()
                             }
@@ -103,6 +106,20 @@ QOnScreenContentTypeB {
                         isSetting: true
                         isEnabled: sandbox.isCreate
                         addressType: addressTypeSelection.typeOption
+                        onSelectMiniscriptTemplate: (templateName) => {
+                            updateAddressType()
+                            _miniTmpSwitch.selectedTemplate(templateName)
+                        }
+                        onEnterCustomMiniscript: (option) => {
+                            updateAddressType()
+                            _miniTmpSwitch.enterCustom(option)
+                        }
+                        onMiniscriptEdit: () => {
+                            _miniTmpSwitch.switchEnterMiniScript()
+                        }
+                        onMiniscriptDelete: () => {
+                            newWalletInfo.customizeMiniscript = ""
+                        }
                     }
                 }
             }
@@ -112,7 +129,11 @@ QOnScreenContentTypeB {
         }
 
         function isEnable() {
-            return _walletName.textInputted !== ""
+            if (walletConfig.option === "miniscript") {
+                return _walletName.textInputted !== "" && newWalletInfo.customizeMiniscript !== ""
+            } else {
+                return _walletName.textInputted !== ""
+            }
         }
 
         function updateGroupWallet() {
@@ -126,6 +147,21 @@ QOnScreenContentTypeB {
                     "addressType"     : addressTypeSelection.typeOption };
                 QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, newObj)
             }
+        }
+
+        function updateGroupWalletMiniscript() {
+            if(_walletName.textInputted !== ""){
+                var config = walletConfig.findOpt()
+                var newObj = {
+                    "type": "update-group-wallet",
+                    "walletNameInputted": _walletName.textInputted,
+                    "addressType"     : addressTypeSelection.typeOption };
+                QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, newObj)
+            }
+        }
+        function updateAddressType() {
+            newWalletInfo.walletAddressType = addressTypeSelection.typeOption
+            newWalletInfo.walletType = walletConfig.option === "miniscript" ? NUNCHUCKTYPE.MINISCRIPT : NUNCHUCKTYPE.MULTI_SIG
         }
     }
     onPrevClicked: closeTo()
@@ -147,7 +183,12 @@ QOnScreenContentTypeB {
             type: eTypeE
             enabled: _content.contentItem.isEnable()
             onButtonClicked: {
-                _content.contentItem.updateGroupWallet()
+                _content.contentItem.updateAddressType()
+                if (newWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                    _content.contentItem.updateGroupWalletMiniscript()
+                } else {
+                    _content.contentItem.updateGroupWallet()
+                }
             }
         }
     }
@@ -166,5 +207,8 @@ QOnScreenContentTypeB {
                 _warning.close()
             }
         ]
+    }
+    QPopupMiniscriptTemplateSwitch {
+        id: _miniTmpSwitch
     }
 }

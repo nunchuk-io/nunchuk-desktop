@@ -33,14 +33,15 @@ import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     width: 846
-    height: 60
+    height: 80
     radius: 8
     color: "#FDEBD2"
-
+    property bool  useDoItNow: false
     property bool   forceClose  : false
     property alias  content     : textContent.text
     signal closeWarning()
     signal hyperlinkClicked()
+    signal doItNow()
 
     Row {
         anchors.fill: parent
@@ -53,28 +54,62 @@ Rectangle {
         }
         QLato {
             id: textContent
-            width: parent.width - 76
-            height: parent.height
-            font.pixelSize: 16
-            textFormat: Text.RichText
-            color: "#031F2B"
             anchors.verticalCenter: parent.verticalCenter
+            width: 598
+            font.pixelSize: 16
+            lineHeightMode: Text.FixedHeight
+            lineHeight: 28
+            wrapMode: Text.WordWrap
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignLeft
             onLinkActivated: {
                 hyperlinkClicked()
             }
-        }
-        QIcon {
-            iconSize: 24
-            anchors.verticalCenter: parent.verticalCenter
-            source: "qrc:/Images/Images/close_24px.png"
             MouseArea {
                 anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    forceClose = true
-                    closeWarning()
-                }
+                cursorShape: textContent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                acceptedButtons: Qt.NoButton
+            }
+        }
+    }
+    QLato {
+        visible: useDoItNow
+        width: paintedWidth
+        height: parent.height
+        font.pixelSize: 16
+        font.weight: Font.Bold
+        text: STR.STR_QML_489
+        color: "#031F2B"
+        anchors {
+            verticalCenter: parent.verticalCenter
+            right: parent.right
+            rightMargin: 22
+        }
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                doItNow()
+            }
+        }
+    }
+    QIcon {
+        visible: !useDoItNow
+        iconSize: 24
+        anchors {
+            verticalCenter: parent.verticalCenter
+            right: parent.right
+            rightMargin: 22
+        }
+        source: "qrc:/Images/Images/close_24px.png"
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                forceClose = true
+                closeWarning()
             }
         }
     }

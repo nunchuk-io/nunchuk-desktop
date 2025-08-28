@@ -33,12 +33,13 @@
 #include "DracoDefines.h"
 #include "QRest.h"
 
-class Byzantine : public QRest
+class Byzantine : public QObject
 {
     Q_OBJECT
 private:
     Byzantine();
     ~Byzantine();
+
 public:
     static Byzantine *instance();
     Byzantine(Byzantine &other) = delete;
@@ -276,6 +277,8 @@ public:
     bool DraftWalletDownloadBackupFile(const QString& group_id, const QString& xfp, QJsonObject& output, QString& errormsg);
     bool DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
 
+private:
+    QRestPtr  m_rest;
 };
 
 #endif // BYZANTINE_H

@@ -93,4 +93,39 @@ QOnScreenContentTypeB {
         contentText: STR.STR_QML_1771
         usingMin: true
     }
+    Connections {
+        target: AppModel.newWalletInfo.sandbox
+        function onNeedTopUpXpub() {
+            _topUpXpub.open()
+        }
+    }
+    QPopupInfoTwoButtons {
+        id: _topUpXpub
+        title: STR.STR_QML_661
+        contentText: STR.STR_QML_1877
+        labels: [STR.STR_QML_560,STR.STR_QML_035]
+        funcs: [
+            function() { 
+                AppModel.rescanOrReCreateSigner(_content.contentItem.key_name, _content.contentItem.fingerPrint)
+             },
+            function() {
+                _topUpXpub.close()
+            }
+        ]
+    }
+
+    QPopupBusyLoading{
+        id:_busyTopUp
+        warningText1:STR.STR_QML_582
+    }
+
+    Connections {
+        target: AppModel
+        onStartTopXPUBsSigner:{
+            _busyTopUp.open()
+        }
+        onFinishTopXPUBsSigner:{
+            _busyTopUp.close()
+        }
+    }
 }

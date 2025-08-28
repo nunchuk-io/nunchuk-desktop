@@ -130,6 +130,7 @@ public:
         wallet_numberOnline_Role,
         wallet_numberSigner_Role,
         wallet_archived_Role,
+        wallet_walletType_Role,
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

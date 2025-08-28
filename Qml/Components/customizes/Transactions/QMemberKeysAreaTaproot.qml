@@ -33,14 +33,14 @@ import "../../../../localization/STR_QML.js" as STR
 
 Item {
     id: _item
-    property var transactionInfo
+    property var    transactionInfo
+    property int    pendingSignature: 0
+    property bool   isDummy: false
+    property string myRole: ""
     signal keySignRequest(var signer)
     signal keyScanRequest
     signal keyExportRequest
     signal keyImportRequest
-    property int pendingSignatue: 0
-    property bool isDummy: false
-    property string myRole: ""
     /*========================================*/
     width: 378
     height: 480

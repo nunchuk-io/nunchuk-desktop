@@ -115,7 +115,7 @@ Item {
             Loader {
                 id: contentInfo
                 width: root.width - (sameOffset ? offset : offsetLeft) - (sameOffset ? offset : offsetRight)
-                height: root.height - (sameOffset ? offset : offsetTop) - (sameOffset ? offset : offsetBottom) - 40 - 16 - 18 - 48
+                height: root.height - (sameOffset ? offset : offsetTop) - (sameOffset ? offset : offsetBottom) - 40 - 16 - 24 - 48
             }
         }
         Item {

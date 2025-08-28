@@ -37,7 +37,7 @@
 #define TESTNET_SERVER   "testnet.nunchuk.io:50001"
 #define SIGNET_SERVER    "ssl://mempool.space:60602"
 
-template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
 class QWalletCached {
 public:
     QWalletCached(){}
@@ -47,6 +47,7 @@ public:
     T4 status;
     T5 backedup;
     T6 hideFiatCurrency;
+    T7 registered;
 };
 
 class  NunchukSettings : public QSettings {
@@ -257,21 +258,31 @@ public:
                                                    QString /*group role*/,
                                                    QString /*wallet status*/,
                                                    bool    /*wallet cached*/,
-                                                   bool    /*wallet hide fiat currency*/> input);
+                                                   bool    /*wallet hide fiat currency*/,
+                                                   bool    /*wallet registered*/
+                                                   > input);
 
     bool getwalletCached(QString id, QWalletCached<QString /*group id*/,
                                                    QString /*group slug*/,
                                                    QString /*group role*/,
                                                    QString /*wallet status*/,
                                                    bool    /*wallet cached*/,
-                                                   bool    /*wallet hide fiat currency*/> &output);
+                                                   bool    /*wallet hide fiat currency*/,
+                                                   bool    /*wallet registered*/
+                                                   > &output);
     void deleteWalletCached(QString id);
 
     void setTransactionKeysetIndex(QString id, const int keyset_index);
-
     int  getTransactionKeysetIndex(QString id);
-
     void deleteTransactionKeysetIndex(QString id);
+
+    void setTransactionSigningPath(QString id, const QByteArray signingPath);
+    QByteArray getTransactionSigningPath(QString id);
+    void deleteTransactionSigningPath(QString id);
+
+    void setTransactionUsescriptpath(QString id, const bool scriptpath);
+    bool getTransactionUsescriptpath(QString id);
+    void deleteTransactionUsescriptpath(QString id);
 
     bool isFirstTimeOnboarding();
     void setIsFirstTimeOnboarding(bool isFirstTime);

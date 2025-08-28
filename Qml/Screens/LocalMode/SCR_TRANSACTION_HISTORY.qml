@@ -195,10 +195,11 @@ QScreen {
                     transactionMemo:   transaction_memo
                     transactionAmount: (transaction_isReceiveTx ? transaction_subtotal : transaction_total)
                     transactiontotalCurrency: (transaction_isReceiveTx ? transaction_subtotalCurrency : transaction_totalCurrency)
-                    confirmation:  Math.max(0, (AppModel.chainTip - transaction_height)+1)
+                    confirmation:  Math.max(0, (AppModel.blockHeight - transaction_height)+1)
                     transactionDate: transaction_blocktime
                     isFacilitatorAdmin: (myRole === "FACILITATOR_ADMIN")
                     walletIsByzantineGuardian: AppModel.walletInfo.isByzantineGuardian
+                    transactionLocked: transaction_timelockedUntil.hasLocked
                     onButtonClicked: {
                         QMLHandle.sendEvent(EVT.EVT_TRANSACTION_INFO_ITEM_SELECTED, transaction_txid)
                     }

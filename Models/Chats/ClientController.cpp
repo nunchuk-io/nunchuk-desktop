@@ -316,7 +316,8 @@ QStringList ClientController::contactsByStringList()
 
 void ClientController::requestSignout()
 {
-    if (!isNunchukLoggedIn()){
+    if(!isNunchukLoggedIn()){
+        DBG_ERROR << "You are not logged in";
         return;
     }
     bridge::StopConsumeGroupEvent();

@@ -83,7 +83,7 @@ Item {
         QRadioSelect {
             id: _radio
             anchors.verticalCenter: parent.verticalCenter
-            onSelectedClicked: {
+            onButtonClicked: {
                 radioClicked()
             }
         }

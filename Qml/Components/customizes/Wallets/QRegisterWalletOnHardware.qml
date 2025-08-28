@@ -40,7 +40,7 @@ QOnScreenContentTypeB {
     label.text: ""
     extraHeader: Item {}
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-    property var newWalletInfo: AppModel.newWalletInfo
+    property var walletInfo: AppModel.walletInfo
     Item {
         anchors {
             left: parent.left
@@ -116,24 +116,43 @@ QOnScreenContentTypeB {
                 menuWidth: 300
                 subMenuWidth: 300
                 property var exportConfigurationMenu: [
+                    // {
+                    //     visible: true,
+                    //     label: STR.STR_QML_324, // As BSMS
+                    //     icon: "",
+                    //     iconRight: "",
+                    //     color: "#031F2B",
+                    //     enable: true,
+                    //     subMenu: null,
+                    //     action: function() {
+                    //         // Export Wallet BSMS File
+                    //         exportContextMenu.close()
+                    //         exportDialog.action = function(){
+                    //             walletInfo.requestExportWalletViaBSMS(exportDialog.currentFile)
+                    //         }
+                    //         exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                    //                 + RoomWalletData.getValidFilename(walletInfo.walletName)
+                    //                 + ".bsms"
+                    //         exportDialog.open()
+                    //     }
+                    // },
                     {
                         visible: true,
-                        label: STR.STR_QML_324, // As BSMS
+                        label: STR.STR_QML_1869, // As descriptor
                         icon: "",
                         iconRight: "",
                         color: "#031F2B",
                         enable: true,
                         subMenu: null,
                         action: function() {
-                            // Export Wallet BSMS File
                             exportContextMenu.close()
                             exportDialog.action = function(){
-                                newWalletInfo.requestExportWalletViaBSMS(exportDialog.currentFile)
+                                walletInfo.requestViaDescriptor(exportDialog.currentFile)
                             }
                             exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
-                                    + ".bsms"
-                            exportDialog.open()
+                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
+                                    + ".txt"
+                            exportDialog.open()                            
                         }
                     },
                     {
@@ -147,9 +166,9 @@ QOnScreenContentTypeB {
                         action: function() {
                             // "Export via BBQR"
                             exportContextMenu.close()
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BBQR"
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(walletInfo.walletName) + "_BBQR"
                             qrcodeExportResult.open()
-                            newWalletInfo.requestExportWalletViaQRBBQRColdcard()
+                            walletInfo.requestExportWalletViaQRBBQRColdcard()
                         }
                     },
                     {
@@ -163,9 +182,9 @@ QOnScreenContentTypeB {
                         action: function() {
                             // "Export as BC-UR2 QR (legacy)"
                             exportContextMenu.close()
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2_Legacy"
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(walletInfo.walletName) + "_BCUR2_Legacy"
                             qrcodeExportResult.open()
-                            newWalletInfo.requestExportWalletViaQRBCUR2Legacy()
+                            walletInfo.requestExportWalletViaQRBCUR2Legacy()
                         }
                     },
                     {
@@ -179,9 +198,9 @@ QOnScreenContentTypeB {
                         action: function() {
                             // "Export as BC-UR2 QR"
                             exportContextMenu.close()
-                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(newWalletInfo.walletName) + "_BCUR2"
+                            qrcodeExportResult.filename = RoomWalletData.getValidFilename(walletInfo.walletName) + "_BCUR2"
                             qrcodeExportResult.open()
-                            newWalletInfo.requestExportWalletViaQRBCUR2()
+                            walletInfo.requestExportWalletViaQRBCUR2()
                         }
                     },
                     {
@@ -196,10 +215,10 @@ QOnScreenContentTypeB {
                             // "Export To Coldcard"
                             exportContextMenu.close()
                             exportDialog.action = function(){
-                                newWalletInfo.requestExportWalletViaCOLDCARD(exportDialog.currentFile)
+                                walletInfo.requestExportWalletViaCOLDCARD(exportDialog.currentFile)
                             }
                             exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
                                     + "-Coldcard-Config.txt"
                             exportDialog.open()
                         }
@@ -215,10 +234,11 @@ QOnScreenContentTypeB {
                         action: function() {
                             //"Export wallet to Bitbox"
                             exportContextMenu.close()
-                            var addrs = newWalletInfo.walletunUsedAddressList;
+                            var addrs = walletInfo.walletunUsedAddressList;
                             if(addrs.length > 0){
                                 displayAddressBusybox.addrToVerify = addrs[0]
-                                AppModel.startDisplayAddress(newWalletInfo.walletId, addrs[0])
+                                AppModel.startDisplayAddress(walletInfo.walletId, addrs[0])
+                                walletInfo.needRegistered = true
                             }
                         }
                     }
@@ -241,11 +261,11 @@ QOnScreenContentTypeB {
                             var year = currentDate.getFullYear();
                             var today = day + '' + month + '' + year;
                             exportDialog.action = function(){
-                                newWalletInfo.requestExportTransactionViaPDF(exportDialog.currentFile)
+                                walletInfo.requestExportTransactionViaPDF(exportDialog.currentFile)
                             }
                             exportContextMenu.close()
                             exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                                            + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                                            + RoomWalletData.getValidFilename(walletInfo.walletName)
                                                             + "_transaction_history_"
                                                             + today
                                                             + ".pdf"
@@ -269,11 +289,11 @@ QOnScreenContentTypeB {
                             var year = currentDate.getFullYear();
                             var today = day + '' + month + '' + year;
                             exportDialog.action = function(){
-                                newWalletInfo.requestExportTransactionViaCSV(exportDialog.currentFile)
+                                walletInfo.requestExportTransactionViaCSV(exportDialog.currentFile)
                             }
                             exportContextMenu.close()
                             exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                                            + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                                            + RoomWalletData.getValidFilename(walletInfo.walletName)
                                                             + "_transaction_history_"
                                                             + today
                                                             + ".csv"
@@ -305,12 +325,12 @@ QOnScreenContentTypeB {
                         action: function(){
                             // Export Wallet Database
                             exportDialog.action = function(){
-                                newWalletInfo.requestExportWalletViaDB(exportDialog.currentFile)
+                                walletInfo.requestExportWalletViaDB(exportDialog.currentFile)
                             }
                             exportContextMenu.close()
                             exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
                                     + "/"
-                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
                                     + "-database.dat"
                             exportDialog.open()
                         }
@@ -338,11 +358,11 @@ QOnScreenContentTypeB {
                         action: function(){
                             // "Export UTXOs (CSV)"
                             exportDialog.action = function(){
-                                newWalletInfo.requestExportUtxoCSV(exportDialog.currentFile)
+                                walletInfo.requestExportUtxoCSV(exportDialog.currentFile)
                             }
                             exportContextMenu.close()
                             exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
-                                    + RoomWalletData.getValidFilename(newWalletInfo.walletName)
+                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
                                     + "-utxos.csv"
                             exportDialog.open()
                         }

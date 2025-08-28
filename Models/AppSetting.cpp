@@ -915,20 +915,20 @@ void AppSetting::setCurrency(QString currency)
     emit currencyChanged();
 }
 
-void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool> input)
+void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool, bool> input)
 {
     QByteArray dataByteArray;
     QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
-    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup << input.hideFiatCurrency;
+    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup << input.hideFiatCurrency << input.registered;
     NunchukSettings::setValue(id, dataByteArray);
 }
 
-bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool> &output)
+bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool, bool> &output)
 {
     if(NunchukSettings::contains(id)){
         QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
         QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
-        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup >> output.hideFiatCurrency;
+        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup >> output.hideFiatCurrency >> output.registered;
         return true;
     }
     return false;
@@ -939,15 +939,14 @@ void AppSetting::deleteWalletCached(QString id)
     NunchukSettings::removeKey(id);
 }
 
+void AppSetting::setTransactionKeysetIndex(QString id, const int keyset_index)
+{
+    NunchukSettings::setValue(id, keyset_index);
+}
+
 int AppSetting::getTransactionKeysetIndex(QString id)
 {
-    int keyset_index = 0;
-    if(NunchukSettings::contains(id)){
-        QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
-        QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
-        stream >> keyset_index;
-    }
-    return keyset_index;
+    return max(0,NunchukSettings::value(id).toInt());
 }
 
 void AppSetting::deleteTransactionKeysetIndex(QString id)
@@ -955,12 +954,45 @@ void AppSetting::deleteTransactionKeysetIndex(QString id)
     NunchukSettings::removeKey(id);
 }
 
-void AppSetting::setTransactionKeysetIndex(QString id, const int keyset_index)
+void AppSetting::setTransactionSigningPath(QString id, const QByteArray signingPath)
 {
-    QByteArray dataByteArray;
-    QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
-    stream << keyset_index;
-    NunchukSettings::setValue(id, dataByteArray);
+    QString key = QString("%1-Sigingpath").arg(id);
+    NunchukSettings::setValue(key, signingPath);
+}
+
+QByteArray AppSetting::getTransactionSigningPath(QString id)
+{
+    QString key = QString("%1-Sigingpath").arg(id);
+    if(NunchukSettings::contains(key)){
+        QByteArray dataByteArray = NunchukSettings::value(key).toByteArray();
+        return dataByteArray;
+    }
+    return QByteArray();
+}
+
+void AppSetting::deleteTransactionSigningPath(QString id)
+{
+    QString key = QString("%1-Sigingpath").arg(id);
+    NunchukSettings::removeKey(key);
+}
+
+void AppSetting::setTransactionUsescriptpath(QString id, const bool scriptpath)
+{
+    QString key = QString("%1-use_script_path").arg(id);
+    NunchukSettings::setValue(key, scriptpath);
+}
+
+bool AppSetting::getTransactionUsescriptpath(QString id)
+{
+    QString key = QString("%1-use_script_path").arg(id);
+    bool ret = NunchukSettings::value(key).toBool();
+    return ret;
+}
+
+void AppSetting::deleteTransactionUsescriptpath(QString id)
+{
+    QString key = QString("%1-use_script_path").arg(id);
+    NunchukSettings::removeKey(key);
 }
 
 bool AppSetting::isFirstTimeOnboarding()

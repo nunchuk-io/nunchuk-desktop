@@ -33,6 +33,7 @@
 #include "utils/bip32.hpp"
 #include "utils/rfc2440.hpp"
 #include "QWarningMessage.h"
+#include <QTimeZone>
 
 namespace qUtils {
 QByteArray aesEncrypt(const QByteArray &plaintext, const QByteArray &key, const QByteArray &iv);
@@ -149,6 +150,7 @@ QJsonObject GetJsonObject(QString text);
 
 uint GetTimeSecond(QString time_str);
 uint GetCurrentTimeSecond();
+QString GetTimeString(uint time_second, bool is_relative = false);
 
 bool strCompare(const QString& str1, const QString& str2);
 
@@ -198,6 +200,106 @@ QString GetMasterFingerprintFromMasterXprv(
 
 QString SignLoginMessageWithMasterXprv(
     const QString& master_xprv, const QString& message);
-}
 
+bool CheckElectrumServer(const std::string& server, int timeout = 1);
+
+bool IsValidPolicy(const std::string& policy);
+
+std::string PolicyToMiniscript(
+    const std::string& policy,
+    const std::map<std::string, nunchuk::SingleSigner>& signers,
+    nunchuk::AddressType address_type);
+
+bool IsValidMiniscriptTemplate(const std::string& miniscript_template,
+                               nunchuk::AddressType address_type);
+
+bool IsValidTapscriptTemplate(const std::string& tapscript_template,
+                              std::string& error);
+
+std::string MiniscriptTemplateToMiniscript(
+    const std::string& miniscript_template,
+    const std::map<std::string, nunchuk::SingleSigner>& signers);
+
+std::string TapscriptTemplateToTapscript(
+    const std::string& tapscript_template,
+    const std::map<std::string, nunchuk::SingleSigner>& signers,
+    std::vector<std::string>& keypath);
+
+nunchuk::ScriptNode GetScriptNode(const std::string& script,
+                                    std::vector<std::string>& keypaths);
+
+std::vector<uint8_t> HashPreimage(const std::vector<uint8_t>& preimage,
+                                  nunchuk::PreimageHashType hashType);
+
+std::string RevealPreimage(const std::string& psbt,
+                           nunchuk::PreimageHashType hashType,
+                           const std::vector<uint8_t>& hash,
+                           const std::vector<uint8_t>& preimage);
+
+bool IsPreimageRevealed(const std::string& psbt,
+                        const std::vector<uint8_t>& hash);
+
+std::string ExpandingMultisigMiniscriptTemplate(
+    int m, int n, int new_n, bool reuse_signers, const nunchuk::Timelock& timelock,
+    nunchuk::AddressType address_type, QWarningMessage &msg);
+
+std::string DecayingMultisigMiniscriptTemplate(
+    int m, int n, int new_m, bool reuse_signers, const nunchuk::Timelock& timelock,
+    nunchuk::AddressType address_type, QWarningMessage &msg);
+
+std::string FlexibleMultisigMiniscriptTemplate(
+    int m, int n, int new_m, int new_n, bool reuse_signers,
+    const nunchuk::Timelock& timelock, nunchuk::AddressType address_type, QWarningMessage &msg);
+
+std::vector<nunchuk::UnspentOutput> GetTimelockedCoins(
+    const std::string& miniscript, const std::vector<nunchuk::UnspentOutput>& coins,
+    int64_t& max_lock_value, int chain_tip);
+
+std::vector<nunchuk::CoinsGroup> GetCoinsGroupedBySubPolicies(
+    const nunchuk::ScriptNode& script_node, const std::vector<nunchuk::UnspentOutput>& coins,
+    int chain_tip);
+
+nunchuk::AddressType AddressTypeFromStr(const QString &str);
+nunchuk::WalletTemplate WalletTemplateFromStr(const QString &str);
+nunchuk::WalletType WalletTypeFromStr(const QString &str);
+
+std::set<nunchuk::SignerType> GetSupportedTaprootTypes(
+    const std::set<nunchuk::AddressType> &supported_address_types = {},
+    const std::set<nunchuk::SignerTag> &supported_tags = {},
+    const std::set<nunchuk::WalletTemplate> &supported_templates = {},
+    const std::set<nunchuk::WalletType> &supported_wallet_types = {}
+);
+std::set<nunchuk::SignerType> GetUnSupportedTaprootTypes(
+    const std::set<nunchuk::AddressType> &unsupported_address_types = {},
+    const std::set<nunchuk::SignerTag> &unsupported_tags = {},
+    const std::set<nunchuk::WalletTemplate> &unsupported_templates = {},
+    const std::set<nunchuk::WalletType> &unsupported_wallet_types = {}
+);
+
+nunchuk::ScriptNodeId ScriptNodeIdFromString(const QString &path);
+QString ScriptNodeIdToString(const nunchuk::ScriptNodeId &id);
+
+nunchuk::SigningPath SigningPathFromStringList(const QStringList &path);
+QStringList SigningPathToStringList(const nunchuk::SigningPath &path);
+
+const nunchuk::ScriptNode* FindScriptNodeById(const nunchuk::ScriptNode& root, const nunchuk::ScriptNodeId& id);
+
+QJsonObject JsonDeepMerge(const QJsonObject& a, const QJsonObject& b);
+
+QVariant toVariant(const QList<int> &list);
+
+QString getDateFromTimestamp( qint64 timestamp, const QTimeZone &tz = QTimeZone::systemTimeZone());
+
+qint64 getDaysFromTimestamp(qint64 timestamp, const QTimeZone &tz = QTimeZone::systemTimeZone());
+
+QString getTimeFromTimestamp(qint64 timestamp, const QTimeZone &tz = QTimeZone::systemTimeZone());
+
+QByteArray serializeSigningPath(const nunchuk::SigningPath path);
+
+nunchuk::SigningPath deserializeSigningPath(const QByteArray ba);
+
+QString incrementZeroIndex(const QString &path);
+
+int getIndexAt(const QString &path, int pos);
+}
 #endif // QUTILS_H

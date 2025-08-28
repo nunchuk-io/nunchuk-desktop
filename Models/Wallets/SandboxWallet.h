@@ -18,13 +18,11 @@ class SandboxWallet : public AssistedWallet
     Q_PROPERTY(bool                 showbubbleChat                  READ showbubbleChat             WRITE setShowbubbleChat     NOTIFY showbubbleChatChanged)
     Q_PROPERTY(bool                 isReplaceGroupWallet            READ isReplaceGroupWallet                                   CONSTANT)
     Q_PROPERTY(QVariantList         replaceGroups                   READ replaceGroups                                          NOTIFY replaceGroupsChanged)
-    Q_PROPERTY(bool         needBackup                              READ needBackup                 WRITE setNeedBackup         NOTIFY needBackupChanged)
+    
 public:
     SandboxWallet(const nunchuk::Wallet &w);
     ~SandboxWallet() override = default;
     bool isReplaced() const override;
-    bool needBackup();
-    void setNeedBackup(const bool data);
     bool isGlobalGroupWallet() const;
     bool isReplaceGroupWallet() const;
     QGroupSandbox* groupSandbox();
@@ -60,7 +58,6 @@ public slots:
 signals:
     void groupSandboxChanged();
     void globalGroupWalletChanged();
-    void needBackupChanged();
     void showbubbleChatChanged();
     void replaceGroupsChanged();
     void numberOnlineChanged();

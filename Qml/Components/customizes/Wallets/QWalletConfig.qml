@@ -34,6 +34,7 @@ import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/Transactions"
 import "../../../Components/customizes/Popups"
 import "../../../Components/customizes/QRCodes"
+import "../../../Components/customizes/Wallets/miniscript"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
@@ -68,8 +69,20 @@ QOnScreenContentTypeA {
                 id: configDetails
 
             }
+            Loader {
+                sourceComponent: walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT ? miniscriptWalletKeys : normalWalletKeys
+            }
+        }
+        Component {
+            id: normalWalletKeys
             QWalletConfigKeys {
 
+            }
+        }
+        Component {
+            id: miniscriptWalletKeys
+            QWalletMiniscriptConfigKeys {
+                height: 480
             }
         }
     }
@@ -362,6 +375,25 @@ QOnScreenContentTypeA {
                                     + RoomWalletData.getValidFilename(walletInfo.walletName)
                                     + ".bsms"
                             exportDialog.open()
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1869, // As descriptor
+                        icon: "",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            exportContextMenu.close()
+                            exportDialog.action = function(){
+                                walletInfo.requestViaDescriptor(exportDialog.currentFile)
+                            }
+                            exportDialog.currentFile = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/"
+                                    + RoomWalletData.getValidFilename(walletInfo.walletName)
+                                    + ".txt"
+                            exportDialog.open()                            
                         }
                     },
                     {

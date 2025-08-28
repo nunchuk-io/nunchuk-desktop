@@ -276,13 +276,21 @@ void EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER(QVariant msg) {
             nw->setWalletName(walletNameInputted);
             nw->setWalletDescription(walletDescription);
             nw->setWalletAddressType(addressType);
-            DBG_INFO << maps;
-            int walletM = maps["walletM"].toInt();
-            int walletN = maps["walletN"].toInt();
-            if (auto sandbox = nw->groupSandboxPtr()) {
-                sandbox->CreateAGroup(walletNameInputted, walletM, walletN, addressType);
-                sandbox->setScreenFlow("setup-group-wallet");
-                // sandbox->setScreenFlow("register-wallet-hardware");
+            auto walletType = static_cast<nunchuk::WalletType>(nw->walletType());
+            if (walletType == nunchuk::WalletType::MINISCRIPT) {
+                auto script_tmpl = nw->customizeMiniscript();
+                if (auto sandbox = nw->groupSandboxPtr()) {
+                    sandbox->CreateAGroup(walletNameInputted, script_tmpl, addressType);
+                    sandbox->setScreenFlow("setup-group-wallet");
+                }
+            } else {
+                DBG_INFO << maps;
+                int walletM = maps["walletM"].toInt();
+                int walletN = maps["walletN"].toInt();
+                if (auto sandbox = nw->groupSandboxPtr()) {
+                    sandbox->CreateAGroup(walletNameInputted, walletM, walletN, addressType);
+                    sandbox->setScreenFlow("setup-group-wallet");
+                }
             }
         }
     } else if (type == "setup-group-wallet") {
@@ -307,3 +315,23 @@ void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
     AppModel::instance()->setSingleSignerInfo(QSingleSignerPtr(new QSingleSigner()));
     QEventProcessor::instance()->setCurrentFlow((int)ENUNCHUCK::IN_FLOW::FLOW_ADD_WALLET);
 }
+
+void EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER(QVariant msg) {
+    DBG_INFO << "[Mini]" << msg;
+    QMap<QString, QVariant> maps = msg.toMap();
+    if(maps.isEmpty()) {
+        DBG_ERROR << "maps is empty";
+        return;
+    }
+    QString walletNameInputted = maps["walletNameInputted"].toString();
+    QString walletDescription  = maps["walletDescription"].toString();
+    int  addressType = maps["addressType"].toInt();
+    DBG_INFO << maps;
+    if(auto nw = AppModel::instance()->newWalletInfo()) {
+        nw->setWalletName(walletNameInputted);
+        nw->setWalletDescription(walletDescription);
+        nw->setWalletAddressType(addressType);
+        nw->CreateAssignAvailableSigners();
+    }
+}
+

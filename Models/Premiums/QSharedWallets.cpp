@@ -53,6 +53,7 @@ void QSharedWallets::GetGroup(const QString &sandbox_id)
             sandbox->setScreenFlow("setup-group-wallet");
             sandbox->GetNumberForAGroup();
             sandbox->GetGroup(sandbox_id);
+            sandbox->setSandbox(sandbox->sandbox());            
             QJsonObject json;
             json["type"] = "setup-group-wallet";
             QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
@@ -124,12 +125,11 @@ bool QSharedWallets::RecoverSandboxWallet(const QString &file_path)
     if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
         msg.resetWarningMessage();
         bool isGroupWallet = bridge::CheckGroupWalletExists(wallet, msg);
-        DBG_INFO << "isGroupWallet: " << isGroupWallet;
         if (isGroupWallet) {
             w->setWalletName("Group Wallet");
             AppModel::instance()->setNewWalletInfo(w);
             if (auto ptr = w->groupSandboxPtr()) {
-                auto sandbox = CreateSandboxFromRecoverWallet(w);
+                auto sandbox = CreateSandboxFromRecoverWallet(w);                
                 ptr->setSandbox(sandbox);
                 ptr->setFilePathRecovery(file_path);
                 w->globalGroupWalletChanged();
@@ -151,14 +151,41 @@ bool QSharedWallets::RecoverSandboxWallet(const QString &file_path)
 
 nunchuk::GroupSandbox QSharedWallets::CreateSandboxFromRecoverWallet(const QWalletPtr& wallet)
 {
+    if (!wallet || !wallet.isValid()) {
+        return nunchuk::GroupSandbox{""};
+    }
+    auto nWallet = wallet->nunchukWallet();
+    std::string walletid = "";
+    try {
+        walletid = nWallet.get_id();
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
+
+    nunchuk::AddressType addressType = nWallet.get_address_type();
+    QString name = wallet->walletName().isEmpty() ? "Group Wallet" : wallet->walletName();
     nunchuk::GroupSandbox sandbox {""};
-    if (wallet.isValid()) {
-        auto nWallet = wallet->nunchukWallet();
+    QWarningMessage msg;
+    if (wallet->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+        QString script_tmpl = nWallet.get_miniscript().empty() ? "" : QString::fromStdString(nWallet.get_miniscript());
+        sandbox.set_name(nWallet.get_name());
+        sandbox.set_m(nWallet.get_m());
+        sandbox.set_n(nWallet.get_n());
+        sandbox.set_wallet_template(nWallet.get_wallet_template());
+        sandbox.set_signers(nWallet.get_signers());
+        sandbox.set_wallet_id(walletid);
+        sandbox.set_address_type(nWallet.get_address_type());
+        sandbox.set_miniscript_template(nWallet.get_miniscript());
+    } else {
         sandbox.set_name(nWallet.get_name());
         sandbox.set_m(nWallet.get_m());
         sandbox.set_n(nWallet.get_n());
         sandbox.set_signers(nWallet.get_signers());
-        sandbox.set_wallet_id(nWallet.get_id());
+        sandbox.set_wallet_id(walletid);
         sandbox.set_address_type(nWallet.get_address_type());
     }
     return sandbox;

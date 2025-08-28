@@ -231,6 +231,7 @@ public:
                                            const std::string& replace_txid,
                                            bool anti_fee_sniping,
                                            bool use_script_path,
+                                           const nunchuk::SigningPath& signing_path,
                                            QWarningMessage& msg);
 
     nunchuk::Transaction DraftTransaction(const std::string& wallet_id,
@@ -240,6 +241,7 @@ public:
                                           const bool subtract_fee_from_amount,
                                           const std::string &replace_txid,
                                           bool use_script_path,
+                                          const nunchuk::SigningPath& signing_path,
                                           QWarningMessage& msg);
 
     nunchuk::Transaction ReplaceTransaction(const std::string &wallet_id,
@@ -738,6 +740,11 @@ public:
                                       nunchuk::AddressType addressType,
                                       QWarningMessage &msg);
 
+    nunchuk::GroupSandbox CreateGroup(const std::string& name,
+                                        const std::string& script_tmpl,
+                                        nunchuk::AddressType addressType,
+                                        QWarningMessage &msg);
+
     int GetGroupOnline(const std::string& groupId,
                        QWarningMessage &msg);
 
@@ -757,19 +764,39 @@ public:
                                           bool value,
                                           QWarningMessage &msg);
 
+    nunchuk::GroupSandbox SetSlotOccupied(const std::string& groupId,
+                                            const std::string& name,
+                                            bool value,
+                                            QWarningMessage &msg);  
+
     nunchuk::GroupSandbox AddSignerToGroup(const std::string& groupId,
                                            const nunchuk::SingleSigner& signer,
                                            int index,
                                            QWarningMessage &msg);
 
+    nunchuk::GroupSandbox AddSignerToGroup(const std::string& groupId,
+                                            const nunchuk::SingleSigner& signer,
+                                            const std::string& name,
+                                            QWarningMessage &msg);
+
     nunchuk::GroupSandbox RemoveSignerFromGroup(const std::string& groupId,
                                                 int index,
                                                 QWarningMessage &msg);
+
+    nunchuk::GroupSandbox RemoveSignerFromGroup(const std::string& groupId,
+                                                    const std::string& name,
+                                                    QWarningMessage &msg);
 
     nunchuk::GroupSandbox UpdateGroup(const std::string& groupId,
                                       const std::string& name,
                                       int m,
                                       int n,
+                                      nunchuk::AddressType addressType,
+                                      QWarningMessage &msg);
+
+    nunchuk::GroupSandbox UpdateGroup(const std::string& groupId,
+                                      const std::string& name,
+                                      const std::string& script_tmpl,
                                       nunchuk::AddressType addressType,
                                       QWarningMessage &msg);
 
@@ -815,6 +842,27 @@ public:
     std::vector<std::string> GetDeprecatedGroupWallets(QWarningMessage &msg) const;
 
     std::string GetHotKeyMnemonic(const std::string& signer_id, const std::string& passphrase, QWarningMessage &msg);
+
+    nunchuk::Wallet CreateMiniscriptWallet( const std::string& name,
+                                           const std::string& script_template,
+                                           const std::map<std::string, nunchuk::SingleSigner>& signers,
+                                           nunchuk::AddressType address_type, const std::string& description,
+                                           bool allow_used_signer,
+                                           const std::string& decoy_pin,
+                                           QWarningMessage &msg);
+
+    std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> EstimateFeeForSigningPaths(const std::string &wallet_id,
+                                                                                             const std::map<std::string, nunchuk::Amount> &outputs,
+                                                                                             const std::vector<nunchuk::UnspentOutput> &inputs,
+                                                                                             nunchuk::Amount fee_rate,
+                                                                                             bool subtract_fee_from_amount,
+                                                                                             const std::string &replace_txid,
+                                                                                             QWarningMessage &msg);
+
+    std::pair<int64_t, nunchuk::Timelock::Based> GetTimelockedUntil(const std::string& wallet_id, const std::string& tx_id, QWarningMessage &msg);
+
+    std::vector<nunchuk::SingleSigner> GetTransactionSigners(const std::string& wallet_id, const std::string& tx_id, QWarningMessage &msg);
+
 private:
     nunchukiface();
     ~nunchukiface();

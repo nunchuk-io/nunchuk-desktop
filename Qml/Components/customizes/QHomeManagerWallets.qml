@@ -240,8 +240,8 @@ Rectangle {
                 isEscrow: false
                 walletName : STR.STR_QML_014
                 walletBalance: "0"
-                walletM: "0"
-                walletN: "0"
+                walletM: 0
+                walletN: 0
                 Rectangle {
                     anchors.fill: parent
                     color: "#031F2B"

@@ -40,7 +40,16 @@ void BaseWallet::convert(const nunchuk::Wallet w)
 }
 
 QString BaseWallet::walletId() const {
-    std::string id = nunchukWallet().get_id();
+    std::string id = "";
+    try {
+        id = nunchukWallet().get_id();
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+    }
     return id.empty() ? m_id: QString::fromStdString(id);
 }
 
@@ -60,6 +69,7 @@ int BaseWallet::walletM() {
 }
 
 void BaseWallet::setWalletM(const int data) {
+    DBG_INFO << "[Mini]" << data << walletType();
     int value = qMax(0, data);
     if(value != m_walletM){
         m_walletM = value;
@@ -76,6 +86,7 @@ int BaseWallet::walletN() {
 }
 
 void BaseWallet::setWalletN(const int data) {
+    DBG_INFO << "[Mini]" << data << walletType();
     int value = qMax(0, data);
     if(value != m_walletN){
         m_walletN = value;
@@ -129,7 +140,7 @@ int BaseWallet::walletType()
 {
     if(m_walletType == -1){
         int cdata = (int)nunchukWallet().get_wallet_type();
-        std::set<int> valid_numbers = {(int)nunchuk::WalletType::SINGLE_SIG, (int)nunchuk::WalletType::MULTI_SIG, (int)nunchuk::WalletType::ESCROW};
+        std::set<int> valid_numbers = {(int)nunchuk::WalletType::SINGLE_SIG, (int)nunchuk::WalletType::MULTI_SIG, (int)nunchuk::WalletType::ESCROW, (int)nunchuk::WalletType::MINISCRIPT};
         if (valid_numbers.find(cdata) != valid_numbers.end()) {
             m_walletType = cdata;
         }
@@ -139,9 +150,18 @@ int BaseWallet::walletType()
 
 void BaseWallet::setWalletType(const int data)
 {
+    DBG_INFO << "[Mini] setWalletType" << data;
     if(data != m_walletType){
         m_walletType = data;
-        m_nunchukWallet.set_wallet_type((nunchuk::WalletType)data);
+        try {
+            m_nunchukWallet.set_wallet_type((nunchuk::WalletType)data);
+        }
+        catch (const nunchuk::BaseException &ex) {
+            DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        }
+        catch (std::exception &e) {
+            DBG_INFO << "THROW EXCEPTION" << e.what();
+        }
         emit walletChanged();
     }
 }
@@ -595,10 +615,10 @@ void BaseWallet::exportBitcoinSignedMessage(const QString &xfp, const QString &f
 
 QVariantList BaseWallet::signerExistList() const
 {
-    return m_signerExistList.toVariantList();
+    return m_signerExistList;
 }
 
-void BaseWallet::setSignerExistList(QJsonArray signerExistList)
+void BaseWallet::setSignerExistList(QVariantList signerExistList)
 {
     if (m_signerExistList == signerExistList)
         return;
@@ -695,16 +715,6 @@ bool BaseWallet::isContainKey(const QString &xfp)
         if (qUtils::strCompare(xfp_from_signer, xfp)) {
             return true;
         }
-    }
-    return false;
-}
-
-bool BaseWallet::isByzantineGuardian()
-{
-    QWalletCached<QString, QString, QString, QString, bool, bool> data;
-    bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
-    if(ret){
-        return data.hideFiatCurrency;
     }
     return false;
 }

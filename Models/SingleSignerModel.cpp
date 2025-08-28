@@ -78,7 +78,6 @@ void QSingleSigner::setName(const QString &d) {
 }
 
 QString QSingleSigner::xpub() {
-    DBG_INFO << singleSigner_.get_xpub();
     if(isDraft){
         return xpub_;
     }
@@ -290,6 +289,20 @@ void QSingleSigner::setSignerType(int signer_type)
     emit signerTypeChanged();
 }
 
+nunchuk::SignerTag QSingleSigner::signerTag() const {
+    std::vector<nunchuk::SignerTag> tags = singleSigner_.get_tags();
+    tags.erase(
+        std::remove_if(tags.begin(), tags.end(), [](const nunchuk::SignerTag& tag) {
+            return tag == nunchuk::SignerTag::INHERITANCE;
+        }),
+        tags.end()
+    );
+    if(tags.empty()) {
+        return static_cast<nunchuk::SignerTag>(-1); // Default tag
+    }
+    return tags.front();
+}
+
 std::vector<nunchuk::SignerTag> QSingleSigner::signerTags() const
 {
     return singleSigner_.get_tags();
@@ -302,7 +315,6 @@ void QSingleSigner::setSignerTags(const std::vector<nunchuk::SignerTag> signer_t
 
 bool QSingleSigner::isColdCard()
 {
-    DBG_INFO << tag();
     bool ret = false;
     if((int)ENUNCHUCK::SignerType::COLDCARD_NFC == signerType()){
         ret = true;
@@ -676,6 +688,21 @@ bool QSingleSigner::allowAssignToWallet() const {
     return true;
 }
 
+QSingleSignerPtr QSingleSigner::clone() {
+    QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(this->originSingleSigner()));
+    if(ret){
+        // username
+        ret.data()->setEmail(this->email());
+        // tapsigner
+        ret.data()->setCardId(this->cardId());
+        // sign status
+        ret.data()->setSignerSigned(this->signerSigned());
+        ret.data()->setValueKey(this->valueKey());
+        // Add to data
+    }
+    return ret;
+}
+
 SingleSignerListModel::SingleSignerListModel(){
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -835,7 +862,11 @@ QVariant SingleSignerListModel::dataSigner(const QSingleSignerPtr &data, int rol
     case single_signer_isReplaced_Role:
         return data->isReplaced();
     case single_signer_keyReplaced_Role:
-        return SingleSignerListModel::useQml(data->keyReplaced());
+        if(!data->keyReplaced().isNull()){
+            return SingleSignerListModel::useQml(data->keyReplaced());
+        } else {
+            return QVariant();
+        }
     case single_signer_taproot_supported_Role:
         return data->taprootSupported();
     case single_signer_keyset_index_Role:
@@ -1020,6 +1051,15 @@ QSingleSignerPtr SingleSignerListModel::getSingleSignerByFingerPrint(const QStri
 {
     foreach (QSingleSignerPtr i , m_data ){
         if(qUtils::strCompare(xfp, i.data()->masterFingerPrint()) && qUtils::strCompare(name, i.data()->name())){
+            return i;
+        }
+    }
+    return NULL;
+}
+
+QSingleSignerPtr SingleSignerListModel::getSingleSignerBy(const QString &xfp, const QString& derivationPath) {
+    foreach (QSingleSignerPtr i , m_data ){
+        if(qUtils::strCompare(xfp, i.data()->masterFingerPrint()) && qUtils::strCompare(derivationPath, i.data()->derivationPath())){
             return i;
         }
     }
@@ -1311,7 +1351,7 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::clone() const
 {
     QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
     for (QSingleSignerPtr signer : m_data) {
-        QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
+        QSingleSignerPtr ret = signer.data()->clone();
         if(ret){
             // username
             ret.data()->setEmail(signer.data()->email());
@@ -1328,9 +1368,9 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneKeysets(std::v
 {
     QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
     for (int i = 0; i < keyset_status.size(); i++){
-        nunchuk::KeysetStatus keyset = keyset_status[i];
-        nunchuk::TransactionStatus tx_status = keyset.first;
-        nunchuk::KeyStatus keystatus = keyset.second;
+        nunchuk::KeysetStatus       keyset    = keyset_status[i];
+        nunchuk::TransactionStatus  tx_status = keyset.first;
+        nunchuk::KeyStatus          keystatus = keyset.second;
         int pending_number = 0;
         for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++){
             QString xfp = QString::fromStdString(it->first);
@@ -1347,17 +1387,11 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneKeysets(std::v
             }
             for (QSingleSignerPtr signer : m_data) {
                 if(qUtils::strCompare(xfp, signer.data()->masterFingerPrint())){
-                    QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
+                    QSingleSignerPtr ret = signer.data()->clone();
                     if(ret){
-                        // username
-                        ret.data()->setEmail(signer.data()->email());
-                        // tapsigner
-                        ret.data()->setCardId(signer.data()->cardId());
-                        // keyset
                         ret.data()->setSignerSigned(signedStatus);
                         ret.data()->setKeysetIndex(i);
                         ret.data()->setKeysetStatus((int)tx_status);
-                        ret.data()->setValueKey(signer.data()->valueKey());
                         // Add to data
                         clone.data()->addKeysetSigner(ret, i);
                     }
@@ -1372,21 +1406,16 @@ QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneKeysets(std::v
 QSharedPointer<SingleSignerListModel> SingleSignerListModel::cloneFinalSigners(std::map<std::string, bool> final_signers) const
 {
     QSharedPointer<SingleSignerListModel> clone = QSharedPointer<SingleSignerListModel>(new SingleSignerListModel());
-
     for (auto it = final_signers.begin(); it != final_signers.end(); ++it) {
         QString xfp = QString::fromStdString(it->first);
         bool    signedStatus = it->second;
         for (QSingleSignerPtr signer : m_data) {
             if(qUtils::strCompare(xfp, signer.data()->masterFingerPrint())){
-                QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer.data()->originSingleSigner()));
+                QSingleSignerPtr ret = signer.data()->clone();
                 if(ret){
-                    // username
-                    ret.data()->setEmail(signer.data()->email());
-                    // tapsigner
-                    ret.data()->setCardId(signer.data()->cardId());
-                    // sign status
-                    ret.data()->setSignerSigned(signedStatus);
-                    ret.data()->setValueKey(signer.data()->valueKey());
+                    if (signedStatus) {
+                        ret.data()->setSignerSigned(signedStatus);
+                    }                    
                     // Add to data
                     clone.data()->addSingleSigner(ret);
                 }

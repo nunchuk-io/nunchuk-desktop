@@ -275,8 +275,17 @@ bool QRecurringPayment::importQRWallet(const QStringList qrtags)
     nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(), in, importmsg);
     if (importmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
         importmsg.resetWarningMessage();
-        WalletId walletId = QString::fromStdString(wallet.get_id());
-        if (qUtils::strCompare(walletId, wallet_id())) {
+        std::string walletid = "";
+        try {
+            walletid = wallet.get_id();
+        }
+        catch (const nunchuk::BaseException &ex) {
+            DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        }
+        catch (std::exception &e) {
+            DBG_INFO << "THROW EXCEPTION" << e.what();
+        }
+        if (qUtils::strCompare(QString::fromStdString(walletid), wallet_id())) {
             QString message = QString("Destination cannot be the same wallet.");
             AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
             return false;
@@ -477,8 +486,17 @@ bool QRecurringPayment::ImportFileWallet(const QString &filepath, bool bsms)
     nunchuk::Wallet wallet = qUtils::ParseWalletDescriptor(fileContent, parsewarningmsg);
     if((int)EWARNING::WarningType::NONE_MSG == parsewarningmsg.type()){
         parsewarningmsg.resetWarningMessage();
-        WalletId walletId = QString::fromStdString(wallet.get_id());
-        if (qUtils::strCompare(walletId, wallet_id())) {
+        std::string walletid = "";
+        try {
+            walletid = wallet.get_id();
+        }
+        catch (const nunchuk::BaseException &ex) {
+            DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        }
+        catch (std::exception &e) {
+            DBG_INFO << "THROW EXCEPTION" << e.what();
+        }
+        if (qUtils::strCompare(QString::fromStdString(walletid), wallet_id())) {
             QString message = QString("Destination cannot be the same wallet.");
             AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
             return false;

@@ -191,6 +191,7 @@ void EVT_HOME_TRANSACTION_HISTORY_REQUEST_HANDLER(QVariant msg) {
 
 void EVT_HOME_WALLET_INFO_REQUEST_HANDLER(QVariant msg) {
     if(auto w = AppModel::instance()->walletInfo()){
+        w->setScreenFlow(msg.toString());
         w->setIsDeleting(false);
         QGroupWallets::instance()->setDashboardInfo(w->groupId());
         w->GetWalletAlias();

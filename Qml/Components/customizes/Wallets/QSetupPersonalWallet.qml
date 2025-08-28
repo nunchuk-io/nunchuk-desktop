@@ -151,6 +151,7 @@ QOnScreenContentTypeA {
                                     single_is_local: single_signer_is_local
                                     single_device_cardid: single_signer_device_cardid
                                     single_need_Topup_Xpub: single_signer_need_Topup_Xpub
+                                    single_derivationPath: singleSigner_derivationPath
                                 }
                                 visible: single_signer_checked
                                 height: visible ? 84 : 0
@@ -162,7 +163,16 @@ QOnScreenContentTypeA {
                                     model.single_signer_need_Topup_Xpub = false;
                                 }
                                 enabled: true
-                                opacity: enabled ? 1 : 0.4  
+                                opacity: enabled ? 1 : 0.4
+                                hasEditPath: false
+                                onBip32PathClick: {
+                                    editBip32Path.clearError()
+                                    editBip32Path.isShowListDevice = false
+                                    editBip32Path.signerData = signerData
+                                    editBip32Path.idx = index
+                                    editBip32Path.xfp = xfp
+                                    editBip32Path.open()
+                                }
                             }   
                         }   
                     }   
@@ -170,107 +180,7 @@ QOnScreenContentTypeA {
                         width: 350
                         visible: newWalletInfo.assignAvailableSigners.signerSelectedCount > 0
                     }   
-                    Column {
-                        width: 350
-                        spacing: 17 
-                        Column {
-                            width: 350
-                            spacing: 4  
-                            QLato {
-                                height: 20
-                                text: STR.STR_QML_1652
-                                font.weight: Font.Bold
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                            }   
-                            QLato {
-                                height: 16
-                                text: STR.STR_QML_1653
-                                font.weight: Font.Medium
-                                font.pixelSize: 12
-                                color: "#757575"
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                            }   
-                        }   
-                        Item {
-                            width: 350
-                            height: 48  
-                            Row {
-                                height: 48
-                                spacing: 16 
-                                Rectangle {
-                                    width: 36
-                                    height: 36
-                                    radius: 36
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: "transparent"
-                                    border.width: 2
-                                    border.color: minus.pressed ? "#595959" : "#031F2B" 
-                                    Rectangle {
-                                        width: 12
-                                        height: 2
-                                        color: minus.pressed ? "#595959" : "#031F2B"
-                                        anchors.centerIn: parent
-                                    }   
-                                    MouseArea {
-                                        id: minus   
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            if (newWalletInfo.walletM > 0)
-                                                newWalletInfo.walletM--;    
-                                        }
-                                    }   
-                                }   
-                                Rectangle {
-                                    id: root    
-                                    width: 48
-                                    height: 48
-                                    radius: 8
-                                    color: "#FFFFFF"
-                                    border.color: "#DEDEDE"
-                                    border.width: 1 
-                                    QLato {
-                                        anchors.centerIn: parent
-                                        text: newWalletInfo.walletM
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }   
-                                }   
-                                Rectangle {
-                                    width: 36
-                                    height: 36
-                                    radius: 36
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: "transparent"
-                                    border.width: 2
-                                    border.color: plusbtn.pressed ? "#595959" : "#031F2B"   
-                                    Rectangle {
-                                        width: 12
-                                        height: 2
-                                        color: plusbtn.pressed ? "#595959" : "#031F2B"
-                                        anchors.centerIn: parent
-                                    }   
-                                    Rectangle {
-                                        width: 2
-                                        height: 12
-                                        color: plusbtn.pressed ? "#595959" : "#031F2B"
-                                        anchors.centerIn: parent
-                                    }   
-                                    MouseArea {
-                                        id: plusbtn 
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            var count = flickerRight.updateVisibleCount();
-                                            newWalletInfo.walletN = count;
-                                            if (newWalletInfo.walletM < count)
-                                                newWalletInfo.walletM++;    
-                                        }
-                                    }   
-                                }   
-                            }   
-                        }   
-                    }   
+                    QEditNumberKeys {}
                 }   
                 ScrollBar.vertical: ScrollBar {
                     active: true
@@ -320,5 +230,37 @@ QOnScreenContentTypeA {
                 nextClicked()
             }
         }   
-    }    
+    }
+    Connections {
+        target: newWalletInfo
+        function onEditBIP32PathSuccess(typeError) {
+            if (typeError == 1) {
+                editBip32Path.close()
+                gettingPublicKey.close()
+            } else if (typeError == -1 || typeError == -3){
+                gettingPublicKey.close()
+                editBip32Path.showError(typeError)
+            } else if (typeError == -2) {
+                gettingPublicKey.close()
+                editBip32Path.isShowListDevice = true
+                editBip32Path.showError(typeError)
+            } else {}
+        }
+    }
+    QPopupEditBIP32Path {
+        id: editBip32Path
+        property string key: ""
+        onEnterText: {
+            if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                gettingPublicKey.open()
+                sandbox.editBIP32Path(key, xfp, pathBip32)
+            } else {
+                gettingPublicKey.open()
+                sandbox.editBIP32Path(idx, xfp, pathBip32)
+            }
+        }
+    }
+    QPopupGettingPublicKeyLoading {
+        id: gettingPublicKey
+    }
 }

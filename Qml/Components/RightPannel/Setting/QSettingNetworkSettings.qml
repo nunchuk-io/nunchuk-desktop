@@ -101,7 +101,7 @@ Item {
                 Connections {
                     target: AppSetting
                     onMainnetServerSelected: {
-                        mainnetsever.text.textOutput = network.name
+                        mainnetsever.textOutput = network.name
                         devselection.networkSave = network
                     }
                 }
@@ -111,8 +111,8 @@ Item {
                     id: mainnetsever
                     width: 627
                     selected: (devselection.primaryServer === NUNCHUCKTYPE.MAIN)
-                    text.placeholder.text: STR.STR_QML_173
-                    text.textOutput: devselection.mainnetServer
+                    placeholderText: STR.STR_QML_173
+                    textOutput: devselection.mainnetServer
                     showArrow: true
                     onButtonClicked: { devselection.primaryServer = NUNCHUCKTYPE.MAIN }
                     onButtonArrowClicked: {
@@ -123,28 +123,28 @@ Item {
                     id: testnetsever
                     width: 627
                     selected: (devselection.primaryServer === NUNCHUCKTYPE.TESTNET)
-                    text.placeholder.text: STR.STR_QML_174
-                    text.textOutput: devselection.testnetServer
+                    placeholderText: STR.STR_QML_174
+                    textOutput: devselection.testnetServer
                     onButtonClicked: { devselection.primaryServer = NUNCHUCKTYPE.TESTNET }
                 }
                 QRadioButtonTypeB {
                     id: signetsever
                     width: 627
                     selected: (devselection.primaryServer === NUNCHUCKTYPE.SIGNET)
-                    text.placeholder.text: STR.STR_QML_583
-                    text.textOutput: devselection.signetServer
+                    placeholderText: STR.STR_QML_583
+                    textOutput: devselection.signetServer
                     onButtonClicked: { devselection.primaryServer = NUNCHUCKTYPE.SIGNET }
                     visible: SIGNET_SERVER != ""
                 }
                 property bool anyChanged: (AppSetting.primaryServer !== devselection.primaryServer)
-                                          || (AppSetting.mainnetServer.name !== mainnetsever.text.textOutput)
-                                          || (AppSetting.testnetServer !== testnetsever.text.textOutput)
-                                          || (AppSetting.signetServer !== signetsever.text.textOutput)
+                                          || (AppSetting.mainnetServer.name !== mainnetsever.textOutput)
+                                          || (AppSetting.testnetServer !== testnetsever.textOutput)
+                                          || (AppSetting.signetServer !== signetsever.textOutput)
                 function applySettings(){
                     AppSetting.primaryServer = devselection.primaryServer
                     AppSetting.setMainnetServer(networkSave)
-                    AppSetting.testnetServer = testnetsever.text.textOutput
-                    AppSetting.signetServer = signetsever.text.textOutput
+                    AppSetting.testnetServer = testnetsever.textOutput
+                    AppSetting.signetServer = signetsever.textOutput
                 }
             }
             Rectangle { width: 627; height: 1; color: "#EAEAEA"}
@@ -453,9 +453,9 @@ Item {
                 AppSetting.resetNetworkSetting(true)
                 corerpcSwitcher.switchOn = false
                 devselection.primaryServer = NUNCHUCKTYPE.MAIN
-                mainnetsever.text.textOutput = AppSetting.mainnetServer.name
-                testnetsever.text.textOutput = AppSetting.testnetServer
-                signetsever.text.textOutput  = AppSetting.signetServer
+                mainnetsever.textOutput = AppSetting.mainnetServer.name
+                testnetsever.textOutput = AppSetting.testnetServer
+                signetsever.textOutput  = AppSetting.signetServer
                 streamswitch.switchOn = false
                 streamLinkText.textInputted = "https://explorer.bc-2.jp/"
 

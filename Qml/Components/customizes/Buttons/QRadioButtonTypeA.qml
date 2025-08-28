@@ -23,46 +23,21 @@ import QtQuick.Controls 2.0
 import "../../origins"
 import "../../customizes/Texts"
 
-Row {
+QRadioSelect {
     id: radioRoot
-    spacing: 8
-    property bool selected: false
     property string label: ""
     property string fontFamily: "Lato"
     property int fontPixelSize: 14
     property int fontWeight: Font.Normal
-    signal buttonClicked()
-    QLato {
-        id: text
-        text: label
-        font.family: fontFamily
-        font.pixelSize: fontPixelSize
-        font.weight: fontWeight
-        color: radioRoot.enabled ? "#031F2B" : "#666666"
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.width - icon.width - 8
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: { buttonClicked() }
-        }
-    }
-    ColorOverlay {
-        anchors.verticalCenter: parent.verticalCenter
-        width: 24
-        height: 24
-        source: QIcon {
-            id: icon
-            iconSize: 24
-            source: radioRoot.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
-        }
-        color: radioRoot.enabled ? "#031F2B" : "#666666"
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: { buttonClicked() }
+    isOverlay: true
+    content: Component {
+        id: radioText
+        QLato {
+            text: label
+            font.family: fontFamily
+            font.pixelSize: fontPixelSize
+            font.weight: fontWeight
+            color: radioRoot.enabled ? "#031F2B" : "#666666"
         }
     }
 }
