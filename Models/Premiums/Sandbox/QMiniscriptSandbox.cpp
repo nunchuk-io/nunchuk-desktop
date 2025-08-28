@@ -284,12 +284,8 @@ void QMiniscriptSandbox::removeKeyName(const QString &group, const QString &keyN
     };
     nunchuk::GroupSandbox sandbox = m_sandbox;
     if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-        auto listKey = w->keySameList(keyName);
-        for (const auto &k : listKey) {
-            sandbox = removeKey(k);
-        }
+        sandbox = removeKey(keyName);
     }
-    
     setSandbox(sandbox);
 }
 

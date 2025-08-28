@@ -934,6 +934,7 @@ void MiniscriptWallet::updateSignersMiniscript(const QString &key, const QSingle
 }
 
 void MiniscriptWallet::removeSignersMiniscript(const QString &key) {
+    DBG_INFO << "Remove key: " << key << m_signersMiniscript.keys();
     if (m_signersMiniscript.contains(key)) {
         m_signersMiniscript.remove(key);
     }
