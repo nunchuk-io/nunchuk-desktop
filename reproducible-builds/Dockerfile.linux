@@ -68,7 +68,7 @@ RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1g/ope
 ENV OPENSSL_ROOT_DIR=/opt/openssl-1.1.1g
 
 # Install appimagetool
-RUN wget -q https://github.com/AppImage/AppImageKit/releases/latest/download/appimagetool-x86_64.AppImage && \
+RUN wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage && \
     chmod +x appimagetool-x86_64.AppImage && mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
 
 WORKDIR /project
