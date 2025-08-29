@@ -20,7 +20,7 @@ AssistedWallet::AssistedWallet(const nunchuk::Wallet &w) :
 
 void AssistedWallet::convert(const nunchuk::Wallet w)
 {
-    BaseWallet::convert(w);
+    SharedWallet::convert(w);
     serverKeyPtr();
     inheritancePlanPtr();
     QGroupDashboardPtr dash = dashboard();

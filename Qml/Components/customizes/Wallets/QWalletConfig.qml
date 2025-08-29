@@ -409,11 +409,16 @@ QOnScreenContentTypeA {
                             // "Export via BBQR"
                             qrcodeExportResult.filename = RoomWalletData.getValidFilename(walletInfo.walletName) + "_BBQR"
                             qrcodeExportResult.open()
-                            walletInfo.requestExportWalletViaQRBBQRColdcard()
+                            if(walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT){
+                                walletInfo.requestExportWalletBBRQDescriptor()
+                            }
+                            else{
+                                walletInfo.requestExportWalletViaQRBBQRColdcard()
+                            }
                         }
                     },
                     {
-                        visible: true,
+                        visible: (walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT),
                         label: STR.STR_QML_1750, // As BC-UR2 QR (legacy)
                         icon: "",
                         iconRight: "",
@@ -429,7 +434,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: true,
+                        visible: (walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT),
                         label: STR.STR_QML_1751, // As BC-UR2 QR
                         icon: "",
                         iconRight: "",

@@ -45,7 +45,7 @@ QString BaseWallet::walletId() const {
         id = nunchukWallet().get_id();
     }
     catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        // DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what();

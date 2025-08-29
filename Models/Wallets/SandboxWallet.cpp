@@ -13,6 +13,12 @@ SandboxWallet::SandboxWallet(const nunchuk::Wallet &w) :
     m_conversations(QGroupMessageModelPtr(new QGroupMessageModel()))
 {}
 
+void SandboxWallet::convert(const nunchuk::Wallet w) {
+    AssistedWallet::convert(w);
+    QWarningMessage msg;
+    m_isGlobalGroupWallet = bridge::CheckGroupWalletExists(w, msg);
+}
+
 bool SandboxWallet::isReplaced() const
 {
     bool isGlobalReplaced = QSharedWallets::instance()->deprecatedWallets().contains(walletId());
@@ -21,14 +27,8 @@ bool SandboxWallet::isReplaced() const
 
 bool SandboxWallet::isGlobalGroupWallet() const
 {
-    if(!AppModel::instance()->groupWalletListPtr()){
-        return false;
-    }
-    else {
-        return AppModel::instance()->groupWalletListPtr()->containsId(walletId());
-    }
+    return m_isGlobalGroupWallet;
 }
-
 
 bool SandboxWallet::isReplaceGroupWallet() const
 {

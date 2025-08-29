@@ -18,6 +18,7 @@ public slots:
     void requestExportWalletViaQRBCUR2Legacy();
     void requestExportWalletViaQRBCUR2();
     void requestExportWalletViaQRBBQRColdcard();
+    void requestExportWalletBBRQDescriptor();
     void requestExportWalletViaDB(const QString &file);
     void requestExportWalletViaDESCRIPTOR(const QString &file);
     void requestExportWalletViaCOLDCARD(const QString &file);

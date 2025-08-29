@@ -1351,8 +1351,12 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
             AppModel::instance()->transactionInfo()->setSigningPaths(signing_paths);
             if (signing_paths.size() == 1) {
                 createTransaction();
+            } else if(signing_paths.size() > 1) {
+                AppModel::instance()->transactionInfo()->setScreenFlow("choose-signing-path");
             } else {
-                AppModel::instance()->transactionInfo()->setScreenFlow("choose-signing-policy");
+                DBG_ERROR << "No signing path available";
+                AppModel::instance()->showToast(0, "Insufficient funds", EWARNING::WarningType::ERROR_MSG);
+                return false;
             }
         } else {
             createTransaction();

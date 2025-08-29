@@ -101,7 +101,8 @@ bool QMiniscriptSandbox::enoughSigner() {
             return gw->enoughSigners();
         }
         return false;
-    } else {
+    }
+    else {
         return QNormalSandbox::enoughSigner();
     }
 }

@@ -63,6 +63,8 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                     }
 
                     if(w && msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+                        bridge::nunchukUpdateWallet(w->walletId(), sandbox->groupName(), w->walletDescription());
+
                         AppModel::instance()->startReloadUserDb();
                         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                         QString msg_name = QString("%1 has been successfully recovered").arg(sandbox->groupName());

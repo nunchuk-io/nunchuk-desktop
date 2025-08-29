@@ -22,6 +22,7 @@ class SandboxWallet : public AssistedWallet
 public:
     SandboxWallet(const nunchuk::Wallet &w);
     ~SandboxWallet() override = default;
+    void convert(const nunchuk::Wallet w) override;
     bool isReplaced() const override;
     bool isGlobalGroupWallet() const;
     bool isReplaceGroupWallet() const;
@@ -72,6 +73,7 @@ private:
     mutable int     m_numberOnline {0};
     mutable int     m_unreadMessage {0};
     mutable bool    m_showbubbleChat{false};
+    bool            m_isGlobalGroupWallet {false};
 };
 
 #endif // SANDBOXWALLET_H

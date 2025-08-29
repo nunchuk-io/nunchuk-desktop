@@ -494,9 +494,8 @@ Item {
         property var destinationData
         interval: 500
         onTriggered: {
-            QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, timerCreateTx.destinationData)
-            createTxBusyBox.close()
             selectedScriptPolicy()
+            createTxBusyBox.close()
         }
     }
     Popup {

@@ -55,6 +55,19 @@ void WalletIO::requestExportWalletViaQRBBQRColdcard() {
     }
 }
 
+void WalletIO::requestExportWalletBBRQDescriptor()
+{
+    QString descriptor = QString::fromStdString(nunchukWallet().get_descriptor(nunchuk::DescriptorPath::EXTERNAL_ALL));
+    QStringList qrtags;
+    if(!descriptor.isEmpty()){
+        qrtags.append(descriptor);
+        AppModel::instance()->setQrExported(qrtags);
+    }
+    else{
+        AppModel::instance()->showToast(0, "Unable to retrieve descriptor. Please check your wallet.", EWARNING::WarningType::ERROR_MSG );
+    }
+}
+
 void WalletIO::requestExportWalletViaDB(const QString &file)
 {
     DBG_INFO << walletId();

@@ -1299,12 +1299,21 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
         if(wallet){
             QTransactionPtr trans = wallet.data()->SyncAssistedTxs(tx);
             if(trans){
-                wallet.data()->transactionHistory()->updateTransaction(tx_id, trans);
+                if (status == (int)nunchuk::TransactionStatus::DELETED) {
+                    wallet.data()->transactionHistory()->removeTransaction(tx_id);                    
+                } else {
+                    wallet.data()->transactionHistory()->updateTransaction(tx_id, trans);
+                }
                 if(AppModel::instance()->transactionInfo()){
                     QString current_tx_wallet_id = AppModel::instance()->transactionInfo()->walletId();
                     QString current_tx_id        = AppModel::instance()->transactionInfo()->txid();
                     if(qUtils::strCompare(wallet_id, current_tx_wallet_id) && qUtils::strCompare(tx_id, current_tx_id)){
-                        AppModel::instance()->setTransactionInfo(trans);
+                        if (status == (int)nunchuk::TransactionStatus::DELETED) {
+                            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);         
+                        } else {
+                            AppModel::instance()->setTransactionInfo(trans);
+                        }
+                        
                     }
                 }
             }

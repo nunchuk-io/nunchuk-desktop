@@ -27,7 +27,7 @@ MiniscriptWallet::MiniscriptWallet(const nunchuk::Wallet &w) :
 }
 
 void MiniscriptWallet::convert(const nunchuk::Wallet w) {
-    BaseWallet::convert(w);
+    SandboxWallet::convert(w);
     convertToMiniscript(w);
 }
 
@@ -533,10 +533,11 @@ void MiniscriptWallet::setKeySelected(const QString &key) {
 bool MiniscriptWallet::enoughSigners() const {
     QMap<QString, int> keyMapAdded = {};
     auto createMap = [] (const QJsonArray &tree, QMap<QString, int> &map) {
+        DBG_INFO << tree;
         for (auto js : tree) {
-            QJsonObject jo = js.toObject();
-            QString key = jo.value("key").toString();
-            int countSameKey = jo.value("keyStrCount").toInt();
+            QJsonObject node = js.toObject();
+            QString key = node.value("key").toString();
+            int countSameKey = node.value("keyStrCount").toInt();
             if (key.isEmpty() == false) {
                 map.insert(key, countSameKey);
             }
