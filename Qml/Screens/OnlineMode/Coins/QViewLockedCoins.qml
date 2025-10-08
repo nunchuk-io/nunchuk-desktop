@@ -108,6 +108,10 @@ QOnScreenContentTypeB {
                     visible: utxo_coin_is_locked
                     outgoing_label: utxo_outgoing_label
                     outgoing_color: utxo_outgoing_color
+                    coin_timelocklist: utxo_coin_timelocklist
+                    coin_timelockbase: utxo_coin_timelockbase
+                    coin_timelockCount: utxo_coin_timelockCount
+                    coin_timelocked: utxo_coin_timeLocked
                     allowRightClick: false
                     onCoinViewCheck : {
                         utxo_selected = !utxo_selected

@@ -43,6 +43,7 @@ Loader {
     readonly property var map_flow: [
         {screen: "choose-signing-path",         screen_component: choose_signing_path},
         {screen: "choose-signing-policy",       screen_component: choose_signing_policy},
+        {screen: "choose-signing-path-seven",   screen_component: choose_signing_path_seven},
     ]
     width: popupWidth
     height: popupHeight
@@ -55,6 +56,18 @@ Loader {
             return add_destination
         }
     }
+
+    function selectedKeyPath() {
+        destinationDataInput["selectPath"] = "keypath"
+        destinationDataInput["use_script_path"] = false
+        QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, destinationDataInput)
+    }
+    function funcSelectedScriptPath() {
+        destinationDataInput["selectPath"] = "scriptpath"
+        destinationDataInput["use_script_path"] = true
+        QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, destinationDataInput)
+    }
+
     property var destinationDataInput
     Component {
         id: add_destination
@@ -63,11 +76,7 @@ Loader {
                 transactionInfo.screenFlow = "choose-signing-path"
             }
             onSelectedScriptPolicy: {
-                if(transactionInfo.numberOfPolices() >= 2) {
-                    transactionInfo.screenFlow = "choose-signing-policy"
-                } else {
-                    QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, destinationDataInput)
-                }
+                funcSelectedScriptPath()
             }
         }
     }
@@ -76,18 +85,31 @@ Loader {
         id: choose_signing_path
         QNewTransactionChooseSigningPath {
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            onPrevClicked: transactionInfo.backScreen()
+            onPrevClicked: {
+                transactionInfo.clearSigningPaths()
+                transactionInfo.backScreen()
+            }
             onNextClicked: {
                 if (selectPath === "keypath") {
-                    destinationDataInput["use_script_path"] = false
-                    QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, destinationDataInput)
+                    selectedKeyPath()
                 } else {
-                    if(transactionInfo.numberOfPolices() >= 2) {
-                        transactionInfo.screenFlow = "choose-signing-policy"
-                    } else {
-                        QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, destinationDataInput)
-                    }
+                    funcSelectedScriptPath()
                 }
+            }
+        }
+    }
+    Component {
+        id: choose_signing_path_seven
+        QNewTransactionChooseSigningPathSeven {
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            onPrevClicked: {
+                transactionInfo.clearSigningPaths()
+                transactionInfo.backScreen()
+            }
+            onNextClicked: {
+                if (transactionInfo.createTransactionOrSingingPolicy()) {
+                    funcSelectedScriptPath() // Create transaction
+                }                
             }
         }
     }
@@ -95,11 +117,13 @@ Loader {
         id: choose_signing_policy
         QNewTransactionChooseSigningPolicy {
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            onPrevClicked: transactionInfo.backScreen()
+            onPrevClicked: {
+                transactionInfo.clearSigningPaths()
+                transactionInfo.backScreen()
+            }
             onNextClicked: {
-                destinationDataInput["use_script_path"] = true
-                QMLHandle.sendEvent(EVT.EVT_SEND_CREATE_TRANSACTION_REQUEST, destinationDataInput)
+                funcSelectedScriptPath()
             }
         }
-    }
+    }    
 }

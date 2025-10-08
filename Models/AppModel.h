@@ -372,8 +372,6 @@ public slots:
     QString qBTCFromAmount(const qint64 amount);
     QString qCurrencyFromAmount(const qint64 amountSats);
     qint64  qAmountFromCurrency(const QString &currency);
-    void rescanOrReCreateSigner(const QString &name,
-                                const QString &fingerPrint);
 };
 
 #endif // APPMODEL_H

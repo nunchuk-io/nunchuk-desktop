@@ -88,6 +88,7 @@ Item {
                         visible: model.wallet_isAssistedWallet && _id.contains(model.wallet_id)
                         isLocked: model.wallet_dashboard ? (model.wallet_dashboard.isLocked || model.wallet_isLocked || model.wallet_isReplaced) : false
                         isReplaced: model.wallet_isReplaced
+                        walletType: model.wallet_walletType
                         onButtonClicked: {
                             selectWalletRequest(model.wallet_id)
                         }

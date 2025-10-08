@@ -90,9 +90,6 @@ QOnScreenContentTypeA {
                             }
                             _path.showError = false;
                             path_input = _path.textInputted
-                            if (path_input !== "") {
-                                signerInfo.signerDerivationPath = path_input
-                            }
                         }
                     }
                 }
@@ -216,10 +213,11 @@ QOnScreenContentTypeA {
         label.text: STR.STR_QML_509
         label.font.pixelSize: 16
         type: eTypeE
+        enabled: message_input !== "" && path_input !== ""
         onButtonClicked: {
             signerInfo.message = message_input
             _indicator.loading()
-            AppModel.walletInfo.updateSignMessage(fingerPrint, wallet_type)
+            AppModel.walletInfo.updateSignMessage(fingerPrint, wallet_type, message_input, path_input)
         }
     }
     FileDialog {

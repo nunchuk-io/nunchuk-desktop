@@ -29,141 +29,197 @@ import "../../../../Components/customizes"
 import "../../../../Components/customizes/Chats"
 import "../../../../Components/customizes/Texts"
 import "../../../../Components/customizes/Buttons"
+import "../../../../Components/customizes/Transactions"
 import "../../../../../localization/STR_QML.js" as STR
 
 Item {
     property var    coinsGroup: miniscript.coinsGroup
-    property bool   tapscriptVisible: false
-    Column {
-        id: maxColumn
-        width: parent.width
-        spacing: 2
-        Row {
-            width: parent.width
-            height: 20
-            spacing: 4
-            QLato {
-                width: paintedWidth
-                height: 20
-                text: miniscript.firstLine
-                font.weight: Font.Normal
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
+    Row {
+        anchors.fill: parent
+        spacing: 4
+        Loader {
+            id: iconLoader
+            sourceComponent: normalIcon
+            anchors {
+                top: parent.top
+                topMargin: 8
             }
-            QLato {
-                width: paintedWidth
-                height: 20
-                text: getTitle()
-                font.weight: Font.Normal
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
-            }
-            Rectangle {
-                width: 70
-                height: 20
-                color: "#FFFFFF"
-                border.color: "#DEDEDE"
-                radius: 20
-                visible: index == 0 && tapscriptVisible
-                QLato {
-                    width: paintedWidth
-                    height: 20
-                    text: "Tapscripts"
-                    font.weight: Font.Bold
-                    font.pixelSize: 10
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    anchors.centerIn: parent
-                }
+            visible: miniscript.type === ScriptNodeHelper.Type.HASH160 ||
+                        miniscript.type ===  ScriptNodeHelper.Type.HASH256 ||
+                        miniscript.type ===  ScriptNodeHelper.Type.RIPEMD160 ||
+                        miniscript.type ===  ScriptNodeHelper.Type.SHA256
+        }
+        Component {
+            id: normalIcon
+            QIcon {
+                iconSize: 20
+                source: "qrc:/Images/Images/Article.svg"
             }
         }
-        QLato {
-            width: parent.width
-            height: paintedHeight
-            text: getDescription()
-            font.weight: Font.Normal
-            font.pixelSize: 12
-            color: "#757575"
-            lineHeight: 16
-            lineHeightMode: Text.FixedHeight
-            wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignLeft
-            verticalAlignment: Text.AlignVCenter
-            visible: text !== ""
-        }
-        Rectangle {
-            id: _coinsGroup
-            width: parent.width
-            height: _group.height + 4*2
-            visible: coinsGroup !== undefined && (_sign.visible || _active.visible)
-            color: "#FFEAF9"
-            radius: 8
-            Column {
-                id: _group
+
+        Column {
+            id: maxColumn
+            anchors{ 
+                top: parent.top
+                topMargin: 8
+            }
+            width: parent.width - iconLoader.width - 4
+            spacing: 2
+            Item {
                 width: parent.width
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
-                Item {
-                    id: _sign
+                height: 20
+                Row {
                     width: parent.width
-                    height: 16
-                    visible: coinsGroup.signXCount > 0 && miniscript.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE
-                    Row {
-                        height: parent.height
-                        spacing: 4
-                        anchors {
-                            verticalCenter: parent.verticalCenter
-                            left: parent.left
-                            leftMargin: 4
-                        }
-                        QIcon {
-                            iconSize: 16
-                            source: "qrc:/Images/Images/CurrencyBtc.svg"
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                    height: 20
+                    spacing: 4
+                    
+                    QLato {
+                        width: paintedWidth
+                        height: 20
+                        text: miniscript.firstLine
+                        font.weight: Font.Normal
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QLato {
+                        width: paintedWidth
+                        height: 20
+                        text: getTitle()
+                        font.weight: Font.Normal
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Rectangle {
+                        width: 70
+                        height: 20
+                        color: "#FFFFFF"
+                        border.color: "#DEDEDE"
+                        radius: 20
+                        visible: index == 0 && miniscript.type ===  ScriptNodeHelper.Type.OR_TAPROOT
                         QLato {
-                            width: parent.width - 20
-                            height: 16
-                            text: STR.STR_QML_1870.arg(coinsGroup.signXCount).arg(coinsGroup.signXCount > 1 ? "coins" : "coin").arg(coinsGroup.amountDisplay).arg(RoomWalletData.unitValue)
-                            font.weight: Font.Normal
-                            font.pixelSize: 12
-                            horizontalAlignment: Text.AlignLeft
+                            width: paintedWidth
+                            height: 20
+                            text: "Tapscripts"
+                            font.weight: Font.Bold
+                            font.pixelSize: 10
+                            horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.centerIn: parent
                         }
                     }
+                    QIconText {
+                        icon: "qrc:/Images/Images/PendingSignatures.png"
+                        visible: miniscript.txStatus == NUNCHUCKTYPE.PENDING_NONCE || miniscript.txStatus == NUNCHUCKTYPE.PENDING_SIGNATURES
+                        text.text: miniscript.txStatus == NUNCHUCKTYPE.PENDING_NONCE ? STR.str_QML_1884(miniscript.pendingNonce) : STR.str_QML_220(miniscript.pendingSignature)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                 }
-                Item {
-                    id: _active
+
+                QRoundBadgeStatus {
+                    anchors {
+                        right: parent.right
+                        rightMargin: 0
+                        verticalCenter: parent.verticalCenter
+                    }
+                    hasSigned: miniscript.m > miniscript.pendingNonce
+                    visible: miniscript.txStatus == NUNCHUCKTYPE.PENDING_NONCE || 
+                                miniscript.txStatus == NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                miniscript.txStatus == NUNCHUCKTYPE.READY_TO_BROADCAST
+                    txStatus: miniscript.txStatus
+                }
+
+            }
+            
+            QLato {
+                id: description
+                width: parent.width
+                height: description.visible ? paintedHeight : 0
+                text: getDescription()
+                font.weight: Font.Normal
+                font.pixelSize: 12
+                color: "#757575"
+                lineHeight: 16
+                lineHeightMode: Text.FixedHeight
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                visible: text !== ""
+            }
+            Rectangle {
+                id: _coinsGroup
+                width: parent.width
+                height: _coinsGroup.visible ? (_group.height + 4*2) : 0
+                visible: coinsGroup !== undefined && (_sign.visible || _active.visible)
+                color: "#FFEAF9"
+                radius: 8
+                Column {
+                    id: _group
                     width: parent.width
-                    height: 16
-                    visible: coinsGroup.hasActiveAfter
-                    Row {
-                        height: parent.height
-                        spacing: 4
-                        anchors {
-                            verticalCenter: parent.verticalCenter
-                            left: parent.left
-                            leftMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+                    Item {
+                        id: _sign
+                        width: parent.width
+                        height: 16
+                        visible: coinsGroup !== undefined && coinsGroup.signXCount > 0 && miniscript.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE
+                        Row {
+                            height: parent.height
+                            spacing: 4
+                            anchors {
+                                verticalCenter: parent.verticalCenter
+                                left: parent.left
+                                leftMargin: 4
+                            }
+                            QIcon {
+                                iconSize: 16
+                                source: "qrc:/Images/Images/CurrencyBtc.svg"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QLato {
+                                width: parent.width - 20
+                                height: 16
+                                text: coinsGroup !== undefined ? STR.STR_QML_1870.arg(coinsGroup.signXCount).arg(coinsGroup.signXCount > 1 ? "coins" : "coin").arg(coinsGroup.amountDisplay).arg(RoomWalletData.unitValue) : ""
+                                font.weight: Font.Normal
+                                font.pixelSize: 12
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
-                        QIcon {
-                            iconSize: 16
-                            source: "qrc:/Images/Images/Timer.svg"
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        QLato {
-                            width: parent.width - 20
-                            height: 16
-                            text: STR.STR_QML_1871.arg(coinsGroup.activeAfter)
-                            font.weight: Font.Normal
-                            font.pixelSize: 12
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            anchors.verticalCenter: parent.verticalCenter
+                    }
+                    Item {
+                        id: _active
+                        width: parent.width
+                        height: 16
+                        visible: coinsGroup !== undefined && coinsGroup.hasActiveAfter
+                        Row {
+                            height: parent.height
+                            spacing: 4
+                            anchors {
+                                verticalCenter: parent.verticalCenter
+                                left: parent.left
+                                leftMargin: 4
+                            }
+                            QIcon {
+                                iconSize: 16
+                                source: "qrc:/Images/Images/Timer.svg"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QLato {
+                                width: parent.width - 20
+                                height: 16
+                                text: coinsGroup !== undefined ? STR.STR_QML_1871.arg(coinsGroup.activeAfter) : ""
+                                font.weight: Font.Normal
+                                font.pixelSize: 12
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
                     }
                 }
             }
         }
     }
+    
 }

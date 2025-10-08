@@ -419,7 +419,7 @@ nunchuk::SingleSigner nunchukiface::GetSignerFromMasterSigner(const std::string 
                                                               const int index,
                                                               QWarningMessage& msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","", {},"",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetSignerFromMasterSigner(mastersigner_id, wallet_type, address_type, index);
@@ -439,7 +439,7 @@ nunchuk::SingleSigner nunchukiface::GetSignerFromMasterSigner(const std::string 
                                                               const std::string &derivation_path,
                                                               QWarningMessage& msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","",{},"",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetSignerFromMasterSigner(mastersigner_id, derivation_path);
@@ -465,7 +465,7 @@ nunchuk::SingleSigner nunchukiface::CreateSigner(const std::string &name,
                                                  const bool replace,
                                                  QWarningMessage& msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","",{}, "",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->CreateSigner(name,
@@ -516,7 +516,7 @@ nunchuk::SingleSigner nunchukiface::GetUnusedSignerFromMasterSigner(const std::s
                                                                     const nunchuk::AddressType &address_type,
                                                                     QWarningMessage& msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","", {},"",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetUnusedSignerFromMasterSigner(mastersigner_id, wallet_type, address_type);
@@ -1600,7 +1600,7 @@ bool nunchukiface::SetSelectedWallet(const std::string &wallet_id, QWarningMessa
 
 nunchuk::SingleSigner nunchukiface::CreateCoboSigner(const std::string &name, const std::string &json_info, QWarningMessage &msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","",{}, "",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->CreateCoboSigner(name, json_info);
@@ -2456,14 +2456,14 @@ std::string nunchukiface::SignHealthCheckMessage(const nunchuk::SingleSigner &si
 
 nunchuk::SingleSigner nunchukiface::GetDefaultSignerFromMasterSigner(const std::string &mastersigner_id, const nunchuk::WalletType &wallet_type, const nunchuk::AddressType &address_type, QWarningMessage &msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","", {},"",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetDefaultSignerFromMasterSigner(mastersigner_id, wallet_type, address_type);
         }
     }
     catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        DBG_INFO << "exception nunchuk::BaseException" << mastersigner_id << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::exception &e) {
@@ -2479,7 +2479,7 @@ nunchuk::SingleSigner nunchukiface::GetDefaultSignerFromMasterSigner(const std::
 
 nunchuk::SingleSigner nunchukiface::GetSigner(const std::string &xfp, const nunchuk::WalletType &wallet_type, const nunchuk::AddressType &address_type, const int index, QWarningMessage &msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","",{}, "",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->GetSigner(xfp, wallet_type, address_type, index);
@@ -2497,7 +2497,7 @@ nunchuk::SingleSigner nunchukiface::GetSigner(const std::string &xfp, const nunc
 
 nunchuk::SingleSigner nunchukiface::GetSigner(const nunchuk::SingleSigner &signer, QWarningMessage &msg)
 {
-    nunchuk::SingleSigner ret("","","","","",0,"");
+    nunchuk::SingleSigner ret("","","","", {},"",0,"");
     try {
         if(nunchuk_instance_[nunchukMode()]){
             if (!signer.get_master_fingerprint().empty()) {
@@ -3913,6 +3913,23 @@ std::vector<nunchuk::SingleSigner> nunchukiface::GetTransactionSigners(const std
     }
     catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+bool nunchukiface::RevealPreimage(const std::string &wallet_id, const std::string &tx_id, const std::vector<uint8_t> &hash,
+                                  const std::vector<uint8_t> &preimage, QWarningMessage &msg) {
+    bool ret = false;
+    try {
+        if (nunchuk_instance_[nunchukMode()]) {
+            ret = nunchuk_instance_[nunchukMode()]->RevealPreimage(wallet_id, tx_id, hash, preimage);
+        }
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return ret;
 }

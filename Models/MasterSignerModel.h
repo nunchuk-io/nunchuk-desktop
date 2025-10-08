@@ -52,7 +52,6 @@ class QMasterSigner : public QObject, public WalletKeys {
     Q_PROPERTY(QVariantList healthCheckHistory READ healthCheckHistory NOTIFY healthCheckHistoryChanged)
     Q_PROPERTY(QString address             READ address         WRITE setAddress        NOTIFY addressChanged)
     Q_PROPERTY(bool isMine                 READ isMine                                  CONSTANT)
-    Q_PROPERTY(bool taprootSupported       READ taprootSupported                        CONSTANT)
     Q_PROPERTY(bool needBackup             READ needBackup                              CONSTANT)
 
 public:
@@ -125,11 +124,10 @@ public:
     void setAddress(const QString &address);
 
     Q_INVOKABLE QVariantList getWalletList();
-    QSingleSignerPtr cloneSingleSigner();
+    nunchuk::SingleSigner cloneSingleSigner(const nunchuk::WalletType& wallet_type, const nunchuk::AddressType& address_type);
 
     bool isMine() const;
 
-    bool taprootSupported();
     void setDeviceIndex(int newDeviceIndex);
 
     int deviceIndex() const;
@@ -234,7 +232,6 @@ public:
         master_signer_need_xpub_Role,
         master_signer_primary_key_Role,
         master_signer_tag_Role,
-        master_signer_taproot_supported_Role,
         master_signer_needBackup_Role,
     };    
 public slots:

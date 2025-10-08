@@ -119,20 +119,49 @@ void Worker::slotStartCreateRemoteSigner(const QString &name,
                                   msg.code());
 }
 
-void Worker::slotStartScanDevices(const int state_id) {
-    QWarningMessage msg;
-    std::vector<nunchuk::Device> deviceList {};
-    if (AppModel::instance()->isSignIn()) {
-        deviceList = qUtils::GetDevices(bridge::hwiPath(), msg);
-        DBG_INFO << "deviceList.size():" << deviceList.size();
-    } else {
-        deviceList = bridge::nunchukGetOriginDevices(msg);
+void Worker::slotStartScanDevices(const QVariant &data) {
+    QFunctionTime f(__PRETTY_FUNCTION__);
+    QMap<QString, QVariant> maps = data.toMap();
+    bool isTopUpXpub = maps.value("isTopUpXpub", false).toBool();
+    if (isTopUpXpub) {
+        AppModel::instance()->startTopXPUBsSigner();
     }
-    emit finishScanDevices(state_id,
-                           deviceList,
-                           msg.what(),
-                           msg.type(),
-                           msg.code());
+    QWarningMessagePtr msg(new QWarningMessage());
+    std::vector<nunchuk::Device> deviceListResult {};
+    if (AppModel::instance()->isSignIn()) {
+        deviceListResult = qUtils::GetDevices(bridge::hwiPath(), *msg);
+    } else {
+        deviceListResult = bridge::nunchukGetOriginDevices(*msg);
+    }
+
+    if(msg && msg->type() == (int)EWARNING::WarningType::NONE_MSG) {
+        QDeviceListModelPtr deviceList(new DeviceListModel());
+        for (nunchuk::Device it : deviceListResult) {
+            QDevicePtr device = QDevicePtr(new QDevice(it));
+            deviceList.data()->addDevice(device);
+        }
+        
+        QString masterSignerId = maps["singleSigner_masterSignerId"].toString();
+        if (masterSignerId.isEmpty()) {
+            QString fingerPrint = maps["singleSigner_masterFingerPrint"].toString();
+            int deviceIndex = deviceList->getDeviceIndexByXfp(fingerPrint);
+            if (deviceIndex >= 0) {
+                QString name = maps["singleSigner_name"].toString();
+                msg->resetWarningMessage();
+                QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, deviceIndex, *msg);
+                if ((int)EWARNING::WarningType::NONE_MSG == msg->type()) {
+                    masterSignerId = ret->id();
+                } else {
+                    masterSignerId = fingerPrint;
+                }
+            }
+        }
+        if (!masterSignerId.isEmpty()) {    
+            msg->resetWarningMessage();        
+            bridge::nunchukCacheMasterSignerXPub(masterSignerId, *msg);           
+        }
+    }
+    emit finishScanDevices(data, deviceListResult, msg);
 }
 
 void Worker::slotStartSigningTransaction(const QString &walletId,
@@ -331,6 +360,7 @@ void Worker::slotStartCreateSoftwareSigner(const QString name,
                                                "",
                                                "",
                                                "",
+                                               {},
                                                ret->fingerPrint().toStdString(),
                                                std::time(0),
                                                ret->id().toStdString(),
@@ -373,6 +403,7 @@ void Worker::slotStartCreateSoftwareSignerXprv(const QString name, const QString
                                                "",
                                                "",
                                                "",
+                                               {},
                                                ret.get_device().get_master_fingerprint(),
                                                std::time(0),
                                                ret.get_id(),
@@ -413,13 +444,6 @@ void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
                  << w->walletM()
                  << w->walletN();
         if((walletAddress_Type == (int)nunchuk::AddressType::TAPROOT) && (wallet_Type == (int)nunchuk::WalletType::MULTI_SIG)){
-            std::set<nunchuk::SignerType> unsupported_types = qUtils::GetUnSupportedTaprootTypes({nunchuk::AddressType::TAPROOT},{},{},{nunchuk::WalletType::MULTI_SIG});
-            if(!unsupported_types.empty()){
-                foreach (nunchuk::SignerType unsupported_type, unsupported_types) {
-                    w->singleSignersAssigned()->removeSingleSignerByType(static_cast<int>(unsupported_type));
-                }
-            }
-
             if(!w->enableValuekeyset()){
                 walletTemplate = nunchuk::WalletTemplate::DISABLE_KEY_PATH;
             }
@@ -466,7 +490,7 @@ void Worker::slotCreateMiniscriptWallet()
     DBG_INFO;
     if(auto w = AppModel::instance()->newWalletInfo()){
         const QString name = w->walletNameDisplay();
-        const QString script_template = w->customizeMiniscript();
+        const QString script_template = w->scriptTemplate();
         const std::map<std::string, nunchuk::SingleSigner> signers = w->signersCreateWallet();
         nunchuk::AddressType address_type = static_cast<nunchuk::AddressType>(w->walletAddressType());
         const QString description = w->walletDescription();
@@ -1015,23 +1039,27 @@ void Controller::slotFinishCreateRemoteSigner(const int event,
     emit finishedCreateRemoteSigner();
 }
 
-void Controller::slotFinishScanDevices(const int state_id,
-                                       std::vector<nunchuk::Device> ret,
-                                       QString what,
-                                       int type,
-                                       int code)
+void Controller::slotFinishScanDevices(const QVariant &data,
+                                        std::vector<nunchuk::Device> ret,
+                                        QWarningMessagePtr msg)
 {
+    QMap<QString,QVariant> maps = data.toMap();
     QDeviceListModelPtr deviceList(new DeviceListModel());
-    if(type == (int)EWARNING::WarningType::NONE_MSG){
+    if(msg && msg->type() == (int)EWARNING::WarningType::NONE_MSG){
         for (nunchuk::Device it : ret) {
             QDevicePtr device = QDevicePtr(new QDevice(it));
             deviceList.data()->addDevice(device);
         }
         AppModel::instance()->setDeviceList(deviceList);
     }
-    else{
+    else if (msg) {
         AppModel::instance()->setDeviceList(deviceList);
-        AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
+        AppModel::instance()->showToast(msg->code(), msg->what(), (EWARNING::WarningType)msg->type());
+    }   
+    bool isTopUpXpub = maps.value("isTopUpXpub", false).toBool();
+    if (isTopUpXpub) {
+        AppModel::instance()->finishTopXPUBsSigner();
+        QSignerManagement::instance()->finishCreateTopUpXpub();
     }
     if(auto trans = AppModel::instance()->transactionInfoPtr()){
         trans->refreshScanDevices();
@@ -1043,6 +1071,7 @@ void Controller::slotFinishScanDevices(const int state_id,
         w->refreshScanDevices();
     }
     emit finishedScanDevices();
+    int state_id = data.toMap().value("state_id").toInt();
     emit checkAndUnlockDevice(state_id);
 }
 
@@ -1080,7 +1109,9 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
         if(!isSoftware){
-            startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
+            QMap<QString,QVariant> data;
+            data["state_id"] = E::STATE_ID_SCR_TRANSACTION_INFO;
+            startScanDevices(QVariant::fromValue(data));
         }
     }
     emit finishedSigningTransaction();
@@ -1119,7 +1150,9 @@ void Controller::slotFinishHealthCheckMasterSigner(const int state_id,
     }
     else{
         if(type == (int)EWARNING::WarningType::EXCEPTION_MSG && nunchuk::HWIException::DEVICE_CONN_ERROR == code){
-            startScanDevices(state_id);
+            QMap<QString,QVariant> data;
+            data["state_id"] = state_id;
+            startScanDevices(QVariant::fromValue(data));
         }
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
         emit finishedHealthCheckMasterSigner(false);
@@ -1142,8 +1175,7 @@ void Controller::slotFinishTopXPUBsMasterSigner(const QVariant &data)
     }
     else{
         if(type == (int)EWARNING::WarningType::EXCEPTION_MSG && nunchuk::HWIException::DEVICE_CONN_ERROR == code){
-            int state_id = maps["state_id"].toInt();
-            startScanDevices(state_id);
+            startScanDevices(data);
             AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
         }
         else{
@@ -1293,6 +1325,7 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
                                               const QString &wallet_id,
                                               nunchuk::Transaction tx)
 {
+    DBG_INFO << tx_id << status << wallet_id;
     qApp->setOverrideCursor(Qt::WaitCursor);
     if(AppModel::instance()->walletList()){
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
@@ -1309,7 +1342,7 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
                     QString current_tx_id        = AppModel::instance()->transactionInfo()->txid();
                     if(qUtils::strCompare(wallet_id, current_tx_wallet_id) && qUtils::strCompare(tx_id, current_tx_id)){
                         if (status == (int)nunchuk::TransactionStatus::DELETED) {
-                            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);         
+                            QEventProcessor::instance()->closeStateScreen(E::STATE_ID_SCR_TRANSACTION_INFO);
                         } else {
                             AppModel::instance()->setTransactionInfo(trans);
                         }
@@ -1317,6 +1350,7 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
                     }
                 }
             }
+            // AppModel::instance()->walletList()->requestSort();
         }
     }
     CLIENT_INSTANCE->transactionChanged(wallet_id, tx_id, status, tx.get_height());
@@ -1372,6 +1406,13 @@ void Controller::slotFinishGetTransactionHistory(const QString wallet_id,
         wallet.data()->transactionHistory()->updateTransaction(wallet_id, ret);
         wallet.data()->transactionHistory()->requestSort(TransactionListModel::TransactionRoles::transaction_blocktime_role, Qt::DescendingOrder);
         emit wallet.data()->transactionHistoryChanged();
+
+        if(auto trans = AppModel::instance()->transactionInfo()) {
+            auto newTx = wallet.data()->transactionHistory()->getTransactionByTxid(trans->txid());
+            if(newTx){
+                AppModel::instance()->setTransactionInfo(newTx);
+            }
+        }
     }
     emit finishedGetTransactionHistory();
 }
@@ -1418,7 +1459,9 @@ void Controller::slotFinishSendPinToDevice(const int state_id,
                                            int code)
 {
     if((int)EWARNING::WarningType::NONE_MSG == type){
-        AppModel::instance()->startScanDevices(state_id);
+        QMap<QString,QVariant> data;
+        data["state_id"] = state_id;
+        AppModel::instance()->startScanDevices(QVariant::fromValue(data));
     }
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);
@@ -1433,7 +1476,9 @@ void Controller::slotFinishSendPassphraseToDevice(const int state_id,
                                                   int code)
 {
     if((int)EWARNING::WarningType::NONE_MSG == type){
-        AppModel::instance()->startScanDevices(state_id);
+        QMap<QString,QVariant> data;
+        data["state_id"] = state_id;
+        AppModel::instance()->startScanDevices(QVariant::fromValue(data));
     }
     else{
         AppModel::instance()->showToast(code, what, (EWARNING::WarningType)type);

@@ -12,7 +12,9 @@ CoinWallet::CoinWallet(const nunchuk::Wallet &w) :
     m_coinCollections(QCoinCollectionsModelPtr(new QCoinCollectionsModel())),
     m_coinTags(QCoinTagsModelPtr(new QCoinTagsModel())),
     m_coinTagsFilter(QCoinTagsModelPtr(new QCoinTagsModel()))
-{}
+{
+
+}
 
 bool CoinWallet::isViewCoinShow() const
 {
@@ -43,12 +45,12 @@ void CoinWallet::setCoinFlow(const QString &newCoinFlow)
     emit coinFlowChanged();
 }
 
-QUTXOListModel *CoinWallet::utxoList() const
+QUTXOListModel *CoinWallet::utxoList()
 {
     return m_utxoList.data();
 }
 
-QUTXOListModelPtr CoinWallet::utxoListPtr() const
+QUTXOListModelPtr CoinWallet::utxoListPtr()
 {
     return m_utxoList;
 }
@@ -56,8 +58,13 @@ QUTXOListModelPtr CoinWallet::utxoListPtr() const
 void CoinWallet::setUtxoList(const QUTXOListModelPtr &utxoList)
 {
     m_utxoList = utxoList;
-    if(m_utxoList.data()){
-        m_utxoList.data()->requestSort(QUTXOListModel::UTXORoles::utxo_amount_role,  Qt::DescendingOrder);
+    if (m_utxoList && walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+        if(AppModel::instance()->walletInfo()->sortByCoinAge()){
+            m_utxoList.data()->requestSort(QUTXOListModel::UTXORoles::utxo_blocktime_role, Qt::DescendingOrder);
+        }
+        else {
+            m_utxoList.data()->requestSort(QUTXOListModel::UTXORoles::utxo_amount_role, Qt::DescendingOrder);
+        }
     }
     emit utxoListChanged();
 }
@@ -748,6 +755,7 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
         m_coinTags->setChecked({});
         m_coinCollections->setChecked({});
         m_utxoList->clearAllFilter();
+        setSortByCoinAge(false);
     }
     else if (type == "view-locked-coins") {
         RequestLockedCoins();
@@ -937,6 +945,25 @@ void CoinWallet::UpdateCoinControlGroupWallet()
 QList<int> CoinWallet::tagsInTxAssigned() const
 {
     return m_tagsInTxAssigned;
+}
+
+bool CoinWallet::sortByCoinAge()
+{
+#ifdef SAVE_SETTING
+    return AppSetting::instance()->sortCoinByAge(walletId());
+#endif
+    return m_sortByCoinAge;
+}
+
+void CoinWallet::setSortByCoinAge(const int data)
+{
+    if (m_sortByCoinAge != data) {
+        m_sortByCoinAge = data;
+#ifdef SAVE_SETTING
+        AppSetting::instance()->setSortCoinByAge(walletId(), data);
+#endif
+        emit sortCoinByAgeChanged();
+    }
 }
 
 void CoinWallet::requestForAllCoins(const QVariant &act)
@@ -1318,8 +1345,8 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
     DBG_INFO << "Subtract From Amount : " << subtractFromAmount;
 
     if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+        QString selectPath = draftTransactionInput.value("selectPath").toString();
         auto signing_paths = AppModel::instance()->transactionInfo()->signingPaths();
-
         auto createTransaction = [&]() {
             DBG_INFO << "Signing paths already exist, using existing signing paths";
             auto selectedSigningPath = AppModel::instance()->transactionInfo()->signingPathSelected();
@@ -1341,18 +1368,20 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
                 QEventProcessor::instance()->sendEvent(successEvtID);
             }
         };
-        if(signing_paths.empty() && !use_script_path){
-            std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> signing_paths = bridge::nunchukEstimateFeeForSigningPaths(wallet_id,
-                                                                                                                                    outputs,
-                                                                                                                                    inputs,
-                                                                                                                                    feerate,
-                                                                                                                                    subtractFromAmount,
-                                                                                                                                    "");
+        
+        if (qUtils::strCompare(selectPath, "keypath")) {
+            createTransaction();
+        } else if (qUtils::strCompare(selectPath, "scriptpath") && signing_paths.size() == 0) {
+            std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> signing_paths =
+                bridge::nunchukEstimateFeeForSigningPaths(wallet_id, outputs, inputs, feerate, subtractFromAmount, "");
             AppModel::instance()->transactionInfo()->setSigningPaths(signing_paths);
             if (signing_paths.size() == 1) {
                 createTransaction();
-            } else if(signing_paths.size() > 1) {
-                AppModel::instance()->transactionInfo()->setScreenFlow("choose-signing-path");
+            } else if (signing_paths.size() > 1 && signing_paths.size() < 7) {
+                AppModel::instance()->transactionInfo()->setScreenFlow("choose-signing-policy");
+            } else if (signing_paths.size() >= 7) {
+                AppModel::instance()->transactionInfo()->firstCreateChooseScriptPath();
+                AppModel::instance()->transactionInfo()->setScreenFlow("choose-signing-path-seven");
             } else {
                 DBG_ERROR << "No signing path available";
                 AppModel::instance()->showToast(0, "Insufficient funds", EWARNING::WarningType::ERROR_MSG);

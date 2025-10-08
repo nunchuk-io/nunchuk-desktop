@@ -34,9 +34,9 @@ QSingleSigner::QSingleSigner()
 }
 
 QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey):
-    singleSigner_(singleKey),
     isDraft(false)
 {
+    convert(singleKey);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -46,6 +46,9 @@ void QSingleSigner::convert(const nunchuk::SingleSigner &src)
 {
     isDraft = false;
     singleSigner_ = src;
+    if(src.get_type() != nunchuk::SignerType::SERVER){
+        m_isLocalSigner = bridge::nunchukHasSinger(src);
+    }
 }
 
 nunchuk::SingleSigner QSingleSigner::originSingleSigner() const
@@ -151,7 +154,11 @@ QString QSingleSigner::masterSignerId() {
         return master_signer_id_;
     }
     else{
-        return QString::fromStdString(singleSigner_.get_master_signer_id());
+        auto masterSignerId = singleSigner_.get_master_signer_id();
+        if(masterSignerId.empty()){
+            return QString::fromStdString(singleSigner_.get_master_fingerprint());
+        } 
+        return QString::fromStdString(masterSignerId);
     }
 }
 
@@ -335,16 +342,7 @@ bool QSingleSigner::isColdCard()
 
 bool QSingleSigner::isLocalSigner()
 {
-    bool isLocal = false;
-    if(signerType() != (int)ENUNCHUCK::SignerType::SERVER){
-        if(AppModel::instance()->masterSignerList()){
-            isLocal = AppModel::instance()->masterSignerList()->containsFingerPrint(masterFingerPrint());
-        }
-        if(!isLocal && AppModel::instance()->remoteSignerList()){
-            isLocal = AppModel::instance()->remoteSignerList()->containsFingerPrint(masterFingerPrint());
-        }
-    }
-    return isLocal;
+    return m_isLocalSigner;
 }
 
 bool QSingleSigner::isMine() const
@@ -538,7 +536,8 @@ QVariantList QSingleSigner::getWalletList()
     QVariantList ret;
     for (auto wallet : AppModel::instance()->walletListPtr()->fullList()) {
         if (wallet->isContainKey(masterFingerPrint()) && wallet->isAssistedWallet()) {
-            ret.append(QVariant::fromValue(wallet.data()));
+            auto walletQml = WalletListModel::useQml(wallet);
+            ret.append(QVariant::fromValue(walletQml));
         }
     }
     return ret;
@@ -566,24 +565,13 @@ void QSingleSigner::setKeyReplaced(const QSingleSignerPtr &keyReplaced)
 
 bool QSingleSigner::taprootSupported()
 {
-    bool ret = true;
-    QJsonArray types = Draco::instance()->GetTaprootSupportedCached();
-    if (types.size() > 0) {
-        QSet<int> supported_types;
-        QSet<QString> supported_tags;
-        foreach (const QJsonValue &value, types) {
-            QJsonObject obj = value.toObject();
-            QString type = obj["signer_type"].toString();
-            QString tag = obj["signer_tag"].toString();
-            nunchuk::SignerType type_enum = qUtils::GetSignerType(type);
-            supported_types.insert((int)type_enum);
-            supported_tags.insert(tag);
-        }
+    return m_taprootSupported;
+}
 
-        ret = supported_types.contains(signerType()) &&
-              supported_tags.contains(tag());
+void QSingleSigner::setTaprootSupported(bool supported) {
+    if (m_taprootSupported != supported) {
+        m_taprootSupported = supported;
     }
-    return ret;
 }
 
 int QSingleSigner::keysetIndex() const
@@ -901,6 +889,16 @@ QVariant SingleSignerListModel::useQml(const QSingleSignerPtr &data)
         res[i.value()] = tmp;
     }
     return QVariant::fromValue(res);
+}
+
+QVariant SingleSignerListModel::get(int index) {
+    if(index < 0 || index >= m_data.count()){
+        DBG_INFO << "Index out of range";
+        return QVariant();
+    }
+    else {
+        return useQml(m_data.at(index));
+    }
 }
 
 void SingleSignerListModel::replaceSingleSigner(int index, const QSingleSignerPtr &value)
@@ -1464,6 +1462,7 @@ int SingleSignerListModel::signerSelectedCount() const
     foreach (QSingleSignerPtr it, m_data) {
         if(it.data()->checked()) { ret++;}
     }
+    DBG_INFO << ret;
     return ret;
 }
 

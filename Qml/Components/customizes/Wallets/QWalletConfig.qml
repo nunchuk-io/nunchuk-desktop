@@ -397,7 +397,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: true,
+                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
                         label: STR.STR_QML_1747, // As BBQR
                         icon: "",
                         iconRight: "",
@@ -418,7 +418,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: (walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT),
+                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
                         label: STR.STR_QML_1750, // As BC-UR2 QR (legacy)
                         icon: "",
                         iconRight: "",
@@ -434,7 +434,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: (walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT),
+                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG || walletInfo.walletType === NUNCHUCKTYPE.SINGLE_SIG) && walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
                         label: STR.STR_QML_1751, // As BC-UR2 QR
                         icon: "",
                         iconRight: "",
@@ -450,7 +450,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: true,
+                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
                         label: STR.STR_QML_1748, // To COLDCARD
                         icon: "",
                         iconRight: "",
@@ -470,7 +470,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: true,
+                        visible: walletInfo.walletType !== NUNCHUCKTYPE.MINISCRIPT,
                         label: STR.STR_QML_1749, // To BitBox
                         icon: "",
                         iconRight: "",

@@ -487,7 +487,7 @@ nunchuk::SingleSigner bridge::nunchukGetOriginSingleSigner(const QString& xfp,
         return signer;
     }
     else{
-        return nunchuk::SingleSigner("","","","","",0,"");
+        return nunchuk::SingleSigner("","","","",{}, "", 0,"");
     }
 }
 
@@ -512,7 +512,13 @@ QSingleSignerPtr bridge::nunchukGetUnusedSignerFromMasterSigner(const QString &m
                                                                                              (nunchuk::WalletType)wallet_type,
                                                                                              (nunchuk::AddressType)address_type,
                                                                                              msg);
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+
+    
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+        QtConcurrent::run([mastersigner_id, signer]() {
+            QWarningMessage msg;
+            nunchukiface::instance()->GetSignerFromMasterSigner(mastersigner_id.toStdString(), signer.get_derivation_path(), msg);
+        });        
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
         return ret;
     }
@@ -542,18 +548,46 @@ QSingleSignerPtr bridge::nunchukGetDefaultSignerFromMasterSigner(const QString &
 
 QSingleSignerPtr bridge::nunchukGetAvailableSignerFromMasterSigner(const QMasterSignerPtr &master, const ENUNCHUCK::WalletType &wallet_type,
                                                                    const ENUNCHUCK::AddressType &address_type, QWarningMessage &msg) {
+
+    if (master.isNull())
+        return QSingleSignerPtr();
+    DBG_INFO << "master id: " << master->id() << " type: " << master->signerType() << " wallet_type: " << (int)wallet_type
+             << " address_type: " << (int)address_type;
     QSingleSignerPtr signer;
+    QString master_id = master->id().isEmpty() ? master->fingerPrint() : master->id();
     if (master->signerType() == (int)nunchuk::SignerType::NFC) {
-        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(master->id(), wallet_type, address_type, msg);
+        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(master_id, wallet_type, address_type, msg);
     } else {
-        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(master->id(), wallet_type, address_type, msg);
+        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(master_id, wallet_type, address_type, msg);
     }
+    // GetDefaultSignerFromMasterSigner
+    return signer;
+}
+
+QSingleSignerPtr bridge::nunchukGetAvailableSignerFromSingleSigner(const QSingleSignerPtr &single, const ENUNCHUCK::WalletType &wallet_type,
+                                                                           const ENUNCHUCK::AddressType &address_type, QWarningMessage &msg) {
+    if (single.isNull())
+        return QSingleSignerPtr();
+    DBG_INFO << "master id: " << single->masterSignerId() << " type: " << single->signerType() << " wallet_type: " << (int)wallet_type
+             << " address_type: " << (int)address_type;
+    QSingleSignerPtr signer;
+    QString master_id = single->masterSignerId().isEmpty() ? single->fingerPrint() : single->masterSignerId();
+    if (single->signerType() == (int)nunchuk::SignerType::NFC) {
+        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(master_id, wallet_type, address_type, msg);
+    } else {
+        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(master_id, wallet_type, address_type, msg);
+    }
+    // GetDefaultSignerFromMasterSigner
     return signer;
 }
 
 QSingleSignerPtr bridge::nunchukGetSignerFromMasterSigner(const QString &mastersigner_id, const QString &derivation_path, QWarningMessage &msg) {
     auto tmp = bridge::GetSignerFromMasterSigner(mastersigner_id, derivation_path, msg);
     return QSingleSignerPtr(new QSingleSigner(tmp));
+}
+
+nunchuk::SingleSigner bridge::nunchukGetDefaultSignerFromMasterSigner(const QString &mastersigner_id, const nunchuk::WalletType &wallet_type, const nunchuk::AddressType &address_type, QWarningMessage &msg) {
+    return nunchukiface::instance()->GetDefaultSignerFromMasterSigner(mastersigner_id.toStdString(), wallet_type, address_type, msg);
 }
 
 QSingleSignerPtr bridge::nunchukCreateSigner(const QString &name,
@@ -772,7 +806,7 @@ QWalletPtr bridge::nunchukImportWalletDescriptor(const QString &dbFile,
             catch (std::exception &e) {
                 DBG_INFO << "THROW EXCEPTION" << e.what();
             }
-            nunchukiface::instance()->RecoverGroupWallet(walletid, msg);
+            RecoverGroupWallet(QString::fromStdString(walletid), msg);
         }
         return bridge::convertWallet(walletResult);
     }
@@ -1921,6 +1955,21 @@ QWalletPtr bridge::nunchukImportKeystoneWallet(const QList<QString> &qr_data,
             bool needTopUp = w->singleSignersAssigned()->needTopUpXpubs();
             w->setCapableCreate(!needTopUp);
         }
+        bool isGroupWallet = bridge::CheckGroupWalletExists(walletResult, msg);
+        DBG_INFO << "isGroupWallet: " << isGroupWallet;
+        if (isGroupWallet) {
+            std::string walletid = "";
+            try {
+                walletid = walletResult.get_id();
+            }
+            catch (const nunchuk::BaseException &ex) {
+                DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+            }
+            catch (std::exception &e) {
+                DBG_INFO << "THROW EXCEPTION" << e.what();
+            }
+            RecoverGroupWallet(QString::fromStdString(walletid), msg);
+        }
         return bridge::convertWallet(walletResult);
     }
     else {
@@ -2289,9 +2338,8 @@ nunchuk::TapsignerStatus bridge::GetTapsignerStatusFromMasterSigner(const QStrin
     return nunchukiface::instance()->GetTapsignerStatusFromMasterSigner(fingerPrint.toStdString(), msgGetTap);
 }
 
-QString bridge::SignMessage(const nunchuk::SingleSigner &signer, const QString &message)
+QString bridge::SignMessage(const nunchuk::SingleSigner &signer, const QString &message, QWarningMessage &msg)
 {
-    QWarningMessage msg;
     return QString::fromStdString(nunchukiface::instance()->SignMessage(signer, message.toStdString(), msg));
 }
 
@@ -2672,6 +2720,21 @@ std::vector<nunchuk::SingleSigner> bridge::GetSignersFromMasterSigner(const QStr
     return nunchukiface::instance()->GetSignersFromMasterSigner(mastersigner_id.toStdString(), msg);
 }
 
+bool bridge::IsSignerUsedInWallets(const QString& mastersigner_id, const nunchuk::SingleSigner& signer)
+{
+    std::vector<nunchuk::SingleSigner> signers = GetSignersFromMasterSigner(mastersigner_id);
+    bool found = false;
+    for (auto s : signers) {
+        if (s.get_master_fingerprint() == signer.get_master_fingerprint() &&
+            s.get_derivation_path() == signer.get_derivation_path() &&
+            s.get_xpub() == signer.get_xpub()) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+}
+
 void bridge::StartConsumeGroupEvent()
 {
     QtConcurrent::run([]() {
@@ -2692,28 +2755,31 @@ void bridge::StopConsumeGroupEvent()
 
 void bridge::EnableGroupWallet()
 {
-    QWarningMessage msg;
-    QString osName      = qUtils::osName();
-    QString osVersion   = qUtils::osVersion();
-    QString appVersion  = qUtils::appVersion();
-    QString deviceClass = qUtils::deviceClass();
-    QString deviceId    = qUtils::deviceId();
-    QString accessToken = qUtils::accessToken();
+    // TBD
+    QtConcurrent::run([]() {
+        QWarningMessage msg;
+        QString osName      = qUtils::osName();
+        QString osVersion   = qUtils::osVersion();
+        QString appVersion  = qUtils::appVersion();
+        QString deviceClass = qUtils::deviceClass();
+        QString deviceId    = qUtils::deviceId();
+        QString accessToken = qUtils::accessToken();
 
-    DBG_INFO << "OS name: " << osName;
-    DBG_INFO << "OS version:" << osVersion;
-    DBG_INFO << "Nunchuk version:" << appVersion;
-    DBG_INFO << "Device class:" << deviceClass;
-    DBG_INFO << "Device ID:" << deviceId;
-    // DBG_INFO << "FIXME-REMOVE:" << accessToken;
+        DBG_INFO << "OS name: " << osName;
+        DBG_INFO << "OS version:" << osVersion;
+        DBG_INFO << "Nunchuk version:" << appVersion;
+        DBG_INFO << "Device class:" << deviceClass;
+        DBG_INFO << "Device ID:" << deviceId;
+        // DBG_INFO << "FIXME-REMOVE:" << accessToken;
 
-    nunchukiface::instance()->EnableGroupWallet(osName.toStdString(),
-                                                osVersion.toStdString(),
-                                                appVersion.toStdString(),
-                                                deviceClass.toStdString(),
-                                                deviceId.toStdString(),
-                                                accessToken.toStdString(),
-                                                msg);
+        nunchukiface::instance()->EnableGroupWallet(osName.toStdString(),
+                                                    osVersion.toStdString(),
+                                                    appVersion.toStdString(),
+                                                    deviceClass.toStdString(),
+                                                    deviceId.toStdString(),
+                                                    accessToken.toStdString(),
+                                                    msg);
+    });
 }
 
 std::vector<nunchuk::Wallet> bridge::nunchukGetOriginGroupWallets(QWarningMessage &msg)
@@ -3016,4 +3082,96 @@ std::vector<nunchuk::SingleSigner> bridge::nunchukGetTransactionSigners(const QS
 {
     QWarningMessage msg;
     return nunchukiface::instance()->GetTransactionSigners(wallet_id.toStdString(), tx_id.toStdString(), msg);
+}
+
+std::vector<nunchuk::SingleSigner> bridge::CreateSupportedSigners(const nunchuk::AddressType& address_type, const nunchuk::WalletType &walletType) {
+    std::vector<nunchuk::SingleSigner> supportedSigners {};
+    auto masterList = AppModel::instance()->masterSignerList();
+    auto singleList = AppModel::instance()->remoteSignerList();
+    if (masterList && singleList) {
+        for (auto master : masterList->fullList()) {
+            supportedSigners.push_back(master->cloneSingleSigner(walletType, address_type));
+        }
+        for (auto single : singleList->fullList()) {
+            supportedSigners.push_back(single->originSingleSigner());
+        }        
+    }
+    return supportedSigners;
+}
+
+QJsonArray bridge::makeExistingSigners(const nunchuk::AddressType& address_type, const nunchuk::WalletType &walletType) {
+    std::vector<nunchuk::SingleSigner> available_signers = bridge::CreateSupportedSigners(address_type, walletType);
+    QList<QJsonObject> list;
+    for (const auto &signer : available_signers) {
+        QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
+        QJsonObject signerObj = QJsonValue::fromVariant(SingleSignerListModel::useQml(signerPtr)).toObject();
+        signerPtr->setTaprootSupported(bridge::IsTapootSupported(signerPtr, address_type, walletType));
+        auto signer_Tag = signerPtr->tag();
+        auto signer_type = signerPtr->originSingleSigner().get_type();        
+        if (address_type == nunchuk::AddressType::TAPROOT) {
+            signerObj["single_signer_enabled"] = signerPtr->taprootSupported();
+        } else if (signer_type == nunchuk::SignerType::NFC && walletType == nunchuk::WalletType::MINISCRIPT) {
+            signerObj["single_signer_enabled"] = false;
+        } else if (qUtils::strCompare(signer_Tag, "TREZOR") && walletType == nunchuk::WalletType::MINISCRIPT) {
+            signerObj["single_signer_enabled"] = false;
+        } else {
+            signerObj["single_signer_enabled"] = true;
+        }
+        list.append(signerObj);
+    }
+    qSort(list.begin(), list.end(),
+              [](const QJsonObject &a, const QJsonObject &b) -> bool {
+                  bool enabledA = a["single_signer_enabled"].toBool();
+                  bool enabledB = b["single_signer_enabled"].toBool();
+                  return enabledA > enabledB;
+              });
+
+    QJsonArray arrays;
+    for (const auto &obj : list) {
+        arrays.append(obj);
+    }
+    return arrays;
+}
+
+bool bridge::IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::AddressType& addressType, const nunchuk::WalletType &walletType) {
+    if (!signer) {
+        return false;
+    }
+
+    if (walletType == nunchuk::WalletType::MINISCRIPT && signer->originSingleSigner().get_type() == nunchuk::SignerType::SOFTWARE) {
+        return true;
+    }
+    
+    auto get_str = [](const QJsonObject &obj, const QString &key) -> QString {
+        return obj.contains(key) ? obj[key].toString() : "";
+    };
+    QJsonArray supported_types = Draco::instance()->GetTaprootSupportedCached();
+  
+
+    auto it = std::find_if(supported_types.begin(), supported_types.end(),
+             [&, walletType, addressType](const QJsonValue &js) {
+                QJsonObject info = js.toObject();
+                QString address_type_str = get_str(info, "address_type");
+                QString signer_tag_str = get_str(info, "signer_tag");
+                QString wallet_template_str = get_str(info, "wallet_template");
+                QString wallet_type_str = get_str(info, "wallet_type");
+                QString signer_type_str = get_str(info, "signer_type");
+                
+                
+                nunchuk::WalletTemplate info_wallet_template = qUtils::WalletTemplateFromStr(wallet_template_str);
+
+                return (wallet_type_str.isEmpty() || qUtils::WalletTypeFromStr(wallet_type_str) == walletType) &&
+                        (address_type_str.isEmpty() || qUtils::AddressTypeFromStr(address_type_str) == addressType) &&
+                        (signer_type_str.isEmpty() || SignerTypeFromStr(signer_type_str.toStdString()) == signer->originSingleSigner().get_type()) &&
+                        (signer_tag_str.isEmpty() || SignerTagFromStr(signer_tag_str.toStdString()) == signer->signerTag()) &&
+                        (wallet_template_str.isEmpty());
+             });
+
+    return it != supported_types.end();
+}
+
+bool bridge::nunchukRevealPreimage(const QString &wallet_id, const QString &tx_id, const std::vector<uint8_t> &hash,
+    const std::vector<uint8_t> &preimage, QWarningMessage &msg) 
+{
+    return nunchukiface::instance()->RevealPreimage(wallet_id.toStdString(), tx_id.toStdString(), hash, preimage, msg);
 }

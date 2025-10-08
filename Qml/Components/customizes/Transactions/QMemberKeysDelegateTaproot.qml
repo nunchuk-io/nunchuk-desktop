@@ -459,28 +459,11 @@ Rectangle {
                                 visible: (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
                             }
                         }
-                        Rectangle {
-                            width: 76
-                            height: 16
-                            radius: 20
-                            color: {
-                                if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST) {return "#1C652D"}
-                                else if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "#FFCB2E"}
-                                else {return "#FDEBD2"}
-                            }
-                            QLato {
-                                anchors.centerIn: parent
-                                text: {
-                                    if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) {return "Round 1/2"}
-                                    else if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "Round 2/2"}
-                                    else {return "Completed"}
-                                }
-                                font.pixelSize: 12
-                                color: valueKeysetItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST ? "#FFFFFF" : "#1C1C1C"
-                                font.weight: Font.Bold
-                                horizontalAlignment: Text.AlignLeft
-                                verticalAlignment: Text.AlignVCenter
-                            }
+                        QRoundBadgeStatus {
+                            visible: valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_NONCE || 
+                                        valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                        valueKeysetItem.keyset_status == NUNCHUCKTYPE.READY_TO_BROADCAST
+                            txStatus: valueKeysetItem.keyset_status
                         }
                     }
                     QLato {

@@ -29,12 +29,29 @@ MiniscriptWallet::MiniscriptWallet(const nunchuk::Wallet &w) :
 void MiniscriptWallet::convert(const nunchuk::Wallet w) {
     SandboxWallet::convert(w);
     convertToMiniscript(w);
+    if(timelockType() == (int)nunchuk::Timelock::Type::LOCKTYPE_ABSOLUTE){
+        m_sortByCoinAge = false;
+    }
+    else {
+        m_sortByCoinAge = true;
+    }
 }
 
 void MiniscriptWallet::convertToMiniscript(const nunchuk::Wallet &w) {
     std::string tmpl = w.get_miniscript();
     if (tmpl.empty())
-        return;    
+        return;
+    nunchuk::MiniscriptTimeline timeline(tmpl);
+    setTimeUnit(static_cast<int>(timeline.get_lock_type())); // TIME_LOCK, HEIGHT_LOCK
+    if (timeline.get_absolute_locks().size() > 0) {
+        setTimelockType(static_cast<int>(nunchuk::Timelock::Type::LOCKTYPE_ABSOLUTE));
+        setTimelocklist(timeline.get_absolute_locks());
+    }
+    else if (timeline.get_relative_locks().size() > 0) {
+        setTimelockType(static_cast<int>(nunchuk::Timelock::Type::LOCKTYPE_RELATIVE));
+        setTimelocklist(timeline.get_relative_locks());
+    }
+
     std::vector<std::string> tmp;    
     nunchuk::ScriptNode script_node = qUtils::GetScriptNode(tmpl, tmp);
     nunchuk::AddressType addressType = static_cast<nunchuk::AddressType>(walletAddressType());
@@ -88,7 +105,7 @@ bool MiniscriptWallet::enterCustomMiniscript(const QString &userInput) {
         DBG_INFO << "MiniscriptWallet::enterCustomMiniscript: ERROR:" << error;
         return false; // Invalid input
     }
-    setCustomizeMiniscript(QString::fromStdString(tmpl));
+    reformatMiniscript(QString::fromStdString(tmpl));
     return true;
 }
 
@@ -114,10 +131,16 @@ bool MiniscriptWallet::miniscriptTemplateSelected(const QString &userSelect) {
     } else if (userSelect == "flexible-multisig") {
         nunchuk::Timelock flexible_time(timelock_based, timelock_type, timeMiniValue());
         tmpl = qUtils::FlexibleMultisigMiniscriptTemplate(m, n, new_m, new_n, reuse_signers, flexible_time, address_type, msg);
+    } else if (userSelect == "zen-hodl") {
+        nunchuk::Timelock zen_hodl_time(timelock_based, timelock_type, timeMiniValue());
+        tmpl = qUtils::ZenHodlMiniscriptTemplate(m, n, zen_hodl_time, address_type, msg);
+    } else {
+        DBG_INFO << "MiniscriptWallet::miniscriptTemplateSelected: ERROR: unknown template type";
+        return false; // Invalid input
     }
     
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        setCustomizeMiniscript(QString::fromStdString(tmpl));
+        reformatMiniscript(QString::fromStdString(tmpl));
         return true;
     } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
@@ -158,6 +181,12 @@ void MiniscriptWallet::setReUseKeys(bool reUse) {
     }
 }
 
+QString MiniscriptWallet::scriptTemplate() {
+    QString tmpInput = m_customizeMiniscript;
+    tmpInput.remove(QRegExp("[\\s]")); //\\n\\r
+    return tmpInput;
+}
+
 QString MiniscriptWallet::customizeMiniscript() {
     return m_customizeMiniscript;
 }
@@ -166,6 +195,13 @@ void MiniscriptWallet::setCustomizeMiniscript(const QString &miniscript) {
     if (m_customizeMiniscript != miniscript) {
         m_customizeMiniscript = miniscript;
         DBG_INFO << m_customizeMiniscript;
+        emit customizeMiniscriptChanged();
+    }
+}
+
+void MiniscriptWallet::reformatMiniscript(const QString &miniscript) {
+    if (m_customizeMiniscript != miniscript) {
+        m_customizeMiniscript = qUtils::formatMiniscript(miniscript);
         emit customizeMiniscriptChanged();
     }
 }
@@ -200,13 +236,17 @@ QVariantList MiniscriptWallet::treeMiniscript() const {
     return m_treeMiniscript.toVariantList();
 }
 
+QJsonArray MiniscriptWallet::treeMiniscriptJs() const {
+    return m_treeMiniscript;
+}
+
 void MiniscriptWallet::setTreeMiniscript(const QJsonArray &tree) {
-    m_treeMiniscript = tree;
+    m_treeMiniscript = tree;    
     emit treeMiniscriptChanged();
 }
 
-uint MiniscriptWallet::timeMiniValue() const {
-    uint value = 0;
+quint64 MiniscriptWallet::timeMiniValue() const {
+    quint64 value = 0;
     nunchuk::Timelock::Type timelock_type = static_cast<nunchuk::Timelock::Type>(timelockType());
     nunchuk::Timelock::Based timelock_based = static_cast<nunchuk::Timelock::Based>(timeUnit());
     if (timelock_type == nunchuk::Timelock::Type::LOCKTYPE_ABSOLUTE && timelock_based == nunchuk::Timelock::Based::TIME_LOCK) {
@@ -221,7 +261,7 @@ uint MiniscriptWallet::timeMiniValue() const {
         value =  epochsecs; //qUtils::GetTimeSecond(tmp);
     }
     else if (timelock_type == nunchuk::Timelock::Type::LOCKTYPE_ABSOLUTE && timelock_based == nunchuk::Timelock::Based::HEIGHT_LOCK) {
-        value = m_timeMiniData["absoluteBlockheight"].toUInt();
+        value = m_timeMiniData["absoluteBlockheight"].toULongLong();
     }
     else if (timelock_type == nunchuk::Timelock::Type::LOCKTYPE_RELATIVE && timelock_based == nunchuk::Timelock::Based::TIME_LOCK) {
         int day = m_timeMiniData["relativeTimestamp"].toMap().value("valueDay").toInt();
@@ -231,7 +271,7 @@ uint MiniscriptWallet::timeMiniValue() const {
         value = (day * 24 * 3600) + (hour * 3600) + (minute * 60);
     }
     else if (timelock_type == nunchuk::Timelock::Type::LOCKTYPE_RELATIVE && timelock_based == nunchuk::Timelock::Based::HEIGHT_LOCK) {
-        value = m_timeMiniData["relativeBlockheight"].toUInt();
+        value = m_timeMiniData["relativeBlockheight"].toULongLong();
     }
 
     DBG_INFO << "timelock_type:" << (int)timelock_type
@@ -298,7 +338,7 @@ QJsonObject MiniscriptWallet::getKeyDetails(const QJsonObject &oldKey, const QSt
         keyDetails = parseSignerString(oldKey, key, QString::fromStdString(keyStr));
     } else {
         keyDetails = parseSignerString(oldKey, key, key);
-    }    
+    }
     return keyDetails;
 }
 
@@ -313,28 +353,28 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
     firstLineObj["enable"] = true; // Default to true
     firstLineObj["type"] = static_cast<int>(node.get_type());
     firstLineObj["typeString"] = QString::fromStdString(nunchuk::ScriptNode::type_to_string(node.get_type()));
-    firstLineObj["m"] = static_cast<int>(node.get_k());
+    firstLineObj["m"] = 0;
     if (node.get_type() == nunchuk::ScriptNode::Type::MULTI ||
         node.get_type() == nunchuk::ScriptNode::Type::MUSIG){
+        firstLineObj["m"] = static_cast<int>(node.get_k());
         firstLineObj["n"] = static_cast<int>(node.get_keys().size());
     }
     else if (node.get_type() == nunchuk::ScriptNode::Type::THRESH) {
-        int totalPK = 0;
-        for (const auto &sub : node.get_subs()) {
-            if (sub.get_type() == nunchuk::ScriptNode::Type::PK) {
-                totalPK++;
-            }
-        }
-        firstLineObj["n"] = totalPK;
+        firstLineObj["m"] = static_cast<int>(node.get_k());
+        firstLineObj["n"] = static_cast<int>(node.get_subs().size());
     }
-    if (node.get_type() == nunchuk::ScriptNode::Type::PK) {
+    
+    switch (node.get_type()) {
+    case nunchuk::ScriptNode::Type::PK: {
         QJsonObject keyLineObj = firstLineObj;
         auto key = QString::fromStdString(node.get_keys()[0]);
         keyLineObj = getKeyDetails(keyLineObj, key);
         keyLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(keyLineObj);
-    } else if (node.get_type() == nunchuk::ScriptNode::Type::MULTI ||
-                node.get_type() == nunchuk::ScriptNode::Type::MUSIG) {
+        break;
+    } 
+    case nunchuk::ScriptNode::Type::MULTI:
+    case nunchuk::ScriptNode::Type::MUSIG: {
         firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(firstLineObj);
         QList<int> tmpLevels = levels;
@@ -355,7 +395,9 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
             keyLineObj["isLast"] = i == (node.get_keys().size() - 1);
             treeLines.append(keyLineObj);
         }
-    } else if (node.get_type() == nunchuk::ScriptNode::Type::AFTER) {
+        break;
+    } 
+    case nunchuk::ScriptNode::Type::AFTER: {
         nunchuk::Timelock timelock = nunchuk::Timelock::FromK(true, node.get_k());
         nunchuk::Timelock::Based lockType = timelock.based();
         firstLineObj["lockType"] = static_cast<int>(lockType);
@@ -407,7 +449,9 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
         }
         firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(firstLineObj);
-    } else if (node.get_type() == nunchuk::ScriptNode::Type::OLDER) {
+        break;
+    } 
+    case nunchuk::ScriptNode::Type::OLDER: {
         nunchuk::Timelock timelock = nunchuk::Timelock::FromK(false, node.get_k());
         nunchuk::Timelock::Based lockType = timelock.based();
         firstLineObj["lockType"] = static_cast<int>(lockType);
@@ -451,9 +495,22 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
         }
         firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(firstLineObj);
-    } else {
+        break;
+    } 
+    case nunchuk::ScriptNode::Type::HASH160:
+    case nunchuk::ScriptNode::Type::HASH256:
+    case nunchuk::ScriptNode::Type::RIPEMD160:
+    case nunchuk::ScriptNode::Type::SHA256: {
+        std::vector<uint8_t> hash = node.get_data();
+        firstLineObj["hashData"] = qUtils::BytesToHex(hash);
+        treeLines.append(firstLineObj);
+        break;
+    } 
+    default: {
         firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(firstLineObj);
+        break;
+    }
     }
 
     QList<int> tmpLevels = levels;
@@ -495,13 +552,41 @@ QVariantList MiniscriptWallet::keypaths() const {
     return m_keypaths.toVariantList();
 }
 
+QJsonArray MiniscriptWallet::keypathsJs() const {
+    return m_keypaths;
+}
+
 QJsonArray MiniscriptWallet::createKeypaths(const QStringList &keypaths) {
     QJsonArray _keypaths = {};
-    for (const auto &key : keypaths) {
-        QJsonObject keyObj = getKeyDetails(QJsonObject(), key);
-        keyObj["firstLine"] = "";
-        _keypaths.append(keyObj);
-    }
+    if (keypaths.size() == 1) {
+        for (const auto &key : keypaths) {
+            QJsonObject keyObj = getKeyDetails(QJsonObject(), key);
+            keyObj["firstLine"] = "";
+            _keypaths.append(keyObj);
+        }
+    } else {
+        QString firstLine = "";
+        QJsonObject firstLineObj;
+        QList<int> levels = {};
+        firstLineObj["firstLine"] = QString("1."); // must have first line
+        firstLineObj["enable"] = true; // Default to true
+        firstLineObj["type"] = static_cast<int>(nunchuk::ScriptNode::Type::MUSIG);
+        firstLineObj["typeString"] = QString::fromStdString(nunchuk::ScriptNode::type_to_string(nunchuk::ScriptNode::Type::MUSIG));
+        firstLineObj["m"] = keypaths.size();
+        firstLineObj["n"] = keypaths.size();
+        firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
+        firstLineObj["isLast"] = false;
+        _keypaths.append(firstLineObj);
+        for(int i = 0; i < keypaths.size(); i++) {
+            QString key = keypaths[i];
+            QJsonObject keyLineObj = getKeyDetails(firstLineObj, key);
+            levels = {1};
+            keyLineObj["firstLine"] = QString("1.%1.").arg(i + 1);
+            keyLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
+            keyLineObj["isLast"] = i == (keypaths.size() - 1);
+            _keypaths.append(keyLineObj);
+        }
+    }    
     return _keypaths;
 }
 
@@ -533,11 +618,10 @@ void MiniscriptWallet::setKeySelected(const QString &key) {
 bool MiniscriptWallet::enoughSigners() const {
     QMap<QString, int> keyMapAdded = {};
     auto createMap = [] (const QJsonArray &tree, QMap<QString, int> &map) {
-        DBG_INFO << tree;
         for (auto js : tree) {
-            QJsonObject node = js.toObject();
-            QString key = node.value("key").toString();
-            int countSameKey = node.value("keyStrCount").toInt();
+            QJsonObject jo = js.toObject();
+            QString key = jo.value("key").toString();
+            int countSameKey = jo.value("keyStrCount").toInt();
             if (key.isEmpty() == false) {
                 map.insert(key, countSameKey);
             }
@@ -546,14 +630,13 @@ bool MiniscriptWallet::enoughSigners() const {
     createMap(m_keypaths, keyMapAdded);
     createMap(m_treeMiniscript, keyMapAdded);
     auto keys = keyMapAdded.keys();
-    bool notSameKey = true;
+    bool allKeyOK = true;
     for (auto it = keyMapAdded.constBegin(); it != keyMapAdded.constEnd(); ++it) {
-        if (it.value() > 1) {
-            notSameKey = false;
+        if (it.value() != 1) {
+            allKeyOK = false;
         }
     }
-    bool enoughKeys = keys.size() == m_signersMiniscript.size();
-    return notSameKey && enoughKeys;
+    return allKeyOK;
 }
 
 bool MiniscriptWallet::AddMasterToWallet() {
@@ -583,13 +666,14 @@ bool MiniscriptWallet::AddRemoteToWallet() {
 }
 
 bool MiniscriptWallet::AddSignerToWallet(const QSingleSignerPtr &signerPtr) {
-    if(signerPtr.isNull()) {
+    if (signerPtr.isNull()) {
         return false;
     }
-    QtConcurrent::run([signerPtr, this]() {
+    QtConcurrent::run([this, signerPtr]() {
         updateSignersMiniscript(keySelected(), signerPtr);
         auto signer = signerPtr->originSingleSigner();
         auto listKey = keySameList(keySelected());
+        setNeedCheckDuplicate(true);
         for (const auto &k : listKey) {
             if (k != keySelected()) {
                 auto path = QString::fromStdString(signer.get_derivation_path());
@@ -598,22 +682,25 @@ bool MiniscriptWallet::AddSignerToWallet(const QSingleSignerPtr &signerPtr) {
                 auto new_path = qUtils::incrementZeroIndex(path);
                 QWarningMessage msgTmp;
                 nunchuk::SingleSigner signer_tmp = bridge::GetSignerFromMasterSigner(master_id, new_path, msgTmp);
-                updateSignersMiniscript(k, QSingleSignerPtr(new QSingleSigner(signer_tmp)));
+                if (msgTmp.type() == (int)EWARNING::WarningType::NONE_MSG) {
+                    signer = signer_tmp;
+                    updateSignersMiniscript(k, QSingleSignerPtr(new QSingleSigner(signer_tmp)));
+                } else {
+                    DBG_ERROR << "Failed to derive new signer for key:" << k << " Error:" << msgTmp.what();
+                }
             }
-        }
-        setNeedCheckDuplicate(true);
-    });
+        }        
+    });   
     return true;
 }
 
 void MiniscriptWallet::registerSigners() {
     auto masterFunc = []() -> bool {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-            bool ret = w->AddMasterToWallet();
+            w->AddMasterToWallet();
             w->configureWallet();
             w->setScreenFlow("setup-mini-script");
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST);
-            return ret;
         }
         return true;
     };
@@ -625,48 +712,17 @@ void MiniscriptWallet::registerSigners() {
     QSignerManagement::instance()->registerCreateSoftwareSignerXprv(masterFunc);
     QSignerManagement::instance()->registerCreateRemoteSigner([]() -> bool {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-            bool ret = w->AddRemoteToWallet();
+            w->AddRemoteToWallet();
             w->configureWallet();
             w->setScreenFlow("setup-mini-script");
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST);
-            return ret;
         }
         return true;
     });
 }
 
 void MiniscriptWallet::makeExistingSigners() {
-    std::set<nunchuk::SignerType> support_signers{};
-    nunchuk::AddressType address_type = static_cast<nunchuk::AddressType>(walletAddressType());
-    if (address_type == nunchuk::AddressType::TAPROOT) {
-        support_signers = qUtils::GetSupportedTaprootTypes({nunchuk::AddressType::TAPROOT}, {}, {}, {nunchuk::WalletType::MULTI_SIG});
-    }
-    const auto available_signers = dynamic_cast<Wallet *>(this)->CreateSupportedSigners(support_signers);
-    if (!available_signers) {
-        DBG_ERROR << "No available signers found.";
-        return;
-    }
-    QJsonArray arrays;
-    for (auto support : available_signers->fullList()) {
-        QJsonObject signer = QJsonValue::fromVariant(SingleSignerListModel::useQml(support)).toObject();
-        signer["single_signer_enabled"] = true;
-        arrays.append(signer);
-    }
-    if (address_type == nunchuk::AddressType::TAPROOT) {
-        std::set<nunchuk::SignerType> unsupport_signers =
-            qUtils::GetUnSupportedTaprootTypes({nunchuk::AddressType::TAPROOT}, {}, {}, {nunchuk::WalletType::MULTI_SIG});
-        const auto unavailable_signers = dynamic_cast<Wallet *>(this)->CreateSupportedSigners(unsupport_signers);
-        if (!unavailable_signers) {
-            DBG_ERROR << "No available signers found.";
-            return;
-        }
-        for (auto unsupport : unavailable_signers->fullList()) {
-            QJsonObject signer = QJsonValue::fromVariant(SingleSignerListModel::useQml(unsupport)).toObject();
-            signer["single_signer_enabled"] = false;
-            arrays.append(signer);
-        }
-    }
-
+    QJsonArray arrays = bridge::makeExistingSigners(static_cast<nunchuk::AddressType>(walletAddressType()), nunchuk::WalletType::MINISCRIPT);
     setSignerExistList(arrays.toVariantList());
     dynamic_cast<Wallet *>(this)->CreateAssignAvailableSigners();
 }
@@ -754,6 +810,71 @@ void MiniscriptWallet::setNeedCheckDuplicate(bool needCheck) {
     m_needCheckDuplicate = needCheck;
 }
 
+QVariantList MiniscriptWallet::timelocklist()
+{
+    return m_timelocklist;
+}
+
+void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks)
+{
+    QVariantList ret;
+    bool anyLocked = false;
+
+    for (int i = 0; i < (int)timelocks.size(); ++i) {
+        int64_t val = timelocks[i];
+        QVariantMap obj;
+        QString valueNodeStr;
+        QString valueRemainingStr;
+        bool isLocked = false;
+
+        if (timeUnit() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
+            QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
+            valueNodeStr = dt.toString("MM/dd/yyyy");
+            QDate dateNode = dt.date();
+            QDate today = QDateTime::currentDateTimeUtc().date();
+            int days = today.daysTo(dateNode);
+            if (days > 0) {
+                valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
+                isLocked = true;
+            } else {
+                valueRemainingStr = "";
+            }
+        } else {
+            QLocale locale(QLocale::English);
+            int64_t currentHeight = AppModel::instance()->blockHeight();
+            int64_t remain = val - currentHeight;
+            valueNodeStr = locale.toString(val);
+            if (val > currentHeight) {
+                QString remainStr = locale.toString(remain);
+                valueRemainingStr = remainStr + (remain == 1 ? " block left" : " blocks left");
+                isLocked = true;
+            } else {
+                valueRemainingStr = "";
+            }
+        }
+
+        if (isLocked) anyLocked = true;
+
+        obj["valueNode"] = valueNodeStr;
+        obj["valueIndex"] = i;
+        obj["valueRemaining"] = valueRemainingStr;
+        obj["valueLocked"] = isLocked;
+        ret << obj;
+    }
+
+    if (ret.size() == 1) {
+        QVariantMap emptyObj;
+        emptyObj["valueNode"] = "";
+        emptyObj["valueIndex"] = ret.size();
+        emptyObj["valueLocked"] = anyLocked;
+        emptyObj["valueRemaining"] = anyLocked ? "" : "Unlocked";
+        ret << emptyObj;
+    }
+    setTimeLocked(anyLocked);
+    m_timelocklist = ret;
+    emit timelocklistChanged();
+}
+
 QString MiniscriptWallet::miniscript() const
 {
     return QString::fromStdString(nunchukWallet().get_miniscript());
@@ -822,7 +943,7 @@ void MiniscriptWallet::updateTimeMiniscript(const QString &key, const QVariant &
         m_timeMiniData[key] = relative_data;
     }
     else {
-        m_timeMiniData[key] = value;
+        m_timeMiniData[key] = QString::number(value.toULongLong());
     }
     emit timeMiniChanged();
 }
@@ -834,10 +955,11 @@ void MiniscriptWallet::updateTimeMiniscript(const QMap<QString, QVariant> &dataM
     emit timeMiniChanged();
 }
 
-void MiniscriptWallet::clearTimeMiniscript() {
+void MiniscriptWallet::clearTimeMiniscript(const QString &userInput) {
     m_timeMiniData.clear();
     QTime time(0, 0);
-    QDateTime datetime(QDate::currentDate().addDays(30), time, Qt::LocalTime);
+    int days = userInput == "zen-hodl" ? 90 : 30;
+    QDateTime datetime(QDate::currentDate().addDays(days), time, Qt::LocalTime);
     QVariantMap absolute_time_data;
     absolute_time_data["valueDisplay"] = datetime.toString("MM/dd/yyyy");
     absolute_time_data["valueDate"] = datetime.toString("MM/dd/yyyy");
@@ -860,7 +982,7 @@ void MiniscriptWallet::clearTimeMiniscript() {
 bool MiniscriptWallet::configureWallet(const QString &script_tmpl) {
     std::string tmpl = script_tmpl.toStdString();
     if (tmpl.empty()) {
-        tmpl = m_customizeMiniscript.toStdString();
+        tmpl = scriptTemplate().toStdString();
     }
     std::vector<std::string> keypaths;
     nunchuk::ScriptNode script_node = qUtils::GetScriptNode(tmpl, keypaths);
@@ -888,18 +1010,19 @@ bool MiniscriptWallet::configureWallet(const QString &script_tmpl) {
     QList<int> levels {};
     QJsonArray scriptPaths = createTreeMiniscript(script_node, levels);
     auto duplicateKeys = getKeyStrCount(scriptPaths, keyPaths);
+
     QJsonArray sPathRefresh = scriptPathRefresh(scriptPaths, duplicateKeys);
     QJsonArray kPathsRefresh = keyPathRefresh(keyPaths, duplicateKeys);
     setKeypaths(kPathsRefresh);
     setTreeMiniscript(sPathRefresh);
-    checkDuplicateKey(duplicateKeys);   
+    checkDuplicateKey();   
     return !scriptPaths.isEmpty();
 }
 
 bool MiniscriptWallet::importMiniscriptFile(const QString &filePath) {
     QString path = qUtils::QGetFilePath(filePath);
     QString fileContent = qUtils::ImportDataViaFile(path);
-    setCustomizeMiniscript(fileContent);
+    reformatMiniscript(fileContent);
     return true;
 }
 
@@ -976,28 +1099,17 @@ void MiniscriptWallet::requestAddExistKey(const QString &xfp) {
         DBG_ERROR << "No signer found with fingerprint:" << xfp;
         return;
     }
-
-    QSingleSignerPtr signer = NULL;
     QWarningMessage msg;
-    if (key->signerType() == (int)nunchuk::SignerType::NFC) {
-        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(key->masterSignerId(), ENUNCHUCK::WalletType::MINISCRIPT,
-                                                                 static_cast<ENUNCHUCK::AddressType>(walletAddressType()), msg);
-    } else {
-        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(key->masterSignerId(), ENUNCHUCK::WalletType::MINISCRIPT,
-                                                                static_cast<ENUNCHUCK::AddressType>(walletAddressType()), msg);
-    }
-    if (signer.isNull()) {
-        signer = key;
-    }
+    QSingleSignerPtr signer = bridge::nunchukGetAvailableSignerFromSingleSigner(key, ENUNCHUCK::WalletType::MINISCRIPT, static_cast<ENUNCHUCK::AddressType>(walletAddressType()), msg);
+    
     if(nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()){
         emit needTopUpXpub();
         return;
     }
     if (!signer.isNull() && (int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        updateSignersMiniscript(keySelected(), signer);
-        setNeedCheckDuplicate(true);
+        AddSignerToWallet(signer);
         configureWallet();
-        setScreenFlow("setup-mini-script");
+        setScreenFlow("setup-mini-script");       
     } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
@@ -1008,7 +1120,11 @@ void MiniscriptWallet::requestChangeWalletTypeToTaproot() {
     AppModel::instance()->showToast(0, "Address type changed to Taproot", EWARNING::WarningType::SUCCESS_MSG);
 }
 
-bool MiniscriptWallet::editBIP32Path(const QString &key, const QString &master_id, const QString &path) {
+bool MiniscriptWallet::editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path) {
+    auto maps = singleData.toMap();
+    auto customMaps = customData.toMap();
+    QString master_id = maps.value("singleSigner_masterSignerId").toString();
+    QString key = customMaps.value("key").toString();
     DBG_INFO << "key: " << key << "master_id: " << master_id << "path: " << path;
     if (!qUtils::QIsValidDerivationPath(path)) {
         emit editBIP32PathSuccess(-1); // Invalid format
@@ -1040,7 +1156,6 @@ bool MiniscriptWallet::editBIP32Path(const QString &key, const QString &master_i
             if (data.errorType == 1) {
                 auto s = QSingleSignerPtr(new QSingleSigner(data.signer));
                 safeThis->updateSignersMiniscript(safeThis->keySelected(), s);
-                safeThis->setNeedCheckDuplicate(true);
                 safeThis->configureWallet();
             }
             emit ptrLamda->editBIP32PathSuccess(data.errorType); // -2 Not Found Key
@@ -1051,6 +1166,7 @@ bool MiniscriptWallet::editBIP32Path(const QString &key, const QString &master_i
 
 QMap<QString, int> MiniscriptWallet::getKeyStrCount(const QJsonArray &scriptPaths, const QJsonArray &keyPaths) {
     QMap<QString, QString> keyMap;
+    keyMap.clear();
     QMap<QString, int> duplicateCheck;
     auto createKeyMap = [](const QJsonArray &tree, QMap<QString, QString> &keyMap) {
         for (const auto &js : tree) {
@@ -1103,56 +1219,52 @@ QJsonArray MiniscriptWallet::keyPathRefresh(const QJsonArray &tree, const QMap<Q
     return keyPathRefresh;
 }
 
-void MiniscriptWallet::checkDuplicateKey(const QMap<QString, int> &duplicateCheck) {
-    if (!needCheckDuplicate() || duplicateCheck.isEmpty()) {
+void MiniscriptWallet::checkDuplicateKey() {
+    if (!needCheckDuplicate()) {
         return;
     }
     setNeedCheckDuplicate(false);
-    timeoutHandler(200, [duplicateCheck, this] {
-        auto findKey = [this](const QJsonArray &tree, const QString &keyStr) -> QString {
-            QString keyRet {};
+    timeoutHandler(200, [this] {
+        auto findKey = [this](const QJsonArray &tree) -> QJsonObject {
             for (const auto &js : tree) {
                 QJsonObject jo = js.toObject();
-                if (qUtils::strCompare(jo.value("keyStr").toString(), keyStr)) {
-                    auto key = jo.value("key").toString();
-                    if (key == this->keySelected()) {
-                        keyRet = key;
-                    }
+                auto key = jo.value("key").toString();
+                if (key == this->keySelected()) {
+                    return jo;
                 }
             }
-            return keyRet;
+            return {};
         };
 
-        auto alertWarn = [&,this](const QString &itKey, int itValue) -> bool {
-            QString key;
-            nunchuk::SingleSigner signer;
-            if (itValue > 1) {
-                key = findKey(this->m_treeMiniscript, itKey);
-                if (key.isEmpty()) {
-                    key = findKey(this->m_keypaths, itKey);
-                }
-                if (key.isEmpty()) {
-                    DBG_ERROR << "MiniscriptWallet::checkDuplicateKey: Key not found for:" << itKey;
-                    return false; // Key not found, skip
-                }
-                QWarningMessage msg;
-                signer = qUtils::ParseSignerString(itKey, msg);            
-                auto p = this->m_signersMiniscript.value(key);
-                if (p != nullptr) {
-                    auto keyObj = SingleSignerListModel::useQml(p);
-                    emit this->duplicateKeyError(key, QString::fromStdString(signer.get_master_fingerprint()), QString::fromStdString(signer.get_derivation_path()), keyObj);
-                    return true;
-                }
-            }
-            return false;
-        };
-        for (auto it = duplicateCheck.constBegin(); it != duplicateCheck.constEnd(); ++it) {
-            bool ret = alertWarn(it.key(), it.value());
-            if (ret) {
-                return; // Skip loop if duplicate found
+        auto keyFound = findKey(this->m_treeMiniscript);
+        if (keyFound.isEmpty()) {
+            keyFound = findKey(this->m_keypaths);
+        }
+        DBG_INFO << "checkDuplicateKey keyFound:" << keyFound;
+        if (!keyFound.isEmpty()) {
+            int keyStrCount = keyFound.value("keyStrCount").toInt();
+            auto keyObj = keyFound.value("keyObj").toObject();
+            if (keyStrCount > 1) {
+                if (groupSandboxPtr()) {
+                    emit groupSandboxPtr()->duplicateKeyError(keyObj, keyFound);
+                } 
+                emit this->duplicateKeyError(keyObj, keyFound);                
             }
         }
     });
+}
+
+bool MiniscriptWallet::timeLocked() const
+{
+    return m_timeLocked;
+}
+
+void MiniscriptWallet::setTimeLocked(bool newTimeLocked)
+{
+    if (m_timeLocked == newTimeLocked)
+        return;
+    m_timeLocked = newTimeLocked;
+    emit timeLockedChanged();
 }
 
 QList<QByteArray> QWalletTimezoneModel::m_timezones;

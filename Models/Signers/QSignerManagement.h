@@ -39,6 +39,9 @@ public:
                                      const QString &xprv,
                                      bool replace = false);
 
+    void registerCreateTopUpXpub(Execute func);
+    bool finishCreateTopUpXpub();
+
 public slots:
     void requestCreateSignerFromHomeScreen();
     void requestCreateSignerFromReplaceScreen();
@@ -49,6 +52,7 @@ private:
     Execute m_executeRemote {nullptr};
     Execute m_executeSoftware {nullptr};
     Execute m_executeSoftXprv {nullptr};
+    Execute m_executeTopUpXpub {nullptr};
 };
 
 #endif // QSIGNERMANAGEMENT_H

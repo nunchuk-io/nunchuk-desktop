@@ -66,6 +66,7 @@ public:
     QList<QObject *> getQmlObj() const;
     bool closeAllPopup();
     QObject *getCurrentScreen() const;
+    void closeStateScreen(uint screenId);
 private:
     static bool                                         m_register;
     static QHash<uint, const APPLICATION_STATE*>        m_stateRegisted;

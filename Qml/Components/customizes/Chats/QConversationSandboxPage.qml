@@ -22,6 +22,7 @@ import QtQuick.Controls 2.3
 import QtQuick.Controls.Styles 1.4
 import QtGraphicalEffects 1.12
 import DataPool 1.0
+import NUNCHUCKTYPE 1.0
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
@@ -43,6 +44,15 @@ Rectangle {
         source: contentItem
     }
     property var sandboxWalletInfo: AppModel.groupWalletList.currentWallet
+
+    function getWalletTypeDes() {
+        if (sandboxWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+            return STR.STR_QML_1801
+        } else {
+            return (sandboxWalletInfo.walletN === 1) ? STR.STR_QML_070 : 
+                            qsTr("%1/%2 %3").arg(sandboxWalletInfo.walletM).arg(sandboxWalletInfo.walletN).arg(STR.STR_QML_069)
+        }
+    }
     Column {
         anchors.fill: parent
         Item {
@@ -158,7 +168,7 @@ Rectangle {
 
                         QLato {
                             width: paintedHeight
-                            text: qsTr("%1/%2 %3").arg(sandboxWalletInfo.walletM).arg(sandboxWalletInfo.walletN).arg(STR.STR_QML_069);
+                            text: getWalletTypeDes()
                             font.pixelSize: 12
                             font.weight: Font.Normal
                             color: "#757575"

@@ -89,18 +89,16 @@ QKeyComponentTransaction {
     }
     Component {
         id: requiredSignature
-        Item {
-            QTextButton {
-                width: label.width + 36
-                height: 36
-                label.text: (miniscript.keysetStatus === NUNCHUCKTYPE.PENDING_NONCE) ? "Commit" : STR.STR_QML_509
-                label.font.pixelSize: 12
-                label.font.family: "Lato"
-                type: eTypeE
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                onButtonClicked: { signRequest() }
-            }
+        QTextButton {
+            width: label.width + 36
+            height: 36
+            label.text: (miniscript.keysetStatus === NUNCHUCKTYPE.PENDING_NONCE) ? "Commit" : STR.STR_QML_509
+            label.font.pixelSize: 12
+            label.font.family: "Lato"
+            type: eTypeE
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right: parent.right
+            onButtonClicked: { signRequest() }
         }
     }
     Component {

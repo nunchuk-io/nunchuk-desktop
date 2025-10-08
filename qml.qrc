@@ -262,6 +262,7 @@
         <file>Qml/Components/customizes/Popups/QPopup.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoTwoButtons.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupInfoThreeButtons.qml</file>
+        <file>Qml/Components/customizes/Popups/QPopupEnterPreimageInHex.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QAccessingWalletConfiguration.qml</file>
         <file>Qml/Screens/OnlineMode/ServerKeys/QPlatformKeyPolicyChange.qml</file>
         <file>Qml/Screens/OnlineMode/ServerKeys/QSignaturesRequired.qml</file>
@@ -564,6 +565,8 @@
         <file>Qml/Components/customizes/Wallets/QSetupPersonalWallet.qml</file>
         <file>Qml/Components/customizes/Wallets/QSetupPersonalWalletFlow.qml</file>
         <file>Qml/Components/customizes/Wallets/QSetupGroupWallet.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupEditBIP32PathFlow.qml</file>
+        <file>Qml/Components/customizes/Wallets/QSetupTopUpXpubFlow.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupWalletInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupWalletArea.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupWalletKeys.qml</file>
@@ -663,19 +666,25 @@
         <file>Qml/Components/customizes/Transactions/miniscript/QMiniscriptPolicesTransactionDelegate.qml</file>
         <file>Qml/Components/customizes/Transactions/miniscript/QScriptPathTransactionDelegate.qml</file>
         <file>Qml/Components/customizes/Transactions/QNewTransactionChooseSigningPolicy.qml</file>
+        <file>Qml/Components/customizes/Transactions/QNewTransactionChooseSigningPathSeven.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QMiniscriptPolicesCheckBoxDelegate.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QScriptPathChooseSigningPath.qml</file>
         <file>Qml/Components/customizes/Transactions/QMemberKeysAreaMiniscript.qml</file>
         <file>Qml/Components/customizes/Transactions/miniscript/QKeyComponentTransactionSign.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QCommonComponentTransaction.qml</file>        
         <file>Qml/Components/customizes/Transactions/miniscript/QMiniscriptPolicesTransactionSignDelegate.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupTimezone.qml</file>
         <file>Qml/Components/customizes/Popups/QTimePicker.qml</file>
         <file>Qml/Components/customizes/Wallets/QPopupTaprootWarningAndInfo.qml</file>
         <file>Qml/Components/customizes/Wallets/QPopupMiniscriptTemplateSwitch.qml</file>
         <file>Qml/Components/origins/QScreenStateFlow.qml</file>
+        <file>Qml/Screens/OnlineMode/Coins/QCoinAge.qml</file>
+        <file>Qml/Components/customizes/Transactions/QRoundBadgeStatus.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>
         <file>Images/services-light.svg</file>
-        <file>Images/Trash.svg</file>        
+        <file>Images/Trash.svg</file>
         <file>Images/Close.png</file>
         <file>Images/check_circle_outline_24px.png</file>
         <file>Images/error_outline_24px.png</file>
@@ -1047,6 +1056,10 @@
         <file>Images/Timer.svg</file>
         <file>Images/CurrencyBtc.svg</file>
         <file>Images/clockEdit.svg</file>
+        <file>Images/CaretRight.svg</file>
+        <file>Images/CaretRightGray.svg</file>
+        <file>Images/Article.svg</file>
+        <file>Images/zen-hodl.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

@@ -52,7 +52,9 @@ void EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST_HANDLER(QVariant msg)
             //Not use for dummy tx
         }
         else if (type == "scan-device") {
-            AppModel::instance()->startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
+            QMap<QString,QVariant> data;
+            data["state_id"] = E::STATE_ID_SCR_TRANSACTION_INFO;
+            AppModel::instance()->startScanDevices(QVariant::fromValue(data));
         }
         else if (type == "dummy-tx-sign") {
             QtConcurrent::run([maps, w]() {

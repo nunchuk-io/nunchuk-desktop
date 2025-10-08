@@ -45,6 +45,7 @@ Loader {
         {screen: "flexible-multisig",         screen_component: flexible_multisig},
         {screen: "expanding-multisig",        screen_component: expanding_multisig},
         {screen: "decaying-multisig",         screen_component: decaying_multisig},
+        {screen: "zen-hodl",                  screen_component: zen_hodl},
         {screen: "enter-mini-script",         screen_component: enter_mini_script},
         {screen: "setup-mini-script",         screen_component: setup_mini_script},
         {screen: "review-wallet-miniscript",  screen_component: review_wallet_miniscript},
@@ -78,6 +79,7 @@ Loader {
             onPrevClicked: QMLHandle.sendEvent(EVT.EVT_ADD_WALLET_SIGNER_CONFIGURATION_BACK)
 
             onSelectMiniscriptTemplate: (templateName) => {
+                newWalletInfo.clearTimeMiniscript(templateName);
                 if (templateName === "expanding-multisig") {
                     newWalletInfo.walletM = 2;
                     newWalletInfo.walletN = 2;
@@ -93,7 +95,13 @@ Loader {
                     newWalletInfo.walletN = 3;
                     newWalletInfo.newWalletM = 3;
                     newWalletInfo.newWalletN = 3;
-                }                
+                } else if (templateName === "zen-hodl") {
+                    newWalletInfo.walletM = 1;
+                    newWalletInfo.walletN = 1;
+                    newWalletInfo.newWalletM = 1;
+                    newWalletInfo.newWalletN = 1;
+                }
+
                 newWalletInfo.screenFlow = templateName;
             }
             onEnterCustomMiniscript: (option) => {
@@ -133,6 +141,16 @@ Loader {
         QWalletTemplateMultisig {
             label.text: STR.STR_QML_1810
             templateMiniscript: "flexible-multisig"
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            onPrevClicked: newWalletInfo.backScreen()
+        }
+    }
+
+    Component {
+        id: zen_hodl
+        QWalletTemplateMultisig {
+            label.text: STR.STR_QML_1885
+            templateMiniscript: "zen-hodl"
             onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onPrevClicked: newWalletInfo.backScreen()
         }

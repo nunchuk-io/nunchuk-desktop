@@ -37,6 +37,7 @@ Item {
     property var existList: draftWallet.signerExistList
     property string key_name: ""
     property string fingerPrint: ""
+    property var selectedKey
 
     Column {
         spacing: 24
@@ -78,6 +79,7 @@ Item {
                     onRadioClicked: {
                         fingerPrint = modelData.singleSigner_masterFingerPrint
                         key_name = modelData.singleSigner_name
+                        selectedKey = modelData
                     }
                 }
             }

@@ -180,7 +180,6 @@ QScreen {
 
     Component {
         id: txSend
-
         QSendTransaction {
             transactionInfo: AppModel.transactionInfo
             myRole: AppModel.walletInfo.myRole
@@ -205,6 +204,12 @@ QScreen {
             }
             onKeyImportRequest: {
                 openfileDialog.open();
+            }
+            onKeyEnterPreImageInput: {
+                enterPreimage.clearText()
+                enterPreimage.hashData = hashData
+                enterPreimage.typeNode = typeNode                
+                enterPreimage.open()
             }
         }
 
@@ -655,6 +660,13 @@ QScreen {
 
         width: parent.width
         height: parent.height
+    }
+
+    QPopupEnterPreimageInHex {
+        id: enterPreimage
+        onEnterText: {
+            transactionInfo.enterPreimageInput(enterPreimage.hashData, str, enterPreimage.typeNode)
+        }
     }
 
     Connections {

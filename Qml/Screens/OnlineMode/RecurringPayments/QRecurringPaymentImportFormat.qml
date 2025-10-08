@@ -167,6 +167,7 @@ QOnScreenContentTypeA {
                             walletN: model.wallet_N
                             isLocked: model.wallet_dashboard ? model.wallet_dashboard.isLocked : false
                             visible: model.wallet_dashboard ? !model.wallet_isReplaced : false
+                            walletType: model.wallet_walletType
                             onButtonClicked: {
                                 var _input = {
                                     type: "select-import-format",

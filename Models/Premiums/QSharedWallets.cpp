@@ -108,6 +108,9 @@ nunchuk::GroupConfig QSharedWallets::config() const
 
 QString QSharedWallets::uid()
 {
+    if(m_uid.isEmpty()){
+        GetGroupDeviceUID();
+    }
     return m_uid;
 }
 

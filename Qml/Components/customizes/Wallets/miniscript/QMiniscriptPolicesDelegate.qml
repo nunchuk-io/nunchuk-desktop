@@ -39,7 +39,6 @@ Item {
     property var    miniscript
     property var    levels: miniscript.levels
     property int    level: levels.length
-    property bool   isTaproot: false
 
     enabled: miniscript.enable
     Row {
@@ -85,22 +84,22 @@ Item {
             height: parent.height
             opacity: miniscript.enable ? 1.0 : 0.4
             sourceComponent: switch(miniscript.type) {
-                case ScriptNodeHelper.Type.PK: return miniscript.key ? keyCoponent : common;
+                case ScriptNodeHelper.Type.PK: return miniscript.key ? keyCoponent : getCommon();
                 case ScriptNodeHelper.Type.OLDER:
                 case ScriptNodeHelper.Type.AFTER: return after_older;
-                case ScriptNodeHelper.Type.HASH160: return common;
-                case ScriptNodeHelper.Type.HASH256: return common;
-                case ScriptNodeHelper.Type.RIPEMD160: return common;
-                case ScriptNodeHelper.Type.SHA256: return common;
-                case ScriptNodeHelper.Type.AND: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.OR: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.ANDOR: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.THRESH: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.MULTI: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.MUSIG: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.OR_TAPROOT: return miniscript.key ? keyCoponent : common;
-                case ScriptNodeHelper.Type.NONE: return common;
-                default: return common;
+                case ScriptNodeHelper.Type.HASH160: return getCommon();
+                case ScriptNodeHelper.Type.HASH256: return getCommon();
+                case ScriptNodeHelper.Type.RIPEMD160: return getCommon();
+                case ScriptNodeHelper.Type.SHA256: return getCommon();
+                case ScriptNodeHelper.Type.AND: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.OR: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.ANDOR: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.THRESH: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.MULTI: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.MUSIG: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.OR_TAPROOT: return miniscript.key ? keyCoponent : getCommon();
+                case ScriptNodeHelper.Type.NONE: return getCommon();
+                default: return getCommon();
             } 
         }
     }
@@ -116,7 +115,7 @@ Item {
         }
     }
     function getCommonHeight() {
-        var tmpHeight = 38
+        var tmpHeight = 46
         if (miniscript.coinsGroup !== undefined && miniscript.coinsGroup !== null) {
             var heightX = ((miniscript.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE) && (miniscript.coinsGroup.signXCount > 0)) ? 24 : 0
             var heightActive = miniscript.coinsGroup.hasActiveAfter ? 24 : 0
@@ -127,7 +126,7 @@ Item {
     }
     function getHeight() {
         var tmpHeight = 0
-         switch(miniscript.type) {
+        switch(miniscript.type) {
             case ScriptNodeHelper.Type.PK: tmpHeight =  miniscript.key ? getKeyHeight() : 38 + 4; break;
             case ScriptNodeHelper.Type.OLDER: tmpHeight = 58; break;
             case ScriptNodeHelper.Type.AFTER: tmpHeight = 58; break;
@@ -218,10 +217,12 @@ Item {
             default: return ""
         }
     }
+    function getCommon() {
+        return common
+    }
     Component {
         id: common
         QCommonComponent {
-            tapscriptVisible: isTaproot
         }
     }
     Component {

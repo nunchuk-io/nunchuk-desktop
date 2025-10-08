@@ -64,19 +64,11 @@ void EVT_ADD_WALLET_TOP_UP_XPUBS_REQUEST_HANDLER(QVariant msg) {
                     int  addressType = AppModel::instance()->newWalletInfo()->walletAddressType();
 
                     warningmsg.resetWarningMessage();
-                    QSingleSignerPtr signer{nullptr};
-                    if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == signer_type) {
-                        signer = bridge::nunchukGetDefaultSignerFromMasterSigner(master_signer_id,
-                                                                                 (ENUNCHUCK::WalletType)walletType,
-                                                                                 (ENUNCHUCK::AddressType)addressType,
-                                                                                 warningmsg);
-                    }
-                    else {
-                        signer = bridge::nunchukGetUnusedSignerFromMasterSigner(master_signer_id,
-                                                                                (ENUNCHUCK::WalletType)walletType,
-                                                                                (ENUNCHUCK::AddressType)addressType,
-                                                                                warningmsg);
-                    }
+                    QSingleSignerPtr signer = bridge::nunchukGetAvailableSignerFromSingleSigner(it,
+                                                                                                (ENUNCHUCK::WalletType)walletType,
+                                                                                                (ENUNCHUCK::AddressType)addressType,
+                                                                                                warningmsg);
+                                                                                            
 
                     if(signer && warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG){
                         AppModel::instance()->newWalletInfo()->singleSignersAssigned()->replaceSingleSigner(msg.toInt(), signer);

@@ -179,7 +179,7 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
             bridge::nunchukCreateWallet(wallet_result, true, msg);
             if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
                 QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
-                AppModel::instance()->startReloadUserDb();
+                AppModel::instance()->startReloadWallets();
                 QString msg = QString("%1 has been successfully recovered").arg(walletName);
                 AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
                 return;

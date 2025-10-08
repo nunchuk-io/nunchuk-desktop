@@ -21,7 +21,8 @@ public:
     int walletType();
 
     bool enoughSigner() override;
-
+    void synchronizeSigners();
+    bool FinalizeGroup() override;
     void clearOccupied() override;
     void CreateAGroup(const QString& name, int m, int n, int addType) override;
     void UpdateGroup(const QString& name, int m, int n, int addType) override;
@@ -33,10 +34,11 @@ public slots:
     void removeKeyName(const QString &group, const QString &keyName);
     bool editBIP32Path(int index, const QString &master_id, const QString& path) override;
     bool editBIP32Path(const QString &keyName, const QString &master_id, const QString &path);
+    bool editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path);
     void requestAddOrRepaceKey(const QVariant &msg);
     int getIndexColor(const QVariant & obj);
 signals:
-    
+    void duplicateKeyError(const QVariant &singleData, const QVariant &customData);
 private:
     QString m_keyName {};
     mutable int m_walletType {-1};

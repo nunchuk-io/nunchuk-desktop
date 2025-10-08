@@ -33,7 +33,6 @@ import "../../../../../localization/STR_QML.js" as STR
 
 QMiniscriptPolicesDelegate {
     property var itemData: miniscript.keyObj
-    isTaproot: newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT
     Component {
         id: keyCoponent
         QKeyComponent {

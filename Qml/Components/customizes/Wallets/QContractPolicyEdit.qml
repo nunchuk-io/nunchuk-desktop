@@ -53,6 +53,7 @@ Rectangle {
             width: paintedWidth
             height: 20
             text: label
+            font.weight: isEditting ? Font.Bold : Font.Normal
             font.underline: true
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

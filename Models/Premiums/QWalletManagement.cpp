@@ -144,6 +144,7 @@ void QWalletManagement::GetListWallet(int mode)
                                                      signer_xpub.toStdString(),
                                                      signer_pubkey.toStdString(),
                                                      signer_derivation_path.toStdString(),
+                                                     {},
                                                      signer_xfp.toStdString(),
                                                      std::time(0));
                         bool has_signer = bridge::nunchukHasSinger(signer);
@@ -383,6 +384,7 @@ void QWalletManagement::UpdateSyncWalletFlows()
                                                  signer_xpub.toStdString(),
                                                  signer_pubkey.toStdString(),
                                                  signer_derivation_path.toStdString(),
+                                                 {},
                                                  signer_xfp.toStdString(),
                                                  std::time(0));
                     bool has_signer = bridge::nunchukHasSinger(signer);
@@ -437,6 +439,7 @@ QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no)
                                      signer_xpub.toStdString(),
                                      signer_pubkey.toStdString(),
                                      signer_derivation_path.toStdString(),
+                                     {},
                                      signer_xfp.toStdString(),
                                      std::time(0));
         bool has_signer = bridge::nunchukHasSinger(signer);

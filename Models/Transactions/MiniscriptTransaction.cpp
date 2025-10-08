@@ -11,6 +11,7 @@
 #include "Servers/Byzantine.h"
 #include "Premiums/QGroupDashboard.h"
 #include "ifaces/bridgeifaces.h"
+#include <descriptor.h>
 
 MiniscriptTransaction::MiniscriptTransaction() : BaseTransaction() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -22,7 +23,35 @@ MiniscriptTransaction::MiniscriptTransaction(const nunchuk::Transaction &tx) : B
 
 bool MiniscriptTransaction::isScriptPath() const
 {
-    return AppSetting::instance()->getTransactionUsescriptpath(txid());
+    auto tx = nunchukTransaction();
+    if (tx.get_wallet_type() == nunchuk::WalletType::MINISCRIPT) {
+        if (tx.get_address_type() == nunchuk::AddressType::NATIVE_SEGWIT) {
+            return true;
+        } else {
+            return AppSetting::instance()->getTransactionUsescriptpath(txid());
+        }
+    } else {
+        return false;
+    }
+}
+
+QJsonArray MiniscriptTransaction::walletTreeMiniscriptJs() const
+{
+    auto walletInfo = AppModel::instance()->walletInfo();
+    if (!walletInfo) {
+        DBG_ERROR << "Wallet info is not available";
+        return {};
+    }    
+    return walletInfo->treeMiniscriptJs();
+}
+
+QVariantList MiniscriptTransaction::treeMiniscript() const {
+    return m_treeMiniscript.toVariantList();
+}
+
+void MiniscriptTransaction::setTreeMiniscript(const QJsonArray &tree) {
+    m_treeMiniscript = tree;    
+    emit treeMiniscriptChanged();
 }
 
 qint64 MiniscriptTransaction::get_lock_time() const
@@ -47,7 +76,7 @@ std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount> > MiniscriptTransac
 
 void MiniscriptTransaction::setSigningPaths(const std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount> > &data) {
     m_signing_paths = data;
-    createScriptPaths();
+    createScriptPaths(data);   
 }
 
 int MiniscriptTransaction::signingPathsCount() const {
@@ -65,6 +94,7 @@ QJsonObject MiniscriptTransaction::createScriptPath(const QJsonArray &scriptTree
     }
     scriptPathObj["currencyEstimatedFee"] = qUtils::currencyLocale(signingPath.second);
     QStringList pathNodes = qUtils::SigningPathToStringList(signingPath.first);
+    DBG_INFO << "pathNodes" << pathNodes;
     for (const auto& item : scriptTree) {
         scriptNodeJson.append(processNodeJson(item, pathNodes));
     }
@@ -73,23 +103,14 @@ QJsonObject MiniscriptTransaction::createScriptPath(const QJsonArray &scriptTree
     return scriptPathObj;
 }
 
-void MiniscriptTransaction::createScriptPaths() {
-    auto walletInfo = AppModel::instance()->walletInfo();
-    if (!walletInfo) {
-        DBG_ERROR << "Wallet info is not available";
-        return; 
-    }
-    std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> signing_paths = signingPaths();
-    std::string miniscript = walletInfo->miniscript().toStdString();
-    std::vector<std::string> keypaths;
+void MiniscriptTransaction::createScriptPaths(const std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> &signing_paths) {
     if (signing_paths.empty()) {
         DBG_ERROR << "No signing paths available";
         return;
     }
     m_selectedSigningPath = signing_paths.front().first; // Default to the first signing path
-    nunchuk::ScriptNode script_node = qUtils::GetScriptNode(miniscript, keypaths);
     QList<int> levels {};
-    QJsonArray scriptNodeTemplate = walletInfo->createTreeMiniscript(script_node, levels);
+    QJsonArray scriptNodeTemplate = walletTreeMiniscriptJs();
     // loop signing_paths
     QJsonArray scriptPaths;
     for (const auto& signing_path : signing_paths) {
@@ -99,6 +120,318 @@ void MiniscriptTransaction::createScriptPaths() {
     setScriptPaths(scriptPaths.toVariantList());
 }
 
+int MiniscriptTransaction::getLevel(const QString &path) {
+    if (path.isEmpty()) return -1;
+    return path.length() / 2;
+}
+
+int MiniscriptTransaction::getMaxLevel(const QJsonArray &tree)  {
+    int maxLevel = 0;
+    for (const auto &js : tree) {
+        QJsonObject jo = js.toObject();
+        QString firstLine = jo.value("firstLine").toString();
+        maxLevel = std::max(maxLevel, getLevel(firstLine));       
+    }
+    return maxLevel;
+}
+
+QString MiniscriptTransaction::getParentPath(const QString &path) {
+    if (path.isEmpty() || path.length() < 3) return "";
+    return path.left(path.length() - 2);
+}
+
+QStringList MiniscriptTransaction::findPaths(const QJsonArray &tree, int level)  {
+    QStringList paths = {};
+    for (const auto &js : tree) {
+        QJsonObject jo = js.toObject();
+        QString firstLine = jo.value("firstLine").toString();
+        if (getLevel(firstLine) == level) {
+            paths.append(firstLine);
+        }        
+    }
+    return paths;
+}
+
+QStringList MiniscriptTransaction::findPathsOfParentChecked(const QSet<QString> &checkedList, const QString &parentPath) {
+    QStringList paths = {};
+    for (const auto &path : checkedList) {
+        QString pPath = getParentPath(path);
+        if (qUtils::strCompare(pPath, parentPath)) {
+            paths.append(path);
+        }
+    }
+    return paths;
+}
+
+QJsonObject MiniscriptTransaction::findSigningPathParent(const QJsonArray &tree, const QString &path) {
+    QString parentPath = getParentPath(path);
+    for (const auto &js : tree) {
+        QJsonObject jo = js.toObject();
+        QString firstLine = jo.value("firstLine").toString();
+        if (qUtils::strCompare(firstLine, parentPath)) {
+            return jo;
+        }       
+    }
+    return {};
+}
+
+QJsonArray MiniscriptTransaction::refreshTreeChecked(const QJsonArray &tree, const QSet<QString> &checkeds) {
+    QJsonArray updatedTree = {};
+    for (const auto &js : tree) {
+        QJsonObject jo = js.toObject();
+        QString firstLine = jo.value("firstLine").toString();
+        bool hasCheckBox = jo.value("hasCheckBox").toBool();
+        jo["checked"] = checkeds.contains(firstLine);
+        updatedTree.append(jo);
+    }
+    return updatedTree;
+}
+
+QJsonArray MiniscriptTransaction::processCheckedBoxes(const QJsonArray &tree, const QJsonArray &newTreeTmp, int level, const QString& path, QSet<QString>& checkeds, QSet<QString>& allowAutos) {
+    QJsonArray newTree = newTreeTmp;
+    for (int i = 0; i < tree.size(); i++) {
+        QJsonValue jsValue = tree.at(i);
+        QJsonObject node = jsValue.toObject();
+        QString firstLine = node.value("firstLine").toString();
+        if (!qUtils::strCompare(firstLine, path)) {
+            continue;
+        }
+        QJsonObject parentNode = findSigningPathParent(tree, firstLine);
+        bool hasBoxParentChecked = parentNode.value("checked").toBool();
+        QString parentPath = getParentPath(firstLine);
+
+        if (hasBoxParentChecked) {
+            node["hasCheckBox"] = true;
+            bool isChecked = checkeds.contains(firstLine);
+            node["checked"] = isChecked;
+            node["enable"] = true;
+            auto type = static_cast<nunchuk::ScriptNode::Type>(parentNode.value("type").toInt());
+            switch (type) {
+                case nunchuk::ScriptNode::Type::ANDOR: {
+                    QStringList pathsCheckedAtLevel = findPathsOfParentChecked(checkeds, parentPath);
+                    int mNode = 1;
+                    if (pathsCheckedAtLevel.size() >= mNode && !isChecked) {
+                        node["enable"] = false;
+                    }
+                } break;
+                case nunchuk::ScriptNode::Type::AND: {
+                    if (checkeds.contains(parentPath) && allowAutos.contains(parentPath)) {
+                        checkeds.insert(firstLine);
+                        allowAutos.insert(firstLine);
+                    }
+                    node["hasCheckBox"] = true;
+                    node["checked"] = checkeds.contains(firstLine);
+                    node["enable"] = false;
+                } break;
+                case nunchuk::ScriptNode::Type::OR_TAPROOT:
+                case nunchuk::ScriptNode::Type::OR: {
+                    QStringList pathsCheckedAtLevel = findPathsOfParentChecked(checkeds, parentPath);
+                    int mNode = 1;
+                    if (pathsCheckedAtLevel.size() >= mNode && !isChecked) {
+                        node["enable"] = false;
+                    }
+                } break;
+                case nunchuk::ScriptNode::Type::MULTI:
+                case nunchuk::ScriptNode::Type::MUSIG: {
+                    if (checkeds.contains(parentPath)) {
+                        node["hasCheckBox"] = false;
+                        node["checked"] = false;
+                        node["enable"] = false;
+                    }                    
+                } break;
+                case nunchuk::ScriptNode::Type::THRESH: {
+                    QStringList pathsCheckedAtLevel = findPathsOfParentChecked(checkeds, parentPath);
+                    int mNode = parentNode.value("m").toInt();
+                    if (pathsCheckedAtLevel.size() >= mNode && !isChecked) {
+                        node["enable"] = false;
+                    }
+                } break;
+                default: {
+                } break;
+            }
+            newTree.append(node);
+        } else {
+            if (level == 1) {
+                int countFirst = findPaths(tree, 1).size();
+                if (countFirst == 1) {
+                    node["hasCheckBox"] = false;
+                    node["checked"] = checkeds.contains(firstLine);
+                } else {
+                    node["hasCheckBox"] = true;
+                    node["checked"] = checkeds.contains(firstLine);
+                }
+                newTree.append(node);
+            } else {
+                node["hasCheckBox"] = false;
+                node["checked"] = false;
+                node["enable"] = false;
+                checkeds.remove(firstLine);
+                allowAutos.remove(firstLine);
+                newTree.append(node);
+            }
+        }
+    }
+    return newTree;
+}
+
+int MiniscriptTransaction::numberFromPath(const QString &path) {
+    QString tmp = path;
+    int level = getLevel(path);
+    tmp.remove('.'); // Remove all dots
+    bool ok;
+    int num = tmp.toInt(&ok)*qPow(10, m_maxLevel)/qPow(10, level);
+    if (ok) return num;
+    return 0;
+}
+
+QJsonArray MiniscriptTransaction::processLevels(const QJsonArray &tree, QSet<QString>& checkeds, QSet<QString>& allowAutos) {
+    QJsonArray newTree = {};
+    for (int level = 1; level <= m_maxLevel; ++level) {
+        QStringList pathsAtLevel = findPaths(tree, level);
+        for (const QString &path : pathsAtLevel) {
+            newTree = processCheckedBoxes(tree, newTree, level, path, checkeds, allowAutos);
+        }
+    }
+    return newTree;
+}
+
+bool MiniscriptTransaction::compareNodes(const QJsonValue &a, const QJsonValue &b) {
+    QJsonObject aObj = a.toObject();
+    QJsonObject bObj = b.toObject();
+    QString firstLineA = aObj.value("firstLine").toString();
+    QString firstLineB = bObj.value("firstLine").toString();
+    return numberFromPath(firstLineA) < numberFromPath(firstLineB);
+}
+
+QJsonArray MiniscriptTransaction::sortJsonArrayByFirstLine(const QJsonArray &arr) {
+    QVector<QJsonValue> values;
+    values.reserve(arr.size());
+    for (auto v : arr)
+        values.append(v);
+
+    std::sort(values.begin(), values.end(),
+        [this](const QJsonValue &a, const QJsonValue &b) {
+            return this->compareNodes(a, b);
+        });
+
+    QJsonArray sorted;
+    for (auto &v : values)
+        sorted.append(v);
+    return sorted;
+}
+
+void MiniscriptTransaction::firstCreateChooseScriptPath() {
+    QJsonArray tmpTree = walletTreeMiniscriptJs();
+    if (tmpTree.size() == 0) {
+        return;
+    }
+    int countFirst = findPaths(tmpTree, 1).size();
+    DBG_INFO << "Only one signing path available, auto-selecting it." << countFirst;
+    if (countFirst == 1) {
+        setCheckedStateForPath("1.", true);
+    } else {
+        createChooseScriptPath();
+    }
+}
+
+void MiniscriptTransaction::createChooseScriptPath() {
+    QJsonArray tmpTree = walletTreeMiniscriptJs();
+    m_maxLevel = getMaxLevel(tmpTree);
+    auto signingPathsChecked = m_signingPathsChecked;
+    auto signingPathsAutoChecked = m_signingPathsAutoChecked;
+begin:;
+    tmpTree = refreshTreeChecked(tmpTree, signingPathsChecked);
+    tmpTree = processLevels(tmpTree, signingPathsChecked, signingPathsAutoChecked);
+
+    if (signingPathsChecked != m_signingPathsChecked) {
+        m_signingPathsChecked = signingPathsChecked;
+        m_signingPathsAutoChecked = signingPathsAutoChecked;
+        goto begin;
+    }
+    tmpTree = sortJsonArrayByFirstLine(tmpTree);
+    setTreeMiniscript(tmpTree);
+}
+
+bool MiniscriptTransaction::hasSigningPathChecked() const {
+    return !m_signingPathsChecked.isEmpty();
+}
+
+void MiniscriptTransaction::setCheckedStateForPath(const QString &path, bool checked) {
+    if (checked) {
+        m_signingPathsChecked.insert(path);
+        m_signingPathsAutoChecked.insert(path);
+    } else {
+        m_signingPathsChecked.remove(path);
+        m_signingPathsAutoChecked.remove(path);
+    }
+    std::function<void(const QString&)> removeParentAutoCheck =
+    [&]( const QString& path) {
+        QString parentPath = getParentPath(path);
+        if (!parentPath.isEmpty()) {
+            m_signingPathsAutoChecked.remove(parentPath);
+            removeParentAutoCheck(parentPath);
+        }
+    };
+    removeParentAutoCheck(path);
+    createChooseScriptPath();
+}
+
+bool MiniscriptTransaction::createTransactionOrSingingPolicy() {
+    QJsonArray tmpTree = walletTreeMiniscriptJs();
+    std::function<bool(const nunchuk::SigningPath, const nunchuk::SigningPath)> isChildOfParent = 
+    [](const nunchuk::SigningPath userPath, const nunchuk::SigningPath libPath) {
+        QStringList userPathStrs = qUtils::SigningPathToStringList(userPath);
+        QStringList libPathStrs = qUtils::SigningPathToStringList(libPath);
+        for (QString str: userPathStrs) {
+            if (!libPathStrs.contains(str)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    std::function<int(const QJsonArray&, const QString&)> getType = 
+    [](const QJsonArray &tree, const QString& path) {
+        for (const auto &js : tree) {
+            QJsonObject jo = js.toObject();
+            QString firstLine = jo.value("firstLine").toString();
+            if (qUtils::strCompare(firstLine, path)) {
+                return jo.value("type").toInt();
+            }        
+        }
+        return -1;
+    };
+
+    std::function<QSet<QString>(const QJsonArray&, const QSet<QString>&)> removeParent = 
+    [getType](const QJsonArray& tree, const QSet<QString>& checkes) {
+        QSet<QString> tmpCheckeds = checkes;
+        for (const auto &path : checkes) {
+            int type = getType(tree, path);
+            if (type == (int)nunchuk::ScriptNode::Type::AND || type == (int)nunchuk::ScriptNode::Type::OR || type == (int)nunchuk::ScriptNode::Type::ANDOR || type == (int)nunchuk::ScriptNode::Type::THRESH) {
+                tmpCheckeds.remove(path);
+            }
+        }
+        return tmpCheckeds;
+    };
+
+    auto tmpCheckeds = removeParent(tmpTree, m_signingPathsChecked);
+    std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> userSelectedSigningPaths;
+    for (const auto &libPath: signingPaths()) {
+        const nunchuk::SigningPath userPath = qUtils::SigningPathFromStringList(tmpCheckeds.values());
+        if (isChildOfParent(userPath, libPath.first)) {
+            userSelectedSigningPaths.push_back(libPath);
+        }
+    }
+    DBG_INFO << "userSelectedSigningPaths size" << userSelectedSigningPaths.size() << "libPath size" << signingPaths().size();
+    if (userSelectedSigningPaths.size() == 1) {
+        setSigningPathSelected(userSelectedSigningPaths.front().first, true);
+        return true;
+    } else {
+        createScriptPaths(userSelectedSigningPaths);
+        setScreenFlow("choose-signing-policy");
+        return false;
+    }    
+}
 
 QVariantList MiniscriptTransaction::scriptPaths()
 {
@@ -157,33 +490,23 @@ void MiniscriptTransaction::setSigningPathSelected(const QString &path) {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigning() {
+    if (isScriptPath()) {
+        return miniTreeForSigningScriptPath();
+    }
+    else {
+        return miniTreeForSigningKeyPath();
+    }
+}
+
+QVariantList MiniscriptTransaction::miniTreeForSigningScriptPath() {
     QString tx_id = txid();
     QVariantList miniTreeForSigning;
 
-#if 0 // TBD
-    nunchuk::SigningPath path = qUtils::deserializeSigningPath(AppSetting::instance()->getTransactionSigningPath(tx_id));
-    setSigningPathSelected(path); // Set selected signing path
-    QStringList cachedPaths;
-    for (const auto &nodeVec : path) {
-        QString s;
-        for (int i = 0; i < nodeVec.size(); ++i) {
-            if (!s.isEmpty()) s += ".";
-            s += QString::number(nodeVec[i]);
-        }
-        s += ".";
-        cachedPaths.append(s);
-    }
-
-    DBG_INFO << "cachedPaths" << cachedPaths;
-#endif
     auto tx = nunchukTransaction();
-    std::map<std::string, bool> signers = tx.get_signers();
-    std::string psbt = tx.get_psbt();
     std::string miniscript = AppModel::instance()->walletInfo()->miniscript().toStdString();
     std::vector<std::string> keypaths;
     nunchuk::ScriptNode script_node = qUtils::GetScriptNode(miniscript, keypaths);
-    QList<int> levels {};
-    QJsonArray scriptTree = AppModel::instance()->walletInfo()->createTreeMiniscript(script_node, levels);
+    QJsonArray scriptTree = AppModel::instance()->walletInfo()->treeMiniscriptJs();
     int64_t chain_tip = bridge::nunchukBlockHeight();
     std::vector<nunchuk::UnspentOutput> coins = bridge::nunchukGetOriginCoinsFromTxInputs(AppModel::instance()->walletInfo()->walletId(), tx.get_inputs());
     DBG_INFO << "coins" << coins.size();
@@ -223,6 +546,39 @@ QVariantList MiniscriptTransaction::miniTreeForSigning() {
 #endif
         miniTreeForSigning[i] = node;
     }
+    return miniTreeForSigning;
+}
+
+QVariantList MiniscriptTransaction::miniTreeForSigningKeyPath() {
+    auto wallet = AppModel::instance()->walletInfo();
+    if (!wallet) {
+        DBG_ERROR << "Wallet info is not available";
+        return {};
+    }
+    auto w = wallet->nunchukWallet();
+    QString tx_id = txid();
+    QVariantList miniTreeForSigning;
+    QStringList keypathsList;
+    std::vector<std::string> keypaths;
+    for(int i = 0; i < w.get_m(); i++) {
+        const nunchuk::SingleSigner &signer = w.get_signers()[i];
+        std::string keypath = nunchuk::GetDescriptorForSigner(signer, nunchuk::DescriptorPath::EXTERNAL_ALL);
+        keypaths.push_back(keypath);
+    }
+    QJsonArray keyPaths = AppModel::instance()->walletInfo()->keypathsJs();
+    QJsonArray keyPathsTx = createTreeMiniscriptTransaction(keypaths);
+    QJsonArray scriptNodeJson;
+    for (const auto& node : keyPaths) {
+        for (const auto& txNode : keyPathsTx) {
+            auto mergeNode = processSignNodeJson(node, txNode).toObject();
+            if (!mergeNode.isEmpty()) {
+                scriptNodeJson.append(mergeNode);
+                break;
+            }
+        }
+    }
+    miniTreeForSigning = scriptNodeJson.toVariantList();
+    
     return miniTreeForSigning;
 }
 
@@ -356,9 +712,14 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
     case nunchuk::ScriptNode::Type::RIPEMD160:
     case nunchuk::ScriptNode::Type::SHA256: {
         std::vector<uint8_t> hash = node.get_data();
-        firstLineObj["hasUnlocked"] = qUtils::IsPreimageRevealed(tx.get_psbt(), hash);
-        QString hashString = QString::fromStdString(std::string(hash.begin(), hash.end()));
-        firstLineObj["hashData"] = hashString;
+        if (qUtils::IsPreimageRevealed(tx.get_psbt(), hash)) {
+            firstLineObj["hasUnlocked"] = true;
+            firstLineObj["hasEnter"] = false;
+        } else {
+            firstLineObj["hasUnlocked"] = false;
+            firstLineObj["hasEnter"] = true;
+        }
+        firstLineObj["hashData"] = qUtils::BytesToHex(hash);
         treeLines.append(firstLineObj);
         break;
     }
@@ -403,11 +764,11 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
             DBG_INFO << "THROW EXCEPTION " << e.what();
         }
 
-        nunchuk::TransactionStatus  tx_status = keyset.first;
+        tx_status = tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES ? (int)keyset.first : tx_status;
         nunchuk::KeyStatus          keystatus = keyset.second;
 
         int pending_nonce = 0;
-        if (tx_status == nunchuk::TransactionStatus::PENDING_NONCE) {
+        if (tx_status == (int)nunchuk::TransactionStatus::PENDING_NONCE) {
             for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++){
                 QString xfp = QString::fromStdString(it->first);
                 bool    signedStatus = it->second;
@@ -417,7 +778,7 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
             }
         }
         int pending_signature = 0;
-        if (tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES) {
+        if (tx_status == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES) {
             for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++){
                 QString xfp = QString::fromStdString(it->first);
                 bool    signedStatus = it->second;
@@ -426,21 +787,25 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
                 }
             }
         }
-        firstLineObj["pendingNonce"] = pending_nonce;
+        firstLineObj["txStatus"] = (int)tx_status;
+        firstLineObj["pendingNonce"]     = pending_nonce;
         firstLineObj["pendingSignature"] = pending_signature;        
-        firstLineObj["satisfiable"]   = selfSatisfiable; // From parent
+        firstLineObj["satisfiable"]      = selfSatisfiable; // From parent
         treeLines.append(firstLineObj);
+
         std::set<int> valid_numbers = {(int)nunchuk::TransactionStatus::CONFIRMED, (int)nunchuk::TransactionStatus::READY_TO_BROADCAST, (int)nunchuk::TransactionStatus::PENDING_CONFIRMATION};
         bool allSigned = valid_numbers.find((int)tx_status) != valid_numbers.end();
-        
-        for (int i = 0; i < node.get_keys().size(); i++) {
+
+        for (int i = 0; i < (int)node.get_keys().size(); i++) {
             QJsonObject keyObj;
             QString firstLineKey = QString("%1%2.").arg(firstLine).arg(i + 1);
             keyObj["firstLine"] = firstLineKey;
             keyObj["satisfiable"] = selfSatisfiable; // From parent
             std::string xfp = qUtils::ParseSignerString( QString::fromStdString(node.get_keys()[i]), msg ).get_master_fingerprint();
-            bool keyset_signed = allSigned ? true : keystatus[xfp];
+
+            bool keyset_signed = !tx.get_raw().empty() ? signers[xfp] : allSigned ? true : keystatus[xfp];
             keyObj = processKeyNodeJson(keyObj, QString::fromStdString(xfp), (int)tx_status, keyset_signed);
+
             treeLines.append(keyObj);
         }
 
@@ -461,6 +826,93 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
     }
 
     return treeLines;
+}
+
+QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(const std::vector<std::string> &keypaths) {
+    auto tx = nunchukTransaction();
+    nunchuk::TransactionStatus tx_status = tx.get_status();
+
+    std::map<std::string, bool> signers;
+    if (!tx.get_raw().empty()) {
+        std::vector<nunchuk::SingleSigner> signers_signedInfo = bridge::nunchukGetTransactionSigners(walletId(), txid());
+        for (const auto &signer : signers_signedInfo) {
+            signers[signer.get_master_fingerprint()] = true;
+        }
+    } else {
+        signers = tx.get_signers();
+    }
+    
+
+    QWarningMessage msg;
+    QJsonArray _keypaths = {};
+    QString firstLine = "";
+    QJsonObject firstLineObj;
+    firstLineObj["firstLine"] = QString("1.");
+    firstLineObj["satisfiable"] = true;
+
+    std::function<nunchuk::KeysetStatus(const nunchuk::Transaction &, int)> keysetFunc = [&](const nunchuk::Transaction &tx,
+                                                                                             int index) -> nunchuk::KeysetStatus {
+        std::vector<nunchuk::KeysetStatus> keysets = tx.get_keyset_status();
+        if (keysets.size() == 0) {
+            return {};
+        }
+        nunchuk::KeysetStatus keyset;
+        if (index == (keysets.size() - 1)) {
+            keyset = keysets.back();
+        } else {
+            keyset = keysets[index];
+        }
+        nunchuk::KeyStatus keystatus = keyset.second;
+        for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++) {
+            QString xfp = QString::fromStdString(it->first);
+            bool signedStatus = it->second;
+            if (!signedStatus) {
+                return keyset;
+            }
+        }
+        return keysetFunc(tx, index + 1);
+    };
+
+    nunchuk::KeysetStatus keyset = keysetFunc(tx, 0);
+    tx_status = tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES ? keyset.first : tx_status;
+    nunchuk::KeyStatus keystatus = keyset.second;
+    
+    int pending_nonce = 0;
+    if (tx_status == nunchuk::TransactionStatus::PENDING_NONCE) {
+        for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++) {
+            QString xfp = QString::fromStdString(it->first);
+            bool signedStatus = it->second;
+            if (!signedStatus) {
+                pending_nonce++;
+            }
+        }
+    }
+    int pending_signature = 0;
+    if (tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES) {
+        for (std::map<std::string, bool>::iterator it = keystatus.begin(); it != keystatus.end(); it++) {
+            QString xfp = QString::fromStdString(it->first);
+            bool signedStatus = it->second;
+            if (!signedStatus) {
+                pending_signature++;
+            }
+        }
+    }
+    firstLineObj["txStatus"] = (int)tx_status;
+    firstLineObj["pendingNonce"] = pending_nonce;
+    firstLineObj["pendingSignature"] = pending_signature;
+    _keypaths.append(firstLineObj);
+    std::set<int> valid_numbers = {(int)nunchuk::TransactionStatus::CONFIRMED, (int)nunchuk::TransactionStatus::READY_TO_BROADCAST, (int)nunchuk::TransactionStatus::PENDING_CONFIRMATION};
+    auto signAlled = valid_numbers.find((int)tx_status) != valid_numbers.end();
+    for (int i = 0; i < keypaths.size(); i++) {
+        std::string key = keypaths[i];
+        QJsonObject keyLineObj = firstLineObj;
+        keyLineObj["firstLine"] = QString("1.%1.").arg(i + 1);
+        std::string xfp = qUtils::ParseSignerString(QString::fromStdString(key), msg).get_master_fingerprint();
+        bool signedStatus = (tx_status == nunchuk::TransactionStatus::PENDING_NONCE || tx_status == nunchuk::TransactionStatus::PENDING_SIGNATURES) ? keystatus[xfp] : signAlled;
+        keyLineObj = processKeyNodeJson(keyLineObj, QString::fromStdString(xfp), (int)tx_status, signedStatus);
+        _keypaths.append(keyLineObj);
+    }
+    return _keypaths;
 }
 
 QJsonValue MiniscriptTransaction::processNodeJson(const QJsonValue& value, const QStringList& nodes) {
@@ -539,8 +991,46 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
     return line;
 }
 
+void MiniscriptTransaction::clearSigningPaths() {
+    setSigningPaths({});
+    m_selectedSigningPath.clear();
+    m_signingPathsChecked.clear();
+    m_signingPathsAutoChecked.clear();    
+    QString tx_id = txid();
+    AppSetting::instance()->setTransactionSigningPath(tx_id, "");
+    auto wallet = AppModel::instance()->walletInfo();
+    if (wallet) {
+        wallet->convertToMiniscript(wallet->nunchukWallet());
+    }
+}
+
 int MiniscriptTransaction::numberOfPolices() {
     return signingPaths().size();
+}
+
+bool MiniscriptTransaction::enterPreimageInput(const QString &hasData, const QString &preimage, int typeNode) {
+    DBG_INFO << " hasData:" << hasData << ", preimage:" << preimage << ", typeNode:" << typeNode;
+    if (preimage.isEmpty()) {
+        DBG_ERROR << "Preimage input is empty";
+        emit preimageInputAlert();
+        return false;
+    }
+    QtConcurrent::run([=, this]() {
+        std::vector<uint8_t> hashVec = qUtils::HexToBytes(hasData);
+        std::vector<uint8_t> preimageVec = qUtils::HexToBytes(preimage);
+        QWarningMessage msg;
+        bool result = bridge::nunchukRevealPreimage(walletId(), txid(), hashVec, preimageVec, msg);
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type() && result){ 
+            DBG_INFO << "Reveal preimage success " << result;
+            AppModel::instance()->startGetTransactionHistory(walletId());
+            emit nunchukTransactionChanged();
+            AppModel::instance()->showToast(msg.code(), "Hashlock unlocked successfully", EWARNING::WarningType::SUCCESS_MSG);
+        } else {
+            AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
+            emit preimageInputAlert();
+        }
+    });    
+    return false;
 }
 
 QJsonObject MiniscriptTransaction::generateCoinsGroup(const nunchuk::CoinsGroup &coinsGroup) {

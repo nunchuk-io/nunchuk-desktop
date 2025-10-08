@@ -1051,8 +1051,8 @@ void AppModel::setWalletInfo(const QWalletPtr &d, bool force)
                  << "Wallet Status:" << m_walletInfo.data()->status();
         if (isNewWallet) {
             QGroupWallets::instance()->setDashboardInfo(m_walletInfo);
-            m_walletInfo.data()->RequestGetCoins();
-        }        
+        }
+        m_walletInfo.data()->RequestGetCoins();
     }
 }
 
@@ -1376,29 +1376,3 @@ qint64 AppModel::qAmountFromCurrency(const QString &currency)
     return qUtils::QAmountFromCurrency(currency);
 }
 
-
-void AppModel::rescanOrReCreateSigner(const QString &name, const QString &fingerPrint)
-{
-    emit startTopXPUBsSigner();
-    QtConcurrent::run([name, fingerPrint]() {
-        int deviceIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(fingerPrint);
-        if (deviceIndex < 0) {
-            if(AppModel::instance()->scanDevicesSync()) {
-                deviceIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(fingerPrint);
-            }
-        }
-
-        QWarningMessage msg;
-        QString masterSignerId = fingerPrint;
-        QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, deviceIndex, msg);
-        if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-            masterSignerId = ret->id();
-        }
-        msg.resetWarningMessage();
-        bridge::nunchukCacheMasterSignerXPub(masterSignerId, msg);
-        if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
-            AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
-        }
-        emit AppModel::instance()->finishTopXPUBsSigner(); 
-    });
-}

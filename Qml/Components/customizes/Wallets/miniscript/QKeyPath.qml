@@ -50,13 +50,7 @@ Item {
     QKeyComponentAddRemove {
         anchors.fill: parent
         onBip32PathClick: (key, xfp, path) => {
-            editBip32Path.clearError()
-            editBip32Path.isShowListDevice = false
-            editBip32Path.signerData = signerData
-            editBip32Path.idx = index
-            editBip32Path.xfp = xfp
-            editBip32Path.key = key
-            editBip32Path.open()
+            editBip32Path.requestEditBIP32Path(miniscript.keyObj, { "key": key })
         }
         onRemoveClicked: (key) => {
             _confirmRemoveKey.key = key

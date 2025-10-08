@@ -188,9 +188,11 @@ QOnScreenContentTypeA {
                                     single_checked: single_signer_checked
                                     single_is_local: single_signer_is_local
                                     single_device_cardid: single_signer_device_cardid
+                                    single_derivationPath: singleSigner_derivationPath
                                 }
                                 visible: single_signer_checked
                                 height: visible ? 84 : 0
+                                hasEditPath: true
                                 onBtnClicked: {
                                     model.single_signer_checked = !model.single_signer_checked
                                     newWalletInfo.walletM = 0
@@ -198,6 +200,10 @@ QOnScreenContentTypeA {
                                 }
                                 enabled: true
                                 opacity: enabled ? 1.0 : 0.4
+                                onBip32PathClick: {
+                                    var modelData = newWalletInfo.assignAvailableSigners.get(index);
+                                    editBip32Path.requestEditBIP32Path(modelData, modelData)
+                                }
                             }
                         }
                     }
@@ -257,5 +263,9 @@ QOnScreenContentTypeA {
                 nextClicked()
             }
         }
-    }    
+    }
+    property var targetEditBIP32: AppModel.newWalletInfo
+    QSetupEditBIP32PathFlow {
+        id: editBip32Path
+    }
 }

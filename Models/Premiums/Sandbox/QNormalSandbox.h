@@ -50,7 +50,7 @@ public:
 
     bool HasEnoughSigner();
     bool HasOneKeyRecovery();
-    bool FinalizeGroup();
+    virtual bool FinalizeGroup();
 
     bool isReplace() const;
     bool isRecovery() const;

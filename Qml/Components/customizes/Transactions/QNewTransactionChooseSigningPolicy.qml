@@ -41,7 +41,8 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1863
+    label.text: STR.STR_QML_1865
+    isShowLine: true
     property int selectPathIndex: 0
     content: Flickable {
         width: 720 + 8

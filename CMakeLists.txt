@@ -1,9 +1,18 @@
-cmake_minimum_required( VERSION 3.1 )
-if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.49)
+if(WIN32)
+    cmake_minimum_required( VERSION 3.1 )
 else()
-    project(nunchuk-qt VERSION 1.9.49)
+    cmake_minimum_required( VERSION 3.16 )
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.25")
+        set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+    endif()
 endif()
+
+if(UNIX AND APPLE)
+    project(Nunchuk VERSION 1.9.52)
+else()
+    project(nunchuk-qt VERSION 1.9.52)
+endif()
+
 
 # nunchuk
 if(MSVC AND WIN32)

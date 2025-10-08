@@ -330,15 +330,16 @@ QOnScreenContentTypeA {
                             id: dele
                             width: 528
                             height: dele.visible ? 92 : 0
-                            walletName: modelData.walletName
-                            walletBalance: modelData.walletBalance
-                            walletCurrency: modelData.walletBalanceCurrency
-                            walletM: modelData.walletM
-                            walletN: modelData.walletN
-                            isLocked: modelData.dashboardInfo ? modelData.dashboardInfo.isLocked : false
+                            walletName: modelData.wallet_name
+                            walletBalance: modelData.wallet_Balance
+                            walletCurrency: modelData.wallet_Balance_Currency
+                            walletM: modelData.wallet_M
+                            walletN: modelData.wallet_N
+                            isLocked: modelData.wallet_dashboard ? (modelData.wallet_dashboard.isLocked || modelData.wallet_isLocked || modelData.wallet_isReplaced) : false
+                            walletType: modelData.wallet_walletType
                             onButtonClicked: {
                                 _select_wallet.close()
-                                modelData.dashboardInfo.requestHealthCheck(signerXfp)
+                                modelData.wallet_dashboard.requestHealthCheck(signerXfp)
                             }
                         }
                     }

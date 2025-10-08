@@ -178,3 +178,17 @@ void QSignerManagement::requestCreateSignerFromClaimScreen() {
     QEventProcessor::instance()->sendEvent(E::EVT_HOME_ADD_NEW_SIGNER_REQUEST);
 }
   
+void QSignerManagement::registerCreateTopUpXpub(Execute func) {
+    m_executeTopUpXpub = func;
+}
+
+bool QSignerManagement::finishCreateTopUpXpub() {
+    if (m_executeTopUpXpub != nullptr) {
+        if (m_executeTopUpXpub()) {
+            // Top up xpub done
+        }
+        m_executeTopUpXpub = nullptr;
+        return true;
+    }
+    return false;
+}

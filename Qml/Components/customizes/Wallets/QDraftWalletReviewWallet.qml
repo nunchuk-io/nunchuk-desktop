@@ -77,4 +77,8 @@ QOnScreenContentTypeA {
             nextClicked()
         }
     }
+    property var topUpXpub: AppModel.newWalletInfo
+    QSetupTopUpXpubFlow {
+
+    }
 }

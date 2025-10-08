@@ -34,7 +34,6 @@ import "../../../../../localization/STR_QML.js" as STR
 
 QMiniscriptPolicesDelegate {
     useDerivationPath: false
-    isTaproot: AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT
     property var itemData: miniscript.keyObj
     Component {
         id: keyCoponent
@@ -63,6 +62,17 @@ QMiniscriptPolicesDelegate {
             }
             onScanRequest: {
                 keyScanRequest()
+            }
+        }
+    }
+    function getCommon() {
+        return commonTmp
+    }
+    Component {
+        id: commonTmp
+        QCommonComponentTransaction {
+            onEnterPreImageInput: {
+                keyEnterPreImageInput(miniscript.hashData, miniscript.type)
             }
         }
     }

@@ -324,6 +324,27 @@ QOnScreenContentTypeB {
                             radioSelect = _ASCENDING
                         }
                     }
+                    Row {
+                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
+                        spacing: 0
+                        QLato {
+                            width: 727-64
+                            text: STR.STR_QML_1880
+                            color: "#031F2B"
+                            font.pixelSize: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QSwitchTypeB {
+                            id: ageSortSwitch
+                            width: 64
+                            height: 36
+                            switchOn: walletInfo.sortByCoinAge
+                            anchors.verticalCenter: parent.verticalCenter
+                            onButtonClicked: {
+                                isCleared = false
+                            }
+                        }
+                    }
                 }
                 Item {
                     width: 727
@@ -351,7 +372,8 @@ QOnScreenContentTypeB {
                     "toDate": _calendarTo.dateString,
                     "isLocked": _locked.checked,
                     "isUnLocked": _unlocked.checked,
-                    "sortOrder": radioSelect
+                    "sortOrder": radioSelect,
+                    "sortByCoinAge": ageSortSwitch.switchOn
                 }
                 QMLHandle.sendEvent(EVT.EVT_COIN_DETAILS_CONTROL_ENTER, input)
             }

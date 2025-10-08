@@ -863,6 +863,12 @@ public:
 
     std::vector<nunchuk::SingleSigner> GetTransactionSigners(const std::string& wallet_id, const std::string& tx_id, QWarningMessage &msg);
 
+    bool RevealPreimage(const std::string& wallet_id,
+        const std::string& tx_id,
+        const std::vector<uint8_t>& hash,
+        const std::vector<uint8_t>& preimage,
+        QWarningMessage &msg);
+
 private:
     nunchukiface();
     ~nunchukiface();

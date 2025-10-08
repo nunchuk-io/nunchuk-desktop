@@ -1339,3 +1339,21 @@ QStringList AppSetting::orderWalletList() {
     }
     return m_orderWalletList;
 }
+
+bool AppSetting::sortCoinByAge(QString walletId)
+{
+    QString key = QString("%1-sort_coin_by_age").arg(walletId);
+    return NunchukSettings::value(key).toBool();
+}
+
+void AppSetting::setSortCoinByAge(QString walletId, bool sortByAge)
+{
+    QString key = QString("%1-sort_coin_by_age").arg(walletId);
+    NunchukSettings::setValue(key, sortByAge);
+}
+
+void AppSetting::deleteSortCoinByAge(QString walletId)
+{
+    QString key = QString("%1-sort_coin_by_age").arg(walletId);
+    NunchukSettings::removeKey(key);
+}

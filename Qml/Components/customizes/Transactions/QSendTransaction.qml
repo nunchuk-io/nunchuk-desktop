@@ -48,6 +48,7 @@ Item {
     signal keyScanRequest
     signal keyExportRequest
     signal keyImportRequest
+    signal keyEnterPreImageInput(var hashData, var typeNode)
     property string myRole: ""
     /*========================================*/
     Row {
@@ -61,17 +62,18 @@ Item {
         }
         Loader {
             sourceComponent: {
+                console.log("isMiniscript", isMiniscript, "isTaproot", isTaproot, "isScriptpath", transactionInfo.isScriptPath)
                 if (isMiniscript) {
                     if(isTaproot){
                         if (transactionInfo.isScriptPath) {
                             return miniscriptWalletKeys;
                         }
                         else {
-                            if((walletInfo.walletTemplate === NUNCHUCKTYPE.DEFAULT) && (walletInfo.walletM > 1)){
-                                return taprootWalletKeys;
+                            if (walletInfo.keypaths.length === 1) {
+                                return standardWalletKeys;
                             }
                             else {
-                                return standardWalletKeys
+                                return miniscriptWalletKeys;
                             }
                         }
                     }
@@ -125,6 +127,9 @@ Item {
             transactionInfo: _send.transactionInfo
             onKeySignRequest: _send.keySignRequest(signer)
             onKeyScanRequest: _send.keyScanRequest()
+            onKeyEnterPreImageInput: {
+                _send.keyEnterPreImageInput(hashData, typeNode)
+            }
             // onKeyExportRequest: _send.keyExportRequest()
             // onKeyImportRequest: _send.keyImportRequest()
         }

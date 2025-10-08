@@ -91,10 +91,13 @@ QOnScreenContentTypeA {
                             visible: !single_signer_checked
                             height: visible ? 84 : 0
                             onBtnClicked: {
-                                if (single_signer_type == NUNCHUCKTYPE.SOFTWARE || single_signer_primary_key)
+                                if (single_signer_type == NUNCHUCKTYPE.SOFTWARE || single_signer_primary_key){
                                     setkeyCheckPassphrase(model);
-                                else
+                                }
+                                else{
                                     model.single_signer_checked = !model.single_signer_checked;
+                                }
+                                newWalletInfo.walletN = newWalletInfo.assignAvailableSigners.signerSelectedCount;
                             }
                             enabled: true
                             opacity: enabled ? 1 : 0.4
@@ -135,7 +138,7 @@ QOnScreenContentTypeA {
                             width: 350
                             height: signersAssign.contentHeight
                             clip: true
-                            model: newWalletInfo.assignAvailableSigners 
+                            model: newWalletInfo.assignAvailableSigners
                             ScrollBar.vertical: ScrollBar {
                                 active: true
                             }   
@@ -157,21 +160,23 @@ QOnScreenContentTypeA {
                                 height: visible ? 84 : 0
                                 onBtnClicked: {
                                     model.single_signer_checked = !model.single_signer_checked;
-                                    newWalletInfo.walletM = 0;
-                                    newWalletInfo.walletN = 0;
                                     newWalletInfo.clearPassphrase(singleSigner_masterFingerPrint);
                                     model.single_signer_need_Topup_Xpub = false;
+
+                                    newWalletInfo.walletN = newWalletInfo.assignAvailableSigners.signerSelectedCount;
+                                    if(newWalletInfo.walletM > newWalletInfo.walletN) {
+                                        newWalletInfo.walletM = newWalletInfo.walletN;
+                                    }
+                                    if(newWalletInfo.walletN === 0) {
+                                        newWalletInfo.walletM = 0;
+                                    }
                                 }
                                 enabled: true
                                 opacity: enabled ? 1 : 0.4
-                                hasEditPath: false
+                                hasEditPath: true
                                 onBip32PathClick: {
-                                    editBip32Path.clearError()
-                                    editBip32Path.isShowListDevice = false
-                                    editBip32Path.signerData = signerData
-                                    editBip32Path.idx = index
-                                    editBip32Path.xfp = xfp
-                                    editBip32Path.open()
+                                    var modelData = newWalletInfo.assignAvailableSigners.get(index);
+                                    editBip32Path.requestEditBIP32Path(modelData, modelData)
                                 }
                             }   
                         }   
@@ -231,36 +236,8 @@ QOnScreenContentTypeA {
             }
         }   
     }
-    Connections {
-        target: newWalletInfo
-        function onEditBIP32PathSuccess(typeError) {
-            if (typeError == 1) {
-                editBip32Path.close()
-                gettingPublicKey.close()
-            } else if (typeError == -1 || typeError == -3){
-                gettingPublicKey.close()
-                editBip32Path.showError(typeError)
-            } else if (typeError == -2) {
-                gettingPublicKey.close()
-                editBip32Path.isShowListDevice = true
-                editBip32Path.showError(typeError)
-            } else {}
-        }
-    }
-    QPopupEditBIP32Path {
+    property var targetEditBIP32: AppModel.newWalletInfo
+    QSetupEditBIP32PathFlow {
         id: editBip32Path
-        property string key: ""
-        onEnterText: {
-            if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
-                gettingPublicKey.open()
-                sandbox.editBIP32Path(key, xfp, pathBip32)
-            } else {
-                gettingPublicKey.open()
-                sandbox.editBIP32Path(idx, xfp, pathBip32)
-            }
-        }
-    }
-    QPopupGettingPublicKeyLoading {
-        id: gettingPublicKey
     }
 }

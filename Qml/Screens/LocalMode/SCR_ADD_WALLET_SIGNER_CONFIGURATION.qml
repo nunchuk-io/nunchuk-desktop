@@ -121,7 +121,10 @@ QScreen {
         contentText: STR.STR_QML_669
         labels: [STR.STR_QML_670,STR.STR_QML_035]
         funcs: [
-            function() { model.single_signer_checked = true; },
+            function() {
+                model.single_signer_checked = true;
+                newWalletInfo.walletN = newWalletInfo.assignAvailableSigners.signerSelectedCount;
+            },
             function() {}
         ]
     }

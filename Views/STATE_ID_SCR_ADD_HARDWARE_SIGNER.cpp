@@ -176,7 +176,9 @@ void EVT_ADD_MASTER_SIGNER_RESULT_HANDLER(QVariant msg) {
 
 void EVT_ADD_HARDWARE_SIGNER_REFRESH_REQUEST_HANDLER(QVariant msg) {
     Q_UNUSED(msg);
-    AppModel::instance()->startScanDevices(E::STATE_ID_SCR_ADD_HARDWARE_SIGNER);
+    QMap<QString,QVariant> data;
+    data["state_id"] = E::STATE_ID_SCR_ADD_HARDWARE_SIGNER_TO_WALLET;
+    AppModel::instance()->startScanDevices(QVariant::fromValue(data));
 }
 
 void EVT_ADD_REMOTE_SIGNER_RESULT_HANDLER(QVariant msg) {

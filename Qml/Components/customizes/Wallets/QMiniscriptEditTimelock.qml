@@ -294,7 +294,7 @@ Column {
                 width: parent.width
                 spacing: 4
                 QTextInputBoxTypeB {
-                    id: _input_date
+                    id: _inputblockAbs
                     label: STR.STR_QML_1841
                     labelComponent.textFormat: Text.RichText
                     labelComponent.font.pixelSize: 12
@@ -302,13 +302,20 @@ Column {
                     boxHeight: 48
                     textInputted: newWalletInfo.timeMini.absoluteBlockheight
                     input.placeholderText: newWalletInfo.timeMini.absoluteBlockheight
-                    onTextInputtedChanged: {
-                        if(!_input_date.isValid){
-                            _input_date.isValid = true
-                            _input_date.errorText = ""
+                    isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblockAbs.textInputted))) && (parseInt(_inputblockAbs.textInputted) < 499999999)
+                    errorText: STR.STR_QML_1887
+                    validator: RegExpValidator {
+                        regExp: /^$|^[0-9]+$/
+                    }
+                    onTypingFinished: {
+                        if(isValid && !Number.isNaN(parseInt(_inputblockAbs.textInputted)) && (parseInt(_inputblockAbs.textInputted) < 499999999)){
+                            newWalletInfo.updateTimeMiniscript("absoluteBlockheight", parseInt(_inputblockAbs.textInputted));
                         }
-                        _input_date.showError = false;
-                        newWalletInfo.updateTimeMiniscript("absoluteBlockheight", parseInt(_input_date.textInputted));
+                    }
+                    onIsValidChanged: {
+                        if(!isValid){
+                            AppModel.showToast(0, STR.STR_QML_1887, EWARNING.ERROR_MSG);
+                        }
                     }
                 }
                 QLato {
@@ -321,7 +328,6 @@ Column {
                     verticalAlignment: Text.AlignVCenter
                 }
             }
-            
         }
     }
     Component {
@@ -420,21 +426,28 @@ Column {
             width: parent.width
             height: 72
             QTextInputBoxTypeB {
-                id: _input_date
+                id: _inputblocks
                 label: STR.STR_QML_1841
                 labelComponent.textFormat: Text.RichText
                 labelComponent.font.pixelSize: 12
                 boxWidth: parent.width
                 boxHeight: 48
                 textInputted: newWalletInfo.timeMini.relativeBlockheight
-                input.placeholderText: newWalletInfo.timeMini.relativeBlockheight
-                onTextInputtedChanged: {
-                    if(!_input_date.isValid){
-                        _input_date.isValid = true
-                        _input_date.errorText = ""
+                input.placeholderText: "900"
+                isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblocks.textInputted))) && (parseInt(_inputblocks.textInputted) < 65535)
+                errorText: STR.STR_QML_1888
+                validator: RegExpValidator {
+                    regExp: /^$|^[0-9]+$/
+                }
+                onTypingFinished: {
+                    if(isValid && !Number.isNaN(parseInt(_inputblocks.textInputted)) && (parseInt(_inputblocks.textInputted) < 65535)){
+                        newWalletInfo.updateTimeMiniscript("relativeBlockheight", parseInt(_inputblocks.textInputted));
                     }
-                    _input_date.showError = false;
-                    newWalletInfo.updateTimeMiniscript("relativeBlockheight", parseInt(_input_date.textInputted));
+                }
+                onIsValidChanged: {
+                    if(!isValid){
+                        AppModel.showToast(0, STR.STR_QML_1888, EWARNING.ERROR_MSG);
+                    }
                 }
             }
         }

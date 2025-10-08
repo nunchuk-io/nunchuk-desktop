@@ -101,10 +101,34 @@ bool QMiniscriptSandbox::enoughSigner() {
             return gw->enoughSigners();
         }
         return false;
-    }
-    else {
+    } else {
         return QNormalSandbox::enoughSigner();
     }
+}
+
+void QMiniscriptSandbox::synchronizeSigners() {
+    if (auto gw = AppModel::instance()->newWalletInfoPtr()) {
+        std::map<std::string, nunchuk::SingleSigner> walletMaps = gw->signersCreateWallet();
+        std::map<std::string, nunchuk::SingleSigner> sandboxMaps = m_sandbox.get_named_signers();
+        for (const auto &pair : sandboxMaps) {
+            if(!pair.second.get_master_fingerprint().empty()) {
+                walletMaps.erase(pair.first);
+            }            
+        }
+        for (const auto &pair : walletMaps) {
+            QWarningMessage msg;
+            if(!pair.second.get_master_fingerprint().empty()) {
+                m_sandbox = bridge::AddSignerToGroup(QString::fromStdString(m_sandbox.get_id()), pair.second, QString::fromStdString(pair.first), msg);
+            }
+        }
+    }
+}
+
+bool QMiniscriptSandbox::FinalizeGroup() {
+    if (walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+        synchronizeSigners();
+    }
+    return QNormalSandbox::FinalizeGroup();
 }
 
 void QMiniscriptSandbox::clearOccupied()
@@ -301,7 +325,7 @@ bool QMiniscriptSandbox::editBIP32Path(const QString &keyName, const QString &ma
         emit editBIP32PathSuccess(-1); // Invalid format
         return false;
     }
-    QPointer<QNormalSandbox> safeThis(this);
+    QPointer<QMiniscriptSandbox> safeThis(this);
     struct DataStruct
     {
         nunchuk::GroupSandbox sandbox {""};
@@ -335,10 +359,24 @@ bool QMiniscriptSandbox::editBIP32Path(const QString &keyName, const QString &ma
         SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
         if (data.errorType == 1) {
             ptrLamda->setSandbox(data.sandbox);
+            ptrLamda->synchronizeSigners();
         }
         emit ptrLamda->editBIP32PathSuccess(data.errorType); // -2 Not Found Key
     });
     return false;
+}
+
+bool QMiniscriptSandbox::editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path) {
+    auto maps = singleData.toMap();
+    auto customMaps = customData.toMap();
+    QString master_id = maps.value("singleSigner_masterSignerId").toString();
+    if (walletType() == (int)nunchuk::WalletType::MINISCRIPT) {        
+        QString key = customMaps.value("key").toString();
+        return editBIP32Path(key, master_id, path);
+    } else {
+        int idx = customMaps.value("idx").toInt();
+        return editBIP32Path(idx, master_id, path);
+    }
 }
 
 void QMiniscriptSandbox::requestAddOrRepaceKey(const QVariant &msg) {
@@ -352,7 +390,7 @@ void QMiniscriptSandbox::requestAddOrRepaceKey(const QVariant &msg) {
         registerSigners();
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             w->setKeySelected(keyName);
-            w->MixMasterSignerAndSingleSignerAll();
+            w->makeExistingSigners();
             bool existSigner = w->signerExistList().size() > 0;
             if (existSigner) {
                 if (auto sandbox = w->groupSandboxPtr()) {

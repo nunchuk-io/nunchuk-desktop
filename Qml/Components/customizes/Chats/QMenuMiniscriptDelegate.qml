@@ -112,7 +112,7 @@ MenuItem {
                     text: itemMenu.label
                     color: itemMenu.color
                     width: _col.width
-                    height: 24
+                    height: 20
                     font.weight: Font.Normal
                     font.pixelSize: 16
                     verticalAlignment: Text.AlignVCenter
@@ -124,7 +124,7 @@ MenuItem {
                     width: _col.width
                     height: paintedHeight
                     font.weight: Font.Normal
-                    font.pixelSize: 14
+                    font.pixelSize: 12
                     lineHeight: 16
                     lineHeightMode: Text.FixedHeight
                     wrapMode: Text.WordWrap

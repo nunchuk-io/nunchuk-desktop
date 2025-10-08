@@ -324,6 +324,9 @@ public:
     void setOrderWalletList(const QStringList &orderWalletList);
     QStringList orderWalletList();
 
+    bool sortCoinByAge(QString walletId);
+    void setSortCoinByAge(QString walletId, bool sortByAge);
+    void deleteSortCoinByAge(QString walletId);
 private:
     AppSetting();
     ~AppSetting();

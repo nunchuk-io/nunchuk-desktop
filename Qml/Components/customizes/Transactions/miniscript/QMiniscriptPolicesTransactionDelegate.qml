@@ -34,7 +34,6 @@ import "../../../../../localization/STR_QML.js" as STR
 
 QMiniscriptPolicesDelegate {
     useDerivationPath: false
-    isTaproot: AppModel.walletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT
     property var itemData: miniscript.keyObj
     Component {
         id: keyCoponent

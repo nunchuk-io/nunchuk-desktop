@@ -26,14 +26,13 @@ public:
     void setNeedRegistered(const bool data);
 
     void CreateSignerListReviewWallet(const std::vector<nunchuk::SingleSigner> &signers, const QList<QString>& needTopUps = {});
-    void CreateAssignAvailableSigners(const std::set<nunchuk::SignerType>& types = {}, const std::set<nunchuk::SignerTag>& tags = {});
-    QSingleSignerListModelPtr CreateSupportedSigners(const std::set<nunchuk::SignerType>& types = {}, const std::set<nunchuk::SignerTag>& tags = {});
+    void CreateAssignAvailableSigners();    
     SingleSignerListModel *assignAvailableSigners();
 public slots:
     bool confirmAndAssignKeysToWallet();
     void clearPassphrase(const QString& masterFingerPrint);
-    void startGetXpubs(int indexSinger);
-    // void editBIP32Path(const QString &master_id, const QString &path);
+    void startGetXpubs(int indexXpub);
+    bool editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path) override;
 signals:
     void walletOptTypeChanged();
     void assignAvailableSignersChanged();

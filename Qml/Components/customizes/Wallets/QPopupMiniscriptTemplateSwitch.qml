@@ -42,6 +42,7 @@ QPopupOverlayScreen {
         {screen: "flexible-multisig",         screen_component: flexible_multisig},
         {screen: "expanding-multisig",        screen_component: expanding_multisig},
         {screen: "decaying-multisig",         screen_component: decaying_multisig},
+        {screen: "zen-hodl",                  screen_component: zen_hodl},
         {screen: "enter-mini-script",         screen_component: enter_mini_script},
         {screen: "miniscript-add-existing-key",screen_component: miniscript_add_existing_key},
     ]
@@ -73,7 +74,12 @@ QPopupOverlayScreen {
             newWalletInfo.walletM = 2;
             newWalletInfo.newWalletN = 3;
             newWalletInfo.newWalletM = 3;            
-        }                
+        } else if (templateName === "zen-hodl") {
+            newWalletInfo.walletN = 2;
+            newWalletInfo.walletM = 2;
+            newWalletInfo.newWalletN = 2;
+            newWalletInfo.newWalletM = 2;            
+        }
         stateScreen.setScreenFlow(templateName)
         _infoPopup.open()
     }
@@ -119,6 +125,16 @@ QPopupOverlayScreen {
         QWalletTemplateMultisig {
             label.text: STR.STR_QML_1810
             templateMiniscript: "flexible-multisig"
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
+        }
+    }
+
+    Component {
+        id: zen_hodl
+        QWalletTemplateMultisig {
+            label.text: STR.STR_QML_1885
+            templateMiniscript: "zen-hodl"
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateScreen.backScreen()
         }

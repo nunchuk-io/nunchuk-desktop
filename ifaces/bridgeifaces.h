@@ -354,9 +354,16 @@ QSingleSignerPtr nunchukGetAvailableSignerFromMasterSigner(const QMasterSignerPt
                                                             const ENUNCHUCK::AddressType& address_type,
                                                             QWarningMessage &msg);
 
+QSingleSignerPtr nunchukGetAvailableSignerFromSingleSigner(const QSingleSignerPtr &single, 
+                                                                const ENUNCHUCK::WalletType &wallet_type,
+                                                                const ENUNCHUCK::AddressType &address_type, 
+                                                                QWarningMessage &msg);
+
 QSingleSignerPtr nunchukGetSignerFromMasterSigner(const QString& mastersigner_id,
                                                             const QString& derivation_path,
                                                             QWarningMessage& msg);
+
+nunchuk::SingleSigner nunchukGetDefaultSignerFromMasterSigner(const QString &mastersigner_id, const nunchuk::WalletType &wallet_type, const nunchuk::AddressType &address_type, QWarningMessage &msg);
 
 bool nunchukDeleteMasterSigner(const QString& mastersigner_id);
 
@@ -750,7 +757,8 @@ bool UpdateWallet(const nunchuk::Wallet &wallet, QWarningMessage &msg);
 nunchuk::TapsignerStatus GetTapsignerStatusFromMasterSigner(const QString& fingerPrint);
 
 QString SignMessage(const nunchuk::SingleSigner& signer,
-                    const QString& message);
+                    const QString& message,
+                    QWarningMessage &msg);
 
 QString GetSignerAddress(const nunchuk::SingleSigner& signer,
                          const nunchuk::AddressType& address_type);
@@ -866,6 +874,8 @@ QMasterSignerPtr ImportBackupKey( const std::vector<unsigned char>& data,
                                  QWarningMessage& msg);
 
 std::vector<nunchuk::SingleSigner> GetSignersFromMasterSigner(const QString& mastersigner_id);
+
+bool IsSignerUsedInWallets(const QString& mastersigner_id, const nunchuk::SingleSigner& signer);
 
 // Group wallet
 void EnableGroupWallet();
@@ -1021,5 +1031,13 @@ std::pair<int64_t, nunchuk::Timelock::Based> nunchukGetTimelockedUntil(const QSt
 
 std::vector<nunchuk::SingleSigner> nunchukGetTransactionSigners(const QString& wallet_id, const QString& tx_id);
 
+std::vector<nunchuk::SingleSigner> CreateSupportedSigners(const nunchuk::AddressType& address_type, const nunchuk::WalletType &walletType);
+
+QJsonArray makeExistingSigners(const nunchuk::AddressType& addressType, const nunchuk::WalletType &walletType);
+
+bool IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::AddressType& addressType, const nunchuk::WalletType &walletType);
+
+bool nunchukRevealPreimage(const QString &wallet_id, const QString &tx_id, const std::vector<uint8_t> &hash,
+    const std::vector<uint8_t> &preimage, QWarningMessage &msg);
 }
 #endif // BRIDGEINTERFACE_H

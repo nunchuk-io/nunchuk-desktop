@@ -20,6 +20,7 @@
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
 import DataPool 1.0
+import NUNCHUCKTYPE 1.0
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
@@ -30,12 +31,13 @@ QLinearGradient {
     width: 304
     height: 92
     property string walletName      : "Name"
-    property string walletBalance   : "0.0000000"
-    property string walletCurrency  : "0.0000000"
-    property string walletM: "0"
-    property string walletN: "0"
+    property real   walletBalance   : 0.0000000
+    property real   walletCurrency  : 0.0000000
+    property real   walletM: 0
+    property real   walletN: 0
     property bool   isLocked: false
     property bool   isReplaced: false
+    property int    walletType: 0
     iEnabled: !isLocked
 
     Column{
@@ -127,7 +129,7 @@ QLinearGradient {
                 color: "#EAEAEA"
                 QText {
                     anchors.centerIn: parent
-                    text: walletN === "1" ? STR.STR_QML_070 : qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(STR.STR_QML_069);
+                    text: getWalletTypeDes()
                     color: "#031F2B"
                     font.weight: Font.Bold
                     font.pixelSize: 10
@@ -135,7 +137,14 @@ QLinearGradient {
             }
         }
     }
-
+    function getWalletTypeDes() {
+        if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
+            return STR.STR_QML_1801
+        } else {
+            return (walletN === "1") ? STR.STR_QML_070 : 
+                            qsTr("%1/%2 %3").arg(walletM).arg(walletN).arg(STR.STR_QML_069)
+        }
+    }
 
     signal buttonClicked()
     MouseArea {

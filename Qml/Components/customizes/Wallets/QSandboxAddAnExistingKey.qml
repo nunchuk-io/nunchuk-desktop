@@ -49,7 +49,7 @@ QOnScreenContentTypeB {
     }
 
     onCloseClicked: closeToSetup()
-    content: QAddAnExistingKey {
+    content: QAddExistingKey {
         notice: ""
         existList: AppModel.newWalletInfo.signerExistList
     }
@@ -74,14 +74,15 @@ QOnScreenContentTypeB {
             type: eTypeE
             enabled: _content.contentItem.fingerPrint !== ""
             onButtonClicked: {
-                if(!_content.contentItem.modelKey.signer_allowAssignToWallet) {
+                var modelKey = _content.contentItem.selectedKey
+                if(!modelKey.single_signer_allowAssignToWallet) {
                     _infoHotWallet.open()
                     return
                 }
                 var masterSignerObj = {
                     type: "group-sandbox-add-existing-key",
-                    xfp: _content.contentItem.fingerPrint,
-                    keyName: _content.contentItem.key_name
+                    xfp: modelKey.singleSigner_masterFingerPrint,
+                    keyName: modelKey.singleSigner_name
                 };
                 QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, masterSignerObj)
             }
@@ -93,39 +94,8 @@ QOnScreenContentTypeB {
         contentText: STR.STR_QML_1771
         usingMin: true
     }
-    Connections {
-        target: AppModel.newWalletInfo.sandbox
-        function onNeedTopUpXpub() {
-            _topUpXpub.open()
-        }
-    }
-    QPopupInfoTwoButtons {
-        id: _topUpXpub
-        title: STR.STR_QML_661
-        contentText: STR.STR_QML_1877
-        labels: [STR.STR_QML_560,STR.STR_QML_035]
-        funcs: [
-            function() { 
-                AppModel.rescanOrReCreateSigner(_content.contentItem.key_name, _content.contentItem.fingerPrint)
-             },
-            function() {
-                _topUpXpub.close()
-            }
-        ]
-    }
+    property var topUpXpub: AppModel.newWalletInfo.sandbox
+    QSetupTopUpXpubFlow {
 
-    QPopupBusyLoading{
-        id:_busyTopUp
-        warningText1:STR.STR_QML_582
-    }
-
-    Connections {
-        target: AppModel
-        onStartTopXPUBsSigner:{
-            _busyTopUp.open()
-        }
-        onFinishTopXPUBsSigner:{
-            _busyTopUp.close()
-        }
     }
 }

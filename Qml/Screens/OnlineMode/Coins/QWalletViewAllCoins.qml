@@ -39,7 +39,9 @@ import "../../../../localization/STR_QML.js" as STR
 Rectangle {
     color: "#FFFFFF"
     id: _coinsroot
-    property var walletInfo: AppModel.walletInfo
+    property var    walletInfo: AppModel.walletInfo
+    property bool   isMiniscript: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
+
     QContextMenu {
         id: optionMenu
         menuWidth: 300
@@ -101,15 +103,14 @@ Rectangle {
 
     Column {
         anchors.fill: parent
-
         // Header
         Item {
             id: header
             width: parent.width
-            height: 120
+            height: childrenRect.height
             Column {
                 width: parent.width
-
+                spacing: 12
                 Item {
                     width: parent.width
                     height: 24
@@ -204,6 +205,44 @@ Rectangle {
                         }
                     }
                 }
+
+                Rectangle {
+                    width: 846
+                    height: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? 80 : 60
+                    radius: 8
+                    color: "#EAEAEA"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: isMiniscript
+                    Row {
+                        anchors.fill: parent
+                        spacing: 12
+                        anchors.margins: 12
+                        QIcon {
+                            iconSize: 36
+                            source: "qrc:/Images/Images/info-60px.svg"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QLato {
+                            width: parent.width - 48
+                            text: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? STR.STR_QML_1883 : STR.STR_QML_1878
+                            font.pixelSize: 16
+                            verticalAlignment: Text.AlignVCenter
+                            wrapMode: Text.WordWrap
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
+                QCoinAge {
+                    width: 846
+                    height: 74
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    coin_timelocklist: walletInfo.timelocklist
+                    coin_timelockbase: walletInfo.timeUnit
+                    coin_timelocked:   walletInfo.timeLocked
+                    visible: isMiniscript && walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE && walletInfo.timelocklist.length > 0
+                }
+
                 Item {
                     width: parent.width
                     height: 48
@@ -260,6 +299,7 @@ Rectangle {
                 }
             }
         }
+
 
         //Body
         Item {
@@ -345,6 +385,10 @@ Rectangle {
                         outgoing_label: utxo_outgoing_label
                         outgoing_color: utxo_outgoing_color
                         allowRightClick: false
+                        coin_timelocklist: utxo_coin_timelocklist
+                        coin_timelockbase: utxo_coin_timelockbase
+                        coin_timelockCount: utxo_coin_timelockCount
+                        coin_timelocked: utxo_coin_timeLocked
                         onCoinViewClicked: {
                             var input = {
                                 type: "coin-details",

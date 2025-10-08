@@ -278,7 +278,7 @@ void EVT_SETUP_GROUP_WALLET_REQUEST_HANDLER(QVariant msg) {
             nw->setWalletAddressType(addressType);
             auto walletType = static_cast<nunchuk::WalletType>(nw->walletType());
             if (walletType == nunchuk::WalletType::MINISCRIPT) {
-                auto script_tmpl = nw->customizeMiniscript();
+                auto script_tmpl = nw->scriptTemplate();
                 if (auto sandbox = nw->groupSandboxPtr()) {
                     sandbox->CreateAGroup(walletNameInputted, script_tmpl, addressType);
                     sandbox->setScreenFlow("setup-group-wallet");

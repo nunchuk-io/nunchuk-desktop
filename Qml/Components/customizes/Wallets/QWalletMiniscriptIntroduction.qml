@@ -89,7 +89,7 @@ QOnScreenContentTypeA {
         }
         QMiniscriptMultiContextMenu {
             id: optionMenu
-            menuWidth: 350
+            menuWidth: 330
             mapMenu: [
                 {
                     isHeadLine: true,
@@ -141,7 +141,7 @@ QOnScreenContentTypeA {
                 {
                     isHeadLine: false,
                     isSeparator: false,
-                    height: 62,
+                    height: 78,
                     visible: true,
                     label: STR.STR_QML_1810,
                     description: STR.STR_QML_1811,
@@ -153,6 +153,23 @@ QOnScreenContentTypeA {
                     subMenu: null,
                     action: function(){
                         selectMiniscriptTemplate("flexible-multisig")
+                    }
+                },
+                 {
+                    isHeadLine: false,
+                    isSeparator: false,
+                    height: 78,
+                    visible: true,
+                    label: STR.STR_QML_1885,
+                    description: STR.STR_QML_1886,
+                    icon: "qrc:/Images/Images/zen-hodl.svg",
+                    iconRight: "",
+                    color: "#031F2B",
+                    colorDescription: "#757575",
+                    enable: true,
+                    subMenu: null,
+                    action: function(){
+                        selectMiniscriptTemplate("zen-hodl")
                     }
                 },
                 {

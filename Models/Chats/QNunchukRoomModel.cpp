@@ -534,12 +534,7 @@ bool QNunchukRoom::joinWalletWithMasterSigner(const QString &id, bool &needXpub)
         ENUNCHUCK::AddressType addressType = (ENUNCHUCK::AddressType)roomWallet()->walletAddressType().toInt();
         QMasterSignerPtr it = AppModel::instance()->masterSignerList()->getMasterSignerById(id);
         QWarningMessage msgWarning;
-        QSingleSignerPtr signer {nullptr};
-        if (ClientController::instance()->isSubscribed() && (int)ENUNCHUCK::SignerType::NFC == it.data()->signerType()) {
-            signer = bridge::nunchukGetDefaultSignerFromMasterSigner(id, walletType, addressType, msgWarning);
-        } else {
-            signer = bridge::nunchukGetUnusedSignerFromMasterSigner(id, walletType, addressType, msgWarning);
-        }
+        QSingleSignerPtr signer = bridge::nunchukGetAvailableSignerFromMasterSigner(it, walletType, addressType, msgWarning);
         if(signer && msgWarning.type() == (int)EWARNING::WarningType::NONE_MSG){
             msgWarning.resetWarningMessage();
             matrixbrigde::JoinWallet(this->id(), signer, msgWarning);
@@ -2090,6 +2085,7 @@ nunchuk::Wallet QNunchukRoom::createWalletFromJson(const QJsonObject &json)
                                            xpub.toStdString(),
                                            public_key.toStdString(),
                                            derivation_path.toStdString(),
+                                           {},
                                            master_fingerprint.toStdString(),
                                            std::time(0),
                                            "");

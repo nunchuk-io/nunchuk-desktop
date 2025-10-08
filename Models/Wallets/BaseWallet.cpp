@@ -549,42 +549,47 @@ void BaseWallet::setFlow(int flow)
     emit flowChanged();
 }
 
-void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type)
+void BaseWallet::updateSignMessage(const QString &xfp, int wallet_type, const QString &message, const QString &derivationPath)
 {
-    QtConcurrent::run([=, this]() {
+    struct DataStruct {
+        nunchuk::SingleSigner signer{};
+        QString address;
+        QString signature;
+    };
+    QPointer<BaseWallet> safeThis(this);
+    runInConcurrent([safeThis, wallet_type, xfp, derivationPath, message]() ->DataStruct{
+        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
         ENUNCHUCK::AddressType type = (ENUNCHUCK::AddressType)wallet_type;
         QWarningMessage msg;
-        QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
+        DataStruct data;
+        auto signer = bridge::GetSignerFromMasterSigner(xfp, derivationPath, msg);
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+            data.signer = signer;
+            data.address = bridge::GetSignerAddress(signer, (nunchuk::AddressType)type);
+            data.signature = bridge::SignMessage(signer, message, msg);
+        } else {
+            AppModel::instance()->showToast(0, msg.what(), static_cast<EWARNING::WarningType>(msg.type()));
+        }       
+        return data;
+    },[safeThis](DataStruct ret) {
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        if(ret.address.isEmpty() || ret.signature.isEmpty()){
+            return;
+        }
+        auto single = QSingleSignerPtr(new QSingleSigner(ret.signer));
         if (single) {
-            QString address = bridge::GetSignerAddress(single->originSingleSigner(), (nunchuk::AddressType)type);
-            QString signature = bridge::SignMessage(single->originSingleSigner(), single->message());
-            single->setAddress(address);
-            single->setSignature(signature);
-            DBG_INFO << address << signature;
-            if (!signature.isEmpty()) {
-                AppModel::instance()->showToast(0, "The message has been signed", EWARNING::WarningType::SUCCESS_MSG );
+            single->setAddress(ret.address);
+            single->setSignature(ret.signature);
+            AppModel::instance()->setSingleSignerInfo(single);
+            QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(single->masterFingerPrint());
+            if (master) {
+                master->setAddress(ret.address);
+                master->setSignature(ret.signature);
+                AppModel::instance()->setMasterSignerInfo(master);
             }
         }
-        if (single.isNull()) {
-            QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
-            single = bridge::nunchukGetDefaultSignerFromMasterSigner(master->id(),
-                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                     type ,
-                                                                     msg);
-            if (single) {
-                QString address = bridge::GetSignerAddress(single->originSingleSigner(), (nunchuk::AddressType)type);
-                if (master) {
-                    QString signature = bridge::SignMessage(single->originSingleSigner(), master->message());
-                    master->setAddress(address);
-                    master->setSignature(signature);
-                    DBG_INFO << address << signature;
-                    if (!signature.isEmpty()) {
-                        AppModel::instance()->showToast(0, "The message has been signed", EWARNING::WarningType::SUCCESS_MSG );
-                    }
-                }
-            }
-        }
-        emit signMessageChanged();
+        emit ptrLamda->signMessageChanged();
+        AppModel::instance()->showToast(0, "The message has been signed", EWARNING::WarningType::SUCCESS_MSG );
     });
 }
 
@@ -592,13 +597,13 @@ void BaseWallet::exportBitcoinSignedMessage(const QString &xfp, const QString &f
 {
     QString path = qUtils::QGetFilePath(file_path);
     QString address_type = qUtils::qAddressTypeToStr((nunchuk::AddressType)wallet_type);
-    QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
+    QSingleSignerPtr single = AppModel::instance()->singleSignerInfoPtr();
     QString signMessage;
     if (single) {
         signMessage = qUtils::ExportBitcoinSignedMessage(single->message(), address_type, single->signature());
     }
     if (single.isNull()) {
-        QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(xfp);
+        QMasterSignerPtr master = AppModel::instance()->masterSignerInfoPtr();
         if (master) {
             signMessage = qUtils::ExportBitcoinSignedMessage(master->message(), address_type, master->signature());
         }

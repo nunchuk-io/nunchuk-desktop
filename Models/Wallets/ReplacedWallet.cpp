@@ -113,7 +113,7 @@ void ReplacedWallet::walletCreateDone()
             QString oldName = "[DEPRECATED]" + wallet->walletName();
             w.set_name(oldName.toStdString());
             bridge::UpdateWallet(w, msg);
-            AppModel::instance()->startReloadUserDb();
+            AppModel::instance()->startReloadWallets();
         }
     }
 }
@@ -176,7 +176,9 @@ bool ReplacedWallet::updateKeyReplace(const QString &xfp, const int index)
         // AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         AppModel::instance()->setAddSignerWizard(1);
         setReplaceFlow("replace-add-signer");
-        AppModel::instance()->startScanDevices(E::STATE_ID_SCR_ADD_HARDWARE_SIGNER);
+        QMap<QString,QVariant> data;
+        data["state_id"] = E::STATE_ID_SCR_ADD_HARDWARE_SIGNER;
+        AppModel::instance()->startScanDevices(QVariant::fromValue(data));
     }
     return false;
 }

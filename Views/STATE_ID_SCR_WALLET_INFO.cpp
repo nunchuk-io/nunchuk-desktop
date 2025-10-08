@@ -63,6 +63,9 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
                     bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
                     if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
                         AppModel::instance()->removeWallet(wallet_id);
+                        AppSetting::instance()->deleteWalletCached(wallet_id);
+                        AppSetting::instance()->deleteSortCoinByAge(wallet_id);
+
                         QEventProcessor::instance()->sendEvent(E::EVT_WALLET_INFO_BACK_REQUEST);
                         AppModel::instance()->setWalletListCurrentIndex(0);
                     }

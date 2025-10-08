@@ -104,6 +104,8 @@ class MiniscriptWallet : public SandboxWallet {
     Q_PROPERTY(bool             enoughSigners           READ enoughSigners                                                  NOTIFY treeMiniscriptChanged)
     Q_PROPERTY(bool             keyPathActivated        READ keyPathActivated                                               CONSTANT)
     Q_PROPERTY(QWalletTimezoneModel*   timezones        READ timezones                                                      NOTIFY timezonesChanged)
+    Q_PROPERTY(QVariantList            timelocklist     READ timelocklist                                                   NOTIFY timelocklistChanged)
+    Q_PROPERTY(bool                    timeLocked       READ timeLocked                                                     NOTIFY timeLockedChanged)
 
 public:
     MiniscriptWallet(const nunchuk::Wallet &w);
@@ -120,8 +122,10 @@ CreateMiniscript:
     void setNewWalletM(int m);
     bool reUseKeys() const;
     void setReUseKeys(bool reUse);
+    QString scriptTemplate();
     QString customizeMiniscript();
     void setCustomizeMiniscript(const QString &miniscript);
+    void reformatMiniscript(const QString &miniscript);
 
     int timelockType() const;
     void setTimelockType(int type);
@@ -129,16 +133,18 @@ CreateMiniscript:
     void setTimeUnit(int unit);
 
     QVariantList treeMiniscript() const;
+    QJsonArray treeMiniscriptJs() const;
     void setTreeMiniscript(const QJsonArray &tree);
 
     QVariant timeMini() const;
-    uint timeMiniValue() const;
+    quint64  timeMiniValue() const;
 
     QJsonObject getKeyDetails(const QJsonObject &oldKey, const QString &key);
 
-    QJsonArray createTreeMiniscript(const nunchuk::ScriptNode &node, QList<int> &levels);
+    QJsonArray createTreeMiniscript(const nunchuk::ScriptNode &node, QList<int> &levels);    
 
     QVariantList keypaths() const;
+    QJsonArray keypathsJs() const;
     QJsonArray createKeypaths(const QStringList &keypaths);
     void setKeypaths(const QJsonArray &keypath);
 
@@ -170,13 +176,19 @@ CreateMiniscript:
     bool needCheckDuplicate() const;
     void setNeedCheckDuplicate(bool needCheck);
 
+    QVariantList timelocklist();
+    void setTimelocklist(const std::vector<int64_t> timelocks);
+
+    bool timeLocked() const;
+    void setTimeLocked(bool newTimeLocked);
+
 public slots:
     bool isTaprootType(const QString &userInput);
     bool enterCustomMiniscript(const QString &userInput);
     bool miniscriptTemplateSelected(const QString &userSelect);
     void updateTimeMiniscript(const QString &key, const QVariant &value);
     void updateTimeMiniscript(const QMap<QString, QVariant>& dataMap);
-    void clearTimeMiniscript();
+    void clearTimeMiniscript(const QString &userInput = "");
     bool configureWallet(const QString &script_tmpl = "");
     bool importMiniscriptFile(const QString &filePath);
     void updateSignersMiniscript(const QString &key, const QSingleSignerPtr &value, bool autoreuse = true);
@@ -187,11 +199,11 @@ public slots:
     void requestAddNewKey();
     void requestAddExistKey(const QString &xfp);
     void requestChangeWalletTypeToTaproot();
-    bool editBIP32Path(const QString &key, const QString &master_id, const QString& path);
+    virtual bool editBIP32Path(const QVariant &singleData, const QVariant &customData, const QString &path);
     QMap<QString, int> getKeyStrCount(const QJsonArray &scriptPaths, const QJsonArray &keyPaths);
     QJsonArray scriptPathRefresh(const QJsonArray &tree, const QMap<QString, int> &duplicateCheck);
     QJsonArray keyPathRefresh(const QJsonArray &tree, const QMap<QString, int> &duplicateCheck);
-    void checkDuplicateKey(const QMap<QString, int> &duplicateCheck);
+    void checkDuplicateKey();
 
 signals:
     void newWalletNChanged();
@@ -205,9 +217,12 @@ signals:
     void treeMiniscriptChanged();
     void keypathsChanged();
     void editBIP32PathSuccess(int typeError);
-    void duplicateKeyError(const QString &key, const QString &xfp, const QString &path, const QVariant &keyObj = QVariant());
+    void duplicateKeyError(const QVariant &signerData, const QVariant &customData);
     void timezonesChanged();
     void needTopUpXpub();
+    void timelocklistChanged();
+
+    void timeLockedChanged();
 
 private:
     QString m_customizeMiniscript {};
@@ -225,6 +240,13 @@ private:
     QWalletTimezoneModelPtr m_timezones; // Model for timezones
     QMap<QString, int> m_defaultKeys;
     bool m_needCheckDuplicate {false};
+    QVariantList m_timelocklist {};
+    bool    m_timeLocked {false};
+    struct CheckBoxInfo {
+        bool hasCheckBox {false};
+        bool checked {true};
+    };
+    QMap<QString, bool> m_checkBoxInfo; // Store checkbox info for script nodes
 };
 
 #endif // MINISCRIPTWALLET_H

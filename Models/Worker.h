@@ -64,7 +64,7 @@ public slots:
                                      const bool replace,
                                      const int event);
 
-    void slotStartScanDevices(const int state_id);
+    void slotStartScanDevices(const QVariant &data);
 
     void slotStartSigningTransaction(const QString &walletId,
                                      const QString &txid,
@@ -154,11 +154,9 @@ signals:
                                   int type,
                                   int code);
 
-    void finishScanDevices(const int state_id,
+    void finishScanDevices(const QVariant &data,
                            std::vector<nunchuk::Device> ret,
-                           QString what,
-                           int type,
-                           int code);
+                           QWarningMessagePtr msg);
 
     void finishSigningTransaction(const QString &walletId,
                                   nunchuk::Transaction result,
@@ -277,11 +275,10 @@ public slots:
                                       QString what,
                                       int type,
                                       int code);
-    void slotFinishScanDevices(const int state_id,
-                               std::vector<nunchuk::Device> ret,
-                               QString what,
-                               int type,
-                               int code);
+
+    void slotFinishScanDevices(const QVariant &data,
+                                std::vector<nunchuk::Device> ret,
+                                QWarningMessagePtr msg);
 
     void slotFinishSigningTransaction(const QString &walletId,
                                       nunchuk::Transaction result,
@@ -392,7 +389,7 @@ signals:
                                  const bool replace,
                                  const int event);
 
-    void startScanDevices(const int state_id);
+    void startScanDevices(const QVariant &data);
 
     void startSigningTransaction(const QString &walletId,
                                  const QString &txid,

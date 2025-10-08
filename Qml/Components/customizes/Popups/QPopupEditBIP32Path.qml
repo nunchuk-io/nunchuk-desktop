@@ -41,7 +41,6 @@ Popup {
     modal: true
     focus: true
     signal enterText(var pathBip32)
-    property var signerData
     property string title: STR.STR_QML_1679
     property bool isShowListDevice: false
     property int idx: -1
@@ -132,8 +131,8 @@ Popup {
                             QCircleIcon {
                                 bgSize: 48
                                 icon.iconSize: 24
-                                icon.type: signerData.single_type
-                                icon.tag: signerData.single_tag
+                                icon.type: singleData.single_signer_type
+                                icon.tag: singleData.single_signer_tag
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: "#F5F5F5"
                             }
@@ -143,7 +142,7 @@ Popup {
                                 QText {
                                     width: 146
                                     height: 20
-                                    text: signerData.single_name
+                                    text: singleData.singleSigner_name
                                     color: "#031F2B"
                                     font.weight: Font.Normal
                                     font.family: "Lato"
@@ -152,7 +151,7 @@ Popup {
                                 QText {
                                     width: 146
                                     height: 20
-                                    text: "XFP: " + signerData.single_masterFingerPrint
+                                    text: "XFP: " + singleData.singleSigner_masterFingerPrint
                                     color: "#595959"
                                     font.weight: Font.Normal
                                     font.capitalization: Font.AllUppercase
@@ -170,7 +169,7 @@ Popup {
                         enabled: false
                         titleFontSize: 12
                         disabledColor: "#F5F5F5"
-                        textInputted: signerData.single_derivationPath
+                        textInputted: singleData.singleSigner_derivationPath
                     }
                     Column {
                         width: parent.width
@@ -182,7 +181,7 @@ Popup {
                             boxHeight: 48
                             isValid: true
                             titleFontSize: 12
-                            textInputted: signerData.single_derivationPath
+                            textInputted: singleData.singleSigner_derivationPath
                             onTextInputtedChanged: {
                                 if(!newBip32Path.isValid) {
                                     newBip32Path.isValid = true
@@ -226,8 +225,7 @@ Popup {
                                 topMargin: 6
                             }
                             onButtonClicked: {
-                                AppModel.startScanDevices(EVT.STATE_ID_SCR_SETUP_GROUP_WALLET)
-                                AppModel.rescanOrReCreateSigner(signerData.single_name, signerData.single_masterFingerPrint)
+                                AppModel.startScanDevices({state_id: EVT.STATE_ID_SCR_SETUP_GROUP_WALLET})
                             }
                         }
                         QListView {

@@ -722,7 +722,7 @@ nunchuk::SingleSigner qUtils::ParseSignerString(const QString key_spec, QWarning
         const std::string xfp = boost::algorithm::to_lower_copy(sm[1].str());
         if (sm[3].str().rfind("tpub", 0) == 0 || sm[3].str().rfind("xpub", 0) == 0) {
             try {
-                ret = nunchuk::SingleSigner(sm[1], sm[3], {}, "m" + sm[2].str(), xfp, 0);
+                ret = nunchuk::SingleSigner(sm[1], sm[3], {}, "m" + sm[2].str(), {}, xfp, 0);
             } catch (const nunchuk::BaseException &ex) {
                 DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
                 msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -732,7 +732,7 @@ nunchuk::SingleSigner qUtils::ParseSignerString(const QString key_spec, QWarning
             }
         } else {
             try {
-                ret = nunchuk::SingleSigner(sm[1], {}, sm[3], "m" + sm[2].str(), xfp, 0);
+                ret = nunchuk::SingleSigner(sm[1], {}, sm[3], "m" + sm[2].str(), {}, xfp, 0);
             } catch (const nunchuk::BaseException &ex) {
                 DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
                 msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -1033,13 +1033,15 @@ std::vector<uint8_t> qUtils::HashPreimage(const std::vector<uint8_t> &preimage, 
 }
 
 std::string qUtils::RevealPreimage(const std::string &psbt, nunchuk::PreimageHashType hashType, const std::vector<uint8_t> &hash,
-                                   const std::vector<uint8_t> &preimage) {
+                                   const std::vector<uint8_t> &preimage, QWarningMessage &msg) {
     try {
         return nunchuk::Utils::RevealPreimage(psbt, hashType, hash, preimage);
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     } catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return "";
 }
@@ -1085,6 +1087,19 @@ std::string qUtils::FlexibleMultisigMiniscriptTemplate(int m, int n, int new_m, 
                                                        nunchuk::AddressType address_type, QWarningMessage &msg) {
     try {
         return nunchuk::Utils::FlexibleMultisigMiniscriptTemplate(m, n, new_m, new_n, reuse_signers, timelock, address_type);
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &ex) {
+        DBG_INFO << "THROW EXCEPTION" << ex.what();
+        msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return "";
+}
+
+std::string qUtils::ZenHodlMiniscriptTemplate(int m, int n, const nunchuk::Timelock& timelock, nunchuk::AddressType address_type, QWarningMessage &msg) {
+    try {
+        return nunchuk::Utils::ZenHodlMiniscriptTemplate(m, n, timelock, address_type);
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -1142,80 +1157,6 @@ nunchuk::WalletType qUtils::WalletTypeFromStr(const QString &str) {
     return nunchuk::WalletType::MULTI_SIG; // Default case, should be handled properly
 }
 
-std::set<nunchuk::SignerType> qUtils::GetSupportedTaprootTypes(
-    const std::set<nunchuk::AddressType> &supported_address_types,
-    const std::set<nunchuk::SignerTag> &supported_tags,
-    const std::set<nunchuk::WalletTemplate> &supported_templates,
-    const std::set<nunchuk::WalletType> &supported_wallet_types
-) {
-    std::set<nunchuk::SignerType> supported_types;
-    QJsonObject data;
-    QString     error_msg = "";
-    bool get_result = Draco::instance()->GetTaprootSupportedSigners(data, error_msg);
-    auto get_str = [](const QJsonObject &obj, const QString &key) -> QString {
-        return obj.contains(key) ? obj[key].toString() : "";
-    };
-    if(get_result){
-        DBG_INFO << data;
-        QJsonArray supported_signers = data["supported_signers"].toArray();
-        foreach (const QJsonValue &value, supported_signers) {
-            QJsonObject obj = value.toObject();
-            
-            QString address_type_str = get_str(obj, "address_type");
-            QString signer_tag_str = get_str(obj, "signer_tag");
-            QString wallet_template_str = get_str(obj, "wallet_template");
-            QString wallet_type_str = get_str(obj, "wallet_type");
-            
-            nunchuk::AddressType address_type = AddressTypeFromStr(address_type_str);
-            nunchuk::SignerTag tag = signer_tag_str.isEmpty() ? nunchuk::SignerTag::INHERITANCE : SignerTagFromStr(signer_tag_str.toStdString());
-            nunchuk::WalletTemplate template_type = WalletTemplateFromStr(wallet_template_str);
-            nunchuk::WalletType wallet_type = WalletTypeFromStr(wallet_type_str);
-            bool supported_address_type = supported_address_types.empty() || supported_address_types.contains(address_type) || address_type_str.isEmpty();
-            bool supported_tag = supported_tags.empty() || supported_tags.contains(tag) || signer_tag_str.isEmpty();
-            bool supported_template = supported_templates.empty() || supported_templates.contains(template_type) || wallet_template_str.isEmpty();
-            bool supported_wallet_type = supported_wallet_types.empty() || supported_wallet_types.contains(wallet_type) || wallet_type_str.isEmpty();
-            if (supported_address_type && supported_tag && supported_template && supported_wallet_type){
-                QString signer_type_str = get_str(obj, "signer_type");
-                DBG_INFO << "Supported Signer Type: " << signer_type_str;
-                nunchuk::SignerType type_enum = qUtils::GetSignerType(signer_type_str);
-                supported_types.insert(type_enum);
-            }            
-        }
-        
-    }
-    else {
-        DBG_INFO << "GetTaprootSupportedSigners failed: " << error_msg;
-    }
-    return supported_types;
-}
-
-std::set<nunchuk::SignerType> qUtils::GetUnSupportedTaprootTypes(
-    const std::set<nunchuk::AddressType> &unsupported_address_types,
-    const std::set<nunchuk::SignerTag> &unsupported_tags,
-    const std::set<nunchuk::WalletTemplate> &unsupported_templates,
-    const std::set<nunchuk::WalletType> &unsupported_wallet_types
-) {
-    std::set<nunchuk::SignerType> all_types = {};
-    all_types.insert(nunchuk::SignerType::UNKNOWN);
-    all_types.insert(nunchuk::SignerType::HARDWARE);
-    all_types.insert(nunchuk::SignerType::AIRGAP);
-    all_types.insert(nunchuk::SignerType::SOFTWARE);
-    all_types.insert(nunchuk::SignerType::FOREIGN_SOFTWARE);
-    all_types.insert(nunchuk::SignerType::NFC);
-    all_types.insert(nunchuk::SignerType::COLDCARD_NFC);
-    all_types.insert(nunchuk::SignerType::SERVER);
-    all_types.insert(nunchuk::SignerType::PORTAL_NFC);
-    
-    const std::set<nunchuk::SignerType> supported_types = GetSupportedTaprootTypes(unsupported_address_types, unsupported_tags, unsupported_templates, unsupported_wallet_types);
-    std::set<nunchuk::SignerType> unsupported_types {};
-    for (const auto &type : all_types) { // Corrected loop syntax
-        if (!supported_types.contains(type)) {
-            unsupported_types.insert(type);
-        }
-    }
-    return unsupported_types;
-}
-
 nunchuk::ScriptNodeId qUtils::ScriptNodeIdFromString(const QString &path) {
     nunchuk::ScriptNodeId id;
     QStringList list = path.split(".");
@@ -1231,6 +1172,7 @@ nunchuk::ScriptNodeId qUtils::ScriptNodeIdFromString(const QString &path) {
     }
     return id;
 }
+
 QString qUtils::ScriptNodeIdToString(const nunchuk::ScriptNodeId &id) {
     QString result;
     QStringList list;
@@ -1408,4 +1350,176 @@ int qUtils::getIndexAt(const QString &path, int pos)
     bool ok = false;
     int value = part.toInt(&ok);
     return ok ? value : -1;
+}
+
+nunchuk::SingleSigner qUtils::toSingleSigner(const nunchuk::MasterSigner& master) {
+    std::string name = master.get_name();
+
+    nunchuk::Device dev = master.get_device();
+
+    std::string xpub;              
+    std::string public_key;        
+    std::string derivation_path;   
+
+    std::string master_fingerprint = dev.get_master_fingerprint();
+
+    std::string master_signer_id = master.get_id();
+
+    time_t last_health_check = master.get_last_health_check();
+
+    nunchuk::SignerType signer_type = master.get_type();
+
+    // Tags
+    std::vector<nunchuk::SignerTag> tags = master.get_tags();
+
+    // Visibility
+    bool visible = master.is_visible();
+
+    // Construct SingleSigner object
+    return nunchuk::SingleSigner(
+        name,
+        xpub,
+        public_key,
+        derivation_path,
+        {},
+        master_fingerprint,
+        last_health_check,
+        master_signer_id,
+        /* used = */ false,
+        signer_type,
+        tags,
+        visible
+    );
+}
+
+// Tìm đóng tương ứng cho '(' hoặc '{' tại pos (trả về index đóng hoặc -1)
+static int findMatchingBracket(const QString &s, int pos) {
+    if (pos < 0 || pos >= s.size()) return -1;
+    QChar open = s[pos];
+    QChar close = (open == '(') ? ')' : (open == '{' ? '}' : QChar());
+    if (close.isNull()) return -1;
+    int depth = 1;
+    for (int i = pos + 1; i < s.size(); ++i) {
+        if (s[i] == open) ++depth;
+        else if (s[i] == close) {
+            --depth;
+            if (depth == 0) return i;
+        }
+    }
+    return -1;
+}
+
+// Quyết định có inline cặp (open..close) hay không
+static bool canInlineRange(const QString &s, int open, int close, int maxInlineLen) {
+    if (open < 0 || close <= open) return true;
+    int len = close - open - 1;
+    if (len <= 0) return true;
+    if (len > maxInlineLen) return false;
+    // nếu nội dung có newline thì không inline
+    QString inner = s.mid(open + 1, len);
+    if (inner.contains('\n')) return false;
+    // Đơn giản: nếu ngắn (< threshold) thì inline tốt
+    return true;
+}
+
+QString qUtils::formatMiniscript(const QString &input, int indentSize, int maxInlineLen) {
+    QString output;
+    QTextStream out(&output);
+
+    QVector<bool> inlineStack; // stack lưu trạng thái inline cho mỗi cặp ngoặc đang mở
+    int indent = 0;
+    int n = input.size();
+
+    for (int i = 0; i < n; ++i) {
+        QChar c = input[i];
+
+        if (c == '(' || c == '{') {
+            int match = findMatchingBracket(input, i);
+            // nếu không tìm thấy đóng, cứ in ra ký tự và tiếp tục
+            if (match == -1) {
+                out << c;
+                continue;
+            }
+
+            // Nếu ngoặc cha đang inline thì ép con inline
+            bool forcedInline = (!inlineStack.isEmpty() && inlineStack.last());
+            bool inlineMode = forcedInline ? true : canInlineRange(input, i, match, maxInlineLen);
+            inlineStack.append(inlineMode);
+
+            out << c;
+            if (!inlineMode) {
+                out << "\n";
+                indent += indentSize;
+                out << QString(indent, ' ');
+            }
+        }
+        else if (c == ',') {
+            // chuẩn hoá: nếu trong inline => ", " ; nếu trong multiline => ",\n<indent>"
+            bool topInline = (!inlineStack.isEmpty() && inlineStack.last());
+            if (topInline) {
+                out << ", ";
+                // bỏ các khoảng trắng sau dấu phẩy trong input (chuẩn hoá spacing)
+                int j = i + 1;
+                while (j < n && input[j].isSpace()) ++j;
+                i = j - 1;
+            } else {
+                out << ",\n" << QString(indent, ' ');
+                int j = i + 1;
+                while (j < n && input[j].isSpace()) ++j;
+                i = j - 1;
+            }
+        }
+        else if (c == ')' || c == '}') {
+            bool isInline = (!inlineStack.isEmpty() && inlineStack.last());
+            if (!inlineStack.isEmpty()) inlineStack.removeLast();
+
+            if (isInline) {
+                out << c;
+            } else {
+                out << "\n";
+                indent -= indentSize;
+                if (indent < 0) indent = 0;
+                out << QString(indent, ' ') << c;
+            }
+        }
+        else {
+            out << c;
+        }
+    }
+
+    return output;
+}
+
+// Convert vector<uint8_t> -> hex string
+std::string qUtils::bytesToHex(const std::vector<uint8_t>& data) {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (uint8_t byte : data) {
+        oss << std::setw(2) << static_cast<int>(byte);
+    }
+    return oss.str();
+}
+
+// Convert hex string -> vector<uint8_t>
+std::vector<uint8_t> qUtils::hexToBytes(const std::string& hex) {
+    if (hex.size() % 2 != 0) {
+        return {};
+    }
+
+    std::vector<uint8_t> bytes;
+    bytes.reserve(hex.size() / 2);
+
+    for (size_t i = 0; i < hex.size(); i += 2) {
+        std::string byteString = hex.substr(i, 2);
+        uint8_t byte = static_cast<uint8_t>(std::stoi(byteString, nullptr, 16));
+        bytes.push_back(byte);
+    }
+    return bytes;
+}
+
+QString qUtils::BytesToHex(const std::vector<uint8_t>& data) {
+    return QString::fromStdString(bytesToHex(data));
+}
+std::vector<uint8_t> qUtils::HexToBytes(const QString& hex) {
+    return hexToBytes(hex.toStdString());
 }

@@ -33,7 +33,8 @@ import "../../../../Components/customizes/Texts"
 import "../../../../../localization/STR_QML.js" as STR
 
 Column {
-    width: 352
+    readonly property int widthHalf: 352
+    width: widthHalf
     readonly property var tmpColors: [
         {colorStr: "#9EC063",           url: "qrc:/Images/Images/User-dark.svg" },
         {colorStr: "#2F466C",           url: "qrc:/Images/Images/User-dark.svg" },
@@ -129,7 +130,7 @@ Column {
     }
     Item {
         id: taprootItem
-        width: 352
+        width: widthHalf
         height: taprootItem.visible ? (16 + 12) : 0
         QBadge {
             width: 63
@@ -163,24 +164,38 @@ Column {
     Component {
         id: keypathList
         Column {
-            width: 352
+            width: widthHalf
             Column {
-                width: 352
+                width: widthHalf
                 Repeater {
                     model: newWalletInfo.keypaths
                     delegate: QKeyPath {
-                        width: 352
+                        width: widthHalf
+                        miniscript: modelData
+                    }
+                }
+                Component {
+                    id: keyPathDelegate
+                    QKeyPath {
+                        width: widthHalf
+                        miniscript: modelData
+                    }
+                }
+                Component {
+                    id: muSigDelegate
+                    QMiniscriptPolicesAddDelegate {
+                        width: widthHalf
                         miniscript: modelData
                     }
                 }
             }
             QLine {
-                width: 352
+                width: widthHalf
                 height: 1
                 color: "#DEDEDE"
             }
             Item {
-                width: 352
+                width: widthHalf
                 height: 8 + 16 + 12
                 QBadge {
                     width: 74
@@ -201,7 +216,7 @@ Column {
     Component {
         id: notHaveKeyPath
         Item {
-            width: 352
+            width: widthHalf
             height: 8 + 16 + 12
             QBadge {
                 width: 74
@@ -220,11 +235,11 @@ Column {
     }
     
     Column {
-        width: 352
+        width: widthHalf
         Repeater {
             model: newWalletInfo.treeMiniscript
             delegate: QMiniscriptPolicesAddDelegate {
-                width: 352
+                width: widthHalf
                 miniscript: modelData
             }
         }

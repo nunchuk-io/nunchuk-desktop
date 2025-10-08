@@ -18,6 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include "QEventProcessor.h"
+#include "ViewsEnums.h"
 #include "QOutlog.h"
 #include <QFontDatabase>
 #include <QScreen>
@@ -345,6 +346,15 @@ bool QEventProcessor::closeAllPopup()
 QObject *QEventProcessor::getCurrentScreen() const
 {
     return m_currentScreen;
+}
+
+void QEventProcessor::closeStateScreen(uint screenId) {
+    if(QEventProcessor::instance()->getCurrentStates().size() > 0) {
+        int last = QEventProcessor::instance()->getCurrentStates().last();
+        if (last == screenId) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+        }
+    }
 }
 
 uint QEventProcessor::onsRequester() const

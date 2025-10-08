@@ -170,25 +170,30 @@ typedef OurSharedPointer<QCoinCollectionsModel> QCoinCollectionsModelPtr;
 class UTXO  : public QObject{
 
     Q_OBJECT
-    Q_PROPERTY(QString  txid                            READ txid                                   NOTIFY unspentOutputChanged)
-    Q_PROPERTY(int      vout                            READ vout                                   NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  address                         READ address                                NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  amount                          READ amountDisplay                          NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  amountCurrency                  READ amountCurrency                         NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  scriptPublickey                 READ scriptPublickey                        NOTIFY unspentOutputChanged)
-    Q_PROPERTY(int      height                          READ height                                 NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  memo                            READ memo                                   NOTIFY unspentOutputChanged)
-    Q_PROPERTY(int      status                          READ status                                 NOTIFY unspentOutputChanged)
-    Q_PROPERTY(bool     isChange                        READ isChange                               NOTIFY unspentOutputChanged)
-    Q_PROPERTY(bool     isLocked                        READ isLocked                               NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  blocktimeDisplay                READ blocktimeDisplayTwo                    NOTIFY unspentOutputChanged)
-    Q_PROPERTY(QString  scheduleTimeDisplay             READ scheduleTimeDisplay                    NOTIFY unspentOutputChanged)
-    Q_PROPERTY(bool     selected                        READ selected           WRITE setSelected   NOTIFY selectedChanged)
-    Q_PROPERTY(QCoinTagsModel*          coinTags        READ coinTags                               NOTIFY coinTagsChanged)
-    Q_PROPERTY(QCoinCollectionsModel*   coinCollections READ coinCollections                        NOTIFY coinCollectionsChanged)
-    Q_PROPERTY(Transaction* transaction                 READ transaction                            NOTIFY coinCollectionsChanged)
-    Q_PROPERTY(QString outpoint                         READ outpoint                               CONSTANT)
-    Q_PROPERTY(QVariant outgoing                        READ outgoing                               CONSTANT)
+    Q_PROPERTY(QString                  txid                            READ txid                                           NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int                      vout                            READ vout                                           NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  address                         READ address                                        NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  amount                          READ amountDisplay                                  NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  amountCurrency                  READ amountCurrency                                 NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  scriptPublickey                 READ scriptPublickey                                NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int                      height                          READ height                                         NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  memo                            READ memo                                           NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int                      status                          READ status                                         NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool                     isChange                        READ isChange                                       NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool                     isLocked                        READ isLocked                                       NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  blocktimeDisplay                READ blocktimeDisplayTwo                            NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QString                  scheduleTimeDisplay             READ scheduleTimeDisplay                            NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool                     selected                        READ selected                   WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(QCoinTagsModel*          coinTags                        READ coinTags                                       NOTIFY coinTagsChanged)
+    Q_PROPERTY(QCoinCollectionsModel*   coinCollections                 READ coinCollections                                NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(Transaction*             transaction                     READ transaction                                    NOTIFY coinCollectionsChanged)
+    Q_PROPERTY(QString                  outpoint                        READ outpoint                                       CONSTANT)
+    Q_PROPERTY(QVariant                 outgoing                        READ outgoing                                       CONSTANT)
+
+    Q_PROPERTY(int                      timelockbase                    READ timelockbase                                   NOTIFY unspentOutputChanged)
+    Q_PROPERTY(QVariantList             timelocklist                    READ timelocklist                                   NOTIFY unspentOutputChanged)
+    Q_PROPERTY(int                      timelockCount                   READ timelockCount                                  NOTIFY unspentOutputChanged)
+    Q_PROPERTY(bool                     timeLocked                      READ timeLocked                                     NOTIFY timeLockedChanged)
 
 public:
     UTXO(QString wallet_id, nunchuk::UnspentOutput data);
@@ -272,6 +277,15 @@ public:
     bool hasTransactionID(const QString &searchText);
 
     bool hasResultSearching(const QString &searchText);
+
+    int lockedIndex();
+    int timelockbase();
+    int timelockCount();
+    QVariantList timelocklist();
+
+    bool timeLocked() const;
+    void setTimeLocked(bool newTimeLocked);
+
 private:
     bool m_selected;
     nunchuk::UnspentOutput mUnspentOutputOrigin;
@@ -279,11 +293,15 @@ private:
     QCoinCollectionsModelPtr m_coinCollections;
     QTransactionPtr m_trans;
     QString m_wallet_id;
+    bool    m_timeLocked {false};
+
+
 signals:
     void selectedChanged();
     void unspentOutputChanged();
     void coinTagsChanged();
     void coinCollectionsChanged();
+    void timeLockedChanged();
 };
 typedef OurSharedPointer<UTXO> QUTXOPtr;
 
@@ -354,6 +372,10 @@ public:
         utxo_outgoing_label_role,
         utxo_outgoing_color_role,
         utxo_coin_is_change_role,
+        utxo_coin_timelockbase_role,
+        utxo_coin_timelocklist_role,
+        utxo_coin_timelockCount_role,
+        utxo_coin_timeLocked_role,
     };
 
     qint64 amountSats();
@@ -412,5 +434,9 @@ bool sortbyHeightDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 // Sort memo
 bool sortbyMemoAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 bool sortbyMemoDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
+
+// Sort block time
+bool sortbyBlocktimeAscending(const QUTXOPtr &v1, const QUTXOPtr &v2);
+bool sortbyBlocktimeDescending(const QUTXOPtr &v1, const QUTXOPtr &v2);
 
 #endif // UNSPENTOUTPUTMODEL_H

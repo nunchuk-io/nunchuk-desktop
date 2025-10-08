@@ -43,7 +43,7 @@ void EVT_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
         QSingleSignerPtr signer = transaction.data()->singleSignersAssigned()->getSingleSignerByFingerPrint(signerXfp);
         if (!signer) {
             // FIXME SHOW TOAST ?
-            DBG_INFO << "Signer not found for fingerprint: " << signerXfp;
+            DBG_INFO << "Signer not found for fingerprint: " << signerXfp << transaction.data()->singleSignersAssigned()->rowCount();
             emit AppModel::instance() -> finishedSigningTransaction();
             return;
         }
@@ -194,7 +194,9 @@ void EVT_TRANSACTION_INFO_BACK_REQUEST_HANDLER(QVariant msg) {}
 void EVT_TRANSACTION_INFO_CANCEL_PENDING_TRANSACTION_REQUEST_HANDLER(QVariant msg) {}
 
 void EVT_TRANSACTION_SCAN_DEVICE_REQUEST_HANDLER(QVariant msg) {
-    AppModel::instance()->startScanDevices(E::STATE_ID_SCR_TRANSACTION_INFO);
+    QMap<QString,QVariant> data;
+    data["state_id"] = E::STATE_ID_SCR_TRANSACTION_INFO;
+    AppModel::instance()->startScanDevices(QVariant::fromValue(data));
 }
 
 void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
@@ -222,7 +224,6 @@ void EVT_TRANSACTION_REMOVE_REQUEST_HANDLER(QVariant msg) {
                         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST, E::STATE_ID_SCR_TRANSACTION_INFO);
                     }
                 }
-                AppSetting::instance()->deleteWalletCached(txid);
                 AppSetting::instance()->deleteTransactionKeysetIndex(txid);
                 AppSetting::instance()->deleteTransactionSigningPath(txid);
                 AppSetting::instance()->deleteTransactionUsescriptpath(txid);

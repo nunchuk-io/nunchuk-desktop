@@ -234,7 +234,8 @@ std::vector<uint8_t> HashPreimage(const std::vector<uint8_t>& preimage,
 std::string RevealPreimage(const std::string& psbt,
                            nunchuk::PreimageHashType hashType,
                            const std::vector<uint8_t>& hash,
-                           const std::vector<uint8_t>& preimage);
+                           const std::vector<uint8_t>& preimage,
+                           QWarningMessage &msg);
 
 bool IsPreimageRevealed(const std::string& psbt,
                         const std::vector<uint8_t>& hash);
@@ -251,6 +252,11 @@ std::string FlexibleMultisigMiniscriptTemplate(
     int m, int n, int new_m, int new_n, bool reuse_signers,
     const nunchuk::Timelock& timelock, nunchuk::AddressType address_type, QWarningMessage &msg);
 
+std::string ZenHodlMiniscriptTemplate(int m, int n,
+        const nunchuk::Timelock& timelock,
+        nunchuk::AddressType address_type,
+        QWarningMessage &msg);
+
 std::vector<nunchuk::UnspentOutput> GetTimelockedCoins(
     const std::string& miniscript, const std::vector<nunchuk::UnspentOutput>& coins,
     int64_t& max_lock_value, int chain_tip);
@@ -262,19 +268,6 @@ std::vector<nunchuk::CoinsGroup> GetCoinsGroupedBySubPolicies(
 nunchuk::AddressType AddressTypeFromStr(const QString &str);
 nunchuk::WalletTemplate WalletTemplateFromStr(const QString &str);
 nunchuk::WalletType WalletTypeFromStr(const QString &str);
-
-std::set<nunchuk::SignerType> GetSupportedTaprootTypes(
-    const std::set<nunchuk::AddressType> &supported_address_types = {},
-    const std::set<nunchuk::SignerTag> &supported_tags = {},
-    const std::set<nunchuk::WalletTemplate> &supported_templates = {},
-    const std::set<nunchuk::WalletType> &supported_wallet_types = {}
-);
-std::set<nunchuk::SignerType> GetUnSupportedTaprootTypes(
-    const std::set<nunchuk::AddressType> &unsupported_address_types = {},
-    const std::set<nunchuk::SignerTag> &unsupported_tags = {},
-    const std::set<nunchuk::WalletTemplate> &unsupported_templates = {},
-    const std::set<nunchuk::WalletType> &unsupported_wallet_types = {}
-);
 
 nunchuk::ScriptNodeId ScriptNodeIdFromString(const QString &path);
 QString ScriptNodeIdToString(const nunchuk::ScriptNodeId &id);
@@ -301,5 +294,15 @@ nunchuk::SigningPath deserializeSigningPath(const QByteArray ba);
 QString incrementZeroIndex(const QString &path);
 
 int getIndexAt(const QString &path, int pos);
+
+nunchuk::SingleSigner toSingleSigner(const nunchuk::MasterSigner& master);
+
+QString formatMiniscript(const QString &input, int indentSize = 2, int maxInlineLen = 40);
+
+std::string bytesToHex(const std::vector<uint8_t>& data);
+std::vector<uint8_t> hexToBytes(const std::string& hex);
+
+QString BytesToHex(const std::vector<uint8_t>& data);
+std::vector<uint8_t> HexToBytes(const QString& hex);
 }
 #endif // QUTILS_H

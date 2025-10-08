@@ -162,6 +162,7 @@ public:
     void setKeyReplaced(const QSingleSignerPtr &keyReplaced);
 
     bool taprootSupported();
+    void setTaprootSupported(bool supported);
     int  keysetIndex() const;
     void setKeysetIndex(const int index);
     int  keysetStatus() const;
@@ -216,6 +217,8 @@ private:
     bool m_isOccupied {false};
     bool m_need_passphrase {false};
     bool m_need_backup {false};
+    bool m_isLocalSigner {false};
+    bool m_taprootSupported {false};
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
@@ -312,6 +315,7 @@ public:
     static QHash<int,QByteArray> roleSignerNames();
     static QVariant dataSigner(const QSingleSignerPtr &data, int role);
     static QVariant useQml(const QSingleSignerPtr &data);
+    Q_INVOKABLE QVariant get(int index);
     void replaceSingleSigner(int index, const QSingleSignerPtr &value);
     void addSingleSigner(const QSingleSignerPtr &d);
     void addKeysetSigner(const QSingleSignerPtr &signer, const int keyset_index);

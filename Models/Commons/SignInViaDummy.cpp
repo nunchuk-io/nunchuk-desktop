@@ -65,6 +65,7 @@ void SignInViaDummy::convertWallet()
                                            "",
                                            "",
                                            derivation_path.toStdString(),
+                                           {},
                                            xfp.toStdString(),
                                            std::time(0),
                                            "",

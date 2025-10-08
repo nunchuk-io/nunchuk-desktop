@@ -124,7 +124,7 @@ QScreen {
         }
 
         function notPaidAlert() {
-            _InfoVer.link = "https://nunchuk.io/claim"
+            _InfoVer.link = "https://nunchuk.io/individuals"
             _InfoVer.linkTop = true
             _InfoVer.contentText = STR.STR_QML_771
             _InfoVer.labels = [STR.STR_QML_772,STR.STR_QML_341]

@@ -153,6 +153,10 @@ bool QNormalSandbox::FinalizeGroup()
     if (!groupId().isEmpty() && enoughSigner()) {
         QWarningMessage msg;
         QSet<size_t> valuekeyset = (m_sandbox.get_address_type() == nunchuk::AddressType::TAPROOT && m_sandbox.get_wallet_template() == nunchuk::WalletTemplate::DEFAULT) ? ValueKeyset() : QSet<size_t>();
+        for (auto &signer : m_sandbox.get_signers()) {
+            DBG_INFO << QString::fromStdString(signer.get_name()) << QString::fromStdString(signer.get_master_fingerprint()) << signer.get_derivation_path();
+        }
+
         auto sandbox = bridge::FinalizeGroup(groupId(), valuekeyset, msg);
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             m_isCreateWallet = true;
@@ -378,19 +382,16 @@ bool QNormalSandbox::AddMasterToGroup()
 {
     if (auto key = AppModel::instance()->masterSignerInfoPtr()) {
         QWarningMessage msg;
-        QSingleSignerPtr signer;
-        auto walletType = static_cast<ENUNCHUCK::WalletType>(m_sandbox.get_wallet_type());
-        if (key->signerType() == (int)nunchuk::SignerType::NFC) {
-            signer = bridge::nunchukGetDefaultSignerFromMasterSigner(key->id(), walletType, static_cast<ENUNCHUCK::AddressType>(addressType()), msg);
-        } else {
-            signer = bridge::nunchukGetUnusedSignerFromMasterSigner(key->id(), walletType, static_cast<ENUNCHUCK::AddressType>(addressType()), msg);
-        }
+        QSingleSignerPtr signer = bridge::nunchukGetAvailableSignerFromMasterSigner(
+            key,
+            static_cast<ENUNCHUCK::WalletType>(m_sandbox.get_wallet_type()),
+            static_cast<ENUNCHUCK::AddressType>(addressType()),
+            msg);
         
         if(nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()){
             emit needTopUpXpub();
             return false;
         }
-        DBG_INFO << "FixMe " << key->id() << (int)walletType <<  addressType() << msg.type() << msg.what();
         if (!signer.isNull() && url().isEmpty() && !qUtils::strCompare(m_fingerprintRecovery, signer->fingerPrint())) {
             emit recoverKeyError();
             return false; // add same finger print for recovery
@@ -410,6 +411,7 @@ bool QNormalSandbox::AddRemoteToGroup()
 {
     if (auto signer = AppModel::instance()->singleSignerInfoPtr()) {
         if (url().isEmpty() && !qUtils::strCompare(m_fingerprintRecovery, signer->fingerPrint())) return true; // add same finger print for recovery
+        DBG_INFO << "Add remote: " << "fingerprint: " << signer->fingerPrint();
         AddSignerToGroup(signer->originSingleSigner());
     }
     return false;
@@ -484,7 +486,7 @@ void QNormalSandbox::requestAddOrRepaceKey(const QVariant &msg)
     setFingerprintRecovery(fingerPrint);
     registerSigners();
     if (auto w = AppModel::instance()->newWalletInfoPtr()) {
-        w->MixMasterSignerAndSingleSignerAll();
+        w->makeExistingSigners();
         bool existSigner = w->signerExistList().size() > 0;
         if (existSigner) {
             if (auto sandbox = w->groupSandboxPtr()) {

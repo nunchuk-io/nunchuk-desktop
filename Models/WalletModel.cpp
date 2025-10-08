@@ -66,81 +66,7 @@ int WalletListModel::rowCount(const QModelIndex &parent) const{
 }
 
 QVariant WalletListModel::data(const QModelIndex &index, int role) const {
-    if(m_data[index.row()]){
-        switch (role) {
-        case wallet_Id_Role:
-            return m_data[index.row()]->walletId();
-        case wallet_Name_Role:
-            return m_data[index.row()]->walletNameDisplay();
-        case wallet_M_Role:
-            return m_data[index.row()]->walletM();
-        case wallet_N_Role:
-            return m_data[index.row()]->walletN();
-        case wallet_AddressType_Role:
-            return m_data[index.row()]->walletAddressType();
-        case wallet_createDate_Role:
-            return m_data[index.row()]->walletCreateDate();
-        case wallet_Balance_Role:
-            return QVariant::fromValue(m_data[index.row()]->balanceDisplay());
-        case wallet_BalanceBTC_Role:
-            return QVariant::fromValue(m_data[index.row()]->balanceBTC());
-        case wallet_BalanceCurrency_Role:
-            return QVariant::fromValue(m_data[index.row()]->balanceCurrency());
-        case wallet_Escrow_Role:
-            return m_data[index.row()]->walletEscrow();
-        case wallet_SingleSignerList_Role:
-            return QVariant::fromValue((SingleSignerListModel*)m_data[index.row()]->singleSignersAssigned());
-        case wallet_Address_Role:{
-            if(m_data[index.row()]->address().isEmpty()){
-                return m_data[index.row()]->unUseAddress();
-            }
-            else{
-                return m_data[index.row()]->address();
-            }
-        }
-        case wallet_usedAddressList_Role:
-            return m_data[index.row()]->usedAddressList();
-        case wallet_unUsedAddressList_Role:
-            return m_data[index.row()]->unUsedAddressList();
-        case wallet_isSharedWallet_Role:
-            return m_data[index.row()]->isSharedWallet();
-        case wallet_isAssistedWallet_Role:
-            return m_data[index.row()]->isAssistedWallet();
-        case wallet_groupid_Role:
-            return m_data[index.row()]->groupId();
-        case wallet_dashboard_Role:
-            return m_data[index.row()]->dashboardInfo();
-        case wallet_myRole_Role:
-            return m_data[index.row()]->myRole();
-        case wallet_hasOwner_Role:
-            return m_data[index.row()]->ownerPrimary().isValid();
-        case wallet_primaryOwner_Role:
-            return m_data[index.row()]->ownerPrimary();
-        case wallet_isHotWallet_Role:
-            return m_data[index.row()]->keyNeedBackup();
-        case wallet_slug_Role:
-            return m_data[index.row()]->slug();
-        case wallet_isLocked_Role:
-            return m_data[index.row()]->isLocked();
-        case wallet_isReplaced_Role:
-            return m_data[index.row()]->isReplaced();
-        case wallet_isSanboxWallet_Role:
-            return m_data[index.row()]->isGlobalGroupWallet();
-        case wallet_conversation_Role:
-            return QVariant::fromValue((QGroupMessageModel*)m_data[index.row()]->conversations());
-        case wallet_unreadMessage_Role:
-            return m_data[index.row()]->unreadMessage();
-        case wallet_numberOnline_Role:
-            return m_data[index.row()]->numberOnline();
-        case wallet_archived_Role:
-            return m_data[index.row()]->isArchived();
-        case wallet_walletType_Role:
-            return m_data[index.row()]->walletType();
-        default:
-            return QVariant();
-        }
-    }
-    return QVariant();
+    return dataWallet(m_data[index.row()], role);
 }
 
 bool WalletListModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -153,6 +79,10 @@ bool WalletListModel::setData(const QModelIndex &index, const QVariant &value, i
 }
 
 QHash<int, QByteArray> WalletListModel::roleNames() const{
+    return roleWalletNames();
+}
+
+QHash<int,QByteArray> WalletListModel::roleWalletNames() {
     QHash<int, QByteArray> roles;
     roles[wallet_Id_Role]                   = "wallet_id";
     roles[wallet_Name_Role]                 = "wallet_name";
@@ -187,6 +117,95 @@ QHash<int, QByteArray> WalletListModel::roleNames() const{
     roles[wallet_archived_Role]             = "wallet_isArchived";
     roles[wallet_walletType_Role]           = "wallet_walletType";
     return roles;
+}
+
+QVariant WalletListModel::dataWallet(const QWalletPtr &data, int role) {
+    if (data.isNull())
+        return QVariant();
+
+    switch (role) {
+    case wallet_Id_Role:
+        return data->walletId();
+    case wallet_Name_Role:
+        return data->walletNameDisplay();
+    case wallet_M_Role:
+        return data->walletM();
+    case wallet_N_Role:
+        return data->walletN();
+    case wallet_AddressType_Role:
+        return data->walletAddressType();
+    case wallet_createDate_Role:
+        return data->walletCreateDate();
+    case wallet_Balance_Role:
+        return QVariant::fromValue(data->balanceDisplay());
+    case wallet_BalanceBTC_Role:
+        return QVariant::fromValue(data->balanceBTC());
+    case wallet_BalanceCurrency_Role:
+        return QVariant::fromValue(data->balanceCurrency());
+    case wallet_Escrow_Role:
+        return data->walletEscrow();
+    case wallet_SingleSignerList_Role:
+        return QVariant::fromValue((SingleSignerListModel *)data->singleSignersAssigned());
+    case wallet_Address_Role: {
+        if (data->address().isEmpty()) {
+            return data->unUseAddress();
+        } else {
+            return data->address();
+        }
+    }
+    case wallet_usedAddressList_Role:
+        return data->usedAddressList();
+    case wallet_unUsedAddressList_Role:
+        return data->unUsedAddressList();
+    case wallet_isSharedWallet_Role:
+        return data->isSharedWallet();
+    case wallet_isAssistedWallet_Role:
+        return data->isAssistedWallet();
+    case wallet_groupid_Role:
+        return data->groupId();
+    case wallet_dashboard_Role:
+        return data->dashboardInfo();
+    case wallet_myRole_Role:
+        return data->myRole();
+    case wallet_hasOwner_Role:
+        return data->ownerPrimary().isValid();
+    case wallet_primaryOwner_Role:
+        return data->ownerPrimary();
+    case wallet_isHotWallet_Role:
+        return data->keyNeedBackup();
+    case wallet_slug_Role:
+        return data->slug();
+    case wallet_isLocked_Role:
+        return data->isLocked();
+    case wallet_isReplaced_Role:
+        return data->isReplaced();
+    case wallet_isSanboxWallet_Role:
+        return data->isGlobalGroupWallet();
+    case wallet_conversation_Role:
+        return QVariant::fromValue((QGroupMessageModel *)data->conversations());
+    case wallet_unreadMessage_Role:
+        return data->unreadMessage();
+    case wallet_numberOnline_Role:
+        return data->numberOnline();
+    case wallet_archived_Role:
+        return data->isArchived();
+    case wallet_walletType_Role:
+        return data->walletType();
+    default:
+        return QVariant();
+    }
+}
+
+QVariant WalletListModel::useQml(const QWalletPtr &data) {
+    QHash<int,QByteArray> names = roleWalletNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap res;
+    while (i.hasNext()) {
+        i.next();
+        QVariant tmp = dataWallet(data, i.key());
+        res[i.value()] = tmp;
+    }
+    return QVariant::fromValue(res);
 }
 
 int WalletListModel::count() const

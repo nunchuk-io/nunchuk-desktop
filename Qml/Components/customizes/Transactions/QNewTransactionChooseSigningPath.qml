@@ -42,6 +42,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1863
+    isShowLine: true
     property string selectPath: "keypath"
     content: Flickable {
         width: 720 + 8
@@ -96,8 +97,10 @@ QOnScreenContentTypeA {
             Item {
                 width: 500
                 height: 12
+                visible: walletInfo.keypaths.length > 0
             }
             QKeyPathTransactionDelegate {
+                visible: walletInfo.keypaths.length > 0
                 isFocused: selectPath === "keypath"
                 onSelectedClicked: {
                     selectPath = "keypath"

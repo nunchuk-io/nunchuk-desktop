@@ -7,8 +7,8 @@
 class CoinWallet : public ReplacedWallet
 {
     Q_OBJECT
-    Q_PROPERTY(bool         isViewCoinShow                          READ isViewCoinShow             WRITE setIsViewCoinShow     NOTIFY isViewCoinShowChanged)
-    Q_PROPERTY(QString      coinFlow                                READ coinFlow                   WRITE setCoinFlow           NOTIFY coinFlowChanged)
+    Q_PROPERTY(bool                 isViewCoinShow                  READ isViewCoinShow             WRITE setIsViewCoinShow     NOTIFY isViewCoinShowChanged)
+    Q_PROPERTY(QString              coinFlow                        READ coinFlow                   WRITE setCoinFlow           NOTIFY coinFlowChanged)
     Q_PROPERTY(QUTXOListModel*      utxoList                        READ utxoList                                               NOTIFY utxoListChanged)
     Q_PROPERTY(UTXO*                utxoInfo                        READ utxoInfo                                               NOTIFY utxoInfoChanged)
     Q_PROPERTY(QUTXOListModel*      utxoFilterTag                   READ utxoFilterTag                                          NOTIFY utxoFilterTagChanged)
@@ -19,6 +19,8 @@ class CoinWallet : public ReplacedWallet
     Q_PROPERTY(QUTXOListModel*      utxoListLocked                  READ utxoListLocked                                         NOTIFY utxoListChanged)
     Q_PROPERTY(QList<QUTXOListModel *> ancestryList                 READ ancestryList                                           NOTIFY ancestryListChanged)
     Q_PROPERTY(QCoinTagsModel*      coinTagsFilter                  READ coinTagsFilter                                         NOTIFY coinTagsFilterChanged)
+    Q_PROPERTY(bool                 sortByCoinAge                   READ sortByCoinAge              WRITE setSortByCoinAge      NOTIFY sortCoinByAgeChanged)
+
 public:
     CoinWallet(const nunchuk::Wallet &w);
     ~CoinWallet() override = default;
@@ -28,8 +30,8 @@ public:
     QString coinFlow() const;
     void setCoinFlow(const QString &newCoinFlow);
 
-    QUTXOListModel *utxoList() const;
-    QUTXOListModelPtr utxoListPtr() const;
+    QUTXOListModel *utxoList();
+    QUTXOListModelPtr utxoListPtr();
     void setUtxoList(const QUTXOListModelPtr &utxoList);
 
     UTXO *utxoInfo() const;
@@ -103,6 +105,9 @@ public:
     QUTXOListModelPtr GetUtxoListSelected();
     bool AssignTagsToTxChange();
     QList<int> tagsInTxAssigned() const;
+
+    bool sortByCoinAge();
+    void setSortByCoinAge(const int data);
 public slots:
     void requestForAllCoins(const QVariant &act);
     void requestForLockedAllCoins(const QVariant &act);
@@ -132,6 +137,8 @@ signals:
     void requestCreateTransaction(const QString& address);
     void updateTagNameChanged(bool isError);
     void coinTagsFilterChanged();
+    void sortCoinByAgeChanged();
+
 private:
     QUTXOListModelPtr m_utxoList;
     QUTXOListModelPtr m_utxoListLocked;
@@ -149,6 +156,9 @@ private:
     bool m_reuse {false};
     QList<int> m_tagsInTxAssigned {};
     QString m_previousViewCollection {};
+
+protected:
+    bool m_sortByCoinAge {false};
 };
 
 #endif // COINWALLET_H

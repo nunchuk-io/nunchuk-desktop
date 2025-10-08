@@ -50,19 +50,19 @@ QOnScreenContentTypeA {
     function timeEditting() {
         console.log("timeEditting", newWalletInfo.timelockType, newWalletInfo.timelockType)
         if(newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE && newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
-            return qsTr("%1").arg(newWalletInfo.timeMini.absoluteTimestamp.valueDisplay)
+            return qsTr("%1,").arg(newWalletInfo.timeMini.absoluteTimestamp.valueDisplay)
         }
         else if(newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE && newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
             console.log(newWalletInfo.timeMini.relativeTimestamp.valueDisplay)
             console.log(newWalletInfo.timeMini.relativeTimestamp.valueDay)
             console.log(newWalletInfo.timeMini.relativeTimestamp.valueHour)
-            return qsTr("%1").arg(newWalletInfo.timeMini.relativeTimestamp.valueDisplay)
+            return qsTr("%1,").arg(newWalletInfo.timeMini.relativeTimestamp.valueDisplay)
         }
         else if(newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE && newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
-            return qsTr("block %1").arg(newWalletInfo.timeMini.absoluteBlockheight)
+            return qsTr("block %1").arg(newWalletInfo.timeMini.absoluteBlockheight)// + (templateMiniscript === "zen-hodl" ? "." : "")
         }
         else if(newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE && newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
-            return qsTr("%1 blocks").arg(newWalletInfo.timeMini.relativeBlockheight)
+            return qsTr("%1 block%2").arg(newWalletInfo.timeMini.relativeBlockheight).arg(newWalletInfo.timeMini.relativeBlockheight > 1 ? "s" : "") // + (templateMiniscript === "zen-hodl" ? "." : "")
         }
         return ""
     }
@@ -88,10 +88,11 @@ QOnScreenContentTypeA {
                         Loader {
                             id: templateLoader
                             width: parent.width
-                            height: newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? 184 : 284
+                            // height: newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? 184 : 256
                             sourceComponent: templateMiniscript === "flexible-multisig" ? flexible_multisig :
                                             templateMiniscript === "expanding-multisig" ? expanding_multisig :
-                                            templateMiniscript === "decaying-multisig" ? decaying_multisig : null
+                                            templateMiniscript === "decaying-multisig" ? decaying_multisig : 
+                                            templateMiniscript === "zen-hodl" ? zen_hodl : null
 
 
                         }
@@ -100,6 +101,7 @@ QOnScreenContentTypeA {
                         width: parent.width
                         height: 28
                         spacing: 4
+                        visible: templateMiniscript !== "zen-hodl"
                         QCheckBox {
                             id: selectAllBox
                             checked: newWalletInfo.reUseKeys
@@ -165,6 +167,13 @@ QOnScreenContentTypeA {
         id: flexible_multisig
         Loader {
             sourceComponent: newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? flexible_multisig_absolute : flexible_multisig_relative
+        }
+    }
+
+    Component {
+        id: zen_hodl
+        Loader {
+            sourceComponent: newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? zen_hodl_absolute : zen_hodl_relative
         }
     }
 
@@ -405,7 +414,7 @@ QOnScreenContentTypeA {
                 }
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: "After that, spending requires either the same"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -445,7 +454,7 @@ QOnScreenContentTypeA {
         id: expanding_multisig_relative
         Rectangle {
             width: parent.width
-            height: 284
+            height: 256
             color: "#F5F5F5"
             radius: 8
             Column {
@@ -481,7 +490,7 @@ QOnScreenContentTypeA {
                     }
                 }
                 QLato {
-                    height: 28
+                    height: 20
                     width: paintedWidth
                     text: qsTr("spending that coin requires signature%1").arg(newWalletInfo.walletN == 1 ? "" : "s")
                     horizontalAlignment: Text.AlignLeft
@@ -520,14 +529,14 @@ QOnScreenContentTypeA {
 
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: "After that, the same coin can be spent with"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                 }
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: newWalletInfo.walletN == 1 ? qsTr("either the same singlesig OR a ") : qsTr("either the same %1-of‑%2 multisig OR a ").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN)
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -627,7 +636,7 @@ QOnScreenContentTypeA {
                 }
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: "After that, spending requires either the same"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -667,7 +676,7 @@ QOnScreenContentTypeA {
         id: decaying_multisig_relative
         Rectangle {
             width: parent.width
-            height: 284
+            height: 256
             color: "#F5F5F5"
             radius: 8
             Column {
@@ -703,7 +712,7 @@ QOnScreenContentTypeA {
                     }
                 }
                 QLato {
-                    height: 28
+                    height: 20
                     width: paintedWidth
                     text: qsTr("spending that coin requires signature%1").arg(newWalletInfo.walletN == 1 ? "" : "s")
                     horizontalAlignment: Text.AlignLeft
@@ -742,14 +751,14 @@ QOnScreenContentTypeA {
 
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: "After that, the same coin can be spent with"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                 }
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: newWalletInfo.walletN == 1 ? qsTr("either the same singlesig OR a ") : qsTr("either the same %1-of‑%2 multisig OR a ").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN)
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -849,7 +858,7 @@ QOnScreenContentTypeA {
                 }
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: "After that, spending requires either the same"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -890,7 +899,7 @@ QOnScreenContentTypeA {
         id: flexible_multisig_relative
         Rectangle {
             width: parent.width
-            height: 284
+            height: 256
             color: "#F5F5F5"
             radius: 8
             Column {
@@ -926,7 +935,7 @@ QOnScreenContentTypeA {
                     }
                 }
                 QLato {
-                    height: 28
+                    height: 20
                     width: paintedWidth
                     text: qsTr("spending that coin requires signature%1").arg(newWalletInfo.walletN == 1 ? "" : "s")
                     horizontalAlignment: Text.AlignLeft
@@ -965,14 +974,14 @@ QOnScreenContentTypeA {
 
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: "After that, the same coin can be spent with"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                 }
                 QLato {
                     width: paintedWidth
-                    height: 28
+                    height: 20
                     text: newWalletInfo.walletN == 1 ? qsTr("either the same singlesig OR a ") : qsTr("either the same %1-of‑%2 multisig OR a ").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN)
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
@@ -997,6 +1006,167 @@ QOnScreenContentTypeA {
                         text: qsTr("multisig.")
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: zen_hodl_absolute
+        Rectangle {
+            width: parent.width
+            height: 212
+            color: "#F5F5F5"
+            radius: 8
+            Column {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 16
+                QLato {
+                    width: paintedWidth
+                    height: 20
+                    text: "Coins sent to this wallet are locked"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                QLato {
+                    width: paintedWidth
+                    height: 20
+                    text: "immediately and cannot be spent until"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                QContractPolicyEdit{
+                    height: 28
+                    isEditting: isTimeEditting
+                    label: timeEditting()
+                    onEditingUpdate: (isEditting) => {
+                                         clearEditing()
+                                         isTimeEditting = isEditting
+                                     }
+                }
+                QLato {
+                    height: 20
+                    width: paintedWidth
+                    text: qsTr("After that, spending requires signature from")
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Row {
+                    height: 28
+                    width: parent.width
+                    spacing: 4
+                    QLato {
+                        height: parent.height
+                        width: paintedWidth
+                        text: "a"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QContractPolicyEdit{
+                        isEditting: isMNEditting
+                        height: parent.height
+                        label: newWalletInfo.walletN == 1 ? "singlesig" : qsTr("%1-of-%2").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN)
+                        onEditingUpdate: (isEditting) => {
+                                             clearEditing()
+                                             isMNEditting = isEditting
+                                         }
+                    }
+                    QLato {
+                        visible: newWalletInfo.walletN > 1
+                        width: paintedWidth
+                        height: parent.height
+                        text: "multisig."
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                
+            }
+        }
+    }
+    Component {
+        id: zen_hodl_relative
+        Rectangle {
+            width: parent.width
+            height: 176
+            color: "#F5F5F5"
+            radius: 8
+            Column {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 16
+                Row {
+                    height: 28
+                    width: parent.width
+                    spacing: 4
+                    QLato {
+                        width: paintedWidth
+                        height: parent.height
+                        text: "First"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QContractPolicyEdit{
+                        height: parent.height
+                        isEditting: isTimeEditting
+                        label: timeEditting()
+                        onEditingUpdate: (isEditting) => {
+                                             clearEditing()
+                                             isTimeEditting = isEditting
+                                         }
+                    }
+                    QLato {
+                        width: paintedWidth
+                        height: parent.height
+                        text: "after a coin is received:"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+                QLato {
+                    height: 20
+                    width: paintedWidth
+                    text: "spending that coin is not allowed."
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                QLato {
+                    height: 20
+                    width: paintedWidth
+                    text: "After that, the same coin can be spent with"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Row {
+                    height: 28
+                    width: parent.width
+                    spacing: 4
+                    QLato {
+                        height: parent.height
+                        width: paintedWidth
+                        text: "a"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QContractPolicyEdit{
+                        isEditting: isMNEditting
+                        height: 28
+                        label: newWalletInfo.walletN == 1 ? "singlesig" : qsTr("%1-of-%2").arg(newWalletInfo.walletM).arg(newWalletInfo.walletN)
+                        onEditingUpdate: (isEditting) => {
+                                             clearEditing()
+                                             isMNEditting = isEditting
+                                         }
+                    }
+                    QLato {
+                        visible: newWalletInfo.walletN > 1
+                        width: paintedWidth
+                        height: parent.height
+                        text: "multisig."
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }

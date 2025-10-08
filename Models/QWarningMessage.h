@@ -109,5 +109,6 @@ signals:
     void popupTypeChanged();
 };
 typedef QSharedPointer<QWarningMessage> QWarningMessagePtr;
+Q_DECLARE_METATYPE(QWarningMessagePtr)
 
 #endif // QERRORCODE_H

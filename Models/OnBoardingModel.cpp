@@ -40,7 +40,7 @@ QWalletPtr OnBoardingModel::ImportWalletDB(const QString &file_path)
     QWarningMessage msg;
     auto w = bridge::nunchukImportWallet(file_path, msg);
     if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
-        AppModel::instance()->startReloadUserDb();
+        AppModel::instance()->startReloadWallets();
         return w;
     }
     if (msg.type() != (int)EWARNING::WarningType::NONE_MSG) {
@@ -60,7 +60,7 @@ void OnBoardingModel::requestBackupHotWallet()
                 AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
             }
             else {
-                AppModel::instance()->startReloadUserDb();
+                AppModel::instance()->startReloadWallets();
             }
         }
     }

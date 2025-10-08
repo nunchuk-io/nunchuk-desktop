@@ -43,27 +43,37 @@ Rectangle {
     property string amount_currency: ""
     property string blocktime: ""
     property var    coin_tags
+    property var    coin_timelocklist
+    property var    coin_timelockbase
+    property int    coin_timelockCount: 0
+    property bool   coin_timelocked: false
     property string coin_note: ""
     property bool   checked: false
     property bool   isLocked: false
     property bool   isScheduled: false
     property bool   isChange: false
     property string backgroundColor: checked ? "#F5F5F5" : "#FFFFFF"
-    property bool allowRightClick: true
+    property bool   allowRightClick: true
     property string removeLabel: STR.STR_QML_1451
     property string outgoing_label: ""
     property string outgoing_color: ""
-    property bool isLarge: true
+    property bool   isLarge: true
+    property int    horizontalMargin: 24*2
+    property int    verticalMargin: 12*2
+    property bool   showCheckBox: true
+
+
+    property var    walletInfo: AppModel.walletInfo
+    property bool   showCoinAge: (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) && walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE
 
     signal coinViewClicked()
     signal coinViewCheck()
     signal removeClicked()
     color: backgroundColor
-    property bool showCheckBox: true
     Item {
         id: body
-        width: parent.width - 24*2
-        height: contents.height + 12*2
+        width: parent.width - horizontalMargin
+        height: contents.height + verticalMargin
         anchors.centerIn: parent
 
         Row {
@@ -79,7 +89,7 @@ Rectangle {
                 }
             }
             Item {
-                width: parent.width - 36
+                width: parent.width - (showCheckBox ? 36 : 0)
                 height: tagContents.height
                 MouseArea {
                     anchors.fill: parent
@@ -145,6 +155,7 @@ Rectangle {
                             }
                         }
                     }
+
                     Column {
                         width: parent.width
                         Item {
@@ -219,6 +230,14 @@ Rectangle {
                         }
                     }
 
+                    QCoinAge {
+                        width: parent.width
+                        height: 70
+                        coin_timelocklist: coinItem.coin_timelocklist
+                        coin_timelockbase: coinItem.coin_timelockbase
+                        coin_timelocked: coinItem.coin_timelocked
+                        visible: showCoinAge && coin_timelockCount > 0
+                    }
 
                     Rectangle {
                         radius: 12
@@ -253,7 +272,6 @@ Rectangle {
                         }
                     }
                 }
-
             }
         }
     }

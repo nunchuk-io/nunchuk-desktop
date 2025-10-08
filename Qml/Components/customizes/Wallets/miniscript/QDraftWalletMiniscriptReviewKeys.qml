@@ -33,7 +33,7 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Flickable {
     id: root
-    readonly property int widthHalf: 352    
+    readonly property int widthHalf: 352
     width: widthHalf
     height: 480
     flickableDirection: Flickable.VerticalFlick
@@ -99,7 +99,18 @@ Flickable {
             width: 450
             Repeater {
                 model: newWalletInfo.keypaths
-                delegate: QKeyPathReview {
+                delegate: newWalletInfo.keypaths.length === 1 ? keyPathDelegate : muSigDelegate
+            }
+            Component {
+                id: keyPathDelegate
+                QKeyPathReview {
+                    width: widthHalf
+                    miniscript: modelData
+                }
+            }
+            Component {
+                id: muSigDelegate
+                QMiniscriptPolicesDraftReviewDlg {
                     width: widthHalf
                     miniscript: modelData
                 }

@@ -296,35 +296,25 @@ QVariantList QMasterSigner::getWalletList() {
     QVariantList ret;
     for (auto wallet : AppModel::instance()->walletListPtr()->fullList()) {
         if (wallet->isContainKey(fingerPrint()) && wallet->isAssistedWallet()) {
-            ret.append(QVariant::fromValue(wallet.data()));
+            auto walletQml = WalletListModel::useQml(wallet);
+            ret.append(QVariant::fromValue(walletQml));
         }
     }
     return ret;
 }
 
-QSingleSignerPtr QMasterSigner::cloneSingleSigner() {
-    std::vector<nunchuk::SingleSigner> signers = bridge::GetSignersFromMasterSigner(id());
-    DBG_INFO << "signers size: " << fingerPrint() << signers.size();
-    nunchuk::SingleSigner singleSigner{};
-    if (signers.empty()) {
-        singleSigner = nunchuk::SingleSigner(
-            masterSigner_.get_name(), "", "", masterSigner_.get_device().get_path(),
-            masterSigner_.get_device().get_master_fingerprint(), time(nullptr),
-            masterSigner_.get_id(), false, masterSigner_.get_type(), masterSigner_.get_tags());
-    } else {
-        singleSigner = signers[0];
+nunchuk::SingleSigner QMasterSigner::cloneSingleSigner(const nunchuk::WalletType& wallet_type, const nunchuk::AddressType& address_type) {
+
+    QString masterId = id().isEmpty() ? fingerPrint() : id();
+    QWarningMessage msg;    
+    nunchuk::SingleSigner signer = bridge::nunchukGetDefaultSignerFromMasterSigner(masterId,
+                                                                                wallet_type,
+                                                                                address_type,
+                                                                                msg);
+
+    if((int)EWARNING::WarningType::NONE_MSG != msg.type()){
+        signer = qUtils::toSingleSigner(masterSigner_);
     }
-    QSingleSignerPtr signer = QSingleSignerPtr(new QSingleSigner(singleSigner));
-    signer->setName(name());
-    signer->setMasterSignerId(id());
-    signer->setSignerType(signerType());
-    signer->setDevicetype(device()->type());
-    signer->setCardId(device()->cardId());
-    signer->setMasterFingerPrint(fingerPrint());
-    signer->setDerivationPath(device()->path());
-    signer->setSignerTags(masterSigner_.get_tags());
-    signer->setNeedPassphrase(needPassphraseSent());
-    signer->setNeedBackup(needBackup());
     return signer;
 }
 
@@ -336,27 +326,6 @@ bool QMasterSigner::isMine() const {
                signer.get_id() == fingerPrint().toStdString();
     });
     return it != signers.end();
-}
-
-bool QMasterSigner::taprootSupported() {
-    bool ret = true;
-    QJsonArray types = Draco::instance()->GetTaprootSupportedCached();
-    if (types.size() > 0) {
-        QSet<int> supported_types;
-        QSet<QString> supported_tags;
-        foreach (const QJsonValue &value, types) {
-            QJsonObject obj = value.toObject();
-            QString type = obj["signer_type"].toString();
-            QString tag = obj["signer_tag"].toString();
-            nunchuk::SignerType type_enum = qUtils::GetSignerType(type);
-            supported_types.insert((int)type_enum);
-            supported_tags.insert(tag);
-        }
-
-        ret = supported_types.contains(signerType()) &&
-              supported_tags.contains(tag());
-    }
-    return ret;
 }
 
 void QMasterSigner::setDeviceIndex(int newDeviceIndex) {
@@ -431,8 +400,6 @@ QVariant MasterSignerListModel::data(const QModelIndex &index, int role) const {
         return d_[index.row()]->isPrimaryKey();
     case master_signer_tag_Role:
         return d_[index.row()]->tag();
-    case master_signer_taproot_supported_Role:
-        return d_[index.row()]->taprootSupported();
     case master_signer_needBackup_Role:
         return d_[index.row()]->needBackup();
     default:
@@ -464,7 +431,6 @@ QHash<int, QByteArray> MasterSignerListModel::roleNames() const {
     roles[master_signer_need_xpub_Role] = "master_signer_need_xpub";
     roles[master_signer_primary_key_Role] = "master_signer_primary_key";
     roles[master_signer_tag_Role] = "master_signer_tag";
-    roles[master_signer_taproot_supported_Role] = "master_signer_taproot_supported";
     roles[master_signer_needBackup_Role] = "master_signer_needBackup";
     return roles;
 }

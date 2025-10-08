@@ -804,7 +804,7 @@ SingleSignerListModel *BaseTransaction::singleSignersAssigned() {
             DBG_INFO;
             return taprootKeysetSigners(wallet);
         }
-        else if (wallet->keyPathActivated() && !trans->useScriptPath()) {
+        else if (wallet->keyPathActivated() && !trans->isScriptPath()) {
             DBG_INFO;
             return taprootMiniscriptSigners(wallet);
         }
@@ -860,46 +860,11 @@ SingleSignerListModel *BaseTransaction::taprootKeysetSigners(const QWalletPtr &w
 }
 
 SingleSignerListModel *BaseTransaction::taprootMiniscriptSigners(const QWalletPtr &wallet) {
-    if (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::READY_TO_BROADCAST) {
-        std::vector<nunchuk::KeysetStatus> keyset_status = keysetStatus();
-        if (wallet->singleSignersAssigned()) {
-            if (wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()) {
-                wallet->syncCollabKeyname();
-            }
-            m_keysets = wallet->singleSignersAssigned()->cloneKeysets(keyset_status);
-            if (m_keysets->needSyncNunchukEmail()) {
-                m_keysets = wallet->singleSignersAssigned()->cloneKeysets(keyset_status);
-            }
-        }
-        std::map<std::string, bool> final_signers = m_transaction.get_signers();        
-        if (m_keysets) {
-            m_keysets = m_keysets->cloneFinalSigners(final_signers);
-        }
-        if (m_keysets) {
-            if (keysetSelected() > 0) {
-                m_keysets.data()->requestSortKeysetSelected();
-            } else {
-                m_keysets.data()->requestSortKeyset();
-            }
-        }
-        if (m_keysets) {
-            emit m_keysets.data()->keyinfoChanged();
-        }
-        return m_keysets.data();
-    }
-    else {
+    if (wallet->singleSignersKeyPath()) {
         std::map<std::string, bool> final_signers = m_transaction.get_signers();
-        if (wallet->singleSignersKeyPath()) {
-            if (wallet->isSharedWallet() && wallet->singleSignersKeyPath()->needSyncNunchukEmail()) {
-                wallet->syncCollabKeyname();
-            }
-            m_signers = wallet->singleSignersKeyPath()->cloneFinalSigners(final_signers);
-            if (m_signers->needSyncNunchukEmail()) {
-                m_signers = wallet->singleSignersKeyPath()->cloneFinalSigners(final_signers);
-            }
-        }
-        return m_signers.data();
+        m_signers = wallet->singleSignersKeyPath()->cloneFinalSigners(final_signers);
     }
+    return m_signers.data();
 }
 
 SingleSignerListModel *BaseTransaction::normalWalletSigners(const QWalletPtr &wallet) {
@@ -1180,6 +1145,9 @@ void BaseTransaction::setServerKeyMessage(const QJsonObject &data)
         DBG_INFO << "FIXME is_cosigning" << is_cosigning << m_serverKeyMessage;
         setIsCosigning(is_cosigning);
         emit serverKeyMessageChanged();
+    } else {
+        DBG_INFO << "FIXME Hide is_cosigning" << m_is_cosigning << m_serverKeyMessage;
+        setIsCosigning(false);
     }
 }
 

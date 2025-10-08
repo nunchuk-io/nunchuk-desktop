@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
     app.setOrganizationName("nunchuk");
     app.setOrganizationDomain("nunchuk.io");
     app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("1.9.49");
+    app.setApplicationVersion("1.9.52");
     app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
     Draco::instance();
     AppModel::instance();
@@ -213,9 +213,9 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef ENABLE_OUTLOG
-    loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
-#else
     loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+#else
+    loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
 #endif
 
     QEventProcessor::registerStates(STATE_ALL, ALEN(STATE_ALL));

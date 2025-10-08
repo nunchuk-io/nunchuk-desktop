@@ -144,12 +144,7 @@ Column {
                 sandbox.requestAddOrRepaceKey(obj)
             }
             onBip32PathClick: {
-                editBip32Path.clearError()
-                editBip32Path.isShowListDevice = false
-                editBip32Path.signerData = signerData
-                editBip32Path.idx = index
-                editBip32Path.xfp = xfp
-                editBip32Path.open()
+                editBip32Path.requestEditBIP32Path(modelData, { "idx": index })
             }
         }
     }

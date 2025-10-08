@@ -65,7 +65,7 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                     if(w && msg.type() == (int)EWARNING::WarningType::NONE_MSG){
                         bridge::nunchukUpdateWallet(w->walletId(), sandbox->groupName(), w->walletDescription());
 
-                        AppModel::instance()->startReloadUserDb();
+                        AppModel::instance()->startReloadWallets();
                         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                         QString msg_name = QString("%1 has been successfully recovered").arg(sandbox->groupName());
                         AppModel::instance()->showToast(0, msg_name, EWARNING::WarningType::SUCCESS_MSG);
@@ -117,7 +117,7 @@ void EVT_SETUP_GROUP_WALLET_ENTER_HANDLER(QVariant msg) {
                 if (!sandbox->groupId().isEmpty()) {
                     auto walletType = static_cast<nunchuk::WalletType>(w->walletType());
                     if (walletType == nunchuk::WalletType::MINISCRIPT) {
-                        QString script_tmpl = w->customizeMiniscript();
+                        QString script_tmpl = w->scriptTemplate();
                         sandbox->UpdateGroup(walletNameInputted, script_tmpl, addressType);
                     }
                     else {

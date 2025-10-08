@@ -89,7 +89,7 @@ QOnScreenContentTypeA {
         }
         onKeyImportRequest: {
             openfileDialog.open()
-        }
+        }        
     }
     bottomLeft: Item {}
     bottomRight: Row {

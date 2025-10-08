@@ -42,6 +42,7 @@ Rectangle {
     property var timelockedUntil: transactionInfo.timelockedUntil
     signal keySignRequest(var signer)
     signal keyScanRequest
+    signal keyEnterPreImageInput(var hashData, var typeNode)
     width: 350
     height: 480
     Flickable {

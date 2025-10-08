@@ -205,6 +205,7 @@ QOnScreenContent {
                 QCoinSelectionTransaction {
                     id: coinSelection
                     height: 480 - feeSetting.childrenRect.height - 16
+                    width: parent.width
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
             }

@@ -65,9 +65,16 @@ Rectangle {
             }
             visible: walletInfo.keyPathActivated
         }
-        Repeater {
-            model: walletInfo.keypaths
-            delegate: QKeyComponentTransaction {
+        Column {
+            width: dlg.width
+            Repeater {
+                model: walletInfo.keypaths
+                delegate: walletInfo.keypaths.length === 1 ? keyPathDelegate : muSigDelegate
+            }
+        }
+        Component {
+            id: keyPathDelegate
+            QKeyComponentTransaction {
                 height: 58
                 width: dlg.width
                 property var miniscript: modelData
@@ -88,6 +95,13 @@ Rectangle {
                     single_isReplaced: itemData.single_signer_isReplaced
                     single_keyReplaced: itemData.single_signer_keyReplaced
                 }
+            }
+        }
+        Component {
+            id: muSigDelegate
+            QMiniscriptPolicesTransactionDelegate {
+                width: dlg.width
+                miniscript: modelData
             }
         }
     }

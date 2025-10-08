@@ -972,6 +972,95 @@ bool UTXO::hasResultSearching(const QString &searchText)
     return hasTag(searchText) || hasCollection(searchText) || hasAmount(searchText) || hasAddress(searchText) || hasMemo(searchText) || hasBlocktime(searchText) || hasTransactionID(searchText);
 }
 
+int UTXO::lockedIndex()
+{
+    return -1;
+}
+
+int UTXO::timelockbase()
+{
+    return (int)mUnspentOutputOrigin.get_lock_based();
+}
+
+int UTXO::timelockCount()
+{
+    return (int)mUnspentOutputOrigin.get_timelocks().size();
+}
+
+QVariantList UTXO::timelocklist()
+{
+    QVariantList ret;
+    std::vector<int64_t> timelocks = mUnspentOutputOrigin.get_timelocks();
+
+    bool anyLocked = false;
+
+    for (int i = 0; i < (int)timelocks.size(); ++i) {
+        int64_t val = timelocks[i];
+        QVariantMap obj;
+        QString valueNodeStr;
+        QString valueRemainingStr;
+        bool isLocked = false;
+
+        if (timelockbase() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
+            QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
+            valueNodeStr = dt.toString("MM/dd/yyyy");
+            QDate dateNode = dt.date();
+            QDate today = QDateTime::currentDateTimeUtc().date();
+            int days = today.daysTo(dateNode);
+            if (days > 0) {
+                valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
+                isLocked = true;
+            } else {
+                valueRemainingStr = "";
+            }
+        } else {
+            QLocale locale(QLocale::English);
+            int64_t currentHeight = AppModel::instance()->blockHeight();
+            int64_t remain = val - currentHeight;
+            valueNodeStr = locale.toString(val);
+            if (val > currentHeight) {
+                QString remainStr = locale.toString(remain);
+                valueRemainingStr = remainStr + (remain == 1 ? " block left" : " blocks left");
+                isLocked = true;
+            } else {
+                valueRemainingStr = "";
+            }
+        }
+
+        if (isLocked) anyLocked = true;
+
+        obj["valueNode"] = valueNodeStr;
+        obj["valueIndex"] = i;
+        obj["valueRemaining"] = valueRemainingStr;
+        obj["valueLocked"] = isLocked;
+        ret << obj;
+    }
+
+    if (ret.size() == 1) {
+        QVariantMap emptyObj;
+        emptyObj["valueNode"] = "";
+        emptyObj["valueIndex"] = ret.size();
+        emptyObj["valueLocked"] = anyLocked;
+        emptyObj["valueRemaining"] = anyLocked ? "" : "Unlocked";
+        ret << emptyObj;
+    }
+    setTimeLocked(anyLocked);
+    return ret;
+}
+
+bool UTXO::timeLocked() const
+{
+    return m_timeLocked;
+}
+
+void UTXO::setTimeLocked(bool newTimeLocked)
+{
+    if (m_timeLocked == newTimeLocked)
+        return;
+    m_timeLocked = newTimeLocked;
+    emit timeLockedChanged();
+}
+
 QUTXOListModel::QUTXOListModel(QString wallet_id) : m_wallet_id(wallet_id)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -1034,6 +1123,18 @@ QVariant QUTXOListModel::data(const QModelIndex &index, int role) const{
     case utxo_coin_is_change_role: {
         return m_data[index.row()]->isChange();
     }
+    case utxo_coin_timelockbase_role: {
+        return m_data[index.row()]->timelockbase();
+    }
+    case utxo_coin_timelocklist_role: {
+        return m_data[index.row()]->timelocklist();
+    }
+    case utxo_coin_timelockCount_role: {
+        return m_data[index.row()]->timelockCount();
+    }
+    case utxo_coin_timeLocked_role: {
+        return m_data[index.row()]->timeLocked();
+    }
     default:
         return QVariant();
     }
@@ -1053,24 +1154,29 @@ bool QUTXOListModel::setData(const QModelIndex &index, const QVariant &value, in
 
 QHash<int, QByteArray> QUTXOListModel::roleNames() const {
     QHash<int, QByteArray> roles;
-    roles[utxo_txid_role] = "utxo_txid";
-    roles[utxo_vout_role] = "utxo_vout";
-    roles[utxo_address_role] = "utxo_address";
-    roles[utxo_amount_role]  = "utxo_amount";
-    roles[utxo_height_role]  = "utxo_height";
+    roles[utxo_txid_role]       = "utxo_txid";
+    roles[utxo_vout_role]       = "utxo_vout";
+    roles[utxo_address_role]    = "utxo_address";
+    roles[utxo_amount_role]     = "utxo_amount";
+    roles[utxo_height_role]     = "utxo_height";
     roles[utxo_selected_role]   = "utxo_selected";
     roles[utxo_confirmed_role]  = "utxo_confirmed";
     roles[utxo_memo_role]       = "utxo_memo";
     roles[utxo_amount_currency_role] = "utxo_amount_currency";
     roles[utxo_blocktime_role]  = "utxo_blocktime";
     roles[utxo_tags_role]       = "utxo_coin_tags";
-    roles[utxo_collections_role] = "utxo_outgoing";
-    roles[utxo_coin_is_locked]  = "utxo_coin_is_locked";
-    roles[utxo_coin_is_scheduled] = "utxo_coin_is_scheduled";
-    roles[utxo_coin_visible_role] = "utxo_coin_visible";
+    roles[utxo_collections_role]    = "utxo_outgoing";
+    roles[utxo_coin_is_locked]      = "utxo_coin_is_locked";
+    roles[utxo_coin_is_scheduled]   = "utxo_coin_is_scheduled";
+    roles[utxo_coin_visible_role]   = "utxo_coin_visible";
     roles[utxo_outgoing_label_role] = "utxo_outgoing_label";
     roles[utxo_outgoing_color_role] = "utxo_outgoing_color";
     roles[utxo_coin_is_change_role] = "utxo_coin_is_change";
+    roles[utxo_coin_timelockbase_role]  = "utxo_coin_timelockbase";
+    roles[utxo_coin_timelocklist_role]  = "utxo_coin_timelocklist";
+    roles[utxo_coin_timelockCount_role] = "utxo_coin_timelockCount";
+    roles[utxo_coin_timeLocked_role]    = "utxo_coin_timeLocked";
+
     return roles;
 }
 
@@ -1160,6 +1266,12 @@ void QUTXOListModel::requestSort(int role, int order)
             else {qSort(m_data.begin(), m_data.end(), sortbyMemoAscending);}
             break;
         }
+        case utxo_blocktime_role:
+        {
+            if(Qt::AscendingOrder == order) {qSort(m_data.begin(), m_data.end(), sortbyBlocktimeDescending);}
+            else {qSort(m_data.begin(), m_data.end(), sortbyBlocktimeAscending);}
+            break;
+        }
         default:
             break;
         }
@@ -1241,11 +1353,19 @@ void QUTXOListModel::searchByFilter(const QVariant &filter)
     DBG_INFO << mFilters;
     int sortOrder = mFilters["sortOrder"].toInt();
     if (sortOrder == 0) {
-        sortOrder = Qt::AscendingOrder;
-    } else {
         sortOrder = Qt::DescendingOrder;
+    } else {
+        sortOrder = Qt::AscendingOrder;
     }
-    requestSort(utxo_amount_role, sortOrder);
+
+    bool sortByCoinAge = mFilters["sortByCoinAge"].toBool();
+    AppModel::instance()->walletInfo()->setSortByCoinAge(sortByCoinAge);
+    if(AppModel::instance()->walletInfo()->sortByCoinAge()){
+        requestSort(utxo_blocktime_role, sortOrder);
+    }
+    else {
+        requestSort(utxo_amount_role, sortOrder);
+    }
     emit countVisibleChanged();
 }
 
@@ -1489,4 +1609,14 @@ bool sortbyMemoAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 bool sortbyMemoDescending(const QUTXOPtr &v1, const QUTXOPtr &v2)
 {
     return (QString::compare((v1.data()->memo()), (v2.data()->memo())) > 0);
+}
+
+bool sortbyBlocktimeAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)
+{
+    return v1.data()->blocktime() < v2.data()->blocktime();
+}
+
+bool sortbyBlocktimeDescending(const QUTXOPtr &v1, const QUTXOPtr &v2)
+{
+    return v1.data()->blocktime() > v2.data()->blocktime();
 }

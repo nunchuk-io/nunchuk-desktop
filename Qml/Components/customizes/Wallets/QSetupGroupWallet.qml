@@ -238,87 +238,9 @@ QOnScreenContentTypeA {
             }
         }
     }
-    QPopupEditBIP32Path {
+    property var targetEditBIP32: AppModel.newWalletInfo.sandbox
+    QSetupEditBIP32PathFlow {
         id: editBip32Path
-        property string key: ""
-        onEnterText: {
-            if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
-                gettingPublicKey.open()
-                sandbox.editBIP32Path(key, xfp, pathBip32)
-            } else {
-                gettingPublicKey.open()
-                sandbox.editBIP32Path(idx, xfp, pathBip32)
-            }
-        }
-    }
-    QPopupGettingPublicKeyLoading {
-        id: gettingPublicKey
-    }
-    QPopupInfoTwoButtons {
-        id: _warningMultiSigner
-        property var key: ""
-        property var xfp: ""
-        property var pathBip32: ""
-        property var signerData: {}
-        isVertical: false
-        title: STR.STR_QML_661
-        contentText: STR.STR_QML_1868
-        labels: [STR.STR_QML_035, STR.STR_QML_1867]
-        funcs: [
-            function() {},
-            function() {
-                editBip32Path.clearError()
-                editBip32Path.isShowListDevice = false
-                editBip32Path.signerData = signerData
-                editBip32Path.idx = 0
-                editBip32Path.xfp = xfp
-                editBip32Path.key = key
-                editBip32Path.open()
-            }
-        ]
-    }
-    Connections {
-        target: sandbox
-        onEditBIP32PathSuccess: {
-            if (typeError == 1) {
-                editBip32Path.close()
-                gettingPublicKey.close()
-            } else if (typeError == -1 || typeError == -3){
-                gettingPublicKey.close()
-                editBip32Path.showError(typeError)
-            } else if (typeError == -2) {
-                gettingPublicKey.close()
-                editBip32Path.isShowListDevice = true
-                editBip32Path.showError(typeError)
-            } else {}
-        }
-    }
-    Connections {
-       target: newWalletInfo
-       function onDuplicateKeyError(key, xfp, path, keyObj){
-            if (editBip32Path.opened) return
-           _warningMultiSigner.open()
-           _warningMultiSigner.key = key
-           _warningMultiSigner.xfp = xfp
-           _warningMultiSigner.pathBip32 = path
-           var data = {
-                   single_name: keyObj.singleSigner_name,
-                   single_type: keyObj.single_signer_type,
-                   single_tag: keyObj.single_signer_tag,
-                   single_devicetype: keyObj.single_signer_devicetype,
-                   single_masterFingerPrint: keyObj.singleSigner_masterFingerPrint,
-                   single_account_index: keyObj.single_signer_account_index,
-                   single_checked: keyObj.single_signer_checked,
-                   single_is_local: keyObj.single_signer_is_local,
-                   single_value_key: keyObj.single_signer_value_key,
-                   single_derivationPath: keyObj.singleSigner_derivationPath,
-                   single_device_cardid: keyObj.single_signer_device_cardid,
-                   single_isOccupied: keyObj.single_signer_isOccupied,
-                   single_isReplaced: keyObj.single_signer_isReplaced,
-                   single_keyReplaced: keyObj.single_signer_keyReplaced,
-               }
-           _warningMultiSigner.signerData = data; // Ensure it's an object
-       }
     }
 
     QConfirmYesNoPopup {
