@@ -57,7 +57,8 @@ void WalletIO::requestExportWalletViaQRBBQRColdcard() {
 
 void WalletIO::requestExportWalletBBRQDescriptor()
 {
-    QString descriptor = QString::fromStdString(nunchukWallet().get_descriptor(nunchuk::DescriptorPath::EXTERNAL_ALL));
+    nunchuk::WalletType type = nunchukWallet().get_wallet_type();
+    QString descriptor = QString::fromStdString(nunchukWallet().get_descriptor(nunchuk::WalletType::MINISCRIPT == type ? nunchuk::DescriptorPath::EXTERNAL_INTERNAL : nunchuk::DescriptorPath::EXTERNAL_ALL));
     QStringList qrtags;
     if(!descriptor.isEmpty()){
         qrtags.append(descriptor);
@@ -114,7 +115,8 @@ void WalletIO::requestExportUtxoCSV(const QString &file)
 void WalletIO::requestViaDescriptor(const QString &file) {
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
-    auto descriptor = nunchukWallet().get_descriptor(nunchuk::DescriptorPath::EXTERNAL_ALL);
+    nunchuk::WalletType type = nunchukWallet().get_wallet_type();
+    auto descriptor = nunchukWallet().get_descriptor(nunchuk::WalletType::MINISCRIPT == type ? nunchuk::DescriptorPath::EXTERNAL_INTERNAL : nunchuk::DescriptorPath::EXTERNAL_ALL);
     if (descriptor.empty()) {
         DBG_ERROR << "Descriptor is empty for wallet" << walletId();
         return;

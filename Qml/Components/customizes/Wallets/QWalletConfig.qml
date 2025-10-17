@@ -397,7 +397,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
+                        visible: /*(walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && => 8767 */walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
                         label: STR.STR_QML_1747, // As BBQR
                         icon: "",
                         iconRight: "",
@@ -450,7 +450,7 @@ QOnScreenContentTypeA {
                         }
                     },
                     {
-                        visible: (walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && walletInfo.walletAddressType != NUNCHUCKTYPE.TAPROOT,
+                        visible: /*(walletInfo.walletType === NUNCHUCKTYPE.MULTI_SIG) && => 8767 */walletInfo.walletAddressType !== NUNCHUCKTYPE.TAPROOT,
                         label: STR.STR_QML_1748, // To COLDCARD
                         icon: "",
                         iconRight: "",

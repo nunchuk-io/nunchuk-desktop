@@ -31,6 +31,7 @@ void QNormalSandbox::initialize()
 {
     connect(QEventProcessor::instance(), &QEventProcessor::stateChanged, this, &QNormalSandbox::slotClearOccupied);
     connect(&m_occupied, &QTimer::timeout, [this]() {
+        DBG_INFO;
         GetGroup(groupId());
     });
     connect(this, &QNormalSandbox::finishSandboxWallet, this, &QNormalSandbox::slotFinishSandboxWallet);
@@ -103,6 +104,15 @@ void QNormalSandbox::setAddressType(int addr)
     }
 }
 
+int QNormalSandbox::walletType() const
+{
+    if (m_sandbox.get_wallet_type() >= nunchuk::WalletType::SINGLE_SIG && m_sandbox.get_wallet_type() <= nunchuk::WalletType::MINISCRIPT) {
+        return static_cast<int>(m_sandbox.get_wallet_type());
+    } else {
+        return static_cast<int>(nunchuk::WalletType::SINGLE_SIG);
+    }
+}
+
 QString QNormalSandbox::url() const
 {
     return QString::fromStdString(m_sandbox.get_url());
@@ -156,6 +166,8 @@ bool QNormalSandbox::FinalizeGroup()
         for (auto &signer : m_sandbox.get_signers()) {
             DBG_INFO << QString::fromStdString(signer.get_name()) << QString::fromStdString(signer.get_master_fingerprint()) << signer.get_derivation_path();
         }
+
+        DBG_INFO << "valuekeyset size: " << valuekeyset.size() << valuekeyset << (int)m_sandbox.get_address_type() << (int)m_sandbox.get_wallet_template();
 
         auto sandbox = bridge::FinalizeGroup(groupId(), valuekeyset, msg);
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
@@ -624,6 +636,8 @@ void QNormalSandbox::CreateSignerListReviewWallet()
             w->setWalletM(groupM());
             w->setWalletName(groupName());
             w->setWalletAddressType(addressType());
+            w->setWalletType(walletType());
+            DBG_INFO << "groupM: " << groupM() << "groupN: " << groupN() << "addressType: " << addressType() << w->walletType();
             w->CreateSignerListReviewWallet(m_sandbox.get_signers());
             if (!w->enableValuekeyset()) {
                 for(auto signer: w->singleSignersAssigned()->fullList()) {
@@ -637,6 +651,7 @@ void QNormalSandbox::CreateSignerListReviewWallet()
 
 QSet<size_t> QNormalSandbox::ValueKeyset()
 {
+    DBG_INFO << isReplace();
     QSet<size_t> valuekeyset;
     if (isReplace()) {
         auto currentWallet = AppModel::instance()->walletListPtr()->getWalletById(QString::fromStdString(m_sandbox.get_replace_wallet_id()));
@@ -654,10 +669,13 @@ QSet<size_t> QNormalSandbox::ValueKeyset()
         }
     } else {
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            DBG_INFO;
             if (auto list = w->singleSignersAssigned()) {
+                DBG_INFO;
                 std::vector<nunchuk::SingleSigner> signers = m_sandbox.get_signers();
                 for (int i = 0; i < signers.size(); i++) {
                     if (auto signer = list->getSingleSignerByFingerPrint(QString::fromStdString(signers.at(i).get_master_fingerprint()))) {
+                        DBG_INFO << i << signer->valueKey();
                         if (signer->valueKey()) {
                             valuekeyset.insert(i);
                         }

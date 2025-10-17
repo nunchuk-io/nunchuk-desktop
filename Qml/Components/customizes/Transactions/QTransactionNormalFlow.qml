@@ -217,11 +217,11 @@ Item {
                                         for(var i = 0; i < destination.model; i++){
                                             if(i !== index){
                                                 var itemAt = destination.itemAt(i)
-                                                var satSend = destinationRow.convertToSatoshi(itemAt.onCurrency, itemAt.toAmount)
+                                                var satSend = destinationRow.amountToSats(itemAt.onCurrency, itemAt.toAmount)
                                                 remaining -= satSend
                                             }
                                         }
-                                        remaining = destinationRow.convertFromSatoshi(destination.itemAt(index).onCurrency, remaining)
+                                        remaining = destinationRow.amountFromSats(destination.itemAt(index).onCurrency, remaining)
                                     }
                                     destination.itemAt(index).toAmount = remaining
                                 }
@@ -232,7 +232,7 @@ Item {
                                     }
                                     destination.fullfill = destination.fullfill & destinationRow.toAddress !== "" & destinationRow.toAmount !== ""
                                 }
-                                function convertToSatoshi(isCurrency, amount) {
+                                function amountToSats(isCurrency, amount) {
                                     if(isCurrency) {
                                         return AppModel.qAmountFromCurrency(amount)
                                     }
@@ -242,7 +242,7 @@ Item {
                                         return amount
                                     }
                                 }
-                                function convertFromSatoshi(isCurrency, amount) {
+                                function amountFromSats(isCurrency, amount) {
                                     if(isCurrency) {
                                         return AppModel.qCurrencyFromAmount(amount)
                                     }
@@ -380,8 +380,8 @@ Item {
                             }
                             if(toAmount !== "" && toAddress !== ""){
                                 var savedObj = {
-                                    "toAddress": toAddress,
-                                    "toAmount" : toAmount,
+                                    "toAddress"  : toAddress,
+                                    "toAmount"   : toAmount,
                                     "onCurrency" : onCurrency
                                 };
                                 saved[i] = savedObj
@@ -413,7 +413,8 @@ Item {
                                            "toType": "Input",
                                            "toAddress": tag,
                                            "toAddressDisplay": tag,
-                                           "toAmount": ""
+                                           "toAmount": "",
+                                           "onCurrency": destination.itemAt(qrscaner.addressRequestIndex).onCurrency
                                        })
                     destination.itemAt(qrscaner.addressRequestIndex).setFavoriteInput(inputObject)
                 }
@@ -643,7 +644,8 @@ Item {
                                                               "toType": "Address",
                                                               "toAddress": savedAddressItem.dataValue,
                                                               "toAddressDisplay": savedAddressItem.dataLabel,
-                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
+                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount,
+                                                              "onCurrency": destination.itemAt(favoritesPopup.addressRequestIndex).onCurrency
                                                           })
                                         destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                     }
@@ -718,10 +720,11 @@ Item {
                             onButtonClicked: {
                                 if(favoritesPopup.addressRequestIndex !== -1){
                                     var inputObject= ({
-                                                          "toType": "Wallet",
-                                                          "toAddress": modelData.wallet_Address,
+                                                          "toType":     "Wallet",
+                                                          "toAmount":   destination.itemAt(favoritesPopup.addressRequestIndex).toAmount,
+                                                          "toAddress":  modelData.wallet_Address,
                                                           "toAddressDisplay": modelData.wallet_name,
-                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
+                                                          "onCurrency": destination.itemAt(favoritesPopup.addressRequestIndex).onCurrency
                                                       })
                                     destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                 }
@@ -1129,11 +1132,12 @@ Item {
         destinations = []
         for(var i = 0; i < destination.count; i++){
             if(destination.itemAt(i).inputObject.toType === "Input" || destination.itemAt(i).inputObject.toType === ""){
-                destination.itemAt(i).inputObject.toType = "Input"
-                destination.itemAt(i).inputObject.toAddress = destination.itemAt(i).toAddress
-                destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
+                destination.itemAt(i).inputObject.toType            = "Input"
+                destination.itemAt(i).inputObject.toAddress         = destination.itemAt(i).toAddress
+                destination.itemAt(i).inputObject.toAddressDisplay  = destination.itemAt(i).toAddress
             }
             destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destination.itemAt(i).inputObject.onCurrency = destination.itemAt(i).onCurrency
             destinations[i] = destination.itemAt(i).inputObject
         }
         if(destination.count < destination.destinationMAX) {
@@ -1146,11 +1150,12 @@ Item {
         for(var i = 0; i < destination.count; i++){
             if(i === index){ continue }
             if(destination.itemAt(i).inputObject.toType === "Input" || destination.itemAt(i).inputObject.toType === ""){
-                destination.itemAt(i).inputObject.toType = "Input"
-                destination.itemAt(i).inputObject.toAddress = destination.itemAt(i).toAddress
-                destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
+                destination.itemAt(i).inputObject.toType            = "Input"
+                destination.itemAt(i).inputObject.toAddress         = destination.itemAt(i).toAddress
+                destination.itemAt(i).inputObject.toAddressDisplay  = destination.itemAt(i).toAddress
             }
             destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destination.itemAt(i).inputObject.onCurrency = destination.itemAt(i).onCurrency
             destinations[idx] = destination.itemAt(i).inputObject
             idx++
         }
@@ -1163,7 +1168,8 @@ Item {
                                "toType": "Input",
                                "toAddress": address,
                                "toAddressDisplay": address,
-                               "toAmount": walletInfo.walletBalance
+                               "toAmount": walletInfo.walletBalance,
+                               "onCurrency": destination.itemAt(0).onCurrency
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
         sendRoot.sendCoinSelected = false
@@ -1173,7 +1179,8 @@ Item {
                                "toType": "Input",
                                "toAddress": address,
                                "toAddressDisplay": address,
-                               "toAmount": walletInfo.utxoList.amountDisplay
+                               "toAmount": walletInfo.utxoList.amountDisplay,
+                               "onCurrency": destination.itemAt(0).onCurrency
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
         sendRoot.sendCoinSelected = true

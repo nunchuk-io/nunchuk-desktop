@@ -120,6 +120,7 @@ void BaseWallet::setWalletName(const QString &data) {
 int BaseWallet::walletAddressType() {
     if(m_walletAddressType == (int)nunchuk::AddressType::ANY){
         int cdata = (int)nunchukWallet().get_address_type();
+        DBG_INFO << "[Mini] walletAddressType" << cdata;
         std::set<int> valid_numbers = {(int)nunchuk::AddressType::LEGACY, (int)nunchuk::AddressType::NESTED_SEGWIT, (int)nunchuk::AddressType::NATIVE_SEGWIT, (int)nunchuk::AddressType::TAPROOT};
         if (valid_numbers.find(cdata) != valid_numbers.end()) {
             m_walletAddressType = cdata;
@@ -175,6 +176,8 @@ bool BaseWallet::enableValuekeyset()
     int wallet_Type = walletType();
     int walletAddress_Type = walletAddressType();
     int walletTemplate_Type = walletTemplate();
+
+    DBG_INFO <<  "[Mini] enableValuekeyset" << wallet_Type << walletAddress_Type << walletTemplate_Type;
     if(((int)nunchuk::AddressType::TAPROOT == walletAddress_Type)
         && ((int)nunchuk::WalletType::MULTI_SIG == wallet_Type)
         && ((int)nunchuk::WalletTemplate::DEFAULT == walletTemplate_Type))
@@ -204,6 +207,7 @@ int BaseWallet::walletTemplate()
 {
     if(!walletId().isEmpty()){
         int cdata = (int)nunchukWallet().get_wallet_template();
+        DBG_INFO << "[Mini] walletAddressType" << cdata;
         std::set<int> valid_numbers = {(int)nunchuk::WalletTemplate::DEFAULT, (int)nunchuk::WalletTemplate::DISABLE_KEY_PATH};
         if (valid_numbers.find(cdata) != valid_numbers.end()) {
             m_walletTemplate = cdata;

@@ -421,7 +421,8 @@ Item {
                                            "toType": "Input",
                                            "toAddress": tag,
                                            "toAddressDisplay": tag,
-                                           "toAmount": ""
+                                           "toAmount": "",
+                                           "onCurrency": destination.itemAt(qrscaner.addressRequestIndex).onCurrency
                                        })
                     destination.itemAt(qrscaner.addressRequestIndex).setFavoriteInput(inputObject)
                 }
@@ -651,7 +652,8 @@ Item {
                                                               "toType": "Address",
                                                               "toAddress": savedAddressItem.dataValue,
                                                               "toAddressDisplay": savedAddressItem.dataLabel,
-                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
+                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount,
+                                                              "onCurrency": destination.itemAt(favoritesPopup.addressRequestIndex).onCurrency
                                                           })
                                         destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                     }
@@ -729,7 +731,8 @@ Item {
                                                           "toType": "Wallet",
                                                           "toAddress": modelData.wallet_Address,
                                                           "toAddressDisplay": modelData.wallet_name,
-                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
+                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount,
+                                                          "onCurrency": destination.itemAt(favoritesPopup.addressRequestIndex).onCurrency
                                                       })
                                     destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                 }
@@ -1142,6 +1145,7 @@ Item {
                 destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
             }
             destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destination.itemAt(i).inputObject.onCurrency = destination.itemAt(i).onCurrency
             destinations[i] = destination.itemAt(i).inputObject
         }
         if(destination.count < destination.destinationMAX) {
@@ -1159,6 +1163,7 @@ Item {
                 destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
             }
             destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destination.itemAt(i).inputObject.onCurrency = destination.itemAt(i).onCurrency
             destinations[idx] = destination.itemAt(i).inputObject
             idx++
         }
@@ -1171,7 +1176,8 @@ Item {
                                "toType": "Input",
                                "toAddress": address,
                                "toAddressDisplay": address,
-                               "toAmount": walletInfo.walletBalance
+                               "toAmount": walletInfo.walletBalance,
+                               "onCurrency": destination.itemAt(0).onCurrency
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
         sendRoot.sendCoinSelected = false
@@ -1181,7 +1187,8 @@ Item {
                                "toType": "Input",
                                "toAddress": address,
                                "toAddressDisplay": address,
-                               "toAmount": walletInfo.utxoList.amountDisplay
+                               "toAmount": walletInfo.utxoList.amountDisplay,
+                               "onCurrency": destination.itemAt(0).onCurrency
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
         sendRoot.sendCoinSelected = true

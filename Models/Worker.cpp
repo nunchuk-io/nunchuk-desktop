@@ -442,7 +442,8 @@ void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
                  << w->walletAddressType()
                  << w->walletType()
                  << w->walletM()
-                 << w->walletN();
+                 << w->walletN()
+                 << w->enableValuekeyset();
         if((walletAddress_Type == (int)nunchuk::AddressType::TAPROOT) && (wallet_Type == (int)nunchuk::WalletType::MULTI_SIG)){
             if(!w->enableValuekeyset()){
                 walletTemplate = nunchuk::WalletTemplate::DISABLE_KEY_PATH;

@@ -313,7 +313,8 @@ QScreen {
                                            "toType": "Input",
                                            "toAddress": tag,
                                            "toAddressDisplay": tag,
-                                           "toAmount": ""
+                                           "toAmount": "",
+                                           "onCurrency": destination.itemAt(qrscaner.addressRequestIndex).onCurrency
                                        })
                     destination.itemAt(qrscaner.addressRequestIndex).setFavoriteInput(inputObject)
 
@@ -544,7 +545,8 @@ QScreen {
                                                               "toType": "Address",
                                                               "toAddress": savedAddressItem.dataValue,
                                                               "toAddressDisplay": savedAddressItem.dataLabel,
-                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
+                                                              "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount,
+                                                              "onCurrency": destination.itemAt(favoritesPopup.addressRequestIndex).onCurrency
                                                           })
                                         destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                     }
@@ -622,7 +624,8 @@ QScreen {
                                                           "toType": "Wallet",
                                                           "toAddress": modelData.wallet_Address,
                                                           "toAddressDisplay": modelData.wallet_name,
-                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount
+                                                          "toAmount": destination.itemAt(favoritesPopup.addressRequestIndex).toAmount,
+                                                          "onCurrency": destination.itemAt(favoritesPopup.addressRequestIndex).onCurrency
                                                       })
                                     destination.itemAt(favoritesPopup.addressRequestIndex).setFavoriteSelected(inputObject)
                                 }
@@ -1034,6 +1037,7 @@ QScreen {
                 destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
             }
             destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destination.itemAt(i).inputObject.onCurrency = destination.itemAt(i).onCurrency
             destinations[i] = destination.itemAt(i).inputObject
         }
         if(destination.count < destination.destinationMAX) {
@@ -1051,6 +1055,7 @@ QScreen {
                 destination.itemAt(i).inputObject.toAddressDisplay = destination.itemAt(i).toAddress
             }
             destination.itemAt(i).inputObject.toAmount = destination.itemAt(i).toAmount
+            destination.itemAt(i).inputObject.onCurrency = destination.itemAt(i).onCurrency
             destinations[idx] = destination.itemAt(i).inputObject
             idx++
         }
@@ -1063,7 +1068,8 @@ QScreen {
                                "toType": "Input",
                                "toAddress": address,
                                "toAddressDisplay": address,
-                               "toAmount": AppModel.walletInfo.walletBalance
+                               "toAmount": AppModel.walletInfo.walletBalance,
+                               "onCurrency": destination.itemAt(0).onCurrency
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
     }
@@ -1106,7 +1112,8 @@ QScreen {
                                "toType": "Input",
                                "toAddress": "",
                                "toAddressDisplay": "",
-                               "toAmount": AppModel.walletInfo.utxoList.amountDisplay
+                               "toAmount": AppModel.walletInfo.utxoList.amountDisplay,
+                               "onCurrency": destination.itemAt(0).onCurrency
                           })
         destination.itemAt(0).setFavoriteInput(inputObject)
     }

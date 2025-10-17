@@ -39,11 +39,12 @@ public:
     void setGroupName(const QString& name);
     int addressType() const;
     void setAddressType(int addressType);
+    int walletType() const;
+
     QString url() const;
     QVariantList groupKeys() const;
+
     int userCount() const;
-
-
     void setUserCount(int number);
 
     virtual bool enoughSigner();

@@ -698,7 +698,14 @@ QStringList qUtils::ExportBBQRTransaction(const QString &psbt, QWarningMessage &
 QStringList qUtils::ExportBBQRWallet(const nunchuk::Wallet &wallet, QWarningMessage &msg) {
     QStringList result{};
     try {
-        std::vector<std::string> data = nunchuk::Utils::ExportBBQRWallet(wallet);
+        std::vector<std::string> data;
+        nunchuk::WalletType type = wallet.get_wallet_type();
+        if(nunchuk::WalletType::MINISCRIPT == type){
+            data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL);
+        }
+        else {
+            data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_ALL);
+        }
         result.reserve(data.size());
         for (std::string tag : data) {
             result.append(QString::fromStdString(tag));

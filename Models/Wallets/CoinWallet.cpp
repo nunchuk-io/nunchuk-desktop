@@ -1367,11 +1367,15 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
                 AppModel::instance()->transactionInfo()->setSigningPathSelected(selectedSigningPath);
                 QEventProcessor::instance()->sendEvent(successEvtID);
             }
+            else {
+                AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
+            }
         };
         
         if (qUtils::strCompare(selectPath, "keypath")) {
             createTransaction();
-        } else if (qUtils::strCompare(selectPath, "scriptpath") && signing_paths.size() == 0) {
+        }
+        else if (qUtils::strCompare(selectPath, "scriptpath") && signing_paths.size() == 0) {
             std::vector<std::pair<nunchuk::SigningPath, nunchuk::Amount>> signing_paths =
                 bridge::nunchukEstimateFeeForSigningPaths(wallet_id, outputs, inputs, feerate, subtractFromAmount, "");
             AppModel::instance()->transactionInfo()->setSigningPaths(signing_paths);
@@ -1387,7 +1391,8 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
                 AppModel::instance()->showToast(0, "Insufficient funds", EWARNING::WarningType::ERROR_MSG);
                 return false;
             }
-        } else {
+        }
+        else {
             createTransaction();
         }
         return true;
@@ -1448,6 +1453,9 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
 #endif
             QEventProcessor::instance()->sendEvent(successEvtID);
             return true;
+        }
+        else {
+            AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
         }
         return false;
     }

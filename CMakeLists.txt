@@ -8,9 +8,9 @@ else()
 endif()
 
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.52)
+    project(Nunchuk VERSION 1.9.53)
 else()
-    project(nunchuk-qt VERSION 1.9.52)
+    project(nunchuk-qt VERSION 1.9.53)
 endif()
 
 

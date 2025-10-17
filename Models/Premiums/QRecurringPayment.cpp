@@ -513,7 +513,8 @@ bool QRecurringPayment::ImportFileWallet(const QString &filepath, bool bsms)
 bool QRecurringPayment::ConvertWalletToBsmsAndAddress(const nunchuk::Wallet &wallet)
 {
     QWarningMessage parsewarningmsg;
-    QString bsms = bridge::nunchukGetWalletExportData(wallet, nunchuk::ExportFormat::BSMS); //bsms ? nunchuk::ExportFormat::BSMS : nunchuk::ExportFormat::COLDCARD
+    nunchuk::WalletType type = wallet.get_wallet_type();
+    QString bsms = bridge::nunchukGetWalletExportData(wallet, (nunchuk::WalletType::MINISCRIPT == type) ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_ALL : nunchuk::ExportFormat::BSMS);
     QStringList addressList = qUtils::DeriveAddresses(wallet, 0, 0, parsewarningmsg);
     if((int)EWARNING::WarningType::NONE_MSG == parsewarningmsg.type()){
         QJsonObject destination_payload;

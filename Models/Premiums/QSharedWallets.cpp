@@ -44,9 +44,11 @@ void QSharedWallets::GetAllGroups()
 
 void QSharedWallets::GetGroup(const QString &sandbox_id)
 {
+    DBG_INFO;
     AppModel::instance()->setNewWalletInfo(QWalletPtr(new Wallet()));
     if (auto gw = AppModel::instance()->newWalletInfoPtr()) {
         if (auto sandbox = sandboxListPtr()->GetGroup(sandbox_id)) {
+            DBG_INFO;
             gw->setWalletAddressType(sandbox->addressType());
             gw->setGroupSandbox(sandbox);
             gw->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_GROUP_WALLET);

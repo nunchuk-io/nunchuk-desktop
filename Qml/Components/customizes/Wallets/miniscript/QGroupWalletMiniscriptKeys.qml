@@ -169,10 +169,7 @@ Column {
                 width: widthHalf
                 Repeater {
                     model: newWalletInfo.keypaths
-                    delegate: QKeyPath {
-                        width: widthHalf
-                        miniscript: modelData
-                    }
+                    delegate: newWalletInfo.keypaths.length === 1 ? keyPathDelegate : muSigDelegate
                 }
                 Component {
                     id: keyPathDelegate

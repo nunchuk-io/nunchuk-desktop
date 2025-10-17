@@ -43,16 +43,17 @@ Rectangle {
                                    "toType": "Input", // "Input, Address, Wallet"
                                    "toAddress": "",
                                    "toAddressDisplay": "",
-                                   "toAmount": ""
+                                   "toAmount": "",
+                                   "onCurrency": false
                                })
 
-    property int   itemCount: 0
-    property alias recipientLabel: addressInput.label
-    property alias toAmount: amountInput.textInputted
+    property int    itemCount: 0
+    property alias  recipientLabel: addressInput.label
+    property alias  toAmount: amountInput.textInputted
     property string toAddress: ""
-    property alias enableInput: addressInput.enabled
-    property bool  enableInputAmount: true
-    property bool  onCurrency: false
+    property alias  enableInput: addressInput.enabled
+    property bool   enableInputAmount: true
+    property bool   onCurrency: false
 
     signal qrCodeRequest()
     signal removeItemRequest()
@@ -70,8 +71,9 @@ Rectangle {
 
     function setFavoriteSelected(cached) {
         inputObject = cached
-        toAddress = inputObject.toAddressDisplay
-        toAmount  = inputObject.toAmount
+        toAddress   = inputObject.toAddressDisplay
+        toAmount    = inputObject.toAmount
+        onCurrency  = inputObject.onCurrency
         addressInput.input.leftPadding = 44
         closeLoader.sourceComponent = clearfav
         if ((inputObject.toType === "Address")){
@@ -86,8 +88,9 @@ Rectangle {
     function setFavoriteInput(cached) {
         inputObject = cached
         inputObject.toType = "Input"
-        toAddress = inputObject.toAddressDisplay
-        toAmount  = inputObject.toAmount
+        toAddress   = inputObject.toAddressDisplay
+        toAmount    = inputObject.toAmount
+        onCurrency  = inputObject.onCurrency
         addressInput.input.leftPadding = 12
         closeLoader.sourceComponent = dropdownfav
         iconLoader.sourceComponent  = null
@@ -295,7 +298,8 @@ Rectangle {
                                            "toType": "Input",
                                            "toAddress": "",
                                            "toAddressDisplay": "",
-                                           "toAmount": toAmount
+                                           "toAmount": toAmount,
+                                           "onCurrency": onCurrency
                                        })
                     setFavoriteInput(inputObject)
                 }
