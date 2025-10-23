@@ -84,6 +84,13 @@ void CreatingWallet::setNeedRegistered(const bool data)
 void CreatingWallet::CreateSignerListReviewWallet(const std::vector<nunchuk::SingleSigner> &signers, const QList<QString>& needTopUps)
 {
     if (auto signersList = singleSignersAssigned()) {
+        // Create QMap for finger print and Valuekey
+        // -- 8771 - begin
+        QMap<QString, bool> existingValuekeyMap;
+        for (int var = 0; var < signersList->rowCount(); var++) {
+            existingValuekeyMap[signersList->getSingleSignerByIndex(var)->fingerPrint()] = signersList->getSingleSignerByIndex(var)->valueKey();
+        }
+        // -- 8771 - end
         signersList->cleardata();
         for (size_t i = 0; i < signers.size(); i++) {
             nunchuk::SingleSigner signer = signers.at(i);
@@ -94,13 +101,16 @@ void CreatingWallet::CreateSignerListReviewWallet(const std::vector<nunchuk::Sin
                 if (needTopUps.contains(ret->fingerPrint())) {
                     ret->setNeedTopUpXpub(true);
                 }
+                ret->setValueKey(existingValuekeyMap.value(ret->fingerPrint(), false));
                 signersList->addSingleSigner(ret);
-            } else {
+            }
+            else {
                 QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
                 if (needTopUps.contains(ret->fingerPrint())) {
                     ret->setNeedTopUpXpub(true);
                 }
                 ret->setName(QString("Key #%1").arg(i + 1));
+                ret->setValueKey(existingValuekeyMap.value(ret->fingerPrint(), false));
                 signersList->addSingleSigner(ret);
             }
         }

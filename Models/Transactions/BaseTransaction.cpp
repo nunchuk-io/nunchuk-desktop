@@ -798,23 +798,18 @@ SingleSignerListModel *BaseTransaction::singleSignersAssigned() {
         setRoomId(wallet->roomId());
         int walletAddress_Type = wallet->walletAddressType();
         int wallet_Type = wallet->walletType();
-        DBG_INFO << wallet_Type << walletAddress_Type;
         auto trans = dynamic_cast<Transaction*>(this);
         if (walletAddress_Type == (int)nunchuk::AddressType::TAPROOT && wallet_Type == (int)nunchuk::WalletType::MULTI_SIG) {
-            DBG_INFO;
             return taprootKeysetSigners(wallet);
         }
         else if (wallet->keyPathActivated() && !trans->isScriptPath()) {
-            DBG_INFO;
             return taprootMiniscriptSigners(wallet);
         }
         else {
-            DBG_INFO;
             return normalWalletSigners(wallet);
         }
     }
     else {
-        DBG_INFO;
         return (new SingleSignerListModel());
     }
 }

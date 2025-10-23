@@ -488,7 +488,6 @@ void Worker::slotStartCreateWallet(bool need_backup, QString file_path)
 
 void Worker::slotCreateMiniscriptWallet()
 {
-    DBG_INFO;
     if(auto w = AppModel::instance()->newWalletInfo()){
         const QString name = w->walletNameDisplay();
         const QString script_template = w->scriptTemplate();

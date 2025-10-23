@@ -301,14 +301,14 @@ Column {
                     boxWidth: parent.width
                     boxHeight: 48
                     textInputted: newWalletInfo.timeMini.absoluteBlockheight
-                    input.placeholderText: newWalletInfo.timeMini.absoluteBlockheight
-                    isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblockAbs.textInputted))) && (parseInt(_inputblockAbs.textInputted) < 499999999)
+                    input.placeholderText: AppModel.blockHeight + 4320
+                    isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblockAbs.textInputted))) && (parseInt(_inputblockAbs.textInputted) <= 499999999)
                     errorText: STR.STR_QML_1887
                     validator: RegExpValidator {
                         regExp: /^$|^[0-9]+$/
                     }
                     onTypingFinished: {
-                        if(isValid && !Number.isNaN(parseInt(_inputblockAbs.textInputted)) && (parseInt(_inputblockAbs.textInputted) < 499999999)){
+                        if(isValid && !Number.isNaN(parseInt(_inputblockAbs.textInputted)) && (parseInt(_inputblockAbs.textInputted) <= 499999999)){
                             newWalletInfo.updateTimeMiniscript("absoluteBlockheight", parseInt(_inputblockAbs.textInputted));
                         }
                     }
@@ -433,7 +433,7 @@ Column {
                 boxWidth: parent.width
                 boxHeight: 48
                 textInputted: newWalletInfo.timeMini.relativeBlockheight
-                input.placeholderText: "900"
+                input.placeholderText: "4320"
                 isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblocks.textInputted))) && (parseInt(_inputblocks.textInputted) < 65535)
                 errorText: STR.STR_QML_1888
                 validator: RegExpValidator {

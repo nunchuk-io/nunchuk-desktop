@@ -49,7 +49,6 @@ Draco::Draco() :
     ,m_rest(QRestPtr(new QRest()))
 #endif
 {
-    DBG_INFO;
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
 #if ENABLE_WEBVIEW_SIGIN
@@ -975,7 +974,6 @@ QList<DracoUser> Draco::getContactsReceived()
 
 QList<DracoUser> Draco::getRoomMembers(const QString &id)
 {
-    DBG_INFO;
     QList<DracoUser> members;
     members.clear();
     QString cmd = QString("%1/%2/members").arg(commands[Common::CMD_IDX::GET_ROOM_MEMBERS], id);

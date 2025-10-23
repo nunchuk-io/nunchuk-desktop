@@ -25,7 +25,6 @@
 nunchukiface::nunchukiface(): nunchukMode_(LOCAL_MODE){}
 
 nunchukiface::~nunchukiface(){
-    DBG_INFO;
     stopOneInstance();
 }
 

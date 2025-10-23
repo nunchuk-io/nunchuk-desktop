@@ -71,7 +71,6 @@ bool Byzantine::GetListGroupWallets(QJsonObject &output, QString &errormsg)
 
 bool Byzantine::GetAllGroupWallets(QJsonObject &output, QString &errormsg)
 {
-    DBG_INFO;
     QJsonObject data;
     int     reply_code = -1;
     QString reply_msg  = "";
@@ -100,7 +99,6 @@ bool Byzantine::GetAllGroupWallets(QJsonObject &output, QString &errormsg)
 
 bool Byzantine::GetAllDeletedGroupWallets(QJsonObject &output, QString &errormsg)
 {
-    DBG_INFO;
     QJsonObject data;
     int     reply_code = -1;
     QString reply_msg  = "";

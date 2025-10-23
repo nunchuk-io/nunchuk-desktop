@@ -228,7 +228,6 @@ QTransactionPtr bridge::convertTransaction(const nunchuk::Transaction &in, const
 
 
 QWalletListModelPtr bridge::nunchukGetWallets() {
-    DBG_INFO;
     QWarningMessage msg;
     std::vector<nunchuk::Wallet> resultWallets = nunchukiface::instance()->GetWallets(msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){

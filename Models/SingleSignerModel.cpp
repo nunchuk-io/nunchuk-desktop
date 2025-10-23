@@ -615,7 +615,6 @@ void QSingleSigner::setKeysetPendingNumber(const int number)
 
 bool QSingleSigner::valueKey() const
 {
-    DBG_INFO << "Get value key " << this << m_valuekey << fingerPrint();
     return m_valuekey;
 }
 
@@ -625,7 +624,6 @@ void QSingleSigner::setValueKey(const bool data)
         m_valuekey = data;
         emit valueKeyChanged();
     }
-    DBG_INFO << "Set value key " << this << m_valuekey << fingerPrint();
 }
 
 bool QSingleSigner::isValid()

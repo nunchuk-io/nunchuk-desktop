@@ -185,7 +185,6 @@ void QEventProcessor::onHeightChanged(int h)
 
 void QEventProcessor::aboutToQuit(QEventProcessor::QPrivateSignal signal)
 {
-    DBG_INFO;
     emit stateChanged();
 }
 

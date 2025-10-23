@@ -37,7 +37,6 @@ void EVT_PRIMARY_KEY_SIGN_IN_REQUEST_HANDLER(QVariant msg) {
 }
 
 void EVT_PRIMARY_KEY_CONFIGURATION_FINISHED_HANDLER(QVariant msg) {
-    DBG_INFO;
     timeoutHandler(200, []() {
         AppModel::instance()->showToast(0, STR_CPP_106, EWARNING::WarningType::SUCCESS_MSG);
         AppModel::instance()->setPrimaryKey(Draco::instance()->Uid());

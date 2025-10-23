@@ -39,9 +39,14 @@ void SCR_SHARED_WL_DEVICE_REGISTRATION_Exit(QVariant msg) {
 void EVT_SHARED_WALLET_EXPORT_COLDCARD_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(CLIENT_CURRENTROOM->roomWallet() && (file_path != "")){
+        nunchuk::ExportFormat format = nunchuk::ExportFormat::COLDCARD;
+        if(CLIENT_CURRENTROOM->roomWallet()->walletInfo()){
+            int type = CLIENT_CURRENTROOM->roomWallet()->walletInfo()->walletType();
+            format = (int)nunchuk::WalletType::MINISCRIPT == type ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL : nunchuk::ExportFormat::COLDCARD;
+        }
         bool ret = bridge::nunchukExportWallet(CLIENT_CURRENTROOM->roomWallet()->get_wallet_id(),
                                                file_path,
-                                               nunchuk::ExportFormat::COLDCARD);
+                                               format);
         DBG_INFO << file_path << ret;
     }
 }

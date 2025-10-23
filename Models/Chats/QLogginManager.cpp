@@ -126,7 +126,6 @@ void QLogginManager::requestLogin()
 
 void QLogginManager::loginWithPassword()
 {
-    DBG_INFO;
     if(connection()){
         QString device_id = QString("%1%2").arg(Draco::instance()->deviceId()).arg(userid());
         QString device_name = devicename();

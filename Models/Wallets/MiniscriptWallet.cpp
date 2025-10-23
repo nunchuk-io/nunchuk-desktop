@@ -74,12 +74,25 @@ void MiniscriptWallet::convertToMiniscript(const nunchuk::Wallet &w) {
     setTreeMiniscript(tree);
 }
 
-bool MiniscriptWallet::isTaprootType(const QString &userInput) {
+bool MiniscriptWallet::isValidTapscriptTemplate(const QString &userInput) {
     QString tmpInput = userInput;
     tmpInput.remove(QRegExp("[\\s]")); //\\n\\r
     std::string error;
     std::string user_input = tmpInput.toStdString();
-    return qUtils::IsValidTapscriptTemplate(user_input, error);
+    bool is_taproot = qUtils::IsValidTapscriptTemplate(user_input, error);
+    DBG_INFO << is_taproot << user_input << error;
+    return is_taproot;
+}
+
+bool MiniscriptWallet::isValidMiniscriptTemplate(const QString &userInput)
+{
+    QString tmpInput = userInput;
+    tmpInput.remove(QRegExp("[\\s]")); //\\n\\r
+    std::string user_input = tmpInput.toStdString();
+    nunchuk::AddressType address_type = static_cast<nunchuk::AddressType>(walletAddressType());
+    bool is_miniscript = qUtils::IsValidMiniscriptTemplate(user_input, address_type);
+    DBG_INFO << is_miniscript << user_input;
+    return is_miniscript;
 }
 
 bool MiniscriptWallet::enterCustomMiniscript(const QString &userInput) {
@@ -548,11 +561,17 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
     return treeLines;
 }
 
-QVariantList MiniscriptWallet::keypaths() const {
+QVariantList MiniscriptWallet::keypaths() {
+    if(m_keypaths.isEmpty() && keyPathActivated()){
+        convertToMiniscript(nunchukWallet());
+    }
     return m_keypaths.toVariantList();
 }
 
-QJsonArray MiniscriptWallet::keypathsJs() const {
+QJsonArray MiniscriptWallet::keypathsJs() {
+    if(m_keypaths.isEmpty() && keyPathActivated()){
+        convertToMiniscript(nunchukWallet());
+    }
     return m_keypaths;
 }
 
@@ -974,8 +993,8 @@ void MiniscriptWallet::clearTimeMiniscript(const QString &userInput) {
     relative_time_data["valueDisplay"] = "90d";
     m_timeMiniData["relativeTimestamp"] = relative_time_data;
 
-    m_timeMiniData["absoluteBlockheight"] = 900000;
-    m_timeMiniData["relativeBlockheight"] = 900;
+    m_timeMiniData["absoluteBlockheight"] = AppModel::instance()->blockHeight() + 4320;
+    m_timeMiniData["relativeBlockheight"] = 4320;
     emit timeMiniChanged();
 }
 

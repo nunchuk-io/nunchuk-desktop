@@ -514,7 +514,6 @@ bool QInheritancePlan::InheritancePlanningRequestDeny()
 
 bool QInheritancePlan::createPeriods()
 {
-    DBG_INFO;
     QJsonArray periods;
     QString errormsg;
     bool ret = Draco::instance()->inheritancePlanBufferPeriod(periods, errormsg);

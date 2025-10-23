@@ -141,10 +141,10 @@ CreateMiniscript:
 
     QJsonObject getKeyDetails(const QJsonObject &oldKey, const QString &key);
 
-    QJsonArray createTreeMiniscript(const nunchuk::ScriptNode &node, QList<int> &levels);    
+    QJsonArray createTreeMiniscript(const nunchuk::ScriptNode &node, QList<int> &levels);
 
-    QVariantList keypaths() const;
-    QJsonArray keypathsJs() const;
+    QVariantList keypaths();
+    QJsonArray keypathsJs();
     QJsonArray createKeypaths(const QStringList &keypaths);
     void setKeypaths(const QJsonArray &keypath);
 
@@ -183,7 +183,8 @@ CreateMiniscript:
     void setTimeLocked(bool newTimeLocked);
 
 public slots:
-    bool isTaprootType(const QString &userInput);
+    bool isValidTapscriptTemplate(const QString &userInput);
+    bool isValidMiniscriptTemplate(const QString &userInput);
     bool enterCustomMiniscript(const QString &userInput);
     bool miniscriptTemplateSelected(const QString &userSelect);
     void updateTimeMiniscript(const QString &key, const QVariant &value);

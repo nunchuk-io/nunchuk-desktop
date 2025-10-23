@@ -148,12 +148,16 @@ QPopupOverlayScreen {
             onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
                 _taprootWarning.count += 1;
-                if (newWalletInfo.isTaprootType(newWalletInfo.customizeMiniscript) && 
-                    _taprootWarning.count < 2 &&
-                    newWalletInfo.walletAddressType !== NUNCHUCKTYPE.TAPROOT) {
+
+                var isValidMiniscript = newWalletInfo.isValidMiniscriptTemplate(newWalletInfo.customizeMiniscript)
+                var isValidTapscript  = newWalletInfo.isValidTapscriptTemplate(newWalletInfo.customizeMiniscript)
+                var isTaprootWallet   = newWalletInfo.walletAddressType === NUNCHUCKTYPE.TAPROOT
+
+                if (!isValidMiniscript && isValidTapscript && (_taprootWarning.count < 2) && !isTaprootWallet){
                     _taprootWarning.open()                   
                     return
-                } else if (newWalletInfo.enterCustomMiniscript(newWalletInfo.customizeMiniscript)) {
+                }
+                else if (newWalletInfo.enterCustomMiniscript(newWalletInfo.customizeMiniscript)) {
                     if (newWalletInfo.configureWallet()) {
                        _infoPopup.close()
                        return
@@ -164,7 +168,6 @@ QPopupOverlayScreen {
             onMiniscriptEntered: (miniscript) => {
                 newWalletInfo.customizeMiniscript = miniscript;
             }
-            
         }
     }
 

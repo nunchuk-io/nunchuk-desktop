@@ -2145,4 +2145,4 @@ function str_QML_1884(m) {
 var STR_QML_1885 = qsTr("Zen Hodl")
 var STR_QML_1886 = qsTr("Locks coins immediately when deposited and only allows spending after the timelock expires")
 var STR_QML_1887 = qsTr("Please enter a value between the current block height and 499999999")
-var STR_QML_1888 = qsTr("Invalid block height. Enter a value between 0 and 65,535 blocks.")
+var STR_QML_1888 = qsTr("Invalid block height. Enter a value between 0 and 65535 blocks.")

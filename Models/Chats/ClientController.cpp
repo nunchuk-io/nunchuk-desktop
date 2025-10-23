@@ -219,7 +219,6 @@ QContactModelPtr ClientController::contactsSentPtr() const
 
 void ClientController::proxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator)
 {
-    DBG_INFO;
     authenticator->setUser("User id here");
     authenticator->setPassword("Pass word here");
 }
