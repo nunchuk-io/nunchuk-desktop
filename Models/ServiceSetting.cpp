@@ -9,6 +9,7 @@
 #include "Servers/Draco.h"
 #include "ViewsEnums.h"
 #include "nunchuckiface.h"
+#include "Signers/QSignerManagement.h"
 
 ServiceSetting::ServiceSetting(QObject *parent) : QStateFlow(), walletInfo_(QWalletPtr(new Wallet())) {}
 
@@ -17,19 +18,34 @@ ServiceSetting *ServiceSetting::instance() {
     return &mInstance;
 }
 
+void ServiceSetting::CreateAssignAvailableSigners(const QString &wallet_type) {
+    QGroupWallets::instance()->createAssignAvailableSigners(wallet_type);
+    QUserWallets::instance()->createAssignAvailableSigners(wallet_type);
+}
+
 bool ServiceSetting::existHardware(const QString &tag) {
+    QString wallet_type = QSignerManagement::instance()->currentSignerJs().value("wallet_type").toString();
+    makeHardwareSingerList(wallet_type, tag);
     if (QAssistedDraftWallets::IsByzantine()) {
-        QGroupWallets::instance()->MixMasterSignerAndSingleSigner(tag);
         if (QGroupWallets::instance()->signerExistList().size() > 0) {
             return true;
         }
     } else {
-        QUserWallets::instance()->MixMasterSignerAndSingleSigner(tag);
         if (QUserWallets::instance()->signerExistList().size() > 0) {
             return true;
         }
     }
     return false;
+}
+
+void ServiceSetting::makeHardwareSingerList(const QString& wallet_type, const QString& tag) {
+    if (qUtils::strCompare(wallet_type, "MINISCRIPT")) {
+        QGroupWallets::instance()->MixMasterSignerAndSingleSignerMiniscript(tag);
+        QUserWallets::instance()->MixMasterSignerAndSingleSignerMiniscript(tag);
+    } else {
+        QGroupWallets::instance()->MixMasterSignerAndSingleSigner(tag);
+        QUserWallets::instance()->MixMasterSignerAndSingleSigner(tag);
+    }
 }
 
 int ServiceSetting::optionIndex() const {

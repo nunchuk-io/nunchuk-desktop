@@ -8,9 +8,9 @@ else()
 endif()
 
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 1.9.54)
+    project(Nunchuk VERSION 1.9.56)
 else()
-    project(nunchuk-qt VERSION 1.9.54)
+    project(nunchuk-qt VERSION 1.9.56)
 endif()
 
 
@@ -231,6 +231,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # add_definitions(-DENABLE_THREAD_MONITOR)
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-DENABLE_OUTLOG)
     # Apply flags for Release with debug info
 else()
     # Apply flags for else with debug info

@@ -29,42 +29,23 @@ import "../OnlineMode/SetupWallets"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    readonly property int hardwareType: GroupWallet.qIsByzantine ? GroupWallet.qAddHardware : UserWallet.qAddHardware
-    readonly property int _ASK_PASSPHRASE: 1
-    readonly property int _IMPORTANT_NOTICE: 2
-    readonly property int _BACKUP_PASSPHRASE: 3
-    readonly property int _PASSPHRASE_DONE: 4
-    readonly property int _BACKUP_COLDCARD: 5
-    property int _passPhrase: _ASK_PASSPHRASE
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: {
+            var hardwareType = SignerManagement.currentSigner.hwType
             switch(hardwareType) {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
-            case NUNCHUCKTYPE.ADD_COLDCARD: return function() {
-                var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
-                if (is_inheritance) {
-                    switch(_passPhrase) {
-                        case _ASK_PASSPHRASE: return _passPhraseSelect
-                        case _IMPORTANT_NOTICE: return _importantNotice
-                        case _BACKUP_PASSPHRASE: return _passPhraseBackup
-                        case _PASSPHRASE_DONE: return _Coldcard
-                        case _BACKUP_COLDCARD: return _backupCOLDCARD
-                        default: return null
-                    }
-                } else {
-                    return _Coldcard
-                }
-            }()
+            case NUNCHUCKTYPE.ADD_COLDCARD: return _Coldcard
             case NUNCHUCKTYPE.ADD_BITBOX: return _BitBox
             case NUNCHUCKTYPE.ADD_JADE: return _Jade
             default: return null
             }
         }
     }
+
     Component {
         id: _Ledger
         QScreenAddLedger {}
@@ -85,79 +66,27 @@ QScreen {
         id: _Jade
         QScreenAddJade {}
     }
-    Component {
-        id: _passPhraseSelect
-        QSelectPassPhraseQuestion {
-            onRequestBack: {
-                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            }
-            onRequestNext: {
-                if (option === "not-have-a-passphrase") {
-                    _passPhrase = _PASSPHRASE_DONE
-                } else {
-                    _passPhrase = _IMPORTANT_NOTICE
-                }
-            }
-        }
-    }
-    Component {
-        id: _importantNotice
-        QImportantNoticeAboutPassphrase {
-            onRequestBack: {
-                _passPhrase = _ASK_PASSPHRASE
-            }
-            onRequestNext: {
-                _passPhrase = _BACKUP_PASSPHRASE
-            }
-            onRequestWithout: {
-                var alert = GroupWallet.dashboardInfo.alert
-                var can_replace = alert.payload.can_replace
-                if (can_replace) {
-                    GroupWallet.dashboardInfo.requestShowReplacementKey();
-                } else {
-                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
-                }
-            }
-        }
-    }
-    Component {
-        id: _passPhraseBackup
-        QPassphraseBackupReminder {
-            onRequestBack: {
-                _passPhrase = _IMPORTANT_NOTICE
-            }
-            onRequestNext: {
-                _passPhrase = _PASSPHRASE_DONE
-            }
-        }
-    }
-    Component {
-        id: _backupCOLDCARD
-        QBackupCOLDCARD {
-            inputFingerPrint: AppModel.masterSignerInfo.fingerPrint
-            onPrevClicked: _passPhrase = _PASSPHRASE_DONE
-        }
-    }
+    
 
     function doneOrTryAgainAddHardwareKey(isSuccess) {
-        if (isSuccess) {
-            AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
-            closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-        } else {
-            GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
-        }
-    }
-    function doneOrTryAgainAddColdcardKey(isSuccess) {
-        if (isSuccess) {
-            var is_inheritance = GroupWallet.dashboardInfo.isInheritance()
-            if (is_inheritance) {
-                _passPhrase = _BACKUP_COLDCARD
-            } else {
+        var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
+        if (isNormalFlow) {
+            if (isSuccess) {
                 AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            } else {
+                GroupWallet.refresh()
+                GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
             }
         } else {
-            GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+            var xfp = SignerManagement.currentSigner.xfp
+            if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            } else {
+                GroupWallet.refresh()
+                GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+            }
         }
     }
 }

@@ -277,6 +277,8 @@ public:
     bool DraftWalletDownloadBackupFile(const QString& group_id, const QString& xfp, QJsonObject& output, QString& errormsg);
     bool DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
 
+    bool DraftWalletUpdateTimelock(const QString& group_id, const QString& timezone, const qint64 timelock, QJsonObject& output, QString& errormsg);
+    bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& type, QString& errormsg);
 private:
     QRestPtr  m_rest;
 };

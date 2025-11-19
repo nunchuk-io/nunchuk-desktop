@@ -9,6 +9,7 @@
 class QBasePremium : public QObject, public Slugs
 {
     Q_OBJECT
+    Q_PROPERTY(Wallet* walletInfo READ walletInfo CONSTANT)
 public:
     explicit QBasePremium(WalletId wallet_id);
     template<typename T>
@@ -30,8 +31,10 @@ public:
     virtual QAssistedDraftWallets* DraftWallet() const;
     QStringList slugs() const final;
     bool isUserDraftWallet() const final;
+    Wallet *walletInfo() const;
 private:
     WalletId m_wallet_id;
+    QWalletPtr globalWallet;
 };
 
 #endif // QBASEPREMIUM_H

@@ -7,6 +7,7 @@
 #include "bridgeifaces.h"
 #include "localization/STR_CPP.h"
 #include "Models/OnBoardingModel.h"
+#include "Premiums/QWalletServicesTag.h"
 
 QSignerManagement::QSignerManagement() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -191,4 +192,38 @@ bool QSignerManagement::finishCreateTopUpXpub() {
         return true;
     }
     return false;
+}
+
+QJsonObject QSignerManagement::currentSignerJs() const {
+    return m_currentSigner;
+}
+
+QVariant QSignerManagement::currentSigner() const {
+    DBG_INFO << "OTE" << m_currentSigner;
+    return QVariant::fromValue(m_currentSigner);
+}
+
+void QSignerManagement::setCurrentSigner(const QJsonObject &data) {
+    if (m_currentSigner != data) {
+        DBG_INFO << "data:" << data;
+        m_currentSigner = data;
+        emit currentSignerChanged();
+    }
+}
+
+void QSignerManagement::updateXfpOfCurrentSigner(const QString &xfp) {
+    m_currentSigner["xfp"] = xfp;
+    emit currentSignerChanged();
+}
+
+QVariant QSignerManagement::miniscriptSupportedFirmwares(const QString& tag) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray miniscript_supported_firmwares = config["miniscript_supported_firmwares"].toArray();
+    for (auto js : miniscript_supported_firmwares) {
+        QJsonObject obj = js.toObject();
+        if (qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return QVariant::fromValue(obj);
+        }
+    }
+    return QVariant();
 }

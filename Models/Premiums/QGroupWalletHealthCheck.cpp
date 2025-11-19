@@ -370,10 +370,15 @@ QVariantList QGroupWalletHealthCheck::healthStatuses() const
         return m_healthStatuses.toVariantList();
     } else {
         QJsonArray list;
+        QSet<QString> xfps;
         for (auto js : m_healthStatuses) {
             auto key = js.toObject()["keyinfo"].toObject();
             if (key["ourAccount"].toBool()) {
+                if(xfps.contains(js.toObject()["xfp"].toString())){
+                    continue;
+                }
                 list.append(js);
+                xfps.insert(js.toObject()["xfp"].toString());
             }
         }
         return list.toVariantList();

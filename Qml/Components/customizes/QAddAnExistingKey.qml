@@ -92,9 +92,9 @@ Item {
                             QSignerDarkIcon {
                                 iconSize: 24
                                 anchors.centerIn: parent
-                                device_type: modelData.signer_deviceType
-                                type: modelData.signer_type
-                                tag: modelData.signer_tag
+                                device_type: modelData.single_signer_devicetype
+                                type: modelData.single_signer_type
+                                tag: modelData.single_signer_tag
                             }
                         }
                         Item{
@@ -106,28 +106,34 @@ Item {
                                 QText {
                                     width: 146
                                     height: 20
-                                    text: modelData.signer_name
+                                    text: modelData.singleSigner_name
                                     color: "#031F2B"
                                     font.weight: Font.Normal
                                     font.family: "Lato"
                                     font.pixelSize: 16
                                 }
                                 QRowSingleSignerType {
-                                    isPrimaryKey: modelData.signer_is_primary
-                                    signerType: modelData.signer_type
-                                    accountIndex: modelData.signer_account_index
-                                    accountVisible: false
+                                    isPrimaryKey: modelData.single_signer_primary_key
+                                    signerType: modelData.single_signer_type
+                                    accountIndex: modelData.single_signer_account_index
+                                    accountVisible: {
+                                        if (modelData.wallet_type === "MINISCRIPT") {
+                                            return true
+                                        } else {
+                                            return modelData.single_signer_account_index > 0
+                                        }
+                                    }
                                 }
                                 QText {
                                     width: 146
                                     height: 20
                                     text: {
-                                        if (modelData.signer_type === NUNCHUCKTYPE.NFC) {
-                                            var card_id_or_xfp = modelData.signer_card_id
+                                        if (modelData.single_signer_type === NUNCHUCKTYPE.NFC) {
+                                            var card_id_or_xfp = modelData.single_signer_device_cardid
                                             var textR = card_id_or_xfp.substring(card_id_or_xfp.length - 5, card_id_or_xfp.length).toUpperCase()
                                             return "Card ID: ••" + textR
                                         } else {
-                                            return "XFP: " + modelData.signer_fingerPrint.toUpperCase()
+                                            return "XFP: " + modelData.singleSigner_masterFingerPrint.toUpperCase()
                                         }
                                     }
                                     color: "#595959"
@@ -141,7 +147,9 @@ Item {
                     }
                     QIcon {
                         iconSize: 24
-                        source: fingerPrint === modelData.signer_fingerPrint && key_name === modelData.signer_name ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                        source: fingerPrint === modelData.singleSigner_masterFingerPrint && 
+                                key_name === modelData.singleSigner_name ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                        
                         scale: primaryKeyMouse.pressed ? 0.9 : 1.0
                         anchors{
                             right: parent.right
@@ -156,12 +164,12 @@ Item {
                         anchors.fill: parent
                         onClicked: {
                             modelKey = modelData
-                            fingerPrint = modelData.signer_fingerPrint
-                            type = modelData.signer_type
-                            tag = modelData.signer_tag
-                            device_type = modelData.signer_deviceType
-                            key_name = modelData.signer_name
-                            bip32_path = modelData.signer_bip32_path
+                            fingerPrint = modelData.singleSigner_masterFingerPrint
+                            type = modelData.single_signer_type
+                            tag = modelData.single_signer_tag
+                            device_type = modelData.single_signer_devicetype
+                            key_name = modelData.singleSigner_name
+                            bip32_path = modelData.singleSigner_derivationPath
                         }
                     }
                 }

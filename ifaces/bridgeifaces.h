@@ -330,6 +330,12 @@ QSingleSignerPtr nunchukGetSignerFromMasterSigner(const QString& mastersigner_id
                                                   const int index,
                                                   QWarningMessage &msg);
 
+nunchuk::SingleSigner nunchukGetOriginSignerFromMasterSigner(const QString& xfp,
+                                                    const ENUNCHUCK::WalletType &wallet_type,
+                                                    const ENUNCHUCK::AddressType &address_type,
+                                                    const int index,
+                                                    QWarningMessage& msg);
+
 nunchuk::SingleSigner nunchukGetOriginSingleSigner(const QString& xfp,
                                                    const ENUNCHUCK::WalletType &wallet_type,
                                                    const ENUNCHUCK::AddressType &address_type,
@@ -607,6 +613,10 @@ void nunchukSendPassphraseToDevice(const QDevicePtr &device,
                                    const QString &passphrase,
                                    QWarningMessage &msg);
 
+void nunchukVerifySingleSigner(const QDevicePtr &device,
+                                    const QSingleSignerPtr &signer,
+                                    QWarningMessage &msg);
+
 QSingleSignerPtr nunchukCreateCoboSigner(const QString &name,
                                          const QString &json_info,
                                          QWarningMessage& msg);
@@ -714,11 +724,13 @@ bool nunchukUpdateTransactionSchedule(const QString& wallet_id,
 
 void ForceRefreshWallet(const QString& wallet_id, QWarningMessage &msg);
 
-QString SignHealthCheckMessage(const QSingleSignerPtr& signer,
+QString SignHealthCheckMessage(const nunchuk::SingleSigner &signer,
                                const QString& message,
                                QWarningMessage& msg);
 
-QString SignHealthCheckMessage(const nunchuk::SingleSigner &signer,
+QString SignHealthCheckMessage(const nunchuk::Wallet &wallet,
+                               const nunchuk::Device &device,
+                               const nunchuk::SingleSigner &signer,
                                const QString& message,
                                QWarningMessage& msg);
 
@@ -1039,5 +1051,9 @@ bool IsTapootSupported(const QSingleSignerPtr& signer, const nunchuk::AddressTyp
 
 bool nunchukRevealPreimage(const QString &wallet_id, const QString &tx_id, const std::vector<uint8_t> &hash,
     const std::vector<uint8_t> &preimage, QWarningMessage &msg);
+
+void CreateAssignAvailableSigners(nunchuk::AddressType address_type,
+                                  nunchuk::WalletType wallet_type,
+                                  std::function<void(const QSingleSignerListModelPtr&)> callback);
 }
 #endif // BRIDGEINTERFACE_H

@@ -30,8 +30,10 @@ public:
     ServiceSetting(ServiceSetting &other) = delete;
     ServiceSetting(ServiceSetting const &other) = delete;
     void operator=(const ServiceSetting &other) = delete;
+    void CreateAssignAvailableSigners(const QString &wallet_type);
 
     bool existHardware(const QString& tag);
+    void makeHardwareSingerList(const QString& wallet_type, const QString& tag);
 
     int optionIndex() const;
     void setOptionIndex(int index);

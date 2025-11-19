@@ -100,7 +100,7 @@ Column {
                 QLato {
                     width: 247
                     height: 20
-                    text: serverKeyInfo.secondsToString(broadcastDelay.signing_delay_seconds)
+                    text: broadcastDelay.signing_delay_seconds == 0 ? "Off" : serverKeyInfo.secondsToString(broadcastDelay.signing_delay_seconds)
                     color: broadcastDelay.signing_delay_seconds_isChanged? "#CF4018": "#031F2B"
                     font.weight: Font.Bold
                     horizontalAlignment: Text.AlignRight

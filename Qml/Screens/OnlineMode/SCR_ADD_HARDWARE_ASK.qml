@@ -24,16 +24,15 @@ import NUNCHUCKTYPE 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../OnlineMode/AddHardwareKeys"
+import "../OnlineMode/SetupWallets/TimeLocks"
 
 QScreen {
-    popupWidth: 300
-    popupHeight: 236
-    readonly property int hardwareType: GroupWallet.qIsByzantine ? GroupWallet.qAddHardware : UserWallet.qAddHardware
     Loader {
-        width: popupWidth
-        height: popupHeight
+        width: 300
+        height: 236
         anchors.centerIn: parent
         sourceComponent: {
+            var hardwareType = SignerManagement.currentSigner.hwType
             switch(hardwareType) {
             case NUNCHUCKTYPE.ADD_LEDGER: return _Ledger
             case NUNCHUCKTYPE.ADD_TREZOR: return _Trezor
@@ -47,26 +46,58 @@ QScreen {
     Component {
         id: _Ledger
         QScreenAddLedgerAsk {
+            onNextClicked: {
+                openCheckFirmware(_HARDWARE_TAG)
+            }
         }
     }
     Component {
         id: _Trezor
         QScreenAddTrezorAsk {
+            onNextClicked: {
+                openCheckFirmware(_HARDWARE_TAG)
+            }
         }
     }
     Component {
         id: _Coldcard
         QScreenAddColdcardAsk {
+            onNextClicked: {
+                openCheckFirmware(_HARDWARE_TAG)
+            }
         }
     }
     Component {
         id: _BitBox
         QScreenAddBitBoxAsk {
+            onNextClicked: {
+                openCheckFirmware(_HARDWARE_TAG)
+            }
         }
     }
     Component {
         id: _Jade
         QScreenAddJadeAsk {
+            onNextClicked: {
+                openCheckFirmware(_HARDWARE_TAG)
+            }
+        }
+    }
+
+    function openCheckFirmware(hadwareTag) {
+        var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
+        if (isNormalFlow) {
+            ServiceSetting.requestStartAddHardwareKey(hadwareTag)
+        } else {
+            _checkFirmware.hadwareTag = hadwareTag
+            _checkFirmware.open()
+        }        
+    }
+
+    QPopupCheckYourFirmware {
+        id: _checkFirmware
+        onNextClicked: {
+            ServiceSetting.requestStartAddHardwareKey(hadwareTag)
         }
     }
 }

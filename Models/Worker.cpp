@@ -928,6 +928,7 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
             AppModel::instance()->setMasterSignerInfo(newsigner);
             selectFingerPrint = newsigner->fingerPrint();
             keyName = newsigner->name();
+            QSignerManagement::instance()->updateXfpOfCurrentSigner(selectFingerPrint);
         }
         DBG_INFO << selectFingerPrint << keyName;
         if (QSignerManagement::instance()->finishCreateMasterSigner())  {
@@ -954,26 +955,6 @@ void Controller::slotFinishCreateMasterSigner(const QMasterSignerPtr ret,
         }
         else if (last == E::STATE_ID_SCR_ADD_HARDWARE_SIGNER_TO_WALLET){
             QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_RESULT);
-        }
-        else if (last == E::STATE_ID_SCR_ADD_HARDWARE) {
-            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
-            if (dashboard && dashboard->canReplaceKey()) {
-                if (QAssistedDraftWallets::IsByzantine()) {
-                    QGroupWallets::instance()->setSelectFingerPrint(selectFingerPrint);
-                    QGroupWallets::instance()->requestKeyReplacement(NULL);
-                } else {
-                    QUserWallets::instance()->setSelectFingerPrint(selectFingerPrint);
-                    QUserWallets::instance()->requestKeyReplacement(NULL);
-                }
-            } else {
-                if (QAssistedDraftWallets::IsByzantine()) {
-                    QGroupWallets::instance()->setSelectFingerPrint(selectFingerPrint);
-                    QGroupWallets::instance()->AddOrUpdateAKeyToDraftWallet();
-                } else {
-                    QUserWallets::instance()->setSelectFingerPrint(selectFingerPrint);
-                    QUserWallets::instance()->AddOrUpdateAKeyToDraftWallet();
-                }
-            }
         }
         else if (last == E::STATE_ID_SCR_REPLACE_KEYS) {
             if (auto w = AppModel::instance()->newWalletInfoPtr()) {

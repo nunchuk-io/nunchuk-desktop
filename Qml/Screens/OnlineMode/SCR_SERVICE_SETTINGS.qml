@@ -193,4 +193,12 @@ QScreen {
     QPopupTheBackupPassword {
         id: _BackupPassword
     }
+
+    QPopupPrepareInheritanceKey {
+        id: _prepareInheritanceKey
+        onNextClicked: {
+            _hardwareAddKey.isInheritance = true
+            _hardwareAddKey.open()
+        }
+    }
 }

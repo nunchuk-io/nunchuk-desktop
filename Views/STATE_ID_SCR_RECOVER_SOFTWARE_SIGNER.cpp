@@ -39,11 +39,12 @@ void SCR_RECOVER_SOFTWARE_SIGNER_Exit(QVariant msg) {
 void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
     QString recover_type = msg.toMap().value("recover_type").toString();
     QString recover_data = msg.toMap().value("recover_data").toString();
+    QString seed_words = recover_data.trimmed();
     if(recover_type == "seed"){
-        bool checkmnemonic = qUtils::CheckMnemonic(recover_data);
+        bool checkmnemonic = qUtils::CheckMnemonic(seed_words);
         if(checkmnemonic){
             QEventProcessor::instance()->sendEvent(E::EVT_RECOVER_SOFTWARE_SIGNER_SUCCEED);
-            AppModel::instance()->setMnemonic(recover_data);
+            AppModel::instance()->setMnemonic(seed_words);
         }
         else{
             AppModel::instance()->setMnemonic("-101");
@@ -53,7 +54,7 @@ void EVT_RECOVER_SOFTWARE_SIGNER_REQUEST_HANDLER(QVariant msg) {
     else if(recover_type == "xprv"){
         DBG_INFO << msg;
         QString recover_name = msg.toMap().value("recover_name").toString();
-        QSignerManagement::instance()->requestCreateSoftwareSignerXprv(recover_name, recover_data);
+        QSignerManagement::instance()->requestCreateSoftwareSignerXprv(recover_name, seed_words);
     }
     else{
         DBG_INFO << msg;

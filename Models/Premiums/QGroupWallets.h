@@ -75,9 +75,7 @@ public:
     void setHistoryPeriods(QJsonArray historyPeriods);
     void SignInDashBoard(QGroupDashboardPtr dashboard);
 public:
-    bool AddOrUpdateAKeyToDraftWallet() final;
     void updateRequestKey() final;
-    bool requestKeyReplacement(QSingleSignerPtr signer) final;
 
 public slots:
     void SyncAllSignerFromDraftWalletInfo();

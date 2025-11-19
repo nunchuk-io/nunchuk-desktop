@@ -23,10 +23,15 @@
 
 #include <QObject>
 #include <QJsonArray>
+#include <QSharedPointer>
 #include "TransactionModel.h"
 #include "ServiceSetting.h"
 #include "WalletModel.h"
 #include "Commons/QStateFlow.h"
+#include "Premiums/QKeyRecovery.h"
+#include "Premiums/QServerKey.h"
+#include "Premiums/QInheritanceClaiming.h"
+#include "ifaces/Servers/DracoDefines.h"
 
 class InheritanceEnum : public QObject
 {
@@ -48,38 +53,26 @@ public:
     };
 };
 
-class QWalletServicesTag : public QStateFlow
+class QWalletServicesTag : public QInheritanceClaiming
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList securityQuestions   READ securityQuestions      NOTIFY securityQuestionChanged)
     Q_PROPERTY(QVariantList periods     READ periods        CONSTANT)
     Q_PROPERTY(QString untilTime                READ untilTime              NOTIFY untilTimeChanged)
-
-    Q_PROPERTY(QVariant inheritanceInfo         READ inheritanceInfo        NOTIFY inheritanceInfoChanged)
+    // Keep non-claim list properties in this class
     Q_PROPERTY(QStringList listInheritantPlans  READ listInheritantPlans    NOTIFY listInheritantPlansChanged)
     Q_PROPERTY(QStringList listLockdown         READ listLockdown           NOTIFY listGroupWChanged)
     Q_PROPERTY(QStringList listLocked           READ listLocked             NOTIFY listLockedChanged)
     Q_PROPERTY(QStringList listPolicy           READ listPolicy             NOTIFY listPolicyChanged)
 
-    // For Claim Inheritance
-    Q_PROPERTY(QVariant inheritanceCheckStatus  READ inheritanceCheckStatus NOTIFY inheritanceCheckStatusChanged)
-    Q_PROPERTY(QVariant inheritanceClaimPlan    READ inheritanceClaimPlan   NOTIFY inheritanceClaimPlanChanged)
-    Q_PROPERTY(QVariant walletConfig            READ walletConfig           NOTIFY walletConfigChanged)
-    Q_PROPERTY(QVariant reqiredSignatures       READ reqiredSignatures      NOTIFY reqiredSignaturesChanged)
-    Q_PROPERTY(qint64 claimInheritanceCustomAmount READ claimInheritanceCustomAmount  NOTIFY claimInheritanceCustomAmountChanged)
-
     Q_PROPERTY(QVariant keyRecovery             READ keyRecovery        CONSTANT)
+    Q_PROPERTY(QVariant setupConfig             READ setupConfig            NOTIFY setupConfigChanged)
 
 public:
     static QWalletServicesTagPtr instance();
     QWalletServicesTag();
-    virtual ~QWalletServicesTag();
-    struct inheritance_t
-    {
-        QString m_destinationAddress = {};
-        nunchuk::Wallet wallet = {};
-        nunchuk::Transaction tx = {};
-    };
+    ~QWalletServicesTag();
+
     QString passwordToken() const;
     bool requestVerifyPassword(const QString& password, const int action);
     bool requestLockDownVerifyPassword(const QString &password);
@@ -100,7 +93,7 @@ public:
     bool secQuesAnswer();
     QJsonArray questionsAndAnswers() const;
 
-    //Emergency Lockdown
+    // Emergency Lockdown
     bool RequestConfirmationCodeEmergencyLockdown();
     QVariantList periods();
     bool createLockdownPeriods();
@@ -112,21 +105,9 @@ public:
     QString untilTime() const;
     void setUntilTime(QString untilTime);
 
-    //Inheritance
-    Q_INVOKABLE void clearClaimAnInheritance();
-    Q_INVOKABLE bool inheritanceCheck(const QString& magic = "", const QString& environment = "PRODUCTION");
-    int inheritanceDownloadBackup(const QString& magic, const QString& backup_password, const QString& backup_password_two);
-    bool inheritanceClaimRequest(const nunchuk::Wallet wallet, const nunchuk::Transaction txSigned, const QString& magic);
-    bool inheritanceClaimStatus(const QString& magic);
-    bool inheritanceCreateTx(const QJsonObject& data, const QStringList& authos);
-    void setInheritanceAddress(const QString& to_wallet_id);
-    void setInheritanceAddressNewTransaction(const QString& address);
-    bool inheritanceCreateDraftTransaction(double fee_rate = 1000.0, bool anti_fee_sniping = false);
-    Q_INVOKABLE bool inheritanceSignTransaction();
-
-    // Get additional wallet
+    // Additional wallet config
     Q_INVOKABLE void additionalGetWalletConfig();
-    QVariant inheritanceInfo() const;
+    Q_INVOKABLE void configWalletSetup();
 
     QStringList listInheritantPlans() const;
     void setListInheritantPlans();
@@ -146,14 +127,9 @@ public:
     QString secQuesToken() const;
     void clearToken();
 
-    QVariant inheritanceCheckStatus() const;
-    void setInheritanceCheckStatus(const QJsonObject& status);
-    Q_INVOKABLE void updateInheritanceCheckStatus(const QString &key, const QVariant &value);
-    void updateInheritanceCheckStatus(const QJsonObject& status);
-    void clearInheritanceCheckStatus();
-
-    QVariant inheritanceClaimPlan() const;
-    void setInheritanceClaimPlan(const QJsonObject& claim);
+    QVariant setupConfig() const;
+    QJsonObject setupConfigJs() const;
+    void setSetupConfig(const QJsonObject& config);
 
     QVariant walletConfig() const;
     void setWalletConfig(const QJsonObject& config);
@@ -176,39 +152,26 @@ public:
     QJsonObject confirmCodeNonceBody() const;
     void setConfirmCodeNonceBody(const QJsonObject& nonceBody);
 
-    qint64 claimInheritanceCustomAmount() const;
-
     // For change Email
     bool RequestConfirmationChangeEmail(const QString &new_email);
 
-public slots:
-    void setClaimInheritanceCustomAmount(qint64 amountSats);
-    void clearBufferPeriodCountdown();
-    void clearInheritance();
 signals:
     void lockdownPeriodsAlert(const QString& errormsg);
     void untilTimeChanged();
     void answerErrorAlert(const QString& errormsg);
-    void notPaidAlert();
-    void isExpiredAlert();
-    void comeBackLaterAlert(const QString& errormsg);
-    void securityDepositRequiredAlert(const QString& errormsg);
-    void hasNotBeenActivatedYetAlert();
+    // Inheritance claim signals come from base class; no re-declaration here
     void serverKeyVerifyPasswordAlert();
     void securityQuestionChanged();
     void thereNoAssistedWalletAlert();
     void inheritanceDiscardChangeAlert();
-    void inheritanceInfoChanged();
     void listInheritantPlansChanged();
     void listGroupWChanged();
     void listLockedChanged();
     void listPolicyChanged();
-    void inheritanceCheckStatusChanged();
-    void inheritanceClaimPlanChanged();
     void confirmCodeVerified();
     void walletConfigChanged();
     void reqiredSignaturesChanged();
-    void claimInheritanceCustomAmountChanged();
+    void setupConfigChanged();
 private:
     QString m_passwordToken {""};
     QString m_secQuesToken {""};
@@ -216,8 +179,6 @@ private:
     QJsonObject m_confirmCodeRequestBody {};
     QString m_period_id {};
     QList<SecurityQuestion> m_quesAnswers;
-    QJsonObject m_inheritanceCheckStatus;
-    QJsonObject m_inheritanceClaimPlan;
     QJsonObject m_walletConfig;
 
     QJsonObject m_reqiredSignatures;
@@ -225,22 +186,18 @@ private:
 
     QKeyRecoveryPtr m_keyRecovery;
 
+    QJsonObject m_setupConfig;
+
     QJsonArray m_periods;
     QMap<QString,QString> m_signatures;
     QString m_untilTime;
 
-    inheritance_t mInheritance = {};
     QStringList m_inheritantPlans;
     QStringList m_listLockdown;
     QStringList m_listLocked;
     QStringList m_listPolicy;
     QStringList m_list2FA;
     QString m_code_id {};
-
-    int64_t m_claimInheritanceCustomAmount = {0};
-
-    std::vector<nunchuk::SingleSigner> single_signers;
-    std::vector<nunchuk::MasterSigner> master_signers;
 };
 
 #endif // QWALLETINHERITANCE_H

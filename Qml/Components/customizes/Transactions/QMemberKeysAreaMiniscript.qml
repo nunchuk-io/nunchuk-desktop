@@ -43,6 +43,8 @@ Rectangle {
     signal keySignRequest(var signer)
     signal keyScanRequest
     signal keyEnterPreImageInput(var hashData, var typeNode)
+    signal keyExportRequest
+    signal keyImportRequest
     width: 350
     height: 480
     Flickable {
@@ -99,6 +101,8 @@ Rectangle {
                     delegate: QMiniscriptPolicesTransactionSignDelegate {
                         width: tree.width - 16
                         miniscript: modelData
+                        is_cosigning: transactionInfo.isCosigning
+                        serverkeyMessage: transactionInfo.serverKeyMessage
                     }
                 }
             }

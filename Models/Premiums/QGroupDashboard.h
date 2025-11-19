@@ -15,7 +15,7 @@ class AlertEnum : public QObject
 public:
     Q_ENUMS(E_Alert_t)
     enum class E_Alert_t : int{
-        GROUP_WALLET_PENDING,
+        GROUP_WALLET_PENDING = 0,
         GROUP_WALLET_SETUP,
         DRAFT_WALLET_KEY_ADDED,
         UPDATE_SERVER_KEY,
@@ -77,6 +77,11 @@ public:
         HEALTH_CHECK_REMINDER_POPULATED,
 
         WELCOME_SIGN_IN_SIGNATURE_XPUB,
+
+        // New for HB onchain alert types
+        BACKUP_WALLET,
+        CHANGE_TIMELOCK_TYPE,
+
         MAX_ALERT,
     };
 };
@@ -99,6 +104,7 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(QVariant inviter                   READ inviter                                  NOTIFY groupInfoChanged)
     Q_PROPERTY(QVariant myInfoModel               READ myInfoModel                              NOTIFY groupInfoChanged)
     Q_PROPERTY(bool isLocked                      READ isLocked                                 NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString walletType                 READ walletType                               NOTIFY draftWalletChanged)
 
     Q_PROPERTY(QVariantList keys                  READ keys                                     NOTIFY draftWalletChanged)
     Q_PROPERTY(bool hasWallet                     READ hasWallet                                NOTIFY groupInfoChanged)
@@ -116,12 +122,15 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                          NOTIFY historyPeriodIdChanged)
     Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
     Q_PROPERTY(QVariantList editMembers           READ editMembers                              NOTIFY editMembersChanged)
+    Q_PROPERTY(QString timeLock                   READ timeLock                                 NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariant timeLockSet               READ timeLockSet                              NOTIFY timeLockSetChanged)
 
 public:
     QGroupDashboard(const QString& wallet_id);
     ~QGroupDashboard();
 
     GroupId groupId() const;
+    QString walletType() const;
 
     QJsonObject groupInfo() const;
     void setGroupInfo(const QJsonObject &groupInfo);
@@ -141,11 +150,12 @@ public:
     void GetAlertsInfo();
     bool MarkAlertAsRead(const QString &alert_id);
     bool DismissAlert(const QString &alert_id);
-    bool DismissAlert();
     void GetWalletInfo();
     void checkInheritanceWallet();
     void GetDraftWalletInfo();
     void GetHealthCheckInfo();
+    QString getOurId() const;
+    QJsonObject createOrUpdateSignerInfo(const QJsonObject &info, int index);
     void UpdateKeys(const QJsonObject &data);
     bool GetKeyReplacementStatus();
     QMap<QString, QVariant> requestBodyUploadBackupFile(const QString &xfp, const QString &filePath);
@@ -233,9 +243,14 @@ public:
     bool containEditMeber(const QJsonObject &aEditMember);
     bool RequestConfirmationCodeEditMembers();
     QJsonObject bodyEditMembers();
+    QString timeLock() const;
+    QVariant timeLockSet() const;
+    void clearTimeLock();
 public slots:
+    void setupTimeLock(const QVariant &datetime, bool isPutServer = false);
     bool requestStartKeyReplacement(const QString &tag);
-    bool requestStartKeyCreate(const QString &tag);
+    bool requestStartKeyCreate(const QString &tag, bool isFirst = false);
+    void registerAddKey();
     void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
 
@@ -250,6 +265,12 @@ public slots:
     void updateFail();
     void markRead();
     void requestBackupColdcard(QVariant msg);
+
+    bool isSupportedInheritance(const QString& tag) const;
+    bool isSupportedNotInheritance(const QString& tag) const;
+    void startAddKeyAtIndex(int index);
+    bool enoughKeyAdded(const QString& xfp);
+    bool dismissAlert();
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);
@@ -267,6 +288,7 @@ signals:
 
     void editMembersChanged();
     void editMembersSuccessChanged();
+    void timeLockSetChanged();
 private:
     QJsonObject m_groupInfo {};
     QJsonObject m_alertInfo {};
@@ -275,7 +297,7 @@ private:
     QJsonObject m_inviterInfo {};
     QJsonArray m_signerInfo {};
     QJsonObject m_walletDraftInfo {};
-    QVariantList m_keys {};
+    QJsonArray m_keys {};
     bool m_showDashBoard {false};
     int m_mInfo {0};
     int m_nInfo {0};
@@ -289,5 +311,6 @@ private:
     bool m_groupChatExisted {false};
     QJsonArray m_editMembers;
     QTimer *mTimer {nullptr};
+    QJsonObject m_timeLockSet;
 };
 #endif // QGROUPDASHBOARD_H

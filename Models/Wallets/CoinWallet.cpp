@@ -105,23 +105,27 @@ void CoinWallet::RequestGetCoins()
 {
     // dynamic cast this to Wallet
     QString wallet_id = (dynamic_cast<Wallet*>(this))->walletId();
-    QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(wallet_id);
-    if(utxos){
-        if (m_reuse) {
-            for (auto old_utxo : m_utxoList->fullList()) {
-                for (auto new_utxo : utxos->fullList()) {
-                    if (old_utxo->txid() == new_utxo->txid()) {
-                        new_utxo->setSelected(old_utxo->selected());
+    
+    QThreadForwarder::instance()->forwardInQueuedConnection([this, wallet_id](){
+        QUTXOListModelPtr utxos = bridge::nunchukGetUnspentOutputs(wallet_id);
+        if(utxos){
+            if (m_reuse) {
+                for (auto old_utxo : m_utxoList->fullList()) {
+                    for (auto new_utxo : utxos->fullList()) {
+                        if (old_utxo->txid() == new_utxo->txid()) {
+                            new_utxo->setSelected(old_utxo->selected());
+                        }
                     }
                 }
+                setReuse(false);
             }
-            setReuse(false);
+            setUtxoList(utxos);
+            if (!utxoInfoPtr().isNull()) {
+                setUtxoInfo(utxoInfoPtr()->txid());
+            }
         }
-        setUtxoList(utxos);
-        if (!utxoInfoPtr().isNull()) {
-            setUtxoInfo(utxoInfoPtr()->txid());
-        }
-    }
+    });
+
     if (!m_coinCollections.isNull()) {
         m_coinCollections->refreshCollections({}, wallet_id, false);
         emit coinCollectionsChanged();
@@ -1290,6 +1294,10 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
     QDestinationListModelPtr destinationList = QDestinationListModelPtr(new DestinationListModel());
     auto walletInfo = (dynamic_cast<Wallet*>(this));
     QString wallet_id = walletInfo->walletId();
+    if(AppModel::instance()->transactionInfo()){
+        AppModel::instance()->transactionInfo()->setWalletId(wallet_id);
+    }
+
     qint64 totalAmountTotal = 0;
     for(QVariant var: destinationInputed){
         qint64 toAmount = 0;
@@ -1343,6 +1351,7 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
 
     DBG_INFO << "Fee rate" << feerate;
     DBG_INFO << "Subtract From Amount : " << subtractFromAmount;
+    DBG_INFO << "walletType : " << walletInfo->walletType() << "wallet_id:" << wallet_id;
 
     if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
         QString selectPath = draftTransactionInput.value("selectPath").toString();
@@ -1352,14 +1361,14 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
             auto selectedSigningPath = AppModel::instance()->transactionInfo()->signingPathSelected();
             QWarningMessage msgwarning;
             QTransactionPtr trans = bridge::nunchukDraftTransaction(wallet_id,
-                                                                outputs,
-                                                                inputs,
-                                                                feerate,
-                                                                subtractFromAmount,
-                                                                "",
-                                                                use_script_path,
-                                                                selectedSigningPath,
-                                                                msgwarning);
+                                                                    outputs,
+                                                                    inputs,
+                                                                    feerate,
+                                                                    subtractFromAmount,
+                                                                    "",
+                                                                    use_script_path,
+                                                                    selectedSigningPath,
+                                                                    msgwarning);
             if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type() && trans){
                 AppModel::instance()->setTransactionInfo(trans);
                 AppModel::instance()->transactionInfo()->setMemo(memo);
@@ -1509,6 +1518,9 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
 
     auto walletInfo = (dynamic_cast<Wallet*>(this));
     QString wallet_id = walletInfo->walletId();
+    if(AppModel::instance()->transactionInfo()){
+        AppModel::instance()->transactionInfo()->setWalletId(wallet_id);
+    }
 
     if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
         auto selectedSigningPath = AppModel::instance()->transactionInfo()->signingPathSelected();

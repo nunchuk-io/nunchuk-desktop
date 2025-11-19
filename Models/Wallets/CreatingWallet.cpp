@@ -122,24 +122,15 @@ void CreatingWallet::CreateSignerListReviewWallet(const std::vector<nunchuk::Sin
 
 void CreatingWallet::CreateAssignAvailableSigners() {
     QPointer<CreatingWallet> safeThis(this);
-    runInConcurrent(
-        [safeThis]() -> std::vector<nunchuk::SingleSigner> {
-            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-            QWarningMessage msg;
-            std::vector<nunchuk::SingleSigner> signers = bridge::CreateSupportedSigners(static_cast<nunchuk::AddressType>(ptrLamda->walletAddressType()), static_cast<nunchuk::WalletType>(ptrLamda->walletType()));
-            return signers;
-        },
-        [safeThis](std::vector<nunchuk::SingleSigner> signers) {
+    bridge::CreateAssignAvailableSigners(
+        static_cast<nunchuk::AddressType>(walletAddressType()),
+        static_cast<nunchuk::WalletType>(walletType()),
+        [safeThis](const QSingleSignerListModelPtr& available_signers) {
             SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-            QSingleSignerListModelPtr available_signers = QSingleSignerListModelPtr(new SingleSignerListModel());
-            for(const auto &signer : signers) {
-                QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
-                signerPtr->setTaprootSupported(bridge::IsTapootSupported(signerPtr, static_cast<nunchuk::AddressType>(ptrLamda->walletAddressType()), static_cast<nunchuk::WalletType>(ptrLamda->walletType())));
-                available_signers->addSingleSigner(signerPtr);
-            }
             ptrLamda->m_assignAvailableSigners = available_signers;
             emit ptrLamda->assignAvailableSignersChanged();
-        });
+        }
+    );
 }
 
 SingleSignerListModel *CreatingWallet::assignAvailableSigners()

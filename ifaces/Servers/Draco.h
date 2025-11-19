@@ -251,6 +251,14 @@ public:
                                 QJsonObject& output,
                                 QString& errormsg);
 
+    bool inheritanceClaimInit(const QString& magic,
+                                QJsonObject& output,
+                                QString& errormsg);
+
+    bool inheritanceClaimDownloadWallet(const QJsonObject& body,
+                                QJsonObject& output,
+                                QString& errormsg);
+
     bool inheritanceCreateTx(const QJsonObject& data,
                              const QStringList& authos,
                              QJsonObject& output,
@@ -441,6 +449,7 @@ public:
     bool ReplacementUploadBackupFile(const QString& wallet_id, const QString& passwordToken, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
     bool DraftWalletDownloadBackupFile(const QString& xfp, QJsonObject& output, QString& errormsg);
     bool DraftWalletUploadBackupFile(const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
+    bool DraftWalletSignerVerify(const QString& xfp, const QString& type, QString& errormsg);
 
     // Supported signers
     bool GetTaprootSupportedSigners(QJsonObject &output, QString &errormsg);
@@ -457,6 +466,9 @@ public:
     bool changeAvatar(const QString &filePath, QString &errormsg);
     bool removeAvatar(QJsonObject &output, QString &errormsg);
 
+    // Mini script
+    bool GetWalletSetupConfig(QJsonObject &output, QString &errormsg);
+    bool DraftWalletUpdateTimelock(const QString& timezone, const qint64 new_timelock, QJsonObject &output, QString &errormsg);
 private:
     Draco();
     ~Draco();

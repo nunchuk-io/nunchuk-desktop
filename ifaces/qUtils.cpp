@@ -24,6 +24,7 @@
 #include "ifaces/Servers/Draco.h"
 #include <QCryptographicHash>
 #include <QJsonDocument>
+#include <QHash>
 #include <boost/algorithm/string.hpp>
 
 QString qUtils::deviceId() {
@@ -1269,6 +1270,22 @@ qint64 qUtils::getDaysFromTimestamp(qint64 timestamp, const QTimeZone &tz) {
     return now.date().daysTo(dt.date());
 }
 
+QString qUtils::localTimeZoneString() {
+    QTimeZone tz = QTimeZone::systemTimeZone();
+
+    QString name = QString::fromUtf8(tz.id()); // Asia/Jakarta
+    int offsetSec = tz.offsetFromUtc(QDateTime::currentDateTime());
+    int hours = offsetSec / 3600;
+    int minutes = (abs(offsetSec) % 3600) / 60;
+    QString sign = hours >= 0 ? "+" : "-";
+
+    return QString("%1 (GMT%2%3:%4)")
+        .arg(name)
+        .arg(sign)
+        .arg(QString::number(abs(hours)).rightJustified(2,'0'))
+        .arg(QString::number(minutes).rightJustified(2,'0'));
+}
+
 QByteArray qUtils::serializeSigningPath(const nunchuk::SigningPath path) {
     QByteArray ba;
     QDataStream out(&ba, QIODevice::WriteOnly);
@@ -1529,4 +1546,174 @@ QString qUtils::BytesToHex(const std::vector<uint8_t>& data) {
 }
 std::vector<uint8_t> qUtils::HexToBytes(const QString& hex) {
     return hexToBytes(hex.toStdString());
+}
+
+QDateTime qUtils::convertTimestampToDateTime(qint64 timestamp, const QString& timezoneId)
+{
+    QTimeZone targetTimeZone(timezoneId.toUtf8());
+    if (!targetTimeZone.isValid()) {
+        return QDateTime::fromSecsSinceEpoch(timestamp, Qt::UTC);
+    }
+
+    QDateTime dateTimeUtc = QDateTime::fromSecsSinceEpoch(timestamp, Qt::UTC);
+    QDateTime finalDateTime = dateTimeUtc.toTimeZone(targetTimeZone);
+    return finalDateTime;
+}
+
+QString qUtils::formatTimeZoneString(const QString& timezoneId)
+{
+    QTimeZone targetZone(timezoneId.toUtf8());
+    if (!targetZone.isValid()) {
+        return timezoneId;
+    }
+
+    // Use current time to compute DST-aware offset
+    const QDateTime now = QDateTime::currentDateTime();
+    const int offsetSec = targetZone.offsetFromUtc(now);
+
+    // Special-case UTC display
+    if (offsetSec == 0 ||
+        timezoneId.compare("Etc/UTC", Qt::CaseInsensitive) == 0 ||
+        timezoneId.compare("UTC", Qt::CaseInsensitive) == 0) {
+        return QString("%1 (UTC)").arg(timezoneId);
+    }
+
+    const int absSec = qAbs(offsetSec);
+    const int hours = absSec / 3600;
+    const int minutes = (absSec % 3600) / 60;
+    const QString sign = (offsetSec >= 0) ? "+" : "-";
+
+    const QString gmtString = QString("GMT%1%2:%3")
+        .arg(sign)
+        .arg(QString::number(hours).rightJustified(2, '0'))
+        .arg(QString::number(minutes).rightJustified(2, '0'));
+
+    return QString("%1 (%2)").arg(timezoneId, gmtString);
+}
+
+QString qUtils::extractTimeZoneId(const QString& formattedString)
+{
+    auto normalizeId = [](const QByteArray& id) -> QString {
+        QTimeZone tz(id);
+        return tz.isValid() ? QString::fromUtf8(tz.id()) : QString();
+    };
+
+    // 1) Trim and split possible "Name (GMT±HH:MM)" or "Name (UTC)" format
+    const QString input = formattedString.trimmed();
+    int paren = input.indexOf(" (");
+    const QString leading = (paren > 0) ? input.left(paren).trimmed() : input;
+    const QString inside  = (paren > 0 && input.endsWith(')'))
+                                ? input.mid(paren + 2, input.size() - paren - 3).trimmed()
+                                : QString();
+
+    // 2) If leading part is already a valid IANA zone, return it normalized
+    if (!leading.isEmpty()) {
+        QString normalized = normalizeId(leading.toUtf8());
+        if (!normalized.isEmpty())
+            return normalized;
+    }
+
+    // 3) Map common Windows time zone names to IANA (Qt version without ianaIdsForWindowsId)
+    static const QHash<QString, QString> windowsToIana {
+        { "Pacific Standard Time", "America/Los_Angeles" },
+        { "Eastern Standard Time", "America/New_York" },
+        { "Central Standard Time", "America/Chicago" },
+        { "Mountain Standard Time", "America/Denver" },
+        { "China Standard Time", "Asia/Shanghai" },
+        { "Tokyo Standard Time", "Asia/Tokyo" },
+        { "India Standard Time", "Asia/Kolkata" },
+        { "W. Europe Standard Time", "Europe/Berlin" },
+        { "Central European Standard Time", "Europe/Berlin" },
+        { "Brazil Standard Time", "America/Sao_Paulo" },
+        { "Greenwich Standard Time", "Etc/UTC" },
+        { "UTC", "Etc/UTC" },
+        { "GMT", "Etc/UTC" }
+    };
+    if (!leading.isEmpty()) {
+        QString key = leading;
+        if (windowsToIana.contains(key)) {
+            QString normalized = normalizeId(windowsToIana.value(key).toUtf8());
+            if (!normalized.isEmpty())
+                return normalized;
+        }
+    }
+
+    // 4) Handle UTC/GMT and fixed offsets like "UTC+07:00", "GMT-0530", "+02:00", etc.
+    auto parseOffsetToId = [](QString s) -> QString {
+        s = s.trimmed();
+
+        // Strip known prefixes
+        if (s.startsWith("UTC", Qt::CaseInsensitive)) s = s.mid(3).trimmed();
+        else if (s.startsWith("GMT", Qt::CaseInsensitive)) s = s.mid(3).trimmed();
+
+        if (s.compare("", Qt::CaseInsensitive) == 0)
+            return "Etc/UTC";
+
+        if (s.isEmpty() || (s[0] != '+' && s[0] != '-'))
+            return QString();
+
+        const QChar signChar = s[0];
+        s = s.mid(1).trimmed();
+
+        int h = 0, m = 0;
+        bool ok = false;
+        if (s.contains(':')) {
+            const auto parts = s.split(':');
+            if (parts.size() != 2) return QString();
+            h = parts[0].toInt(&ok); if (!ok) return QString();
+            m = parts[1].toInt(&ok); if (!ok) return QString();
+        } else {
+            if (s.size() <= 2) {
+                h = s.toInt(&ok); if (!ok) return QString();
+            } else if (s.size() == 4) {
+                bool okh=false, okm=false;
+                h = s.left(2).toInt(&okh);
+                m = s.mid(2,2).toInt(&okm);
+                if (!okh || !okm) return QString();
+            } else {
+                return QString();
+            }
+        }
+        if (h < 0 || h > 14 || m < 0 || m > 59) return QString();
+
+        const int sign = (signChar == '-') ? -1 : 1;
+        const int seconds = sign * (h * 3600 + m * 60);
+
+        // Build a fixed-offset QTimeZone and return its canonical ID (e.g. "UTC+07:00")
+        QTimeZone fixed(seconds);
+        return fixed.isValid() ? QString::fromUtf8(fixed.id()) : QString();
+    };
+
+    // Try: inside "(GMT+...)" first, then leading if it's an offset form
+    if (!inside.isEmpty()) {
+        QString id = parseOffsetToId(inside);
+        if (!id.isEmpty()) return id;
+    }
+    {
+        QString id = parseOffsetToId(leading);
+        if (!id.isEmpty()) return id;
+    }
+
+    // 5) Handle plain "UTC"/"GMT"
+    if (leading.compare("UTC", Qt::CaseInsensitive) == 0 ||
+        leading.compare("Etc/UTC", Qt::CaseInsensitive) == 0 ||
+        leading.compare("GMT", Qt::CaseInsensitive) == 0) {
+        return "Etc/UTC";
+    }
+
+    // 6) As a last attempt, resolve by current abbreviation (e.g. "PST")
+    //    Note: abbreviations are ambiguous; this picks the first match.
+    if (!leading.isEmpty()) {
+        const auto now = QDateTime::currentDateTime();
+        const auto ids = QTimeZone::availableTimeZoneIds();
+        for (const auto& id : ids) {
+            QTimeZone tz(id);
+            if (!tz.isValid()) continue;
+            if (tz.abbreviation(now).compare(leading, Qt::CaseInsensitive) == 0)
+                return QString::fromUtf8(tz.id());
+        }
+    }
+
+    // 7) Fallback: return the leading part unchanged
+    return leading;
 }

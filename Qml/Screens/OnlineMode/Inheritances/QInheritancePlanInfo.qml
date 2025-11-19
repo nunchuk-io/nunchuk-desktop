@@ -33,7 +33,8 @@ import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id:_content
-    property var alert: GroupWallet.dashboardInfo.alert
+    property var dashInfo: GroupWallet.dashboardInfo
+    property var alert: dashInfo.alert
     property var dummyTx: AppModel.walletInfo.dummyTx
     property var requester_user: dummyTx.requester_user
     property string walletName: AppModel.walletInfo.walletName
@@ -41,6 +42,7 @@ QOnScreenContentTypeB {
     property string descriptionHb: ""
     property var planInfo
     property bool planIsCancel: false
+    property int    walletType: AppModel.walletInfo.walletType
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
@@ -61,6 +63,7 @@ QOnScreenContentTypeB {
         }
         inheritance: planInfo
         isCancel: planIsCancel
+        isOnChain: walletType === NUNCHUCKTYPE.MINISCRIPT
     }
     isShowLine: false
     bottomRight: QTextButton {

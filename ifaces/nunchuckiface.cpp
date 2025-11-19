@@ -1577,6 +1577,22 @@ void nunchukiface::SendPassphraseToDevice(const nunchuk::Device &device, const s
     }
 }
 
+void nunchukiface::VerifySingleSigner(const nunchuk::Device& device, const nunchuk::SingleSigner& signer, QWarningMessage& msg) {
+    try {
+        if (nunchuk_instance_[nunchukMode()]) {
+            nunchuk_instance_[nunchukMode()]->VerifySingleSigner(device, signer);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
 bool nunchukiface::SetSelectedWallet(const std::string &wallet_id, QWarningMessage &msg)
 {
     bool ret = false;
@@ -2441,6 +2457,24 @@ std::string nunchukiface::SignHealthCheckMessage(const nunchuk::SingleSigner &si
     try {
         if(nunchuk_instance_[nunchukMode()]){
             ret = nunchuk_instance_[nunchukMode()]->SignHealthCheckMessage(signer,message);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what(); msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::string nunchukiface::SignHealthCheckMessage(const nunchuk::Wallet &wallet, const nunchuk::Device& device, const nunchuk::SingleSigner &signer, const std::string &message, QWarningMessage &msg)
+{
+    std::string ret = "";
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->SignHealthCheckMessage(wallet, device, signer, message);
         }
     }
     catch (const nunchuk::BaseException &ex) {

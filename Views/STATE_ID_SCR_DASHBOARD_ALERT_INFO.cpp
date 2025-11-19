@@ -84,9 +84,12 @@ void EVT_DASHBOARD_ALERT_INFO_ENTER_HANDLER(QVariant msg) {
         QString wallet_id = dashboard->wallet_id();
         DBG_INFO << wallet_id << file_path;
         if(wallet_id != "" && file_path != "") {
-            bool ret = bridge::nunchukExportWallet(wallet_id,
-                                                    file_path,
-                                                    nunchuk::ExportFormat::COLDCARD);
+            auto wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_id);;
+            if (!wallet) {
+                DBG_ERROR << "Wallet not found:" << wallet_id;
+                return;
+            }
+            bool ret = wallet->requestExportWalletViaCOLDCARD(file_path);
             if (ret) {
                 if (dashboard->registerKeyDone()) {
                     dashboard->setConfigFlow("register-Done");

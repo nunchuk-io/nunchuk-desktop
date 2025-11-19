@@ -78,8 +78,11 @@ bool QUserWalletDummyTx::requestSignTx(const QString &xfp)
         if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
             warningmsg.resetWarningMessage();
             QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, bodyString(), warningmsg);
+            DBG_INFO << "tx:" << tx_to_sign << xfp;
+            DBG_INFO << "body:" << bodyString();
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                 QMap<QString, QString> signatures = transactionPtr()->signatures();
+                DBG_INFO << "signatures:" << signatures;
                 QString signature = "";
                 nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(), [xfp](const nunchuk::SingleSigner &s) {
                     return s.get_master_fingerprint() == xfp.toStdString();
@@ -90,8 +93,13 @@ bool QUserWalletDummyTx::requestSignTx(const QString &xfp)
                 case nunchuk::SignerType::SOFTWARE:
                 case nunchuk::SignerType::COLDCARD_NFC:
                 {
+                    auto device = AppModel::instance()->deviceListPtr()->getDeviceByXfp(xfp);
+                    if (!device) {
+                        DBG_INFO << "Device not found for xfp:" << xfp;
+                        break;
+                    }
                     warningmsg.resetWarningMessage();
-                    signature = bridge::SignHealthCheckMessage(signer, tx_to_sign, warningmsg);
+                    signature = bridge::SignHealthCheckMessage(wallet, device->originDevice(), signer, tx_to_sign, warningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                         signatures[xfp] = signature;
                     }

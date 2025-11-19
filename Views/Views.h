@@ -119,7 +119,7 @@ static const APPLICATION_STATE STATE_ID_SCR_COIN_DETAILS_CONTROL                
 static const APPLICATION_STATE STATE_ID_SCR_SETUP_GROUP_WALLET                   = {E::STATE_ID_SCR_SETUP_GROUP_WALLET                  , SCR_SETUP_GROUP_WALLET_Entry                  , SCR_SETUP_GROUP_WALLET_Exit                  , LAYER::LAYER_ONSCREEN, LIMIT::NONE , SCR_SETUP_GROUP_WALLET                   };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_ROOT_trigger[43] = 
+static const STATE_TRIGGER STATE_ID_ROOT_trigger[44] = 
 {
 	{E::EVT_STARTING_APPLICATION_LOCALMODE                  , EVT_STARTING_APPLICATION_LOCALMODE_HANDLER                  , NULL                                          },
 	{E::EVT_STARTING_APPLICATION_ONLINEMODE                 , EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER                 , NULL                                          },
@@ -163,6 +163,7 @@ static const STATE_TRIGGER STATE_ID_ROOT_trigger[43] =
 	{E::EVT_PRIMARY_KEY_CONFIGURATION_REQUEST               , EVT_PRIMARY_KEY_CONFIGURATION_REQUEST_HANDLER               , &STATE_ID_SCR_PRIMARY_KEY_CONFIGURATION       },
 	{E::EVT_HOME_ADD_NEW_SIGNER_REQUEST                     , EVT_HOME_ADD_NEW_SIGNER_REQUEST_HANDLER                     , &STATE_ID_SCR_ADD_NEW_SIGNER                  },
 	{E::EVT_HOME_ADD_WALLET_REQUEST                         , EVT_HOME_ADD_WALLET_REQUEST_HANDLER                         , &STATE_ID_SCR_ADD_WALLET                      },
+	{E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST                , EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER                , &STATE_ID_SCR_DASHBOARD_ALERT_INFO            },
 	{E::EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST         , EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER         , &STATE_ID_SCR_ADD_WALLET_SIGNER_CONFIGURATION },
 };
 
@@ -510,7 +511,7 @@ static const STATE_TRIGGER STATE_ID_SCR_HEALTH_CHECK_STARTING_trigger[2] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[22] = 
+static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[21] = 
 {
 	{E::EVT_HOME_WALLET_SELECTED                 , EVT_HOME_WALLET_SELECTED_HANDLER                 , NULL                                   },
 	{E::EVT_HOME_WALLET_COPY_ADDRESS             , EVT_HOME_WALLET_COPY_ADDRESS_HANDLER             , NULL                                   },
@@ -528,7 +529,6 @@ static const STATE_TRIGGER STATE_ID_SCR_HOME_trigger[22] =
 	{E::EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST, EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST_HANDLER, &STATE_ID_SCR_MASTER_SIGNER_INFO       },
 	{E::EVT_ASK_HARDWARE_REQ                     , EVT_ASK_HARDWARE_REQ_HANDLER                     , &STATE_ID_SCR_ADD_HARDWARE_ASK         },
 	{E::EVT_EXIST_HARDWARE_REQ                   , EVT_EXIST_HARDWARE_REQ_HANDLER                   , &STATE_ID_SCR_ADD_HARDWARE_EXIST       },
-	{E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST     , EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER     , &STATE_ID_SCR_DASHBOARD_ALERT_INFO     },
 	{E::EVT_KEY_HEALTH_CHECK_STATUS_REQUEST      , EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER      , &STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS  },
 	{E::EVT_RECURRING_PAYMENTS_REQUEST           , EVT_RECURRING_PAYMENTS_REQUEST_HANDLER           , &STATE_ID_SCR_RECURRING_PAYMENTS       },
 	{E::EVT_ADD_HARDWARE_REQUEST                 , EVT_ADD_HARDWARE_REQUEST_HANDLER                 , &STATE_ID_SCR_ADD_HARDWARE             },

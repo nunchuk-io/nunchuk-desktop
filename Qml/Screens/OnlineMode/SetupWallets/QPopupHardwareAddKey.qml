@@ -36,8 +36,11 @@ import "../../../../localization/STR_QML.js" as STR
 
 QPopupEmpty {
     id: _popup
+    property int key_index: -1
     property string hardware: ""
     property bool isInheritance: false
+    property var supportedModel: []
+    signal nextClicked()
     onOpened: {
         GroupWallet.addHardwareFromConfig(-1, "", -1)
         hardware = ""
@@ -79,27 +82,7 @@ QPopupEmpty {
                 Column {
                     spacing: 0
                     Repeater {
-                        model: {
-                            var ls = []
-                            if (!isKeyHolderLimited) {
-                                if (!isInheritance) {
-                                    ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
-                                }
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
-                            }
-                            if (!isInheritance) {
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
-                            }
-                            if (isInheritance) {
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
-                            }
-                            if (!isInheritance) {
-                                ls.push({add_type: NUNCHUCKTYPE.ADD_JADE,   txt: "Blockstream Jade"   , type: "JADE"  , tag: "JADE"  })
-                            }
-                            return ls
-                        }
-
+                        model: supportedModel                    
                         QRadioButtonTypeA {
                             id: btn
                             width: 528
@@ -142,9 +125,7 @@ QPopupEmpty {
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_TREZOR ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_BITBOX ||
                     GroupWallet.qAddHardware === NUNCHUCKTYPE.ADD_JADE
-        onPrevClicked:{ closeClicked() }
-        onNextClicked: {
-            dashInfo.requestStartKeyCreate(hardware)
-        }
+        onPrevClicked:{ closeClicked() }  
+        onNextClicked:{ _popup.nextClicked() }            
     }
 }

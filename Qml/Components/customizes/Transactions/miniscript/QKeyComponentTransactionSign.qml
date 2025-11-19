@@ -36,10 +36,13 @@ QKeyComponentTransaction {
     id: keyroot
     signal signRequest()
     signal scanRequest()
+    signal exportRequest()
+    signal importRequest()
     property bool alreadySigned : miniscript.alreadySigned
     property bool hasSignOrScan : miniscript.hasSignOrScan
     property int  tx_status     : transactionInfo.status
     property bool signerReadyToSign: miniscript.signerReadyToSign
+    property int  signerType    : miniscript.signerType
 
     Loader {
         anchors {
@@ -54,13 +57,15 @@ QKeyComponentTransaction {
             else{
                 if(tx_status !== NUNCHUCKTYPE.PENDING_SIGNATURES && tx_status !== NUNCHUCKTYPE.PENDING_NONCE && tx_status !== NUNCHUCKTYPE.READY_TO_BROADCAST) {
                     return null;
-                }
-                else{
-                    if(signerReadyToSign){
-                        return hasSignOrScan ? requiredSignature : null;
-                    }
-                    else {
-                        return hasSignOrScan ? requiredScan : null;
+                } else {
+                    if(signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.UNKNOWN ) {
+                        return hasSignOrScan ? keysignOption : null;
+                    } else {
+                        if(signerReadyToSign){
+                            return hasSignOrScan ? requiredSignature : null;
+                        } else {
+                            return hasSignOrScan ? requiredScan : null;
+                        }
                     }
                 }
             }
@@ -114,6 +119,50 @@ QKeyComponentTransaction {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 onButtonClicked: { scanRequest() }
+            }
+        }
+    }
+    Component {
+        id: keysignOption
+        Item {
+            QTextButton {
+                width: label.width + 36
+                height: 36
+                label.text: STR.STR_QML_509
+                label.font.pixelSize: 12
+                label.font.family: "Lato"
+                type: eTypeE
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                onButtonClicked: {
+                    signOptionMenu.x = 20
+                    signOptionMenu.y = 20 - signOptionMenu.height
+                    signOptionMenu.open()
+                }
+            }
+            QContextMenu {
+                id: signOptionMenu
+                menuWidth: 250
+                labels: [
+                    STR.STR_QML_294,
+                    STR.STR_QML_252,
+                ]
+                icons: [
+                    "qrc:/Images/Images/ExportFile.svg",
+                    "qrc:/Images/Images/importFile.svg",
+                ]
+                onItemClicked: {
+                    switch(index){
+                    case 0: // Export transaction
+                        exportRequest()
+                        break;
+                    case 1: // Import signature
+                        importRequest()
+                        break;
+                    default:
+                        break;
+                    }
+                }
             }
         }
     }

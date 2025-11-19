@@ -47,6 +47,7 @@ public:
     QVariant planInfoUpdate() const;
 
     bool isSetup() const;
+    QString formatDateTime() const;
 private:
     QJsonObject ConvertToDisplayQml(QJsonObject data);
 public:
@@ -68,6 +69,7 @@ public:
 public slots:
     bool createPeriods();
     void editPlanInfo(const QVariant& info);
+    void editPlanInfoOnchain(const QVariant& info);
 signals:
     void actionPlanChanged();
     void secretChanged();

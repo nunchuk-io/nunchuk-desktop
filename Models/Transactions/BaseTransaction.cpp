@@ -632,6 +632,11 @@ void BaseTransaction::setTxJson(const QJsonObject &txJs)
     m_txJson = txJs;
 }
 
+QJsonObject BaseTransaction::txJson() const
+{
+    return m_txJson;
+}
+
 void BaseTransaction::setSignatures(const QMap<QString, QString> &signatures)
 {
     m_signatures = signatures;
@@ -882,38 +887,7 @@ SingleSignerListModel *BaseTransaction::normalWalletSigners(const QWalletPtr &wa
         for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
             m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second, "");
         }
-        DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
-        if (!m_txJson.isEmpty() || isDummyTx()) {// Use for dummy transaction
-            if (!m_txJson.isEmpty()) {
-                QJsonArray signatures = m_txJson["signatures"].toArray();
-                for (auto js : signatures) {
-                    QString xfp = js.toObject()["xfp"].toString();
-                    QString signature = js.toObject()["signature"].toString().split(".").at(1);
-                    m_signers.data()->updateSignatures(xfp, true, signature);
-                }
-            } else if (m_signatures.size() > 0) {
-                for (auto xfp : m_signatures.uniqueKeys()) {
-                    QString signature = m_signatures.value(xfp);
-                    m_signers.data()->updateSignatures(xfp, true, signature);
-                }
-            }
-            for (int i = 0; i < m_signers->rowCount(); i++) {
-                auto signer = m_signers->getSingleSignerByIndex(i);
-                signer->setHasSignBtn(true);
-                if (signer->signerType() == (int)ENUNCHUCK::SignerType::SERVER) {
-                    m_signers->removeSingleSignerByIndex(i);
-                    --i;
-                }
-                if (!dummyXfp().isEmpty()) {
-                    if (dummyXfp() != signer->masterFingerPrint() ) {
-                        signer->setHasSignBtn(false);
-                    }
-                }
-                if (hideSignBtns().contains(signer->masterFingerPrint())) {
-                    signer->setHasSignBtn(false);
-                }
-            }
-        }
+        updateSignaturesForDummyTx();
         m_signers.data()->requestSort(true);
         return m_signers.data();
     }
@@ -934,9 +908,46 @@ SingleSignerListModel *BaseTransaction::allFinalSigners() {
         if (wallet->singleSignersAssigned()) {
             m_signers = wallet->singleSignersAssigned()->cloneFinalSigners(final_signers);
         }
+        updateSignaturesForDummyTx();
         return m_signers.data();
     } else {
         return (new SingleSignerListModel());
+    }
+}
+
+void BaseTransaction::updateSignaturesForDummyTx() {
+    if (m_signers.isNull()) return;
+    DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
+    if (!m_txJson.isEmpty() || isDummyTx()) {// Use for dummy transaction
+        if (!m_txJson.isEmpty()) {
+            QJsonArray signatures = m_txJson["signatures"].toArray();
+            for (auto js : signatures) {
+                QString xfp = js.toObject()["xfp"].toString();
+                QString signature = js.toObject()["signature"].toString().split(".").at(1);
+                m_signers.data()->updateSignatures(xfp, true, signature);
+            }
+        } else if (m_signatures.size() > 0) {
+            for (auto xfp : m_signatures.uniqueKeys()) {
+                QString signature = m_signatures.value(xfp);
+                m_signers.data()->updateSignatures(xfp, true, signature);
+            }
+        }
+        for (int i = 0; i < m_signers->rowCount(); i++) {
+            auto signer = m_signers->getSingleSignerByIndex(i);
+            signer->setHasSignBtn(true);
+            if (signer->signerType() == (int)ENUNCHUCK::SignerType::SERVER) {
+                m_signers->removeSingleSignerByIndex(i);
+                --i;
+            }
+            if (!dummyXfp().isEmpty()) {
+                if (dummyXfp() != signer->masterFingerPrint() ) {
+                    signer->setHasSignBtn(false);
+                }
+            }
+            if (hideSignBtns().contains(signer->masterFingerPrint())) {
+                signer->setHasSignBtn(false);
+            }
+        }
     }
 }
 

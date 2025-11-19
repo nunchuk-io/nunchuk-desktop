@@ -715,6 +715,7 @@ void AppModel::requestInitialData()
         startReloadUserDb();
     }
     requestSyncGroups();
+    QWalletServicesTag::instance()->configWalletSetup();
 }
 
 void AppModel::requestSyncWalletDb(const QString &wallet_id)

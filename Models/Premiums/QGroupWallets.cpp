@@ -246,10 +246,10 @@ void QGroupWallets::dashboard(const QString &group_id, const QString& wallet_id)
     DBG_INFO << mDashboard;
     if (mDashboard) {
         mDashboard->setShowDashBoard(true);
+        mDashboard->GetDraftWalletInfo();
         mDashboard->GetAlertsInfo();
         mDashboard->GetMemberInfo();
-        mDashboard->GetHealthCheckInfo();
-        mDashboard->GetDraftWalletInfo();
+        mDashboard->GetHealthCheckInfo();        
         mDashboard->GetWalletInfo();
     }
 }
@@ -280,7 +280,7 @@ void QGroupWallets::reset(const QString &group_id)
 
 void QGroupWallets::markRead(const QString &alert_id)
 {
-    DBG_INFO << alert_id;
+    DBG_INFO << "alert_id: " << alert_id;
     if (!mDashboard) return;
     mDashboard->setAlertId(alert_id);
     if (mDashboard->canEntryClickAlert()) {
@@ -293,14 +293,20 @@ void QGroupWallets::markRead(const QString &alert_id)
             if(auto tx = AppModel::instance()->transactionInfoPtr()) {
                 tx->setHasMoreBtn(false);
             }
+            mDashboard->MarkAlertAsRead(alert_id);
+            break;
+        }
+        case AlertEnum::E_Alert_t::WALLET_PENDING:
+        case AlertEnum::E_Alert_t::GROUP_WALLET_PENDING:{
+            QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
             break;
         }
         default:
             QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+            mDashboard->MarkAlertAsRead(alert_id);
             break;
         }
     }
-    mDashboard->MarkAlertAsRead(alert_id);
 }
 
 void QGroupWallets::dismiss(const QString &alert_id)
@@ -427,17 +433,6 @@ void QGroupWallets::reset()
         mPendingWallets.clear();
     }
     clearDashBoard();
-}
-
-bool QGroupWallets::AddOrUpdateAKeyToDraftWallet()
-{
-    return QAssistedDraftWallets::AddOrUpdateAKeyToDraftWallet();
-}
-
-
-bool QGroupWallets::requestKeyReplacement(QSingleSignerPtr signer)
-{
-    return QAssistedDraftWallets::requestKeyReplacement(signer);
 }
 
 void QGroupWallets::SyncAllSignerFromDraftWalletInfo()

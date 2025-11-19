@@ -33,14 +33,14 @@ import "../../../../localization/STR_QML.js" as STR
 
 QScreenAdd {
     anchors.fill: parent
+    signal nextClicked()
     QOnScreenContent {
         id:_content
-        width: popupWidth
-        height: popupHeight
+        anchors.fill: parent
         anchors.centerIn: parent
         enableHeader:false
         offset: 24
-        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)        
         QLato {
             anchors{
                 top: parent.top
@@ -90,7 +90,7 @@ QScreenAdd {
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {
-                    ServiceSetting.requestStartAddHardwareKey(_HARDWARE_TAG)
+                    nextClicked()
                 }
             }
         }

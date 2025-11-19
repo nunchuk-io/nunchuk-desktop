@@ -34,228 +34,262 @@ import "../../../../localization/STR_QML.js" as STR
 
 QScreenAdd {
     anchors.fill: parent
-    readonly property int eREUSE_LIST_KEYS: 0
-    readonly property int eREUSE_INPUT_INDEX: 1
-    readonly property int eREUSE_LOADING_STATE: 2
-    readonly property int eREUSE_SCAN_DEVICE: 3
-    readonly property int eREUSE_RESULT: 4
-    property int eADD_STEP: eREUSE_LIST_KEYS
-    Component.onCompleted: {
-        inputtingIndex.device_name = ""
-        inputtingIndex.device_type = ""
-        inputtingIndex.device_tag = ""
-        inputtingIndex.device_xfp = ""
-        inputtingIndex.device_bip32_path = ""
-    }
 
-    QOnScreenContentTypeB {
-        id:_content
-        visible: eADD_STEP === eREUSE_LIST_KEYS
+    QInputtingIndex { id: inputtingIndex }
+    readonly property var map_flow: [
+        {screen: "eREUSE_LIST_KEYS",    screen_component: _reuseListKeys},
+        {screen: "eREUSE_INPUT_INDEX",  screen_component: _accountSettingIndex},
+        {screen: "eREUSE_LOADING_STATE",screen_component: loadingState},
+        {screen: "eREUSE_SCAN_DEVICE",  screen_component: _scanDevices},
+        {screen: "eREUSE_RESULT",       screen_component: addKeysuccess},
+    ]
+
+    Loader {
         width: popupWidth
         height: popupHeight
-        anchors.centerIn: parent
-        label.text: STR.STR_QML_901
-        extraHeader: Item {}
-        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-        content: QAddAnExistingKey {
-            notice: STR.STR_QML_915
+        sourceComponent: {
+            var itemScreen = map_flow.find(function(e) { return e.screen === stateScreen.screenFlow })
+            return itemScreen ? itemScreen.screen_component : _reuseListKeys
         }
-        onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-        bottomRight: Row {
-            spacing: 12
-            QTextButton {
-                width: 215
-                height: 48
-                label.text: STR.STR_QML_900
-                label.font.pixelSize: 16
-                type: eTypeB
-                onButtonClicked: {
-                    QMLHandle.sendEvent(EVT.EVT_ADD_NEW_HARDWARE_REQUEST)
+    }
+
+    Component.onCompleted: {
+        var currentSigner = SignerManagement.currentSigner
+        inputtingIndex.device_name = currentSigner.name
+        inputtingIndex.device_type = currentSigner.type
+        inputtingIndex.device_tag = currentSigner.tag
+        inputtingIndex.device_xfp = currentSigner.xfp
+        inputtingIndex.device_bip32_path = currentSigner.derivation_path
+        inputtingIndex.current_index = currentSigner.account_index
+        inputtingIndex.new_index = -1
+    }
+
+    // Screen: list existing keys
+    Component {
+        id: _reuseListKeys
+        QOnScreenContentTypeB {
+            id:_content
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_901
+            extraHeader: Item {}
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            content: QAddAnExistingKey {
+                notice: STR.STR_QML_915
+            }
+            onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            bottomRight: Row {
+                spacing: 12
+                QTextButton {
+                    width: 215
+                    height: 48
+                    label.text: STR.STR_QML_900
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    onButtonClicked: {
+                        QMLHandle.sendEvent(EVT.EVT_ADD_NEW_HARDWARE_REQUEST)
+                    }
+                }
+                QTextButton {
+                    width: 150
+                    height: 48
+                    label.text: STR.STR_QML_899
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    enabled: _content.contentItem.fingerPrint !== ""
+                    onButtonClicked: {
+                        inputtingIndex.current_index = draftWallet.reuseKeyGetCurrentIndex(_content.contentItem.fingerPrint)
+                        inputtingIndex.device_name = _content.contentItem.key_name
+                        inputtingIndex.device_type = _content.contentItem.device_type
+                        inputtingIndex.device_tag = _content.contentItem.tag
+                        inputtingIndex.device_xfp = _content.contentItem.fingerPrint
+                        inputtingIndex.device_bip32_path = draftWallet.bip32path(inputtingIndex.device_xfp, inputtingIndex.current_index)
+                        var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
+                        if (isNormalFlow) {
+                            stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                        } else {
+                            var account_index = draftWallet.getAccountIndexFromSigner(inputtingIndex.device_bip32_path)
+                            var noKey = SignerManagement.currentSigner.has != undefined && !SignerManagement.currentSigner.has
+                            if (noKey) {
+                                draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, 0)
+                            } else {
+                                draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, 1)
+                                // stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                            }
+                        }
+                    }
                 }
             }
-            QTextButton {
-                width: 150
+        }
+    }
+
+    // Screen: account/index input
+    Component {
+        id: _accountSettingIndex
+        QOnScreenContentTypeA {
+            id: accountIndexSetting
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_1046
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            content: Item {
+                Column {
+                    spacing: 32
+                    Item {
+                        width: parent.width
+                        height: 64
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 12
+                            Rectangle {
+                                width: 48
+                                height: 48
+                                radius: width
+                                color: "#F5F5F5"
+                                QSignerDarkIcon {
+                                    iconSize: 24
+                                    anchors.centerIn: parent
+                                    device_type: inputtingIndex.device_type
+                                    type: NUNCHUCKTYPE.HARDWARE
+                                    tag: inputtingIndex.device_tag
+                                }
+                            }
+                            Column {
+                                spacing: 4
+                                anchors.verticalCenter: parent.verticalCenter
+                                QLato {
+                                    width: 146
+                                    height: 20
+                                    text: inputtingIndex.device_name
+                                    color: "#031F2B"
+                                    font.weight: Font.Normal
+                                    font.pixelSize: 16
+                                }
+                                QLato {
+                                    width: 146
+                                    height: 20
+                                    text: "XFP: " + inputtingIndex.device_xfp
+                                    color: "#595959"
+                                    font.weight: Font.Normal
+                                    font.capitalization: Font.AllUppercase
+                                    font.pixelSize: 12
+                                }
+                            }
+                        }
+                    }
+                    QLato {
+                        width: 540
+                        font.pixelSize: 16
+                        lineHeight: 28
+                        lineHeightMode: Text.FixedHeight
+                        wrapMode: Text.WordWrap
+                        text: STR.STR_QML_1171
+                    }
+                    Column {
+                        spacing: 4
+                        QTextInputBoxTypeB {
+                            label: STR.STR_QML_1172
+                            boxWidth: 350
+                            boxHeight: 48
+                            isValid: true
+                            enabled: false
+                            textInputted: (inputtingIndex.current_index >= 0) ? inputtingIndex.current_index : ""
+                        }
+                        QLato {
+                            visible: (inputtingIndex.current_index >= 0)
+                            text: "BIP32 path: " + inputtingIndex.device_bip32_path
+                        }
+                    }
+                    Column {
+                        spacing: 4
+                        QTextInputBoxTypeB {
+                            id: newIndexInputted
+                            label: STR.STR_QML_1173
+                            boxWidth: 350
+                            boxHeight: 48
+                            isValid: true
+                            validator:  RegExpValidator {regExp: /^[0-9][0-9]*$/ }
+                            textInputted: inputtingIndex.current_index === -1 ? 0 : ""
+                            onTextInputtedChanged: {
+                                if(textInputted !== ""){
+                                    inputtingIndex.new_index = textInputted
+                                }
+                                else{
+                                    inputtingIndex.new_index = -1
+                                }
+                            }
+                        }
+                        QLato {
+                            visible: newIndexInputted.textInputted !== ""
+                            text: "BIP32 path: " + ((AppSetting.primaryServer === NUNCHUCKTYPE.MAIN) ? qsTr("m/48h/0h/%1h/2h").arg(newIndexInputted.textInputted !== "" ? newIndexInputted.textInputted : "0")
+                                                                                                     : qsTr("m/48h/1h/%1h/2h").arg(newIndexInputted.textInputted !== "" ? newIndexInputted.textInputted : "0"))
+                        }
+                    }
+                }
+            }
+            onPrevClicked: { stateScreen.setScreenFlow("eREUSE_LIST_KEYS") }
+            bottomRight: QTextButton {
+                width: 120
                 height: 48
-                label.text: STR.STR_QML_899
+                label.text: STR.STR_QML_265
                 label.font.pixelSize: 16
                 type: eTypeE
-                enabled: _content.contentItem.fingerPrint !== ""
+                enabled: inputtingIndex.new_index !== -1
                 onButtonClicked: {
-                    inputtingIndex.current_index = draftWallet.reuseKeyGetCurrentIndex(_content.contentItem.fingerPrint)
-                    inputtingIndex.device_name = _content.contentItem.key_name
-                    inputtingIndex.device_type = _content.contentItem.device_type
-                    inputtingIndex.device_tag = _content.contentItem.tag
-                    inputtingIndex.device_xfp = _content.contentItem.fingerPrint
-                    inputtingIndex.device_bip32_path = draftWallet.bip32path(inputtingIndex.device_xfp, inputtingIndex.current_index)
-                    eADD_STEP = eREUSE_INPUT_INDEX
+                    stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                    draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
                 }
             }
         }
     }
-    QOnScreenContentTypeA {
-        id: inputtingIndex
-        property string device_name: ""
-        property string device_type: ""
-        property string device_tag: ""
-        property string device_xfp : ""
-        property string device_bip32_path : ""
-        property int    current_index: -1
-        property int    new_index: -1
 
-        visible: eADD_STEP == eREUSE_INPUT_INDEX
-        width: popupWidth
-        height: popupHeight
-        anchors.centerIn: parent
-        label.text: STR.STR_QML_1046
-        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-        content: Item {
-            Column {
-                spacing: 32
-                Item {
-                    width: parent.width
-                    height: 64
-                    Row {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 12
-                        Rectangle {
-                            width: 48
-                            height: 48
-                            radius: width
-                            color: "#F5F5F5"
-                            QSignerDarkIcon {
-                                iconSize: 24
-                                anchors.centerIn: parent
-                                device_type: inputtingIndex.device_type
-                                type: NUNCHUCKTYPE.HARDWARE
-                                tag: inputtingIndex.device_tag
-                            }
-                        }
-                        Column {
-                            spacing: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            QText {
-                                width: 146
-                                height: 20
-                                text: inputtingIndex.device_name
-                                color: "#031F2B"
-                                font.weight: Font.Normal
-                                font.family: "Lato"
-                                font.pixelSize: 16
-                            }
-                            QText {
-                                width: 146
-                                height: 20
-                                text: "XFP: " + inputtingIndex.device_xfp
-                                color: "#595959"
-                                font.weight: Font.Normal
-                                font.capitalization: Font.AllUppercase
-                                font.family: "Lato"
-                                font.pixelSize: 12
-                            }
-                        }
-                    }
-                }
-                QText {
-                    width: 540
-                    font.family: "Lato"
-                    font.pixelSize: 16
-                    lineHeight: 28
-                    lineHeightMode: Text.FixedHeight
-                    wrapMode: Text.WordWrap
-                    text: STR.STR_QML_1171
-                }
-                Column {
-                    spacing: 4
-                    QTextInputBoxTypeB {
-                        label: STR.STR_QML_1172
-                        boxWidth: 350
-                        boxHeight: 48
-                        isValid: true
-                        enabled: false
-                        textInputted: (inputtingIndex.current_index >= 0) ? inputtingIndex.current_index : ""
-                    }
-                    QText {
-                        visible: (inputtingIndex.current_index >= 0)
-                        text: "BIP32 path: " + inputtingIndex.device_bip32_path
-                    }
-                }
-                Column {
-                    spacing: 4
-                    QTextInputBoxTypeB {
-                        id: newIndexInputted
-                        label: STR.STR_QML_1173
-                        boxWidth: 350
-                        boxHeight: 48
-                        isValid: true
-                        validator:  RegExpValidator {regExp: /^[0-9][0-9]*$/ }
-                        textInputted: inputtingIndex.current_index === -1 ? 0 : ""
-                        onTextInputtedChanged: {
-                            if(textInputted !== ""){
-                                inputtingIndex.new_index = textInputted
-                            }
-                            else{
-                                inputtingIndex.new_index = -1
-                            }
-                        }
-                    }
-                    QText {
-                        visible: newIndexInputted.textInputted !== ""
-                        text: "BIP32 path: " + ((AppSetting.primaryServer === NUNCHUCKTYPE.MAIN) ? qsTr("m/48h/0h/%1h/2h").arg(newIndexInputted.textInputted !== "" ? newIndexInputted.textInputted : "0")
-                                                                                                 : qsTr("m/48h/1h/%1h/2h").arg(newIndexInputted.textInputted !== "" ? newIndexInputted.textInputted : "0"))
-                    }
+    // Screen: scan devices
+    Component {
+        id: _scanDevices
+        QOnScreenContentTypeA {
+            id: scanDevices
+            width: popupWidth
+            height: popupHeight
+            anchors.centerIn: parent
+            label.text: STR.STR_QML_814
+            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            content: QAddKeyRefreshDevices {
+                title: STR.STR_QML_830
+                state_id: EVT.STATE_ID_SCR_ADD_HARDWARE_EXIST
+            }
+            onPrevClicked: { 
+                stateScreen.backScreen()
+                if (stateScreen.screenFlow === "eREUSE_LOADING_STATE") {
+                    stateScreen.backScreen()
                 }
             }
-        }
-        onPrevClicked: { eADD_STEP = eREUSE_LIST_KEYS }
-        bottomRight: QTextButton {
-            width: 120
-            height: 48
-            label.text: STR.STR_QML_265
-            label.font.pixelSize: 16
-            type: eTypeE
-            enabled: inputtingIndex.new_index !== -1
-            onButtonClicked: {
-                eADD_STEP = eREUSE_LOADING_STATE
-                draftWallet.reuseKeyFromMasterSigner(inputtingIndex.device_xfp, inputtingIndex.new_index)
-            }
-        }
-    }
-    QOnScreenContentTypeA {
-        id: scanDevices
-        visible: eADD_STEP === eREUSE_SCAN_DEVICE
-        width: popupWidth
-        height: popupHeight
-        anchors.centerIn: parent
-        label.text: STR.STR_QML_814
-        onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-        content: QAddKeyRefreshDevices {
-            title: STR.STR_QML_830
-            state_id: EVT.STATE_ID_SCR_ADD_HARDWARE_EXIST
-        }
-        onPrevClicked: { eADD_STEP = eREUSE_INPUT_INDEX }
-        bottomRight: QTextButton {
-            width: 120
-            height: 48
-            label.text: STR.STR_QML_265
-            label.font.pixelSize: 16
-            type: eTypeE
-            enabled: scanDevices.contentItem.isEnable()
-            onButtonClicked: {
-                if (scanDevices.contentItem.selected_xfp === inputtingIndex.device_xfp) {
-                    eADD_STEP = eREUSE_LOADING_STATE
-                    draftWallet.reuseKeyFromMasterSigner(inputtingIndex.device_xfp, inputtingIndex.new_index)
-                }
-                else
-                {
-                    AppModel.showToast(-1, STR.STR_QML_1169, EWARNING.ERROR_MSG);
+            bottomRight: QTextButton {
+                width: 120
+                height: 48
+                label.text: STR.STR_QML_265
+                label.font.pixelSize: 16
+                type: eTypeE
+                enabled: scanDevices.contentItem.isEnable()
+                onButtonClicked: {
+                    if (scanDevices.contentItem.selected_xfp === inputtingIndex.device_xfp) {
+                        stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                        draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
+                    }
+                    else
+                    {
+                        AppModel.showToast(-1, STR.STR_QML_1169, EWARNING.ERROR_MSG);
+                    }
                 }
             }
         }
     }
+
+    // Loading state (no change in UX)
     QOnScreenContent {
         id: loadingState
-        visible: eADD_STEP === eREUSE_LOADING_STATE
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
@@ -281,9 +315,10 @@ QScreenAdd {
             }
         }
     }
+
+    // Result screen (no change in UX)
     QOnScreenContent {
         id: addKeysuccess
-        visible: eADD_STEP === eREUSE_RESULT
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
@@ -334,19 +369,11 @@ QScreenAdd {
         }
     }
 
+    // Events mapping to ScreenState
     Connections {
         target: draftWallet
-        onReuseKeyGetSignerResult : {
-            console.log("onReuseKeyGetSignerResult", result)
-            if(result == 1){
-                eADD_STEP = eREUSE_RESULT
-            }
-            else{
-                eADD_STEP = eREUSE_SCAN_DEVICE
-            }
-        }
         onAddHardwareAlert: {
-            eADD_STEP = eREUSE_SCAN_DEVICE
+            stateScreen.setScreenFlow("eREUSE_SCAN_DEVICE")
         }
     }
 }

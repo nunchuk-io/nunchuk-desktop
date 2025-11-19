@@ -36,6 +36,7 @@ Item {
     property string title: ""
     property var inheritance
     property bool isCancel: false
+    property bool isOnChain: false
 
     Column {
         spacing: 16
@@ -48,48 +49,90 @@ Item {
             wrapMode: Text.WordWrap
             lineHeight: 28
             lineHeightMode: Text.FixedHeight
+            visible: title.length > 0
         }
         Flickable {
             width: 539 + 12
-            height: 389
-            contentHeight: _col.height + pre.height
+            height: 452
+            contentHeight: _col.height
             ScrollBar.vertical: ScrollBar { active: true }
             clip: true
+            visible: !isCancel
             Column {
                 id: _col
                 spacing: 16
-                QTextInputBoxTypeB {
-                    boxWidth: 539
-                    boxHeight: 48
-                    label: STR.STR_QML_848
-                    textInputted: inheritance.activation_date
-                    enabled: false
-                    visible: !isCancel
-                    input.color: inheritance.activation_date_isChanged ? "#CF4018": "#031F2B"
+                Column {
+                    spacing: 12
+                    QLato {
+                        width: 539
+                        height: paintedHeight
+                        text: isOnChain ? STR.STR_QML_1958 : STR.STR_QML_1954
+                        font.weight: Font.Bold
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Rectangle {
+                        width: 539
+                        height: inheritance.activation_timezone_local.length > 0 ? 70 : 52
+                        color: "#F5F5F5"
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 16
+                            spacing: 2
+                            QLato {
+                                width: 539
+                                height: paintedHeight
+                                text: inheritance.activation_date
+                                font.weight: Font.Normal
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            QLato {
+                                width: 539
+                                height: paintedHeight
+                                font.pixelSize: 12
+                                text: inheritance.activation_timezone_local
+                                font.weight: Font.Normal
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                                visible: inheritance.activation_timezone_local.length > 0
+                            }
+                        }                        
+                    }
                 }
-                QTextInputBoxTypeB {
-                    boxWidth: 539
-                    boxHeight: 48
-                    label: STR.STR_QML_1047
-                    textInputted: inheritance.note
-                    enabled: false
-                    visible: !isCancel
-                    input.color: inheritance.note_isChanged ? "#CF4018": "#031F2B"
+                Column {
+                    spacing: 12
+                    QLato {
+                        width: 539
+                        height: paintedHeight
+                        text: STR.STR_QML_1047
+                        font.weight: Font.Bold
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Rectangle {
+                        width: 539
+                        height: 52
+                        color: "#F5F5F5"                        
+                        QLato {
+                            width: 539
+                            anchors {
+                                left: parent.left
+                                leftMargin: 16
+                                verticalCenter: parent.verticalCenter
+                            }
+                            height: paintedHeight
+                            text: inheritance.note
+                            font.weight: Font.Normal
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
                 }
-                QTextInputBoxTypeB {
-                    boxWidth: 539
-                    boxHeight: 48
-                    label: STR.STR_QML_851
-                    textInputted: inheritance.buffer_period.id === "" ? STR.STR_QML_921 : inheritance.buffer_period.display_name
-                    enabled: false
-                    visible: !isCancel
-                    input.color: inheritance.buffer_period_isChanged ? "#CF4018": "#031F2B"
-                }
-                QInheritanceNotificationPreferences {
+                QInheritanceNotificationPreferencesOnChain {
                     id: pre
                     width: 539
                     inheritance: _item.inheritance
-                    visible: !isCancel
                 }
             }
         }

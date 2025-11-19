@@ -142,12 +142,11 @@ QOnScreenContentTypeA {
             fileDialog.open()
         }
     }
-    property alias file: fileDialog.file
     FileDialog {
         id: fileDialog
         fileMode: FileDialog.OpenFile
         onAccepted: {
-            addDeviceViaImportFile()
+            addColdcardViaImportFile(fileDialog.file)
         }
     }
 }

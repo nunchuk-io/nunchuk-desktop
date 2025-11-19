@@ -39,11 +39,13 @@ import "../Common"
 import "../../../../../localization/STR_QML.js" as STR
 
 Item {
-    property var inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
-    property var planInfo: inheritancePlanInfo.planInfo
+    id: viewByzantineinheritancePlanRoot
+    property var    inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
+    property var    planInfo: inheritancePlanInfo.planInfo
     property string walletName: ServiceSetting.walletInfo.walletName
+    property int    walletType: ServiceSetting.walletInfo.walletType
     property string myRole: ServiceSetting.walletInfo.myRole
-    property bool isEdit: myRole === "MASTER" || myRole === "ADMIN"
+    property bool   isEdit: myRole === "MASTER" || myRole === "ADMIN"
     QContextMenu {
         id: optionMenu
         menuWidth: 300
@@ -81,40 +83,142 @@ Item {
             }
         }
     }
-    Rectangle {
-        id: _img_bg
-        width: parent.width
-        height: parent.height * 0.5
-        color: "#D0E2FF"
-        visible: isEdit
-        QIconButton{
-            id:_more
-            anchors{
-                top: parent.top
-                topMargin: 24
-                right: parent.right
-                rightMargin: 24
+
+    Column {
+        id: columnHeader
+        anchors.fill: parent
+        spacing: 0
+        Rectangle {
+            id: _img_bg
+            width: parent.width
+            height: 494
+            color: "#D0E2FF"
+            Column {
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 28
+                Item {
+                    width: parent.width
+                    height: 48
+                    visible: walletType !== NUNCHUCKTYPE.MINISCRIPT
+                    QText {
+                        font.family: "Lato"
+                        font.pixelSize: 28
+                        color: "#031F2B"
+                        font.weight: Font.Bold
+                        text: STR.STR_QML_843
+                    }
+                    QIconButton{
+                        width: 48
+                        height: 48
+                        anchors.right: parent.right
+                        visible: inheritancePlanInfo.isActived
+                        bgColor: "#D0E2FF"
+                        icon: "qrc:/Images/Images/more-horizontal-dark.svg"
+                        onClicked: {
+                            optionMenu.popup()
+                        }
+                    }
+                }
+                Loader {
+                    sourceComponent: walletType === NUNCHUCKTYPE.MINISCRIPT ? headerplanOnchain : headerplanOffchain
+                    width: parent.width
+                    height: _img_bg.height * 0.75
+                }
+                Item {
+                    width: parent.width
+                    height: 48
+                    visible: walletType === NUNCHUCKTYPE.MINISCRIPT
+                    QText {
+                        font.family: "Lato"
+                        font.pixelSize: 28
+                        color: "#031F2B"
+                        font.weight: Font.Bold
+                        text: STR.STR_QML_843
+                    }
+                    QIconButton{
+                        width: 48
+                        height: 48
+                        anchors.right: parent.right
+                        visible: inheritancePlanInfo.isActived
+                        bgColor: "#D0E2FF"
+                        icon: "qrc:/Images/Images/more-horizontal-dark.svg"
+                        onClicked: {
+                            optionMenu.popup()
+                        }
+                    }
+                }
             }
-            width: 48
-            height: 48
-            bgColor: parent.color
-            icon: "qrc:/Images/Images/more-horizontal-dark.svg"
-            onClicked: {
-                optionMenu.popup()
+        }
+
+        Item {
+            width: parent.width
+            height: parent.height - _img_bg.height - normalRect.height
+            Loader {
+                sourceComponent: walletType === NUNCHUCKTYPE.MINISCRIPT ? bodyplanOnchain : bodyplanOffchain
+                anchors.fill: parent
+                anchors.margins: 24
             }
         }
     }
-    Column {
-        anchors.fill: parent
-        anchors.margins: 24
-        spacing: 28
-        QText {
-            font.family: "Lato"
-            font.pixelSize: 28
-            color: "#031F2B"
-            font.weight: Font.Bold
-            text: STR.STR_QML_843
+
+    Rectangle {
+        id: normalRect
+        height: 80
+        anchors{
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
         }
+        layer.enabled: true
+        layer.effect: DropShadow {
+            radius: 4
+            samples: radius * 2
+            source: normalRect
+            color: Qt.rgba(0, 0, 0, 0.5)
+        }
+        Row {
+            anchors{
+                right: parent.right
+                rightMargin: 24
+                bottom: parent.bottom
+                bottomMargin: 16
+            }
+            spacing: 12
+            layoutDirection: Qt.RightToLeft
+            QTextButton {
+                id: _save
+                width: 66
+                height: 48
+                label.text: STR.STR_QML_835
+                label.font.pixelSize: 16
+                type: eTypeE
+                enabled: planInfo.edit_isChanged
+                onButtonClicked: {
+                    var _input = {
+                        option : "finalize-change"
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
+                }
+            }
+            QTextButton {
+                width: 148
+                height: 48
+                label.text: STR.STR_QML_805
+                label.font.pixelSize: 16
+                type: eTypeF
+                enabled: planInfo.edit_isChanged
+                onButtonClicked: {
+                    var _input = {
+                        option : "discard-change"
+                    }
+                    QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
+                }
+            }
+        }
+    }
+    Component {
+        id: headerplanOffchain
         Rectangle {
             width: parent.width
             height: _img_bg.height * 0.75
@@ -184,7 +288,8 @@ Item {
                 }
                 QTextInputBoxTypeE {
                     width: parent.width
-                    icon: "qrc:/Images/Images/calendar-dark.png"
+                    icon.source : "qrc:/Images/Images/calendar-dark.png"
+                    icon.sourceSize: Qt.size(24,24)
                     input.text: planInfo.activation_date
                     input.verticalAlignment: Text.AlignVCenter
                     onTextEditClicked: {
@@ -201,7 +306,8 @@ Item {
                         QTextInputBoxTypeE {
                             width: 387
                             height: 104
-                            icon: "qrc:/Images/Images/star-dark.png"
+                            icon.source: "qrc:/Images/Images/star-light.png"
+                            icon.sourceSize: Qt.size(24,24)
                             edit.visible: false
                             label.text: STR.STR_QML_749
                             input.text: planInfo.magic !== null ? planInfo.magic : "null null null"
@@ -212,7 +318,8 @@ Item {
                         QTextInputBoxTypeE {
                             width: 387
                             height: 104
-                            icon: "qrc:/Images/Images/change-password-dark.svg"
+                            icon.source: "qrc:/Images/Images/change-password-dark.svg"
+                            icon.sourceSize: Qt.size(24,24)
                             edit.text: STR.STR_QML_339
                             label.text: STR.STR_QML_727
                             input.text: STR.STR_QML_917
@@ -226,6 +333,203 @@ Item {
                 }
             }
         }
+    }
+    Component {
+        id: headerplanOnchain
+        Rectangle {
+            radius: 24
+            color: "#2F466C"
+            Column {
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 24
+                Item {
+                    width: parent.width
+                    height: 60
+                    Row {
+                        width: parent.width
+                        spacing: 12
+                        QIcon {
+                            iconSize: 60
+                            anchors.verticalCenter: parent.verticalCenter
+                            source: "qrc:/Images/Images/wallet-brand-icon.svg"
+                        }
+                        Column {
+                            width: 304
+                            height: 44
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+                            QLato {
+                                font.weight: Font.Bold
+                                font.pixelSize: 16
+                                color: "#FFFFFF"
+                                text: STR.STR_QML_845
+                            }
+                            QLato {
+                                color: "#FFFFFF"
+                                text: walletName
+                            }
+                        }
+                    }
+                    Row {
+                        width: parent.width
+                        layoutDirection: Qt.RightToLeft
+                        spacing: 12
+                        QTextButton {
+                            width: 162
+                            height: 48
+                            label.text: STR.STR_QML_847
+                            label.font.pixelSize: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                            type: eTypeC
+                            onButtonClicked: {
+                                QMLHandle.sendEvent(EVT.EVT_SHARE_YOUR_SECRET_REQUEST)
+                            }
+                        }
+                        QTextLink {
+                            width: 220
+                            height: 48
+                            font.weight: Font.Bold
+                            font.pixelSize: 16
+                            color: "#FFFFFF"
+                            text: STR.STR_QML_846
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.underline: false
+                            onTextClicked: {
+                                Qt.openUrlExternally("https://nunchuk.io/howtoclaim")
+                            }
+                        }
+                    }
+                }
+                Column {
+                    width: parent.width
+                    spacing: 12
+                    QLato {
+                        font.pixelSize: 16
+                        color: "#FFFFFF"
+                        text: STR.STR_QML_1983
+                    }
+                    Flickable {
+                        width: parent.width
+                        height: row_key.height
+                        contentWidth: row_key.width
+                        clip: true
+                        ScrollBar.vertical: ScrollBar { active: true }
+                        flickDeceleration : Flickable.HorizontalFlick
+                        Row {
+                            id: row_key
+                            spacing: 12
+                            Row {
+                                spacing: 12
+                                Rectangle {
+                                    width: planInfo.inheritance_keys.length > 1 ? 393 : 350
+                                    height: 92
+                                    color: "#FFFFFF"
+                                    radius: 12
+                                    Row {
+                                        spacing: 12
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        QIcon {
+                                            iconSize: 24
+                                            source: "qrc:/Images/Images/star-dark.png"
+                                        }
+                                        Column {
+                                            spacing: 12
+                                            QLato {
+                                                font.pixelSize: 16
+                                                color: "#1C1C1C"
+                                                text: STR.STR_QML_749
+                                                font.weight: Font.Bold
+                                            }
+                                            QLato {
+                                                font.pixelSize: 16
+                                                color: "#1C1C1C"
+                                                text: planInfo.magic !== null ? planInfo.magic : "null null null"
+                                            }
+                                        }
+                                    }
+                                }
+                                Repeater {
+                                    model: planInfo.inheritance_keys.length
+                                    Rectangle {
+                                        width: planInfo.inheritance_keys.length > 1 ? 350 : 393
+                                        height: 92
+                                        color: "#FFFFFF"
+                                        radius: 12
+                                        Row {
+                                            spacing: 12
+                                            anchors.fill: parent
+                                            anchors.margins: 12
+                                            QIcon {
+                                                iconSize: 24
+                                                source: "qrc:/Images/Images/key-dark.svg"
+                                            }
+                                            Column {
+                                                spacing: 12
+                                                QLato {
+                                                    font.pixelSize: 16
+                                                    color: "#1C1C1C"
+                                                    text:  planInfo.inheritance_keys.length > 1 ? STR.STR_QML_2038.arg(index+1).arg(planInfo.inheritance_keys[index].xfp.toUpperCase()) : STR.STR_QML_1984.arg(planInfo.inheritance_keys[0].xfp.toUpperCase())
+                                                    textFormat: Text.RichText
+                                                }
+                                                QLato {
+                                                    font.pixelSize: 16
+                                                    color: "#1C1C1C"
+                                                    text: planInfo.inheritance_keys.length > 1 ? STR.STR_QML_2039.arg(index+1) : STR.STR_QML_1986
+                                                    width: 290
+                                                    wrapMode: Text.WordWrap
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Column {
+                        QLato {
+                            font.pixelSize: 16
+                            color: "#FFFFFF"
+                            text: STR.STR_QML_1985
+                        }
+                        Rectangle {
+                            width: 300
+                            height: 62
+                            color: "#2A3F61"
+                            radius: 12
+                            Row {
+                                spacing: 12
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                QImage {
+                                    width: 24
+                                    height: 24
+                                    source: "qrc:/Images/Images/calendar-dark.png"
+                                }
+                                Column {
+                                    spacing: 2
+                                    QLato {
+                                        font.pixelSize: 16
+                                        color: "#FFFFFF"
+                                        text: planInfo.activation_date
+                                    }
+                                    QLato {
+                                        font.pixelSize: 12
+                                        color: "#FFFFFF"
+                                        text: planInfo.activation_timezone_local
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: bodyplanOffchain
+
         Item {
             width: parent.width - 24
             height: parent.height * 0.58 - 24
@@ -285,7 +589,7 @@ Item {
                         width: 651
                         color: "#EAEAEA"
                     }
-                    QServiceInheritanceNotificationPreferences {
+                    QServiceInheritanceNotificationPreferencesOffchain {
                         width: 651
                         inheritance: planInfo
                         onTextEditClicked: {
@@ -302,57 +606,50 @@ Item {
             }
         }
     }
-    Rectangle {
-        id: normalRect
-        height: 80
-        anchors{
-            left: parent.left
-            right: parent.right
-            bottom: parent.bottom
-        }
-        layer.enabled: true
-        layer.effect: DropShadow {
-            radius: 4
-            samples: radius * 2
-            source: normalRect
-            color: Qt.rgba(0, 0, 0, 0.5)
-        }
-        Row {
-            anchors{
-                right: parent.right
-                rightMargin: 24
-                bottom: parent.bottom
-                bottomMargin: 16
-            }
-            spacing: 12
-            layoutDirection: Qt.RightToLeft
-            QTextButton {
-                id: _save
-                width: 214
-                height: 48
-                label.text: STR.STR_QML_804
-                label.font.pixelSize: 16
-                type: eTypeE
-                enabled: planInfo.edit_isChanged
-                onButtonClicked: {
-                    var _input = {
-                        option : "finalize-change"
+    Component {
+        id: bodyplanOnchain
+        Item {
+            clip: true
+            Flickable {
+                width: 661
+                height: parent.height
+                contentWidth: width
+                contentHeight: _colum.childrenRect.height + 48
+                ScrollBar.vertical: ScrollBar { active: true }
+                Column {
+                    id: _colum
+                    width: parent.width
+                    spacing: 24
+                    QTextAreaBoxTypeB {
+                        width: 651
+                        height: 128
+                        label.text: STR.STR_QML_850
+                        input.text: planInfo.note
+                        input.backgroundColor: "#F5F5F5"
+                        input.verticalAlignment: Text.AlignTop
+                        input.height: 96
+                        input.readOnly: true
+                        textColor: "#031F2B"
+                        onTextEditClicked: {
+                            if(isEdit) {
+                                QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_LEAVE_MESSAGE)
+                            }
+                        }
                     }
-                    QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
-                }
-            }
-            QTextButton {
-                width: 148
-                height: 48
-                label.text: STR.STR_QML_805
-                label.font.pixelSize: 16
-                type: eTypeF
-                enabled: planInfo.edit_isChanged
-                onButtonClicked: {
-                    var _input = {
-                        option : "discard-change"
+                    Rectangle {
+                        height: 1
+                        width: 651
+                        color: "#EAEAEA"
                     }
-                    QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
+                    QServiceInheritanceNotificationPreferencesOnchain {
+                        width: 651
+                        inheritance: planInfo
+                        onTextEditClicked: {
+                            if(isEdit) {
+                                QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_NOTIFICATION)
+                            }
+                        }
+                    }
                 }
             }
         }

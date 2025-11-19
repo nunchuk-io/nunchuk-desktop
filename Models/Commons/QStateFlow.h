@@ -10,9 +10,9 @@ class QStateFlow : public QObject
     Q_PROPERTY(QString screenFlow            READ screenFlow                 WRITE setScreenFlow       NOTIFY screenFlowChanged)
 public:
     QString screenFlow() const;
-    void setScreenFlow(const QString& flow);
 
 public slots:
+    void setScreenFlow(const QString& flow);
     void backScreen();
     void clearState();
     bool isScreenFlow(const QString& flow);

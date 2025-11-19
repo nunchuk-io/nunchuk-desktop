@@ -214,6 +214,7 @@ public:
 
     SingleSignerListModel *normalWalletSigners(const QWalletPtr &wallet);
     SingleSignerListModel *allFinalSigners();
+    void updateSignaturesForDummyTx();
     int numberSigned();
     int pendingSignatures();
 
@@ -241,6 +242,7 @@ public:
     bool isCosigning() const;
     void setIsCosigning(bool is_cosigning);
     void setTxJson(const QJsonObject &txJs);
+    QJsonObject txJson() const;
     void setSignatures(const QMap<QString, QString>& signatures);
     QMap<QString, QString> signatures() const;
 

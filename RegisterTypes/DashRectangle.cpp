@@ -56,14 +56,51 @@ void DashRectangle::slotUpdate()
 
 void DashRectangle::paint(QPainter *painter)
 {
-    QPen pen;  // creates a default pen
-    pen.setStyle(Qt::DashLine);
-    pen.setWidth(m_borderWitdh);
-    pen.setBrush(m_borderColor);
-    pen.setCapStyle(Qt::RoundCap);
-    pen.setJoinStyle(Qt::RoundJoin);
+    painter->setRenderHint(QPainter::Antialiasing, true);
 
-    painter->setPen(pen);
-    painter->setBrush(Qt::white);
-    painter->drawRoundedRect(QRectF(m_borderWitdh, m_borderWitdh, width() - 2*m_borderWitdh, height() - 2*m_borderWitdh), m_radius, m_radius);
+    if (m_borderWitdh > 0) {
+        QPen pen;
+        pen.setStyle(m_isDashed ? Qt::DashLine : Qt::SolidLine);
+        pen.setWidth(m_borderWitdh);
+        pen.setBrush(m_borderColor);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        painter->setPen(pen);
+    } else {
+        painter->setPen(Qt::NoPen); // no border
+    }
+
+    painter->setBrush(m_color);
+
+    const QRectF rect = (m_borderWitdh > 0)
+        ? QRectF(m_borderWitdh, m_borderWitdh,
+                 width() - 2 * m_borderWitdh, height() - 2 * m_borderWitdh)
+        : QRectF(0, 0, width(), height());
+
+    painter->drawRoundedRect(rect, m_radius, m_radius);
+}
+
+
+bool DashRectangle::isDashed() const {
+    return m_isDashed;
+}
+
+void DashRectangle::setIsDashed(bool isDashed) {
+    if (m_isDashed == isDashed)
+        return;
+    m_isDashed = isDashed;
+    QQuickPaintedItem::update();
+    emit isDashedChanged(isDashed);
+}
+
+QColor DashRectangle::color() const {
+    return m_color;
+}
+
+void DashRectangle::setColor(const QColor &color) {
+    if (m_color == color)
+        return;
+    m_color = color;
+    QQuickPaintedItem::update();
+    emit colorChanged(m_color);
 }

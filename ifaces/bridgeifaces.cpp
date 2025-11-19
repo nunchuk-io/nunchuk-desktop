@@ -471,6 +471,12 @@ QSingleSignerPtr bridge::nunchukGetSignerFromMasterSigner(const QString &masters
     }
 }
 
+nunchuk::SingleSigner bridge::nunchukGetOriginSignerFromMasterSigner(const QString &xfp, const ENUNCHUCK::WalletType &wallet_type,
+                                                             const ENUNCHUCK::AddressType &address_type, const int index, QWarningMessage &msg) {
+    return nunchukiface::instance()->GetSignerFromMasterSigner(xfp.toStdString(), (nunchuk::WalletType)wallet_type,
+                                                               (nunchuk::AddressType)address_type, index, msg);
+}
+
 nunchuk::SingleSigner bridge::nunchukGetOriginSingleSigner(const QString& xfp,
                                                            const ENUNCHUCK::WalletType &wallet_type,
                                                            const ENUNCHUCK::AddressType &address_type,
@@ -1671,6 +1677,12 @@ void bridge::nunchukSendPassphraseToDevice(const QDevicePtr &device, const QStri
     }
 }
 
+void bridge::nunchukVerifySingleSigner(const QDevicePtr &device, const QSingleSignerPtr &signer, QWarningMessage &msg) {
+    if(device.data() && signer.data()){
+        nunchukiface::instance()->VerifySingleSigner(device->originDevice(), signer->originSingleSigner(), msg);
+    }
+}
+
 QSingleSignerPtr bridge::nunchukCreateCoboSigner(const QString &name, const QString &json_info, QWarningMessage &msg)
 {
     nunchuk::SingleSigner signer = nunchukiface::instance()->CreateCoboSigner(name.toStdString(),
@@ -2224,14 +2236,14 @@ void bridge::ForceRefreshWallet(const QString &wallet_id, QWarningMessage &msg)
     nunchukiface::instance()->ForceRefreshWallet(wallet_id.toStdString(),msg);
 }
 
-QString bridge::SignHealthCheckMessage(const QSingleSignerPtr &signer, const QString &message, QWarningMessage &msg)
-{
-    return SignHealthCheckMessage(signer.data()->originSingleSigner(), message, msg);
-}
-
 QString bridge::SignHealthCheckMessage(const nunchuk::SingleSigner &signer, const QString &message, QWarningMessage &msg)
 {
     return QString::fromStdString(nunchukiface::instance()->SignHealthCheckMessage(signer, message.toStdString(), msg));
+}
+
+QString bridge::SignHealthCheckMessage(const nunchuk::Wallet &wallet, const nunchuk::Device &device, const nunchuk::SingleSigner &signer, const QString &message, QWarningMessage &msg)
+{
+    return QString::fromStdString(nunchukiface::instance()->SignHealthCheckMessage(wallet, device, signer, message.toStdString(), msg));
 }
 
 QMasterSignerPtr bridge::ImportTapsignerMasterSigner( const std::vector<unsigned char>& data,
@@ -3173,4 +3185,24 @@ bool bridge::nunchukRevealPreimage(const QString &wallet_id, const QString &tx_i
     const std::vector<uint8_t> &preimage, QWarningMessage &msg) 
 {
     return nunchukiface::instance()->RevealPreimage(wallet_id.toStdString(), tx_id.toStdString(), hash, preimage, msg);
+}
+
+void bridge::CreateAssignAvailableSigners(nunchuk::AddressType address_type,
+    nunchuk::WalletType wallet_type,
+    std::function<void(const QSingleSignerListModelPtr&)> callback) {
+    runInConcurrent(
+        [address_type, wallet_type]() -> std::vector<nunchuk::SingleSigner> {
+            QWarningMessage msg;
+            std::vector<nunchuk::SingleSigner> signers = bridge::CreateSupportedSigners(address_type, wallet_type);
+            return signers;
+        },
+        [address_type, wallet_type, callback](std::vector<nunchuk::SingleSigner> signers) {
+            QSingleSignerListModelPtr available_signers = QSingleSignerListModelPtr(new SingleSignerListModel());
+            for(const auto &signer : signers) {
+                QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
+                signerPtr->setTaprootSupported(bridge::IsTapootSupported(signerPtr, address_type, wallet_type));
+                available_signers->addSingleSigner(signerPtr);
+            }
+            callback(available_signers);
+        });
 }

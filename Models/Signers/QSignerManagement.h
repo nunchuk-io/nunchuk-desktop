@@ -2,12 +2,15 @@
 #define QSIGNERMANAGEMENT_H
 
 #include <QObject>
+#include <QVariant>
+#include <QJsonObject>
 #include "PrimaryKeyAccount.h"
 
 typedef bool (*Execute)();
 class QSignerManagement : public PrimaryKeyAccount
 {
     Q_OBJECT
+    Q_PROPERTY(QVariant currentSigner                 READ currentSigner                               NOTIFY currentSignerChanged)
 private:
     QSignerManagement();
     ~QSignerManagement();
@@ -42,17 +45,26 @@ public:
     void registerCreateTopUpXpub(Execute func);
     bool finishCreateTopUpXpub();
 
+    QJsonObject currentSignerJs() const;
+    QVariant currentSigner() const;
+    void setCurrentSigner(const QJsonObject &data);
+    void updateXfpOfCurrentSigner(const QString &xfp);
+
 public slots:
     void requestCreateSignerFromHomeScreen();
     void requestCreateSignerFromReplaceScreen();
     void requestCreateSignerFromClaimScreen();
+
+    QVariant miniscriptSupportedFirmwares(const QString& tag) const;
 signals:
+    void currentSignerChanged();
 private:
     Execute m_executeMaster {nullptr};
     Execute m_executeRemote {nullptr};
     Execute m_executeSoftware {nullptr};
     Execute m_executeSoftXprv {nullptr};
     Execute m_executeTopUpXpub {nullptr};
+    QJsonObject m_currentSigner {};
 };
 
 #endif // QSIGNERMANAGEMENT_H

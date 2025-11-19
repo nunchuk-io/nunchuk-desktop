@@ -1864,7 +1864,9 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
         {
             auto w = AppModel::instance()->walletInfoPtr();
             auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
-            dashboard = w ? w->dashboard() : dashboard;
+            if (dashboard.isNull()) {
+                dashboard = w ? w->dashboard() : dashboard;
+            }            
             QString msgtype = evt.contentJson()["msgtype"].toString();
             DBG_INFO << msgtype;
             if (dashboard) {
@@ -1874,6 +1876,9 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             {
                 QGroupWallets::instance()->GetAllGroups();
                 QUserWallets::instance()->GetListAllRequestAddKey();
+                if (dashboard) {
+                    dashboard->GetDraftWalletInfo();
+                }
             }
             else if (msgtype.contains("io.nunchuk.custom.wallet_created", Qt::CaseInsensitive) ||
                      msgtype.contains("io.nunchuk.custom.wallet_name_changed", Qt::CaseInsensitive) ||
@@ -1881,6 +1886,12 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                      msgtype.contains("io.nunchuk.custom.key_updated", Qt::CaseInsensitive))
             {
                 AppModel::instance()->requestCreateUserWallets();
+                QList<uint> states = QEventProcessor::instance()->getCurrentStates();
+                if(msgtype.contains("io.nunchuk.custom.wallet_created", Qt::CaseInsensitive) && 
+                    !states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_DASHBOARD_ALERT_INFO) {
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                    QUserWallets::instance()->GetListAllRequestAddKey();
+                }
             }
             else if(msgtype.contains("io.nunchuk.custom.transaction", Qt::CaseInsensitive))
             {

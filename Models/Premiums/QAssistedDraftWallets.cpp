@@ -1,115 +1,105 @@
 #include "QAssistedDraftWallets.h"
-#include <QQmlEngine>
-#include <QJsonDocument>
 #include "AppModel.h"
-#include "localization/STR_CPP.h"
-#include "ServiceSetting.h"
-#include "nunchuckiface.h"
-#include "ViewsEnums.h"
-#include "Servers/Draco.h"
-#include "Servers/Byzantine.h"
-#include "Premiums/QWalletServicesTag.h"
-#include "Premiums/QWalletManagement.h"
 #include "Premiums/QGroupWalletDummyTx.h"
-#include "Premiums/QUserWalletDummyTx.h"
 #include "Premiums/QGroupWallets.h"
+#include "Premiums/QUserWalletDummyTx.h"
+#include "Premiums/QWalletManagement.h"
+#include "Premiums/QWalletServicesTag.h"
+#include "Servers/Byzantine.h"
+#include "Servers/Draco.h"
+#include "ServiceSetting.h"
+#include "Signers/QSignerManagement.h"
+#include "ViewsEnums.h"
+#include "localization/STR_CPP.h"
+#include "nunchuckiface.h"
+#include <QJsonDocument>
+#include <QQmlEngine>
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QUserWallets.h"
 
 const QMap<Key, StructAddHardware> map_keys = {
-    {Key::ADD_LEDGER,   {"LEDGER",   "ledger",   STR_CPP_122, STR_CPP_121, 124}},
-    {Key::ADD_TREZOR,   {"TREZOR",   "trezor",   STR_CPP_124, STR_CPP_123, 124}},
+    {Key::ADD_LEDGER, {"LEDGER", "ledger", STR_CPP_122, STR_CPP_121, 124}},
+    {Key::ADD_TREZOR, {"TREZOR", "trezor", STR_CPP_124, STR_CPP_123, 124}},
     {Key::ADD_COLDCARD, {"COLDCARD", "coldcard", STR_CPP_126, STR_CPP_125, 152}},
-    {Key::ADD_BITBOX,   {"BITBOX",   "bitbox02", STR_CPP_128, STR_CPP_127, 124}},
-    {Key::ADD_JADE,     {"JADE",     "jade",     STR_CPP_133, STR_CPP_132, 152}},
+    {Key::ADD_BITBOX, {"BITBOX", "bitbox02", STR_CPP_128, STR_CPP_127, 124}},
+    {Key::ADD_JADE, {"JADE", "jade", STR_CPP_133, STR_CPP_132, 152}},
 };
 
 namespace {
 
-inline QString titleCase(QString str)
-{
-    if (str.length() == 0) return "";
+inline QString titleCase(QString str) {
+    if (str.length() == 0)
+        return "";
     QString tmp = str;
     // if you want to ensure all other letters are lowercase:
     tmp = tmp.toLower();
     tmp[0] = str[0].toUpper();
     return tmp;
 }
-}
+} // namespace
 QAssistedDraftWallets::QAssistedDraftWallets(int mode)
-    : QSwitchAPI(mode)
-    , mRefreshDeviceList(QDeviceListModelPtr(new DeviceListModel()))
-{
+    : QSwitchAPI(mode), mRefreshDeviceList(QDeviceListModelPtr(new DeviceListModel())),
+      m_availableSignerListPtr(QSingleSignerListModelPtr(new SingleSignerListModel())) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QAssistedDraftWallets::~QAssistedDraftWallets(){
+QAssistedDraftWallets::~QAssistedDraftWallets() {
     mRefreshDeviceList.clear();
 }
 
-QString QAssistedDraftWallets::typeReq() const
-{
-    if(getAddHardware() == 0) return "";
+QString QAssistedDraftWallets::typeReq() const {
+    if (getAddHardware() == 0)
+        return "";
     return map_keys.value((Key)getAddHardware()).mType;
 }
 
-void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray& groups)
-{
-    if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
+void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray &groups) {
+    if (!CLIENT_INSTANCE->isNunchukLoggedIn()) {
         return;
     }
     QPointer<QAssistedDraftWallets> safeThis(this);
-    runInThread([safeThis, groups]() ->QMap<Key, StructAddHardware> {
-        QMap<Key, StructAddHardware> requests;
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        if (ptrLamda->m_mode == USER_WALLET) {
-            QJsonObject data;
-            QString error_msg;
-            Draco::instance()->assistedWalletGetListKey(data, error_msg);
-            requests = ptrLamda->addRequest(data.value("requests").toArray());
-            DBG_INFO << data;
-        }
-        else if (ptrLamda->m_mode == GROUP_WALLET) {
-            QJsonObject data;
-            QString error_msg;
-            for (QJsonValue js : groups) {
-                QJsonObject group = js.toObject();
-                QString status = group["status"].toString();
-                if (status == "PENDING_WALLET") {
-                    QString group_id = group["id"].toString();
-                    Byzantine::instance()->GetAllListRequestAddKey(group_id, data, error_msg);
-                    QMap<Key, StructAddHardware> tmps = ptrLamda->addRequest(data.value("requests").toArray(), group_id);
-                    for (auto tmp = tmps.begin(); tmp != tmps.end(); ++tmp) {
-                        requests.insertMulti(tmp.key(), tmp.value());
+    runInThread(
+        [safeThis, groups]() -> QMap<Key, StructAddHardware> {
+            QMap<Key, StructAddHardware> requests;
+            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+            if (ptrLamda->m_mode == USER_WALLET) {
+                QJsonObject data;
+                QString error_msg;
+                Draco::instance()->assistedWalletGetListKey(data, error_msg);
+                requests = ptrLamda->addRequest(data.value("requests").toArray());
+                DBG_INFO << data;
+            } else if (ptrLamda->m_mode == GROUP_WALLET) {
+                QJsonObject data;
+                QString error_msg;
+                for (QJsonValue js : groups) {
+                    QJsonObject group = js.toObject();
+                    QString status = group["status"].toString();
+                    if (status == "PENDING_WALLET") {
+                        QString group_id = group["id"].toString();
+                        Byzantine::instance()->GetAllListRequestAddKey(group_id, data, error_msg);
+                        QMap<Key, StructAddHardware> tmps = ptrLamda->addRequest(data.value("requests").toArray(), group_id);
+                        for (auto tmp = tmps.begin(); tmp != tmps.end(); ++tmp) {
+                            requests.insertMulti(tmp.key(), tmp.value());
+                        }
+                        DBG_INFO << group_id << data;
                     }
-                    DBG_INFO << group_id << data;
                 }
             }
-        }
-        return requests;
-    },[safeThis](QMap<Key, StructAddHardware> requests) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        ptrLamda->m_requests = requests;
-        ptrLamda->makeListRequests();
-    });
+            return requests;
+        },
+        [safeThis](QMap<Key, StructAddHardware> requests) {
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+            ptrLamda->m_requests = requests;
+            ptrLamda->makeListRequests();
+        });
 }
 
-bool QAssistedDraftWallets::AddOrUpdateAKeyToDraftWallet()
-{
-    return RequestAddOrUpdateAKeyToDraftWallet(m_request);
-}
-
-bool QAssistedDraftWallets::AddOrUpdateReuseKeyToDraftWallet(nunchuk::SingleSigner keyresued)
-{
-    return RequestAddOrUpdateReuseKeyToDraftWallet(m_request, keyresued);;
-}
-
-void QAssistedDraftWallets::cancelRequestKey(const QString &request_id, const QString& group_id)
-{
+void QAssistedDraftWallets::cancelRequestKey(const QString &request_id, const QString &group_id) {
     if (!request_id.isEmpty()) {
-        bool ret {false};
+        bool ret{false};
         if (group_id.isEmpty()) {
             ret = Draco::instance()->assistedWalletRemoveId(request_id);
-        }
-        else {
+        } else {
             ret = Byzantine::instance()->DeleteRequestAddKey(group_id, request_id);
         }
         if (ret) {
@@ -118,178 +108,41 @@ void QAssistedDraftWallets::cancelRequestKey(const QString &request_id, const QS
     }
 }
 
-bool QAssistedDraftWallets::RequestAddOrUpdateAKeyToDraftWallet(StructAddHardware hardware){
-    if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
-        return false;
-    }
-    if (!m_selectFingerPrint.isEmpty()) {
-        QJsonObject data;
-        QWarningMessage warningmsg;
-        QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(m_selectFingerPrint);
-        if (single.isNull()) {
-            QMasterSignerPtr master = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(m_selectFingerPrint);
-            single = bridge::nunchukGetDefaultSignerFromMasterSigner(master->id(),
-                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                     ENUNCHUCK::AddressType::NATIVE_SEGWIT ,
-                                                                     warningmsg);
-        }
-        if (single.isNull()){
-            return false;
-        }
-        DBG_INFO << single->tag() << "tag:" << hardware.mTag << m_mode << hardware.mGroupId << " ==== " << hardware.mRequestId;
-        if (single->tag() == hardware.mTag) {
-            if (warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
-                QJsonArray tags;
-                if (!hardware.mTag.isEmpty()) {
-                    tags.append(hardware.mTag);
-                }
-                auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
-                data["name"] = dash.isNull() ? (single->name() != "" ? single->name() : titleCase(hardware.mTag)) : dash->generateName({hardware.mTag});
-                data["xfp"] = single->masterFingerPrint();
-                data["derivation_path"] = single->derivationPath();
-                data["xpub"] = single->xpub();
-                data["pubkey"] = single->publickey();
-                data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
-                if (dash) {
-                    if (dash->allowInheritance()) { // Request from Alert DashBoard
-                        if (dash->nInfo() == 4 && hardware.mKeyIndex == 0) {
-                            tags.append("INHERITANCE");
-                        }
-                        else if (dash->nInfo() == 5 && (hardware.mKeyIndex == 0 || hardware.mKeyIndex == 1)) {
-                            tags.append("INHERITANCE");
-                        }
-                    }
-                }
-                if (hardware.mTags.contains("INHERITANCE") && !tags.contains("INHERITANCE")) { // Request receive from Mobile Banner
-                    tags.append("INHERITANCE");
-                }
-                data["name"] = tags.contains("INHERITANCE") ? data["name"].toString() + "(inh.)" : data["name"].toString();
-                data["tags"] = tags;
-                data["tapsigner"] = {};
-                if (hardware.mKeyIndex >= 0) {
-                    data["key_index"] = hardware.mKeyIndex;
-                }
-                else {
-                    data["key_index"] = {};
-                }
-                DBG_INFO << data;
-                bool isDuplicateKey {false};
-                bool ret {false};
-                QString error_msg;
-                if (hardware.mGroupId.isEmpty()) {
-                    ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
-                    DBG_INFO << ret << isDuplicateKey;
-                } else {
-                    if (dash && dash->isUserDraftWallet()) {
-                        ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
-                    } else {
-                        ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
-                        DBG_INFO << ret << error_msg << isDuplicateKey;
-                    }
-                    if (ret) {
-                        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-                            dashboard->GetAlertsInfo();
-                            dashboard->GetHealthCheckInfo();
-                        }
-                    }
-                }
-                if (ret) {
-                    AppModel::instance()->setAddSignerWizard(3);
-                    return true;
-                }
-                else {
-                    AppModel::instance()->setAddSignerWizard(4);
-                    if (isDuplicateKey) {
-                        emit addHardwareAlert();
-                    }
-                    return false;
-                }
-            }
-        }
-    }
-    AppModel::instance()->setAddSignerWizard(4);
-    return false;
-}
+bool QAssistedDraftWallets::AddOrUpdateToDraftWallet(nunchuk::SingleSigner hardware) {
+    QJsonObject data = progressAddOrReplacementInfo(hardware);
+    QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+    QString group_id = currentSignerInfo.value("group_id").toString();
+    QString request_id = currentSignerInfo.value("request_id").toString();
+    DBG_INFO << data;
 
-bool QAssistedDraftWallets::RequestAddOrUpdateReuseKeyToDraftWallet(StructAddHardware hardware, nunchuk::SingleSigner keyresued)
-{
-    if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
-        return false;
-    }
-    if (!m_selectFingerPrint.isEmpty()) {
-        QJsonObject data;
-        QJsonArray tags;
-        if (!hardware.mTag.isEmpty()) {
-            tags.append(hardware.mTag);
-        }
-        auto dash = QGroupWallets::instance()->GetDashboard(hardware.mGroupId);
-        QString name = QString::fromStdString(keyresued.get_name());
-        data["name"]            = dash.isNull() ? (name != "" ? name : titleCase(hardware.mTag)) : dash->generateName({hardware.mTag});
-        data["xfp"]             = QString::fromStdString(keyresued.get_master_fingerprint());
-        data["derivation_path"] = QString::fromStdString(keyresued.get_derivation_path());
-        data["xpub"]            = QString::fromStdString(keyresued.get_xpub());
-        data["pubkey"]          = QString::fromStdString(keyresued.get_public_key());
-        data["type"]            = qUtils::GetSignerTypeString(keyresued.get_type());
-        if (dash) {
-            if (dash->allowInheritance()) { // Request from Alert Dasboard
-                if (dash->nInfo() == 4 && hardware.mKeyIndex == 0) {
-                    tags.append("INHERITANCE");
-                }
-                else if (dash->nInfo() == 5 && (hardware.mKeyIndex == 0 || hardware.mKeyIndex == 1)) {
-                    tags.append("INHERITANCE");
-                }
-            }
-        }
-        if (hardware.mTags.contains("INHERITANCE") && !tags.contains("INHERITANCE")) { // Request receive from Mobile Banner
-            tags.append("INHERITANCE");
-        }
-        data["name"] = tags.contains("INHERITANCE") && !data["name"].toString().contains("(inh.)") ? data["name"].toString() + "(inh.)" : data["name"].toString();
-        data["tags"] = tags;
-        data["tapsigner"] = {};
-        if (hardware.mKeyIndex >= 0) {
-            data["key_index"] = hardware.mKeyIndex;
-        }
-        else {
-            data["key_index"] = {};
-        }
-        DBG_INFO << data;
-        bool isDuplicateKey {false};
-        bool ret {false};
-        QString error_msg;
-        if (hardware.mGroupId.isEmpty()) {
-            ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
-            DBG_INFO << ret << isDuplicateKey << "Honybadger/IronHand";
-        }
-        else {
-            if (dash && dash->isUserDraftWallet()) {
-                ret = Draco::instance()->assistedWalletAddKey(hardware.mRequestId, data, isDuplicateKey, error_msg);
-                DBG_INFO << ret << isDuplicateKey << "Honybadger/IronHand";
-            } else {
-                ret = Byzantine::instance()->DraftWalletAddKey(hardware.mGroupId, hardware.mRequestId, data, isDuplicateKey, error_msg);
-                DBG_INFO << ret << error_msg << isDuplicateKey << "Not Honybadger/IronHand";
-            }
-            if (ret) {
-                if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-                    dashboard->GetAlertsInfo();
-                    dashboard->GetHealthCheckInfo();
-                }
-            }
+    bool isDuplicateKey{false};
+    bool ret{false};
+    QString error_msg;
+    auto dash = QGroupWallets::instance()->GetDashboard(group_id);
+    if (group_id.isEmpty()) {
+        ret = Draco::instance()->assistedWalletAddKey(request_id, data, isDuplicateKey, error_msg);
+        DBG_INFO << ret << isDuplicateKey;
+    } else {
+        if (dash && dash->isUserDraftWallet()) {
+            ret = Draco::instance()->assistedWalletAddKey(request_id, data, isDuplicateKey, error_msg);
+        } else {
+            ret = Byzantine::instance()->DraftWalletAddKey(group_id, request_id, data, isDuplicateKey, error_msg);
+            DBG_INFO << ret << error_msg << isDuplicateKey;
         }
         if (ret) {
-            return true;
-        }
-        else {
-            if (isDuplicateKey) {
-                emit addHardwareAlert();
+            if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                dashboard->GetAlertsInfo();
+                dashboard->GetHealthCheckInfo();
             }
-            return false;
         }
     }
-    return false;
+    if (isDuplicateKey) {
+        emit addHardwareAlert();
+    }
+    return ret;
 }
 
-QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString& group_id)
-{
+QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray &requests, const QString &group_id) {
     DBG_INFO << requests;
     QMap<Key, StructAddHardware> reqs;
     for (QJsonValue request : requests) {
@@ -299,16 +152,17 @@ QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray 
         QString request_id = requestObj.value("id").toString();
         int key_index = requestObj.value("key_index").toInt(-1);
         if (status == "PENDING") {
-            for (Key key: map_keys.uniqueKeys()) {
+            for (Key key : map_keys.uniqueKeys()) {
                 StructAddHardware hardware = map_keys.value(key);
                 if (tags.contains(hardware.mTag) && status == "PENDING") {
                     hardware.mGroupId = group_id;
                     hardware.mRequestId = request_id;
                     hardware.mKeyIndex = key_index;
                     hardware.mTags.clear();
-                    for (auto tag: tags) {
+                    for (auto tag : tags) {
                         hardware.mTags.append(tag.toString());
                     }
+                    hardware.mConfig = requestObj;
                     reqs.insert(key, hardware);
                 }
             }
@@ -317,124 +171,174 @@ QMap<Key, StructAddHardware> QAssistedDraftWallets::addRequest(const QJsonArray 
     return reqs;
 }
 
-void QAssistedDraftWallets::makeListRequests()
-{
+void QAssistedDraftWallets::makeListRequests() {
     QVariantList hardwares;
     DBG_INFO << m_requests.size();
     for (auto i = m_requests.cbegin(), end = m_requests.cend(); i != end; ++i) {
         StructAddHardware hardware = i.value();
         Key key = i.key();
-        QMap<QString, QVariant> maps;
-        maps["key"] = hardware.mTag;
-        maps["type"] = (int)key;
+        QMap<QString, QVariant> maps = hardware.mConfig.toVariantMap();
+        maps["hwType"] = (int)key;
         maps["textBtn"] = hardware.mTextBtn;
         maps["title"] = hardware.mTitle;
         maps["mHeight"] = hardware.mHeight;
         maps["group_id"] = hardware.mGroupId;
         maps["request_id"] = hardware.mRequestId;
+        maps["is_inheritance"] = hardware.mTag.contains("INHERITANCE");
         DBG_INFO << maps;
         hardwares.append(QVariant::fromValue(maps));
     }
     setHardwareReq(hardwares);
 }
 
-void QAssistedDraftWallets::reset()
-{
+void QAssistedDraftWallets::reset() {
     m_requests.clear();
     makeListRequests();
 }
 
-DeviceListModel* QAssistedDraftWallets::refreshDeviceList() const
-{
+DeviceListModel *QAssistedDraftWallets::refreshDeviceList() const {
     return mRefreshDeviceList.data();
 }
 
-void QAssistedDraftWallets::addHardwareFromConfig(int hardwareType, const QString& group_id, int key_index, bool is_inheritance)
-{
+void QAssistedDraftWallets::addHardwareFromConfig(int hardwareType, const QString &group_id, int key_index, bool isIh) {
     DBG_INFO << hardwareType << group_id << key_index;
     QSwitchAPI::setAddHardware(hardwareType);
-    m_request = map_keys.value((Key)hardwareType);
-    if (is_inheritance) {
-        m_request.mTags.append("INHERITANCE");
-    }
+    auto request = map_keys.value((Key)hardwareType);
+    m_request = request;
     m_request.mGroupId = group_id;
     m_request.mRequestId = "";
     m_request.mKeyIndex = key_index;
+    QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+    currentSignerInfo["hwType"] = hardwareType;
+
+    bool is_inheritance = currentSignerInfo.value("is_inheritance").toBool();
+    QJsonArray tags = currentSignerInfo.value("tags").toArray();
+    if (tags.isEmpty() && !request.mTag.isEmpty()) {
+        tags.append(request.mTag);
+        if (is_inheritance) {
+            tags.append("INHERITANCE");
+        }
+        currentSignerInfo["tags"] = tags;
+    }
+
+    QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);
 }
 
-void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id)
-{
-    for (auto i = m_requests.cbegin(), end = m_requests.cend(); i != end; ++i) {
-        StructAddHardware hardware = i.value();
-        Key key = i.key();
+void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
+    for (int i = 0; i < m_hardwareReq.size(); ++i) {
+        auto info = QJsonValue::fromVariant(m_hardwareReq.at(i)).toObject();
+        auto key = static_cast<Key>(info.value("hwType").toInt());
+        StructAddHardware hardware = m_requests.value(key);
         if (qUtils::strCompare(hardware.mRequestId, request_id)) {
             QSwitchAPI::setAddHardware((int)key);
             m_request = hardware;
+
+            QJsonObject keyInfo = info.value("key").toObject();
+            QJsonArray key_indices = info.value("key_indices").toArray();
+            if (!keyInfo.isEmpty()) {
+                info["key_index"] = key_indices.last().toInt(-1);
+                info["has"] = true;
+                info["new_account_index"] = 1;
+            } else {
+                info["key_index"] = key_indices.first().toInt(-1);
+                info["has"] = false;
+                info["new_account_index"] = 0;
+            }
+            
+            QSignerManagement::instance()->setCurrentSigner(info);
+            QString wallet_type = info.value("wallet_type").toString();
+            ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
         }
     }
 }
 
-int QAssistedDraftWallets::reuseKeyGetCurrentIndex(const QString &xfp)
-{
+int QAssistedDraftWallets::reuseKeyGetCurrentIndex(const QString &xfp) {
     QWarningMessage msg;
-    int ret = bridge::nunchukGetLastUsedSignerIndex(xfp,
-                                                    ENUNCHUCK::WalletType::MULTI_SIG,
-                                                    ENUNCHUCK::AddressType::NATIVE_SEGWIT,
-                                                    msg);
-    if((int)EWARNING::WarningType::NONE_MSG != msg.type()){
+    int ret = bridge::nunchukGetLastUsedSignerIndex(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, msg);
+    if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
         DBG_INFO << msg.code() << msg.what();
     }
     return ret;
 }
 
-bool QAssistedDraftWallets::getSignerFromMasterSigner(const QString &xfp, const int index)
-{
-    DBG_INFO << xfp << index;
+bool QAssistedDraftWallets::checkAndGetSingleSigner(const QString &xfp, int index, nunchuk::SingleSigner &outSigner) {
+    DBG_INFO << "xfp: " << xfp << "index: " << index;
     QWarningMessage msg;
-    QSingleSignerPtr ret = bridge::nunchukGetSignerFromMasterSigner(xfp,
-                                                                    ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                    ENUNCHUCK::AddressType::NATIVE_SEGWIT,
-                                                                    index,
-                                                                    msg);
-    if(ret && (int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        setSelectFingerPrint(xfp);
-        return canReplaceKey() ? requestKeyReplacement(ret) : AddOrUpdateReuseKeyToDraftWallet(ret.data()->singleSigner());
+    int tmpIndex = index < 0 ? 0 : index;
+    nunchuk::SingleSigner ret =  bridge::nunchukGetOriginSignerFromMasterSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, tmpIndex, msg);
+    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+        outSigner = ret;
+        return true;
+    } else {
+        msg.resetWarningMessage();
+        ret = bridge::nunchukGetOriginSingleSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, index, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+            outSigner = ret;
+            return true;
+        }
     }
-    else if((int)EWARNING::WarningType::EXCEPTION_MSG == msg.type() && nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()){
+    if ((int)EWARNING::WarningType::EXCEPTION_MSG == msg.type() && nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()) {
         AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::WARNING_MSG);
         return false;
-    }
-    else{
+    } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         return false;
     }
 }
 
-bool QAssistedDraftWallets::getSigner(const QString &xfp, const int index)
-{
-    DBG_INFO << xfp << index;
-    QWarningMessage msg;
-    nunchuk::SingleSigner ret = bridge::nunchukGetOriginSingleSigner(xfp,
-                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                     ENUNCHUCK::AddressType::NATIVE_SEGWIT,
-                                                                     index,
-                                                                     msg);
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        if (ret.get_type() == nunchuk::SignerType::COLDCARD_NFC) {
-            bool existTag = std::find(ret.get_tags().begin(), ret.get_tags().end(), nunchuk::SignerTag::COLDCARD) != ret.get_tags().end();
-            if (!existTag) {
-                ret.set_tags({nunchuk::SignerTag::COLDCARD});
-            }
-        }
-        setSelectFingerPrint(xfp);
-        return canReplaceKey() ? requestKeyReplacement(QSingleSignerPtr(new QSingleSigner(ret))) : AddOrUpdateReuseKeyToDraftWallet(ret);
+QJsonObject QAssistedDraftWallets::progressAddOrReplacementInfo(nunchuk::SingleSigner hardware) {
+    QString xfp = hardware.get_master_fingerprint().empty() ? QString::fromStdString(hardware.get_master_signer_id()) : QString::fromStdString(hardware.get_master_fingerprint());
+    QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+    QString selectXfp = currentSignerInfo.value("xfp").toString();
+    QString group_id = currentSignerInfo.value("group_id").toString();
+    DBG_INFO << selectXfp << "|" << xfp << "|" << group_id << "|" << currentSignerInfo;
+    if (xfp.isEmpty()) {
+        resultAddOrUpdateAKeyToDraftWallet("eADD_ERROR");
+        return {};
     }
-    //Don't show toast here
-    return false;
+    QJsonObject data;
+    QJsonArray tags = currentSignerInfo.value("tags").toArray();
+    QString tag = "";
+    for (auto t : tags) {
+        if (!qUtils::strCompare(t.toString(), "INHERITANCE")) {
+            tag = t.toString();
+        }
+    }
+
+    QString name = QString::fromStdString(hardware.get_name());
+    auto dash = QGroupWallets::instance()->GetDashboard(group_id);
+    QString finalName = dash.isNull() ? (name != "" ? name : titleCase(tag)) : dash->generateName({tag});
+    bool is_inheritance = currentSignerInfo.value("is_inheritance").toBool();
+    if (is_inheritance && !finalName.contains("(inh.)")) {
+        finalName += "(inh.)";
+    }
+    data["name"] = finalName;
+    data["xfp"] = xfp;
+    data["derivation_path"] = QString::fromStdString(hardware.get_derivation_path());
+    data["xpub"] = QString::fromStdString(hardware.get_xpub());
+    data["pubkey"] = QString::fromStdString(hardware.get_public_key());
+    data["type"] = qUtils::GetSignerTypeString(hardware.get_type());
+    data["tags"] = tags;
+    data["tapsigner"] = {};
+
+    int key_index = currentSignerInfo.value("key_index").toInt(-1);
+    if (key_index >= 0) {
+        data["key_index"] = key_index;
+    } else {
+        data["key_index"] = {};
+    }
+    return data;
 }
 
-bool QAssistedDraftWallets::canReplaceKey()
-{
+bool QAssistedDraftWallets::requestAddOrReplacementToServer(nunchuk::SingleSigner signer) {
+    DBG_INFO << signer.get_master_fingerprint() << "tag:" << signer.get_tags();
+    if (!CLIENT_INSTANCE->isNunchukLoggedIn()) {
+        return false;
+    }
+    return canReplaceKey() ? requestKeyReplacement(signer) : AddOrUpdateToDraftWallet(signer);
+}
+
+bool QAssistedDraftWallets::canReplaceKey() {
     auto dashboard = AppModel::instance()->walletInfoPtr()->dashboard();
     if (dashboard && dashboard->canReplaceKey()) {
         return true;
@@ -443,248 +347,191 @@ bool QAssistedDraftWallets::canReplaceKey()
     }
 }
 
-bool QAssistedDraftWallets::requestKeyReplacement(QSingleSignerPtr signer)
-{
-    StructAddHardware hardware = m_request;
-    if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
-        return false;
+void QAssistedDraftWallets::resultAddOrUpdateAKeyToDraftWallet(const QString &result, bool resetFlow) {
+    if (resetFlow) {
+        QSignerManagement::instance()->clearState();
     }
-    if (!m_selectFingerPrint.isEmpty()) {
-        QJsonObject data;
-        QWarningMessage warningmsg;
-        QSingleSignerPtr single {NULL};
-        if (signer.isNull()) {
-            single = bridge::nunchukGetRemoteSigner(m_selectFingerPrint);
+    QJsonObject currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
+    QString xfp = currentSigerInfo.value("xfp").toString();
+    bool isColdcardNFC = false;
+    if (!m_availableSignerListPtr.isNull()) {
+        auto signer = m_availableSignerListPtr->getSingleSignerByFingerPrint(xfp);
+        isColdcardNFC = signer && signer->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC;
+    }
+    DBG_INFO << result << isColdcardNFC;
+    if (isColdcardNFC) {
+        if (result == "eREUSE_RESULT") {
+            if (canReplaceKey()) {
+                QSignerManagement::instance()->setScreenFlow(result);
+            }
+            else {
+                QGroupWallets::instance()->refresh();
+                if(auto dash = QGroupWallets::instance()->dashboardInfoPtr()) {
+                    dash->requestShowLetAddYourKeys();
+                }                
+            }
         } else {
-            single = signer;
+            QSignerManagement::instance()->setScreenFlow(result);
         }
-
-        if (single.isNull()) {
-            QMasterSignerPtr master = bridge::nunchukGetMasterSignerFingerprint(m_selectFingerPrint);
-            single = bridge::nunchukGetDefaultSignerFromMasterSigner(master->id(),
-                                                                     ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                     ENUNCHUCK::AddressType::NATIVE_SEGWIT ,
-                                                                     warningmsg);
-        }
-        if (single.isNull()){
-            return false;
-        }
-
-        DBG_INFO << "tag:" << single->tag() << m_mode << hardware.mGroupId;
-        if (warningmsg.type() == (int)EWARNING::WarningType::NONE_MSG) {
-            QJsonArray tags;
-            if (!single->tags().isEmpty()) {
-                QStringList list = single->tags();
-                list.removeAll("INHERITANCE");
-                for (auto tag : list) {
-                    tags.append(tag);
-                }
-            }
-            if (!tags.contains(single->tag())) {
-                tags.append(single->tag());
-            }
-            auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
-            data["name"] = dashboard.isNull() ? (single->name() != "" ? single->name() : titleCase(single->tag())) : dashboard->generateName({single->tag()});
-            data["xfp"] = single->masterFingerPrint();
-            data["derivation_path"] = single->derivationPath();
-            data["xpub"] = single->xpub();
-            data["pubkey"] = single->publickey();
-            data["type"] = qUtils::GetSignerTypeString(single->singleSigner().get_type());
-            if (dashboard.isNull()) return false;
-            if (dashboard->isInheritance() || hardware.mTags.contains("INHERITANCE")) { // Request receive from Mobile Banner
-                tags.append("INHERITANCE");
-            }
-            data["name"] = tags.contains("INHERITANCE") ? data["name"].toString() + "(inh.)" : data["name"].toString();
-            data["tags"] = tags;
-            data["tapsigner"] = {};
-            if (hardware.mKeyIndex >= 0) {
-                data["key_index"] = hardware.mKeyIndex;
-            }
-            else {
-                data["key_index"] = {};
-            }
-            bool ret = dashboard->FinishKeyReplacement(data);
-            if (ret) {
-                AppModel::instance()->setAddSignerWizard(3);
-                return true;
-            }
-            else {
-                AppModel::instance()->setAddSignerWizard(4);
-                return false;
-            }
-        }
+    } else {
+        QSignerManagement::instance()->setScreenFlow(result);
     }
-    AppModel::instance()->setAddSignerWizard(4);
+}
+
+bool QAssistedDraftWallets::requestKeyReplacement(nunchuk::SingleSigner hardware) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        QJsonObject data = progressAddOrReplacementInfo(hardware);
+        DBG_INFO << data;
+        bool ret = dashboard->FinishKeyReplacement(data);
+        return ret;
+    }
     return false;
 }
 
-QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardViaFile(const QString &fileName, int new_index)
-{
+QAssistedDraftWallets::ImportColdcard_t QAssistedDraftWallets::ImportColdcardViaFile(const QString &fileName, int new_index) {
+    // Preserve old behavior by delegating based on canReplaceKey() 
+    DBG_INFO << "canReplaceKey:" << canReplaceKey() << "fileName:" << fileName << "new_index: " << new_index;
     using Enum = QAssistedDraftWallets::ImportColdcard_t;
     QWarningMessage msg;
     QString file_path = qUtils::QGetFilePath(fileName);
     QSingleSignerPtr retJson = bridge::nunchukParseJSONSigners(file_path, ENUNCHUCK::SignerType::AIRGAP, ENUNCHUCK::AddressType::NATIVE_SEGWIT, msg);
-    if(retJson && (int)EWARNING::WarningType::NONE_MSG == msg.type()){
+    if (retJson && (int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         msg.resetWarningMessage();
         int current_index = reuseKeyGetCurrentIndex(retJson->masterFingerPrint());
         int account_index = qUtils::GetIndexFromPath(retJson->derivationPath());
-        if(new_index != -1 && current_index != new_index && new_index == account_index){
-            setSelectFingerPrint(retJson->masterFingerPrint());
-            bool ret = canReplaceKey() ? requestKeyReplacement(retJson) : AddOrUpdateReuseKeyToDraftWallet(retJson->originSingleSigner());
+        if (new_index != -1 && current_index != new_index && new_index == account_index) {
+            bool ret = requestAddOrReplacementToServer(retJson->originSingleSigner());
             return ret ? Enum::eOK : Enum::eError_Keep_Screen;
-        }
-        else if (new_index != -1 && current_index != new_index && new_index != account_index) {
+        } else if (new_index != -1 && current_index != new_index && new_index != account_index) {
             QString message = QString("The account imported does not match the account that you entered (%1). Please try again.").arg(new_index);
             AppModel::instance()->showToast(-1, message, EWARNING::WarningType::EXCEPTION_MSG);
             return Enum::eError_Back;
-        }
-        else {
+        } else {
             if (bridge::nunchukHasSinger(retJson->originSingleSigner())) {
-                setSelectFingerPrint(retJson->masterFingerPrint());
-                bool ret = canReplaceKey() ? requestKeyReplacement(retJson) : AddOrUpdateReuseKeyToDraftWallet(retJson->originSingleSigner());
+                bool ret = requestAddOrReplacementToServer(retJson->originSingleSigner());
                 return ret ? Enum::eOK : Enum::eError_Keep_Screen;
-            }
-            else {
-                nunchuk::SingleSigner create = bridge::nunchukCreateOriginSigner(retJson->name(),
-                                                                                 retJson->xpub(),
-                                                                                 retJson->publickey(),
-                                                                                 retJson->derivationPath(),
-                                                                                 retJson->masterFingerPrint(),
-                                                                                 (nunchuk::SignerType)retJson->signerType(),
-                                                                                 retJson->signerTags(),
-                                                                                 false,
-                                                                                 msg);
-                if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+            } else {
+                nunchuk::SingleSigner create = bridge::nunchukCreateOriginSigner(retJson->name(), retJson->xpub(), retJson->publickey(),
+                                                                                 retJson->derivationPath(), retJson->masterFingerPrint(),
+                                                                                 (nunchuk::SignerType)retJson->signerType(), retJson->signerTags(), false, msg);
+                if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                     create.set_tags({nunchuk::SignerTag::COLDCARD});
                     msg.resetWarningMessage();
                     bridge::UpdateRemoteSigner(create, msg);
-                    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+                    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                         msg.resetWarningMessage();
                         QSingleSignerPtr signer = QSingleSignerPtr(new QSingleSigner(create));
                         AppModel::instance()->setSingleSignerInfo(signer);
                         QSingleSignerListModelPtr remoteSigners = bridge::nunchukGetRemoteSigners();
-                        if(remoteSigners){
+                        if (remoteSigners) {
                             AppModel::instance()->setRemoteSignerList(remoteSigners);
                         }
                         if (signer) {
-                            setSelectFingerPrint(signer->masterFingerPrint());
-                            bool ret = canReplaceKey() ? requestKeyReplacement(signer) : AddOrUpdateReuseKeyToDraftWallet(create);
+                            bool ret = requestAddOrReplacementToServer(create);
                             return ret ? Enum::eOK : Enum::eError_Keep_Screen;
                         }
                     }
                 }
             }
         }
-
-    }
-    else if (msg.code() == -100){
+    } else if (msg.code() == -100) {
         AppModel::instance()->showToast(-1, msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
         return Enum::eError_Keep_Screen;
     }
-    if((int)EWARNING::WarningType::EXCEPTION_MSG == msg.type() && nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()){
+    if ((int)EWARNING::WarningType::EXCEPTION_MSG == msg.type() && nunchuk::NunchukException::RUN_OUT_OF_CACHED_XPUB == msg.code()) {
         AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::WARNING_MSG);
         return Enum::eError_Keep_Screen;
-    }
-    else{
+    } else {
         AppModel::instance()->showToast(msg.code(), "XPUBs file is invalid", EWARNING::WarningType::EXCEPTION_MSG);
         return Enum::eError_Keep_Screen;
     }
 }
 
-QString QAssistedDraftWallets::selectFingerPrint() const
-{
-    return m_selectFingerPrint;
-}
-
-void QAssistedDraftWallets::setSelectFingerPrint(const QString &selectFingerPrint)
-{
-    m_selectFingerPrint = selectFingerPrint;
-}
-
-QVariantList QAssistedDraftWallets::hardwareReq() const
-{
+QVariantList QAssistedDraftWallets::hardwareReq() const {
     return m_hardwareReq;
 }
 
-void QAssistedDraftWallets::setHardwareReq(const QVariantList &hardwareReq)
-{
-    if (m_hardwareReq == hardwareReq) return;
+void QAssistedDraftWallets::setHardwareReq(const QVariantList &hardwareReq) {
+    if (m_hardwareReq == hardwareReq)
+        return;
     m_hardwareReq = hardwareReq;
     emit hardwareReqChanged();
 }
 
-void QAssistedDraftWallets::updateRequestKey()
-{
+void QAssistedDraftWallets::updateRequestKey() {
     GetListAllRequestAddKey();
 }
 
-QWalletServicesTagPtr QAssistedDraftWallets::servicesTagPtr() const
-{
+void QAssistedDraftWallets::createAssignAvailableSigners(const QString &wallet_type) {
+    nunchuk::WalletType wtype = nunchuk::WalletType::MULTI_SIG;
+    if (qUtils::strCompare(wallet_type, "MINISCRIPT")) {
+        wtype = nunchuk::WalletType::MINISCRIPT;
+    }
+    QPointer<QAssistedDraftWallets> safeThis(this);
+    bridge::CreateAssignAvailableSigners(nunchuk::AddressType::NATIVE_SEGWIT, wtype, [safeThis](const QSingleSignerListModelPtr &available_signers) {
+        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+        ptrLamda->m_availableSignerListPtr = available_signers;
+    });
+}
+
+QWalletServicesTagPtr QAssistedDraftWallets::servicesTagPtr() const {
     return QWalletServicesTag::instance();
 }
 
-void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag)
-{
-    auto masterList = AppModel::instance()->masterSignerListPtr();
-    auto remoteList = AppModel::instance()->remoteSignerListPtr();
-    DBG_INFO << tag << masterList->rowCount() << remoteList->rowCount();
-    QJsonArray arrays;
-    auto contains = [&](const QString& xfp)->bool {
-        for (auto js : arrays) {
-            QJsonObject json = js.toObject();
-            QString finger = json["signer_fingerPrint"].toString();
-            if (finger == xfp) {
-                return true;
-            }
-        }
-        return false;
-    };
-    for (auto m : masterList->fullList()) {
-        DBG_INFO << m->tag() << m->signerType();
-        if ((m->tag() == tag && (m->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || m->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
-            (qUtils::strCompare(tag, "COLDCARD") && m->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) ||
-            qUtils::strCompare(m->tag(), "KEEPKEY")) {
-            QJsonObject signer;
-            signer["signer_deviceType"] = m->devicePtr()->type();
-            signer["signer_type"] = (int)m->signerType();
-            signer["signer_name"] = m->name();
-            signer["signer_fingerPrint"] = m->fingerPrint();
-            signer["signer_tag"] = m->tag();
-            signer["signer_id"] = m->id();
-            signer["signer_bip32_path"] = m->path();
-            signer["signer_is_primary"] = m->isPrimaryKey();
-            signer["signer_card_id"] = m->device()->cardId();
-            if (!contains(m->fingerPrint())) {
-                arrays.append(signer);
-            }
-        }
+void QAssistedDraftWallets::MixMasterSignerAndSingleSigner(const QString &tag) {
+    if (m_availableSignerListPtr.isNull()) {
+        DBG_ERROR << "availableSignerListPtr is null";
+        return;
     }
-    for (auto s : remoteList->fullList()) {
+    DBG_INFO << "tag: " << tag << "size: " << m_availableSignerListPtr->rowCount();
+    QVariantList arrays;
+    for (auto s : m_availableSignerListPtr->fullList()) {
         DBG_INFO << s->tag() << s->signerType();
         if ((s->tag() == tag && (s->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || s->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
-            (qUtils::strCompare(tag, "COLDCARD") && s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) ||
-            qUtils::strCompare(s->tag(), "KEEPKEY")) {
-            QJsonObject signer;
-            signer["signer_deviceType"] = s->devicetype();
-            signer["signer_type"] = (int)s->signerType();
-            signer["signer_name"] = s->name();
-            signer["signer_fingerPrint"] = s->masterFingerPrint();
-            signer["signer_tag"] = s->tag();
-            signer["signer_id"] = s->masterSignerId();
-            signer["signer_bip32_path"] = s->derivationPath();
-            signer["signer_is_primary"] = s->isPrimaryKey();
-            signer["signer_account_index"] = s->accountIndex();
-            signer["signer_card_id"] = s->cardId();
-            if (!contains(s->masterFingerPrint())) {
-                arrays.append(signer);
-            }
+            (qUtils::strCompare(tag, "COLDCARD") && s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) || qUtils::strCompare(s->tag(), "KEEPKEY")) {
+            auto signer = SingleSignerListModel::useQml(s);
+            arrays.append(signer);
         }
     }
     setSignerExistList(arrays);
 }
 
-void QAssistedDraftWallets::finishScanDevices()
-{
+void QAssistedDraftWallets::MixMasterSignerAndSingleSignerMiniscript(const QString &tag) {
+    if (m_availableSignerListPtr.isNull()) {
+        DBG_ERROR << "availableSignerListPtr is null";
+        return;
+    }    
+    QJsonObject currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
+    QString wallet_type = currentSigerInfo.value("wallet_type").toString();
+    bool has = currentSigerInfo.value("has").toBool();
+    bool hasSecond = currentSigerInfo.value("hasSecond").toBool();
+    QVariantList arrays;
+    for (auto s : m_availableSignerListPtr->fullList()) {
+        DBG_INFO << s->tag() << s->signerType();
+        if ((s->tag() == tag && (s->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE || s->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP)) ||
+            (qUtils::strCompare(tag, "COLDCARD") && s->signerType() == (int)ENUNCHUCK::SignerType::COLDCARD_NFC) || qUtils::strCompare(s->tag(), "KEEPKEY")) {
+            auto signer = SingleSignerListModel::useQml(s);
+            auto maps = signer.toMap();
+            maps["wallet_type"] = wallet_type;
+            signer = QVariant::fromValue(maps);
+            if (!has) {
+                int account_index = qUtils::GetIndexFromPath(s->derivationPath());
+                if (account_index == 0) {
+                    arrays.append(signer);
+                }
+            } else if (has && !hasSecond) {
+                int account_index = qUtils::GetIndexFromPath(s->derivationPath());
+                if (account_index == 1) {
+                    arrays.append(signer);
+                }
+            }
+        }
+    }
+    DBG_INFO << "tag: " << tag << "size: " << m_availableSignerListPtr->rowCount() << "filtered size: " << arrays.size();
+    setSignerExistList(arrays);
+}
+
+void QAssistedDraftWallets::finishScanDevices() {
     if (!typeReq().isEmpty()) {
         auto deviceList = AppModel::instance()->deviceListPtr();
         if (mRefreshDeviceList) {
@@ -705,13 +552,11 @@ void QAssistedDraftWallets::finishScanDevices()
     }
 }
 
-QVariantList QAssistedDraftWallets::signerExistList() const
-{
-    return m_signerExistList.toVariantList();
+QVariantList QAssistedDraftWallets::signerExistList() const {
+    return m_signerExistList;
 }
 
-void QAssistedDraftWallets::setSignerExistList(QJsonArray signerExistList)
-{
+void QAssistedDraftWallets::setSignerExistList(QVariantList signerExistList) {
     if (m_signerExistList == signerExistList)
         return;
 
@@ -719,56 +564,114 @@ void QAssistedDraftWallets::setSignerExistList(QJsonArray signerExistList)
     emit signerExistListChanged();
 }
 
-void QAssistedDraftWallets::reuseKeyFromMasterSigner(const QString &xfp, const int index)
-{
-    DBG_INFO << xfp << index;
+bool QAssistedDraftWallets::requestAddOrReplacementWithIndex(const QString &xfp, int index) {
+    DBG_INFO << "xfp: " << xfp << "index: " << index;
+    nunchuk::SingleSigner outSigner;
+    bool ret = checkAndGetSingleSigner(xfp, index, outSigner);
+    if (ret) {
+        ret = requestAddOrReplacementToServer(outSigner);
+    }
+    QList<uint> states = QEventProcessor::instance()->getCurrentStates();
+    if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_ADD_HARDWARE_EXIST)
+    {
+        resultAddOrUpdateAKeyToDraftWallet(ret ? "eREUSE_RESULT" : "eREUSE_SCAN_DEVICE");
+    } else {
+        resultAddOrUpdateAKeyToDraftWallet(ret ? "eADD_SUCCESS" : "eADD_ERROR");
+    }
+    return ret;
+}
+
+void QAssistedDraftWallets::requestAddOrReplacementWithIndexAsync(const QString &xfp, int index) {
+    DBG_INFO << "xfp: " << xfp << "index: " << index;
+    newAccountIndexCached(xfp, index);
     QtConcurrent::run([this, xfp, index]() {
-        bool ret = getSignerFromMasterSigner(xfp, index);
-        emit reuseKeyGetSignerResult(ret ? 1 : 0);
+        requestAddOrReplacementWithIndex(xfp, index);
     });
 }
 
-void QAssistedDraftWallets::reuseKeyGetSigner(const QString &xfp, const int index)
-{
+QString QAssistedDraftWallets::bip32path(const QString &xfp, int index) {
     DBG_INFO << xfp << index;
-    QtConcurrent::run([this, xfp, index]() {
-        bool ret = getSigner(xfp, index);
-        emit reuseKeyGetSignerResult(ret ? 1 : 0);
-    });
-}
-
-QString QAssistedDraftWallets::bip32path(const QString &xfp, int index)
-{
-    DBG_INFO << xfp << index;
-    if(index >= 0){
-        QWarningMessage msg;
-        nunchuk::SingleSigner ret = bridge::nunchukGetOriginSingleSigner(xfp,
-                                                                         ENUNCHUCK::WalletType::MULTI_SIG,
-                                                                         ENUNCHUCK::AddressType::NATIVE_SEGWIT,
-                                                                         index,
-                                                                         msg);
-        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-            return QString::fromStdString(ret.get_derivation_path());
-        }
-        else{
-            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
-        }
+    nunchuk::SingleSigner outSigner;
+    bool ret = checkAndGetSingleSigner(xfp, index, outSigner);
+    if (ret) {
+        return QString::fromStdString(outSigner.get_derivation_path());
     }
     return "";
 }
 
-QString QAssistedDraftWallets::reuseKeyXfp(const QString &fileName)
-{
+QString QAssistedDraftWallets::reuseKeyXfp(const QString &fileName) {
     QWarningMessage msg;
     QString file_path = qUtils::QGetFilePath(fileName);
     QSingleSignerPtr retJson = bridge::nunchukParseJSONSigners(file_path, ENUNCHUCK::SignerType::AIRGAP, ENUNCHUCK::AddressType::NATIVE_SEGWIT, msg);
-    if(retJson && (int)EWARNING::WarningType::NONE_MSG == msg.type()){
+    if (retJson && (int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         return retJson->masterFingerPrint();
     }
     return "";
 }
 
-StructAddHardware QAssistedDraftWallets::request() const
-{
+StructAddHardware QAssistedDraftWallets::request() const {
     return m_request;
+}
+
+ENUNCHUCK::WalletType QAssistedDraftWallets::walletType() const {
+    QJsonObject currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
+    QString wallet_type = currentSigerInfo.value("wallet_type").toString();
+    if (qUtils::strCompare(wallet_type, "MINISCRIPT")) {
+        return ENUNCHUCK::WalletType::MINISCRIPT;
+    } else {
+        return ENUNCHUCK::WalletType::MULTI_SIG;
+    }
+}
+
+void QAssistedDraftWallets::requestVerifySingleSigner(const int index, const QString &verifyType) {
+    DBG_INFO << "index: " << index << "verifyType: " << verifyType;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, verifyType, index]() ->bool{
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        auto deviceList = refreshDeviceList();
+        if (deviceList && qUtils::strCompare(verifyType, "SELF_VERIFIED")) {
+            auto device = deviceList->getDeviceByIndex(qMax(0, index));
+            if (device) {
+                QWarningMessage msg;
+                auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
+                auto signer = bridge::nunchukGetSignerFromMasterSigner(xfpSelected, derivation_path, msg);
+                if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+                    msg.resetWarningMessage();
+                    bridge::nunchukVerifySingleSigner(device, signer, msg);
+                }
+                if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
+                    AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+                }
+            }
+        }
+
+        QString error_msg;
+        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+            bool ret{false};
+            if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
+                ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verifyType, error_msg);
+            } else {
+                ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verifyType, error_msg);
+            }
+            if (ret) {
+                emit verifySingleSignerResult(1);
+            }
+        }
+        return true;
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+    });
+}
+
+int QAssistedDraftWallets::getAccountIndexFromSigner(const QString &derivation_path) {
+    int ret = qUtils::GetIndexFromPath(derivation_path);
+    DBG_INFO << "OTE" << ret;
+    return ret;
+}
+
+void QAssistedDraftWallets::newAccountIndexCached(const QString &xfp, int index) {
+    auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
+    currentSigerInfo["new_account_index"] = index;
+    QSignerManagement::instance()->setCurrentSigner(currentSigerInfo);
+    
 }

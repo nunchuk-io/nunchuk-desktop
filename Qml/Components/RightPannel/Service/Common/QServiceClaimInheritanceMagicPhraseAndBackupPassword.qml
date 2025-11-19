@@ -36,15 +36,12 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Item {
     property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
-    Component.onCompleted: {
-        _claim.claimClear()
-    }
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            suggestionList.enterKeyRequest()
-        }
-    }
+    property int _eINPUT_MAGICPHRASE: 0
+    property int _eINPUT_BACKUPPWD  : 1
+    property int _eINPUT_INHERITANCE: 2
+    property int currentInputMode: _eINPUT_MAGICPHRASE
+    property string magicphrase_inputted: ""
+
     Column {
         id: _claim
         anchors.fill: parent
@@ -55,11 +52,8 @@ Item {
             top: parent.top
             topMargin: 24
         }
-        function claimClear() {
-            magicPhrase.textInputted = ""
-            backupPassword.textInputted = ""
-        }
         Rectangle {
+            id: banner
             width: parent.width - 24
             height: parent.height * 0.42
             radius: 24
@@ -69,20 +63,43 @@ Item {
                 source: "qrc:/Images/Images/claim-inheritance-illustration.svg"
             }
         }
+        QText {
+            id: title
+            text: STR.STR_QML_747
+            color: "#031F2B"
+            font.family: "Montserrat"
+            font.pixelSize: 32
+            font.weight: Font.DemiBold
+        }
+
         Item {
-            width: parent.width - 24
-            height: parent.height * 0.58 - 24
+            width: parent.width
+            height: parent.height - banner.height - title.height - 48
+            Loader {
+                anchors.fill: parent
+                sourceComponent: currentInputMode === _eINPUT_MAGICPHRASE ? inputMagicphrase :
+                                 currentInputMode === _eINPUT_BACKUPPWD   ? inputBackuppwd   : inputInheritanceKey
+            }
+        }
+    }
+
+    ListModel {
+        id: modelSearch
+    }
+
+    Component {
+        id: inputMagicphrase
+        Item {
+            anchors.fill: parent
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    suggestionList.enterKeyRequest()
+                }
+            }
             Column {
-                id: _header
                 width: parent.width
                 spacing: 16
-                QText {
-                    text: STR.STR_QML_747
-                    color: "#031F2B"
-                    font.family: "Montserrat"
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                }
                 QText {
                     text: STR.STR_QML_748
                     color: "#031F2B"
@@ -90,143 +107,214 @@ Item {
                     font.pixelSize: 16
                     font.weight: Font.Normal
                 }
-            }
-            QTextInputBoxTypeB {
-                id: magicPhrase
-                anchors{
-                    top: _header.bottom
-                    topMargin: 16
-                }
-                z: backupPassword.z + 1
-                label: STR.STR_QML_749
-                boxWidth: 537
-                boxHeight: 48
-                isValid: true
-                onTextInputtedChanged: {
-                    if(!magicPhrase.isValid){
-                        magicPhrase.isValid = true
-                        magicPhrase.errorText = ""
-                    }
-                    magicPhrase.showError = false;
-
-                    var targetY = magicPhrase.y + magicPhrase.height
-                    var targetX = magicPhrase.x
-                    if(textBoxFocus){
-                        sglst.currentIndex = 0
-                        _claim.searchingText(magicPhrase.textInputted)
-                    }
-                }
-                onTextBoxFocusChanged: {
-                    if(textBoxFocus){
-                        sglst.currentIndex = 0
-                        suggestionList.y = magicPhrase.y + magicPhrase.height
-                        suggestionList.x = magicPhrase.x
-                        _claim.searchingText(magicPhrase.textInputted)
-                    }
-                    else{
-                        sglst.currentIndex = -1
-                    }
-                }
-                onDownKeyRequest: {suggestionList.downKeyRequest()  }
-                onUpKeyRequest:   {suggestionList.upKeyRequest()    }
-                onEnterKeyRequest:{suggestionList.enterKeyRequest() }
-                onTabKeyRequest: { suggestionList.enterKeyRequest() }
-
-                Item {
-                    id: suggestionList
-                    width: suggestionList.visible ? magicPhrase.width : 0
-                    height: suggestionList.visible ? Math.min(sglst.contentHeight + 10, 250): 0
-                    visible: sglst.currentIndex !== -1
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {}
-                    }
-
-                    function downKeyRequest() {sglst.downKeyRequest() }
-                    function upKeyRequest()   {sglst.upKeyRequest()   }
-                    function enterKeyRequest(){sglst.enterKeyRequest()}
-
-                    Rectangle {
-                        id: bg
-                        anchors {
-                            fill: parent
-                            leftMargin: 5
-                            rightMargin: 5
-                            topMargin: 5
-                            bottomMargin: 5
+                QTextInputBoxTypeB {
+                    id: magicPhrase
+                    label: STR.STR_QML_749
+                    boxWidth: 537
+                    boxHeight: 48
+                    isValid: true
+                    onTextInputtedChanged: {
+                        if(!magicPhrase.isValid){
+                            magicPhrase.isValid = true
+                            magicPhrase.errorText = ""
                         }
-                        radius: 4
-                        color: "#FFFFFF"
-                        visible: false
+                        magicPhrase.showError = false;
+
+                        var targetY = magicPhrase.y + magicPhrase.height
+                        var targetX = magicPhrase.x
+                        if(textBoxFocus){
+                            sglst.currentIndex = 0
+                            searchingText(magicPhrase.textInputted)
+                        }
                     }
+                    onTextBoxFocusChanged: {
+                        if(textBoxFocus){
+                            sglst.currentIndex = 0
+                            suggestionList.y = magicPhrase.y + magicPhrase.height
+                            suggestionList.x = magicPhrase.x
+                            searchingText(magicPhrase.textInputted)
+                        }
+                        else{
+                            sglst.currentIndex = -1
+                        }
+                    }
+                    onDownKeyRequest: {suggestionList.downKeyRequest()  }
+                    onUpKeyRequest:   {suggestionList.upKeyRequest()    }
+                    onEnterKeyRequest:{suggestionList.enterKeyRequest() }
+                    onTabKeyRequest: { suggestionList.enterKeyRequest() }
 
-                    DropShadow {
-                        anchors.fill: bg
-                        verticalOffset: 3
-                        cached: true
-                        radius: 16
-                        samples: 24
-                        color: Qt.rgba(0, 0, 0, 0.4)
-                        source: bg
-                        ListView {
-                            id: sglst
-                            anchors.centerIn: parent
-                            width: parent.width - 10
-                            height: suggestionList.visible ? Math.min(sglst.contentHeight, 240): 0
-                            model: modelSearch
-                            clip: true
-                            ScrollBar.vertical: ScrollBar { active: true }
-                            delegate: Rectangle {
-                                width: sglst.width
-                                property bool shown: textsuggest.visible
-                                height: 240/10
-                                color: suggestMouse.containsMouse ? "#F1FAFE" : "#FFFFFF"
-                                QText {
-                                    id: textsuggest
-                                    anchors.left: parent.left
-                                    text: modelData
-                                    color: suggestMouse.pressed ?"#031F2B" :  (suggestMouse.containsMouse || sglst.currentIndex === index) ? "#35ABEE" : "#031F2B"
-                                    font.pixelSize: 16
-                                    font.weight: (suggestMouse.containsMouse || sglst.currentIndex === index) ? Font.ExtraBold : Font.Normal
-                                }
+                    Item {
+                        id: suggestionList
+                        width: suggestionList.visible ? magicPhrase.width : 0
+                        height: suggestionList.visible ? Math.min(sglst.contentHeight + 10, 250): 0
+                        visible: sglst.currentIndex !== -1
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {}
+                        }
 
-                                MouseArea {
-                                    id: suggestMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {sglst.mouseKeyRequest(index)}
-                                }
+                        function downKeyRequest() {sglst.downKeyRequest() }
+                        function upKeyRequest()   {sglst.upKeyRequest()   }
+                        function enterKeyRequest(){sglst.enterKeyRequest()}
+
+                        Rectangle {
+                            id: bg
+                            anchors {
+                                fill: parent
+                                leftMargin: 5
+                                rightMargin: 5
+                                topMargin: 5
+                                bottomMargin: 5
                             }
+                            radius: 4
+                            color: "#FFFFFF"
+                            visible: false
+                        }
 
-                            function downKeyRequest() { if(sglst.currentIndex < sglst.count - 1) {sglst.currentIndex += 1}; }
-                            function upKeyRequest() {if(sglst.currentIndex > 0) {sglst.currentIndex -= 1};}
-                            function enterKeyRequest() {
-                                if (sglst.currentIndex !== -1) {
-                                    var splitString = magicPhrase.textInputted.split(" ");
-                                    splitString[splitString.length - 1] = modelSearch.get(sglst.currentIndex).mnemonic;
-                                    magicPhrase.textInputted = splitString.toString(" ");
+                        DropShadow {
+                            anchors.fill: bg
+                            verticalOffset: 3
+                            cached: true
+                            radius: 16
+                            samples: 24
+                            color: Qt.rgba(0, 0, 0, 0.4)
+                            source: bg
+                            ListView {
+                                id: sglst
+                                anchors.centerIn: parent
+                                width: parent.width - 10
+                                height: suggestionList.visible ? Math.min(sglst.contentHeight, 240): 0
+                                model: modelSearch
+                                clip: true
+                                ScrollBar.vertical: ScrollBar { active: true }
+                                delegate: Rectangle {
+                                    width: sglst.width
+                                    property bool shown: textsuggest.visible
+                                    height: 240/10
+                                    color: suggestMouse.containsMouse ? "#F1FAFE" : "#FFFFFF"
+                                    QText {
+                                        id: textsuggest
+                                        anchors.left: parent.left
+                                        text: modelData
+                                        color: suggestMouse.pressed ?"#031F2B" :  (suggestMouse.containsMouse || sglst.currentIndex === index) ? "#35ABEE" : "#031F2B"
+                                        font.pixelSize: 16
+                                        font.weight: (suggestMouse.containsMouse || sglst.currentIndex === index) ? Font.ExtraBold : Font.Normal
+                                    }
+
+                                    MouseArea {
+                                        id: suggestMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {sglst.mouseKeyRequest(index)}
+                                    }
+                                }
+
+                                function downKeyRequest() { if(sglst.currentIndex < sglst.count - 1) {sglst.currentIndex += 1}; }
+                                function upKeyRequest() {if(sglst.currentIndex > 0) {sglst.currentIndex -= 1};}
+                                function enterKeyRequest() {
+                                    if (sglst.currentIndex !== -1) {
+                                        var splitString = magicPhrase.textInputted.split(" ");
+                                        splitString[splitString.length - 1] = modelSearch.get(sglst.currentIndex).mnemonic;
+                                        magicPhrase.textInputted = splitString.toString(" ");
+                                        sglst.currentIndex = -1;
+                                    }
+                                }
+                                function mouseKeyRequest(index) {
+                                    if(index !== -1) {
+                                        var splitString = magicPhrase.textInputted.split(" ");
+                                        splitString[splitString.length - 1] = modelSearch.get(index).mnemonic;
+                                        magicPhrase.textInputted = splitString.toString(" ");
+                                    }
                                     sglst.currentIndex = -1;
                                 }
                             }
-                            function mouseKeyRequest(index) {
-                                if(index !== -1) {
-                                    var splitString = magicPhrase.textInputted.split(" ");
-                                    splitString[splitString.length - 1] = modelSearch.get(index).mnemonic;
-                                    magicPhrase.textInputted = splitString.toString(" ");
-                                }
-                                sglst.currentIndex = -1;
-                            }
                         }
                     }
                 }
             }
-            Column {
-                anchors{
-                    top: _header.bottom
-                    topMargin: 16 + 72 + 16
+            Rectangle {
+                width: parent.width + 24
+                height: 80
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                color: "#FFFFFF"
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#DEDEDE"
                 }
+                QTextButton {
+                    width: label.paintedWidth + 2*16
+                    height: 48
+                    anchors {
+                        right: parent.right
+                        rightMargin: 24
+                        verticalCenter: parent.verticalCenter
+                    }
+                    label.text: STR.STR_QML_265
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: {
+                        magicphrase_inputted = magicPhrase.textInputted
+                        var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
+                        _prepareInheritanceKey.onChainClaim()
+                        if (typeof(data.code) !== `undefined`) {
+                        } else if(data.wallet_type === "MINISCRIPT"){
+                            _prepareInheritanceKey.onChainClaim()
+                        } else {
+                            currentInputMode = _eINPUT_BACKUPPWD
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                claimClear()
+            }
+            function claimClear() {
+                magicPhrase.textInputted = ""
+                magicphrase_inputted = ""
+            }
+            function searchingText(str){
+                // SPIT TEXT
+                const words = str.split(" ");
+                const lastIdx = words.length - 1;
+                const lastWord = words[lastIdx];
+
+                modelSearch.clear()
+                for(var i = 0; i < AppModel.suggestMnemonics.length; i++){
+                    if(str === ""){
+                        var data = {'mnemonic': AppModel.suggestMnemonics[i]};
+                        modelSearch.append(data)
+                    }
+                    else{
+                        var currentText = AppModel.suggestMnemonics[i].toLowerCase().substring(0, lastWord.length)
+                        if (currentText.toLowerCase() === lastWord.toLowerCase()){
+                            var datafilter = {'mnemonic': AppModel.suggestMnemonics[i]};
+                            modelSearch.append(datafilter)
+                        }
+                    }
+                }
+                sglst.currentIndex = 0
+                return true
+            }
+        }
+    }
+
+    Component {
+        id: inputBackuppwd
+        Item {
+            anchors.fill: parent
+            Column {
+                width: parent.width
                 spacing: 16
+                QText {
+                    text: STR.STR_QML_1987
+                    color: "#031F2B"
+                    font.family: "Lato"
+                    font.pixelSize: 16
+                    font.weight: Font.Normal
+                }
                 QTextInputBoxTypeB {
                     id: backupPassword
                     label: STR.STR_QML_727
@@ -241,7 +329,6 @@ Item {
                         backupPassword.showError = false;
                     }
                 }
-
                 QTextInputBoxTypeB {
                     id: backupPassword_two
                     label: STR.STR_QML_727_optinal
@@ -258,53 +345,56 @@ Item {
                 }
             }
 
-            QTextButton {
-                width: 98
-                height: 48
-                anchors {
-                    right: parent.right
-                    bottom: parent.bottom
-                    bottomMargin: 16
+            Rectangle {
+                width: parent.width + 24
+                height: 80
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                color: "#FFFFFF"
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#DEDEDE"
                 }
-                label.text: STR.STR_QML_265
-                label.font.pixelSize: 16
-                type: eTypeE
-                onButtonClicked: {
-//                    suggestionList.enterKeyRequest()
-                    var input = {
-                        "magic":magicPhrase.textInputted,
-                        "backupPassword":backupPassword.textInputted,
-                        "backupPasswordTwo":backupPassword_two.textInputted
+                QTextButton {
+                    width: label.paintedWidth + 2*16
+                    height: 48
+                    anchors {
+                        right: parent.right
+                        rightMargin: 24
+                        verticalCenter: parent.verticalCenter
                     }
-                    QMLHandle.signalNotifySendEvent(EVT.EVT_CLAIM_INHERITANCE_CHECK_REQUEST,input)
+                    label.text: STR.STR_QML_265
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: {
+                        var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
+                        // var input = {
+                        //     "magic"             :magicphrase_inputted,
+                        //     "backupPassword"    :backupPassword.textInputted,
+                        //     "backupPasswordTwo" :backupPassword_two.textInputted
+                        // }
+                        // console.log("EVT_CLAIM_INHERITANCE_CHECK_REQUEST input:", input)
+                        // QMLHandle.signalNotifySendEvent(EVT.EVT_CLAIM_INHERITANCE_CHECK_REQUEST,input)
+                    }
                 }
             }
-        }
-        function searchingText(str){
-            // SPIT TEXT
-            const words = str.split(" ");
-            const lastIdx = words.length - 1;
-            const lastWord = words[lastIdx];
 
-            modelSearch.clear()
-            for(var i = 0; i < AppModel.suggestMnemonics.length; i++){
-                if(str === ""){
-                    var data = {'mnemonic': AppModel.suggestMnemonics[i]};
-                    modelSearch.append(data)
-                }
-                else{
-                    var currentText = AppModel.suggestMnemonics[i].toLowerCase().substring(0, lastWord.length)
-                    if (currentText.toLowerCase() === lastWord.toLowerCase()){
-                        var datafilter = {'mnemonic': AppModel.suggestMnemonics[i]};
-                        modelSearch.append(datafilter)
-                    }
-                }
+            Component.onCompleted: {
+                backuppwdClear()
             }
-            sglst.currentIndex = 0
-            return true
+            function backuppwdClear() {
+                backupPassword.textInputted = ""
+                backupPassword_two.textInputted = ""
+            }
         }
-        ListModel {
-            id: modelSearch
+    }
+
+    Component {
+        id: inputInheritanceKey
+        Rectangle {
+            anchors.fill: parent
+            color: "LightGray"
         }
     }
 }

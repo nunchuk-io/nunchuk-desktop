@@ -349,6 +349,10 @@ public:
                                 const std::string& passphrase,
                                 QWarningMessage& msg);
 
+    void VerifySingleSigner(const nunchuk::Device& device,
+                            const nunchuk::SingleSigner& signer,
+                            QWarningMessage& msg);
+
     bool SetSelectedWallet(const std::string& wallet_id, QWarningMessage& msg);
 
     nunchuk::SingleSigner CreateCoboSigner(const std::string& name,
@@ -511,6 +515,12 @@ public:
                                                QWarningMessage& msg);
 
     std::string SignHealthCheckMessage(const nunchuk::SingleSigner& signer,
+                                       const std::string& message,
+                                       QWarningMessage& msg);
+
+    std::string SignHealthCheckMessage(const nunchuk::Wallet& wallet,
+                                       const nunchuk::Device& device,
+                                       const nunchuk::SingleSigner& signer,
                                        const std::string& message,
                                        QWarningMessage& msg);
 

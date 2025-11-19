@@ -190,7 +190,7 @@ Column {
                     height: _input_date.height
                     QTextInputBoxTypeB {
                         id: _input_date
-                        label: "Date"
+                        label: STR.STR_QML_1463
                         labelComponent.textFormat: Text.RichText
                         labelComponent.font.pixelSize: 12
                         boxWidth: parent.width
@@ -205,7 +205,7 @@ Column {
                             _input_date.showError = false;
                             var absolute_time = {
                                 "valueDate"      : _input_date.textInputted,
-                                "valueTime"      : _input_time.textInputted
+                                "valueTime"      : newWalletInfo.timeMini.absoluteTimestamp.valueTime
                             }
                             newWalletInfo.updateTimeMiniscript("absoluteTimestamp", absolute_time);
                         }
@@ -241,31 +241,21 @@ Column {
                     height: _input_time.height
                     QTextInputBoxTypeB {
                         id: _input_time
-                        label: "Time"
+                        label: STR.STR_QML_1989
                         labelComponent.textFormat: Text.RichText
                         labelComponent.font.pixelSize: 12
                         boxWidth: parent.width
                         boxHeight: 48
-                        textInputted: "00:00"
-                        input.placeholderText: "00:00"
-                        validator: RegExpValidator {
-                            regExp: /^(\d{1,2}):(\d{1,2})$/
-                        }
-                        onTypingFinished: {
-                            var match = _input_time.textInputted.match(/^(\d{1,2}):(\d{1,2})$/)
-                            if (match) {
-                                var hour = Math.min(parseInt(match[1], 10), 23)
-                                var minute = Math.min(parseInt(match[2], 10), 59)
-
-                                _input_time.textInputted =
-                                    (hour < 10 ? "0" + hour : hour) + ":" +
-                                    (minute < 10 ? "0" + minute : minute)
+                        textInputted: _analogClockInput.timeString
+                        input.placeholderText: newWalletInfo.timeMini.absoluteTimestamp.valueTime
+                        onTextInputtedChanged: {
+                            if(!_input_time.isValid){
+                                _input_time.isValid = true
+                                _input_time.errorText = ""
                             }
-                            else {
-                                _input_time.textInputted = "00:00"
-                            }
+                            _input_time.showError = false;
                             var absolute_time = {
-                                "valueDate"      : _input_date.textInputted,
+                                "valueDate"      : newWalletInfo.timeMini.absoluteTimestamp.valueDate,
                                 "valueTime"      : _input_time.textInputted
                             }
                             newWalletInfo.updateTimeMiniscript("absoluteTimestamp", absolute_time);
@@ -279,6 +269,15 @@ Column {
                             bottomMargin: 14
                             right: _input_time.right
                             rightMargin: 12
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        propagateComposedEvents: true
+                        onClicked: {
+                            _analogClockInput.open()
                         }
                     }
                 }

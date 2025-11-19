@@ -23,9 +23,14 @@ MiniscriptTransaction::MiniscriptTransaction(const nunchuk::Transaction &tx) : B
 
 bool MiniscriptTransaction::isScriptPath() const
 {
-    auto tx = nunchukTransaction();
-    if (tx.get_wallet_type() == nunchuk::WalletType::MINISCRIPT) {
-        if (tx.get_address_type() == nunchuk::AddressType::NATIVE_SEGWIT) {
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
+    if (!wallet) {
+        DBG_ERROR << "Wallet info is not available";
+        return false;
+    }
+    auto w = wallet->nunchukWallet();
+    if (w.get_wallet_type() == nunchuk::WalletType::MINISCRIPT) {
+        if (w.get_address_type() == nunchuk::AddressType::NATIVE_SEGWIT) {
             return true;
         } else {
             return AppSetting::instance()->getTransactionUsescriptpath(txid());
@@ -37,12 +42,12 @@ bool MiniscriptTransaction::isScriptPath() const
 
 QJsonArray MiniscriptTransaction::walletTreeMiniscriptJs() const
 {
-    auto walletInfo = AppModel::instance()->walletInfo();
-    if (!walletInfo) {
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
+    if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return {};
-    }    
-    return walletInfo->treeMiniscriptJs();
+    }
+    return wallet->treeMiniscriptJs();
 }
 
 QVariantList MiniscriptTransaction::treeMiniscript() const {
@@ -499,16 +504,21 @@ QVariantList MiniscriptTransaction::miniTreeForSigning() {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigningScriptPath() {
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
+    if (!wallet) {
+        DBG_ERROR << "Wallet info is not available";
+        return {};
+    }
     QString tx_id = txid();
     QVariantList miniTreeForSigning;
 
     auto tx = nunchukTransaction();
-    std::string miniscript = AppModel::instance()->walletInfo()->miniscript().toStdString();
+    std::string miniscript = wallet->miniscript().toStdString();
     std::vector<std::string> keypaths;
     nunchuk::ScriptNode script_node = qUtils::GetScriptNode(miniscript, keypaths);
-    QJsonArray scriptTree = AppModel::instance()->walletInfo()->treeMiniscriptJs();
+    QJsonArray scriptTree = wallet->treeMiniscriptJs();
     int64_t chain_tip = bridge::nunchukBlockHeight();
-    std::vector<nunchuk::UnspentOutput> coins = bridge::nunchukGetOriginCoinsFromTxInputs(AppModel::instance()->walletInfo()->walletId(), tx.get_inputs());
+    std::vector<nunchuk::UnspentOutput> coins = bridge::nunchukGetOriginCoinsFromTxInputs(walletId(), tx.get_inputs());
     DBG_INFO << "coins" << coins.size();
     QJsonArray scriptTreeTx = createTreeMiniscriptTransaction(script_node, chain_tip, coins, nunchuk::CoinsGroup(), true);
     QJsonArray scriptNodeJson;
@@ -521,7 +531,6 @@ QVariantList MiniscriptTransaction::miniTreeForSigningScriptPath() {
             }
         }
     }
-
     miniTreeForSigning = scriptNodeJson.toVariantList();
     for (int i = 0; i < miniTreeForSigning.size(); ++i) {
         QVariantMap node = miniTreeForSigning[i].toMap();
@@ -550,7 +559,8 @@ QVariantList MiniscriptTransaction::miniTreeForSigningScriptPath() {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigningKeyPath() {
-    auto wallet = AppModel::instance()->walletInfo();
+    // auto wallet = AppModel::instance()->walletInfo();
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (!wallet) {
         DBG_ERROR << "Wallet info is not available";
         return {};
@@ -565,7 +575,7 @@ QVariantList MiniscriptTransaction::miniTreeForSigningKeyPath() {
         std::string keypath = nunchuk::GetDescriptorForSigner(signer, nunchuk::DescriptorPath::EXTERNAL_ALL);
         keypaths.push_back(keypath);
     }
-    QJsonArray keyPaths = AppModel::instance()->walletInfo()->keypathsJs();
+    QJsonArray keyPaths = wallet->keypathsJs();
     QJsonArray keyPathsTx = createTreeMiniscriptTransaction(keypaths);
     QJsonArray scriptNodeJson;
     for (const auto& node : keyPaths) {
@@ -578,6 +588,8 @@ QVariantList MiniscriptTransaction::miniTreeForSigningKeyPath() {
         }
     }
     miniTreeForSigning = scriptNodeJson.toVariantList();
+
+    DBG_INFO << scriptNodeJson;
     
     return miniTreeForSigning;
 }
@@ -970,7 +982,11 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
         return line;
     }
     auto signer = list->getSingleSignerByFingerPrint(QString::fromStdString(xfp.toStdString()));
+    
     if (!signer.isNull()) {
+        if (!txJson().isEmpty() || isDummyTx()) {
+            line["alreadySigned"] = signer->signerSigned();
+        }
         if(signer->signerType() == (int)ENUNCHUCK::SignerType::HARDWARE) {
             line["hasSignOrScan"] = true; // always show sign button or scan button
             line["signerReadyToSign"] = AppModel::instance()->deviceList()->contains(QString::fromStdString(xfp.toStdString()));
@@ -978,12 +994,13 @@ QJsonObject MiniscriptTransaction::processKeyNodeJson(const QJsonObject& value, 
             line["hasSignOrScan"] = true; // always show sign button or scan button
             line["signerReadyToSign"] = true;
         } else if (signer->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP) {
-            line["hasSignOrScan"] = false; // no sign button, only scan button
-            line["signerReadyToSign"] = false;
+            line["hasSignOrScan"] = true; // only sign button, no scan button
+            line["signerReadyToSign"] = true;
         } else {
             line["hasSignOrScan"] = false; // no sign button, no scan button
             line["signerReadyToSign"] = false;
         }
+        line["signerType"] = signer->signerType();
     } else {
         line["hasSignOrScan"] = false; // no sign button, no scan button
         line["signerReadyToSign"] = false;
@@ -998,7 +1015,7 @@ void MiniscriptTransaction::clearSigningPaths() {
     m_signingPathsAutoChecked.clear();    
     QString tx_id = txid();
     AppSetting::instance()->setTransactionSigningPath(tx_id, "");
-    auto wallet = AppModel::instance()->walletInfo();
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
     if (wallet) {
         wallet->convertToMiniscript(wallet->nunchukWallet());
     }

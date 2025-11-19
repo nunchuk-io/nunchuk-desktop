@@ -136,14 +136,37 @@ bool QInheritancePlan::isSetup() const
     return qUtils::strCompare(email, me.email);
 }
 
+QString QInheritancePlan::formatDateTime() const {
+    if (auto walletInfo = walletInfoPtr()) {
+        if (walletInfo->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+            return QString("MM/dd/yyyy hh:mm");
+        } else {
+            return QString("MM/dd/yyyy");
+        }
+    }
+    return QString();
+}
+
 QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
 {
-    long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble()/1000);
-    if (activation_time_milis > 0) {
-        data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).date().toString("MM/dd/yyyy");
+    auto wallet = walletInfoPtr();
+    if (wallet.isNull()) return data;
+    auto dashBoard = dashBoardPtr();
+    if (dashBoard.isNull()) return data;
+    nunchuk::WalletType wallet_type = wallet->nunchukWallet().get_wallet_type();
+    if (wallet_type == nunchuk::WalletType::MINISCRIPT) {
+        data["activation_date"] = dashBoard->timeLock();
+        data["activation_timezone_local"] = wallet->timezones()->selectedTimezone();
     } else {
-        data["activation_date"] = "";
+        long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble()/1000);
+        if (activation_time_milis > 0) {
+            data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).toString(formatDateTime());
+        } else {
+            data["activation_date"] = "";
+        }
+        data["activation_timezone_local"] = "";
     }
+    
     QJsonArray emails = data.value("notification_emails").toArray();
     if (emails.size() > 0) {
         QStringList emailList;
@@ -155,6 +178,7 @@ QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
     } else {
         data["display_emails"] = "";
     }
+    
     QJsonObject buffer_period = data["buffer_period"].toObject();
     if (buffer_period.isEmpty()) {
         buffer_period["id"] = "";
@@ -248,6 +272,7 @@ QJsonObject QInheritancePlan::JsBody()
     else {
         body["activation_time_milis"] = (double)t*1000;
     }
+    body["notification_preferences"] = m_planInfo["notification_preferences"].toObject();
     return body;
 }
 
@@ -532,40 +557,230 @@ bool QInheritancePlan::createPeriods()
 
 void QInheritancePlan::editPlanInfo(const QVariant &info)
 {
-    QMap<QString,QVariant> _new = info.toMap();
-    DBG_INFO << _new;
-    QJsonObject change = m_planInfo;
-    QJsonObject _old = m_planInfoCurrent;
-    change["edit_isChanged"] = false;
-    if (_new["note"].isValid() && _old["note"].toVariant() != _new["note"]) {
-        change["note"] = _new["note"].toString();
-    }
-    if (_new["display_emails"].isValid() && _old["display_emails"].toVariant() != _new["display_emails"]) {
-        change["display_emails"] = _new["display_emails"].toString();
-    }
-    if (_new["activation_date"].isValid() && _old["activation_date"].toVariant() != _new["activation_date"]) {
-        change["activation_date"] = _new["activation_date"].toString();
-    }
-    if (_new["notify_today"].isValid() && _old["notify_today"].toVariant() != _new["notify_today"]) {
-        change["notify_today"] = _new["notify_today"].toBool();
-    }
-    if (_new["buffer_period"].isValid()) {
-        QJsonObject buffer_period = _old["buffer_period"].toObject();
-        QMap<QString,QVariant> new_buffer_period = _new["buffer_period"].toMap();
-        if (new_buffer_period["id"].isValid() && buffer_period["id"].toVariant() != new_buffer_period["id"]) {
-            buffer_period["id"] = new_buffer_period["id"].toString();
+    QMap<QString, QVariant> _new = info.toMap();
+    QJsonObject original = m_planInfoCurrent; // baseline from server
+    QJsonObject change   = m_planInfo;        // working copy (may already include previous edits)
+
+    auto normalizeEmails = [](const QString &text) -> QString {
+        QStringList parts = text.split(",", Qt::SkipEmptyParts);
+        QStringList out;
+        for (QString e : parts) {
+            e = e.trimmed();
+            if (e.isEmpty()) continue;
+            bool dup = false;
+            for (const QString &ex : out) {
+                if (ex.compare(e, Qt::CaseInsensitive) == 0) { dup = true; break; }
+            }
+            if (!dup) out.append(e);
         }
-        if (new_buffer_period["display_name"].isValid() && buffer_period["display_name"].toVariant() != new_buffer_period["display_name"]) {
-            buffer_period["display_name"] = new_buffer_period["display_name"].toString();
+        return out.join(",");
+    };
+
+    // note
+    if (_new.contains("note")) {
+        QString newNote = _new["note"].toString();
+        QString oldNote = original.value("note").toString();
+        if (newNote != oldNote) {
+            change["note"] = newNote;
         }
-        if (new_buffer_period["enabled"].isValid() && buffer_period["enabled"].toVariant() != new_buffer_period["enabled"]) {
-            buffer_period["enabled"] = new_buffer_period["enabled"].toBool();
+    }
+
+    // display_emails (normalize, trim, dedupe; compare canonically)
+    if (_new.contains("display_emails")) {
+        QString newEmails = normalizeEmails(_new["display_emails"].toString());
+        QString oldEmails = normalizeEmails(original.value("display_emails").toString());
+        if (newEmails != oldEmails) {
+            change["display_emails"] = newEmails;
         }
-        change["buffer_period"] = buffer_period;
     }
-    if (change != _old) {
-        change["edit_isChanged"] = true;
+
+    // activation_date (accept only valid )
+    if (_new.contains("activation_date")) {
+        QString newDate = _new["activation_date"].toString().trimmed();
+        QDate d = QDate::fromString(newDate, formatDateTime());
+        if (d.isValid()) {
+            QString oldDate = original.value("activation_date").toString();
+            if (newDate != oldDate) {
+                change["activation_date"] = newDate;
+            }
+        }
     }
-    DBG_INFO << change;
+
+    // notify_today (keep buffer_period.enabled in sync)
+    if (_new.contains("notify_today")) {
+        bool newNotify = _new["notify_today"].toBool();
+        bool oldNotify = original.value("buffer_period").toObject().value("enabled").toBool();
+        if (newNotify != oldNotify) {
+            change["notify_today"] = newNotify;
+            QJsonObject bp = change.value("buffer_period").toObject();
+            bp["enabled"] = newNotify;
+            change["buffer_period"] = bp;
+        }
+    }
+
+    // buffer_period (merge any provided keys, keep notify_today in sync if enabled changed)
+    if (_new.contains("buffer_period")) {
+        QJsonObject oldBP = original.value("buffer_period").toObject();
+        QJsonObject curBP = change.value("buffer_period").toObject();
+        QMap<QString, QVariant> newBPMap = _new["buffer_period"].toMap();
+
+        bool bpChanged = false;
+        for (auto it = newBPMap.constBegin(); it != newBPMap.constEnd(); ++it) {
+            QJsonValue newVal = QJsonValue::fromVariant(it.value());
+            if (!oldBP.contains(it.key()) || oldBP.value(it.key()) != newVal) {
+                curBP.insert(it.key(), newVal);
+                bpChanged = true;
+            }
+        }
+
+        // If enabled provided without explicit notify_today, mirror it
+        if (!_new.contains("notify_today") && newBPMap.contains("enabled")) {
+            bool newEnabled = newBPMap["enabled"].toBool();
+            bool oldEnabled = oldBP.value("enabled").toBool();
+            if (newEnabled != oldEnabled) {
+                change["notify_today"] = newEnabled;
+            }
+        }
+
+        if (bpChanged) {
+            change["buffer_period"] = curBP;
+        }
+    }
+
+    change["edit_isChanged"] = (change != original);
+    setPlanInfo(change);
+}
+
+void QInheritancePlan::editPlanInfoOnchain(const QVariant &info)
+{
+    QMap<QString, QVariant> req = info.toMap();
+    QString setup_type = req.value("setup_type").toString();
+
+    QJsonObject original = m_planInfoCurrent;  // baseline from server
+    QJsonObject change   = m_planInfo;         // working copy
+
+    auto ensurePrefs = [](QJsonObject prefs) {
+        if (!prefs.contains("beneficiary_notifications"))
+            prefs["beneficiary_notifications"] = QJsonArray{};
+        if (!prefs.contains("email_me_wallet_config"))
+            prefs["email_me_wallet_config"] = false;
+        return prefs;
+    };
+
+    auto normalizeEmails = [](const QString &text) -> QStringList {
+        QStringList parts = text.split(",", Qt::SkipEmptyParts);
+        QStringList out;
+        for (QString e : parts) {
+            e = e.trimmed();
+            if (e.isEmpty()) continue;
+            bool dup = false;
+            for (const QString &ex : out) {
+                if (ex.compare(e, Qt::CaseInsensitive) == 0) { dup = true; break; }
+            }
+            if (!dup) out.append(e);
+        }
+        return out;
+    };
+
+    change["notification_preferences"] = ensurePrefs(change.value("notification_preferences").toObject());
+
+    if (setup_type == "emails") {
+        QStringList newEmailList = normalizeEmails(req.value("display_emails").toString());
+
+        QJsonObject oldPrefs = original.value("notification_preferences").toObject();
+        QJsonArray oldList = oldPrefs.value("beneficiary_notifications").toArray();
+
+        QJsonArray newList;
+        for (const QString &email : newEmailList) {
+            bool found = false;
+            QJsonObject entry;
+            for (const QJsonValue &v : oldList) {
+                QJsonObject obj = v.toObject();
+                if (obj.value("email").toString().compare(email, Qt::CaseInsensitive) == 0) {
+                    entry = obj;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                entry["email"] = email;
+                entry["notify_timelock_expires"] = true;
+                entry["notify_wallet_changes"] = true;
+                entry["include_wallet_config"] = true;
+            }
+            newList.append(entry);
+        }
+
+        QJsonObject curPrefs = change.value("notification_preferences").toObject();
+        QJsonArray curList = curPrefs.value("beneficiary_notifications").toArray();
+        if (newList != curList) {
+            curPrefs["beneficiary_notifications"] = newList;
+            change["notification_preferences"] = curPrefs;
+        }
+
+        QString newDisplay = newEmailList.join(",");
+        if (change.value("display_emails").toString() != newDisplay) {
+            change["display_emails"] = newDisplay;
+        }
+
+        QJsonArray flatEmails;
+        for (const QString &e : newEmailList) flatEmails.append(e);
+        if (change.value("notification_emails").toArray() != flatEmails) {
+            change["notification_emails"] = flatEmails;
+        }
+    }
+    else if (setup_type == "preference") {
+        QString email = req.value("setup_email").toString().trimmed();
+        if (!email.isEmpty()) {
+            QJsonObject prefs = change.value("notification_preferences").toObject();
+            QJsonArray list = prefs.value("beneficiary_notifications").toArray();
+            bool changedLocal = false;
+
+            for (int i = 0; i < list.size(); ++i) {
+                QJsonObject item = list[i].toObject();
+                if (item.value("email").toString().compare(email, Qt::CaseInsensitive) == 0) {
+                    bool nt = req.contains("notify_timelock_expires")
+                              ? req.value("notify_timelock_expires").toBool()
+                              : item.value("notify_timelock_expires").toBool();
+                    bool nw = req.contains("notify_wallet_changes")
+                              ? req.value("notify_wallet_changes").toBool()
+                              : item.value("notify_wallet_changes").toBool();
+                    bool ic = req.contains("include_wallet_config")
+                              ? req.value("include_wallet_config").toBool()
+                              : item.value("include_wallet_config").toBool();
+
+                    if (item.value("notify_timelock_expires").toBool() != nt ||
+                        item.value("notify_wallet_changes").toBool() != nw ||
+                        item.value("include_wallet_config").toBool() != ic) {
+                        item["notify_timelock_expires"] = nt;
+                        item["notify_wallet_changes"] = nw;
+                        item["include_wallet_config"] = ic;
+                        list[i] = item;
+                        changedLocal = true;
+                    }
+                    break;
+                }
+            }
+
+            if (changedLocal) {
+                prefs["beneficiary_notifications"] = list;
+                change["notification_preferences"] = prefs;
+            }
+        }
+    }
+    else if (setup_type == "owner") {
+        if (req.contains("email_me_wallet_config")) {
+            QJsonObject prefs = change.value("notification_preferences").toObject();
+            bool newVal = req.value("email_me_wallet_config").toBool();
+            if (prefs.value("email_me_wallet_config").toBool() != newVal) {
+                prefs["email_me_wallet_config"] = newVal;
+                change["notification_preferences"] = prefs;
+            }
+        }
+    } else {
+        return;
+    }
+
+    change["edit_isChanged"] = (change != original);
     setPlanInfo(change);
 }

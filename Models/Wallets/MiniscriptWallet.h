@@ -75,6 +75,8 @@ public:
     QString selectedTimezone();
     QByteArray selectedTimezoneId();
     void setSelectedTimezone(const QByteArray &timezone);
+    QByteArray convertFormattedToTimezoneId(const QString &formatted);
+    void setSelectedTimezone(const QString &formatted);
 signals:
     void currentIndexChanged();
 

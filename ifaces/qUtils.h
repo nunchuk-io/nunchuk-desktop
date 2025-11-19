@@ -287,6 +287,8 @@ qint64 getDaysFromTimestamp(qint64 timestamp, const QTimeZone &tz = QTimeZone::s
 
 QString getTimeFromTimestamp(qint64 timestamp, const QTimeZone &tz = QTimeZone::systemTimeZone());
 
+QString localTimeZoneString();
+
 QByteArray serializeSigningPath(const nunchuk::SigningPath path);
 
 nunchuk::SigningPath deserializeSigningPath(const QByteArray ba);
@@ -304,5 +306,9 @@ std::vector<uint8_t> hexToBytes(const std::string& hex);
 
 QString BytesToHex(const std::vector<uint8_t>& data);
 std::vector<uint8_t> HexToBytes(const QString& hex);
+
+QDateTime convertTimestampToDateTime(qint64 timestamp, const QString& timezoneId);
+QString formatTimeZoneString(const QString& timezoneId);
+QString extractTimeZoneId(const QString& formattedString);
 }
 #endif // QUTILS_H

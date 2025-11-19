@@ -89,7 +89,7 @@ Item {
         
             QLato {
                 width: parent.width
-                visible: miniscript.keyObj !== null && miniscript.keyObj !== undefined
+                visible: miniscript.keyObj !== null && miniscript.keyObj !== undefined && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                 text: {
                     if (miniscript.keyObj.single_signer_device_cardid !== "") {
                         var card_id_text = miniscript.keyObj.single_signer_device_cardid
@@ -103,7 +103,14 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 font.capitalization: Font.AllUppercase
                 font.pixelSize: 12
-            }            
+            }
+            QLato {
+                height: 16
+                visible: (is_cosigning || serverkeyMessage !== "") && signerType === NUNCHUCKTYPE.SERVER
+                font.pixelSize: 12
+                color: "#A66800"
+                text:  is_cosigning ? STR.STR_QML_1002 : serverkeyMessage
+            }
         }
     }
 }

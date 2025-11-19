@@ -115,7 +115,9 @@ Rectangle {
                          modelData.type === AlertType.KEY_REPLACEMENT_PENDING ||
                          modelData.type === AlertType.KEY_REPLACEMENT_COMPLETED ||
                          modelData.type === AlertType.TRANSFER_FUNDS ||
-                         modelData.type === AlertType.SETUP_INHERITANCE_PLAN
+                         modelData.type === AlertType.SETUP_INHERITANCE_PLAN ||
+                         modelData.type === AlertType.BACKUP_WALLET// ||
+                         // modelData.type === AlertType.CHANGE_TIMELOCK_TYPE
 
                 onButtonClicked: {
                     clickView()

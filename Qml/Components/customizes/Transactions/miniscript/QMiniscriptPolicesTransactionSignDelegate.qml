@@ -35,6 +35,8 @@ import "../../../../../localization/STR_QML.js" as STR
 QMiniscriptPolicesDelegate {
     useDerivationPath: false
     property var itemData: miniscript.keyObj
+    property bool   is_cosigning: false
+    property string serverkeyMessage: ""
     Component {
         id: keyCoponent
         QKeyComponentTransactionSign {
@@ -53,9 +55,9 @@ QMiniscriptPolicesDelegate {
                 single_isOccupied: itemData.single_signer_isOccupied
                 single_isReplaced: itemData.single_signer_isReplaced
                 single_keyReplaced: itemData.single_signer_keyReplaced
-                single_keyset_status: model.single_signer_keyset_status
-                single_keyset_index: model.single_signer_keyset_index
-                single_keyset_remaining: model.single_signer_keyset_remaining
+                single_keyset_status: itemData.single_signer_keyset_status
+                single_keyset_index: itemData.single_signer_keyset_index
+                single_keyset_remaining: itemData.single_signer_keyset_remaining
             }
             onSignRequest: {
                 keySignRequest(itemData)
@@ -63,6 +65,23 @@ QMiniscriptPolicesDelegate {
             onScanRequest: {
                 keyScanRequest()
             }
+            onExportRequest: {
+                keyExportRequest()
+            }
+            onImportRequest: {
+                keyImportRequest()
+            }
+        }
+    }
+    function getKeyHeight() {
+        if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
+            if (miniscript.keyObj.singleSigner_derivationPath !== undefined && miniscript.keyObj.singleSigner_derivationPath !== null && useDerivationPath) {
+                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 76 : 48
+            } else {
+                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 58 : 48 //38
+            }            
+        } else {
+            return 48
         }
     }
     function getCommon() {

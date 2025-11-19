@@ -76,7 +76,7 @@ Row {
         width: accttext.implicitWidth + 16
         height: accttext.implicitHeight + 8
         color: "#EAEAEA"
-        visible: (accountIndex > 0) && (signerType !== NUNCHUCKTYPE.SERVER) && accountVisible
+        visible: (signerType !== NUNCHUCKTYPE.SERVER) && accountVisible
         anchors.verticalCenter: parent.verticalCenter
         radius: 8
         QText {

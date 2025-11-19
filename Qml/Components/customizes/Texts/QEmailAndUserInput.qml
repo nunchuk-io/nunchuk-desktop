@@ -71,7 +71,7 @@ Column {
                 }
                 Repeater {
                     id: emailrepeat
-                    model: 0
+                    model: dataInput.requestlist.length
                     function validateEmail(email) {
                         if(Draco.pkey_username_availability(email)){
                             return true;

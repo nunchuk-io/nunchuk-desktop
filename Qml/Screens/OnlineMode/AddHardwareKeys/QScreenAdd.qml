@@ -7,6 +7,7 @@ import "../../../../localization/STR_QML.js" as STR
 Item {
     id: _item
     property var draftWallet: GroupWallet.qIsByzantine ? GroupWallet : UserWallet
+    property var stateScreen: SignerManagement
     readonly property int hardwareType: draftWallet.qAddHardware
     readonly property int eADD_INFORMATION: 0
     readonly property int eADD_REFRESH_DEVICE: 1
@@ -14,6 +15,7 @@ Item {
     readonly property int eADD_SUCCESSFULLY: 3
     readonly property int eADD_ERROR: 4
     readonly property int eADD_VIA_FILE: 5
+    readonly property int eADD_VIA_QR: 6
     readonly property var map_hardware: [
         {type: NUNCHUCKTYPE.ADD_LEDGER   ,name: "Ledger"  , device_type: "ledger"  , tag: "LEDGER"  },
         {type: NUNCHUCKTYPE.ADD_TREZOR   ,name: "Trezor"  , device_type: "trezor"  , tag: "TREZOR"  },

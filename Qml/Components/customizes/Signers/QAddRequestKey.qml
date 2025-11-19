@@ -38,19 +38,27 @@ Item {
     signal serkeyClicked()
     signal hardwareClicked()
     signal backupClicked()
+
+    property var  key_index: modelData.wallet_type === "MULTI_SIG" ? (modelData.key_index + 1) : modelData.key_index
+    property var  walletType: modelData.wallet_type
+    property int  slot_index: index
+    property bool isBeforeSlot: modelData.key_index % 2 === 1
+    property var accountIndexsDefault: ["X", "Y"]
     Loader {
         id: _source
         anchors.fill: parent
-        sourceComponent: {
-            if(modelData.is_inheritance) {
-                return modelData.has ? inheritanceAdded : inheritanceAdd
-            }
-            else if (modelData.type === "SERVER") {
-                return modelData.has ? serverAdded : serverAdd
-            }
-            else {
-                return modelData.has ? hardwareAdded : hardwareAdd
-            }
+        sourceComponent: component()
+    }
+
+    function component() {
+        if(modelData.is_inheritance) {
+            return modelData.has ? inheritanceAdded : inheritanceAdd
+        }
+        else if (modelData.type === "SERVER") {
+            return modelData.has ? serverAdded : serverAdd
+        }
+        else {
+            return modelData.has ? hardwareAdded : hardwareAdd
         }
     }
 
@@ -59,6 +67,74 @@ Item {
         source: _source
         radius: 32
         visible: modelData.type === "SERVER" ? isKeyHolderLimited : (isKeyHolderLimited && modelData.has && !modelData.ourAccount)
+    }
+
+    Component {
+        id: backupButton
+        QTextButton {
+            width: label.paintedWidth + 2*20
+            height: 36
+            type: eTypeB
+            label.text: modelData.wallet_type === "MULTI_SIG" ? STR.STR_QML_342 : STR.STR_QML_1964
+            label.font.pixelSize: 16
+            onButtonClicked: {
+                backupClicked()
+            }
+        }
+    }
+    Component {
+        id: addButton
+        QTextButton {
+            width: label.paintedWidth + 2*20
+            height: 36
+            type: eTypeB
+            label.text: STR.STR_QML_941
+            label.font.pixelSize: 16
+            onButtonClicked: {
+                if (modelData.is_inheritance) {
+                    tapsignerClicked()
+                } else {
+                    hardwareClicked()
+                }
+            }
+        }
+    }
+    Component {
+        id: addedCheck
+        QBadge {
+            anchors {
+                verticalCenter: parent.verticalCenter
+                right: parent.right
+                rightMargin: 12
+            }
+            width: 75
+            height: 24
+            iconSize: 24
+            icon: "qrc:/Images/Images/check-circle-dark.svg"
+            text: STR.STR_QML_104
+            color: "#A7F0BA"
+        }
+    }
+
+    function inheritance(add, backup, added) {
+        if (modelData.wallet_type === "MULTI_SIG") {
+            return modelData.user_key === null ? backup : added
+        }
+        var needVerifyBackup = modelData.verification_type === "NONE" ? backup : added
+        if (isBeforeSlot) {
+            return modelData.hasSecond ? needVerifyBackup : add
+        }        
+        return needVerifyBackup
+    }
+
+    function normal(add, added) {
+        if (modelData.wallet_type === "MULTI_SIG") {
+            return added
+        }
+        if (isBeforeSlot) {
+            return modelData.hasSecond ? added : add
+        }
+        return added
     }
 
     Component {
@@ -85,48 +161,52 @@ Item {
                 }
                 Column {
                     height: childrenRect.height
-                    width: 150
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 4
                     QLato {
                         width: 150
                         height: 28
-                        text: STR.STR_QML_954.arg(modelData.key_index + 1)
+                        text: STR.STR_QML_954.arg(slot_index)
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                     }
-                    QBadge {
-                        width: 77
-                        height: 16
-                        fontSize: 10
-                        text: STR.STR_QML_1600
-                        color: "#EAEAEA"
+                    Row {
+                        spacing: 4
+                        QBadge {
+                            width: 77
+                            height: 16
+                            fontSize: 10
+                            text: STR.STR_QML_1600
+                            color: "#EAEAEA"
+                        }
+                        QAccountIndexs {
+                            height: 16
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                            accountIndexs: accountIndexsDefault
+                            walletType: modelData.wallet_type
+                        }
                     }
                 }
             }
-            QTextButton {
+            Loader {
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
                     rightMargin: 12
                 }
-                width: label.paintedWidth + 2*20
-                height: 36
-                type: eTypeB
-                label.text: STR.STR_QML_941
-                label.font.pixelSize: 16
-                onButtonClicked: {
-                    tapsignerClicked()
-                }
+                sourceComponent: addButton
             }
         }
     }
     Component {
         id: inheritanceAdded
-        Rectangle {
+        QDashRectangle {
             anchors.fill: parent
-            color: modelData.user_key !== null ? "#A7F0BA" : "#FDEBD2"
+            color: inheritance("#66A7F0BA", "#FDEBD2", "#A7F0BA")
+            isDashed: inheritance(true, false, false)
             radius: 8
+            borderWitdh: isDashed ? 2 : 0
+            borderColor: "#031F2B"
             Row {
                 anchors {
                     fill: parent
@@ -170,21 +250,11 @@ Item {
                                 color: "#031F2B"
                             }
                         }
-                        Rectangle {
-                            width: accttext.width + 10
+                        QAccountIndexs {
                             height: 16
-                            color: "#EAEAEA"
-                            visible: (modelData.account_index > 0) && (modelData.signer_type !== NUNCHUCKTYPE.SERVER)
-                            radius: 8
-                            QText {
-                                id: accttext
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                font.weight: Font.Bold
-                                text: qsTr("Acct %1").arg(modelData.account_index)
-                            }
+                            visible: (modelData.signer_type !== NUNCHUCKTYPE.SERVER) && (modelData.account_indexs.length > 0)
+                            accountIndexs: modelData.account_indexs
+                            walletType: modelData.wallet_type
                         }
                     }
                     Item {
@@ -215,35 +285,13 @@ Item {
                     }
                 }
             }
-            QBadge {
-                visible: modelData.user_key !== null
+            Loader {
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
                     rightMargin: 12
                 }
-                width: 75
-                height: 24
-                iconSize: 24
-                icon: "qrc:/Images/Images/check-circle-dark.svg"
-                text: STR.STR_QML_104
-                color: "#A7F0BA"
-            }
-            QTextButton {
-                visible: modelData.user_key === null
-                anchors {
-                    verticalCenter: parent.verticalCenter
-                    right: parent.right
-                    rightMargin: 12
-                }
-                width: label.paintedWidth + 2*20
-                height: 36
-                type: eTypeB
-                label.text: STR.STR_QML_342
-                label.font.pixelSize: 16
-                onButtonClicked: {
-                    backupClicked()
-                }
+                sourceComponent: inheritance(addButton, backupButton, addedCheck)
             }
         }
     }
@@ -268,37 +316,42 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#F5F5F5"
                 }
-                QLato {
-                    width: 150
-                    text: STR.STR_QML_954.arg(modelData.key_index + 1)
+                Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignVCenter
+                    spacing: 4
+                    QLato {
+                        width: 150
+                        text: STR.STR_QML_954.arg(slot_index)
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QAccountIndexs {
+                        height: 16
+                        visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                        accountIndexs: accountIndexsDefault
+                        walletType: modelData.wallet_type
+                    }
                 }
             }
-            QTextButton {
+            Loader {
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
                     rightMargin: 12
                 }
-                width: label.paintedWidth + 2*20
-                height: 36
-                type: eTypeB
-                label.text: STR.STR_QML_941
-                label.font.pixelSize: 16
-                onButtonClicked: {
-                    hardwareClicked()
-                }
+                sourceComponent: addButton
             }
         }
     }
     Component {
         id: hardwareAdded
-        Rectangle {
+        QDashRectangle {
             anchors.fill: parent
-            color: "#A7F0BA"
+            color: normal("#66A7F0BA", "#A7F0BA")
+            isDashed: normal(true, false)
             radius: 8
+            borderWitdh: isDashed ? 2 : 0
+            borderColor: "#031F2B"
             Row {
                 anchors {
                     fill: parent
@@ -342,21 +395,11 @@ Item {
                                 color: "#031F2B"
                             }
                         }
-                        Rectangle {
-                            width: accttext.width + 10
+                        QAccountIndexs {
                             height: 16
-                            color: "#EAEAEA"
-                            visible: (modelData.account_index > 0) && (modelData.signer_type !== NUNCHUCKTYPE.SERVER)
-                            radius: 8
-                            QText {
-                                id: accttext
-                                font.family: "Lato"
-                                color: "#031F2B"
-                                font.pixelSize: 10
-                                anchors.centerIn: parent
-                                font.weight: Font.Bold
-                                text: qsTr("Acct %1").arg(modelData.account_index)
-                            }
+                            visible: (modelData.signer_type !== NUNCHUCKTYPE.SERVER) && (modelData.account_indexs.length > 0)
+                            accountIndexs: modelData.account_indexs
+                            walletType: modelData.wallet_type
                         }
                     }
                     QLato {
@@ -369,18 +412,13 @@ Item {
                     }
                 }
             }
-            QBadge {
+            Loader {
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
                     rightMargin: 12
                 }
-                width: 75
-                height: 24
-                iconSize: 24
-                icon: "qrc:/Images/Images/check-circle-dark.svg"
-                text: STR.STR_QML_104
-                color: "#A7F0BA"
+                sourceComponent: normal(addButton, addedCheck)
             }
         }
     }

@@ -21,7 +21,7 @@ public slots:
     void requestExportWalletBBRQDescriptor();
     void requestExportWalletViaDB(const QString &file);
     void requestExportWalletViaDESCRIPTOR(const QString &file);
-    void requestExportWalletViaCOLDCARD(const QString &file);
+    bool requestExportWalletViaCOLDCARD(const QString &file);
 
     void requestExportTransactionViaCSV(const QString &file);
     void requestExportTransactionViaPDF(const QString &file);

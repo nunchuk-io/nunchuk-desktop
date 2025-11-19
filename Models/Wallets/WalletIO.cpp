@@ -83,14 +83,15 @@ void WalletIO::requestExportWalletViaDESCRIPTOR(const QString &file)
     bridge::nunchukExportWallet(walletId(), file_path, nunchuk::ExportFormat::DESCRIPTOR);
 }
 
-void WalletIO::requestExportWalletViaCOLDCARD(const QString &file)
+bool WalletIO::requestExportWalletViaCOLDCARD(const QString &file)
 {
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
     nunchuk::WalletType type = nunchukWallet().get_wallet_type();
     nunchuk::ExportFormat format = nunchuk::WalletType::MINISCRIPT == type ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL : nunchuk::ExportFormat::COLDCARD;
-    bridge::nunchukExportWallet(walletId(), file_path, format);
+    bool ret = bridge::nunchukExportWallet(walletId(), file_path, format);
     dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
+    return ret;
 }
 
 void WalletIO::requestExportTransactionViaCSV(const QString &file)

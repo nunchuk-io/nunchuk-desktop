@@ -15,7 +15,8 @@
 #include "Premiums/QGroupWallets.h"
 
 QBasePremium::QBasePremium(WalletId wallet_id)
-    :m_wallet_id(wallet_id)
+    :m_wallet_id(wallet_id),
+    globalWallet(QWalletPtr(new Wallet()))
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -29,13 +30,13 @@ QWalletPtr QBasePremium::walletInfoPtr() const
 {
     auto list = AppModel::instance()->walletListPtr();
     if (!list) {
-        return QWalletPtr();
+        return globalWallet;
     }
     QWalletPtr wallet = list->getWalletById(wallet_id());
     if (wallet) {
         return wallet;
     }
-    return QWalletPtr();
+    return globalWallet;
 }
 
 QGroupDashboardPtr QBasePremium::dashBoardPtr() const
@@ -111,4 +112,9 @@ bool QBasePremium::isUserDraftWallet() const
         }
     }
     return false;
+}
+
+Wallet *QBasePremium::walletInfo() const
+{
+    return walletInfoPtr().data();
 }

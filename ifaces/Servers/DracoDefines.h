@@ -211,11 +211,13 @@ enum CMD_IDX {
     USER_KEYS_GET_USER_KEY,
 
     //INHERITANCE
-    INHERITANCE_DOWNLOAD_BACKUP,
+    INHERITANCE_CLAIM_DOWNLOAD_BACKUP,
     INHERITANCE_CLAIM_REQUEST,
     INHERITANCE_CLAIM_STATUS,
-    INHERITANCE_CREATE_TX,
+    INHERITANCE_CLAIM_CREATE_TX,
     INHERITANCE_CHECK,
+    INHERITANCE_CLAIM_INIT,
+    INHERITANCE_CLAIM_DOWNLOAD_WALLET,
     INHERITANCE_GET_PLAN,
     INHERITANCE_FAKE_UPDATE,
     INHERITANCE_PLAN_REQUIRED_SIGNATURES,
@@ -295,6 +297,10 @@ enum CMD_IDX {
     DRAFT_WALLET_RESET_CURRENT,
     DRAFT_WALLET_UPLOAD_BACKUP,
     DRAFT_WALLET_DOWNLOAD_BACKUP,
+    DRAFT_WALLET_VERIFY,
+
+    CONFIG_WALLET_SETUP,
+    DRAFT_WALLET_TIMELOCK,
 
     CMD_MAX
 };
@@ -406,6 +412,10 @@ enum CMD_IDX {
 
     GROUP_WALLET_COINCONTROL_GET,
     GROUP_WALLET_COINCONTROL_UPDATE,
+
+    GROUP_DRAFT_WALLET_TIMELOCK,
+    GROUP_DRAFT_WALLET_VERIFY,
+
     CMD_MAX
 };
 }
@@ -582,10 +592,12 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::USER_KEYS_GET_USER_KEY,                  QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("user-keys/{key_id_or_xfp}") },
 
     //INHERITANCE
-    { Premium::CMD_IDX::INHERITANCE_DOWNLOAD_BACKUP  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/download-backups") },
-    { Premium::CMD_IDX::INHERITANCE_CLAIM_REQUEST    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/claim") },
     { Premium::CMD_IDX::INHERITANCE_CLAIM_STATUS     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/status") },
-    { Premium::CMD_IDX::INHERITANCE_CREATE_TX        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/create-transaction") },
+    { Premium::CMD_IDX::INHERITANCE_CLAIM_INIT       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/init") },
+    { Premium::CMD_IDX::INHERITANCE_CLAIM_DOWNLOAD_WALLET, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/download-wallet") },
+    { Premium::CMD_IDX::INHERITANCE_CLAIM_DOWNLOAD_BACKUP  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/download-backups") },
+    { Premium::CMD_IDX::INHERITANCE_CLAIM_REQUEST    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/claim") },
+    { Premium::CMD_IDX::INHERITANCE_CLAIM_CREATE_TX  , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/claiming/create-transaction") },
     { Premium::CMD_IDX::INHERITANCE_CHECK            , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/check") },
     { Premium::CMD_IDX::INHERITANCE_GET_PLAN         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance") },
     { Premium::CMD_IDX::INHERITANCE_FAKE_UPDATE      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/fake-update") },
@@ -655,6 +667,7 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::DRAFT_WALLET_RESET_CURRENT                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/current") },
     { Premium::CMD_IDX::DRAFT_WALLET_DOWNLOAD_BACKUP               , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/{xfp}/download-backup") },
     { Premium::CMD_IDX::DRAFT_WALLET_UPLOAD_BACKUP                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/upload-backup") },
+    { Premium::CMD_IDX::DRAFT_WALLET_VERIFY                        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/{xfp}/verify") },
 
     //DRAGON_GROUP_WALLETS
     { Group::CMD_IDX::GROUP_WALLET_LIST_WALLETS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("wallets") },
@@ -681,7 +694,8 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLET_UPDATE_ALIAS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/alias") },
     { Group::CMD_IDX::GROUP_WALLET_DELETE_ALIAS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/alias") },
     { Group::CMD_IDX::GROUP_WALLET_UPDATE_PRIMARY_OWNER , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/primary-owner") },
-    { Group::CMD_IDX::GROUP_WALLET_UPDATE_WALLET                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}") },
+    { Group::CMD_IDX::GROUP_WALLET_UPDATE_WALLET        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}") },
+    { Group::CMD_IDX::GROUP_DRAFT_WALLET_VERIFY         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/{xfp}/verify") },
 
     { Group::CMD_IDX::GROUP_DRAFT_WALLETS_ADD_KEY               , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/add-key") },
     { Group::CMD_IDX::GROUP_DRAFT_WALLETS_GET_CURRENT           , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/current") },
@@ -778,6 +792,12 @@ const QMap<int, QString> commands {
 
     // Check supported signers
     { Common::CMD_IDX::TAPROOT_SUPPORTED_SIGNERS                 , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("taproot/supported-signers") },
+
+    // Miniscript
+    { Command::Premium::CONFIG_WALLET_SETUP                      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("configs/setup") },
+    { Command::Premium::DRAFT_WALLET_TIMELOCK                    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/timelock") },
+    // Group Miniscript
+    { Command::Group::GROUP_DRAFT_WALLET_TIMELOCK                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/timelock") },
 };
 
 class DRACO_CODE: public QObject

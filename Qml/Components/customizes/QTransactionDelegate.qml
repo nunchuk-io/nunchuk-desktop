@@ -228,7 +228,7 @@ Rectangle {
                     font.family: "Lato"
                     font.pixelSize: 12
                     color:  "#595959"
-                    text: "Memo"
+                    text: "Note"
                     verticalAlignment: Text.AlignVCenter
                 }
                 QText {

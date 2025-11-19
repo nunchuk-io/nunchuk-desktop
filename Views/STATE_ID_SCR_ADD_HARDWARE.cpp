@@ -52,17 +52,17 @@ void EVT_ADD_HARDWARE_DEVICE_REQUEST_HANDLER(QVariant msg)
     QString action = msg.toMap().value("action").toString();
     if (action == "import-coldcard-via-file") {
         QString file_path = msg.toMap().value("file_path").toString();
-        AppModel::instance()->setAddSignerWizard(2);//eADD_LOADING: 2
         using Enum = QAssistedDraftWallets::ImportColdcard_t;
-        auto ret = QAssistedDraftWallets::IsByzantine() ? QGroupWallets::instance()->ImportColdcardViaFile(file_path) : QUserWallets::instance()->ImportColdcardViaFile(file_path);
+        auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
+        auto ret = draftWallet->ImportColdcardViaFile(file_path);
         if (ret == Enum::eOK) {
-            AppModel::instance()->setAddSignerWizard(3);
+            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eADD_SUCCESS");
             if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
                 dashboard->GetAlertsInfo();
             }
         }
         else if (ret == Enum::eError_Keep_Screen) {
-            AppModel::instance()->setAddSignerWizard(5);
+            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eADD_VIA_FILE");
         }
         else if (ret == Enum::eError_Back) {
 

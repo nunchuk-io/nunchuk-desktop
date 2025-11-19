@@ -270,7 +270,7 @@ void EVT_HOME_IMPORT_PSBT_HANDLER(QVariant msg) {
 }
 
 void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
-    if(AppModel::instance()->walletInfo()) {
+    if(auto walletInfo = AppModel::instance()->walletInfo()) {
         QMap<QString, QVariant> maps = msg.toMap();
         QString export_type = maps["export_type"].toString();
         QString export_path = maps["export_path"].toString();
@@ -278,17 +278,12 @@ void EVT_HOME_EXPORT_BSMS_HANDLER(QVariant msg) {
 
         if("bsms" == export_type){
             if(file_path != ""){
-                bool ret = bridge::nunchukExportWallet(AppModel::instance()->walletInfo()->walletId(), file_path, nunchuk::ExportFormat::BSMS);
-                if(ret){
-                    AppModel::instance()->walletInfo()->setNeedBackup(false);
-                }
+                walletInfo->requestExportWalletViaBSMS(file_path);
             }
         }
         else if("csv" == export_type){
             if(file_path != ""){
-                bool ret = bridge::nunchukExportTransactionHistory(AppModel::instance()->walletInfo()->walletId(),
-                                                                   file_path,
-                                                                   nunchuk::ExportFormat::CSV);
+                walletInfo->requestExportTransactionViaCSV(file_path);
             }
         }
         else {
@@ -350,11 +345,6 @@ void EVT_ASK_HARDWARE_REQ_HANDLER(QVariant msg) {
 }
 
 void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {
-    DBG_INFO;
-}
-
-void EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER(QVariant msg)
-{
     DBG_INFO;
 }
 

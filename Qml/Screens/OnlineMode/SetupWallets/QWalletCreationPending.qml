@@ -34,222 +34,33 @@ import "../../../Components/customizes/Popups"
 import "../../OnlineMode/AddHardwareKeys"
 import "../../../../localization/STR_QML.js" as STR
 
-Item {
+Loader {
     property var dashInfo: GroupWallet.dashboardInfo
     property var alert: dashInfo.alert
-    property var inviter: dashInfo.inviter.user
     property bool isRead: false
-    property int key_index: -1
-    property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
     function closeScreen() {
-        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         dashInfo.markRead()
+        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
 
-    QOnScreenContentTypeB {
-        visible: alert.status === "UNREAD"
-        width: popupWidth
-        height: popupHeight
-        anchors.centerIn: parent
-        label.text: alert.title
-        extraHeader: Item {}
-        onCloseClicked: closeScreen()
-        content: Item {
-            Column {
-                anchors.fill: parent
-                spacing: 24
-                QLato {
-                    width: 656
-                    height: 56
-                    text: STR.STR_QML_937.arg(inviter.name)
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignVCenter
-                }
+    width: popupWidth
+    height: popupHeight
+    anchors.centerIn: parent
+    sourceComponent: (alert.status === "READ" || isRead) ? _read : _unread
+
+    Component {
+        id: _unread
+        QWalletCreationPendingUnread {
+            onNextClicked: {
+                dashInfo.markRead()
+                isRead = true
             }
         }
-        onPrevClicked: closeScreen()
-        onNextClicked: {
-            isRead = true
-            dashInfo.markRead()
+    }
+
+    Component {
+        id: _read
+        QWalletCreationPendingRead {
         }
-    }
-
-    QOnScreenContentTypeB {
-        visible: alert.status === "READ" || isRead
-        width: popupWidth
-        height: popupHeight
-        anchors.centerIn: parent
-        label.text: STR.STR_QML_938
-        onCloseClicked: closeScreen()
-        content: Item {
-            Row {
-                anchors.fill: parent
-                spacing: 36
-                Item {
-                    width: 346
-                    height: parent.height
-                    Column {
-                        anchors.fill: parent
-                        spacing: 36
-                        QLato {
-                            width: parent.width
-                            text: STR.STR_QML_939.arg(dashInfo.mInfo).arg(dashInfo.nInfo).arg(dashInfo.mInfo === 2 ? STR.STR_QML_939_two : STR.STR_QML_939_three)
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 28
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        QLato {
-                            width: parent.width
-                            text: {
-                                if (dashInfo.allowInheritance)
-                                {
-                                    var user = ClientController.user
-                                    if (dashInfo.mInfo === 2 && dashInfo.nInfo === 4) {
-                                        if (dashInfo.isPremierGroup) {
-                                            return STR.STR_QML_940_without
-                                        } else {
-                                            return STR.STR_QML_940_one
-                                        }
-                                    }
-                                    else {
-                                        if (dashInfo.isPremierGroup) {
-                                            return STR.STR_QML_940_without
-                                        } else {
-                                            return STR.STR_QML_940_two
-                                        }
-                                    }
-                                }
-                                else {
-                                    return STR.STR_QML_940_without
-                                }
-                            }
-
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 28
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                    }
-                }
-                Item {
-                    width: 346
-                    height: parent.height
-                    Item {
-                        width: parent.width
-                        height: 36
-                        QLato {
-                            width: 96
-                            height: 36
-                            text: STR.STR_QML_289
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        QRefreshButtonA {
-                            anchors {
-                                right: parent.right
-                                verticalCenter: parent.verticalCenter
-                            }
-                            width: 70
-                            height: 36
-                            color: "transparent"
-                            border.color: "transparent"
-                            iconSize: 18
-                            iconSpacing: 4
-                            label: STR.STR_QML_652
-                            fontPixelSize: 12
-                            onButtonClicked: {
-                                GroupWallet.refresh()
-                                stopRefresh()
-                            }
-                        }
-                    }
-                    Rectangle {
-                        anchors {
-                            top: parent.top
-                            topMargin: 36
-                        }
-                        color: "#FFFFFF"
-                        border.color: "#FFEAEA"
-                        radius: 12
-                        width: 346
-                        height: 456
-                        Flickable {
-                            anchors {
-                                fill: parent
-                                margins: 12
-                            }
-                            Column {
-                                width: 322
-                                spacing: 16
-
-                                Repeater {
-                                    id: signers
-                                    model: GroupWallet.dashboardInfo.keys
-                                    QAddRequestKey {
-                                        onTapsignerClicked: {
-                                            // _info.contentText = STR.STR_QML_961
-                                            // _info.open()
-                                            key_index = modelData.key_index
-                                            _hardwareAddKey.isInheritance = true
-                                            _hardwareAddKey.open()
-                                        }
-                                        onHardwareClicked: {
-                                            key_index = modelData.key_index
-                                            _hardwareAddKey.isInheritance = false
-                                            _hardwareAddKey.open()
-                                        }
-                                        onSerkeyClicked: {
-                                            _info.contentText = STR.STR_QML_962
-                                            _info.open()
-                                        }
-                                        onBackupClicked: {
-                                            _importColdcardBackup.xfp = modelData.xfp
-                                            _importColdcardBackup.open()
-                                            var _input = {
-                                                type: "open-import-encrypted-backup",
-                                                fingerPrint: modelData.xfp,
-                                            }
-                                            dashInfo.requestBackupColdcard(_input)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        onPrevClicked: closeScreen()
-        bottomRight: Item{}
-    }
-
-
-    QPopupHardwareAddKey {
-        id: _hardwareAddKey
-    }
-
-    QPopupInfo{
-        id:_info
-        contentText: STR.STR_QML_961
-    }
-
-    function importEncryptedBackup(xfp, file) {
-        var _input = {
-            type: "import-encrypted-backup",
-            fingerPrint: xfp,
-            currentFile: file
-        }
-        dashInfo.requestBackupColdcard(_input)
-    }
-
-    QPopupImportColdcardBackup {
-        id: _importColdcardBackup
     }
 }

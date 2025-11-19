@@ -313,7 +313,26 @@ nunchuk::SingleSigner QMasterSigner::cloneSingleSigner(const nunchuk::WalletType
                                                                                 msg);
 
     if((int)EWARNING::WarningType::NONE_MSG != msg.type()){
-        signer = qUtils::toSingleSigner(masterSigner_);
+        msg.resetWarningMessage();
+        std::vector<nunchuk::SingleSigner> signers = bridge::GetSignersFromMasterSigner(masterId);
+        if (!signers.empty()) {
+            // Move the signer with account_index == 0 to the front
+            auto it0 = std::find_if(signers.begin(), signers.end(),
+                [](const nunchuk::SingleSigner& s) {
+                    const QString path = QString::fromStdString(s.get_derivation_path());
+                    if (!path.isEmpty()) {
+                        return qUtils::GetIndexFromPath(path) == 0;
+                    }
+                    return false;
+                });
+            if (it0 != signers.end()) {
+                signer = *it0;
+            } else {
+                signer = signers.front();
+            }
+        } else {
+            signer = qUtils::toSingleSigner(masterSigner_);
+        }
     }
     return signer;
 }

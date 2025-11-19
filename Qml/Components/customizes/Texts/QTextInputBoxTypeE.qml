@@ -3,7 +3,7 @@ import "../../origins"
 import "../../../../localization/STR_QML.js" as STR
 Item {
     id: _item
-    property string icon: ""
+    property alias icon: _icon
     property alias label: _label
     property alias edit: _edit
     property alias input: _input
@@ -21,11 +21,11 @@ Item {
                 anchors.fill: parent
                 spacing: 12
                 QImage {
+                    id: _icon
                     width: sourceSize.width
                     height: sourceSize.height
                     anchors.verticalCenter: parent.verticalCenter
-                    source: icon
-                    visible: icon !== ""
+                    visible: source !== ""
                 }
                 QLato {
                     id: _label

@@ -39,6 +39,7 @@ QGroupDashboard::QGroupDashboard(const QString& wallet_id)
     connect(CLIENT_INSTANCE, &ClientController::byzantineRoomDeleted,   this, &QGroupDashboard::byzantineRoomDeleted);
     mTimer = new QTimer(this);
     connect(mTimer, &QTimer::timeout, this, &QGroupDashboard::updateProgress);
+    clearTimeLock();
 }
 
 QGroupDashboard::~QGroupDashboard()
@@ -49,6 +50,11 @@ GroupId QGroupDashboard::groupId() const
 {
     GroupId group_id = WalletsMng->groupId(wallet_id());
     return group_id.isEmpty() ? groupInfo()["id"].toString() : group_id;
+}
+
+QString QGroupDashboard::walletType() const
+{
+    return m_walletInfo.isEmpty() ? m_walletDraftInfo["wallet_type"].toString() : m_walletInfo["wallet_type"].toString();
 }
 
 QJsonObject QGroupDashboard::groupInfo() const
@@ -221,6 +227,29 @@ void QGroupDashboard::GetAlertsInfo()
             alert["type"] = StringToInt(type);
             v_alerts.append(alert);
         }
+        // Optional hard-coded alert (fixed syntax)
+        QJsonObject alertHardCode;
+        alertHardCode["body"] = "IMPORTANT: You might need to register the wallet with your device.";
+        alertHardCode["created_time_millis"] = "11/15/2025 at 09:59 PM";
+        alertHardCode["id"] = "644914284035313664";
+        QJsonObject payload;
+        payload["claim_key"] = false;
+        payload["group_id"] = "644817879908225024";
+        QJsonArray register_key_xfps;
+        register_key_xfps.append("25c523fb");
+        register_key_xfps.append("c0452228");
+        payload["register_key_xfps"] = register_key_xfps;
+        payload["wallet_id"] = "644914281829109760";
+        payload["wallet_local_id"] = "5ut70w3v";
+        alertHardCode["payload"] = payload;
+        alertHardCode["status"] = "READ";
+        alertHardCode["title"] = "A group wallet has been set up";
+        alertHardCode["type"] = 1;
+        alertHardCode["viewable"] = true;
+
+        // Append the hard-coded alert if needed
+        // v_alerts.append(alertHardCode);
+
         ptrLamda->m_alertInfo["alerts"] = v_alerts;
         emit ptrLamda->alertInfoChanged();
         DBG_INFO << ptrLamda->m_alertInfo;
@@ -230,6 +259,7 @@ void QGroupDashboard::GetAlertsInfo()
 
 bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
 {
+    DBG_INFO << alert_id;
     if (alert_id.isEmpty()) return false;
     QPointer<QGroupDashboard> safeThis(this);
     runInConcurrent([safeThis, alert_id]() ->bool{
@@ -285,7 +315,7 @@ bool QGroupDashboard::DismissAlert(const QString &alert_id)
     return false;
 }
 
-bool QGroupDashboard::DismissAlert()
+bool QGroupDashboard::dismissAlert()
 {
     return DismissAlert(alertId());
 }
@@ -297,15 +327,14 @@ void QGroupDashboard::GetWalletInfo()
         SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
         QJsonObject output;
         QString error_msg = "";
-        bool ret {false};
         if (ptrLamda->isUserDraftWallet()) {
 
         } else if (ptrLamda->isUserWallet()) {
-            ret = Draco::instance()->assistedWalletGetInfo(ptrLamda->wallet_id(), output, error_msg);
+            Draco::instance()->assistedWalletGetInfo(ptrLamda->wallet_id(), output, error_msg);
         } else {
-            ret = Byzantine::instance()->GetCurrentGroupWallet(ptrLamda->groupId(), output, error_msg);
+            Byzantine::instance()->GetCurrentGroupWallet(ptrLamda->groupId(), output, error_msg);
         }
-        return output["wallet"].toObject();
+        return output.value("wallet").toObject();
     },[safeThis](QJsonObject wallet) {
         SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
         if (!wallet.isEmpty()) {
@@ -318,6 +347,7 @@ void QGroupDashboard::GetWalletInfo()
             if (ptrLamda->walletInfoPtr() && ptrLamda->walletInfoPtr()->serverKeyPtr()) {
                 ptrLamda->walletInfoPtr()->serverKeyPtr()->UpdateFromWallet(wallet);
             }
+            ptrLamda->clearTimeLock();
         }
     });
 }
@@ -357,6 +387,7 @@ void QGroupDashboard::GetDraftWalletInfo()
             ptrLamda->m_signerInfo = signers;
             ptrLamda->m_walletDraftInfo = draft_wallet;
             ptrLamda->UpdateKeys(draft_wallet);
+            ptrLamda->clearTimeLock();
         }
     });
 }
@@ -368,22 +399,7 @@ void QGroupDashboard::GetHealthCheckInfo()
     healthPtr()->GetStatuses();
 }
 
-void QGroupDashboard::UpdateKeys(const QJsonObject &data)
-{
-    QJsonObject wallet_config = data["wallet_config"].toObject();
-    bool allow_inheritance = wallet_config["allow_inheritance"].toBool();
-    int n = wallet_config["n"].toInt();
-    int m = wallet_config["m"].toInt();
-
-    m_nInfo = n;
-    m_mInfo = m;
-    m_allow_inheritance = allow_inheritance;
-    bool required_server_key = wallet_config["required_server_key"].toBool();
-
-    QJsonArray signers = data["signers"].toArray();
-    QJsonObject server;
-    server["type"] = "SERVER";
-    server["has"]  = false;
+QString QGroupDashboard::getOurId() const {
     QJsonArray origin = groupInfo()["members"].toArray();
     QString our_id = "";
     for (auto member : origin) {
@@ -395,130 +411,252 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
             break;
         }
     }
-    QJsonArray signers_tmp = signers;
-    signers = {};
-    for (auto js : signers_tmp) {
-        QJsonObject signer = js.toObject();
-        signer["ourAccount"] = false;
-        signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());
-        signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
-        QJsonObject tapsignerObj = signer["tapsigner"].toObject();
-        signer["card_id"] = tapsignerObj.isEmpty() ? "" : tapsignerObj["card_id"].toString();
-        QString type = signer["type"].toString();
-        if (type == "SERVER") {
-            server = signer;
-            server["has"] = true;
+    return our_id;
+}
+
+const QMap<int, QList<int>> mapIndexMultiSig = {
+    {0, {0}},
+    {1, {1}},
+    {2, {2}},
+    {3, {3}},
+    {4, {4}},
+    {5, {5}},
+    {6, {6}}
+};
+
+const QMap<int, QList<int>> mapIndexMiniscript = {
+    {0, {0*2, 0*2 + 1}},
+    {1, {1*2, 1*2 + 1}},
+    {2, {2*2, 2*2 + 1}},
+    {3, {3*2, 3*2 + 1}},
+    {4, {4*2, 4*2 + 1}},
+    {5, {5*2, 5*2 + 1}},
+    {6, {6*2, 6*2 + 1}}
+};
+
+const QMap<QString, int> mapTagkeys = {
+    {"LEDGER",   (int)Key::ADD_LEDGER},
+    {"TREZOR",   (int)Key::ADD_TREZOR},
+    {"COLDCARD", (int)Key::ADD_COLDCARD},
+    {"BITBOX",   (int)Key::ADD_BITBOX},
+    {"JADE",     (int)Key::ADD_JADE},
+};
+
+QJsonObject QGroupDashboard::createOrUpdateSignerInfo(const QJsonObject &info, int index) {
+    QString our_id = getOurId();
+    QJsonObject signer = info;
+    QString wallet_type = walletType();
+    int key_index = signer.value("key_index").toInt(-1);
+    std::function<QJsonObject(const QJsonObject&, const int)> setFirstTime = [wallet_type](const QJsonObject&signer, const int index) -> QJsonObject {
+        QJsonObject obj = signer;
+        if (wallet_type == "MULTI_SIG") {
+            obj["key_index"] = index;
+        } else {
+            obj["key_index"] = index*2;
         }
-        QString added_by_user_id = signer["added_by_user_id"].toString();
+        return obj;
+    };
+    std::function<QJsonObject(const QJsonObject&, const int)> setSecondTime = [wallet_type, this](const QJsonObject&signer, const int index) -> QJsonObject {
+        QJsonObject obj = signer;
+        if (wallet_type == "MULTI_SIG") {
+            obj["key_index"] = index;
+        } else {
+            bool required_server_key = m_walletDraftInfo["required_server_key"].toBool();
+            if (required_server_key && index == (m_nInfo -1)) {
+                obj["key_index"] = index*2;
+            } else {
+                obj["key_index"] = index*2 + 1;
+            }
+        }
+        return obj;
+    };
+    if (key_index != -1) {
+        signer["ourAccount"] = false;
+        signer["signer_type"] = (int)qUtils::GetSignerType(signer.value("type").toString());
+        QJsonObject tapsignerObj = signer.value("tapsigner").toObject();
+        signer["card_id"] = tapsignerObj.isEmpty() ? "" : tapsignerObj.value("card_id").toString();
+        QString added_by_user_id = signer.value("added_by_user_id").toString();
         if (our_id == added_by_user_id) {
             signer["ourAccount"] = true;
             WalletsMng->UpdateSigner(signer);
         }
-        signers.append(signer);
+
+        signer["has"] = true;
+        QJsonArray tags = signer.value("tags").toArray();
+        signer["is_inheritance"] = tags.contains("INHERITANCE");
+        for (auto tag : tags) {
+            if (tag.toString() != "INHERITANCE") {
+                signer["tag"] = tag.toString();
+                signer["hwType"] = mapTagkeys.value(tag.toString(), -1);
+            }
+        }
+        
+        signer = setSecondTime(signer, index);
+
+    } else {
+        if (signer.isEmpty()) {
+            signer["is_inheritance"] = false;
+            signer["has"] = false;
+        } else {
+            QJsonArray tags = signer["tags"].toArray();
+            signer["is_inheritance"] = tags.contains("INHERITANCE");
+            for (auto tag : tags) {
+                if (tag.toString() != "INHERITANCE") {
+                    signer["tag"] = tag.toString();
+                    signer["hwType"] = mapTagkeys.value(tag.toString(), -1);
+                }
+            }                
+            signer["has"] = true;
+            signer["signer_type"] = (int)qUtils::GetSignerType(signer.value("type").toString());
+        }
+        signer = setFirstTime(signer, index);
+    }
+    signer["wallet_type"] = wallet_type;
+    signer["group_id"] = groupId();
+    bool has = signer.value("has").toBool();
+    if (!has) {
+        signer["new_account_index"] = 0;
+    } else {
+        signer["new_account_index"] = 1;
+    }    
+    return signer;
+}
+
+void QGroupDashboard::UpdateKeys(const QJsonObject &data)
+{
+    QJsonObject wallet_config = data["wallet_config"].toObject();
+    QString wallet_type = data["wallet_type"].toString();
+    bool allow_inheritance = wallet_config["allow_inheritance"].toBool();
+    int n = m_nInfo = wallet_config["n"].toInt();
+    int m = m_mInfo = wallet_config["m"].toInt();
+    DBG_INFO << data;
+    m_allow_inheritance = allow_inheritance;
+    bool required_server_key = wallet_config["required_server_key"].toBool();
+
+    QJsonArray signers = data["signers"].toArray();
+    QString our_id = getOurId();
+    QJsonArray signers_tmp = signers;
+    signers = {};
+    QMap<QString, QString> accountIndexMap;
+    // Improved findAtIndex function for clarity and correctness
+    std::function<QJsonObject(int)> findAtIndex = [signers_tmp, wallet_type, &accountIndexMap](int idx) {
+        if (wallet_type == "MULTI_SIG") {
+            // For MULTI_SIG, just map index directly
+            QList<int> indices = mapIndexMultiSig.value(idx);
+            QJsonObject ret {};
+            for (const auto& js : signers_tmp) {
+                QJsonObject signer = js.toObject();
+                int key_index = signer.value("key_index").toInt();
+                if (indices.contains(key_index)) {
+                    QString xfp = signer.value("xfp").toString();
+                    int index = qUtils::GetIndexFromPath(signer.value("derivation_path").toString());
+                    accountIndexMap.insertMulti(xfp, QString::number(index));
+                    QList<QString> accountIndexs = accountIndexMap.values(xfp);
+                    signer["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
+                    signer["account_index"] = index;
+                    ret = signer;
+                    break;
+                }
+            }
+            return ret;
+        } else if (wallet_type == "MINISCRIPT") {
+            // For MINISCRIPT, each logical index maps to two key indices
+            QList<int> indices = mapIndexMiniscript.value(idx);
+            // Try to find the "second" key first (usually the backup/inheritance key)
+            QJsonObject ret {};
+            for (const auto& js : signers_tmp) {
+                QJsonObject signer = js.toObject();
+                int key_index = signer.value("key_index").toInt();
+                if (key_index == indices.value(1, -1)) {
+                    QString xfp = signer.value("xfp").toString();
+                    int index = qUtils::GetIndexFromPath(signer.value("derivation_path").toString());
+                    accountIndexMap.insertMulti(xfp, QString::number(index));
+                    QList<QString> accountIndexs = accountIndexMap.values(xfp);
+                    accountIndexs.removeAll("Y");
+                    if (accountIndexs.size() == 1) {
+                        accountIndexs.append("Y");
+                    }
+                    signer["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
+                    signer["account_index"] = index;
+                    ret = signer;
+                    break;
+                }
+            }
+            // If not found, try to find the "first" key
+            for (const auto& js : signers_tmp) {
+                QJsonObject signer = js.toObject();
+                int key_index = signer.value("key_index").toInt();
+                if (key_index == indices.value(0, -1)) {
+                    QString xfp = signer.value("xfp").toString();
+                    int index = qUtils::GetIndexFromPath(signer.value("derivation_path").toString());
+                    accountIndexMap.insertMulti(xfp, QString::number(index));
+                    QList<QString> accountIndexs = accountIndexMap.values(xfp);
+                    accountIndexs.removeAll("Y");
+                    if (accountIndexs.size() == 1) {
+                        accountIndexs.append("Y");
+                    }
+                    signer["account_indexs"] = QJsonArray::fromStringList(accountIndexs);
+                    signer["account_index"] = index;
+                    ret = signer;
+                    break;
+                }
+            }
+            QJsonArray ret_accountIndexs = ret.value("account_indexs").toArray();
+            if (ret_accountIndexs.size() > 0) {
+                ret["hasSecond"] = !ret_accountIndexs.contains("Y");
+            }
+            return ret;
+        }
+        // If not found, return empty object
+        return QJsonObject();
+    };
+    
+    for(int i = 0; i < n; i++) {
+        QJsonObject signer = findAtIndex(i);
+        auto tmp = createOrUpdateSignerInfo(signer, i);
+        signers.append(tmp);
     }
     emit WalletsMng->signalUpdateSigner();
-    auto find = [&](const int index) -> QJsonObject{
-        for (QJsonValue js : signers) {
-            QJsonObject signer = js.toObject();
-            int key_index = signer["key_index"].toInt(-1);
-            if (key_index == index) {
-                signer["has"] = true;
-                QJsonArray tags = signer["tags"].toArray();
-                signer["is_inheritance"] = tags.contains("INHERITANCE");
-                for (auto tag : tags) {
-                    if (tag.toString() != "INHERITANCE") {
-                        signer["tag"] = tag.toString();
-                    }
-                }
-                signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());
-                signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
-                QJsonObject tapsignerObj = signer["tapsigner"].toObject();
-                if (!tapsignerObj.isEmpty()) {
-                    signer["card_id"] = tapsignerObj["card_id"].toString();
-                }
-                return signer;
-            }
-        }
-        int id = index - 1;
-        if (id >= 0 && id < signers.size()) {
-            QJsonObject signer = signers.at(id).toObject();
-            int key_index = signer["key_index"].toInt(-1);
-            if (key_index == -1) {
-                QJsonArray tags = signer["tags"].toArray();
-                signer["is_inheritance"] = tags.contains("INHERITANCE");
-                for (auto tag : tags) {
-                    if (tag.toString() != "INHERITANCE") {
-                        signer["tag"] = tag.toString();
-                    }
-                }
-                signer["key_index"] = index;
-                signer["has"] = true;
-                signer["signer_type"] = (int)qUtils::GetSignerType(signer["type"].toString());
-                signer["account_index"] = qUtils::GetIndexFromPath(signer["derivation_path"].toString());
-                return signer;
-            }
-        }
-        return {};
-    };
-    m_keys.clear();
+    
+   
+    QList<QJsonObject> tmp_keys;
 
     bool is_wallet_2_of_4 = (m == 2 && n == 4);
     bool is_wallet_3_of_5 = (m == 3 && n == 5);
     int  last_index = required_server_key ? n - 1 : n;
     bool is_premier = CLIENT_INSTANCE->isByzantinePremier() || isPremierGroup();
     bool hasServer = !CLIENT_INSTANCE->isFinney();
-    DBG_INFO << is_premier << m_allow_inheritance << m_mInfo << m_nInfo;
+    DBG_INFO << is_premier << allow_inheritance << m_mInfo << m_nInfo;
+    // Improved logic for assigning inheritance and server key properties
+    for (int i = 0; i < signers.size(); i++) {
+        QJsonObject obj = signers.at(i).toObject();
+        // Assign inheritance keys based on wallet type and conditions
+        if (is_wallet_2_of_4 && i == 0 && allow_inheritance && !is_premier) {
+            obj["is_inheritance"] = true;
+        } else if (is_wallet_3_of_5 && (i == 0 || i == 1) && allow_inheritance && !is_premier) {
+            obj["is_inheritance"] = true;
+        }
 
-    if (is_wallet_2_of_4) {
-        for(int i = 0; i < last_index; i++) {
-            QJsonObject obj = find(i);
-            if (obj.isEmpty()) {
-                obj["is_inheritance"] = false;
-                obj["key_index"] = i;
-                obj["has"] = false;
-                if((i == 0) && m_allow_inheritance && !is_premier){
-                    obj["is_inheritance"] = true;
-                }
+        // Assign server key properties if required
+        if (i == last_index && required_server_key && hasServer) {
+            bool has = obj["has"].toBool();
+            if (!has) {
+                obj["type"] = "SERVER";
+                obj["has"]  = false;
             }
-            m_keys.insert(i, QVariant::fromValue(obj));
         }
-        if (required_server_key && hasServer) {
-            m_keys.insert(last_index, QVariant::fromValue(server));
-        }
+
+        DBG_INFO << obj;
+        tmp_keys.insert(i, obj);
     }
-    else if (is_wallet_3_of_5) {
-        for(int i = 0; i < last_index; i++) {
-            QJsonObject obj = find(i);
-            if (obj.isEmpty()) {
-                obj["is_inheritance"] = false;
-                obj["key_index"] = i;
-                obj["has"] = false;
-                if((i == 0 || i == 1) && m_allow_inheritance && !is_premier){
-                    obj["is_inheritance"] = true;
-                }
-            }
-            DBG_INFO << obj;
-            m_keys.insert(i, QVariant::fromValue(obj));
-        }
-        if (required_server_key && hasServer) {
-            m_keys.insert(last_index, QVariant::fromValue(server));
-        }
+    QJsonArray array;
+    for (const QJsonObject &obj : tmp_keys) {
+        array.append(obj);
     }
-    else {
-        for(int i = 0; i < last_index; i++) {
-            QJsonObject obj = find(i);
-            if (obj.isEmpty()) {
-                obj["key_index"] = i;
-                obj["has"] = false;
-            }
-            DBG_INFO << obj;
-            m_keys.insert(i, QVariant::fromValue(obj));
-        }
-        if (required_server_key && hasServer) {
-            m_keys.insert(last_index, QVariant::fromValue(server));
-        }
-    }
+    m_keys = array;
     emit draftWalletChanged();
+
+    ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
 }
 
 bool QGroupDashboard::GetKeyReplacementStatus()
@@ -660,10 +798,10 @@ bool QGroupDashboard::registerKeyDone()
         QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
         bool ret = m_registered_key_xfps.size() == register_key_xfps.size() && m_registered_key_xfps.size() > 0;
         if (ret) {
-            DismissAlert();
+            dismissAlert();
         }
         else if (register_key_xfps.size() == 0) {
-            DismissAlert();
+            dismissAlert();
         }
         return ret;
     }
@@ -672,12 +810,22 @@ bool QGroupDashboard::registerKeyDone()
 
 bool QGroupDashboard::registerKeyNext()
 {
+    QWalletPtr w = walletInfoPtr();
+    if (w.isNull()) return false;
+    nunchuk::WalletType wallet_type = w->nunchukWallet().get_wallet_type();
     QJsonObject payload = alertJson()["payload"].toObject();
     QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
     QStringList::iterator not_register = std::find_if_not(register_key_xfps.begin(), register_key_xfps.end(), [this](QString xfp) {return m_registered_key_xfps.contains(xfp);});
     if (not_register != register_key_xfps.end()) {
         m_registered_key_xfps.append(*not_register);
-        return xfpExport(*not_register);
+        if (wallet_type == nunchuk::WalletType::MINISCRIPT) {
+            setConfigFlow("register-wallet-hardware");
+            registerKeyDone();
+            DBG_INFO << "GROUP_WALLET_SETUP " << "register-wallet-hardware" ;
+            return true;
+        } else {
+            return xfpExport(*not_register);
+        }
     }
     return false;
 }
@@ -705,6 +853,9 @@ bool QGroupDashboard::canEntryClickAlert()
     }
     switch ((AlertEnum::E_Alert_t)flow) {
     case AlertEnum::E_Alert_t::GROUP_WALLET_SETUP:{
+        if (hasWallet()) {
+            GetWalletInfo();
+        }
         QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
         bool isClaimkey = payload["claim_key"].toBool();
         bool isRegisterkey = register_key_xfps.size() > 0;
@@ -720,6 +871,7 @@ bool QGroupDashboard::canEntryClickAlert()
             return true;
         }
     }
+    case AlertEnum::E_Alert_t::CHANGE_TIMELOCK_TYPE:
     case AlertEnum::E_Alert_t::WALLET_PENDING:
     case AlertEnum::E_Alert_t::GROUP_WALLET_PENDING:{
         GetDraftWalletInfo();
@@ -749,13 +901,17 @@ bool QGroupDashboard::canEntryClickAlert()
     case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
     case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS:
     case AlertEnum::E_Alert_t::KEY_RECOVERY_REQUEST:
-    case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:
+    case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:    
     case AlertEnum::E_Alert_t::UPDATE_INHERITANCE_PLAN:
     case AlertEnum::E_Alert_t::CANCEL_INHERITANCE_PLAN:
     case AlertEnum::E_Alert_t::UPDATE_SERVER_KEY:
     case AlertEnum::E_Alert_t::REQUEST_INHERITANCE_PLANNING:
     case AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING:
+    case AlertEnum::E_Alert_t::BACKUP_WALLET:
     case AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST:{
+        if (hasWallet()) {
+            GetWalletInfo();
+        }
         return true;
     }
     case AlertEnum::E_Alert_t::TRANSACTION_SIGNATURE_REQUEST:{
@@ -929,7 +1085,10 @@ bool QGroupDashboard::CalculateRequireSignaturesForEditingMembers()
 
 bool QGroupDashboard::requestStartKeyReplacement(const QString &tag)
 {
+    DBG_INFO << "tag:" << tag;
+    QSignerManagement::instance()->clearState();
     QSignerManagement::instance()->clearExecute();
+    registerAddKey();
     if (ServiceSetting::instance()->existHardware(tag)) {
         QEventProcessor::instance()->sendEvent(E::EVT_EXIST_HARDWARE_REQ);
     } else {
@@ -938,15 +1097,60 @@ bool QGroupDashboard::requestStartKeyReplacement(const QString &tag)
     return true;
 }
 
-bool QGroupDashboard::requestStartKeyCreate(const QString &tag)
+bool QGroupDashboard::requestStartKeyCreate(const QString &tag, bool isFirst)
 {
+    DBG_INFO << "isFirst:" << isFirst << "tag:" << tag;
+    QSignerManagement::instance()->clearState();
     QSignerManagement::instance()->clearExecute();
-    if (ServiceSetting::instance()->existHardware(tag)) {
-        QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_EXIST_REQ);
+    registerAddKey();
+    if (!isFirst) {
+        if (ServiceSetting::instance()->existHardware(tag)) {
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_EXIST_REQ);
+        } else {
+            QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+        }
     } else {
-        QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+        qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+        runInConcurrent([]() ->bool{
+            auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
+            auto currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+            QString xfp = currentSignerInfo.value("xfp").toString();
+            QString account1Path = draftWallet->bip32path(xfp, 1);
+            draftWallet->newAccountIndexCached(xfp, 1);
+            if (!account1Path.isEmpty()) {                    
+                bool ret = draftWallet->requestAddOrReplacementWithIndex(xfp, 1);
+                QList<uint> states = QEventProcessor::instance()->getCurrentStates();
+                if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_ADD_HARDWARE_EXIST)
+                {
+                    draftWallet->resultAddOrUpdateAKeyToDraftWallet(ret ? "eREUSE_RESULT" : "eREUSE_SCAN_DEVICE");
+                } else {
+                    draftWallet->resultAddOrUpdateAKeyToDraftWallet(ret ? "eADD_SUCCESS" : "eADD_ERROR");
+                }
+                QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+            } else {
+                draftWallet->resultAddOrUpdateAKeyToDraftWallet("eADD_REFRESH_DEVICE", true);
+                QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+            }
+            return true;
+        },[](bool ret) {
+            qApp->restoreOverrideCursor();
+        });
     }
     return true;
+}
+
+void QGroupDashboard::registerAddKey() {
+    auto masterFunc = []()->bool {
+        auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
+        if (draftWallet) {
+            auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
+            int new_index = currentSigerInfo.value("new_account_index").toInt(-1);
+            QString xfp = currentSigerInfo.value("xfp").toString();
+            return draftWallet->requestAddOrReplacementWithIndex(xfp, new_index);
+        }
+        return true;
+    };
+    QSignerManagement::instance()->registerCreateMasterSigner(masterFunc);
 }
 
 void QGroupDashboard::requestHealthCheck(const QString &xfp){
@@ -1030,12 +1234,7 @@ void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
 
 void QGroupDashboard::requestShowLetAddYourKeys()
 {
-    if (isUserDraftWallet()) {
-        setFlow((int)AlertEnum::E_Alert_t::WALLET_PENDING);
-    }
-    else {
-        setFlow((int)AlertEnum::E_Alert_t::GROUP_WALLET_PENDING);
-    }
+    setFlow((int)AlertEnum::E_Alert_t::WALLET_PENDING);
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }
 
@@ -1103,27 +1302,55 @@ void QGroupDashboard::requestBackupColdcard(QVariant msg)
     DBG_INFO << maps;
     if (type == "import-encrypted-backup") {
         QString currentFile = maps["currentFile"].toString();
-        QString xfp = maps["fingerPrint"].toString();
-        if (xfp.isEmpty()) {
-            if (QAssistedDraftWallets::IsByzantine()) {
-                xfp = QGroupWallets::instance()->selectFingerPrint();
-            } else {
-                QUserWallets::instance()->selectFingerPrint();
-            }
+        QString selectXfp = maps["fingerPrint"].toString();
+        if (selectXfp.isEmpty()) {
+            QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+            selectXfp = currentSignerInfo.value("xfp").toString();
         }
         if (canReplaceKey()) {
-            ReplacementUploadBackupFile(xfp, currentFile);
+            ReplacementUploadBackupFile(selectXfp, currentFile);
         } else {
-            DraftWalletUploadBackupFile(xfp, currentFile);
+            DraftWalletUploadBackupFile(selectXfp, currentFile);
         }
     } else if (type == "open-import-encrypted-backup") {
         AppModel::instance()->setAddSignerPercentage(0);
     }
 }
 
+bool QGroupDashboard::isSupportedInheritance(const QString& tag) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray supported_signers = config["supported_signers"].toArray();
+    for (auto js : supported_signers) {
+        QJsonObject obj = js.toObject();
+        bool isInheritance = obj["is_inheritance_key"].toBool();
+        if (isInheritance && qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QGroupDashboard::isSupportedNotInheritance(const QString& tag) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray supported_signers = config["supported_signers"].toArray();
+    for (auto js : supported_signers) {
+        QJsonObject obj = js.toObject();
+        bool isInheritance = obj["is_inheritance_key"].toBool();
+        if (!isInheritance && qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void QGroupDashboard::startAddKeyAtIndex(int index) {
+    if (index < 0 || index >= m_keys.size()) return;
+    QJsonObject key = m_keys.at(index).toObject();
+    QSignerManagement::instance()->setCurrentSigner(key);
+}
+
 bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type)
 {
-    DBG_INFO << tags << qUtils::GetSignerTypeString(type);
     bool ret {true};
     if (type == nunchuk::SignerType::COLDCARD_NFC || tags.contains("COLDCARD")) {
         setConfigFlow("register-COLDCARD");
@@ -1144,7 +1371,7 @@ bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType t
 
 bool QGroupDashboard::xfpExport(const QString xfp)
 {
-    QWalletPtr w = AppModel::instance()->walletListPtr()->getWalletById(wallet_id());
+    QWalletPtr w = walletInfoPtr();
     if (w.isNull()) return false;
     nunchuk::Wallet wallet = w->nunchukWallet();
     nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(), [xfp](const nunchuk::SingleSigner &s) {
@@ -1429,12 +1656,9 @@ bool QGroupDashboard::isInheritance()
     if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING) {
         QJsonObject payload = alertJson()["payload"].toObject();
         return payload["is_inheritance"].toBool();
-    } else if (type == AlertEnum::E_Alert_t::WALLET_PENDING) {
-        auto request = QGroupWallets::instance()->request();
-        return request.mTags.contains("INHERITANCE");
     } else {
-        auto request = DraftWallet()->request();
-        return request.mTags.contains("INHERITANCE");
+         auto signer = QSignerManagement::instance()->currentSignerJs();
+        return signer["is_inheritance"].toBool();
     }
 }
 
@@ -1479,7 +1703,7 @@ QString QGroupDashboard::generateName(const QStringList &tags)
 
 QVariantList QGroupDashboard::keys() const
 {
-    return m_keys;
+    return m_keys.toVariantList();
 }
 
 QVariantList QGroupDashboard::alerts() const
@@ -1600,4 +1824,116 @@ QJsonObject QGroupDashboard::bodyEditMembers()
     QJsonObject requestBody;
     requestBody["members"] = arrays;
     return requestBody;
+}
+
+QString QGroupDashboard::timeLock() const {
+    auto info = m_walletInfo.isEmpty() ? m_walletDraftInfo : m_walletInfo;
+    QJsonObject timelock = info.value("timelock").toObject();
+    qint64 timestamp = timelock.value("value").toVariant().toULongLong();
+    QString timezone = timelock.value("timezone").toString();
+    QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
+    QString formatted = dt.toString("MM/dd/yyyy HH:mm");
+    DBG_INFO << formatted << timezone;
+    return timestamp == 0 ? "" : formatted;
+}
+
+void QGroupDashboard::clearTimeLock() {
+    auto info = m_walletInfo.isEmpty() ? m_walletDraftInfo : m_walletInfo;
+    QJsonObject timelock = info.value("timelock").toObject();
+    DBG_INFO << timelock;
+    if (timelock.isEmpty()) {
+        auto wallet = walletInfoPtr();
+        if (!wallet) return;
+        QDateTime dt = QDateTime::currentDateTime();
+        dt = dt.addYears(5);
+        QString formattedDate = dt.toString("MM/dd/yyyy");
+        QString formattedTime = dt.toString("HH:mm");
+        QJsonObject formatted;
+        formatted["valueDate"] = formattedDate;
+        formatted["valueTime"] = formattedTime;
+        formatted["valueTimezone"] = wallet->timezones()->selectedTimezone();
+        m_timeLockSet = formatted;
+        emit timeLockSetChanged();
+    } else {
+        auto wallet = walletInfoPtr();
+        if (!wallet) return;
+        qint64 timestamp = timelock.value("value").toVariant().toULongLong();
+        QString timezone = timelock.value("timezone").toString();
+        QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
+        wallet->timezones()->setSelectedTimezone(timezone);
+        QString formattedDate = dt.date().toString("MM/dd/yyyy");
+        QString formattedTime = dt.time().toString("HH:mm");
+        QJsonObject formatted;
+        formatted["valueDate"] = formattedDate;
+        formatted["valueTime"] = formattedTime;
+        formatted["valueTimezone"] = timezone;
+        m_timeLockSet = formatted;
+        emit timeLockSetChanged();
+    }
+    
+}
+
+QVariant QGroupDashboard::timeLockSet() const {    
+    return QVariant::fromValue(m_timeLockSet);
+}
+
+void QGroupDashboard::setupTimeLock(const QVariant &datetime, bool isPutServer) {
+    if (isPutServer) {
+        QString date = m_timeLockSet.value("valueDate").toString();
+        QString time = m_timeLockSet.value("valueTime").toString();
+        QString timezone = m_timeLockSet.value("valueTimezone").toString();
+        QString timezoneId = qUtils::extractTimeZoneId(timezone);
+        QDateTime dt = QDateTime::fromString(date + " " + time, "MM/dd/yyyy HH:mm");
+        QTimeZone tz(timezoneId.toUtf8());
+        if (!tz.isValid()) {
+            // Fallback to UTC
+            dt.setTimeSpec(Qt::UTC);
+        } else {
+            dt.setTimeZone(tz);
+        }
+        qint64 timestamp = dt.toSecsSinceEpoch();
+        QPointer<QGroupDashboard> safeThis(this);
+        runInConcurrent([safeThis, timestamp, timezoneId]() ->bool{
+            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+            QJsonObject output;
+            QString error_msg = "";
+            bool ret {false};
+            if (ptrLamda->isUserWallet() || ptrLamda->isUserDraftWallet()) {
+                ret = Draco::instance()->DraftWalletUpdateTimelock(timezoneId, timestamp, output, error_msg);
+            } else {
+                ret = Byzantine::instance()->DraftWalletUpdateTimelock(ptrLamda->groupId(), timezoneId, timestamp, output, error_msg);
+            }
+            return ret;
+        },[safeThis](bool ret) {
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+            if (ret) {
+                ptrLamda->GetDraftWalletInfo();
+            }
+        });
+    } else {
+        auto maps = datetime.toMap();
+        if (!maps.isEmpty()) {
+            m_timeLockSet["valueDate"] = maps["valueDate"].toString();
+            m_timeLockSet["valueTime"] = maps["valueTime"].toString();
+            m_timeLockSet["valueTimezone"] = maps["valueTimezone"].toString();
+            emit timeLockSetChanged(); 
+        }             
+    }
+}
+
+bool QGroupDashboard::enoughKeyAdded(const QString& xfp) {
+    QJsonArray signers = m_walletDraftInfo.value("signers").toArray();
+    int count = 0;
+    QString wallet_type = m_walletDraftInfo.value("wallet_type").toString();
+    for (QJsonValue js : signers) {
+        QJsonObject signer = js.toObject();
+        if (signer.value("xfp").toString() == xfp) {
+            count++;
+        }
+    }
+    if (wallet_type == "MINISCRIPT") {
+        return count == 2;
+    } else {
+        return count == 1;
+    }
 }

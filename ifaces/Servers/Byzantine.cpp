@@ -2688,3 +2688,61 @@ bool Byzantine::DraftWalletUploadBackupFile(const QString& group_id, const QMap<
     }
     return false;
 }
+
+bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QString& timezone, const qint64 timelock, QJsonObject &output, QString &errormsg)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_TIMELOCK];
+    cmd.replace("{group_id}", group_id);
+
+    QJsonObject data;
+    QJsonObject value;
+    value["value"] = timelock;
+    value["timezone"] = timezone;
+    data["timelock"] = value;
+
+    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            errormsg = response_msg;
+            DBG_INFO << response_code << response_msg;
+        }
+    }
+    return false;
+}
+
+bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& type, QString& errormsg)
+{
+    QJsonObject data;
+    data["verification_type"] = type;
+    QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_VERIFY];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{xfp}", xfp);
+
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK) {
+            QJsonObject dataObj = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
+            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    return false;
+}

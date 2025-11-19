@@ -58,7 +58,10 @@ Rectangle {
             font.weight: fontWeight
             color: "#031F2B"
             anchors.verticalCenter: parent.verticalCenter
-            width: paintedWidth
+            width: radioRoot.width - icon.width - 40
+            wrapMode: Text.WordWrap
+            lineHeightMode: Text.FixedHeight
+            lineHeight: 20
         }
         QBadge {
             text: textBadge

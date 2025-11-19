@@ -35,23 +35,26 @@ import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id: _Notification
-    property var planInfo
+    property var    planInfo
     property string emails: planInfo.display_emails
-    property bool isNotify: planInfo.buffer_period.enabled
+    property var    emails_preference: planInfo.notification_preferences
+    property bool   isNotify: planInfo.buffer_period.enabled
+    property int    walletType: ServiceSetting.walletInfo.walletType
+
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_865
+
     onCloseClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+
     content: Item {
         function requestFinishInputEmail() {
             _email_user.requestFinishInputEmail()
         }
         Column {
             anchors.fill: parent
-            anchors.top: parent.top
-            anchors.topMargin: -16
-            spacing: 24
+            spacing: 16
             QLato {
                 width: 539
                 height: 56
@@ -63,12 +66,13 @@ QOnScreenContentTypeB {
                 lineHeightMode: Text.FixedHeight
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
+                visible: walletType !== NUNCHUCKTYPE.MINISCRIPT
             }
             QEmailAndUserInput {
                 id: _email_user
-                title: STR.STR_QML_867
-                width: 539
-                height: 140
+                title: walletType !== NUNCHUCKTYPE.MINISCRIPT ? STR.STR_QML_867 : STR.STR_QML_2026
+                width: 728
+                height: walletType !== NUNCHUCKTYPE.MINISCRIPT ? 280 : 330
                 requestlist: emails.length === 0 ? [] : emails.split(",")
                 onEmailUpdated: {
                     emails = requestlist.join(",")
@@ -76,10 +80,11 @@ QOnScreenContentTypeB {
             }
             QCheckBoxButton{
                 id: notify
-                width: 539
+                width: 280
                 height: 24
                 label: STR.STR_QML_868
                 checked: isNotify
+                visible: walletType !== NUNCHUCKTYPE.MINISCRIPT
                 onButtonClicked: {
                     isNotify = checked
                 }
@@ -90,7 +95,7 @@ QOnScreenContentTypeB {
             height: 80
             anchors {
                 bottom: parent.bottom
-                bottomMargin: 36
+                horizontalCenter: parent.horizontalCenter
             }
             color:"#FDEBD2"
             radius: 8
@@ -124,31 +129,331 @@ QOnScreenContentTypeB {
             label.text: STR.STR_QML_871
             label.font.pixelSize: 16
             type: eTypeB
-            onButtonClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+            onButtonClicked: {
+                closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+            }
         }
         QTextButton {
-            width: 259
+            width: walletType !== NUNCHUCKTYPE.MINISCRIPT ? 259 : 177
             height: 48
-            label.text: STR.STR_QML_870
+            label.text: walletType !== NUNCHUCKTYPE.MINISCRIPT ? STR.STR_QML_870 : STR.STR_QML_2027
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
                 _Notification.contentItem.requestFinishInputEmail()
                 _Notification.nextClicked()
+                if(walletType === NUNCHUCKTYPE.MINISCRIPT){
+                    onchainSetupNotificationPreferences.open()
+                }
             }
         }
     }
     onPrevClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
     onNextClicked: {
-        var buffer_period = {
-            "enabled" : isNotify
+        if(walletType !== NUNCHUCKTYPE.MINISCRIPT){
+            var buffer_period = {
+                "enabled" : isNotify
+            }
+            var _editOffchain = {
+                "buffer_period": buffer_period,
+                "display_emails": emails
+            }
+            inheritancePlanInfo.editPlanInfo(_editOffchain)
+            closeTo(NUNCHUCKTYPE.SERVICE_TAB)
         }
-        var _edit = {
-            "buffer_period": buffer_period,
-            "display_emails": emails
+        else {
+            var buffer_period = {
+                "enabled" : isNotify
+            }
+            var _editOnchain = {
+                "setup_type": "emails",
+                "display_emails": emails
+            }
+            inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
         }
-        inheritancePlanInfo.editPlanInfo(_edit)
-        closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    }
+
+    Popup {
+        id: onchainSetupNotificationPreferences
+        width: parent.width
+        height: parent.height
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        background: Item{}
+        Rectangle {
+            width: popupWidth
+            height: popupHeight
+            radius: 24
+            color: "#FFFFFF"
+            anchors.centerIn: parent
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: onchainSetupNotificationPreferences.width
+                    height: onchainSetupNotificationPreferences.height
+                    radius: 24
+                }
+            }
+
+            QOnScreenContentTypeB {
+                anchors.fill: parent
+                label.text: STR.STR_QML_865
+                onCloseClicked: onchainSetupNotificationPreferences.close()
+                content: Item {
+                    width: 728
+                    height: 512
+                    clip: true
+                    Flickable {
+                        width: parent.width
+                        height: parent.height
+                        contentWidth: width
+                        contentHeight: _itempreferences.childrenRect.height
+                        ScrollBar.vertical: ScrollBar { active: true }
+
+                        Column {
+                            id: _itempreferences
+                            width: parent.width
+                            spacing: 12
+                            QLato {
+                                font.pixelSize: 16
+                                text: STR.STR_QML_852
+                                anchors.left: parent.left
+                            }
+
+                            Rectangle {
+                                width: _itempreferences.width
+                                height: myemailItems.implicitHeight+32
+                                radius: 12
+                                color: "#F5F5F5"
+                                Column {
+                                    id: myemailItems
+                                    width: parent.width - 32
+                                    spacing: 16
+                                    anchors.centerIn: parent
+                                    QLato {
+                                        text: ClientController.user.email
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        font.weight: Font.Bold
+                                    }
+                                    Rectangle {
+                                        width: parent.width
+                                        height: 1
+                                        color: "#EAEAEA"
+                                    }
+                                    Row {
+                                        width: parent.width
+                                        Column {
+                                            width: parent.width - 72
+                                            spacing: 4
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            QLato {
+                                                width: parent.width
+                                                horizontalAlignment: Text.AlignLeft
+                                                text: STR.STR_QML_2019
+                                            }
+                                            QLato {
+                                                width: parent.width
+                                                horizontalAlignment: Text.AlignLeft
+                                                text: STR.STR_QML_2029
+                                                font.pixelSize: 12
+                                                wrapMode: Text.WordWrap
+                                                color: "#595959"
+                                            }
+                                        }
+                                        QSwitchTypeB {
+                                            id: email_me_wallet_config_switch
+                                            width: 51
+                                            height: 31
+                                            switchOn: emails_preference ? emails_preference.email_me_wallet_config : false
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            onSwitchOnChanged: {
+                                                if(!switchOn){
+                                                    var _editOnchain = {
+                                                        "setup_type" : "owner",
+                                                        "setup_email": ClientController.user.email,
+                                                        "email_me_wallet_config": email_me_wallet_config_switch.switchOn
+                                                    }
+                                                    inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            QLato {
+                                font.pixelSize: 16
+                                text: STR.STR_QML_2028
+                                anchors.left: parent.left
+                            }
+
+                            Repeater {
+                                model: emails_preference.beneficiary_notifications.length
+                                Rectangle {
+                                    width: _itempreferences.width
+                                    height: emailItems.implicitHeight+32
+                                    radius: 12
+                                    color: "#F5F5F5"
+                                    Column {
+                                        id: emailItems
+                                        width: parent.width - 32
+                                        spacing: 16
+                                        anchors.centerIn: parent
+                                        QLato {
+                                            text: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].email : "unknown email"
+                                            width: parent.width
+                                            elide: Text.ElideRight
+                                            font.weight: Font.Bold
+                                        }
+                                        Rectangle {
+                                            width: parent.width
+                                            height: 1
+                                            color: "#EAEAEA"
+                                        }
+                                        Row {
+                                            width: parent.width
+                                            Column {
+                                                width: parent.width - 72
+                                                spacing: 4
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                QLato {
+                                                    width: parent.width
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    text: STR.STR_QML_2020
+                                                }
+                                                QLato {
+                                                    width: parent.width
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    text: STR.STR_QML_2030
+                                                    font.pixelSize: 12
+                                                    wrapMode: Text.WordWrap
+                                                    color: "#595959"
+                                                }
+                                            }
+
+                                            QSwitchTypeB {
+                                                id: notify_timelock_expires_switch
+                                                width: 51
+                                                height: 31
+                                                switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].notify_timelock_expires : false
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                onSwitchOnChanged: {
+                                                    if(!switchOn){
+                                                        var _editOnchain = {
+                                                            "setup_type" : "preference",
+                                                            "setup_email": emails_preference.beneficiary_notifications[index].email,
+                                                            "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
+                                                            "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
+                                                            "include_wallet_config": include_wallet_config_switch.switchOn
+                                                        }
+                                                        inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Row {
+                                            width: parent.width
+                                            Column {
+                                                width: parent.width - 72
+                                                spacing: 4
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                QLato {
+                                                    width: parent.width
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    text: STR.STR_QML_2021
+                                                }
+                                                QLato {
+                                                    width: parent.width
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    text: STR.STR_QML_2031
+                                                    font.pixelSize: 12
+                                                    wrapMode: Text.WordWrap
+                                                    color: "#595959"
+                                                }
+                                            }
+                                            QSwitchTypeB {
+                                                id: notify_wallet_changes_switch
+                                                width: 51
+                                                height: 31
+                                                switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].notify_wallet_changes : false
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                onSwitchOnChanged: {
+                                                    if(!switchOn){
+                                                        var _editOnchain = {
+                                                            "setup_type" : "preference",
+                                                            "setup_email": emails_preference.beneficiary_notifications[index].email,
+                                                            "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
+                                                            "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
+                                                            "include_wallet_config": include_wallet_config_switch.switchOn
+                                                        }
+                                                        inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Row {
+                                            width: parent.width
+                                            Column {
+                                                width: parent.width - 72
+                                                spacing: 4
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                QLato {
+                                                    width: parent.width
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    text: STR.STR_QML_2022
+                                                }
+                                                QLato {
+                                                    width: parent.width
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    text: STR.STR_QML_2032
+                                                    font.pixelSize: 12
+                                                    wrapMode: Text.WordWrap
+                                                    color: "#595959"
+                                                }
+                                            }
+                                            QSwitchTypeB {
+                                                id: include_wallet_config_switch
+                                                width: 51
+                                                height: 31
+                                                switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].include_wallet_config : false
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                onSwitchOnChanged: {
+                                                    if(!switchOn){
+                                                        var _editOnchain = {
+                                                            "setup_type" : "preference",
+                                                            "setup_email": emails_preference.beneficiary_notifications[index].email,
+                                                            "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
+                                                            "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
+                                                            "include_wallet_config": include_wallet_config_switch.switchOn
+                                                        }
+                                                        inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                bottomRight: QTextButton {
+                    width: 66
+                    height: 48
+                    label.text: STR.STR_QML_835
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+                }
+                bottomLeft:  QButtonTextLink {
+                    height: 48
+                    label: STR.STR_QML_059
+                    onButtonClicked: onchainSetupNotificationPreferences.close()
+                }
+            }
+        }
     }
 }
 

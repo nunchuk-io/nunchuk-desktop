@@ -24,6 +24,7 @@
 #include "Premiums/QUserWallets.h"
 #include "Premiums/QGroupWallets.h"
 #include "ServiceSetting.h"
+#include "Signers/QSignerManagement.h"
 
 void SCR_ADD_HARDWARE_EXIST_Entry(QVariant msg) {
     AppModel::instance()->setAddSignerWizard(0);
@@ -40,10 +41,10 @@ void EVT_ADD_EXIST_HARDWARE_REQUEST_HANDLER(QVariant msg) {
         QString file_path = msg.toMap().value("file_path").toString();
         int new_index = msg.toMap().value("new_index").toInt();
         using Enum = QAssistedDraftWallets::ImportColdcard_t;
-        QAssistedDraftWallets *instance = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-        auto ret = instance->ImportColdcardViaFile(file_path, new_index);
+        QAssistedDraftWallets *draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
+        auto ret = draftWallet->ImportColdcardViaFile(file_path, new_index);
         if (ret == Enum::eOK) {
-            emit instance->reuseKeyGetSignerResult(1);
+            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eREUSE_RESULT");
             if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
                 dashboard->GetAlertsInfo();
             }
@@ -52,27 +53,12 @@ void EVT_ADD_EXIST_HARDWARE_REQUEST_HANDLER(QVariant msg) {
             // Don't need emit
         }
         else if (ret == Enum::eError_Back) {
-            emit instance->reuseKeyGetSignerResult(2);
+            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eREUSE_INPUT_INDEX");
         }
     }
     else {
-        auto dashboard = QGroupWallets::instance()->dashboardInfoPtr();
-        if (dashboard && dashboard->canReplaceKey()) {
-            if (QAssistedDraftWallets::IsByzantine()) {
-                QGroupWallets::instance()->setSelectFingerPrint(msg.toString());
-                QGroupWallets::instance()->requestKeyReplacement(NULL);
-            } else {
-                QUserWallets::instance()->setSelectFingerPrint(msg.toString());
-                QUserWallets::instance()->requestKeyReplacement(NULL);
-            }
-        } else {
-            if (QAssistedDraftWallets::IsByzantine()) {
-                QGroupWallets::instance()->setSelectFingerPrint(msg.toString());
-                QGroupWallets::instance()->AddOrUpdateAKeyToDraftWallet();
-            } else {
-                QUserWallets::instance()->setSelectFingerPrint(msg.toString());
-                QUserWallets::instance()->AddOrUpdateAKeyToDraftWallet();
-            }
+        if (QSignerManagement::instance()->finishCreateMasterSigner())  {
+            AppModel::instance()->setAddSignerStep(-1);
         }
     }
 }

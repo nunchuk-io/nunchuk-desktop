@@ -29,6 +29,7 @@ import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
+import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
@@ -1171,5 +1172,9 @@ QOnScreenContentTypeA {
                 }
             }
         }
+    }
+    QPopupAnalogClock {
+        id: _analogClockInput
+        timeString: newWalletInfo.timeMini.absoluteTimestamp.valueTime
     }
 }

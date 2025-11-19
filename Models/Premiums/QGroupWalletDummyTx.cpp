@@ -89,6 +89,8 @@ bool QGroupWalletDummyTx::requestSignTx(const QString &xfp)
             QString request_body    = m_tx["request_body"].toString();
             warningmsg.resetWarningMessage();
             QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, request_body, warningmsg);
+            DBG_INFO << "tx:" << tx_to_sign << xfp;
+            DBG_INFO << "body:" << request_body;
             if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                 nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(), [xfp](const nunchuk::SingleSigner &s) {
                     return s.get_master_fingerprint() == xfp.toStdString();
@@ -96,15 +98,22 @@ bool QGroupWalletDummyTx::requestSignTx(const QString &xfp)
                 QMap<QString, QString> signers;
                 QMap<QString, QString> signatures;
                 QString signature = "";
+                
 
-                DBG_INFO << (int)signer.get_type();
+                DBG_INFO << (int)signer.get_type() << QString::fromStdString(signer.get_master_fingerprint()) << QString::fromStdString(signer.get_master_signer_id());
                 switch (signer.get_type()) {
                 case nunchuk::SignerType::HARDWARE:
                 case nunchuk::SignerType::SOFTWARE:
                 case nunchuk::SignerType::COLDCARD_NFC:
                 {
+                    auto device = AppModel::instance()->deviceListPtr()->getDeviceByXfp(xfp);
+                    if (!device) {
+                        DBG_INFO << "Device not found for xfp:" << xfp;
+                        break;
+                    }
                     warningmsg.resetWarningMessage();
-                    signature = bridge::SignHealthCheckMessage(signer, tx_to_sign, warningmsg);
+                    DBG_INFO << "Signing tx via HWI for xfp:" << xfp;
+                    signature = bridge::SignHealthCheckMessage(wallet, device->originDevice(), signer, tx_to_sign, warningmsg);
                     if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
                         signatures[xfp] = signature;
                         signers[xfp] = QString::fromStdString(signer.get_name());

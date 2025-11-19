@@ -26,206 +26,34 @@ import NUNCHUCKTYPE 1.0
 import DataPool 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
-import "../../Components/customizes/Chats"
-import "../../Components/customizes/Texts"
-import "../../Components/customizes/Buttons"
-import "../../Components/customizes/Signers"
 import "../OnlineMode/SetupWallets"
-import "../OnlineMode/AddHardwareKeys"
-import "../OnlineMode/ServerKeys"
-import "../OnlineMode/Healths"
-import "../OnlineMode/Inheritances"
-import "../OnlineMode/RecurringPayments"
-import "../../Components/customizes/services"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property int flow: AppModel.walletInfo.flow
-    property string config_flow: GroupWallet.dashboardInfo.configFlow
-    readonly property var map_flow: [
-        {flow_action: AlertType.GROUP_WALLET_PENDING,        screen_component: _group_wallet_creation_pending},
-        {flow_action: AlertType.WALLET_PENDING,              screen_component: _user_wallet_creation_pending},
-        {flow_action: AlertType.GROUP_WALLET_SETUP,          screen_component: _wallet_setup},
-        {flow_action: AlertType.UPDATE_SERVER_KEY,           screen_component: _platform_key_policy_change},
-        {flow_action: AlertType.HEALTH_CHECK_PENDING,        screen_component: _health_check_pending},
-        {flow_action: AlertType.HEALTH_CHECK_REQUEST,        screen_component: _health_check_request},
-        {flow_action: AlertType.UPDATE_INHERITANCE_PLAN,     screen_component: _update_inheritance_plan},
-        {flow_action: AlertType.CANCEL_INHERITANCE_PLAN,     screen_component: _cancel_inheritance_plan},
-        {flow_action: AlertType.CREATE_INHERITANCE_PLAN,     screen_component: _create_inheritance_plan},
-        {flow_action: AlertType.REQUEST_INHERITANCE_PLANNING,screen_component: _inheritance_planning_request},
-        {flow_action: AlertType.KEY_RECOVERY_APPROVED,       screen_component: enter_backup_password},
-        {flow_action: AlertType.CREATE_INHERITANCE_PLAN_SUCCESS,screen_component: _inheritance_plan_has_been_setup},
-        {flow_action: AlertType.RECURRING_PAYMENT_REQUEST,   screen_component:_recurring_payment_request},
-        {flow_action: AlertType.RECURRING_PAYMENT_CANCELATION_PENDING,   screen_component:_cancel_payment_request},
-
-        {flow_action: AlertType.KEY_RECOVERY_REQUEST,        screen_component: _request_key_recovery_for},
-        {flow_action: AlertType.UPDATE_SECURITY_QUESTIONS,   screen_component: _update_security_questions},
-        {flow_action: AlertType.MANAGE_GROUP_CHAT_HISTORY,   screen_component: _manageGroupChatHistory},
-        {flow_action: AlertType.CHANGE_EMAIL_REQUEST,        screen_component: _change_email_request},
-        {flow_action: AlertType.HEALTH_CHECK_REMINDER,       screen_component: _healthCheckReminderAlert},
-        {flow_action: AlertType.KEY_REPLACEMENT_PENDING,     screen_component: _key_replacement_pending},
-    ]
-    readonly property var map_screens: [
-        {screen_name: "register-gapped-device",         screen_component: _register_gapped_device},
-        {screen_name: "register-COLDCARD",              screen_component: _register_COLDCARD},
-        {screen_name: "register-BitBox",                screen_component: _register_BitBox},
-        {screen_name: "register-Done",                  screen_component: _accessing_wallet_configuration},
-        {screen_name: "accessing-wallet-configuration", screen_component: _accessing_wallet_configuration},
-        {screen_name: "register-claim",                 screen_component: _claim_your_key},
-    ]
-
-    property var _wallet_setup: map_screens.find(function(e) {if (e.screen_name === config_flow) return true; else return false}).screen_component
-
+    property bool isNormalFlow: GroupWallet.dashboardInfo.walletType !== "MINISCRIPT"
+    
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        sourceComponent: map_flow.find(function(e) {if (e.flow_action === flow) return true; else return false}).screen_component
-    }
-    Component {
-        id: _group_wallet_creation_pending
-        QWalletCreationPending {}
-    }
-    Component {
-        id: _user_wallet_creation_pending
-        QWalletCreationPending {
-            isRead: true
-        }
-    }
-    Component {
-        id: _register_gapped_device
-        QRegisterAirGappedDevice {}
-    }
-    Component {
-        id: _register_COLDCARD
-        QRegisterCOLDCARD {}
-    }
-    Component {
-        id: _register_BitBox
-        QRegisterBitbox {}
-    }
-    Component {
-        id: _claim_your_key
-        QClaimYourKey {}
-    }
-    Component {
-        id: _accessing_wallet_configuration
-        QAccessingWalletConfiguration {}
-    }
-    Component {
-        id: _platform_key_policy_change
-        QPlatformKeyPolicyChange {}
-    }
-    Component {
-        id: _health_check_pending
-        QHealthCheckPending {}
-    }
-    Component {
-        id: _health_check_request
-        QHealthCheckRequested {}
-    }
-    Component {
-        id: _healthCheckReminderAlert
-        QHealthCheckReminderAlert {}
-    }
-
-    Component {
-        id: _update_inheritance_plan
-        QInheritancePlanInfo {
-            description: STR.STR_QML_1036
-            descriptionHb: STR.STR_QML_1215
-            planInfo: AppModel.walletInfo.inheritancePlanInfo.planInfoUpdate
-        }
-    }
-
-    Component {
-        id: _cancel_inheritance_plan
-        QInheritancePlanInfo {
-            description: STR.STR_QML_1034
-            descriptionHb: STR.STR_QML_1214
-            planIsCancel: true
-        }
-    }
-
-    Component {
-        id: _create_inheritance_plan
-        QInheritancePlanInfo {
-            description: STR.STR_QML_1035
-            planInfo: AppModel.walletInfo.inheritancePlanInfo.planInfoNew
-        }
-    }
-
-    Component {
-        id: _inheritance_planning_request
-        QInheritancePlanningRequest {
-        }
-    }
-    Component {
-        id: enter_backup_password
-        QEnterBackupPassword {
-            onPrevClicked: closeTo(NUNCHUCKTYPE.SERVICE_TAB)
-            onNextClicked: {
-                var _input = {
-                    type: "enter-backup-password",
-                    password: backup_password.textInputted
-                }
-                QMLHandle.sendEvent(EVT.EVT_DASHBOARD_ALERT_INFO_ENTER, _input)
+        sourceComponent: {
+            if (isNormalFlow) {
+                return setup_wallet_flow
+            } else {
+                return setup_wallet_timelock_flow
             }
         }
     }
 
     Component {
-        id: _inheritance_plan_has_been_setup
-        QInheritancePlanHasBeenSetup {
+        id: setup_wallet_flow
+        QSetupWalletsNormalFlow {
 
         }
     }
-
     Component {
-        id: _recurring_payment_request
-        QRecurringPaymentRequest {
-
-        }
-    }
-
-    Component {
-        id: _cancel_payment_request
-        QRecurringPaymentCancelationPending {
-
-        }
-    }
-
-    Component {
-        id: _request_key_recovery_for
-        QRequestedKeyRecoveryFor {
-
-        }
-    }
-
-    Component {
-        id: _update_security_questions
-        QSecurityQuestionsUpdate {
-
-        }
-    }
-
-    Component {
-        id: _manageGroupChatHistory
-        QManageGroupChatHistory {
-
-        }
-    }
-
-    Component {
-        id: _change_email_request
-        QChangeEmailRequest {
-
-        }
-    }
-
-    Component {
-        id: _key_replacement_pending
-        QKeyReplacementInProgress {
+        id: setup_wallet_timelock_flow
+        QSetupWalletsTimelockFlow {
 
         }
     }

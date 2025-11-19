@@ -106,9 +106,9 @@ Item {
     function getKeyHeight() {
         if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
             if (miniscript.keyObj.singleSigner_derivationPath !== undefined && miniscript.keyObj.singleSigner_derivationPath !== null && useDerivationPath) {
-                return 76
+                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 76 : 38
             } else {
-                return 58
+                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 58 : 38
             }            
         } else {
             return 48

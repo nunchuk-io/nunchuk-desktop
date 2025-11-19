@@ -130,8 +130,8 @@ Item {
             onKeyEnterPreImageInput: {
                 _send.keyEnterPreImageInput(hashData, typeNode)
             }
-            // onKeyExportRequest: _send.keyExportRequest()
-            // onKeyImportRequest: _send.keyImportRequest()
+            onKeyExportRequest: _send.keyExportRequest()
+            onKeyImportRequest: _send.keyImportRequest()
         }
     }
 }

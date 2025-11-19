@@ -121,7 +121,7 @@ Item {
         
             QLato {
                 width: parent.width
-                visible: miniscript.keyObj != null && miniscript.keyObj != undefined
+                visible: miniscript.keyObj !== null && miniscript.keyObj !== undefined && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                 text: {
                     if (miniscript.keyObj.single_signer_device_cardid !== "") {
                         var card_id_text = miniscript.keyObj.single_signer_device_cardid
@@ -138,7 +138,7 @@ Item {
             }
             QLato {
                 width: paintedWidth + 4 + 12
-                visible: miniscript.keyObj != null && miniscript.keyObj != undefined
+                visible: miniscript.keyObj !== null && miniscript.keyObj !== undefined && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                 text: qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath)
                 color: miniscript.keyStrCount > 1 ? "#CF4018": "#757575"
                 horizontalAlignment: Text.AlignLeft
@@ -153,8 +153,7 @@ Item {
                         verticalCenter: parent.verticalCenter
                         right: parent.right
                     }
-                    visible: (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SOFTWARE ||
-                            miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.HARDWARE) && showEdit
+                    visible: (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SOFTWARE || miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.HARDWARE) && showEdit
                 }
                 MouseArea {
                     visible: _icon.visible
