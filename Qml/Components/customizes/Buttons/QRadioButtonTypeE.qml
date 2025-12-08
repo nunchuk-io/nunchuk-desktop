@@ -25,10 +25,10 @@ Rectangle {
     id: radioRoot
     property bool selected: false
     property string label: ""
-    property string fontFamily: "Lato"
     property string textBadge: ""
     property int fontPixelSize: 14
     property int fontWeight: Font.Bold
+    property int textWidth: 0
     signal buttonClicked()
     border.width: 2
     border.color: selected ? "#000000" : "#DEDEDE"
@@ -42,32 +42,34 @@ Rectangle {
             iconSize: 24
             source: radioRoot.selected ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
-            MouseArea {
-                id: mouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: { buttonClicked() }
-            }
+           
         }
-        QText {
+        QLato {
             id: text
             text: label
-            font.family: fontFamily
             font.pixelSize: fontPixelSize
             font.weight: fontWeight
-            color: "#031F2B"
             anchors.verticalCenter: parent.verticalCenter
-            width: radioRoot.width - icon.width - 40
+            width: textWidth > 0 ? textWidth : radioRoot.width - icon.width - 40
             wrapMode: Text.WordWrap
             lineHeightMode: Text.FixedHeight
             lineHeight: 20
         }
         QBadge {
+            id: badge
             text: textBadge
             color: "#EAEAEA"
             visible: textBadge !== ""
+            fontSize: 10
+            anchors.verticalCenter: parent.verticalCenter
         }
+    }
+    MouseArea {
+        id: mouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: { buttonClicked() }
     }
 }
 

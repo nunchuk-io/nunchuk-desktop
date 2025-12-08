@@ -42,9 +42,9 @@ QScreenAdd {
         {screen: "_IMPORTANT_NOTICE",     screen_component: _importantNotice},
         {screen: "_BACKUP_PASSPHRASE",    screen_component: _passPhraseBackup},
         {screen: "_BACKUP_COLDCARD",      screen_component: _backupCOLDCARD},
-        {screen: "eADD_INFORMATION",      screen_component: _Information},
-        {screen: "eADD_REFRESH_DEVICE",   screen_component: _RefreshDevice},
-        {screen: "eADD_VIA_FILE",         screen_component: function() {
+        {screen: "eSCREEN_INFORMATION",      screen_component: _Information},
+        {screen: "eSCREEN_REFRESH_DEVICE",   screen_component: _RefreshDevice},
+        {screen: "eSCREEN_VIA_FILE",         screen_component: function() {
                                                 var walletType = SignerManagement.currentSigner.wallet_type
                                                 if (walletType === "MINISCRIPT") {
                                                     var has = SignerManagement.currentSigner.has
@@ -55,16 +55,17 @@ QScreenAdd {
                                                 }
                                                 return _ViaFile
                                             }},
-        {screen: "eADD_VIA_QR",           screen_component: function() {
+        {screen: "eSCREEN_VIA_QR",           screen_component: function() {
                                                 var has = SignerManagement.currentSigner.has
                                                 var hasSecond = SignerManagement.currentSigner.hasSecond
                                                 if (!has && !hasSecond) return _ViaQR12
                                                 if (has && !hasSecond) return _ViaQR22
                                                 return null
                                             }},
-        {screen: "eADD_LOADING",          screen_component: _Loading},
-        {screen: "eADD_SUCCESS",          screen_component: _resultSuccess},
-        {screen: "eADD_ERROR",            screen_component: _resultError},
+        {screen: "eSCREEN_LOADING",          screen_component: _loadingScreen},
+        {screen: "eSCREEN_SUCCESS",        screen_component: _result},
+        {screen: "eSCREEN_ERROR",          screen_component: _result},
+        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     Loader {
@@ -88,7 +89,7 @@ QScreenAdd {
             }
             onRequestNext: {
                 if (option === "not-have-a-passphrase") {
-                    stateScreen.setScreenFlow("eADD_INFORMATION")
+                    stateScreen.setScreenFlow("eSCREEN_INFORMATION")
                 } else {
                     stateScreen.setScreenFlow("_IMPORTANT_NOTICE")
                 }
@@ -118,7 +119,7 @@ QScreenAdd {
         QPassphraseBackupReminder {
             onRequestBack: stateScreen.setScreenFlow("_IMPORTANT_NOTICE")
             onRequestNext: {
-                stateScreen.setScreenFlow("eADD_INFORMATION")
+                stateScreen.setScreenFlow("eSCREEN_INFORMATION")
             }
         }
     }
@@ -126,7 +127,7 @@ QScreenAdd {
         id: _backupCOLDCARD
         QBackupCOLDCARD {
             inputFingerPrint: AppModel.masterSignerInfo.fingerPrint
-            onPrevClicked: stateScreen.setScreenFlow("eADD_SUCCESS")
+            onPrevClicked: stateScreen.setScreenFlow("eSCREEN_SUCCESS")
         }
     }
     
@@ -254,7 +255,7 @@ QScreenAdd {
 
             onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onNextClicked: {
-                 stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
@@ -272,7 +273,7 @@ QScreenAdd {
                 state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
             }
             onPrevClicked: {
-                 stateScreen.setScreenFlow("eADD_INFORMATION")
+                 stateScreen.setScreenFlow("eSCREEN_INFORMATION")
             }
             bottomRight: Row {
                 spacing: 12
@@ -284,9 +285,8 @@ QScreenAdd {
                     fontPixelSize: 16
                     iconSize: 16
                     type: eTypeB
-                    // visible: SignerManagement.currentSigner.wallet_type === "MINISCRIPT"
-                    visible: false
-                    onButtonClicked: stateScreen.setScreenFlow("eADD_VIA_QR")
+                    visible: SignerManagement.currentSigner.wallet_type === "MINISCRIPT"
+                    onButtonClicked: stateScreen.setScreenFlow("eSCREEN_VIA_QR")
                 }
                 QIconTextButton {
                     width: 244
@@ -296,7 +296,7 @@ QScreenAdd {
                     fontPixelSize: 16
                     iconSize: 16
                     type: eTypeB
-                    onButtonClicked: stateScreen.setScreenFlow("eADD_VIA_FILE")
+                    onButtonClicked: stateScreen.setScreenFlow("eSCREEN_VIA_FILE")
                 }
                 QTextButton {
                     width: 120
@@ -306,7 +306,7 @@ QScreenAdd {
                     type: eTypeE
                     enabled: _refresh.contentItem.isEnable()
                     onButtonClicked: {
-                        stateScreen.setScreenFlow("eADD_LOADING")
+                        stateScreen.setScreenFlow("eSCREEN_LOADING")
                         _refresh.contentItem.addDevice()
                     }
                 }
@@ -319,7 +319,7 @@ QScreenAdd {
         {
             id: via_file
             onPrevClicked: {
-                 stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
@@ -329,7 +329,7 @@ QScreenAdd {
         {
             id: via_file
             onPrevClicked: {
-                 stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
@@ -339,7 +339,7 @@ QScreenAdd {
         {
             id: via_file
             onPrevClicked: {
-                 stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
@@ -349,7 +349,7 @@ QScreenAdd {
         {
             id: via_file
             onPrevClicked: {
-                 stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
@@ -359,146 +359,62 @@ QScreenAdd {
         {
             id: via_file
             onPrevClicked: {
-                 stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
     Component {
-        id: _Loading
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            enableHeader: false
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            content: Item {
-                Column {
-                    width: 400
-                    height: 56
-                    anchors.centerIn: parent
-                    spacing: 16
-                    QProgressbarTypeA {
-                        id: progresBar
-                        percentage: AppModel.addSignerPercentage
-                    }
-                    QLato{
-                        font.weight: Font.Bold
-                        font.pixelSize: 20
-                        text: STR.STR_QML_912
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
-            }
+        id: _loadingScreen
+        QScreenAddKeyLoadingState {
+            progressTitle: STR.STR_QML_912
         }
     }
 
     // Screen: Result - Success
     Component {
-        id: _resultSuccess
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96; height: 96;
-                    radius: 48
-                    color: "#A7F0BA"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/check-dark.svg"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: STR.STR_QML_913
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-                QLato {
-                    visible: true
-                    width: parent.width
-                    height: 28
-                    text: STR.STR_QML_828
-                    verticalAlignment: Text.AlignVCenter
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                }
-            }
-            bottomRight: Row {
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_777
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: doneOrTryAgainAddColdcardKey(true)
-                }
-            }
+        id: _result
+        QScreenAddKeyResult {
+            isSuccess: stateScreen.screenFlow === "eSCREEN_SUCCESS"
+            resultTitle: isSuccess ? STR.STR_QML_913 : STR.STR_QML_966
+            resultSubtitle: isSuccess ? STR.STR_QML_828 : ""
+            onDoneClicked: doneOrTryAgainAddHardwareKey(isSuccess)
         }
     }
-
-    // Screen: Result - Error
     Component {
-        id: _resultError
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96; height: 96;
-                    radius: 48
-                    color: "#FFD7D9"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/error_outline_24px.png"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: STR.STR_QML_966
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
+        id: _resultClaimInheritancePlan
+        QScreenAddKeyResult {
+            isSuccess: false
+            resultTitle: STR.STR_QML_2045
+            resultSubtitle: STR.STR_QML_2046
             bottomRight: Row {
                 spacing: 12
                 QTextButton {
                     width: 120
                     height: 48
-                    label.text: STR.STR_QML_777
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
                     type: eTypeE
-                    onButtonClicked: doneOrTryAgainAddColdcardKey(false)
+                    onButtonClicked: {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
                 }
             }
         }
     }
     function addColdcardViaImportFile(filePath) {
-        var masterSignerObj = {
-            "action"                : "import-coldcard-via-file",
-            "file_path"             : filePath
-        };
-        QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_DEVICE_REQUEST, masterSignerObj)
+        var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
+        if (isNormalFlow) {
+            draftWallet.requestImportFileAddOrReplacementWithIndexAsync(filePath, -1)
+        } else {
+            var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim
+            if (onlyUseForClaim) {
+                ServiceSetting.servicesTag.requestDownloadWalletViaImportFile(inputtingIndex.device_xfp, 0)
+            } else {
+                var has = SignerManagement.currentSigner.has
+                var hasSecond = SignerManagement.currentSigner.hasSecond
+                if (!has && !hasSecond) return draftWallet.requestImportFileAddOrReplacementWithIndexAsync(filePath, 0)
+                if (has && !hasSecond) return draftWallet.requestImportFileAddOrReplacementWithIndexAsync(filePath, 1)
+            }
+        }
     }
 }

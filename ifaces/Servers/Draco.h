@@ -136,7 +136,7 @@ public:
     void assistedSyncTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt, const QString &note);
     bool assistedRbfTx(const QString &wallet_id, const QString &transaction_id, const QString &psbt, QJsonObject &output, QString &errormsg);
     bool assistedWalletGetListKey(QJsonObject &output, QString &errormsg);
-    bool assistedWalletAddKey(const QString &request_id, const QJsonObject& data, bool &isDuplicateKey, QString &errormsg);
+    bool assistedWalletAddKey(const QString &request_id, const QJsonObject& data, QJsonObject &output);
     bool assistedWalletRemoveId(const QString &request_id);
     QJsonObject assistedGetWalletConfig();
     bool assistedWalletGetInfo(const QString &wallet_id, QJsonObject &output, QString &errormsg);
@@ -237,37 +237,28 @@ public:
 
     bool inheritanceDownloadBackup(const QString& magic,
                                    const QStringList &backup_passwords,
-                                   int& response_code,
-                                   QJsonObject &output,
-                                   QString& errormsg);
+                                   QJsonObject &output);
 
-    bool inheritanceClaimRequest(const QString& magic,
-                                 const QString& psbt,
-                                 QJsonObject& output,
-                                 QString& errormsg);
+    bool inheritanceClaimRequest(const QJsonObject& data,
+                                 QJsonObject& output);
 
     bool inheritanceClaimStatus(const QJsonObject& data,
                                 const QStringList& authos,
-                                QJsonObject& output,
-                                QString& errormsg);
+                                QJsonObject& output);
 
     bool inheritanceClaimInit(const QString& magic,
-                                QJsonObject& output,
-                                QString& errormsg);
+                                QJsonObject& output);
 
     bool inheritanceClaimDownloadWallet(const QJsonObject& body,
-                                QJsonObject& output,
-                                QString& errormsg);
+                                QJsonObject& output);
 
     bool inheritanceCreateTx(const QJsonObject& data,
                              const QStringList& authos,
-                             QJsonObject& output,
-                             QString& errormsg);
+                             QJsonObject& output);
 
     bool inheritanceCheck(const QString& magic,
                           const QString& environment,
-                          QJsonObject& output,
-                          QString& errormsg);
+                          QJsonObject& output);
 
     bool inheritanceGetPlan(const QString &wallet_id,
                             const QString &group_id,
@@ -404,9 +395,10 @@ public:
                     const QString &xfp,
                     const QString& passwordToken,
                     const QJsonObject& request_body,
-                    QString &errormsg);
+                    QJsonObject &output);
 
     bool FinalizeKeyReplacement(const QString &wallet_id,
+                                const QString& passwordToken,
                                 QJsonObject& output,
                                 QString &errormsg);
 
@@ -415,8 +407,20 @@ public:
                                 QString &errormsg);
 
     bool ResetKeyReplacement(const QString &wallet_id,
+                            const QString& passwordToken,
                             QJsonObject& output,
                             QString &errormsg);
+
+    bool VerifyKeyReplacement(const QString &wallet_id,
+                              const QString &xfp,
+                              const QString& type,
+                              const QString& passwordToken,
+                              QJsonObject& result);
+
+    bool RemoveKeyReplacement(const QString &wallet_id,
+                              const QString &xfp,
+                              const QString& passwordToken,
+                              QJsonObject& result);
 
     //Saved address
     bool GetSavedAddress(QJsonObject &output, QString &errormsg);
@@ -469,6 +473,15 @@ public:
     // Mini script
     bool GetWalletSetupConfig(QJsonObject &output, QString &errormsg);
     bool DraftWalletUpdateTimelock(const QString& timezone, const qint64 new_timelock, QJsonObject &output, QString &errormsg);
+
+    // Replace or change timelock
+    bool walletChangeTimelock(const QString &wallet_id, const QString &timezone, const qint64 new_timelock, const QString &verify_token, QJsonObject &output);
+
+    // Claiming wallets
+    bool ClaimingWalletGet(const QString &local_id, QJsonObject &output, QString &errormsg);
+    bool ClaimingWalletUpdate(const QString &local_id, const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
+    bool ClaimingWalletDelete(const QString &local_id, QJsonObject &output, QString &errormsg);
+    bool ClaimingWalletList(QJsonObject &output, QString &errormsg);
 private:
     Draco();
     ~Draco();

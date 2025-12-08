@@ -32,6 +32,7 @@ import "../../../../localization/STR_QML.js" as STR
 
 
 QOnScreenContentTypeB {
+    id: _onScreen
     property var dashInfo: GroupWallet.dashboardInfo    
     property bool isKeyHolderLimited: dashInfo.myRole === "KEYHOLDER_LIMITED"
     width: popupWidth
@@ -186,26 +187,8 @@ QOnScreenContentTypeB {
 
     QPopupHardwareAddKey {
         id: _hardwareAddKey
-        supportedModel: {
-            var ls = []
-            if (!isKeyHolderLimited) {
-                if (!isInheritance) {
-                    ls.push({add_type: NUNCHUCKTYPE.ADD_BITBOX,   txt: "BitBox"   , type: "bitbox02", tag: "BITBOX"  })
-                }
-                ls.push({add_type: NUNCHUCKTYPE.ADD_COLDCARD, txt: "COLDCARD" , type: "coldcard", tag: "COLDCARD"})
-            }
-            if (!isInheritance) {
-                ls.push({add_type: NUNCHUCKTYPE.ADD_LEDGER,   txt: "Ledger"   , type: "ledger"  , tag: "LEDGER"  })
-                ls.push({add_type: NUNCHUCKTYPE.ADD_TREZOR,   txt: "Trezor"   , type: "trezor"  , tag: "TREZOR"  })
-            }
-            if (isInheritance) {
-                ls.push({add_type: NUNCHUCKTYPE.ADD_TAPSIGNER,   txt: "TAPSIGNER"   , type: "TAPSIGNER"  , tag: "INHERITANCE"  })
-            }
-            if (!isInheritance) {
-                ls.push({add_type: NUNCHUCKTYPE.ADD_JADE,   txt: "Blockstream Jade"   , type: "JADE"  , tag: "JADE"  })
-            }
-            return ls
-        }
+        isKeyHolderLimited: _onScreen.isKeyHolderLimited
+        isMiniscript: dashInfo.walletType === "MINISCRIPT"
         onNextClicked: {
             dashInfo.requestStartKeyCreate(hardware)
         }

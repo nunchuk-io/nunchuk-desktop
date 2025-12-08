@@ -69,11 +69,14 @@ void EVT_SHARED_WALLET_FINALIZE_WALLET_HANDLER(QVariant msg) {
 void EVT_SHARED_WALLET_CONFIGURE_EXPORT_COLDCARD_HANDLER(QVariant msg) {
     QString file_path = qUtils::QGetFilePath(msg.toString());
     if(AppModel::instance()->walletInfo() && CLIENT_CURRENTROOM->roomWallet() && (file_path != "")){
-        nunchuk::ExportFormat format = nunchuk::ExportFormat::COLDCARD;
-        if(CLIENT_CURRENTROOM->roomWallet()->walletInfo()){
-            int type = CLIENT_CURRENTROOM->roomWallet()->walletInfo()->walletType();
-            format = (int)nunchuk::WalletType::MINISCRIPT == type ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL : nunchuk::ExportFormat::COLDCARD;
-        }
+        // nunchuk::ExportFormat format = nunchuk::ExportFormat::COLDCARD;
+        // if(CLIENT_CURRENTROOM->roomWallet()->walletInfo()){
+        //     int type = CLIENT_CURRENTROOM->roomWallet()->walletInfo()->walletType();
+        //     format = (int)nunchuk::WalletType::MINISCRIPT == type ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL : nunchuk::ExportFormat::COLDCARD;
+        // }
+
+        // 6.Dec.25: Always export descriptor external/internal for Coldcard as per new spec
+        nunchuk::ExportFormat format = nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL;
         bool ret = bridge::nunchukExportWallet(CLIENT_CURRENTROOM->roomWallet()->get_wallet_id(),
                                                file_path,
                                                format);

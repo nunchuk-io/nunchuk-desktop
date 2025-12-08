@@ -108,9 +108,18 @@ class QAssistedDraftWallets : public QSwitchAPI {
     void requestAddOrReplacementWithIndexAsync(const QString &xfp, int index);
     QString bip32path(const QString &xfp, int index);
     QString reuseKeyXfp(const QString &fileName);
-    void requestVerifySingleSigner(const int index, const QString &verifyType);
-    int getAccountIndexFromSigner(const QString &derivation_path);
+    void requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType);
+    void requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType);
+    void requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType);
+    bool requestVerifySingleSigner(const QString &verifyType);
+    bool addVerifySingleSigner(const QString &verifyType);
+    bool replacementVerifySingleSigner(const QString &verifyType);
+    bool requestRemoveSingleSigner(const QString &xfp);
     void newAccountIndexCached(const QString &xfp, int index);
+    bool requestQRAddOrReplacementWithIndexAsync(const QStringList &qr_data, int index);
+    bool requestImportFileAddOrReplacementWithIndexAsync(const QString &fileName, int index);
+    bool requestAddOrReplacementBothIndicesIfPossible(const QString &xfp);
+    bool requestAddOrReplacementBothIndicesIfPossibleAsync(const QString &xfp);
   private:
     QMap<Key, StructAddHardware> m_requests{};
     StructAddHardware m_request{};

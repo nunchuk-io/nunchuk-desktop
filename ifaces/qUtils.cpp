@@ -26,6 +26,7 @@
 #include <QJsonDocument>
 #include <QHash>
 #include <boost/algorithm/string.hpp>
+#include "utils/enumconverter.hpp"
 
 QString qUtils::deviceId() {
     QString deviceId = QSysInfo::machineUniqueId();
@@ -515,7 +516,7 @@ QString qUtils::GetTimeString(uint time_second, bool is_relative)
 }
 
 bool qUtils::strCompare(const QString &str1, const QString &str2) {
-    return (0 == QString::compare(str1, str2)) && !str1.isEmpty();
+    return (0 == QString::compare(str1, str2, Qt::CaseInsensitive)) && !str1.isEmpty();
 }
 
 nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags) {
@@ -701,12 +702,14 @@ QStringList qUtils::ExportBBQRWallet(const nunchuk::Wallet &wallet, QWarningMess
     try {
         std::vector<std::string> data;
         nunchuk::WalletType type = wallet.get_wallet_type();
-        if(nunchuk::WalletType::MINISCRIPT == type){
-            data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL);
-        }
-        else {
-            data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_ALL);
-        }
+        // if(nunchuk::WalletType::MINISCRIPT == type){
+        //     data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL);
+        // }
+        // else {
+        //     data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_ALL);
+        // }
+        // 6.Dec.25: Always export descriptor external/internal for Coldcard as per new spec
+        data = nunchuk::Utils::ExportBBQRWallet(wallet, nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL);
         result.reserve(data.size());
         for (std::string tag : data) {
             result.append(QString::fromStdString(tag));
@@ -1560,22 +1563,62 @@ QDateTime qUtils::convertTimestampToDateTime(qint64 timestamp, const QString& ti
     return finalDateTime;
 }
 
-QString qUtils::formatTimeZoneString(const QString& timezoneId)
+QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
 {
-    QTimeZone targetZone(timezoneId.toUtf8());
+    QString tzInput = timezoneIdInput.trimmed();
+    QTimeZone targetZone(tzInput.toUtf8());
+
+    // If not a valid IANA ID, try parse "GMT+7", "GMT+07:00", "UTC-5", ...
+    bool parsedFromGmt = false;
+    QString normalizedId = tzInput; // used for display when input was GMT/UTC style
+
     if (!targetZone.isValid()) {
-        return timezoneId;
+        // regex: optional whitespace, (GMT|UTC) case-insensitive, optional space,
+        // optional sign, 1-2 digit hours, optional :mm or mm
+        static const QRegularExpression re(R"(^\s*(?:GMT|UTC)\s*([+-])?(\d{1,2})(?::?(\d{2}))?\s*$)",
+                                           QRegularExpression::CaseInsensitiveOption);
+        const QRegularExpressionMatch m = re.match(tzInput);
+        if (m.hasMatch()) {
+            parsedFromGmt = true;
+            QString signStr = m.captured(1);
+            // If no sign provided (rare), treat as plus
+            int sign = (signStr == "-") ? -1 : 1;
+            int hours = m.captured(2).toInt();
+            int minutes = m.captured(3).isEmpty() ? 0 : m.captured(3).toInt();
+
+            int offsetSec = sign * (hours * 3600 + minutes * 60);
+
+            // Build a normalized GMT ID for display like "GMT+07:00"
+            QString signDisplay = (offsetSec >= 0) ? "+" : "-";
+            int absSec = qAbs(offsetSec);
+            int h = absSec / 3600;
+            int mm = (absSec % 3600) / 60;
+            normalizedId = QString("GMT%1%2:%3")
+                               .arg(signDisplay)
+                               .arg(QString::number(h).rightJustified(2, '0'))
+                               .arg(QString::number(mm).rightJustified(2, '0'));
+
+            // Construct a fixed-offset QTimeZone
+            targetZone = QTimeZone(offsetSec);
+            // Note: QTimeZone(int seconds) creates a fixed-offset timezone.
+        }
+    }
+
+    // If still invalid (not an IANA ID and not a GMT/UTC offset), fall back to original input
+    if (!targetZone.isValid()) {
+        return timezoneIdInput;
     }
 
     // Use current time to compute DST-aware offset
-    const QDateTime now = QDateTime::currentDateTime();
+    const QDateTime now = QDateTime::currentDateTimeUtc();
     const int offsetSec = targetZone.offsetFromUtc(now);
 
     // Special-case UTC display
-    if (offsetSec == 0 ||
-        timezoneId.compare("Etc/UTC", Qt::CaseInsensitive) == 0 ||
-        timezoneId.compare("UTC", Qt::CaseInsensitive) == 0) {
-        return QString("%1 (UTC)").arg(timezoneId);
+    if (offsetSec == 0) {
+        // Prefer showing canonical UTC-like label
+        // If parsedFromGmt, show normalizedId e.g. "GMT+00:00 (UTC)"
+        const QString displayId = parsedFromGmt ? normalizedId : timezoneIdInput;
+        return QString("Etc/UTC (%1)").arg(displayId);
     }
 
     const int absSec = qAbs(offsetSec);
@@ -1584,11 +1627,14 @@ QString qUtils::formatTimeZoneString(const QString& timezoneId)
     const QString sign = (offsetSec >= 0) ? "+" : "-";
 
     const QString gmtString = QString("GMT%1%2:%3")
-        .arg(sign)
-        .arg(QString::number(hours).rightJustified(2, '0'))
-        .arg(QString::number(minutes).rightJustified(2, '0'));
+                                  .arg(sign)
+                                  .arg(QString::number(hours).rightJustified(2, '0'))
+                                  .arg(QString::number(minutes).rightJustified(2, '0'));
 
-    return QString("%1 (%2)").arg(timezoneId, gmtString);
+    // If we parsed from a GMT input, show the normalizedId (e.g. "GMT+07:00"), else show original ID
+    const QString displayId = parsedFromGmt ? normalizedId : timezoneIdInput;
+
+    return QString("%1 (%2)").arg(displayId, gmtString);
 }
 
 QString qUtils::extractTimeZoneId(const QString& formattedString)
@@ -1716,4 +1762,89 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
 
     // 7) Fallback: return the leading part unchanged
     return leading;
+}
+
+// Normalize a path: h → '
+static QString normalizePath(const QString &path)
+{
+    QString p = path.trimmed();
+    p.replace("H", "'");
+    p.replace("h", "'");
+    return p;
+}
+
+// ----------------------------
+// Get Purpose from path
+// (44, 49, 84, ...)
+// ----------------------------
+int qUtils::GetPurposeFromPath(const QString &path)
+{
+    QString p = normalizePath(path);
+    QStringList parts = p.split('/');
+
+    if (parts.size() < 2) {
+        qWarning() << "Invalid derivation path:" << path;
+        return -1;
+    }
+
+    QString purposeStr = parts[1];
+    purposeStr.remove("'");
+
+    bool ok = false;
+    int purpose = purposeStr.toInt(&ok);
+    return ok ? purpose : -1;
+}
+
+// ----------------------------
+// Get CoinType from path
+// (0: Bitcoin mainnet,
+//  60: Ethereum, ...)
+// ----------------------------
+int qUtils::GetCoinTypeFromPath(const QString &path)
+{
+    QString p = normalizePath(path);
+    QStringList parts = p.split('/');
+
+    if (parts.size() < 3) {
+        qWarning() << "Invalid derivation path:" << path;
+        return -1;
+    }
+
+    QString coinStr = parts[2];
+    coinStr.remove("'");
+
+    bool ok = false;
+    int coinType = coinStr.toInt(&ok);
+    return ok ? coinType : -1;
+}
+
+QJsonObject qUtils::SingleSignertoJsonObject(const nunchuk::SingleSigner &single) {
+    QJsonObject obj;
+
+    // Basic fields
+    obj["name"] = QString::fromStdString(single.get_name());
+    obj["xfp"] = QString::fromStdString(single.get_master_fingerprint());
+    obj["derivation_path"] = QString::fromStdString(single.get_derivation_path());
+    obj["xpub"] = QString::fromStdString(single.get_xpub());
+    obj["pubkey"] = QString::fromStdString(single.get_public_key());
+
+    // Signer type as string
+    obj["type"] = qUtils::GetSignerTypeString(single.get_type());
+
+    obj["tapsigner"] = {};
+
+    // Tags as array of strings (use tag.value when present)
+    QJsonArray tagsArray;
+    for (const auto &tag : single.get_tags()) {
+        QString value = QString::fromStdString(SignerTagToStr(tag));
+        if (!value.isEmpty()) {
+            tagsArray.append(value);
+        }
+    }
+    obj["tags"] = tagsArray;
+
+    // key_index (default 0 if not provided by SingleSigner)
+    obj["key_index"] = 0;
+
+    return obj;
 }

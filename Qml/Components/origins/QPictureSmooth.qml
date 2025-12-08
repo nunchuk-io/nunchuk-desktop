@@ -21,4 +21,5 @@ import QtQuick 2.4
 
 QSvgImage {
     transformOrigin: Item.Center
+    smooth: false
 }

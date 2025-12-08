@@ -71,7 +71,20 @@ QString QSingleSigner::name() {
         return email();
     }
     else{
-        return QString::fromStdString(singleSigner_.get_name());
+        QString signer_name = QString::fromStdString(singleSigner_.get_name()).trimmed();
+        if(qUtils::strCompare("import", signer_name.trimmed()) && AppModel::instance()->masterSignerList()){
+            QString master_name = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(masterFingerPrint());
+            if(master_name != ""){
+                signer_name = master_name;
+            }
+        }
+        if(qUtils::strCompare("import", signer_name.trimmed()) && AppModel::instance()->remoteSignerList()){
+            QString master_name = AppModel::instance()->remoteSignerList()->getRemoteSignerNameByFingerPrint(masterFingerPrint());
+            if(master_name != ""){
+                signer_name = master_name;
+            }
+        }
+        return signer_name;
     }
 }
 
@@ -79,7 +92,6 @@ void QSingleSigner::setName(const QString &d) {
     singleSigner_.set_name(d.toStdString());
     emit nameChanged();
 }
-
 QString QSingleSigner::xpub() {
     if(isDraft){
         return xpub_;
@@ -1062,6 +1074,15 @@ QSingleSignerPtr SingleSignerListModel::getSingleSignerBy(const QString &xfp, co
         }
     }
     return NULL;
+}
+
+QString SingleSignerListModel::getRemoteSignerNameByFingerPrint(const QString &fingerprint) {
+    foreach (QSingleSignerPtr it, m_data) {
+        if (qUtils::strCompare(fingerprint, it.data()->fingerPrint())) {
+            return it.data()->name();
+        }
+    }
+    return "";
 }
 
 int SingleSignerListModel::getIndexByFingerPrint(const QString &fingerprint)

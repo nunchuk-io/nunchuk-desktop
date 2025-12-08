@@ -88,7 +88,10 @@ bool WalletIO::requestExportWalletViaCOLDCARD(const QString &file)
     DBG_INFO << walletId();
     QString file_path = qUtils::QGetFilePath(file);
     nunchuk::WalletType type = nunchukWallet().get_wallet_type();
-    nunchuk::ExportFormat format = nunchuk::WalletType::MINISCRIPT == type ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL : nunchuk::ExportFormat::COLDCARD;
+    // nunchuk::ExportFormat format = nunchuk::WalletType::MINISCRIPT == type ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL : nunchuk::ExportFormat::COLDCARD;
+
+    // 6.Dec.25: Always export descriptor external/internal for Coldcard as per new spec
+    nunchuk::ExportFormat format = nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_INTERNAL;
     bool ret = bridge::nunchukExportWallet(walletId(), file_path, format);
     dynamic_cast<CreatingWallet *>(this)->setNeedRegistered(false);
     return ret;

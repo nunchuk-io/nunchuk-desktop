@@ -332,6 +332,7 @@ public:
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp);
     QSingleSignerPtr getSingleSignerByFingerPrint(const QString &xfp, const QString& name);
     QSingleSignerPtr getSingleSignerBy(const QString &xfp, const QString& derivationPath);
+    QString getRemoteSignerNameByFingerPrint(const QString &fingerprint);
     int getIndexByFingerPrint(const QString &fingerprint);
     int getnumberSigned();
     bool containsHardwareKey();

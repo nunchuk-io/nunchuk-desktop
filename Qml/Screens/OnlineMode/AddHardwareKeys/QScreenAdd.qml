@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import NUNCHUCKTYPE 1.0
+import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
@@ -16,13 +17,10 @@ Item {
     readonly property int eADD_ERROR: 4
     readonly property int eADD_VIA_FILE: 5
     readonly property int eADD_VIA_QR: 6
-    readonly property var map_hardware: [
-        {type: NUNCHUCKTYPE.ADD_LEDGER   ,name: "Ledger"  , device_type: "ledger"  , tag: "LEDGER"  },
-        {type: NUNCHUCKTYPE.ADD_TREZOR   ,name: "Trezor"  , device_type: "trezor"  , tag: "TREZOR"  },
-        {type: NUNCHUCKTYPE.ADD_COLDCARD ,name: "Coldcard", device_type: "coldcard", tag: "COLDCARD"},
-        {type: NUNCHUCKTYPE.ADD_BITBOX   ,name: "BitBox"  , device_type: "bitbox02", tag: "BITBOX"  },
-        {type: NUNCHUCKTYPE.ADD_JADE     ,name: "Blockstream Jade"  , device_type: "jade", tag: "JADE"  },
-    ]
+    QSupportedKeys {
+        id: supportedKeys
+    }
+    readonly property var map_hardware: supportedKeys.allKeys
     readonly property var hardware: map_hardware.find(function(e) {if (e.type === hardwareType) return true; else return false})
     readonly property string _HARDWARE: hardware ? hardware.name : ""
     readonly property string _HARDWARE_TYPE: hardware ? hardware.device_type : ""

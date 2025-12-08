@@ -8,6 +8,7 @@
 #include <nunchuk.h>
 #include "Premiums/QBasePremium.h"
 #include <QTimer>
+#include "UseCase/TimeLockUseCase.h"
 
 class AlertEnum : public QObject
 {
@@ -81,6 +82,7 @@ public:
         // New for HB onchain alert types
         BACKUP_WALLET,
         CHANGE_TIMELOCK_TYPE,
+        KEY_TIMELOCK_UPDATE_PENDING,
 
         MAX_ALERT,
     };
@@ -107,6 +109,8 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(QString walletType                 READ walletType                               NOTIFY draftWalletChanged)
 
     Q_PROPERTY(QVariantList keys                  READ keys                                     NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantList replaceKeys           READ replaceKeys                              NOTIFY replacementKeysChanged)
+
     Q_PROPERTY(bool hasWallet                     READ hasWallet                                NOTIFY groupInfoChanged)
     Q_PROPERTY(QVariantList alerts                READ alerts                                   NOTIFY alertInfoChanged)
     Q_PROPERTY(QVariant alert                     READ alert                                    NOTIFY alertInfoChanged)
@@ -122,8 +126,10 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                          NOTIFY historyPeriodIdChanged)
     Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
     Q_PROPERTY(QVariantList editMembers           READ editMembers                              NOTIFY editMembersChanged)
-    Q_PROPERTY(QString timeLock                   READ timeLock                                 NOTIFY draftWalletChanged)
+    Q_PROPERTY(QString  timeLock                  READ timeLock                                 NOTIFY draftWalletChanged)
     Q_PROPERTY(QVariant timeLockSet               READ timeLockSet                              NOTIFY timeLockSetChanged)
+    Q_PROPERTY(QString  timelockReplacementDisp   READ timelockReplacementDisp                  NOTIFY timelockReplacementChanged)
+    Q_PROPERTY(QVariant timelockReplacement       READ timelockReplacement                      NOTIFY timelockReplacementChanged)
 
 public:
     QGroupDashboard(const QString& wallet_id);
@@ -146,6 +152,7 @@ public:
     QVariantList memberSignatures();
     QVariant inviter() const;
     QJsonObject walletJson() const;
+    QJsonObject walletDraftJson() const;
     void GetMemberInfo();
     void GetAlertsInfo();
     bool MarkAlertAsRead(const QString &alert_id);
@@ -157,7 +164,10 @@ public:
     QString getOurId() const;
     QJsonObject createOrUpdateSignerInfo(const QJsonObject &info, int index);
     void UpdateKeys(const QJsonObject &data);
+    QJsonObject CreateAccountIndexAndKeyIndices(const QJsonArray &signers, int index);
+    void UpdateReplacementKeys(const QJsonObject &data);
     bool GetKeyReplacementStatus();
+    QJsonObject GetSigerReplacement(const QString &xfp);
     QMap<QString, QVariant> requestBodyUploadBackupFile(const QString &xfp, const QString &filePath);
     bool ReplacementUploadBackupFile(const QString &xfp, const QString &filePath);
     bool DraftWalletUploadBackupFile(const QString &xfp, const QString &filePath);
@@ -166,6 +176,7 @@ public:
     QVariant alert() const;
     QJsonObject alertJson() const;
     QVariantList keys() const;
+    QVariantList replaceKeys() const;
 
     bool hasWallet() const;
 
@@ -245,12 +256,17 @@ public:
     QJsonObject bodyEditMembers();
     QString timeLock() const;
     QVariant timeLockSet() const;
+    QString  timelockReplacementDisp() const;
+    QVariant timelockReplacement() const;
+    void setTimelockReplacement(const QJsonObject &timelock);
     void clearTimeLock();
+
 public slots:
-    void setupTimeLock(const QVariant &datetime, bool isPutServer = false);
+    void draftWalletSetupTimeLock(const QVariant &datetime, bool isPutServer = false);
+    void walletSetupTimeLock(const QVariant &datetime, bool isPutServer = false);
     bool requestStartKeyReplacement(const QString &tag);
     bool requestStartKeyCreate(const QString &tag, bool isFirst = false);
-    void registerAddKey();
+    
     void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
 
@@ -266,11 +282,14 @@ public slots:
     void markRead();
     void requestBackupColdcard(QVariant msg);
 
-    bool isSupportedInheritance(const QString& tag) const;
-    bool isSupportedNotInheritance(const QString& tag) const;
     void startAddKeyAtIndex(int index);
+    void startReplaceKeyAtIndex(int index);
     bool enoughKeyAdded(const QString& xfp);
     bool dismissAlert();
+
+    void preparingKeyTobeReplaced();
+    void CorrectCurrentSignerInfoForReplacementKey(const QString &xfp);
+
 private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);
@@ -289,6 +308,8 @@ signals:
     void editMembersChanged();
     void editMembersSuccessChanged();
     void timeLockSetChanged();
+    void timelockReplacementChanged();
+    void replacementKeysChanged();
 private:
     QJsonObject m_groupInfo {};
     QJsonObject m_alertInfo {};
@@ -298,6 +319,7 @@ private:
     QJsonArray m_signerInfo {};
     QJsonObject m_walletDraftInfo {};
     QJsonArray m_keys {};
+    QJsonArray m_replaceKeys {};
     bool m_showDashBoard {false};
     int m_mInfo {0};
     int m_nInfo {0};
@@ -312,5 +334,9 @@ private:
     QJsonArray m_editMembers;
     QTimer *mTimer {nullptr};
     QJsonObject m_timeLockSet;
+    QJsonObject m_keyReplacementInfo;
+    QJsonObject m_timeLockReplacement;
+    TimeLockUseCase m_timeLockUseCase;
 };
+void registerAddKey();
 #endif // QGROUPDASHBOARD_H

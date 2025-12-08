@@ -25,18 +25,18 @@ import "../../customizes/Texts"
 Row {
     id: radioRoot
     spacing: 8
-    property bool selected: false
+    property bool  selected: false
     property alias content: loader.sourceComponent
     readonly property Item contentItem: loader.item
     property bool isOverlay: false
     signal buttonClicked()
     Loader {
         id: loader
-        width: radioRoot.width - icon.width - 8
+        width: radioRoot.width - icon.width - spacing
         anchors.verticalCenter: parent.verticalCenter
         sourceComponent: contentItem
         MouseArea {
-            anchors.fill: loader
+            anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: { buttonClicked() }

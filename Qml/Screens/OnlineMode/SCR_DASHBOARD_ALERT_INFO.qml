@@ -30,30 +30,30 @@ import "../OnlineMode/SetupWallets"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    property bool isNormalFlow: GroupWallet.dashboardInfo.walletType !== "MINISCRIPT"
+    property bool isOffchainFlow: GroupWallet.dashboardInfo.walletType !== "MINISCRIPT"
     
     Loader {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
         sourceComponent: {
-            if (isNormalFlow) {
-                return setup_wallet_flow
+            if (isOffchainFlow) {
+                return setup_wallet_offchain_flow
             } else {
-                return setup_wallet_timelock_flow
+                return setup_wallet_onchain_flow
             }
         }
     }
 
     Component {
-        id: setup_wallet_flow
-        QSetupWalletsNormalFlow {
+        id: setup_wallet_offchain_flow
+        QSetupWalletsOffchainFlow {
 
         }
     }
     Component {
-        id: setup_wallet_timelock_flow
-        QSetupWalletsTimelockFlow {
+        id: setup_wallet_onchain_flow
+        QSetupWalletsOnchainFlow {
 
         }
     }

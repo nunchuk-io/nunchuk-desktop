@@ -180,6 +180,7 @@ Column {
                 }
                 QPopupTimezone {
                     id: _timezoneInput
+                    selectedWalletInfo: AppModel.newWalletInfo
                 }
             }
 

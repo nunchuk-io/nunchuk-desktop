@@ -681,8 +681,8 @@
         <file>Qml/Components/origins/QScreenStateFlow.qml</file>
         <file>Qml/Screens/OnlineMode/Coins/QCoinAge.qml</file>
         <file>Qml/Components/customizes/Transactions/QRoundBadgeStatus.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/QSetupWalletsNormalFlow.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/QSetupWalletsTimelockFlow.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QSetupWalletsOffchainFlow.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/QSetupWalletsOnchainFlow.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QWalletCreationPendingRead.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/QWalletCreationPendingUnread.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QAddBlockstreamJadeViaQR.qml</file>
@@ -695,11 +695,11 @@
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QHowOnChainTimelockWorks.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseGuide.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QVerifyYourInheritanceKeySeedPhraseQuestion.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingTimeLock.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingTimeLockRead.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingTimeLockUnread.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchain.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchainRead.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletCreationPendingOnchainUnread.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QYourInheritanceKey.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QImportantNoticeAboutPassphraseTimeLock.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QImportantNoticeAboutPassphraseOnchain.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QCheckYourHardwareFirmware.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QAddCOLDCARDGuideViaQR_1_2.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QAddCOLDCARDGuideViaQR_2_2.qml</file>
@@ -715,8 +715,8 @@
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QInputtingIndex.qml</file>
         <file>Qml/Components/customizes/services/QInheritanceDetailsOnChain.qml</file>
         <file>Qml/Components/customizes/services/QInheritanceHowItWorks.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupAnOnChainTimelock.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupAnOnChainTimelock.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupOnChainTimelockDraftWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOnChainTimelockDraftWallet.qml</file>
         <file>Qml/Components/customizes/Popups/QAnalogClock.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupAnalogClock.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QPopupPrepareInheritanceKey.qml</file>
@@ -726,6 +726,20 @@
         <file>Qml/Components/RightPannel/Service/Common/QRestoreSeedPhraseToHardwareDevice.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceInheritanceNotificationPreferencesOnchain.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QYourPlanRequiresTwoInheritanceKeysAddedOne.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QReAddBlockstreamJadeViaQR.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QReAddCOLDCARDGuideViaFile.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QReAddCOLDCARDGuideViaQR.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QWalletReplaceKeyOrChangeTimelock.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyLoadingState.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyResult.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyBusyLoadingState.qml</file>
+        <file>Qml/Components/customizes/Signers/QReplaceRequestKey.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOnChainTimelockWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupOnChainTimelockWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/AddHardwareKeys/QRecoverAnExistingSeed.qml</file>
+        <file>Qml/Components/origins/QSupportedKeys.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOffChainTimelockWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupOffChainTimelockWallet.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>
@@ -835,6 +849,8 @@
         <file>Images/1.Active.svg</file>
         <file>Images/2.Active.svg</file>
         <file>Images/3.Active.svg</file>
+        <file>Images/4.Active.svg</file>
+        <file>Images/5.Active.svg</file>
         <file>Images/compose-white.svg</file>
         <file>Images/Delete.svg</file>
         <file>Images/more_options.svg</file>
@@ -923,7 +939,6 @@
         <file>Images/pending-transaction-dark.svg</file>
         <file>Images/QR-dark.svg</file>
         <file>Images/sort-dark.svg</file>
-        <file>Images/4.Active.svg</file>
         <file>Images/connected.svg</file>
         <file>Images/onboarding-assisted-wallet.svg</file>
         <file>Images/onboarding-unassisted-wallet.svg</file>

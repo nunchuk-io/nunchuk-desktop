@@ -30,6 +30,7 @@ import "../../../../Components/customizes"
 import "../../../../Components/customizes/Chats"
 import "../../../../Components/customizes/Texts"
 import "../../../../Components/customizes/Buttons"
+import "../../../../Components/customizes/QRCodes"
 import "../../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
@@ -38,6 +39,8 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string guideDescriptionTwo: STR.STR_QML_1927
+    property string guideExportString: ""
+
     content: Item {
         Row {
             spacing: 36
@@ -94,7 +97,7 @@ QOnScreenContentTypeA {
                             readonly property var content_map: [
                                 {height: 48,  headline:STR.STR_QML_907, content: STR.STR_QML_908 , icon: "qrc:/Images/Images/1.Active.svg" },
                                 {height: 68,  headline:STR.STR_QML_909, content: STR.STR_QML_910 , icon: "qrc:/Images/Images/2.Active.svg" },
-                                {height: 88, headline:STR.STR_QML_1949,content: STR.STR_QML_1939 , icon: "qrc:/Images/Images/3.Active.svg" },
+                                {height: 88,  headline:STR.STR_QML_1949,content: guideExportString , icon: "qrc:/Images/Images/3.Active.svg" },
                                 {height: 68,  headline:STR.STR_QML_1934,content: STR.STR_QML_1935 , icon: "qrc:/Images/Images/4.Active.svg" },
                             ]
                             model: content_map.length
@@ -154,6 +157,26 @@ QOnScreenContentTypeA {
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {
+            qrscaner.open()
+        }
+    }
+    QQrImportScanner {
+        id: qrscaner
+        onTagFound: {
+            if(qrscaner.complete) {
+                var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim
+                if (onlyUseForClaim) {
+                    ServiceSetting.servicesTag.requestDownloadWalletViaQR(qrscaner.tags, 0)
+                } else {
+                    var noKey = SignerManagement.currentSigner.has != undefined && !SignerManagement.currentSigner.has
+                    if (noKey) {
+                        draftWallet.requestQRAddOrReplacementWithIndexAsync(qrscaner.tags, 0)
+                    } else {
+                        draftWallet.requestQRAddOrReplacementWithIndexAsync(qrscaner.tags, 1)
+                    }
+                }
+                qrscaner.close()
+            }
         }
     }
 }

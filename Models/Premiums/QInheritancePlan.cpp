@@ -156,15 +156,20 @@ QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
     nunchuk::WalletType wallet_type = wallet->nunchukWallet().get_wallet_type();
     if (wallet_type == nunchuk::WalletType::MINISCRIPT) {
         data["activation_date"] = dashBoard->timeLock();
-        data["activation_timezone_local"] = wallet->timezones()->selectedTimezone();
-    } else {
+        data["activation_timezone"] = wallet->timezones()->selectedTimezone();
+        data["activation_timezone_local"] = wallet->timezones()->localTimezone();
+    }
+    else {
         long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble()/1000);
         if (activation_time_milis > 0) {
             data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).toString(formatDateTime());
-        } else {
+        }
+        else {
             data["activation_date"] = "";
         }
-        data["activation_timezone_local"] = "";
+        data["activation_timezone"] = qUtils::formatTimeZoneString(data["timezone"].toString());
+        data["activation_timezone_local"] = wallet->timezones()->localTimezone();
+        wallet->timezones()->setSelectedTimezone(data["activation_timezone"].toString());
     }
     
     QJsonArray emails = data.value("notification_emails").toArray();

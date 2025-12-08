@@ -1996,21 +1996,33 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
             else if(msgtype.contains("io.nunchuk.custom.saved_address_updated", Qt::CaseInsensitive)){
                 emit AppSetting::instance()->favoriteAddressesChanged();
             }
-            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_canceled", Qt::CaseInsensitive) ||
-                    msgtype.contains("io.nunchuk.custom.wallet_key_replacement_reset", Qt::CaseInsensitive) ||
-                    msgtype.contains("io.nunchuk.custom.wallet_key_replacement_pending", Qt::CaseInsensitive))
-
+            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_canceled", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.wallet_key_replacement_reset", Qt::CaseInsensitive))
+            {
+                QList<uint> states = QEventProcessor::instance()->getCurrentStates();
+                if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_DASHBOARD_ALERT_INFO)
+                {
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                }
+            }
+            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_pending", Qt::CaseInsensitive))
             {
 
             }
-            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_completed", Qt::CaseInsensitive) ||
-                    msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive))
+            else if(msgtype.contains("io.nunchuk.custom.wallet_key_replacement_completed", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive))
             {
-                if (msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive)) {
-
+                QList<uint> states = QEventProcessor::instance()->getCurrentStates();
+                if(msgtype.contains("io.nunchuk.custom.wallet_replaced", Qt::CaseInsensitive)
+                    && !states.isEmpty()
+                    && states.last() == (uint)E::STATE_ID_SCR_DASHBOARD_ALERT_INFO)
+                {
+                    QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                 }
+
                 if (dashboard) {
                     dashboard->GetWalletInfo();
+                    dashboard->GetKeyReplacementStatus();
                     if(dashboard->isReplaced()){
                         dashboard->setShowDashBoard(false);
                         AppModel::instance()->requestCreateUserWallets();
@@ -2018,6 +2030,11 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                     if (auto walletList = AppModel::instance()->walletListPtr()) {
                         walletList->refresh();
                     }
+                }
+            }
+            else if(msgtype.contains("io.nunchuk.custom.wallet_replacement_timelock_set", Qt::CaseInsensitive)){
+                if (dashboard && dashboard->showDashBoard()) {
+                    dashboard->GetKeyReplacementStatus();
                 }
             }
             else {

@@ -33,8 +33,8 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_2000
     readonly property var keys: [
-        {id: "hardware-device",          display_name: STR.STR_QML_2005, is_recommended: true},
-        {id: "seed-phrase-backup",       display_name: STR.STR_QML_2006, is_recommended: false},
+        {id: "hardware-device",      textWidth: 271,    display_name: STR.STR_QML_2005, is_recommended: true},
+        {id: "seed-phrase-backup",   textWidth: 271,    display_name: STR.STR_QML_2006, is_recommended: false},
     ]
     property string key_option: "hardware-device"
     content: Item {
@@ -126,7 +126,7 @@ QOnScreenContentTypeA {
                             width: 343
                             height: 76
                             label: modelData.display_name
-                            fontFamily: "Lato"
+                            textWidth: modelData.textWidth
                             fontPixelSize: 16                            
                             fontWeight: btn.selected ? Font.ExtraBold : Font.DemiBold
                             selected: key_option === modelData.id

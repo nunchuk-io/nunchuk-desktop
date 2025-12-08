@@ -341,7 +341,10 @@ QVariant QWalletServicesTag::setupConfig() const {
     return QVariant::fromValue(m_setupConfig);
 }
 
-QJsonObject QWalletServicesTag::setupConfigJs() const {
+QJsonObject QWalletServicesTag::setupConfigJs() {
+    if (m_setupConfig.isEmpty()) {
+        configWalletSetup();
+    }
     return m_setupConfig;
 }
 

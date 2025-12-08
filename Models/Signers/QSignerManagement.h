@@ -49,13 +49,16 @@ public:
     QVariant currentSigner() const;
     void setCurrentSigner(const QJsonObject &data);
     void updateXfpOfCurrentSigner(const QString &xfp);
-
+    bool requestStartKeyReplacement(const QString &tag, std::function<void()> progress = nullptr);
+    bool requestStartKeyCreate(const QString &tag, std::function<void()> progress = nullptr);
 public slots:
     void requestCreateSignerFromHomeScreen();
     void requestCreateSignerFromReplaceScreen();
     void requestCreateSignerFromClaimScreen();
-
+    
     QVariant miniscriptSupportedFirmwares(const QString& tag) const;
+    bool isSupportedInheritance(const QString& tag) const;
+    bool isSupportedNotInheritance(const QString& tag) const;
 signals:
     void currentSignerChanged();
 private:

@@ -95,9 +95,7 @@ void ServiceSetting::requestStartAddHardwareKey(const QString &tag) {
     } else {
         QGroupWallets::instance()->SignInDashBoard(QUserWallets::instance()->dashboardInfoPtr());
     }
-    if (auto dash = QGroupWallets::instance()->dashboardInfoPtr()) {
-        dash->requestStartKeyReplacement(tag);
-    }
+    QSignerManagement::instance()->requestStartKeyReplacement(tag, registerAddKey);
 }
 
 void ServiceSetting::clearWalletInfo() {
@@ -144,4 +142,24 @@ void ServiceSetting::handleClaimInheritance(const QVariant &msg) {
     if (isShowScreen) {
         QEventProcessor::instance()->sendEvent(E::EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST);
     }    
+}
+
+const QMap<QString, int> mapTagkeys = {
+    {"LEDGER",   (int)Key::ADD_LEDGER},
+    {"TREZOR",   (int)Key::ADD_TREZOR},
+    {"COLDCARD", (int)Key::ADD_COLDCARD},
+    {"BITBOX",   (int)Key::ADD_BITBOX},
+    {"JADE",     (int)Key::ADD_JADE},
+};
+
+void ServiceSetting::requestSignerInitialClaimSetup(const QString &tag) {
+    QJsonObject info;
+    info["is_inheritance"] = true;
+    info["wallet_type"] = "MINISCRIPT";
+    info["has"] = false;
+    info["hasSecond"] = false;
+    info["tag"] = tag;
+    info["hwType"] = mapTagkeys.value(tag, -1);
+    info["onlyUseForClaim"] = true;
+    QSignerManagement::instance()->setCurrentSigner(info);
 }

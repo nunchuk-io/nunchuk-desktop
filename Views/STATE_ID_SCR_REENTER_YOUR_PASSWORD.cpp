@@ -118,7 +118,20 @@ void EVT_INPUT_PASSWORD_REQUEST_HANDLER(QVariant msg) {
         if (wallet && wallet->servicesTagPtr()->requestReplaceKeysVerifyPassword(password)) {
             ServiceSetting::instance()->setWalletInfo(wallet);
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
-            QEventProcessor::instance()->sendEvent(E::EVT_REPLACE_SELECT_KEY_REQUEST);
+            if (auto dashboard = wallet->dashboard()) {
+                auto type = static_cast<AlertEnum::E_Alert_t>(dashboard->alertJson()["type"].toInt());
+                switch(type) {
+                case AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING:
+                    QEventProcessor::instance()->sendEvent(E::EVT_REPLACE_SELECT_KEY_REQUEST);
+                    break;
+                case AlertEnum::E_Alert_t::KEY_TIMELOCK_UPDATE_PENDING:
+                    dashboard->setFlow((int)AlertEnum::E_Alert_t::KEY_TIMELOCK_UPDATE_PENDING);
+                    QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
+                    break;
+                default:
+                    break;
+                }
+            }
         }
         break;
     case E::STATE_ID_SCR_EDIT_MEMBERS:

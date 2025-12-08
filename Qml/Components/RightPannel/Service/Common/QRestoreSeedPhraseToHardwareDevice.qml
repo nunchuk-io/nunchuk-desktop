@@ -32,43 +32,30 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_2012
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     content: Item {
         Row {
             spacing: 36
-            Rectangle {
+            QImage {
                 width: 346
-                height: 512
-                radius: 24
-                color: "#D0E2FF"
-                QPicture {
-                    width: 346
-                    height: 300
-                    anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/coldcard-illustration.svg"
-                }
+                height: 432
+                anchors.verticalCenter: parent.verticalCenter
+                source: "qrc:/Images/Images/restore-seed-phrase-to-hardware-device.svg"
             }
             Item {
                 width: 346
-                height: 512
+                height: 432
                 Column {
                     width: parent.width
                     spacing: 24
-                    QLato {
-                        width: parent.width
-                        text: STR.STR_QML_817
-                        lineHeightMode: Text.FixedHeight
-                        lineHeight: 28
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                    }
                     Repeater {
                         id: _guide
                         width: parent.width
                         readonly property var content_map: [
-                            {height: 48, headline:STR.STR_QML_907, content: STR.STR_QML_908 , icon: "qrc:/Images/Images/1.Active.svg" },
-                            {height: 84, headline:STR.STR_QML_909, content: STR.STR_QML_910 , icon: "qrc:/Images/Images/2.Active.svg" },
+                            {height: 40, content: STR.STR_QML_2013, icon: "qrc:/Images/Images/1.Active.svg" },
+                            {height: 24, content: STR.STR_QML_2014, icon: "qrc:/Images/Images/2.Active.svg" },
+                            {height: 60, content: STR.STR_QML_2015, icon: "qrc:/Images/Images/3.Active.svg" },
+                            {height: 40, content: STR.STR_QML_2016, icon: "qrc:/Images/Images/4.Active.svg" },
+                            {height: 40, content: STR.STR_QML_2017, icon: "qrc:/Images/Images/5.Active.svg" },
                         ]
                         model: content_map.length
                         Rectangle {
@@ -88,27 +75,12 @@ QOnScreenContentTypeA {
                                     spacing: 4
                                     QLato {
                                         width: 310
-                                        text: _item.headline
-                                        font.weight: Font.DemiBold
-                                        horizontalAlignment: Text.AlignLeft
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    QLato {
-                                        id: _term
-                                        width: 310
                                         text: _item.content
-                                        textFormat: Text.RichText
                                         lineHeightMode: Text.FixedHeight
                                         lineHeight: 28
                                         wrapMode: Text.WordWrap
                                         horizontalAlignment: Text.AlignLeft
                                         verticalAlignment: Text.AlignVCenter
-                                        onLinkActivated: Qt.openUrlExternally("https://coldcard.com/docs/quick")
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: _term.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                            acceptedButtons: Qt.NoButton
-                                        }
                                     }
                                 }
                             }
@@ -117,9 +89,12 @@ QOnScreenContentTypeA {
                 }
             }
         }
-    }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-    onNextClicked: {
-         stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+        QWarningBg {
+            width: 728
+            iSize: 36
+            icon: "qrc:/Images/Images/info-60px.svg"
+            txt.text: STR.STR_QML_2018
+            anchors.bottom: parent.bottom
+        }
     }
 }

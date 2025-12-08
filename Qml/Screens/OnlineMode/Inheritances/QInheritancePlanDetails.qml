@@ -73,7 +73,7 @@ Item {
                     }
                     Rectangle {
                         width: 539
-                        height: inheritance.activation_timezone_local.length > 0 ? 70 : 52
+                        height: (inheritance.activation_timezone.length > 0 && inheritance.activation_date.length > 0) ? 70 : 52
                         color: "#F5F5F5"
                         Column {
                             anchors.fill: parent
@@ -91,11 +91,11 @@ Item {
                                 width: 539
                                 height: paintedHeight
                                 font.pixelSize: 12
-                                text: inheritance.activation_timezone_local
+                                text: inheritance.activation_timezone
                                 font.weight: Font.Normal
                                 horizontalAlignment: Text.AlignLeft
                                 verticalAlignment: Text.AlignVCenter
-                                visible: inheritance.activation_timezone_local.length > 0
+                                visible: inheritance.activation_timezone.length > 0
                             }
                         }                        
                     }

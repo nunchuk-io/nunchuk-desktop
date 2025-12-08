@@ -46,9 +46,9 @@ QOnScreenContentTypeA {
                 height: 512
                 radius: 24
                 color: "#D0E2FF"
-                QPicture {
+                QPictureSmooth {
                     width: 346
-                    height: 300
+                    height: 229
                     anchors.verticalCenter: parent.verticalCenter
                     source: "qrc:/Images/Images/inheritance-seed-phrase.svg"
                 }
@@ -74,7 +74,7 @@ QOnScreenContentTypeA {
                         readonly property var content_map: [
                             {height: 24,  content:STR.STR_QML_1908, icon: "qrc:/Images/Images/1.Active.svg" },
                             {height: 60,  content:STR.STR_QML_1909, icon: "qrc:/Images/Images/2.Active.svg" },
-                            {height: 40,  content:STR.STR_QML_1161, icon: "qrc:/Images/Images/3.Active.svg" },
+                            {height: 40,  content:STR.STR_QML_1910, icon: "qrc:/Images/Images/3.Active.svg" },
                         ]
                         model: content_map.length
                         Rectangle {

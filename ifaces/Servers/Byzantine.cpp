@@ -525,7 +525,7 @@ bool Byzantine::GetDefaultPermissions(QJsonObject &output, QString &errormsg)
     return false;
 }
 
-bool Byzantine::DraftWalletAddKey(const QString group_id, const QString request_id, const QJsonObject data, bool &isDuplicateKey, QString &errormsg)
+bool Byzantine::DraftWalletAddKey(const QString group_id, const QString request_id, const QJsonObject data, QJsonObject &output)
 {
     if (group_id.isEmpty()) return false;
     int     reply_code = -1;
@@ -540,20 +540,15 @@ bool Byzantine::DraftWalletAddKey(const QString group_id, const QString request_
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
         if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
             return true;
         }
         else{
-            errormsg = response_msg;
-            QString message = errorObj["message"].toString();
-            if (message.contains("Duplicate")) {
-                isDuplicateKey = true;
-            }
-            DBG_INFO << errorObj << isDuplicateKey;
+            output = errorObj;
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
-    errormsg = reply_msg;
     return false;
 }
 
@@ -2330,7 +2325,7 @@ bool Byzantine::CancelKeyReplacement(const QString &group_id, const QString &wal
     return false;
 }
 
-bool Byzantine::ReplaceKey(const QString &group_id, const QString &wallet_id, const QString &xfp, const QString& passwordToken, const QJsonObject& request_body, QString &errormsg)
+bool Byzantine::ReplaceKey(const QString &group_id, const QString &wallet_id, const QString &xfp, const QString& passwordToken, const QJsonObject& request_body, QJsonObject &output)
 {
     if (group_id.isEmpty()) return false;
     int     reply_code = -1;
@@ -2342,36 +2337,33 @@ bool Byzantine::ReplaceKey(const QString &group_id, const QString &wallet_id, co
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
     cmd.replace("{xfp}", xfp);
     QJsonObject jsonObj = m_rest->postSync(cmd, {} , params, request_body, reply_code, reply_msg);
-    DBG_INFO << jsonObj;
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
         if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
             return true;
         }
         else {
-            errormsg = response_msg;
-            DBG_INFO << response_code << response_msg;
-#if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
-#endif
+            output = errorObj;
             return false;
         }
     }
-    errormsg = reply_msg;
     return false;
 }
 
-bool Byzantine::FinalizeKeyReplacement(const QString &group_id, const QString &wallet_id, QJsonObject &output, QString &errormsg)
+bool Byzantine::FinalizeKeyReplacement(const QString &group_id, const QString &wallet_id, const QString& passwordToken, QJsonObject &output, QString &errormsg)
 {
     if (group_id.isEmpty()) return false;
     int     reply_code = -1;
     QString reply_msg  = "";
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_FINALIZE_KEY_REPLACEMENT];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = m_rest->postSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2423,15 +2415,17 @@ bool Byzantine::GetKeyReplacementStatus(const QString &group_id, const QString &
     return false;
 }
 
-bool Byzantine::ResetKeyReplacement(const QString &group_id, const QString &wallet_id, QJsonObject &output, QString &errormsg)
+bool Byzantine::ResetKeyReplacement(const QString &group_id, const QString &wallet_id, const QString& passwordToken, QJsonObject &output, QString &errormsg)
 {
     if (group_id.isEmpty()) return false;
     int     reply_code = -1;
     QString reply_msg  = "";
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
     QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_RESET_KEY_REPLACEMENT];
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
-    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, params, {}, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2450,6 +2444,63 @@ bool Byzantine::ResetKeyReplacement(const QString &group_id, const QString &wall
         }
     }
     errormsg = reply_msg;
+    return false;
+}
+
+bool Byzantine::VerifyKeyReplacement(const QString &group_id, const QString &wallet_id, const QString &xfp, const QString& type, const QString& passwordToken, QJsonObject& result) {
+    if (group_id.isEmpty()) return false;
+
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_VERIFY_KEY_REPLACEMENT];
+
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+
+    QJsonObject data;
+    data["verification_type"] = type;
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+    DBG_INFO << data << passwordToken;
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            result = jsonObj["data"].toObject();
+            return true;
+        } else {
+            result = errorObj;
+            return false;
+        }
+    }
+    return false;
+}
+
+bool Byzantine::RemoveKeyReplacement(const QString &group_id, const QString &wallet_id, const QString &xfp, const QString& passwordToken, QJsonObject& result) {
+    if (group_id.isEmpty()) return false;
+
+    int reply_code = -1;
+    QString reply_msg = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_REMOVE_KEY_REPLACEMENT];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    cmd.replace("{xfp}", xfp);
+    QMap<QString, QString> params;
+    params["Verify-token"] = passwordToken;
+    QJsonObject jsonObj = m_rest->deleteSync(cmd, {}, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            result = jsonObj["data"].toObject();
+            return true;
+        } else {
+            result = errorObj;
+            return false;
+        }
+    }
     return false;
 }
 
@@ -2742,6 +2793,40 @@ bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& 
         else{
             errormsg = response_msg;
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    return false;
+}
+
+bool Byzantine::walletChangeTimelock(const QString &wallet_id, const QString &group_id, const QString &timezone, const qint64 timelock, const QString &verify_token, QJsonObject &output)
+{
+    if (group_id.isEmpty()) return false;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLET_REPLACEMENT_TIMELOCK];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+
+    QJsonObject data;
+    QJsonObject value;
+    value["value"] = timelock;
+    value["timezone"] = timezone;
+    data["timelock"] = value;
+
+    QMap<QString, QString> params;
+    params["Verify-token"] = verify_token;
+
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, data, reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if (response_code == DRACO_CODE::RESPONSE_OK) {
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else {
+            output = errorObj;
         }
     }
     return false;

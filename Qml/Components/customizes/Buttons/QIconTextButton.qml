@@ -27,10 +27,12 @@ QBaseButton {
     property alias  iconSize: idIcon.iconSize
     property bool   iconInRight: false
     property alias  icons : idIcon.icons
+    property alias  rowObj: rowContent
     QBackgroundState {
         anchors.fill: parent
     }
     Row {
+        id: rowContent
         anchors.centerIn: parent
         spacing: 8
         layoutDirection: iconInRight ?  Qt.RightToLeft : Qt.LeftToRight

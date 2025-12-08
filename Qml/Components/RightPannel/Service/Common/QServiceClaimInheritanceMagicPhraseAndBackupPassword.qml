@@ -258,10 +258,13 @@ Item {
                     onButtonClicked: {
                         magicphrase_inputted = magicPhrase.textInputted
                         var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
-                        _prepareInheritanceKey.onChainClaim()
                         if (typeof(data.code) !== `undefined`) {
                         } else if(data.wallet_type === "MINISCRIPT"){
-                            _prepareInheritanceKey.onChainClaim()
+                            // var is_existing_wallet = data.is_existing_wallet ? data.is_existing_wallet : false
+                            // if(!is_existing_wallet){
+                            //     _prepareInheritanceKey.onChainClaim(data)
+                            // }
+                            _claimInheritanceViaMobile.open()
                         } else {
                             currentInputMode = _eINPUT_BACKUPPWD
                         }
@@ -368,14 +371,14 @@ Item {
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {
-                        var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
-                        // var input = {
-                        //     "magic"             :magicphrase_inputted,
-                        //     "backupPassword"    :backupPassword.textInputted,
-                        //     "backupPasswordTwo" :backupPassword_two.textInputted
-                        // }
-                        // console.log("EVT_CLAIM_INHERITANCE_CHECK_REQUEST input:", input)
-                        // QMLHandle.signalNotifySendEvent(EVT.EVT_CLAIM_INHERITANCE_CHECK_REQUEST,input)
+                        // var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
+                        var input = {
+                            "magic"             :magicphrase_inputted,
+                            "backupPassword"    :backupPassword.textInputted,
+                            "backupPasswordTwo" :backupPassword_two.textInputted
+                        }
+                        console.log("EVT_CLAIM_INHERITANCE_CHECK_REQUEST input:", input)
+                        QMLHandle.signalNotifySendEvent(EVT.EVT_CLAIM_INHERITANCE_CHECK_REQUEST,input)
                     }
                 }
             }

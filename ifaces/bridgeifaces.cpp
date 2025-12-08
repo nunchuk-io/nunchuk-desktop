@@ -1805,6 +1805,21 @@ QMasterSignerPtr bridge::nunchukCreateSoftwareSigner(const QString &name,
     return NULL;
 }
 
+nunchuk::MasterSigner bridge::nunchukCreateOriginSoftwareSigner(const QString &name,
+                                                        const QString &mnemonic,
+                                                        const QString &passphrase,
+                                                        bool isPrimaryKey,
+                                                        bool replace,
+                                                        QWarningMessage& msg) 
+{
+    return nunchukiface::instance()->CreateSoftwareSigner(name.toStdString(),
+                                                            mnemonic.toStdString(),
+                                                            passphrase.toStdString(),
+                                                            isPrimaryKey,
+                                                            replace,
+                                                            msg);
+}
+
 QString bridge::SignLoginMessage(const QString &mastersigner_id, const QString &message)
 {
     QWarningMessage msg;
@@ -2041,6 +2056,62 @@ QString bridge::nunchukParseQRSigners(const QStringList &qr_data)
     }
 }
 
+nunchuk::SingleSigner bridge::nunchukParseQRSigners(const QStringList &qr_data, int account_index, QWarningMessage &msg)
+{
+    nunchuk::SingleSigner signer("","","","", {},"",0,"");
+    QStringList in = qr_data;
+    in.removeDuplicates();
+    if(in.isEmpty()){
+        return {};
+    }
+    QJsonObject ret;
+    std::vector<std::string> qr_in;
+    for (QString qr : in) {
+        qr_in.push_back(qr.toStdString());
+    }
+
+    std::vector<nunchuk::SingleSigner> signers = nunchukiface::instance()->ParseQRSigners(qr_in, msg);
+    bool foundNetworkMatch = false;
+    bool foundPurposeMatch = false;
+    bool foundAccountMatch = false;
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
+        for (auto s : signers) {
+            int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
+            if (coinType == AppSetting::instance()->primaryServer()) {
+                foundNetworkMatch = true;
+                DBG_INFO << "coinType matched:" << coinType;
+                int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
+                if (purpose == 48) {
+                    foundPurposeMatch = true;
+                    DBG_INFO << "purpose matched:" << purpose;
+                    int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
+                    if (index == account_index) {
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched:" << index;
+                        break;
+                    } else if (account_index == -1) {
+                        // If account_index is -1, return the first matching purpose and network
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched any:" << index;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!foundNetworkMatch) {
+            msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundNetworkMatch) {
+            msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundAccountMatch) {
+            msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    return signer;
+}
 
 QString bridge::loadJsonFile(const QString &filePathName)
 {
@@ -2126,6 +2197,52 @@ QSingleSignerPtr bridge::nunchukParseJSONSigners(const QString &filePathName, EN
     else{
         return NULL;
     }
+}
+
+nunchuk::SingleSigner bridge::nunchukParseJSONSigners(const QString &filePathName, int account_index, nunchuk::SignerType signer_type, QWarningMessage &msg) {
+    QString json_str = loadJsonFile(filePathName);
+    std::vector<nunchuk::SingleSigner> signers = nunchukiface::instance()->ParseJSONSigners(json_str.toStdString(), signer_type, msg);
+    bool foundNetworkMatch = false;
+    bool foundPurposeMatch = false;
+    bool foundAccountMatch = false;
+    nunchuk::SingleSigner signer("","","","", {},"",0,"");
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type() && signers.size() > 0){
+        for (auto s : signers) {
+            int coinType = qUtils::GetCoinTypeFromPath(QString::fromStdString(s.get_derivation_path()));
+            if (coinType == AppSetting::instance()->primaryServer()) {
+                foundNetworkMatch = true;
+                DBG_INFO << "coinType matched:" << coinType;
+                int purpose = qUtils::GetPurposeFromPath(QString::fromStdString(s.get_derivation_path()));
+                if (purpose == 48) {
+                    foundPurposeMatch = true;
+                    DBG_INFO << "purpose matched:" << purpose;
+                    int index = qUtils::GetIndexFromPath(QString::fromStdString(s.get_derivation_path()));
+                    if (index == account_index) {
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched:" << index;
+                        break;
+                    } else if (account_index == -1) {
+                        // If account_index is -1, return the first matching purpose and network
+                        foundAccountMatch = true;
+                        signer = s;
+                        DBG_INFO << "account_index matched any:" << index;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!foundNetworkMatch) {
+            msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundNetworkMatch) {
+            msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundAccountMatch) {
+            msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+    }
+    return signer;
 }
 
 QStringList bridge::nunchukExportPassportWallet(const QString &wallet_id, QWarningMessage &msg)

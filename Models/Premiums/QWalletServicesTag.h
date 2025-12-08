@@ -128,7 +128,7 @@ public:
     void clearToken();
 
     QVariant setupConfig() const;
-    QJsonObject setupConfigJs() const;
+    QJsonObject setupConfigJs();
     void setSetupConfig(const QJsonObject& config);
 
     QVariant walletConfig() const;

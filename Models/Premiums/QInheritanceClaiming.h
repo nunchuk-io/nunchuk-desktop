@@ -71,7 +71,18 @@ public:
     QJsonObject inheritanceCheckStatusJs() const { return m_inheritanceCheckStatus; }
 
     Q_INVOKABLE QVariant inheritanceClaimInit(const QString& magic);
-
+    void clearInheritanceKeys();
+    QJsonObject claimInitJson() const;
+    nunchuk::SingleSigner RecoverAnExistingSeed(const QString &mnemonic);
+    bool GetClaimingWalletInfo(const QString &local_id);
+public slots:
+    QJsonArray inheritanceKeys() const;
+    bool requestDownloadWalletWithIndexAsync(const QString &xfp);
+    bool requestDownloadWalletViaQR(const QStringList &qr_data);
+    bool requestDownloadWalletViaImportFile(const QString &fileName);
+    bool requestDownloadWallet(const nunchuk::SingleSigner &single);
+    bool requestDownloadWallet();
+    bool requestDownloadWalletViaSeedPhrase(const QString &seedPhrase);
 signals:
     // Signals mirrored from QWalletServicesTag for claim logic
     void notPaidAlert();
@@ -84,7 +95,7 @@ signals:
     void inheritanceCheckStatusChanged();
     void inheritanceClaimPlanChanged();
     void claimInheritanceCustomAmountChanged();
-
+    void resultClaimInheritanceAlert(const QString &result);
 private:
     QJsonObject m_inheritanceCheckStatus;
     QJsonObject m_inheritanceClaimPlan;
@@ -93,5 +104,9 @@ private:
     inheritance_t mInheritance = {};
     std::vector<nunchuk::SingleSigner> single_signers;
     std::vector<nunchuk::MasterSigner> master_signers;
+    QJsonObject m_claimInitJson{};
+    QJsonArray m_inheritanceKeys{};
+    QJsonObject m_walletInfoClaim{};
+    QJsonObject m_claimWallet{};
 };
 #endif // QINHERITANCECLAIMING_H

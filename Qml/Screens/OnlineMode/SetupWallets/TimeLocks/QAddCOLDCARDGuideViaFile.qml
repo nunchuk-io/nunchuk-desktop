@@ -38,6 +38,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string guideDescriptionTwo: STR.STR_QML_1927
+    property string guideExportString: ""
     content: Item {
         Row {
             spacing: 36
@@ -94,7 +95,7 @@ QOnScreenContentTypeA {
                             readonly property var content_map: [
                                 {height: 48,  headline:STR.STR_QML_907, content: STR.STR_QML_908 , icon: "qrc:/Images/Images/1.Active.svg" },
                                 {height: 68,  headline:STR.STR_QML_909, content: STR.STR_QML_910 , icon: "qrc:/Images/Images/2.Active.svg" },
-                                {height: 88, headline:STR.STR_QML_1161,content: STR.STR_QML_1953 , icon: "qrc:/Images/Images/3.Active.svg" },
+                                {height: 88,  headline:STR.STR_QML_1161,content: guideExportString , icon: "qrc:/Images/Images/3.Active.svg" },
                                 {height: 68,  headline:STR.STR_QML_1163,content: STR.STR_QML_1164 , icon: "qrc:/Images/Images/4.Active.svg" },
                             ]
                             model: content_map.length

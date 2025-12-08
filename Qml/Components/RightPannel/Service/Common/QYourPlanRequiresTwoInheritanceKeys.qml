@@ -31,8 +31,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1997
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    label.text: STR.STR_QML_1997.arg(claimData.inheritance_key_count)
     content: Item {
         Row {
             spacing: 36
@@ -50,7 +49,7 @@ QOnScreenContentTypeA {
                     spacing: 24
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1998
+                        text: STR.STR_QML_1998.arg(claimData.inheritance_key_count)
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -61,7 +60,6 @@ QOnScreenContentTypeA {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     bottomRight: QTextButton {
         width: label.paintedWidth + 16 * 2
         height: 48

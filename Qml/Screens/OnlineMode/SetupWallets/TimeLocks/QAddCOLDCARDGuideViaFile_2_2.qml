@@ -22,4 +22,5 @@ import "../../../../../localization/STR_QML.js" as STR
 QAddCOLDCARDGuideViaFile {
     label.text: STR.STR_QML_1952.arg(2)
     guideDescriptionTwo: STR.STR_QML_1937
+    guideExportString: STR.STR_QML_2042.arg("1")
 }

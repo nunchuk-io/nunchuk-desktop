@@ -80,7 +80,6 @@ QOnScreenContentTypeB {
                             width: 539
                             height: 60
                             label: modelData.display_name
-                            fontFamily: "Lato"
                             fontPixelSize: 16
                             fontWeight: btn.selected ? Font.ExtraBold : Font.DemiBold
                             selected: period_id === modelData.id

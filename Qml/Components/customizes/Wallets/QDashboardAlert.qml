@@ -116,9 +116,9 @@ Rectangle {
                          modelData.type === AlertType.KEY_REPLACEMENT_COMPLETED ||
                          modelData.type === AlertType.TRANSFER_FUNDS ||
                          modelData.type === AlertType.SETUP_INHERITANCE_PLAN ||
-                         modelData.type === AlertType.BACKUP_WALLET// ||
-                         // modelData.type === AlertType.CHANGE_TIMELOCK_TYPE
-
+                         modelData.type === AlertType.BACKUP_WALLET ||
+                         modelData.type === AlertType.CHANGE_TIMELOCK_TYPE ||
+                         modelData.type === AlertType.KEY_TIMELOCK_UPDATE_PENDING
                 onButtonClicked: {
                     clickView()
                 }

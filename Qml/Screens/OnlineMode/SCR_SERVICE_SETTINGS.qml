@@ -38,6 +38,7 @@ import "../../Components"
 import "../../Components/LeftPannel"
 import "../../Components/RightPannel"
 import "../../Components/RightPannel/Service/Common"
+import "../../Screens/OnlineMode/SetupWallets/TimeLocks"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
@@ -197,8 +198,15 @@ QScreen {
     QPopupPrepareInheritanceKey {
         id: _prepareInheritanceKey
         onNextClicked: {
-            _hardwareAddKey.isInheritance = true
-            _hardwareAddKey.open()
+            
         }
+    }
+    QPopupSetupOffChainTimelockWallet {
+        id: _popupSetupAnOffChainTimelock
+    }
+
+    QPopupInfo{
+        id:_claimInheritanceViaMobile
+        contentText: STR.STR_QML_2060
     }
 }

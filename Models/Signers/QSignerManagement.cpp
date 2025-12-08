@@ -199,7 +199,6 @@ QJsonObject QSignerManagement::currentSignerJs() const {
 }
 
 QVariant QSignerManagement::currentSigner() const {
-    DBG_INFO << "OTE" << m_currentSigner;
     return QVariant::fromValue(m_currentSigner);
 }
 
@@ -216,6 +215,36 @@ void QSignerManagement::updateXfpOfCurrentSigner(const QString &xfp) {
     emit currentSignerChanged();
 }
 
+bool QSignerManagement::requestStartKeyReplacement(const QString &tag, std::function<void()> progress) {
+    DBG_INFO << "tag:" << tag;
+    QSignerManagement::instance()->clearState();
+    QSignerManagement::instance()->clearExecute();
+    if (progress) {
+        progress();
+    }
+    if (ServiceSetting::instance()->existHardware(tag)) {
+        QEventProcessor::instance()->sendEvent(E::EVT_EXIST_HARDWARE_REQ);
+    } else {
+        QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_REQUEST);
+    }
+    return true;
+}
+
+bool  QSignerManagement::requestStartKeyCreate(const QString &tag, std::function<void()> progress) {
+    DBG_INFO << "tag:" << tag;
+    QSignerManagement::instance()->clearState();
+    QSignerManagement::instance()->clearExecute();
+    if (progress) {
+        progress();
+    }
+    if (ServiceSetting::instance()->existHardware(tag)) {
+        QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_EXIST_REQ);
+    } else {
+        QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+    }
+    return true;
+}
+
 QVariant QSignerManagement::miniscriptSupportedFirmwares(const QString& tag) const {
     QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
     QJsonArray miniscript_supported_firmwares = config["miniscript_supported_firmwares"].toArray();
@@ -226,4 +255,30 @@ QVariant QSignerManagement::miniscriptSupportedFirmwares(const QString& tag) con
         }
     }
     return QVariant();
+}
+
+bool QSignerManagement::isSupportedInheritance(const QString& tag) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray supported_signers = config["supported_signers"].toArray();
+    for (auto js : supported_signers) {
+        QJsonObject obj = js.toObject();
+        bool isInheritance = obj["is_inheritance_key"].toBool();
+        if (isInheritance && qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QSignerManagement::isSupportedNotInheritance(const QString& tag) const {
+    QJsonObject config = QWalletServicesTag::instance()->setupConfigJs();
+    QJsonArray supported_signers = config["supported_signers"].toArray();
+    for (auto js : supported_signers) {
+        QJsonObject obj = js.toObject();
+        bool isInheritance = obj["is_inheritance_key"].toBool();
+        if (!isInheritance && qUtils::strCompare(obj["signer_tag"].toString(), tag)) {
+            return true;
+        }
+    }
+    return false;
 }

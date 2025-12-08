@@ -28,7 +28,6 @@ Loader {
     function closeScreen() {
         dashInfo.markRead()
         closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-        
     }
 
     width: popupWidth
@@ -42,7 +41,7 @@ Loader {
 
     Component {
         id: _unread
-        QWalletCreationPendingTimeLockUnread {
+        QWalletCreationPendingOnchainUnread {
             onNextClicked: {
                 dashInfo.markRead()
                 isRead = true                
@@ -52,7 +51,8 @@ Loader {
 
     Component {
         id: _read
-        QWalletCreationPendingTimeLockRead {
+        QWalletCreationPendingOnchainRead {
+
         }
     }
 }

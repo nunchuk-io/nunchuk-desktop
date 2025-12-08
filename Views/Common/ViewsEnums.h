@@ -258,30 +258,30 @@ public:
         EVT_HOME_ADD_WALLET_REQUEST                         , // 133
         EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST                , // 134
         EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST         , // 135
-        EVT_STATE_ID_ROOT_MAX                               , // 136
+        EVT_EXIST_HARDWARE_REQ                              , // 136
+        EVT_ADD_HARDWARE_REQUEST                            , // 137
+        EVT_STATE_ID_ROOT_MAX                               , // 138
     };
     enum EVT_STATE_ID_SCR_HOME
     {
-        EVT_STATE_ID_SCR_HOME_MIN=EVT_STATE_ID_ROOT_MAX+1, // 137
-        EVT_HOME_WALLET_SELECTED                         , // 138
-        EVT_HOME_WALLET_COPY_ADDRESS                     , // 139
-        EVT_HOME_SETTING_REQUEST                         , // 140
-        EVT_HOME_DISPLAY_ADDRESS                         , // 141
-        EVT_HOME_IMPORT_PSBT                             , // 142
-        EVT_HOME_EXPORT_BSMS                             , // 143
-        EVT_HOME_MASTER_SIGNER_INFO_REQUEST              , // 144
-        EVT_HOME_SEND_REQUEST                            , // 145
-        EVT_HOME_RECEIVE_REQUEST                         , // 146
-        EVT_HOME_TRANSACTION_HISTORY_REQUEST             , // 147
-        EVT_HOME_WALLET_INFO_REQUEST                     , // 148
-        EVT_HOME_TRANSACTION_INFO_REQUEST                , // 149
-        EVT_HOME_REMOTE_SIGNER_INFO_REQUEST              , // 150
-        EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST        , // 151
-        EVT_ASK_HARDWARE_REQ                             , // 152
-        EVT_EXIST_HARDWARE_REQ                           , // 153
-        EVT_KEY_HEALTH_CHECK_STATUS_REQUEST              , // 154
-        EVT_RECURRING_PAYMENTS_REQUEST                   , // 155
-        EVT_ADD_HARDWARE_REQUEST                         , // 156
+        EVT_STATE_ID_SCR_HOME_MIN=EVT_STATE_ID_ROOT_MAX+1, // 139
+        EVT_HOME_WALLET_SELECTED                         , // 140
+        EVT_HOME_WALLET_COPY_ADDRESS                     , // 141
+        EVT_HOME_SETTING_REQUEST                         , // 142
+        EVT_HOME_DISPLAY_ADDRESS                         , // 143
+        EVT_HOME_IMPORT_PSBT                             , // 144
+        EVT_HOME_EXPORT_BSMS                             , // 145
+        EVT_HOME_MASTER_SIGNER_INFO_REQUEST              , // 146
+        EVT_HOME_SEND_REQUEST                            , // 147
+        EVT_HOME_RECEIVE_REQUEST                         , // 148
+        EVT_HOME_TRANSACTION_HISTORY_REQUEST             , // 149
+        EVT_HOME_WALLET_INFO_REQUEST                     , // 150
+        EVT_HOME_TRANSACTION_INFO_REQUEST                , // 151
+        EVT_HOME_REMOTE_SIGNER_INFO_REQUEST              , // 152
+        EVT_HOME_COLDCARD_NFC_SIGNER_INFO_REQUEST        , // 153
+        EVT_ASK_HARDWARE_REQ                             , // 154
+        EVT_KEY_HEALTH_CHECK_STATUS_REQUEST              , // 155
+        EVT_RECURRING_PAYMENTS_REQUEST                   , // 156
         EVT_ADD_SOFTWARE_SIGNER_RESULT                   , // 157
         EVT_REPLACE_KEYS_REQUEST                         , // 158
         EVT_STATE_ID_SCR_HOME_MAX                        , // 159

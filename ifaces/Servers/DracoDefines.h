@@ -265,6 +265,8 @@ enum CMD_IDX {
     ASSISTED_WALLET_CONFIGURE_WALLET_REPLACEMENT,
     ASSISTED_WALLET_INITIATE_KEY_REPLACEMENT,
     ASSISTED_WALLET_CANCEL_KEY_REPLACEMENT,
+    ASSISTED_WALLET_VERIFY_KEY_REPLACEMENT,
+    ASSISTED_WALLET_REMOVE_KEY_REPLACEMENT,
     ASSISTED_WALLET_REPLACE_KEY,
     ASSISTED_WALLET_FINALIZE_KEY_REPLACEMENT,
     ASSISTED_WALLET_GET_STATUS_KEY_REPLACEMENT,
@@ -301,6 +303,14 @@ enum CMD_IDX {
 
     CONFIG_WALLET_SETUP,
     DRAFT_WALLET_TIMELOCK,
+
+    ASSISTED_WALLET_REPLACEMENT_TIMELOCK,
+
+    // Claiming wallets
+    CLAIMING_WALLET_GET_BY_ID,
+    CLAIMING_WALLET_UPDATE_BY_ID,
+    CLAIMING_WALLET_DELETE_BY_ID,
+    CLAIMING_WALLET_LIST,
 
     CMD_MAX
 };
@@ -403,6 +413,8 @@ enum CMD_IDX {
     GROUP_WALLET_CONFIGURE_WALLET_REPLACEMENT,
     GROUP_WALLET_INITIATE_KEY_REPLACEMENT,
     GROUP_WALLET_CANCEL_KEY_REPLACEMENT,
+    GROUP_WALLET_VERIFY_KEY_REPLACEMENT,
+    GROUP_WALLET_REMOVE_KEY_REPLACEMENT,
     GROUP_WALLET_REPLACE_KEY,
     GROUP_WALLET_FINALIZE_KEY_REPLACEMENT,
     GROUP_WALLET_GET_STATUS_KEY_REPLACEMENT,
@@ -415,6 +427,7 @@ enum CMD_IDX {
 
     GROUP_DRAFT_WALLET_TIMELOCK,
     GROUP_DRAFT_WALLET_VERIFY,
+    GROUP_WALLET_REPLACEMENT_TIMELOCK,
 
     CMD_MAX
 };
@@ -646,9 +659,12 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::ASSISTED_WALLET_CONFIGURE_WALLET_REPLACEMENT    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/configs") },
     { Premium::CMD_IDX::ASSISTED_WALLET_INITIATE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
     { Premium::CMD_IDX::ASSISTED_WALLET_CANCEL_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_VERIFY_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/verify") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_REMOVE_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/remove") },
     { Premium::CMD_IDX::ASSISTED_WALLET_REPLACE_KEY                     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/replace") },
     { Premium::CMD_IDX::ASSISTED_WALLET_FINALIZE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/finalize") },
     { Premium::CMD_IDX::ASSISTED_WALLET_GET_STATUS_KEY_REPLACEMENT      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/status") },
+    { Premium::CMD_IDX::ASSISTED_WALLET_REPLACEMENT_TIMELOCK            , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/timelock") },
     { Premium::CMD_IDX::ASSISTED_WALLET_RESET_KEY_REPLACEMENT           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/reset") },
     { Premium::CMD_IDX::ASSISTED_WALLET_DOWNLOAD_BACKUP_KEY_REPLACEMENT         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/{xfp}/download-backup") },
     { Premium::CMD_IDX::ASSISTED_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("wallets/{wallet_id_or_local_id}/replacement/upload-backup") },
@@ -768,9 +784,12 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLET_CONFIGURE_WALLET_REPLACEMENT    , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/configs") },
     { Group::CMD_IDX::GROUP_WALLET_INITIATE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
     { Group::CMD_IDX::GROUP_WALLET_CANCEL_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}") },
+    { Group::CMD_IDX::GROUP_WALLET_VERIFY_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/verify") },
+    { Group::CMD_IDX::GROUP_WALLET_REMOVE_KEY_REPLACEMENT          , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/remove") },
     { Group::CMD_IDX::GROUP_WALLET_REPLACE_KEY                     , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/replace") },
     { Group::CMD_IDX::GROUP_WALLET_FINALIZE_KEY_REPLACEMENT        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/finalize") },
     { Group::CMD_IDX::GROUP_WALLET_GET_STATUS_KEY_REPLACEMENT      , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/status") },
+    { Group::CMD_IDX::GROUP_WALLET_REPLACEMENT_TIMELOCK            , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/timelock") },
     { Group::CMD_IDX::GROUP_WALLET_RESET_KEY_REPLACEMENT           , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/reset") },
     { Group::CMD_IDX::GROUP_WALLET_DOWNLOAD_BACKUP_KEY_REPLACEMENT , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/{xfp}/download-backup") },
     { Group::CMD_IDX::GROUP_WALLET_UPLOAD_BACKUP_KEY_REPLACEMENT   , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/replacement/upload-backup") },
@@ -798,6 +817,12 @@ const QMap<int, QString> commands {
     { Command::Premium::DRAFT_WALLET_TIMELOCK                    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/timelock") },
     // Group Miniscript
     { Command::Group::GROUP_DRAFT_WALLET_TIMELOCK                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/timelock") },
+
+    // Claiming wallets
+    { Premium::CMD_IDX::CLAIMING_WALLET_GET_BY_ID      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_UPDATE_BY_ID   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_DELETE_BY_ID   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_LIST           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets") },
 };
 
 class DRACO_CODE: public QObject

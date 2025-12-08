@@ -310,5 +310,10 @@ std::vector<uint8_t> HexToBytes(const QString& hex);
 QDateTime convertTimestampToDateTime(qint64 timestamp, const QString& timezoneId);
 QString formatTimeZoneString(const QString& timezoneId);
 QString extractTimeZoneId(const QString& formattedString);
+
+int GetPurposeFromPath(const QString &path);
+int GetCoinTypeFromPath(const QString &path);
+
+QJsonObject SingleSignertoJsonObject(const nunchuk::SingleSigner &single);
 }
 #endif // QUTILS_H

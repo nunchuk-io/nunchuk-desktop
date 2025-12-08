@@ -113,21 +113,17 @@ bool QAssistedDraftWallets::AddOrUpdateToDraftWallet(nunchuk::SingleSigner hardw
     QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
     QString group_id = currentSignerInfo.value("group_id").toString();
     QString request_id = currentSignerInfo.value("request_id").toString();
-    DBG_INFO << data;
 
-    bool isDuplicateKey{false};
     bool ret{false};
-    QString error_msg;
+    QJsonObject output;
     auto dash = QGroupWallets::instance()->GetDashboard(group_id);
     if (group_id.isEmpty()) {
-        ret = Draco::instance()->assistedWalletAddKey(request_id, data, isDuplicateKey, error_msg);
-        DBG_INFO << ret << isDuplicateKey;
+        ret = Draco::instance()->assistedWalletAddKey(request_id, data, output);
     } else {
         if (dash && dash->isUserDraftWallet()) {
-            ret = Draco::instance()->assistedWalletAddKey(request_id, data, isDuplicateKey, error_msg);
+            ret = Draco::instance()->assistedWalletAddKey(request_id, data, output);
         } else {
-            ret = Byzantine::instance()->DraftWalletAddKey(group_id, request_id, data, isDuplicateKey, error_msg);
-            DBG_INFO << ret << error_msg << isDuplicateKey;
+            ret = Byzantine::instance()->DraftWalletAddKey(group_id, request_id, data, output);
         }
         if (ret) {
             if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
@@ -136,7 +132,9 @@ bool QAssistedDraftWallets::AddOrUpdateToDraftWallet(nunchuk::SingleSigner hardw
             }
         }
     }
-    if (isDuplicateKey) {
+    DBG_INFO << "data:" << data << "output:" << output;
+    QString message = output["message"].toString();
+    if (message.contains("Duplicate")) {
         emit addHardwareAlert();
     }
     return ret;
@@ -232,7 +230,6 @@ void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
         if (qUtils::strCompare(hardware.mRequestId, request_id)) {
             QSwitchAPI::setAddHardware((int)key);
             m_request = hardware;
-
             QJsonObject keyInfo = info.value("key").toObject();
             QJsonArray key_indices = info.value("key_indices").toArray();
             if (!keyInfo.isEmpty()) {
@@ -244,7 +241,8 @@ void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
                 info["has"] = false;
                 info["new_account_index"] = 0;
             }
-            
+            QString magic = info.value("magic").toString();
+            info["onlyUseForClaim"] = magic != "";
             QSignerManagement::instance()->setCurrentSigner(info);
             QString wallet_type = info.value("wallet_type").toString();
             ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
@@ -265,13 +263,13 @@ bool QAssistedDraftWallets::checkAndGetSingleSigner(const QString &xfp, int inde
     DBG_INFO << "xfp: " << xfp << "index: " << index;
     QWarningMessage msg;
     int tmpIndex = index < 0 ? 0 : index;
-    nunchuk::SingleSigner ret =  bridge::nunchukGetOriginSignerFromMasterSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, tmpIndex, msg);
+    nunchuk::SingleSigner ret = bridge::nunchukGetOriginSingleSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, tmpIndex, msg);
     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         outSigner = ret;
         return true;
     } else {
         msg.resetWarningMessage();
-        ret = bridge::nunchukGetOriginSingleSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, index, msg);
+        ret = bridge::nunchukGetOriginSignerFromMasterSigner(xfp, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, tmpIndex, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             outSigner = ret;
             return true;
@@ -293,7 +291,7 @@ QJsonObject QAssistedDraftWallets::progressAddOrReplacementInfo(nunchuk::SingleS
     QString group_id = currentSignerInfo.value("group_id").toString();
     DBG_INFO << selectXfp << "|" << xfp << "|" << group_id << "|" << currentSignerInfo;
     if (xfp.isEmpty()) {
-        resultAddOrUpdateAKeyToDraftWallet("eADD_ERROR");
+        resultAddOrUpdateAKeyToDraftWallet("eSCREEN_ERROR");
         return {};
     }
     QJsonObject data;
@@ -360,7 +358,7 @@ void QAssistedDraftWallets::resultAddOrUpdateAKeyToDraftWallet(const QString &re
     }
     DBG_INFO << result << isColdcardNFC;
     if (isColdcardNFC) {
-        if (result == "eREUSE_RESULT") {
+        if (result == "eSCREEN_SUCCESS") {
             if (canReplaceKey()) {
                 QSignerManagement::instance()->setScreenFlow(result);
             }
@@ -505,6 +503,8 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSignerMiniscript(const QStri
     QString wallet_type = currentSigerInfo.value("wallet_type").toString();
     bool has = currentSigerInfo.value("has").toBool();
     bool hasSecond = currentSigerInfo.value("hasSecond").toBool();
+    bool notAllowDisplayKeySameXfp = currentSigerInfo.value("notAllowDisplayKeySameXfp").toBool();
+    
     QVariantList arrays;
     for (auto s : m_availableSignerListPtr->fullList()) {
         DBG_INFO << s->tag() << s->signerType();
@@ -514,6 +514,12 @@ void QAssistedDraftWallets::MixMasterSignerAndSingleSignerMiniscript(const QStri
             auto maps = signer.toMap();
             maps["wallet_type"] = wallet_type;
             signer = QVariant::fromValue(maps);
+            if (notAllowDisplayKeySameXfp) {
+                QString xfp = currentSigerInfo.value("xfp").toString();
+                if (qUtils::strCompare(s->masterFingerPrint(), xfp)) {
+                    continue;
+                }
+            }
             if (!has) {
                 int account_index = qUtils::GetIndexFromPath(s->derivationPath());
                 if (account_index == 0) {
@@ -574,9 +580,9 @@ bool QAssistedDraftWallets::requestAddOrReplacementWithIndex(const QString &xfp,
     QList<uint> states = QEventProcessor::instance()->getCurrentStates();
     if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_ADD_HARDWARE_EXIST)
     {
-        resultAddOrUpdateAKeyToDraftWallet(ret ? "eREUSE_RESULT" : "eREUSE_SCAN_DEVICE");
+        resultAddOrUpdateAKeyToDraftWallet(ret ? "eSCREEN_SUCCESS" : "eSCREEN_REFRESH_DEVICE");
     } else {
-        resultAddOrUpdateAKeyToDraftWallet(ret ? "eADD_SUCCESS" : "eADD_ERROR");
+        resultAddOrUpdateAKeyToDraftWallet(ret ? "eSCREEN_SUCCESS" : "eSCREEN_ERROR");
     }
     return ret;
 }
@@ -623,17 +629,19 @@ ENUNCHUCK::WalletType QAssistedDraftWallets::walletType() const {
     }
 }
 
-void QAssistedDraftWallets::requestVerifySingleSigner(const int index, const QString &verifyType) {
-    DBG_INFO << "index: " << index << "verifyType: " << verifyType;
+void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int index, const QString &verifyType) {
+    
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
     runInConcurrent([this, verifyType, index]() ->bool{
-        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
+        auto xfpSelected = currentSigerInfo.value("xfp").toString();
+        DBG_INFO << "index: " << index << "verifyType: " << verifyType << "currentSigerInfo: " << currentSigerInfo;
         auto deviceList = refreshDeviceList();
-        if (deviceList && qUtils::strCompare(verifyType, "SELF_VERIFIED")) {
+        if (deviceList) {
             auto device = deviceList->getDeviceByIndex(qMax(0, index));
             if (device) {
                 QWarningMessage msg;
-                auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
+                auto derivation_path = currentSigerInfo.value("derivation_path").toString();
                 auto signer = bridge::nunchukGetSignerFromMasterSigner(xfpSelected, derivation_path, msg);
                 if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
                     msg.resetWarningMessage();
@@ -641,20 +649,9 @@ void QAssistedDraftWallets::requestVerifySingleSigner(const int index, const QSt
                 }
                 if ((int)EWARNING::WarningType::NONE_MSG != msg.type()) {
                     AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+                } else {
+                    requestVerifySingleSigner(verifyType);
                 }
-            }
-        }
-
-        QString error_msg;
-        if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-            bool ret{false};
-            if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
-                ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verifyType, error_msg);
-            } else {
-                ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verifyType, error_msg);
-            }
-            if (ret) {
-                emit verifySingleSignerResult(1);
             }
         }
         return true;
@@ -663,10 +660,113 @@ void QAssistedDraftWallets::requestVerifySingleSigner(const int index, const QSt
     });
 }
 
-int QAssistedDraftWallets::getAccountIndexFromSigner(const QString &derivation_path) {
-    int ret = qUtils::GetIndexFromPath(derivation_path);
-    DBG_INFO << "OTE" << ret;
-    return ret;
+void QAssistedDraftWallets::requestVerifySingleSignerViaQR(const QStringList &qr_data, const QString &verifyType) {
+    DBG_INFO << "verifyType: " << verifyType << "qr_data size: " << qr_data.size();
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, qr_data, verifyType]() ->bool{
+        QWarningMessage msg;
+        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
+        auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
+        if (signer.get_descriptor() != qrSigner.get_descriptor()) {
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        } else {
+            requestVerifySingleSigner(verifyType);
+        }        
+        return true;
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+    });
+}
+
+void QAssistedDraftWallets::requestVerifySingleSignerViaFile(const QString &fileName, const QString &verifyType) {
+    DBG_INFO << "verifyType: " << verifyType << "fileName: " << fileName;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, fileName, verifyType]() ->bool{
+        QWarningMessage msg;
+        QString file_path = qUtils::QGetFilePath(fileName);
+        nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        auto derivation_path = QSignerManagement::instance()->currentSignerJs().value("derivation_path").toString();
+        auto signer = bridge::nunchukGetOriginSingleSigner(xfpSelected, walletType(), ENUNCHUCK::AddressType::NATIVE_SEGWIT, 0, msg);
+        if (signer.get_descriptor() != fileSigner.get_descriptor()) {
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        } else {
+            requestVerifySingleSigner(verifyType);
+        }        
+        return true;
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+    });
+}
+
+bool QAssistedDraftWallets::requestVerifySingleSigner(const QString &verifyType) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        if (dashboard->canReplaceKey()) {
+            return replacementVerifySingleSigner(verifyType);
+        } else {
+            return addVerifySingleSigner(verifyType);
+        }
+    }
+    return false;
+}
+
+bool QAssistedDraftWallets::addVerifySingleSigner(const QString &verifyType) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        QString error_msg;
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        bool ret{false};
+        if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
+            ret = Draco::instance()->DraftWalletSignerVerify(xfpSelected, verifyType, error_msg);
+        } else {
+            ret = Byzantine::instance()->DraftWalletSignerVerify(dashboard->groupId(), xfpSelected, verifyType, error_msg);
+        }
+        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "ret: " << ret << "error_msg: " << error_msg;
+        if (ret) {
+            emit verifySingleSignerResult(1);
+        }
+        return ret;
+    }
+    return false;
+}
+
+bool QAssistedDraftWallets::replacementVerifySingleSigner(const QString &verifyType) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        QJsonObject result;
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        bool ret{false};
+        if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
+            ret = Draco::instance()->VerifyKeyReplacement(dashboard->wallet_id(), xfpSelected, verifyType, servicesTagPtr()->passwordToken(), result);
+        } else {
+            ret = Byzantine::instance()->VerifyKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, verifyType, servicesTagPtr()->passwordToken(), result);
+        }
+        DBG_INFO << "xfpSelected: " << xfpSelected << "verifyType: " << verifyType << "result: " << result;
+        if (ret) {
+            emit verifySingleSignerResult(1);
+        }
+        return ret;
+    }
+    return false;
+}
+
+bool QAssistedDraftWallets::requestRemoveSingleSigner(const QString &xfp) {
+    if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+        QJsonObject result;
+        auto xfpSelected = QSignerManagement::instance()->currentSignerJs().value("xfp").toString();
+        bool ret{false};
+        if (dashboard->isUserWallet() || dashboard->isUserDraftWallet()) {
+            ret = Draco::instance()->RemoveKeyReplacement(dashboard->wallet_id(), xfpSelected, servicesTagPtr()->passwordToken(), result);
+        } else {
+            ret = Byzantine::instance()->RemoveKeyReplacement(dashboard->groupId(), dashboard->wallet_id(), xfpSelected, servicesTagPtr()->passwordToken(), result);
+        }
+        if (ret) {
+            // QString 
+            // emit removeSingleSignerResult(1);
+        }
+        return ret;
+    }
+    return false;
 }
 
 void QAssistedDraftWallets::newAccountIndexCached(const QString &xfp, int index) {
@@ -674,4 +774,105 @@ void QAssistedDraftWallets::newAccountIndexCached(const QString &xfp, int index)
     currentSigerInfo["new_account_index"] = index;
     QSignerManagement::instance()->setCurrentSigner(currentSigerInfo);
     
+}
+
+bool QAssistedDraftWallets::requestQRAddOrReplacementWithIndexAsync(const QStringList &qr_data, int index) {
+    DBG_INFO << "index: " << index << "qr_data size: " << qr_data.size();
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, index, qr_data]() ->bool{
+        QWarningMessage msg;
+        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, index, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+            bool ret = requestAddOrReplacementToServer(qrSigner);
+            QList<uint> states = QEventProcessor::instance()->getCurrentStates();
+            if(!states.isEmpty() && states.last() == (uint)E::STATE_ID_SCR_ADD_HARDWARE_EXIST)
+            {
+                resultAddOrUpdateAKeyToDraftWallet(ret ? "eSCREEN_SUCCESS" : "eSCREEN_REFRESH_DEVICE");
+            } else {
+                resultAddOrUpdateAKeyToDraftWallet(ret ? "eSCREEN_SUCCESS" : "eSCREEN_ERROR");
+            }
+            return ret;
+        } else {
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+        return false;  
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+    });
+    return false;    
+}
+
+bool QAssistedDraftWallets::requestImportFileAddOrReplacementWithIndexAsync(const QString &fileName, int index) {
+    DBG_INFO << "index: " << index << "fileName: " << fileName;
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, index, fileName]() ->bool{
+        auto ret = ImportColdcardViaFile(fileName, index);
+        using Enum = QAssistedDraftWallets::ImportColdcard_t;
+        if (ret == Enum::eOK) {
+            resultAddOrUpdateAKeyToDraftWallet("eSCREEN_SUCCESS");
+            if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
+                dashboard->GetAlertsInfo();
+            }
+        }
+        else if (ret == Enum::eError_Keep_Screen) {
+            // Don't need emit
+        }
+        else if (ret == Enum::eError_Back) {
+            resultAddOrUpdateAKeyToDraftWallet("eSCREEN_INPUT_INDEX");
+        }
+        return ret == Enum::eOK;
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+    });
+    return false;
+}
+
+bool QAssistedDraftWallets::requestAddOrReplacementBothIndicesIfPossible(const QString &xfp) {
+    QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+    const QString wallet_type = currentSignerInfo.value("wallet_type").toString();
+    const bool isMiniscript = qUtils::strCompare(wallet_type, "MINISCRIPT");
+
+    auto handleMiniscript = [&, this]() -> bool {
+        bool has = currentSignerInfo.value("has").toBool();
+        bool hasSecond = currentSignerInfo.value("hasSecond").toBool();
+        // First time: need indices 0 and 1
+        if (!has) {
+            if (!requestAddOrReplacementWithIndex(xfp, 0)) {
+                return false;
+            }
+            currentSignerInfo["has"] = true;
+            currentSignerInfo["hasSecond"] = false;
+            currentSignerInfo["key_index"] = currentSignerInfo.value("key_index").toInt(-1) + 1;
+            currentSignerInfo["new_account_index"] = 1;
+            QSignerManagement::instance()->setCurrentSigner(currentSignerInfo);
+            return requestAddOrReplacementWithIndex(xfp, 1);
+        }
+
+        // Second pending: add index 1 (or provided newIndex)
+        if (has && !hasSecond) {
+            return requestAddOrReplacementWithIndex(xfp, 1);
+        }
+
+        // Already have both, nothing to do
+        return true;
+    };
+
+    auto handleNormal = [&, this]() -> bool {
+        int newIndex = currentSignerInfo.value("new_account_index").toInt(-1);
+        return requestAddOrReplacementWithIndex(xfp, newIndex);
+    };
+
+    return isMiniscript ? handleMiniscript() : handleNormal();
+}
+
+bool QAssistedDraftWallets::requestAddOrReplacementBothIndicesIfPossibleAsync(const QString &xfp) {
+    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+    runInConcurrent([this, xfp]() ->bool{
+        bool ret = requestAddOrReplacementBothIndicesIfPossible(xfp);
+        return ret;
+    },[](bool ret) {
+        qApp->restoreOverrideCursor();
+    });
+    return false;
 }

@@ -36,8 +36,9 @@ import "../../../../localization/STR_QML.js" as STR
 
 Popup {
     id: _timezone
-    property var    newWalletInfo: AppModel.newWalletInfo
-    property string selectedTimezone: newWalletInfo.timezones.selectedTimezone
+    property var    selectedWalletInfo: AppModel.newWalletInfo
+    property string selectedTimezone: selectedWalletInfo.timezones.selectedTimezone
+    property int    selectedIndex: selectedWalletInfo.timezones.currentIndex
     modal: true
     focus: true
     width: 350
@@ -63,8 +64,8 @@ Popup {
             id: timezonelist
             anchors.fill: parent
             anchors.margins: 16
-            model: newWalletInfo.timezones
-            currentIndex: newWalletInfo.timezones.currentIndex
+            model: selectedWalletInfo.timezones
+            currentIndex: selectedIndex
             clip: true
             snapMode: ListView.SnapToItem
             delegate:  Item {
@@ -91,7 +92,7 @@ Popup {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        newWalletInfo.timezones.currentIndex = index;
+                        selectedWalletInfo.timezones.currentIndex = index;
                         _timezone.close();
                     }
                 }

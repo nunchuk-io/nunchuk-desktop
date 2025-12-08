@@ -324,6 +324,7 @@ void QGroupWallets::refresh()
     mDashboard->GetDraftWalletInfo();
     if (mDashboard->hasWallet()) {
         mDashboard->GetWalletInfo();
+        mDashboard->GetKeyReplacementStatus();
     }
 }
 

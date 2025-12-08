@@ -37,7 +37,9 @@ import "../../../../localization/STR_QML.js" as STR
 Popup {
     id: _calendar
     property string dateString: ""
-    property date minimumDate
+    property date   minimumDate
+    property alias  selectedDate: inputCalendar.selectedDate
+
     width: inputCalendar.width
     height: inputCalendar.height
     modal: true

@@ -649,6 +649,13 @@ QMasterSignerPtr nunchukCreateSoftwareSigner(const QString &name,
                                              bool replace,
                                              QWarningMessage& msg);
 
+nunchuk::MasterSigner nunchukCreateOriginSoftwareSigner(const QString &name,
+                                                        const QString &mnemonic,
+                                                        const QString &passphrase,
+                                                        bool isPrimaryKey,
+                                                        bool replace,
+                                                        QWarningMessage& msg);
+
 nunchuk::MasterSigner CreateSoftwareSignerFromMasterXprv(const QString &name,
                                                          const QString &xprv,
                                                          bool isPrimaryKey,
@@ -691,6 +698,8 @@ QString nunchukParsePassportSigner(const QStringList &qr_data);
 
 QString nunchukParseQRSigners(const QStringList &qr_data);
 
+nunchuk::SingleSigner nunchukParseQRSigners(const QStringList &qr_data, int account_index, QWarningMessage &msg);
+
 QString loadJsonFile(const QString &filePathName);
 
 QString nunchukParseJSONSigners(const QString &filePathName);
@@ -698,6 +707,8 @@ QString nunchukParseJSONSigners(const QString &filePathName);
 QSingleSignerPtr nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, QWarningMessage &msg);
 
 QSingleSignerPtr nunchukParseJSONSigners(const QString &filePathName, ENUNCHUCK::SignerType signer_type, ENUNCHUCK::AddressType address_type, QWarningMessage &msg);
+
+nunchuk::SingleSigner nunchukParseJSONSigners(const QString &filePathName, int account_index, nunchuk::SignerType signer_type, QWarningMessage &msg);
 
 QStringList nunchukExportPassportWallet(const QString& wallet_id,
                                         QWarningMessage& msg);

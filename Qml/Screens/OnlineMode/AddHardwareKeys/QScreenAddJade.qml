@@ -35,20 +35,29 @@ import "../../../../localization/STR_QML.js" as STR
 QScreenAdd {
     anchors.fill: parent
     readonly property var map_flow: [
-        {screen: "eADD_INFORMATION",    screen_component: _Information},
-        {screen: "eADD_REFRESH_DEVICE", screen_component: _RefreshDevice},
-        {screen: "eADD_VIA_QR",         screen_component: _ViaQR12},
-        {screen: "eADD_LOADING",        screen_component: _Loading},
-        {screen: "eADD_SUCCESS",        screen_component: _result},
-        {screen: "eADD_ERROR",          screen_component: _result},
+        {screen: "eSCREEN_INFORMATION",    screen_component: _Information},
+        {screen: "eSCREEN_REFRESH_DEVICE", screen_component: _RefreshDevice},
+        {screen: "eSCREEN_VIA_QR",           screen_component: function() {
+                                                var has = SignerManagement.currentSigner.has
+                                                var hasSecond = SignerManagement.currentSigner.hasSecond
+                                                if (!has && !hasSecond) return _ViaQR12
+                                                if (has && !hasSecond) return _ViaQR22
+                                                return null
+                                            }},
+        {screen: "eSCREEN_LOADING",        screen_component: _loadingScreen},
+        {screen: "eSCREEN_SUCCESS",        screen_component: _result},
+        {screen: "eSCREEN_ERROR",          screen_component: _result},
+        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     Loader {
         id: _background
         anchors.fill: parent
         sourceComponent: {
-            var item = map_flow.find(function(e) { return e.screen === stateScreen.screenFlow })
-            return item ? item.screen_component : _Information
+            var itemScreen = map_flow.find(function(e) { return e.screen === stateScreen.screenFlow })
+            if (!itemScreen) return _Information
+            var sc = itemScreen.screen_component
+            return (typeof sc === 'function') ? sc() : sc
         }
     }
 
@@ -147,7 +156,7 @@ QScreenAdd {
 
             onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
             onNextClicked: {
-                stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+                stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
@@ -165,22 +174,21 @@ QScreenAdd {
                 state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
             }
             onPrevClicked: {
-                stateScreen.setScreenFlow("eADD_INFORMATION")
+                stateScreen.setScreenFlow("eSCREEN_INFORMATION")
             }
             bottomRight: Row {
                 spacing: 12
                 QIconTextButton {
-                    width: 244
+                    width: 270
                     height: 48
-                    label: STR.STR_QML_1922
+                    label: STR.STR_QML_2040
                     icons: ["QR-dark.svg", "QR-dark.svg", "QR-dark.svg","QR-dark.svg"]
                     fontPixelSize: 16
                     iconSize: 16
                     type: eTypeB
-                    // visible: SignerManagement.currentSigner.wallet_type === "MINISCRIPT"
-                    visible: false
+                    visible: SignerManagement.currentSigner.wallet_type === "MINISCRIPT"
                     onButtonClicked: {
-                        stateScreen.setScreenFlow("eADD_VIA_QR")
+                        stateScreen.setScreenFlow("eSCREEN_VIA_QR")
                     }
                 }
                 QTextButton {
@@ -191,7 +199,7 @@ QScreenAdd {
                     type: eTypeE
                     enabled: _refresh.contentItem.isEnable()
                     onButtonClicked: {
-                        stateScreen.setScreenFlow("eADD_LOADING")
+                        stateScreen.setScreenFlow("eSCREEN_LOADING")
                         _refresh.contentItem.addDevice()
                     }
                 }
@@ -200,100 +208,56 @@ QScreenAdd {
     }
     Component {
         id: _ViaQR12
-        QAddCOLDCARDGuideViaQR_1_2
+        QAddBlockstreamJadeViaQR_1_2
         {
-            id: via_qr
+            id: via_file
             onPrevClicked: {
-                stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
-            }
-            function addDeviceViaImportFile() {
-                var masterSignerObj = {
-                    "action"                : "import-coldcard-via-file",
-                    "file_path"             : via_qr.file
-                };
-                QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_DEVICE_REQUEST, masterSignerObj)
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
         }
     }
     Component {
-        id: _Loading
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            enableHeader: false
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            content: Item {
-                Column {
-                    width: 400
-                    height: 56
-                    anchors.centerIn: parent
-                    spacing: 16
-                    QProgressbarTypeA {
-                        id: progresBar
-                        percentage: AppModel.addSignerPercentage
-                    }
-                    QLato{
-                        font.weight: Font.Bold
-                        font.pixelSize: 20
-                        text: STR.STR_QML_1540
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
+        id: _ViaQR22
+        QAddBlockstreamJadeViaQR_2_2
+        {
+            id: via_file
+            onPrevClicked: {
+                 stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
             }
+        }
+    }
+    Component {
+        id: _loadingScreen
+        QScreenAddKeyLoadingState {
+            progressTitle: STR.STR_QML_1540
         }
     }
     Component {
         id: _result
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96;height: 96;
-                    radius: 48
-                    color: stateScreen.screenFlow === "eADD_SUCCESS" ? "#A7F0BA" : "#FFD7D9"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: stateScreen.screenFlow === "eADD_SUCCESS" ? "qrc:/Images/Images/check-dark.svg" : "qrc:/Images/Images/error_outline_24px.png"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: stateScreen.screenFlow === "eADD_SUCCESS" ? STR.STR_QML_1541 : STR.STR_QML_1542
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-                QLato {
-                    visible: stateScreen.screenFlow === "eADD_SUCCESS"
-                    width: parent.width
-                    height: 28
-                    text: STR.STR_QML_828
-                    verticalAlignment: Text.AlignVCenter
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                }
-            }
+        QScreenAddKeyResult {
+            isSuccess: stateScreen.screenFlow === "eSCREEN_SUCCESS"
+            resultTitle: isSuccess ? STR.STR_QML_1541 : STR.STR_QML_1542
+            resultSubtitle: STR.STR_QML_828
+            onDoneClicked: doneOrTryAgainAddHardwareKey(isSuccess)
+        }
+    }
+    Component {
+        id: _resultClaimInheritancePlan
+        QScreenAddKeyResult {
+            isSuccess: false
+            resultTitle: STR.STR_QML_2045
+            resultSubtitle: STR.STR_QML_2046
             bottomRight: Row {
                 spacing: 12
                 QTextButton {
                     width: 120
                     height: 48
-                    label.text: STR.STR_QML_777
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
                     type: eTypeE
-                    onButtonClicked: doneOrTryAgainAddHardwareKey(stateScreen.screenFlow === "eADD_SUCCESS")
+                    onButtonClicked: {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
                 }
             }
         }

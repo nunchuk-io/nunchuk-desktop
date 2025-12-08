@@ -22,4 +22,5 @@ import "../../../../../localization/STR_QML.js" as STR
 QAddBlockstreamJadeViaQR {
     label.text: STR.STR_QML_1925.arg(2)
     guideDescriptionTwo: STR.STR_QML_1937
+    guideExportString: STR.STR_QML_2044.arg("1")
 }

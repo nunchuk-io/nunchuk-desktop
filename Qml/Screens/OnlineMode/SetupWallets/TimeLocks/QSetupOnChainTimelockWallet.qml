@@ -33,7 +33,7 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_1992
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-    
+
     content: Item {
         Column {
             width: parent.width
@@ -87,10 +87,10 @@ QOnScreenContentTypeA {
                             _input_date.showError = false;
                             var _time = {
                                 "valueTimezone"  : _input_timezone.textInputted,
-                                "valueDate"      : dashInfo.timeLockSet.valueDate,
-                                "valueTime"      : dashInfo.timeLockSet.valueTime
+                                "valueDate"      : dashInfo.timelockReplacement.valueDate,
+                                "valueTime"      : dashInfo.timelockReplacement.valueTime
                             }
-                            dashInfo.setupTimeLock(_time)
+                            dashInfo.walletSetupTimeLock(_time)
                         }
                     }
                     QIcon {
@@ -114,7 +114,7 @@ QOnScreenContentTypeA {
                     }
                     QPopupTimezone {
                         id: _timezoneInput
-                        newWalletInfo: dashInfo.walletInfo
+                        selectedWalletInfo: dashInfo.walletInfo
                     }
                 }
                 Row {
@@ -130,7 +130,7 @@ QOnScreenContentTypeA {
                             boxWidth: parent.width
                             boxHeight: 48
                             textInputted: _calendarInput.dateString
-                            input.placeholderText: dashInfo.timeLockSet.valueDate
+                            input.placeholderText: dashInfo.timelockReplacement.valueDate
                             onTextInputtedChanged: {
                                 if(!_input_date.isValid){
                                     _input_date.isValid = true
@@ -138,11 +138,11 @@ QOnScreenContentTypeA {
                                 }
                                 _input_date.showError = false;
                                 var _time = {
-                                    "valueTimezone"  : dashInfo.timeLockSet.valueTimezone,
+                                    "valueTimezone"  : dashInfo.timelockReplacement.valueTimezone,
                                     "valueDate"      : _input_date.textInputted,
-                                    "valueTime"      : dashInfo.timeLockSet.valueTime
+                                    "valueTime"      : dashInfo.timelockReplacement.valueTime
                                 }
-                                dashInfo.setupTimeLock(_time)
+                                dashInfo.walletSetupTimeLock(_time)
                             }
                         }
                         QIcon {
@@ -161,13 +161,20 @@ QOnScreenContentTypeA {
                             cursorShape: Qt.PointingHandCursor
                             propagateComposedEvents: true
                             onClicked: {
+                                var parts = dashInfo.timelockReplacement.valueDate.split("/")
+                                var dated = new Date(parts[2], parts[0] - 1, parts[1])
+                                _calendarInput.selectedDate = dated
                                 _calendarInput.open()
                             }
                         }
                         QPopupCalendar {
                             id: _calendarInput
                             minimumDate: new Date()
-                            dateString: dashInfo.timeLockSet.valueDate
+                            selectedDate: {
+                                var parts = dashInfo.timelockReplacement.valueDate.split("/")
+                                return new Date(parts[2], parts[0] - 1, parts[1])
+                            }
+                            dateString: dashInfo.timelockReplacement.valueDate
                         }
                     }
 
@@ -182,7 +189,7 @@ QOnScreenContentTypeA {
                             boxWidth: parent.width
                             boxHeight: 48
                             textInputted: _analogClockInput.timeString
-                            input.placeholderText: dashInfo.timeLockSet.valueTime
+                            input.placeholderText: dashInfo.timelockReplacement.valueTime
                             onTextInputtedChanged: {
                                 if(!_input_time.isValid){
                                     _input_time.isValid = true
@@ -190,11 +197,11 @@ QOnScreenContentTypeA {
                                 }
                                 _input_time.showError = false;
                                 var _time = {
-                                    "valueTimezone"  : dashInfo.timeLockSet.valueTimezone,
-                                    "valueDate"      : dashInfo.timeLockSet.valueDate,
+                                    "valueTimezone"  : dashInfo.timelockReplacement.valueTimezone,
+                                    "valueDate"      : dashInfo.timelockReplacement.valueDate,
                                     "valueTime"      : _input_time.textInputted
                                 }
-                                dashInfo.setupTimeLock(_time)
+                                dashInfo.walletSetupTimeLock(_time)
                             }
                         }
                         QIcon {
@@ -219,7 +226,7 @@ QOnScreenContentTypeA {
                     }
                 }
             }
-           
+
         }
 
         QWarningBgMulti {
@@ -232,6 +239,6 @@ QOnScreenContentTypeA {
     }
     QPopupAnalogClock {
         id: _analogClockInput
-        timeString: dashInfo.timeLockSet.valueTime
+        timeString: dashInfo.timelockReplacement.valueTime
     }
 }

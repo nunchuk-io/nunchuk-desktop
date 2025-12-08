@@ -49,38 +49,17 @@ void EVT_ADD_HARDWARE_DEVICE_REQUEST_HANDLER(QVariant msg)
     DBG_INFO << msg;
     QString signerNameInputted = msg.toMap().value("signerNameInputted").toString();
     int deviceIndexSelected    = msg.toMap().value("deviceIndexSelected").toInt();
-    QString action = msg.toMap().value("action").toString();
-    if (action == "import-coldcard-via-file") {
-        QString file_path = msg.toMap().value("file_path").toString();
-        using Enum = QAssistedDraftWallets::ImportColdcard_t;
-        auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-        auto ret = draftWallet->ImportColdcardViaFile(file_path);
-        if (ret == Enum::eOK) {
-            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eADD_SUCCESS");
-            if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-                dashboard->GetAlertsInfo();
-            }
-        }
-        else if (ret == Enum::eError_Keep_Screen) {
-            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eADD_VIA_FILE");
-        }
-        else if (ret == Enum::eError_Back) {
-
-        }
-    }
-    else {
-        DeviceListModel *deviceList = QAssistedDraftWallets::IsByzantine() ? QGroupWallets::instance()->refreshDeviceList() : QUserWallets::instance()->refreshDeviceList();
-        if (deviceList && AppModel::instance()->deviceList()) {
-            QDevicePtr selectedDv = deviceList->getDeviceByIndex(deviceIndexSelected);
-            if (selectedDv) {
-                int actualIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(selectedDv->masterFingerPrint());
-                if (selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()) {
-                    AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
-                } else {
-                    AppModel::instance()->setAddSignerWizard(2);//eADD_LOADING: 2
-                    DBG_INFO << signerNameInputted << actualIndex;
-                    AppModel::instance()->startCreateMasterSigner(signerNameInputted, actualIndex);
-                }
+    DeviceListModel *deviceList = QAssistedDraftWallets::IsByzantine() ? QGroupWallets::instance()->refreshDeviceList() : QUserWallets::instance()->refreshDeviceList();
+    if (deviceList && AppModel::instance()->deviceList()) {
+        QDevicePtr selectedDv = deviceList->getDeviceByIndex(deviceIndexSelected);
+        if (selectedDv) {
+            int actualIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(selectedDv->masterFingerPrint());
+            if (selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()) {
+                AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
+            } else {
+                AppModel::instance()->setAddSignerWizard(2);//eADD_LOADING: 2
+                DBG_INFO << signerNameInputted << actualIndex;
+                AppModel::instance()->startCreateMasterSigner(signerNameInputted, actualIndex);
             }
         }
     }

@@ -35,31 +35,8 @@ void SCR_ADD_HARDWARE_EXIST_Exit(QVariant msg) {
 }
 
 void EVT_ADD_EXIST_HARDWARE_REQUEST_HANDLER(QVariant msg) {
-    DBG_INFO << QAssistedDraftWallets::IsByzantine() << msg;
-    QString action = msg.toMap().value("action").toString();
-    if (action == "import-coldcard-via-file") {
-        QString file_path = msg.toMap().value("file_path").toString();
-        int new_index = msg.toMap().value("new_index").toInt();
-        using Enum = QAssistedDraftWallets::ImportColdcard_t;
-        QAssistedDraftWallets *draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-        auto ret = draftWallet->ImportColdcardViaFile(file_path, new_index);
-        if (ret == Enum::eOK) {
-            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eREUSE_RESULT");
-            if (auto dashboard = QGroupWallets::instance()->dashboardInfoPtr()) {
-                dashboard->GetAlertsInfo();
-            }
-        }
-        else if (ret == Enum::eError_Keep_Screen) {
-            // Don't need emit
-        }
-        else if (ret == Enum::eError_Back) {
-            draftWallet->resultAddOrUpdateAKeyToDraftWallet("eREUSE_INPUT_INDEX");
-        }
-    }
-    else {
-        if (QSignerManagement::instance()->finishCreateMasterSigner())  {
-            AppModel::instance()->setAddSignerStep(-1);
-        }
+    if (QSignerManagement::instance()->finishCreateMasterSigner())  {
+        AppModel::instance()->setAddSignerStep(-1);
     }
 }
 

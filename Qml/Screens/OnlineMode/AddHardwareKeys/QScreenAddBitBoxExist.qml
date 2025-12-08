@@ -39,11 +39,12 @@ QScreenAdd {
     // Use shared state/flow pattern like Coldcard screen
     QInputtingIndex { id: inputtingIndex }
     readonly property var map_flow: [
-        {screen: "eREUSE_LIST_KEYS",      screen_component: _reuseListKeys},
-        {screen: "eREUSE_INPUT_INDEX",    screen_component: _accountSettingIndex},
-        {screen: "eREUSE_LOADING_STATE",  screen_component: loadingState},
-        {screen: "eREUSE_SCAN_DEVICE",    screen_component: _scanDevices},
-        {screen: "eREUSE_RESULT",         screen_component: addKeysuccess},
+        {screen: "eSCREEN_LIST_KEYS",      screen_component: _reuseListKeys},
+        {screen: "eSCREEN_INPUT_INDEX",    screen_component: _accountSettingIndex},
+        {screen: "eSCREEN_LOADING",  screen_component: loadingState},
+        {screen: "eSCREEN_REFRESH_DEVICE",    screen_component: _scanDevices},
+        {screen: "eSCREEN_SUCCESS",         screen_component: addKeysuccess},
+        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     Loader {
@@ -109,15 +110,13 @@ QScreenAdd {
                         inputtingIndex.device_bip32_path = draftWallet.bip32path(inputtingIndex.device_xfp, inputtingIndex.current_index)
                         var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
                         if (isNormalFlow) {
-                            stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                            stateScreen.setScreenFlow("eSCREEN_INPUT_INDEX")
                         } else {
-                            var account_index = draftWallet.getAccountIndexFromSigner(inputtingIndex.device_bip32_path)
-                            var noKey = SignerManagement.currentSigner.has != undefined && !SignerManagement.currentSigner.has
-                            if (noKey && account_index <= 0) {
-                                draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, 0)
+                            var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim
+                            if (onlyUseForClaim) {
+                                ServiceSetting.servicesTag.requestDownloadWalletWithIndexAsync(inputtingIndex.device_xfp)
                             } else {
-                                draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, 1)
-                                // stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                                draftWallet.requestAddOrReplacementBothIndicesIfPossibleAsync(inputtingIndex.device_xfp)
                             }
                         }
                     }
@@ -240,7 +239,7 @@ QScreenAdd {
                 type: eTypeE
                 enabled: inputtingIndex.new_index !== -1
                 onButtonClicked: {
-                    stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                    stateScreen.setScreenFlow("eSCREEN_LOADING")
                     draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
                 }
             }
@@ -263,7 +262,7 @@ QScreenAdd {
             }
             onPrevClicked: { 
                 stateScreen.backScreen()
-                if (stateScreen.screenFlow === "eREUSE_LOADING_STATE") {
+                if (stateScreen.screenFlow === "eSCREEN_LOADING") {
                     stateScreen.backScreen()
                 }
             }
@@ -276,7 +275,7 @@ QScreenAdd {
                 enabled: scanDevices.contentItem.isEnable()
                 onButtonClicked: {
                     if (scanDevices.contentItem.selected_xfp === inputtingIndex.device_xfp) {
-                        stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                        stateScreen.setScreenFlow("eSCREEN_LOADING")
                         draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
                     }
                     else {
@@ -290,84 +289,38 @@ QScreenAdd {
     // Screen: loading
     Component {
         id: loadingState
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            enableHeader: false
-            content: Item {
-                Column {
-                    width: 400
-                    height: 56
-                    anchors.centerIn: parent
-                    spacing: 16
-                    QBusyIndicator {
-                        width: 70
-                        height: 70
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QLato{
-                        font.weight: Font.Bold
-                        font.pixelSize: 20
-                        text: STR.STR_QML_930
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
-            }
+        QScreenAddKeyBusyLoadingState {
+            busyTitle: STR.STR_QML_930
         }
     }
 
     // Screen: success
     Component {
         id: addKeysuccess
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96; height: 96;
-                    radius: 48
-                    color: "#A7F0BA"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/check-dark.svg"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: STR.STR_QML_931
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-                QLato {
-                    width: parent.width
-                    height: 28
-                    text: STR.STR_QML_828
-                    verticalAlignment: Text.AlignVCenter
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                }
-            }
+        QScreenAddKeyResult {
+            isSuccess: true
+            resultTitle: STR.STR_QML_931
+            resultSubtitle: STR.STR_QML_828
+            onDoneClicked: doneAddHardwareKey()
+        }
+    }
+    Component {
+        id: _resultClaimInheritancePlan
+        QScreenAddKeyResult {
+            isSuccess: false
+            resultTitle: STR.STR_QML_2045
+            resultSubtitle: STR.STR_QML_2046
             bottomRight: Row {
                 spacing: 12
                 QTextButton {
                     width: 120
                     height: 48
-                    label.text: STR.STR_QML_777
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
                     type: eTypeE
-                    onButtonClicked: doneAddHardwareKey()
+                    onButtonClicked: {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
                 }
             }
         }

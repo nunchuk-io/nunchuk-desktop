@@ -69,7 +69,7 @@ QPopupOverlayScreen {
 
     Component {
         id: important_notice_about_passphrase
-        QImportantNoticeAboutPassphraseTimeLock {
+        QImportantNoticeAboutPassphraseOnchain {
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateScreen.backScreen()
             onNextClicked: {

@@ -69,6 +69,7 @@ Loader {
         {flow_action: AlertType.KEY_REPLACEMENT_PENDING,     screen_component: _key_replacement_pending},
         {flow_action: AlertType.BACKUP_WALLET,               screen_component: bsms_file_success},
         {flow_action: AlertType.CHANGE_TIMELOCK_TYPE,        screen_component: _user_wallet_creation_pending},
+        {flow_action: AlertType.KEY_TIMELOCK_UPDATE_PENDING, screen_component: replace_or_change_timelock},
     ]
     readonly property var map_screens: [
         {screen_name: "register-gapped-device",         screen_component: _register_gapped_device},
@@ -94,11 +95,13 @@ Loader {
 
     Component {
         id: _group_wallet_creation_pending
-        QWalletCreationPendingTimeLock {}
+        QWalletCreationPendingOnchain {
+
+        }
     }
     Component {
         id: _user_wallet_creation_pending
-        QWalletCreationPendingTimeLock {
+        QWalletCreationPendingOnchain {
             isRead: true
         }
     }
@@ -255,6 +258,13 @@ Loader {
     Component {
         id: register_wallet_hardware
         QRegisterWalletOnHardware {
+        }
+    }
+
+    Component {
+        id: replace_or_change_timelock
+        QWalletReplaceKeyOrChangeTimelock {
+
         }
     }
 

@@ -32,11 +32,17 @@ import "./../../../customizes/Popups"
 import "./../../../customizes/services"
 import "./../../../customizes/Texts"
 import "../../../RightPannel/Service/Common"
+import "../../../../Screens/OnlineMode/SetupWallets"
+import "../../../../Screens/OnlineMode/SetupWallets/TimeLocks"
+import "../../../../Screens/OnlineMode/AddHardwareKeys"
 import "../../../../../localization/STR_QML.js" as STR
 
 QPopupOverlayScreen {
     id: _infoPopup
     signal nextClicked()
+    property var claimData
+    property bool isKeyHolderLimited: false
+    property bool isMiniscript: true
     QScreenStateFlow {
         id: stateScreen
     }
@@ -47,20 +53,33 @@ QPopupOverlayScreen {
         { screen: "recover-inheritance-key",                  screen_component: recover_inheritance_key },
         { screen: "restore-seed-phrase-to-hardware-device",   screen_component: restore_seed_phrase_to_hardware_device },
         { screen: "your-plan-requires-two-inheritance-keys-added-one",  screen_component: your_plan_requires_two_inheritance_keys_added_one },
+        { screen: "recover-an-existing-seed",               screen_component: _recoverAnExistingSeed },
+        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     content: {
         var itemScreen = map_flow.find(function(e) {if (e.screen === stateScreen.screenFlow) return true; else return false})
         if (itemScreen) {
-            return prepare_inheritance_key //itemScreen.screen_component
+            return itemScreen.screen_component
         } else {
             _infoPopup.close()
             return null
         }
     }
 
-    function onChainClaim() {
-        stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
+    function onChainClaimSecond(claimData) {
+        _infoPopup.claimData = claimData
+        stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys-added-one")
+        _infoPopup.open()
+    }
+
+    function onChainClaim(claimData) {
+        _infoPopup.claimData = claimData
+        if (claimData.inheritance_key_count == 1) {
+            stateScreen.setScreenFlow("prepare-inheritance-key")
+        } else {
+            stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
+        }
         _infoPopup.open()
     }
 
@@ -77,26 +96,125 @@ QPopupOverlayScreen {
 
     Component {
         id: prepare_inheritance_key
-        QPrepareInheritanceKey { }
+        QPrepareInheritanceKey { 
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                if (key_option === "hardware-device") {
+                    _hardwareAddKey.isInheritance = true
+                    _hardwareAddKey.open()
+                } else {
+                    stateScreen.setScreenFlow("recover-inheritance-key")
+                }
+            }
+        }
     }
 
     Component {
         id: recover_inheritance_key
-        QRecoverInheritanceKey { }
+        QRecoverInheritanceKey { 
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                if (key_option === "hardware-device") {
+                    stateScreen.setScreenFlow("restore-seed-phrase-to-hardware-device")
+                } else {
+                    // Recover via seed phrase backup not yet supported
+                    stateScreen.setScreenFlow("recover-an-existing-seed")
+                }                
+            }
+        }
     }
 
     Component {
         id: restore_seed_phrase_to_hardware_device
-        QRestoreSeedPhraseToHardwareDevice { }
+        QRestoreSeedPhraseToHardwareDevice {
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                _hardwareAddKey.isInheritance = true
+                _hardwareAddKey.open()
+            }
+        }
     }
 
     Component {
         id: your_plan_requires_two_inheritance_keys_added_one
         QYourPlanRequiresTwoInheritanceKeysAddedOne { 
             onCloseClicked: _infoPopup.close()
-            onPrevClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
-                stateScreen.setScreenFlow("prepare-inheritance-key")
+                _infoPopup.close()
+            }
+        }
+    }
+
+    Component {
+        id: _recoverAnExistingSeed
+        QRecoverAnExistingSeed {            
+            onCloseClicked: _infoPopup.close()
+            onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                ServiceSetting.servicesTag.requestDownloadWalletViaSeedPhrase(mnemonicstr)
+            }
+        }
+    }
+
+    QPopupHardwareAddKey {
+        id: _hardwareAddKey
+        titleText: STR.STR_QML_2050 + "\n\n" + STR.STR_QML_2051
+        supportWarning: false
+        isKeyHolderLimited: _infoPopup.isKeyHolderLimited
+        isMiniscript: _infoPopup.isMiniscript
+        onNextClicked: {
+            _hardwareAddKey.close()
+            _checkFirmware.hadwareTag = hardware
+            _checkFirmware.open()
+        }
+    }
+
+    QPopupCheckYourFirmware {
+        id: _checkFirmware
+        onNextClicked: {
+            _infoPopup.close()
+            _checkFirmware.close()
+            ServiceSetting.requestSignerInitialClaimSetup(hadwareTag)
+            ServiceSetting.requestStartAddHardwareKey(hadwareTag)
+        }
+    }
+
+     Component {
+        id: _resultClaimInheritancePlan
+        QScreenAddKeyResult {
+            isSuccess: false
+            resultTitle: STR.STR_QML_2045
+            resultSubtitle: STR.STR_QML_2046
+            onCloseClicked: _infoPopup.close()
+            bottomRight: Row {
+                spacing: 12
+                QTextButton {
+                    width: 120
+                    height: 48
+                    label.text: STR.STR_QML_097
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: {
+                        _infoPopup.close()
+                    }
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: ServiceSetting.servicesTag
+        onResultClaimInheritanceAlert: {
+            if (result === "CLAIM_INHERITANCE_SECOND_KEY") {
+                _infoPopup.onChainClaimSecond(claimData)
+            } else if (result === "CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS") {
+                _infoPopup.close()
+            } else if (result === "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR") {
+                stateScreen.setScreenFlow("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR")
             }
         }
     }

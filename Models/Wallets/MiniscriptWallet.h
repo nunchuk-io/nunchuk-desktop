@@ -69,7 +69,7 @@ public:
         timezone_offsetFromUtc_Role,
     };
 
-    int currentIndex() const;
+    int currentIndex();
     void setCurrentIndex(int newCurrentIndex);
 
     QString selectedTimezone();
@@ -77,6 +77,7 @@ public:
     void setSelectedTimezone(const QByteArray &timezone);
     QByteArray convertFormattedToTimezoneId(const QString &formatted);
     void setSelectedTimezone(const QString &formatted);
+    QString localTimezone();
 signals:
     void currentIndexChanged();
 
@@ -84,7 +85,7 @@ private:
     static QList<QByteArray>  m_timezones;
     static QByteArray         m_systemTimezone;
     QByteArray                m_selectedTimezone;
-    int                       m_currentIndex {0};
+    int                       m_currentIndex {-1};
 };
 typedef OurSharedPointer<QWalletTimezoneModel> QWalletTimezoneModelPtr;
 

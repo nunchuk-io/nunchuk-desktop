@@ -220,8 +220,6 @@ Item {
     Component {
         id: headerplanOffchain
         Rectangle {
-            width: parent.width
-            height: _img_bg.height * 0.75
             radius: 24
             color: "#2F466C"
             Column {
@@ -232,7 +230,7 @@ Item {
                     width: parent.width
                     height: 60
                     Row {
-                        anchors.fill: parent
+                        width: parent.width
                         spacing: 12
                         QIcon {
                             iconSize: 60
@@ -257,7 +255,7 @@ Item {
                         }
                     }
                     Row {
-                        anchors.fill: parent
+                        width: parent.width
                         layoutDirection: Qt.RightToLeft
                         spacing: 12
                         QTextButton {
@@ -286,47 +284,151 @@ Item {
                         }
                     }
                 }
-                QTextInputBoxTypeE {
+                Column {
                     width: parent.width
-                    icon.source : "qrc:/Images/Images/calendar-dark.png"
-                    icon.sourceSize: Qt.size(24,24)
-                    input.text: planInfo.activation_date
-                    input.verticalAlignment: Text.AlignVCenter
-                    onTextEditClicked: {
-                        if(isEdit) {
-                            QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_ACTIVATION_DATE)
+                    spacing: 12
+                    QLato {
+                        font.pixelSize: 16
+                        color: "#FFFFFF"
+                        text: STR.STR_QML_1983
+                    }
+                    Row {
+                        id: row_key
+                        spacing: 12
+                        Row {
+                            spacing: 12
+                            Rectangle {
+                                width: 393
+                                height: 92
+                                color: "#FFFFFF"
+                                radius: 12
+                                Row {
+                                    spacing: 12
+                                    anchors.fill: parent
+                                    anchors.margins: 12
+                                    QIcon {
+                                        iconSize: 24
+                                        source: "qrc:/Images/Images/star-dark.png"
+                                    }
+                                    Column {
+                                        spacing: 12
+                                        QLato {
+                                            font.pixelSize: 16
+                                            color: "#1C1C1C"
+                                            text: STR.STR_QML_749
+                                            font.weight: Font.Bold
+                                        }
+                                        QLato {
+                                            font.pixelSize: 16
+                                            width: 333
+                                            wrapMode: Text.WordWrap
+                                            color: "#1C1C1C"
+                                            text: planInfo.magic !== null ? planInfo.magic : "null null null"
+                                        }
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                width: 393
+                                height: 92
+                                color: "#FFFFFF"
+                                radius: 12
+                                Row {
+                                    spacing: 12
+                                    anchors.fill: parent
+                                    anchors.margins: 12
+                                    QIcon {
+                                        iconSize: 24
+                                        source: "qrc:/Images/Images/change-password-dark.svg"
+                                    }
+                                    Column {
+                                        spacing: 12
+                                        QLato {
+                                            width: 333
+                                            font.pixelSize: 16
+                                            color: "#1C1C1C"
+                                            text:  STR.STR_QML_727
+                                            font.weight: Font.Bold
+                                            QLato {
+                                                anchors.right: parent.right
+                                                font.pixelSize: 16
+                                                color: "#1C1C1C"
+                                                text:  "Info"
+                                                font.underline: true
+                                                font.weight: Font.Bold
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        _BackupPassword.open()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        QLato {
+                                            font.pixelSize: 16
+                                            color: "#1C1C1C"
+                                            text: STR.STR_QML_917
+                                            width: 333
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-                Item {
-                    width: parent.width
-                    height: 104
-                    Row {
-                        spacing: 24
-                        QTextInputBoxTypeE {
-                            width: 387
-                            height: 104
-                            icon.source: "qrc:/Images/Images/star-light.png"
-                            icon.sourceSize: Qt.size(24,24)
-                            edit.visible: false
-                            label.text: STR.STR_QML_749
-                            input.text: planInfo.magic !== null ? planInfo.magic : "null null null"
-                            echoMode: inheritancePlanInfo.isSetup ? TextInput.Normal : TextInput.Password
-                            input.verticalAlignment: Text.AlignTop
-                            input.height: 68
+                    Column {
+                        spacing: 12
+                        QLato {
+                            font.pixelSize: 16
+                            color: "#FFFFFF"
+                            text: STR.STR_QML_1985
                         }
-                        QTextInputBoxTypeE {
-                            width: 387
-                            height: 104
-                            icon.source: "qrc:/Images/Images/change-password-dark.svg"
-                            icon.sourceSize: Qt.size(24,24)
-                            edit.text: STR.STR_QML_339
-                            label.text: STR.STR_QML_727
-                            input.text: STR.STR_QML_917
-                            input.verticalAlignment: Text.AlignTop
-                            input.height: 68
-                            onTextEditClicked: {
-                                _BackupPassword.open()
+                        Rectangle {
+                            width: 393
+                            height: 62
+                            color: "#2A3F61"
+                            radius: 12
+                            Row {
+                                spacing: 12
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                QImage {
+                                    width: 24
+                                    height: 24
+                                    source: "qrc:/Images/Images/calendar-dark.png"
+                                }
+                                Column {
+                                    width: 292
+                                    spacing: 2
+                                    QLato {
+                                        font.pixelSize: 16
+                                        color: "#FFFFFF"
+                                        text: planInfo.activation_date
+                                    }
+                                    QLato {
+                                        font.pixelSize: 12
+                                        color: "#FFFFFF"
+                                        text: planInfo.activation_timezone
+                                    }
+                                }
+                                QLato {
+                                    width:  29
+                                    color: "#FFFFFF"
+                                    text:  "Edit"
+                                    font.underline: true
+                                    font.weight: Font.Bold
+                                    visible: false
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            _popupSetupAnOffChainTimelock.open()
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -488,6 +590,7 @@ Item {
                         }
                     }
                     Column {
+                        spacing: 12
                         QLato {
                             font.pixelSize: 16
                             color: "#FFFFFF"
@@ -517,7 +620,7 @@ Item {
                                     QLato {
                                         font.pixelSize: 12
                                         color: "#FFFFFF"
-                                        text: planInfo.activation_timezone_local
+                                        text: planInfo.activation_timezone
                                     }
                                 }
                             }
@@ -654,7 +757,6 @@ Item {
             }
         }
     }
-
     Connections {
         target: inheritancePlanInfo
         onSecurityQuestionClosed: {

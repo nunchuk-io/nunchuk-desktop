@@ -35,11 +35,12 @@ QScreenAdd {
     anchors.fill: parent
     // Adopt unified screen-flow mechanism similar to QScreenAddBitBoxExist
     readonly property var map_flow: [
-        {screen: "eADD_INFORMATION",    screen_component: _infoScreen},
-        {screen: "eADD_REFRESH_DEVICE", screen_component: _refreshScreen},
-        {screen: "eADD_LOADING",        screen_component: _loadingScreen},
-        {screen: "eADD_SUCCESS",        screen_component: _resultSuccess},
-        {screen: "eADD_ERROR",          screen_component: _resultError},
+        {screen: "eSCREEN_INFORMATION",    screen_component: _infoScreen},
+        {screen: "eSCREEN_REFRESH_DEVICE", screen_component: _refreshScreen},
+        {screen: "eSCREEN_LOADING",        screen_component: _loadingScreen},
+        {screen: "eSCREEN_SUCCESS",        screen_component: _result},
+        {screen: "eSCREEN_ERROR",          screen_component: _result},
+        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     Loader {
@@ -144,7 +145,7 @@ QScreenAdd {
                 }
             }
             onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            onNextClicked: stateScreen.setScreenFlow("eADD_REFRESH_DEVICE")
+            onNextClicked: stateScreen.setScreenFlow("eSCREEN_REFRESH_DEVICE")
         }
     }
 
@@ -163,7 +164,7 @@ QScreenAdd {
                 state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
             }
             onPrevClicked: {
-                stateScreen.setScreenFlow("eADD_INFORMATION")
+                stateScreen.setScreenFlow("eSCREEN_INFORMATION")
             }
             bottomRight: QTextButton {
                 width: 120
@@ -173,7 +174,7 @@ QScreenAdd {
                 type: eTypeE
                 enabled: _refresh.contentItem.isEnable()
                 onButtonClicked: {
-                    stateScreen.setScreenFlow("eADD_LOADING")
+                    stateScreen.setScreenFlow("eSCREEN_LOADING")
                     _refresh.contentItem.addDevice()
                 }
             }
@@ -183,131 +184,38 @@ QScreenAdd {
     // Screen: Loading
     Component {
         id: _loadingScreen
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            enableHeader: false
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            content: Item {
-                Column {
-                    width: 400
-                    height: 56
-                    anchors.centerIn: parent
-                    spacing: 16
-                    QProgressbarTypeA {
-                        id: progresBar
-                        percentage: AppModel.addSignerPercentage
-                    }
-                    QLato{
-                        font.weight: Font.Bold
-                        font.pixelSize: 20
-                        text: STR.STR_QML_930
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
-            }
+        QScreenAddKeyLoadingState {
+            progressTitle: STR.STR_QML_930
         }
     }
 
     // Screen: Result - Success
     Component {
-        id: _resultSuccess
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96; height: 96;
-                    radius: 48
-                    color: "#A7F0BA"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/check-dark.svg"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: STR.STR_QML_931
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-                QLato {
-                    visible: true
-                    width: parent.width
-                    height: 28
-                    text: STR.STR_QML_828
-                    verticalAlignment: Text.AlignVCenter
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                }
-            }
-            bottomRight: Row {
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_777
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: doneOrTryAgainAddHardwareKey(true)
-                }
-            }
+        id: _result
+        QScreenAddKeyResult {
+            isSuccess: stateScreen.screenFlow === "eSCREEN_SUCCESS"
+            resultTitle: isSuccess ? STR.STR_QML_931 : STR.STR_QML_965
+            resultSubtitle: isSuccess ? STR.STR_QML_828 : ""
+            onDoneClicked: doneOrTryAgainAddHardwareKey(isSuccess)
         }
     }
-
-    // Screen: Result - Error
     Component {
-        id: _resultError
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96; height: 96;
-                    radius: 48
-                    color: "#FFD7D9"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/error_outline_24px.png"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: STR.STR_QML_965
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
+        id: _resultClaimInheritancePlan
+        QScreenAddKeyResult {
+            isSuccess: false
+            resultTitle: STR.STR_QML_2045
+            resultSubtitle: STR.STR_QML_2046
             bottomRight: Row {
                 spacing: 12
                 QTextButton {
                     width: 120
                     height: 48
-                    label.text: STR.STR_QML_777
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
                     type: eTypeE
-                    onButtonClicked: doneOrTryAgainAddHardwareKey(false)
+                    onButtonClicked: {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
                 }
             }
         }

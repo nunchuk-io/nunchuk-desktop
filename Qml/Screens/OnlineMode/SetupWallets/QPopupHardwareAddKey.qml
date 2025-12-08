@@ -38,12 +38,22 @@ QPopupEmpty {
     id: _popup
     property int key_index: -1
     property string hardware: ""
+    property bool isKeyHolderLimited: false
+    property bool isMiniscript: false
     property bool isInheritance: false
-    property var supportedModel: []
     signal nextClicked()
+    property string titleText: STR.STR_QML_942
+    property string subtitleText: isKeyHolderLimited ? STR.STR_QML_1282 : ""
+    property bool   supportWarning: true
     onOpened: {
         GroupWallet.addHardwareFromConfig(-1, "", -1)
         hardware = ""
+    }
+    QSupportedKeys {
+        id: supportedKeys
+        isInheritance: _popup.isInheritance
+        isKeyHolderLimited: _popup.isKeyHolderLimited
+        isMiniscript: _popup.isMiniscript
     }
     content: QOnScreenContentTypeB {
         width: 600
@@ -58,17 +68,21 @@ QPopupEmpty {
                 anchors.fill: parent
                 spacing: 0
                 QLato {
+                    id: titleLabel
                     width: parent.width
-                    height: 20 + 12
-                    text: STR.STR_QML_942
-                    font.weight: Font.Bold
+                    height: titleLabel.lineCount == 1 ? 32 : 60
+                    text: titleText
+                    font.weight: Font.Normal
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignTop
+                    wrapMode: Text.WordWrap
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 16
                 }
                 QLato {
                     width: parent.width
-                    height: isKeyHolderLimited ? 32 : 0
-                    text: STR.STR_QML_1282
+                    height: subtitleText != "" ? 32 : 0
+                    text: subtitleText
                     font.weight: Font.Normal
                     font.pixelSize: 12
                     color: "#595959"
@@ -77,25 +91,29 @@ QPopupEmpty {
                     lineHeight: 16
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
-                    visible: isKeyHolderLimited
+                    visible: subtitleText != ""
                 }
                 Column {
                     spacing: 0
                     Repeater {
-                        model: supportedModel                    
+                        model: supportedKeys.listSupportedKeys()                    
                         QRadioButtonTypeA {
                             id: btn
                             width: 528
                             height: 48
-                            label: modelData.txt
+                            label: modelData.name
                             layoutDirection: Qt.LeftToRight
                             fontFamily: "Lato"
                             fontPixelSize: 16
                             fontWeight: Font.Normal
-                            enabled: !(modelData.add_type === NUNCHUCKTYPE.ADD_TAPSIGNER)
-                            selected: GroupWallet.qAddHardware === modelData.add_type
+                            enabled: !(modelData.type === NUNCHUCKTYPE.ADD_TAPSIGNER)
+                            selected: GroupWallet.qAddHardware === modelData.type
                             onButtonClicked: {
-                                GroupWallet.addHardwareFromConfig(modelData.add_type, GroupWallet.dashboardInfo.groupId, key_index, isInheritance)
+                                if (GroupWallet.dashboardInfo) {
+                                    GroupWallet.addHardwareFromConfig(modelData.type, GroupWallet.dashboardInfo.groupId, key_index, isInheritance)
+                                } else {
+                                    GroupWallet.addHardwareFromConfig(modelData.type, "", key_index, isInheritance)
+                                }
                                 hardware = modelData.tag
                             }
                         }
@@ -104,7 +122,7 @@ QPopupEmpty {
             }
             QWarningBgMulti {
                 width: 528
-                visible: isInheritance
+                visible: isInheritance && supportWarning && !supportedKeys.isMiniscript
                 height: 108
                 icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: STR.STR_QML_1603
@@ -113,7 +131,7 @@ QPopupEmpty {
 
             QWarningBg {
                 width: 528
-                visible: !isInheritance
+                visible: !isInheritance && supportWarning && !supportedKeys.isMiniscript
                 height: 60
                 icon: "qrc:/Images/Images/info-60px.svg"
                 txt.text: STR.STR_QML_943

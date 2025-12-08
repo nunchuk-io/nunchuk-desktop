@@ -31,10 +31,10 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_2000
-    readonly property var keys: [
-        {id: "hardware-device",          display_name: STR.STR_QML_2005, is_recommended: true},
-        {id: "seed-phrase-backup",       display_name: STR.STR_QML_2006, is_recommended: false},
+    label.text: STR.STR_QML_2007
+    readonly property var optionList: [
+        {id: "hardware-device",     textWidth: 152,     display_name: STR.STR_QML_2010, is_recommended: true},
+        {id: "seed-phrase-backup",  textWidth: 271,     display_name: STR.STR_QML_2011, is_recommended: false},
     ]
     property string key_option: "hardware-device"
     content: Item {
@@ -44,7 +44,7 @@ QOnScreenContentTypeA {
                 width: 346
                 height: 512
                 anchors.verticalCenter: parent.verticalCenter
-                source: "qrc:/Images/Images/prepare-inheritance-key.svg"
+                source: "qrc:/Images/Images/recover-inheritance-key.svg"
             }
             Item {
                 width: 346
@@ -52,61 +52,9 @@ QOnScreenContentTypeA {
                 Column {
                     width: parent.width
                     spacing: 24
-                    Column {
-                        width: parent.width
-                        QLato {
-                            width: parent.width
-                            text: STR.STR_QML_2001
-                            lineHeightMode: Text.FixedHeight
-                            lineHeight: 28
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        Repeater {
-                            id: _guide
-                            width: parent.width
-                            readonly property var content_map: [
-                                {height: 40, title:STR.STR_QML_2002 },
-                                {height: 40, title:STR.STR_QML_2003 },
-                            ]
-                            model: content_map.length
-                            Rectangle {
-                                property var _item: _guide.content_map[index]
-                                width: 346
-                                height: _item.height
-                                Row {
-                                    spacing: 0
-                                    QLato {
-                                        width: 20
-                                        height: 20
-                                        text: "●"
-                                        font.weight: Font.Normal
-                                        font.pixelSize: 8
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    QLato {
-                                        id: _term
-                                        width: 310
-                                        height: _item.height
-                                        text: _item.title
-                                        textFormat: Text.RichText
-                                        lineHeightMode: Text.FixedHeight
-                                        lineHeight: 20
-                                        wrapMode: Text.WordWrap
-                                        horizontalAlignment: Text.AlignLeft
-                                        verticalAlignment: Text.AlignVCenter
-                                        
-                                    }
-                                }
-                            }
-                        }
-                        
-                    }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_2004
+                        text: STR.STR_QML_2008 + "\n\n" + STR.STR_QML_2009
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -119,18 +67,18 @@ QOnScreenContentTypeA {
                         height: childrenRect.height
                         spacing: 8
                         clip: true
-                        model: keys
+                        model: optionList
                         interactive: false
                         delegate: QRadioButtonTypeE {
                             id: btn
                             width: 343
                             height: 76
                             label: modelData.display_name
-                            fontFamily: "Lato"
+                            textWidth: modelData.textWidth
                             fontPixelSize: 16                            
                             fontWeight: btn.selected ? Font.ExtraBold : Font.DemiBold
                             selected: key_option === modelData.id
-                            textBadge: ""
+                            textBadge: modelData.is_recommended ? STR.STR_QML_879 : ""
                             onButtonClicked: {
                                 key_option = modelData.id
                             }

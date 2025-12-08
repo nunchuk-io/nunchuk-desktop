@@ -344,10 +344,6 @@ void EVT_ASK_HARDWARE_REQ_HANDLER(QVariant msg) {
     QGroupWallets::instance()->setDashboardInfo("");
 }
 
-void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {
-    DBG_INFO;
-}
-
 void EVT_KEY_HEALTH_CHECK_STATUS_REQUEST_HANDLER(QVariant msg)
 {
     QGroupDashboardPtr dash = QGroupWallets::instance()->dashboardInfoPtr() ? QGroupWallets::instance()->dashboardInfoPtr() : AppModel::instance()->walletInfoPtr()->dashboard();
@@ -377,10 +373,6 @@ void EVT_RECURRING_PAYMENTS_REQUEST_HANDLER(QVariant msg)
             }
         }
     }
-}
-
-void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg) {
-    DBG_INFO;
 }
 
 void EVT_ADD_SOFTWARE_SIGNER_RESULT_HANDLER(QVariant msg) {

@@ -66,7 +66,7 @@ public:
     bool GetOnePermissions(const QString slug, QJsonObject& output, QString &errormsg);
     bool GetDefaultPermissions(QJsonObject& output, QString &errormsg);
 
-    bool DraftWalletAddKey(const QString group_id, const QString request_id, const QJsonObject data, bool &isDuplicateKey, QString &errormsg);
+    bool DraftWalletAddKey(const QString group_id, const QString request_id, const QJsonObject data, QJsonObject &output);
 
     bool GetCurrentGroupWallet(const QString group_id, QJsonObject& output, QString &errormsg);
     bool GetCurrentGroupDraftWallet(const QString group_id, QJsonObject& output, QString &errormsg);
@@ -237,10 +237,11 @@ public:
                     const QString &xfp,
                     const QString& passwordToken,
                     const QJsonObject& request_body,
-                    QString &errormsg);
+                    QJsonObject &output);
 
     bool FinalizeKeyReplacement(const QString &group_id,
                                 const QString &wallet_id,
+                                const QString& passwordToken,
                                 QJsonObject& output,
                                 QString &errormsg);
 
@@ -251,8 +252,22 @@ public:
 
     bool ResetKeyReplacement(const QString &group_id,
                              const QString &wallet_id,
+                             const QString& passwordToken,
                              QJsonObject& output,
                              QString &errormsg);
+
+    bool VerifyKeyReplacement(const QString &group_id,
+                                const QString &wallet_id,
+                                const QString &xfp,
+                                const QString& type,
+                                const QString& passwordToken,
+                                QJsonObject& result);
+  
+    bool RemoveKeyReplacement(const QString &group_id,
+                                const QString &wallet_id,
+                                const QString &xfp,
+                                const QString& passwordToken,
+                                QJsonObject& result);
 
     bool EditGroupMembers(const QString &group_id,
                           const QJsonObject& request_body,
@@ -279,6 +294,8 @@ public:
 
     bool DraftWalletUpdateTimelock(const QString& group_id, const QString& timezone, const qint64 timelock, QJsonObject& output, QString& errormsg);
     bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& type, QString& errormsg);
+
+    bool walletChangeTimelock(const QString &wallet_id, const QString& group_id, const QString& timezone, const qint64 timelock, const QString &verify_token, QJsonObject& output);
 private:
     QRestPtr  m_rest;
 };

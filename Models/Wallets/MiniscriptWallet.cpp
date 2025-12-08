@@ -1343,7 +1343,8 @@ QString QWalletTimezoneModel::formatTimeZone(const QTimeZone &tz) const {
 
     // Special-case UTC to show "(UTC)" instead of "(GMT+00:00)"
     if (id == QLatin1String("Etc/UTC") || id == QLatin1String("UTC")) {
-        return QString("%1 (UTC)").arg(id);
+        // return QString("%1 (UTC)").arg(id);
+        return QString("Etc/UTC (GMT+00:00)");
     }
 
     const QDateTime nowUtc = QDateTime::currentDateTimeUtc(); // use UTC to compute effective offset (incl. DST)
@@ -1370,15 +1371,30 @@ qint64 QWalletTimezoneModel::offsetFromUtc(const QTimeZone &tz) const
 
 void QWalletTimezoneModel::timezones()
 {
-    if(m_timezones.size() <= 0){
+    if (m_timezones.size() <= 0) {
         m_timezones.clear();
         m_systemTimezone = QTimeZone::systemTimeZone().id();
-        QByteArray region = m_systemTimezone.left(m_systemTimezone.indexOf('/'));
+
+        // compute region safely (handle case like "UTC" without '/')
+        int slash = m_systemTimezone.indexOf('/');
+        QByteArray region = (slash > 0) ? m_systemTimezone.left(slash) : QByteArray();
+
         for (const QByteArray &zoneId : QTimeZone::availableTimeZoneIds()) {
-            if (zoneId.startsWith(region + '/')) {
+            // keep zone if same region OR if it's UTC / Etc/UTC (you can add others)
+            if (!region.isEmpty()) {
+                if (zoneId.startsWith(region + '/')
+                    || zoneId == "UTC"
+                    || zoneId == "Etc/UTC"
+                    || zoneId == "Etc/GMT") // optional
+                {
+                    m_timezones.append(zoneId);
+                }
+            } else {
+                // no region (system timezone is something like "UTC") => include everything
                 m_timezones.append(zoneId);
             }
         }
+
         QDateTime refDate = QDateTime::currentDateTime();
         std::sort(m_timezones.begin(), m_timezones.end(), [refDate](const QByteArray &a, const QByteArray &b) {
             QTimeZone tzA(a);
@@ -1390,11 +1406,12 @@ void QWalletTimezoneModel::timezones()
             }
             return offsetA < offsetB;
         });
-    }
 
-    // Calc current index based on currentTimezone
-    setCurrentIndex(m_timezones.indexOf(m_systemTimezone));
-    setSelectedTimezone(m_systemTimezone);
+        // printAllTimezones();
+        if(-1 == currentIndex()){
+            setSelectedTimezone(m_systemTimezone);
+        }
+    }
 }
 
 void QWalletTimezoneModel::printAllTimezones() const
@@ -1403,22 +1420,31 @@ void QWalletTimezoneModel::printAllTimezones() const
     for (const auto &id : m_timezones) {
         QTimeZone tz(id);
         QString formatted = formatTimeZone(tz);
-        qDebug() << "Timezone ID:" << id << ", Formatted:" << formatted;
+        DBG_INFO << "Timezone ID:" << QString(id)<< ", Formatted:" << formatted;
     }
 }
 
-int QWalletTimezoneModel::currentIndex() const
+int QWalletTimezoneModel::currentIndex()
 {
+    DBG_INFO << "Current index requested:" << m_currentIndex << selectedTimezone();
+    if(-1 == m_currentIndex){
+        m_currentIndex = m_timezones.indexOf(m_selectedTimezone);
+    }
+    if(-1 == m_currentIndex){
+        m_currentIndex = m_timezones.indexOf(m_systemTimezone);
+    }
     return m_currentIndex;
 }
 
 void QWalletTimezoneModel::setCurrentIndex(int newCurrentIndex)
 {
-    if (m_currentIndex == newCurrentIndex)
+    DBG_INFO << "Current index set to:" << newCurrentIndex;
+    if (m_currentIndex == newCurrentIndex || newCurrentIndex < 0 || newCurrentIndex >= m_timezones.size()) {
         return;
+    }
     m_currentIndex = newCurrentIndex;
-    // Update selected timezone based on current index
-    if (m_currentIndex >= 0 && m_currentIndex < m_timezones.size()) {
+    DBG_INFO << "Current index set to:" << m_currentIndex;
+    if (m_currentIndex >= 0 && m_currentIndex < m_timezones.size()){
         setSelectedTimezone(m_timezones.at(m_currentIndex));
     }
     emit currentIndexChanged();
@@ -1440,71 +1466,65 @@ void QWalletTimezoneModel::setSelectedTimezone(const QByteArray &timezone)
         return;
     m_selectedTimezone = timezone;
     m_currentIndex = m_timezones.indexOf(m_selectedTimezone);
+    DBG_INFO << QString(timezone) << m_currentIndex;
     emit currentIndexChanged();
 }
-// Convert a formatted timezone string like "Asia/Dhaka (GMT+06:00)" back to its timezone id "Asia/Dhaka"
+
 QByteArray QWalletTimezoneModel::convertFormattedToTimezoneId(const QString &formatted)
 {
     if (formatted.isEmpty())
         return {};
 
-    QString id;
+    QString text = formatted.trimmed();
 
-    // Handle standard "Name (GMT±HH:MM)" format
-    int gmtPos = formatted.indexOf(" (GMT");
-    if (gmtPos > 0) {
-        id = formatted.left(gmtPos).trimmed();
+    // Try extract substring inside parentheses: e.g. "(UTC)" or "(GMT+00:00)"
+    int open = text.indexOf('(');
+    int close = text.indexOf(')');
+    QString inside, outside;
+
+    if (open >= 0 && close > open) {
+        inside = text.mid(open + 1, close - open - 1).trimmed();   // e.g. "UTC" or "GMT+00:00"
+        outside = text.left(open).trimmed();                       // e.g. "Etc/UTC"
     } else {
-        // Special-case UTC formatted as "Etc/UTC (UTC)" or "UTC (UTC)"
-        static const QString kUtcSuffix = " (UTC)";
-        if (formatted.endsWith(kUtcSuffix)) {
-            id = formatted.left(formatted.size() - kUtcSuffix.size()).trimmed();
-        } else {
-            id = formatted.trimmed();
-        }
+        outside = text;
     }
 
-    // Try to match against known timezone ids
-    for (const auto &tzid : m_timezones) {
-        if (QString::fromUtf8(tzid) == id)
-            return tzid;
+    // 1) If inside is an IANA timezone ID → use it
+    if (!inside.isEmpty()) {
+        QTimeZone tz(inside.toUtf8());
+        if (tz.isValid()) {
+            return tz.id();
+        }
+        // If inside is GMT offset such as GMT+00:00 → ignore; fall back to outside
     }
 
-    // Normalize common UTC ids
-    if (id == QLatin1String("UTC") || id == QLatin1String("Etc/UTC")) {
-        // Prefer an existing UTC id from the model, if present
-        for (const auto &tzid : m_timezones) {
-            if (tzid == QByteArray("UTC") || tzid == QByteArray("Etc/UTC"))
-                return tzid;
-        }
-        // Fallback to valid QTimeZone ids
-        QTimeZone tz(id.toUtf8());
+    // 2) If outside is a timezone ID → use it
+    if (!outside.isEmpty()) {
+        QTimeZone tz(outside.toUtf8());
         if (tz.isValid())
             return tz.id();
-
-        QTimeZone tzUtc("UTC");
-        if (tzUtc.isValid())
-            return QByteArray("UTC");
-
-        QTimeZone tzEtc("Etc/UTC");
-        if (tzEtc.isValid())
-            return QByteArray("Etc/UTC");
-
-        return {};
     }
 
-    // Generic fallback: validate via QTimeZone
-    QTimeZone tz(id.toUtf8());
-    if (tz.isValid())
-        return tz.id();
+    // 3) Special UTC normalization
+    if (outside == "UTC" || outside == "Etc/UTC" || inside == "UTC") {
+        if (m_timezones.contains("UTC"))
+            return QByteArray("UTC");
+        if (m_timezones.contains("Etc/UTC"))
+            return QByteArray("Etc/UTC");
+        return QByteArray("UTC");
+    }
 
+    // 4) Fallback
     return {};
 }
 
 void QWalletTimezoneModel::setSelectedTimezone(const QString &formatted) {
     QByteArray timezoneId = convertFormattedToTimezoneId(formatted);
+    DBG_INFO << "formatted" << formatted << "timezoneId:" << QString(timezoneId);
     setSelectedTimezone(timezoneId);
 }
 
-// NOTE: Add the declaration to QWalletTimezoneModel in the header:
-// static QByteArray convertFormattedToTimezoneId(const QString &formatted);
+QString QWalletTimezoneModel::localTimezone()
+{
+    return formatTimeZone(QTimeZone::systemTimeZone());
+}

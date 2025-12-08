@@ -41,9 +41,8 @@ Item {
 
     property var  key_index: modelData.wallet_type === "MULTI_SIG" ? (modelData.key_index + 1) : modelData.key_index
     property var  walletType: modelData.wallet_type
-    property int  slot_index: index
-    property bool isBeforeSlot: modelData.key_index % 2 === 1
-    property var accountIndexsDefault: ["X", "Y"]
+    property int  slot_index: index + 1
+    property bool isBeforeSlot: modelData.has && !modelData.hasSecond
     Loader {
         id: _source
         anchors.fill: parent
@@ -72,7 +71,7 @@ Item {
     Component {
         id: backupButton
         QTextButton {
-            width: label.paintedWidth + 2*20
+            width: label.paintedWidth + 2*16
             height: 36
             type: eTypeB
             label.text: modelData.wallet_type === "MULTI_SIG" ? STR.STR_QML_342 : STR.STR_QML_1964
@@ -85,7 +84,7 @@ Item {
     Component {
         id: addButton
         QTextButton {
-            width: label.paintedWidth + 2*20
+            width: label.paintedWidth + 2*16
             height: 36
             type: eTypeB
             label.text: STR.STR_QML_941
@@ -182,7 +181,7 @@ Item {
                         QAccountIndexs {
                             height: 16
                             visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
-                            accountIndexs: accountIndexsDefault
+                            accountIndexs: modelData.account_indexs
                             walletType: modelData.wallet_type
                         }
                     }
@@ -328,7 +327,7 @@ Item {
                     QAccountIndexs {
                         height: 16
                         visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
-                        accountIndexs: accountIndexsDefault
+                        accountIndexs: modelData.account_indexs
                         walletType: modelData.wallet_type
                     }
                 }

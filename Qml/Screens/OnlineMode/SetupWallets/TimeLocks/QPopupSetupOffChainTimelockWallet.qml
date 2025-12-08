@@ -22,15 +22,15 @@ import "../../../../Components/customizes/Popups"
 import "../../../OnlineMode/SetupWallets/TimeLocks"
 
 QPopupOverlayScreen {
-    id: _infoPopup    
+    id: _infoPopup
     content: setup_an_on_chain_timelock
     Component {
         id: setup_an_on_chain_timelock
-        QSetupAnOnChainTimelock {
+        QSetupOffChainTimelockWallet {
             onCloseClicked: _infoPopup.close()
             onPrevClicked: _infoPopup.close()
             onNextClicked: {
-                dashInfo.setupTimeLock({}, true)
+                dashInfo.walletSetupTimeLock({}, true)
                 _infoPopup.close()
             }
         }

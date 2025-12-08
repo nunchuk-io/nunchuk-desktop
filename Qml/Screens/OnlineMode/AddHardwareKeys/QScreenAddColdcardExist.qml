@@ -39,16 +39,17 @@ QScreenAdd {
     anchors.fill: parent
     QInputtingIndex { id: inputtingIndex }
     readonly property var map_flow: [
-        {screen: "eREUSE_LIST_KEYS",                    screen_component: _reuseListKeys},
-        {screen: "eREUSE_INPUT_INDEX",                  screen_component: _accountSettingIndex},
-        {screen: "eREUSE_LOADING_STATE",                screen_component: loadingState},
-        {screen: "eREUSE_SCAN_DEVICE",                  screen_component: _scanDevices},
-        {screen: "eREUSE_RESULT",                       screen_component: addKeysuccess},
-        {screen: "eREUSE_VIA_FILE",                     screen_component: importViaFile},
+        {screen: "eSCREEN_LIST_KEYS",                    screen_component: _reuseListKeys},
+        {screen: "eSCREEN_INPUT_INDEX",                  screen_component: _accountSettingIndex},
+        {screen: "eSCREEN_LOADING",                screen_component: loadingState},
+        {screen: "eSCREEN_REFRESH_DEVICE",                  screen_component: _scanDevices},
+        {screen: "eSCREEN_SUCCESS",                       screen_component: addKeysuccess},
+        {screen: "eSCREEN_VIA_FILE",                     screen_component: importViaFile},
         {screen: "_ASK_PASSPHRASE",                     screen_component: _passPhraseSelect},
         {screen: "_IMPORTANT_NOTICE",                   screen_component: _importantNotice},
         {screen: "_BACKUP_PASSPHRASE",                  screen_component: _passPhraseBackup},
         {screen: "_BACKUP_COLDCARD",                    screen_component: _backupCOLDCARD},
+        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
     Loader {
         width: popupWidth
@@ -82,7 +83,7 @@ QScreenAdd {
             }
             onRequestNext: {
                 if (option === "not-have-a-passphrase") {
-                    stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                    stateScreen.setScreenFlow("eSCREEN_INPUT_INDEX")
                 } else {
                     stateScreen.setScreenFlow("_IMPORTANT_NOTICE")
                 }
@@ -112,7 +113,7 @@ QScreenAdd {
         QPassphraseBackupReminder {
             onRequestBack: stateScreen.backScreen()
             onRequestNext: {
-                stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                stateScreen.setScreenFlow("eSCREEN_INPUT_INDEX")
             }
         }
     }
@@ -121,7 +122,7 @@ QScreenAdd {
         QBackupCOLDCARD {
             inputFingerPrint: inputtingIndex.device_xfp
             onPrevClicked: {
-                stateScreen.setScreenFlow("eREUSE_RESULT")
+                stateScreen.setScreenFlow("eSCREEN_SUCCESS")
             }
 
         }
@@ -171,13 +172,11 @@ QScreenAdd {
                         if (isNormalFlow) {
                             stateScreen.setScreenFlow("_ASK_PASSPHRASE")
                         } else {
-                            var account_index = draftWallet.getAccountIndexFromSigner(inputtingIndex.device_bip32_path)
-                            var noKey = SignerManagement.currentSigner.has != undefined && !SignerManagement.currentSigner.has
-                            if (noKey) {
-                                draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, 0)
+                            var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim
+                            if (onlyUseForClaim) {
+                                ServiceSetting.servicesTag.requestDownloadWalletWithIndexAsync(inputtingIndex.device_xfp)
                             } else {
-                                draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, 1)
-                                // stateScreen.setScreenFlow("eREUSE_INPUT_INDEX")
+                                draftWallet.requestAddOrReplacementBothIndicesIfPossibleAsync(inputtingIndex.device_xfp)
                             }
                         }
                     }
@@ -304,7 +303,7 @@ QScreenAdd {
                 onButtonClicked: {
                     if(inputtingIndex.signer_type == NUNCHUCKTYPE.COLDCARD_NFC) {
                         if (inputtingIndex.new_index == inputtingIndex.current_index) {
-                            stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                            stateScreen.setScreenFlow("eSCREEN_LOADING")
                             draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
                         }
                         else {
@@ -312,7 +311,7 @@ QScreenAdd {
                         }
                     }
                     else {
-                        stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                        stateScreen.setScreenFlow("eSCREEN_LOADING")
                         draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
                     }
                 }
@@ -348,7 +347,7 @@ QScreenAdd {
             }
             onPrevClicked: { 
                 stateScreen.backScreen()
-                if (stateScreen.screenFlow === "eREUSE_LOADING_STATE") {
+                if (stateScreen.screenFlow === "eSCREEN_LOADING") {
                     stateScreen.backScreen()
                 }
             }
@@ -363,7 +362,7 @@ QScreenAdd {
                     iconSize: 16
                     type: eTypeB
                     onButtonClicked: {
-                        stateScreen.setScreenFlow("eREUSE_VIA_FILE")
+                        stateScreen.setScreenFlow("eSCREEN_VIA_FILE")
                     }
                 }
                 QTextButton {
@@ -375,7 +374,7 @@ QScreenAdd {
                     enabled: scanDevices.contentItem.isEnable()
                     onButtonClicked: {
                         if (scanDevices.contentItem.selected_xfp === inputtingIndex.device_xfp) {
-                            stateScreen.setScreenFlow("eREUSE_LOADING_STATE")
+                            stateScreen.setScreenFlow("eSCREEN_LOADING")
                             draftWallet.requestAddOrReplacementWithIndexAsync(inputtingIndex.device_xfp, inputtingIndex.new_index)
                         }
                         else
@@ -389,82 +388,37 @@ QScreenAdd {
     }
     Component {
         id: loadingState
-        QOnScreenContent {                
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            enableHeader: false
-            content: Item {
-                Column {
-                    width: 400
-                    height: 56
-                    anchors.centerIn: parent
-                    spacing: 16
-                    QBusyIndicator {
-                        width: 70
-                        height: 70
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QLato{
-                        font.weight: Font.Bold
-                        font.pixelSize: 20
-                        text: STR.STR_QML_912
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
-            }
+        QScreenAddKeyBusyLoadingState {
+            busyTitle: STR.STR_QML_912
         }
     }
     Component {
         id: addKeysuccess
-        QOnScreenContent {
-            width: popupWidth
-            height: popupHeight
-            anchors.centerIn: parent
-            label.text: ""
-            onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            Column {
-                anchors.fill: parent
-                anchors.margins: 36
-                spacing: 24
-                Rectangle {
-                    width: 96;height: 96;
-                    radius: 48
-                    color: "#A7F0BA"
-                    QIcon {
-                        iconSize: 60
-                        anchors.centerIn: parent
-                        source: "qrc:/Images/Images/check-dark.svg"
-                    }
-                }
-                QLato {
-                    width: parent.width
-                    height: 40
-                    text: STR.STR_QML_913
-                    font.pixelSize: 32
-                    font.weight: Font.DemiBold
-                    verticalAlignment: Text.AlignVCenter
-                }
-                QLato {
-                    width: parent.width
-                    height: 28
-                    text: STR.STR_QML_828
-                    verticalAlignment: Text.AlignVCenter
-                    lineHeightMode: Text.FixedHeight
-                    lineHeight: 28
-                    wrapMode: Text.WordWrap
-                }
-            }
+        QScreenAddKeyResult {
+            isSuccess: true
+            resultTitle: STR.STR_QML_913
+            resultSubtitle: STR.STR_QML_828
+            onDoneClicked: doneAddHardwareKey()
+        }
+    }
+
+    Component {
+        id: _resultClaimInheritancePlan
+        QScreenAddKeyResult {
+            isSuccess: false
+            resultTitle: STR.STR_QML_2045
+            resultSubtitle: STR.STR_QML_2046
             bottomRight: Row {
                 spacing: 12
                 QTextButton {
                     width: 120
                     height: 48
-                    label.text: STR.STR_QML_777
+                    label.text: STR.STR_QML_097
                     label.font.pixelSize: 16
                     type: eTypeE
-                    onButtonClicked: doneOrTryAgainAddColdcardKey(true)
+                    onButtonClicked: {
+                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                    }
                 }
             }
         }
@@ -504,12 +458,7 @@ QScreenAdd {
             function addDeviceViaImportFile() {
                 var xfp = draftWallet.reuseKeyXfp(via_file.file)
                 if (inputtingIndex.device_xfp === xfp) {
-                    var masterSignerObj = {
-                        "action"                : "import-coldcard-via-file",
-                        "file_path"             : via_file.file,
-                        "new_index"             : inputtingIndex.new_index
-                    };
-                    QMLHandle.sendEvent(EVT.EVT_ADD_EXIST_HARDWARE_REQUEST, masterSignerObj)
+                    draftWallet.requestImportFileAddOrReplacementWithIndexAsync(via_file.file, inputtingIndex.new_index)
                 }
                 else
                 {

@@ -60,7 +60,15 @@ QString QMasterSigner::name() const {
     if (isDraft) {
         return name_;
     } else {
-        return QString::fromStdString(masterSigner_.get_name());
+        QString signer_name = QString::fromStdString(masterSigner_.get_name());
+        // DBG_INFO << "Original signer name:" << signer_name;
+        // if(qUtils::strCompare("import", signer_name) && AppModel::instance()->remoteSignerList()){
+        //     QString remote_name = AppModel::instance()->remoteSignerList()->getRemoteSignerNameByFingerPrint(fingerPrint());
+        //     if(remote_name != ""){
+        //         signer_name = remote_name;
+        //     }
+        // }
+        return signer_name;
     }
 }
 
