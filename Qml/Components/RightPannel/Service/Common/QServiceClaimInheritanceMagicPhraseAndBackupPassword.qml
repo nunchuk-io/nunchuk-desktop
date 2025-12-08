@@ -256,18 +256,19 @@ Item {
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {
-                        magicphrase_inputted = magicPhrase.textInputted
-                        var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
-                        if (typeof(data.code) !== `undefined`) {
-                        } else if(data.wallet_type === "MINISCRIPT"){
-                            // var is_existing_wallet = data.is_existing_wallet ? data.is_existing_wallet : false
-                            // if(!is_existing_wallet){
-                            //     _prepareInheritanceKey.onChainClaim(data)
-                            // }
-                            _claimInheritanceViaMobile.open()
-                        } else {
-                            currentInputMode = _eINPUT_BACKUPPWD
-                        }
+                        _claimInheritanceViaMobile.open()
+                        // magicphrase_inputted = magicPhrase.textInputted
+                        // var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
+                        // if (typeof(data.code) !== `undefined`) {
+                        // } else if(data.wallet_type === "MINISCRIPT"){
+                        //     // var is_existing_wallet = data.is_existing_wallet ? data.is_existing_wallet : false
+                        //     // if(!is_existing_wallet){
+                        //     //     _prepareInheritanceKey.onChainClaim(data)
+                        //     // }
+                        //     _claimInheritanceViaMobile.open()
+                        // } else {
+                        //     currentInputMode = _eINPUT_BACKUPPWD
+                        // }
                     }
                 }
             }
