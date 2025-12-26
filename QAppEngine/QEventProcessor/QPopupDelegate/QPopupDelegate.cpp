@@ -111,7 +111,12 @@ bool QPopupDelegate::closeAll()
 bool QPopupDelegate::showToastMessage(QVariant msg)
 {
     if(m_rootObject){
-        return QMetaObject::invokeMethod(m_rootObject, JS_TOASTS_TRANSITION_FUNCTION, Q_ARG(QVariant, msg));
+        QObject *toastHost = m_rootObject->findChild<QObject*>("toastHost");
+        if (!toastHost) {
+            DBG_WARN << "ToastHost not found";
+            return false;
+        }
+        return QMetaObject::invokeMethod(toastHost, JS_TOASTS_TRANSITION_FUNCTION, Q_ARG(QVariant, msg));
     }
     return false;
 }
@@ -129,7 +134,12 @@ void QPopupDelegate::qmlSyncup()
         m_QmlOder.clear();
         m_QmlOder = m_PopupQmlData;
         DBG_INFO << m_QmlOder;
-        QMetaObject::invokeMethod(m_rootObject, JS_POPUPS_TRANSITION_FUNCTION, Q_ARG(QVariant, QVariant::fromValue(m_QmlOder)), Q_ARG(QVariant,QVariant::fromValue( m_QmlOder.count())));
+        QObject *popupHost = m_rootObject->findChild<QObject*>("popupHost");
+        if (!popupHost) {
+            DBG_WARN << "PopupHost not found";
+            return;
+        }
+        QMetaObject::invokeMethod(popupHost, JS_POPUPS_TRANSITION_FUNCTION, Q_ARG(QVariant, QVariant::fromValue(m_QmlOder)), Q_ARG(QVariant,QVariant::fromValue( m_QmlOder.count())));
     }
     m_PopupQmlData.clear();
 }

@@ -24,6 +24,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -63,15 +64,17 @@ QOnScreenContentTypeB {
                 contentHeight: _walletList.count * 92
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
-                    spacing: 24
+                    spacing: 0
                     Repeater {
                         id: _walletList
-                        model: AppModel.walletList
+                        model: vm.walletList
                         QRadioButtonTypeD {
                             width: 443
                             height: 92
                             labelTop: model.wallet_name
-                            center1.text: qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(STR.STR_QML_069)
+                            center1.text: (model.wallet_walletType === NUNCHUCKTYPE.MINISCRIPT) ? STR.STR_QML_1801
+                                                                                                : (model.wallet_M === 1) ? STR.STR_QML_070
+                                                                                                                         : qsTr("%1/%2 %3").arg(model.wallet_M).arg(model.wallet_N).arg(STR.STR_QML_069)
                             labelBottom: model.wallet_Balance + RoomWalletData.unitValue
                             center2.icon: model.wallet_isSharedWallet ? "qrc:/Images/Images/collab-wallet-dark.svg" :
                                                                 model.wallet_isAssistedWallet ? "qrc:/Images/Images/collab-wallet-dark.svg" :
@@ -95,6 +98,13 @@ QOnScreenContentTypeB {
             AppModel.showToast(-1, STR.STR_QML_816, EWARNING.ERROR_MSG);
         } else {
             QMLHandle.sendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_REQUEST,walletId)
+        }
+    }
+
+    WithdrawSelectWalletViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
         }
     }
 }

@@ -514,7 +514,7 @@ bool QRecurringPayment::ConvertWalletToBsmsAndAddress(const nunchuk::Wallet &wal
 {
     QWarningMessage parsewarningmsg;
     nunchuk::WalletType type = wallet.get_wallet_type();
-    QString bsms = bridge::nunchukGetWalletExportData(wallet, (nunchuk::WalletType::MINISCRIPT == type) ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_ALL : nunchuk::ExportFormat::BSMS);
+    QString bsms = bridge::wallet::GetWalletExportData(wallet, (nunchuk::WalletType::MINISCRIPT == type) ? nunchuk::ExportFormat::DESCRIPTOR_EXTERNAL_ALL : nunchuk::ExportFormat::BSMS, parsewarningmsg);
     QStringList addressList = qUtils::DeriveAddresses(wallet, 0, 0, parsewarningmsg);
     if((int)EWARNING::WarningType::NONE_MSG == parsewarningmsg.type()){
         QJsonObject destination_payload;

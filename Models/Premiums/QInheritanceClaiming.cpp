@@ -163,7 +163,7 @@ bool QInheritanceClaiming::inheritanceClaimRequest(const nunchuk::Wallet wallet,
         if (status == "PENDING_CONFIRMATION" || status == "CONFIRMED") {
             QWarningMessage _msg;
             bridge::nunchukImportPsbt(wallet_local_id, psbt, _msg);
-            QString id = transaction.value("id").toString();
+            QString id = transaction.value("transaction_id").toString();
             QString hex = transaction.value("hex").toString();
             QString reject_msg = transaction.value("reject_msg").toString();
             std::string walletid = "";
@@ -221,8 +221,8 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
     bool ret = Draco::instance()->inheritanceCreateTx(data, authos, result);
     DBG_INFO << "data:" << data << " authos:" << authos << " result:" << result;
     if (ret) {
-        QJsonObject transaction = result["transaction"].toObject();
-        QString psbt = transaction["psbt"].toString();
+        m_claimTransaction = result["transaction"].toObject();
+        QString psbt = m_claimTransaction["psbt"].toString();
         QString sub_amount = QString("%1").arg(result["sub_amount"].toDouble());
         QString fee = QString("%1").arg(result["fee"].toDouble());
         QString fee_rate = QString("%1").arg(result["fee_rate"].toDouble());
@@ -239,7 +239,10 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
         mInheritance.tx = qUtils::DecodeTx(mInheritance.wallet, psbt, tx_sub_amount, tx_fee, tx_fee_rate, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             mInheritance.tx.set_change_index(change_pos); // set change index to i
-
+            QString wallet_type = m_claimInitJson.value("wallet_type").toString();
+            if (qUtils::strCompare(wallet_type, "MINISCRIPT")) {
+                mInheritance.tx.set_wallet_type(nunchuk::WalletType::MINISCRIPT);
+            }
             std::string walletid = "";
             try {
                 walletid = mInheritance.wallet.get_id();
@@ -250,6 +253,7 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
             catch (std::exception &e) {
                 DBG_INFO << "THROW EXCEPTION" << e.what();
             }
+            DBG_INFO << "miniscript wallet id:" << QString::fromStdString(mInheritance.wallet.get_miniscript());
 
             QTransactionPtr trans = bridge::convertTransaction(mInheritance.tx, QString::fromStdString(walletid));
             if (trans) {
@@ -268,10 +272,26 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
     return ret;
 }
 
+bool QInheritanceClaiming::inheritanceUpdateLibTransaction() {
+    QString wallet_type = m_claimInitJson.value("wallet_type").toString();
+    mInheritance.tx.set_wallet_type(nunchuk::WalletType::MINISCRIPT);
+    QWarningMessage _msg;
+    auto wallet_local_id = QString::fromStdString(mInheritance.wallet.get_id());
+    QString psbt = m_claimTransaction["psbt"].toString();
+    bridge::nunchukImportPsbt(wallet_local_id, psbt, _msg);
+    QString id = m_claimTransaction.value("transaction_id").toString();
+    QString hex = m_claimTransaction.value("hex").toString();
+    QString reject_msg = m_claimTransaction.value("reject_msg").toString();
+    DBG_INFO << "Update inheritance lib transaction id:" << id;
+    if ((int)EWARNING::WarningType::NONE_MSG == _msg.type()) {
+        return true;
+    }
+    return false;
+}
+
 void QInheritanceClaiming::setInheritanceAddress(const QString &to_wallet_id) {
     QWalletPtr ptr = AppModel::instance()->walletList()->getWalletById(to_wallet_id);
     if (!ptr.isNull()) {
-        ServiceSetting::instance()->setWalletInfo(ptr);
         QString wallet_id = ptr->walletId();
         QStringList addrs = bridge::nunchukGetUnusedAddresses(wallet_id, false);
         if (addrs.size() > 0) {
@@ -280,7 +300,6 @@ void QInheritanceClaiming::setInheritanceAddress(const QString &to_wallet_id) {
             mInheritance.m_destinationAddress = bridge::nunchukGenNewAddresses(wallet_id, false);
         }
         DBG_INFO << mInheritance.m_destinationAddress;
-        AppModel::instance()->setWalletInfo(ptr);
     }
 }
 
@@ -330,7 +349,6 @@ bool QInheritanceClaiming::inheritanceSignTransaction() {
     for (auto master_signer : master_signers) {
         tx = bridge::SignTransaction(mInheritance.wallet, tx, nunchuk::Device(master_signer.get_id()), msgwarning);
     }
-
     if ((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
         QTransactionPtr trans = bridge::convertTransaction(tx, "");
         if (trans) {
@@ -433,30 +451,26 @@ QVariant QInheritanceClaiming::inheritanceClaimInit(const QString& magic) {
         m_claimInitJson = result;
         m_claimInitJson["magic"] = magic;
         clearInheritanceKeys();
-        // if (!wallet_local_id.isEmpty()) {
-        //     QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_local_id);
-        //     if (!wallet.isNull()) {
-        //         AppModel::instance()->setWalletInfo(wallet);
-        //         ServiceSetting::instance()->setWalletInfo(wallet);
-        //         m_walletInfoClaim = wallet->dashboard()->walletJson();
-        //         QString bsms = m_walletInfoClaim.value("bsms").toString();
-        //         if (!bsms.isEmpty()) {
-        //             QWarningMessage msg;
-        //             mInheritance.wallet = qUtils::ParseWalletDescriptor(bsms, msg);
-        //         }
-        //         emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
-        //         inheritanceClaimStatus(magic);
-        //         result["is_existing_wallet"] = true;
-        //     } else {
-        //         if (inheritance_key_count > 0) {
-        //             ServiceSetting::instance()->CreateAssignAvailableSigners("MINISCRIPT");
-        //         }                
-        //     }
-        // } else {
-        //     if (inheritance_key_count > 0) {
-        //         ServiceSetting::instance()->CreateAssignAvailableSigners("MINISCRIPT");
-        //     }
-        // }        
+        if (!wallet_local_id.isEmpty()) {
+            QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_local_id);
+            if (!wallet.isNull()) {
+                mInheritance.wallet = wallet->nunchukWallet();
+                QWarningMessage msg;
+                QString bsms = bridge::wallet::GetWalletExportData(mInheritance.wallet, nunchuk::ExportFormat::BSMS, msg);
+                if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+                    m_walletInfoClaim["bsms"] = bsms;
+                    ServiceSetting::instance()->setWalletInfo(wallet);
+                    emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
+                    inheritanceClaimStatus(magic);
+                    result["is_existing_wallet"] = true;
+                    return QVariant::fromValue(result);
+                }
+            }
+        }
+    
+        if (inheritance_key_count > 0) {
+            ServiceSetting::instance()->CreateAssignAvailableSigners("MINISCRIPT");
+        }
         return QVariant::fromValue(result);
     } else {
         int response_code = result.value("code").toInt();
@@ -571,61 +585,36 @@ bool QInheritanceClaiming::requestDownloadWallet() {
         if (!bsms.isEmpty()) {
             QWarningMessage msg;
             mInheritance.wallet = qUtils::ParseWalletDescriptor(bsms, msg);
+            mInheritance.wallet.set_name("Inheritance Wallet");
+            bridge::nunchukCreateWallet(mInheritance.wallet, true, msg);
+            if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+                QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+                AppModel::instance()->startReloadWallets();
+                
+            }
             auto wallet = bridge::convertWallet(mInheritance.wallet);
             if (wallet.isNull()) {
                 DBG_INFO << "Failed to convert wallet from descriptor";
                 return false;
             }
-            AppModel::instance()->setWalletInfo(wallet);
             ServiceSetting::instance()->setWalletInfo(wallet);
+            QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+            emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
+            inheritanceClaimStatus(claimInit.value("magic").toString());
+        } else {
+            emit resultClaimInheritanceAlert("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR");
+            QSignerManagement::instance()->setScreenFlow("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR");
         }
-        QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
-        emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
-        inheritanceClaimStatus(claimInit.value("magic").toString());
+        
     }
     return ret;
 }
 
 nunchuk::SingleSigner QInheritanceClaiming::RecoverAnExistingSeed(const QString &mnemonic) {
-    auto listSS = AppModel::instance()->masterSignerListPtr()->fullList();
-    QList<int> listId;
-    for (auto signer : listSS) {
-        if (signer->signerType() == (int)nunchuk::SignerType::SOFTWARE) {
-            if (signer->name().startsWith("Inheritance key")) {
-                if (qUtils::strCompare(signer->name(), "Inheritance key")) {
-                    listId.append(0);
-                } else {
-                    QStringList listName = signer->name().split("Inheritance key");
-                    QString lastName = listName.at(1);
-                    lastName.replace("#", "");
-                    bool isOK = false;
-                    int id = lastName.toInt(&isOK);
-                    DBG_INFO << listName << lastName << id << isOK;
-                    if (isOK) {
-                        listId.append(id);
-                    }
-                }
-            }
-        }
-    }
-    std::sort(listId.begin(), listId.end());
-    QString nameKey = listId.isEmpty() ? "Inheritance key" : "Inheritance key #" + QString::fromStdString(std::to_string(listId.last() + 1));
-    QWarningMessage msg;
-    
-    auto ss = bridge::nunchukCreateOriginSoftwareSigner(nameKey, mnemonic, "", false, false, msg);
-    DBG_INFO << nameKey << listId << ss.get_id();
-    QString fingerprint;
-    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        fingerprint = QString::fromStdString(ss.get_id());
-    } else {
-        fingerprint = qUtils::GetMasterFingerprint(mnemonic, "");       
-    }
+    QString fingerprint = qUtils::GetMasterFingerprint(mnemonic, "");
     nunchuk::SingleSigner outSigner("","","","",{}, "", 0,"");
     auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
     bool ret = draftWallet->checkAndGetSingleSigner(fingerprint, 0, outSigner);
-    if (!ret) {
-        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
-    }
     return outSigner;
 }
 

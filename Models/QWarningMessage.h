@@ -22,6 +22,7 @@
 #define QERRORCODE_H
 
 #include <QObject>
+#include <QSharedPointer>
 
 class EWARNING: public QObject
 {
@@ -93,6 +94,7 @@ public:
     int popupType() const;
     void setPopupType(int popup);
 
+    bool isSuccess() const;
 private:
     int code_;
     QString what_;

@@ -20,7 +20,8 @@
 import "../../../../../localization/STR_QML.js" as STR
 
 QAddBlockstreamJadeViaQR {
-    label.text: STR.STR_QML_1925.arg(1)
-    guideDescriptionTwo: STR.STR_QML_1927
+    label.text: isFlowClamOrAddKeyClaim() ? STR.STR_QML_2067 : STR.STR_QML_1925.arg(1)
+    guideDescriptionOne: isFlowClamOrAddKeyClaim() ? STR.STR_QML_817 : STR.STR_QML_1926
+    guideDescriptionTwo: isFlowClamOrAddKeyClaim() ? "" : STR.STR_QML_1927
     guideExportString: STR.STR_QML_2044.arg("0")
 }

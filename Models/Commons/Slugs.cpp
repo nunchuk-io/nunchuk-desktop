@@ -48,7 +48,7 @@ bool Slugs::containsSlug(const QStringList& slugsToCheck) const
 
 bool Slugs::isSubscribed() const
 {
-    return safeSlugs().size() > 0;
+    return (safeSlugs().size() > 0);
 }
 
 bool Slugs::isByzantineStandard() const
@@ -129,4 +129,9 @@ bool Slugs::isHoneyBadgerPremier() const
 bool Slugs::isUserDraftWallet() const
 {
     return false;
+}
+
+bool Slugs::isFreeWallet() const
+{
+    return (safeSlugs().size() == 0);
 }

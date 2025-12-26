@@ -17,22 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
  *                                                                        *
  **************************************************************************/
-import QtQuick 2.4
-import "../../../../Components/customizes/Popups"
-import "../../../OnlineMode/SetupWallets/TimeLocks"
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
-QPopupOverlayScreen {
-    id: _infoPopup
-    content: setup_an_on_chain_timelock
-    Component {
-        id: setup_an_on_chain_timelock
-        QSetupOffChainTimelockWallet {
-            onCloseClicked: _infoPopup.close()
-            onPrevClicked: _infoPopup.close()
-            onNextClicked: {
-                dashInfo.walletSetupTimeLock({}, true)
-                _infoPopup.close()
-            }
+Item {
+    id: root
+    anchors.fill: parent
+    property alias dataList: onsDataList
+    ListModel { id: onsDataList }
+    Repeater {
+        id: ons_Creator
+        transformOrigin: Item.TopLeft
+        Loader {
+            id: osd_Loader
+            anchors.centerIn: parent
+            source: osdSource
         }
+    }
+    function load_Popup(Onsdata, popCount) {
+        onsDataList.clear()
+        for(var onsCnt = 0; onsCnt < popCount; onsCnt++ ) { var data = {'osdSource': Onsdata[onsCnt]}; onsDataList.append(data); }
+        ons_Creator.model = onsDataList
     }
 }

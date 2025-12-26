@@ -36,6 +36,7 @@
 #include "WalletModel.h"
 #include "nunchuckiface.h"
 #include "qUtils.h"
+#include "bridgeWallet.h"
 
 using namespace std;
 #define MAX_UNUSED_ADDR 20
@@ -305,7 +306,7 @@ QDeviceListModelPtr nunchukGetDevices(QWarningMessage& msg);
 std::vector<nunchuk::Device> nunchukGetOriginDevices(QWarningMessage& msg);
 
 QMasterSignerPtr nunchukCreateMasterSigner(const QString &name,
-                                           const int deviceIndex,
+                                           const QString &xfp,
                                            QWarningMessage &msg);
 
 QString nunchukGetHealthCheckPath();
@@ -758,8 +759,6 @@ nunchuk::Transaction nunchukImportQRTransaction(const QString& wallet_id,
 QStringList nunchukExportQRTransaction(const QString &wallet_id,
                                        const QString &tx_id,
                                        QWarningMessage &msg);
-
-QString nunchukGetWalletExportData(const nunchuk::Wallet& wallet, nunchuk::ExportFormat format);
 
 bool IsMyAddress(const QString& wallet_id, const QString& address, QWarningMessage &msg);
 

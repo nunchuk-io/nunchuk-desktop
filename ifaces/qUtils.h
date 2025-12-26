@@ -315,5 +315,6 @@ int GetPurposeFromPath(const QString &path);
 int GetCoinTypeFromPath(const QString &path);
 
 QJsonObject SingleSignertoJsonObject(const nunchuk::SingleSigner &single);
+
 }
 #endif // QUTILS_H

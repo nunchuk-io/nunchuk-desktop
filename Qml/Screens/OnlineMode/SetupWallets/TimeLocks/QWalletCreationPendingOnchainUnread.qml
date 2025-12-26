@@ -29,8 +29,7 @@ Loader {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    sourceComponent: if(pendingScreen === _WALLET_PENDING) _unread 
-                    else _timelockGuide
+    sourceComponent: (pendingScreen === _WALLET_PENDING) ? _unread : _timelockGuide
 
     Component {
         id: _unread

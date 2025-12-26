@@ -33,6 +33,10 @@ class AssistedWallet : public SharedWallet, public Slugs
     Q_PROPERTY(bool         isHoneyBadger                           READ isHoneyBadger                                          CONSTANT)
     Q_PROPERTY(bool         isIronHand                              READ isIronHand                                             CONSTANT)
     Q_PROPERTY(bool         isByzantineGuardian                     READ isByzantineGuardian                                    NOTIFY isByzantineGuardianChanged)
+    Q_PROPERTY(bool         isHoneyBadgerPremier                    READ isHoneyBadgerPremier                                   CONSTANT)
+    Q_PROPERTY(bool         isByzantinePro                          READ isByzantinePro                                         CONSTANT)
+    Q_PROPERTY(bool         isFreeWallet                            READ isFreeWallet                                         CONSTANT)
+
 
 public:
     AssistedWallet(const nunchuk::Wallet &w);

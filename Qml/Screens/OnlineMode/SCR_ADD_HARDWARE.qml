@@ -67,25 +67,37 @@ QScreen {
         QScreenAddJade {}
     }
     
-
+    function isFlowClamOrAddKeyClaim() {
+        var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner // Add Key From Claim Banner
+        var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim // Claim Flow
+        return onlyUseForClaimBanner || onlyUseForClaim
+    }
     function doneOrTryAgainAddHardwareKey(isSuccess) {
         var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
         if (isNormalFlow) {
             if (isSuccess) {
-                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            } else {
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+            }
+            else {
                 GroupWallet.refresh()
                 GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
             }
         } else {
             var xfp = SignerManagement.currentSigner.xfp
             if (GroupWallet.dashboardInfo.enoughKeyAdded(xfp)) {
-                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
                 closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            } else {
-                GroupWallet.refresh()
-                GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
+            }
+            else {
+                var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner
+                if (onlyUseForClaimBanner) {
+                    closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                }
+                else {
+                    GroupWallet.refresh()
+                    GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+                }
             }
         }
     }

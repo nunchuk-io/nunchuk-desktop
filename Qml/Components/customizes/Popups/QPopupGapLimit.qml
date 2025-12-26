@@ -37,6 +37,7 @@ QPopup {
     height: parent.height
     signal confirmSave()
     signal confirmCancel()
+    readonly property int maxGapLimit: 200
     content: Item {
         id: boxmask
         width: 300
@@ -56,7 +57,7 @@ QPopup {
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.family: "Lato"
                 font.pixelSize: 16
-                text: "Max: 100"
+                text: "Max: " + maxGapLimit
             }
             Item { height: 1; width: parent.width }
             Item {
@@ -97,7 +98,7 @@ QPopup {
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {
-                        if (parseInt(inputGapLimit.textInputted) > 100) {
+                        if (parseInt(inputGapLimit.textInputted) > maxGapLimit) {
                             inputGapLimit.errorText = STR.STR_QML_834
                             inputGapLimit.isValid = false
                             inputGapLimit.showError = true;

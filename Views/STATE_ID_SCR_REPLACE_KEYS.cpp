@@ -74,7 +74,7 @@ void EVT_REPLACE_KEYS_ENTER_HANDLER(QVariant msg) {
                         }
                         AppModel::instance()->setAddSignerWizard(2);//eADD_LOADING: 2
                         DBG_INFO << signerNameInputted << actualIndex;
-                        AppModel::instance()->startCreateMasterSigner(signerNameInputted, actualIndex);
+                        AppModel::instance()->startCreateMasterSigner(signerNameInputted, selectedDv->masterFingerPrint());
                     }
                 }
             }

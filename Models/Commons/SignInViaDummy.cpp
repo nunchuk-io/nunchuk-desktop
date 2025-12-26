@@ -80,11 +80,13 @@ void SignInViaDummy::convertWallet()
     };
     std::vector<nunchuk::SingleSigner> signers;
     QJsonObject wallet = m_dummy_SignIn["wallet"].toObject();
+    QJsonObject dummy_transaction = m_dummy_SignIn["dummy_transaction"].toObject();
+    int required_signatures = dummy_transaction["required_signatures"].toInt();
     QJsonArray list = wallet["signers"].toArray();
     for(auto signer : list){
         signers.push_back(getSigner(signer.toObject()));
     }
-    m_wallet = nunchuk::Wallet("", 1, 1, signers, nunchuk::AddressType::NATIVE_SEGWIT, false, 0, true);
+    m_wallet = nunchuk::Wallet("", required_signatures, signers.size(), signers, nunchuk::AddressType::NATIVE_SEGWIT, false, 0, true);
     if (auto w = AppModel::instance()->walletInfoPtr()) {
         w->convert(m_wallet);
         if (auto signers = w->singleSignersAssigned()) {

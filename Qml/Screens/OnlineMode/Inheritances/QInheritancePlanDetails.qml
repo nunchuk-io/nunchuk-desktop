@@ -105,7 +105,7 @@ Item {
                     QLato {
                         width: 539
                         height: paintedHeight
-                        text: STR.STR_QML_1047
+                        text: STR.STR_QML_850
                         font.weight: Font.Bold
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter

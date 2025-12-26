@@ -879,7 +879,9 @@ public:
         const std::vector<uint8_t>& preimage,
         QWarningMessage &msg);
 
-private:
+    std::string GetWalletExportData(const std::string &wallet_id, nunchuk::ExportFormat format, QWarningMessage &msg);
+
+  private:
     nunchukiface();
     ~nunchukiface();
     void registerCallback();

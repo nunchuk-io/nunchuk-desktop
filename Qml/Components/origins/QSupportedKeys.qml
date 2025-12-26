@@ -28,12 +28,12 @@ QtObject {
     property bool isInheritance: false
     
     readonly property var allKeys: [
-        { type: NUNCHUCKTYPE.ADD_BITBOX,     name: "BitBox",          device_type: "bitbox02",   tag: "BITBOX"      },
+        { type: NUNCHUCKTYPE.ADD_BITBOX,     name: "BitBox",            device_type: "bitbox02",   tag: "BITBOX"      },
         { type: NUNCHUCKTYPE.ADD_COLDCARD,   name: "COLDCARD",          device_type: "coldcard",   tag: "COLDCARD"    },
+        { type: NUNCHUCKTYPE.ADD_JADE,       name: "Blockstream Jade",  device_type: "jade",       tag: "JADE"        },
         { type: NUNCHUCKTYPE.ADD_LEDGER,     name: "Ledger",            device_type: "ledger",     tag: "LEDGER"      },
         { type: NUNCHUCKTYPE.ADD_TREZOR,     name: "Trezor",            device_type: "trezor",     tag: "TREZOR"      },
         { type: NUNCHUCKTYPE.ADD_TAPSIGNER,  name: "TAPSIGNER",         device_type: "tapsigner",  tag: "INHERITANCE" },
-        { type: NUNCHUCKTYPE.ADD_JADE,       name: "Blockstream Jade",  device_type: "jade",       tag: "JADE"        },
     ]
     function isSupportedInheritance(tag) {
         if (isMiniscript) {

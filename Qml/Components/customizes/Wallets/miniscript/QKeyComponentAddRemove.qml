@@ -63,18 +63,17 @@ QKeyComponent {
         type: eTypeB
         visible: label.text !== ""
         label.text: {
-            var hasKey = miniscript.keyObj != null && miniscript.keyObj != undefined
-            if (typeof(sandbox) !== 'undefined' && sandbox != null) {
+            var hasKey = miniscript.keyObj !== null && miniscript.keyObj !== undefined
+            if (typeof(sandbox) !== 'undefined' && sandbox !== null) {
+                var keyObj = miniscript.keyObj
                 if (sandbox.isReplace) {
                     if (hasKey) {
-                        var keyObj = miniscript.keyObj
                         return keyObj.single_signer_isReplaced ? STR.STR_QML_1134 : STR.STR_QML_1368
                     } else {
                         return STR.STR_QML_941
                     }
                 } else if (sandbox.isRecovery) {                    
                     if (hasKey) {
-                        var keyObj = miniscript.keyObj
                         return keyObj.single_signer_is_local ? "" : STR.STR_QML_941
                     } else {
                         return STR.STR_QML_941
@@ -90,7 +89,7 @@ QKeyComponent {
         }
         label.font.pixelSize: 12
         onButtonClicked: {
-            if(miniscript.keyObj != null && miniscript.keyObj != undefined) {
+            if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
                 removeClicked(miniscript.key)
             } else {
                 addClicked(miniscript.key)

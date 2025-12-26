@@ -1,6 +1,10 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>Qml/core/PopupHost.qml</file>
+        <file>Qml/core/ScreenHost.qml</file>
+        <file>Qml/core/SubScreenHost.qml</file>
+        <file>Qml/core/ToastHost.qml</file>
         <file>Qml/Components/customizes/QBoxShadow.qml</file>
         <file>Qml/Components/customizes/QConnection.qml</file>
         <file>Qml/Components/customizes/QScreen.qml</file>
@@ -211,6 +215,7 @@
         <file>Qml/Components/customizes/QManagerActiveWallets.qml</file>
         <file>Qml/Components/customizes/QHomePendingWallet.qml</file>
         <file>Qml/Components/customizes/Buttons/QRefreshButtonA.qml</file>
+        <file>Qml/Components/customizes/Buttons/QRefreshButtonB.qml</file>
         <file>Qml/Components/customizes/QWarningBg.qml</file>
         <file>Qml/Components/customizes/Wallets/QPendingWallet.qml</file>
         <file>Qml/Components/customizes/Signers/QAddAssistedWalletSigner.qml</file>
@@ -673,6 +678,7 @@
         <file>Qml/Components/customizes/Transactions/QMemberKeysAreaMiniscript.qml</file>
         <file>Qml/Components/customizes/Transactions/miniscript/QKeyComponentTransactionSign.qml</file>
         <file>Qml/Components/customizes/Transactions/miniscript/QCommonComponentTransaction.qml</file>
+        <file>Qml/Components/customizes/Transactions/miniscript/QAfterOlderComponentTransaction.qml</file>
         <file>Qml/Components/customizes/Transactions/miniscript/QMiniscriptPolicesTransactionSignDelegate.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupTimezone.qml</file>
         <file>Qml/Components/customizes/Popups/QTimePicker.qml</file>
@@ -739,7 +745,8 @@
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QRecoverAnExistingSeed.qml</file>
         <file>Qml/Components/origins/QSupportedKeys.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOffChainTimelockWallet.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupOffChainTimelockWallet.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceOnChainTransactionDetails.qml</file>
+        <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceTransactionDetailsClaimed.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>
@@ -1144,6 +1151,9 @@
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4-off.png</file>
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4.png</file>
         <file>Images/download_black.svg</file>
+        <file>Images/jade-illustration.svg</file>
+        <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.png</file>
+        <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

@@ -410,7 +410,7 @@ Item {
                                     QLato {
                                         font.pixelSize: 12
                                         color: "#FFFFFF"
-                                        text: planInfo.activation_timezone
+                                        text: ServiceSetting.walletInfo.timezones.selectedTimezone //planInfo.activation_timezone
                                     }
                                 }
                                 QLato {
@@ -419,13 +419,12 @@ Item {
                                     text:  "Edit"
                                     font.underline: true
                                     font.weight: Font.Bold
-                                    visible: false
                                     MouseArea {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            _popupSetupAnOffChainTimelock.open()
+                                            QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_ACTIVATION_DATE)
                                         }
                                     }
                                 }

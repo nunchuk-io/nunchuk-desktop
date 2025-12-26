@@ -31,50 +31,47 @@ import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Transactions"
 import "../../Components/customizes/Popups"
+import "../OnlineMode/Inheritances"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
-    QOnScreenContentTypeA {
-        id:_content
+    property var transactionInfo: AppModel.transactionInfo
+    readonly property int confirmations: Math.max(0, (AppModel.blockHeight - transactionInfo.height) + 1)
+    Loader {
+        id: screenLoader
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        label.text: STR.STR_QML_785
-        extraHeader: QBadge {
-            color: "#E8DAFF"
-            text: STR.STR_QML_286
-        }
-        onCloseClicked: {
-            if (ServiceSetting.screenFlow === "withdraw-to-address") {
-                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-            } else {
-                closeTo(NUNCHUCKTYPE.WALLET_TAB)
-            }            
-        }
-        content: Item {
-            QSendAddressAreaClaimInheritance {
-                transactionInfo: AppModel.transactionInfo
-                onAddrToVerify: {
-                    displayAddressBusybox.addrToVerify = addr
-                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_VERIFY_ADDRESS, addr)
-                }
-                onNewMemoNotify: {
-                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo)
-                }
+        sourceComponent: {
+            if (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                transactionInfo.status === NUNCHUCKTYPE.READY_TO_BROADCAST) {
+                return inheritance_on_chain_transaction_details
+            } else {                
+                return inheritance_transaction_details_claimed
             }
         }
+    }
 
-        onPrevClicked: {
-            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_TRANSACTION_DETAILS_BACK)
+    Component {
+        id: inheritance_transaction_details_claimed
+        QInheritanceTransactionDetailsClaimed {
+           
         }
-        bottomRight: QTextButton {
-            width: 249
-            height: 48
-            label.text: STR.STR_QML_783
-            label.font.pixelSize: 16
-            type: eTypeB
-            onButtonClicked: {
-                Qt.openUrlExternally(urlActiveLink())
+    }
+    Component {
+        id: inheritance_on_chain_transaction_details
+        QInheritanceOnChainTransactionDetails {
+
+        }
+    }
+    Connections {
+        target: transactionInfo
+        onNunchukTransactionChanged: {
+            if (transactionInfo.status !== NUNCHUCKTYPE.PENDING_SIGNATURES &&
+                transactionInfo.status !== NUNCHUCKTYPE.READY_TO_BROADCAST) {
+                if (!_congra.opened) {
+                    _congra.open()
+                }
             }
         }
     }
@@ -83,10 +80,6 @@ QScreen {
         id:_congra
         title: STR.STR_QML_788
         contentText: STR.STR_QML_789
-    }
-
-    Component.onCompleted: {
-        _congra.open()
     }
 
     function urlActiveLink(){

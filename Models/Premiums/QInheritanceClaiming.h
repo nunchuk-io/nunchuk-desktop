@@ -49,6 +49,7 @@ public:
     Q_INVOKABLE void setInheritanceAddressNewTransaction(const QString &address);
     Q_INVOKABLE bool inheritanceCreateDraftTransaction(double fee_rate = 1000.0, bool anti_fee_sniping = false);
     Q_INVOKABLE bool inheritanceSignTransaction();
+    bool inheritanceUpdateLibTransaction();
 
     QVariant inheritanceInfo() const;
 
@@ -83,6 +84,7 @@ public slots:
     bool requestDownloadWallet(const nunchuk::SingleSigner &single);
     bool requestDownloadWallet();
     bool requestDownloadWalletViaSeedPhrase(const QString &seedPhrase);
+    
 signals:
     // Signals mirrored from QWalletServicesTag for claim logic
     void notPaidAlert();
@@ -108,5 +110,6 @@ private:
     QJsonArray m_inheritanceKeys{};
     QJsonObject m_walletInfoClaim{};
     QJsonObject m_claimWallet{};
+    QJsonObject m_claimTransaction{};
 };
 #endif // QINHERITANCECLAIMING_H

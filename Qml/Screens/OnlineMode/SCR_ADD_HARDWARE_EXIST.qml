@@ -64,14 +64,24 @@ QScreen {
         id: _Jade
         QScreenAddJadeExist {}
     }
+    function isFlowClamOrAddKeyClaim() {
+        var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner // Add Key From Claim Banner
+        var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim // Claim Flow
+        return onlyUseForClaimBanner || onlyUseForClaim
+    }
     function doneAddHardwareKey() {
         var isNormalFlow = SignerManagement.currentSigner.wallet_type !== "MINISCRIPT"
         if (isNormalFlow) {
             AppModel.showToast(0, STR.STR_QML_1392, EWARNING.SUCCESS_MSG);
             closeTo(NUNCHUCKTYPE.CURRENT_TAB)
         } else {
-            GroupWallet.refresh()
-            GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+            var onlyUseForClaimBanner = SignerManagement.currentSigner.onlyUseForClaimBanner !== undefined && SignerManagement.currentSigner.onlyUseForClaimBanner
+            if (onlyUseForClaimBanner) {
+                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+            } else {
+                GroupWallet.refresh()
+                GroupWallet.dashboardInfo.requestShowLetAddYourKeys();
+            }
         }  
     }
 }

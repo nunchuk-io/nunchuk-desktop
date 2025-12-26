@@ -24,11 +24,13 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Signers.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
+import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
@@ -253,8 +255,53 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
-                nextClicked()
+                addDevice()
             }
+        }
+    }
+    function addDevice() {
+        var masterSignerObj = {
+            "mnemonicstr"          : mnemonicstr
+        };
+        vm.startCreateMaster(masterSignerObj)
+    }
+    function yesClickedHandler() {
+        var masterSignerObj = {
+            "mnemonicstr"          : mnemonicstr
+        };
+        vm.forceCreateMaster(masterSignerObj)
+    }
+    QPopupInfoTwoButtons {
+        id: _info
+        title: STR.STR_QML_661
+        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        funcs: [
+            function() { yesClickedHandler() },
+            function() {}
+        ]
+    }
+    function showPopupInfo(isSoftware, fingerPrint){
+        if (isSoftware) {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = STR.STR_QML_1284
+            _info.open()
+        }
+        else {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = ""
+            _info.open()
+        }
+    }
+    RecoverAnExistingSeedViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
+        }
+    }
+    Connections {
+        target: vm
+        onNotifySignerExist: {
+            showPopupInfo(isSoftware, fingerPrint)
         }
     }
 }

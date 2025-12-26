@@ -86,7 +86,7 @@ Item {
             sourceComponent: switch(miniscript.type) {
                 case ScriptNodeHelper.Type.PK: return miniscript.key ? keyCoponent : getCommon();
                 case ScriptNodeHelper.Type.OLDER:
-                case ScriptNodeHelper.Type.AFTER: return after_older;
+                case ScriptNodeHelper.Type.AFTER: return getAfterOlder();
                 case ScriptNodeHelper.Type.HASH160: return getCommon();
                 case ScriptNodeHelper.Type.HASH256: return getCommon();
                 case ScriptNodeHelper.Type.RIPEMD160: return getCommon();
@@ -128,8 +128,8 @@ Item {
         var tmpHeight = 0
         switch(miniscript.type) {
             case ScriptNodeHelper.Type.PK: tmpHeight =  miniscript.key ? getKeyHeight() : 38 + 4; break;
-            case ScriptNodeHelper.Type.OLDER: tmpHeight = 58; break;
-            case ScriptNodeHelper.Type.AFTER: tmpHeight = 58; break;
+            case ScriptNodeHelper.Type.OLDER: tmpHeight = getAfterOlderHeight(); break;
+            case ScriptNodeHelper.Type.AFTER: tmpHeight = getAfterOlderHeight(); break;
             case ScriptNodeHelper.Type.HASH160: tmpHeight = 58; break;
             case ScriptNodeHelper.Type.HASH256: tmpHeight = 74; break;
             case ScriptNodeHelper.Type.RIPEMD160: tmpHeight = 58; break;
@@ -151,9 +151,9 @@ Item {
             case ScriptNodeHelper.Type.PK: return ""
             case ScriptNodeHelper.Type.OLDER: {
                 if (miniscript.lockType === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
-                    return qsTr("Older %1").arg(miniscript.relativeTimestamp.valueDisplay)
+                    return qsTr("After %1").arg(miniscript.relativeTimestamp.valueDisplay)
                 } else if (miniscript.lockType === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
-                    return qsTr("Older %1 blocks").arg(miniscript.relativeBlockheight)
+                    return qsTr("After %1 blocks").arg(miniscript.relativeBlockheight)
                 }
             }
             case ScriptNodeHelper.Type.AFTER: {
@@ -188,7 +188,7 @@ Item {
                         return ""
                     }
                     else {
-                        return STR.STR_QML_1855.arg(miniscript.absoluteTimestamp.valueRemaining)
+                        return STR.STR_QML_1855.arg(miniscript.absoluteTimestamp.valueRemaining).arg(miniscript.absoluteTimestamp.valueFrom)
                     }
                 }
                 else if (miniscript.lockType === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
@@ -219,6 +219,12 @@ Item {
     }
     function getCommon() {
         return common
+    }
+    function getAfterOlder() {
+        return after_older
+    }
+    function getAfterOlderHeight() {
+        return 58
     }
     Component {
         id: common

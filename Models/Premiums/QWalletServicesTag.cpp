@@ -618,5 +618,6 @@ ReqiredSignaturesInfo QWalletServicesTag::reqiredSignaturesInfo() const {
     reqired_signature.required_signatures = m_reqiredSignatures["required_signatures"].toInt();
     reqired_signature.required_answers = m_reqiredSignatures["required_answers"].toInt();
     reqired_signature.required_confirmation_codes = m_reqiredSignatures["required_confirmation_codes"].toInt();
+    DBG_INFO << m_reqiredSignatures;
     return reqired_signature;
 }

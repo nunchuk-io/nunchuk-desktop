@@ -41,6 +41,7 @@
 #include "RegisterTypes/DashRectangle.h"
 #include "QRScanner/QBarcodeFilter.h"
 #include "QPDFPrinter.h"
+#include "app/AppRegister.h"
 
 #ifdef ENABLE_THREAD_MONITOR
 #include "QPingThread.h"
@@ -190,16 +191,16 @@ int main(int argc, char* argv[])
     // static int   argc_own = 1;
     // QApplication app(argc_own, &qt_argv);
 
-    QApplication app(argc, argv);
+    QApplication appNunchuk(argc, argv);
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
-    app.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
-    app.setOrganizationName("nunchuk");
-    app.setOrganizationDomain("nunchuk.io");
-    app.setApplicationName("NunchukClient");
-    app.setApplicationVersion("2.0.1");
-    app.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(app.applicationVersion()));
+    appNunchuk.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
+    appNunchuk.setOrganizationName("nunchuk");
+    appNunchuk.setOrganizationDomain("nunchuk.io");
+    appNunchuk.setApplicationName("NunchukClient");
+    appNunchuk.setApplicationVersion("2.1.0");
+    appNunchuk.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(appNunchuk.applicationVersion()));
     Draco::instance();
     AppModel::instance();
     QWalletManagement::instance();
@@ -281,7 +282,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->setContextProperty("AppSetting", QVariant::fromValue(AppSetting::instance()));
     QEventProcessor::instance()->setContextProperty("Draco", QVariant::fromValue(Draco::instance()));
     QEventProcessor::instance()->setContextProperty("ClientController", QVariant::fromValue(CLIENT_INSTANCE));
-    QEventProcessor::instance()->setContextProperty("qapplicationVersion", app.applicationVersion());
+    QEventProcessor::instance()->setContextProperty("qapplicationVersion", appNunchuk.applicationVersion());
     QEventProcessor::instance()->setContextProperty("UserWallet", QVariant::fromValue(QUserWallets::instance()));
     QEventProcessor::instance()->setContextProperty("GroupWallet", QVariant::fromValue(QGroupWallets::instance()));
     QEventProcessor::instance()->setContextProperty("SharedWallet", QVariant::fromValue(QSharedWallets::instance()));
@@ -290,6 +291,8 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->setContextProperty("OnBoarding", QVariant::fromValue(OnBoardingModel::instance()));
     QEventProcessor::instance()->setContextProperty("PDFPrinter", QVariant::fromValue(QPDFPrinter::instance()));
     QEventProcessor::instance()->setContextProperty("SignerManagement", QVariant::fromValue(QSignerManagement::instance()));
+    app::registerContextProperty();
+    app::registerViewModels();
     QEventProcessor::instance()->completed();
     QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
@@ -323,5 +326,5 @@ int main(int argc, char* argv[])
         });
     });
     QEventProcessor::instance()->show();
-    return app.exec();
+    return appNunchuk.exec();
 }

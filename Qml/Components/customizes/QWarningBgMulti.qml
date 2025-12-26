@@ -47,6 +47,7 @@ Rectangle {
             iconSize: iSize
             source: icon
             anchors.verticalCenter: parent.verticalCenter
+            visible: icon !== ""
         }
         QLato {
             id: _txt

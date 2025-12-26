@@ -76,6 +76,7 @@ void QInheritancePlan::setPlanInfo(QJsonObject plan_info)
         return;
 
     m_planInfo = plan_info;
+    DBG_INFO << m_planInfo;
     emit planInfoChanged();
 }
 
@@ -167,6 +168,7 @@ QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
         else {
             data["activation_date"] = "";
         }
+        DBG_INFO << data;
         data["activation_timezone"] = qUtils::formatTimeZoneString(data["timezone"].toString());
         data["activation_timezone_local"] = wallet->timezones()->localTimezone();
         wallet->timezones()->setSelectedTimezone(data["activation_timezone"].toString());
@@ -278,6 +280,7 @@ QJsonObject QInheritancePlan::JsBody()
         body["activation_time_milis"] = (double)t*1000;
     }
     body["notification_preferences"] = m_planInfo["notification_preferences"].toObject();
+    body["timezone"] = m_planInfo["timezone"].toString();
     return body;
 }
 
@@ -649,6 +652,16 @@ void QInheritancePlan::editPlanInfo(const QVariant &info)
 
         if (bpChanged) {
             change["buffer_period"] = curBP;
+        }
+    }
+
+    if (_new.contains("activation_timezone")) {
+        QString inputTimezone = _new["activation_timezone"].toString();
+        QString newTimezone = qUtils::extractTimeZoneId(inputTimezone);
+        QString oldTimezone = original.value("timezone").toString();
+        if (newTimezone != oldTimezone) {
+            change["timezone"] = newTimezone;
+            change["activation_timezone"] = inputTimezone;
         }
     }
 

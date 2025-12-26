@@ -29,6 +29,7 @@ import NUNCHUCKTYPE 1.0
 import "./Qml/Popups"
 import "./Qml/Components/customizes"
 import "./Qml/Components/customizes/Popups"
+import "./Qml/core"
 import "./localization/STR_QML.js" as STR
 
 Item {
@@ -36,33 +37,22 @@ Item {
     height: QAPP_DEVICE_HEIGHT
     antialiasing: true
     smooth: true
-    Loader {
-        id: screen_layer
-        anchors.fill: parent
-        transformOrigin: Item.TopLeft
-    }
-    function screen_Transition() {
-        screen_layer.sourceComponent = null
-        screen_layer.sourceComponent = QAppScreen
-    }
-
-    ListModel { id: onsDataList }
-    Repeater {
-        id: ons_Creator
-        transformOrigin: Item.TopLeft
-        Loader {
-            id: osd_Loader
-            source: osdSource
-        }
-    }
-    function load_Popup(Onsdata, popCount) {
-        onsDataList.clear()
-        for(var onsCnt = 0; onsCnt < popCount; onsCnt++ ) { var data = {'osdSource': Onsdata[onsCnt]}; onsDataList.append(data); }
-        ons_Creator.model = onsDataList
-    }
-
     property int popupWidth: 800
     property int popupHeight: 700
+    ScreenHost {
+        id: screenHost
+        objectName: "screenHost"
+    }
+
+    PopupHost {
+        id: popupHost
+        objectName: "popupHost"
+    }
+
+    SubScreenHost {
+        id: subScreenHost
+        objectName: "subScreenHost"
+    }
 
     QPopupInfo{
         id:_checkforupdate
@@ -81,47 +71,10 @@ Item {
         _checkforupdate.open()
     }
 
-    Popup {
-        id: popup
-        width: parent.width
-        height: parent.height
-        modal: true
-        background: Item{}
-        dim: false
-        anchors.centerIn: parent
-        visible: toastLoader.model.count > 0
-        closePolicy: Popup.CloseOnReleaseOutside | Popup.CloseOnEscape
-        QToastMessage {
-            id: toastLoader
-            isScreenBase: onsDataList.count == 0 ? true : false
-            anchors.fill: parent
-            model: ListModel { id: toastes}
-            // onToastVisibleChanged : {
-            //     if(toastLoader.model.count == 0){
-            //         popup.close()
-            //     }
-            // }
-        }
-    }
-
-    function loadToastMessage(toastObj) {
-        console.log(toastObj.code, toastObj.type, toastObj.what)
-        for(var i = 0; i < toastLoader.model.count; i++){
-            console.log(toastLoader.model.get(i).code , toastObj.code, toastObj.type)
-            if(toastLoader.model.get(i).code === toastObj.code && (toastObj.type > EWARNING.ERROR_MSG)) {
-                return;
-            }
-        }
-        var toastItem = {
-            "contentDisplay": toastObj.contentDisplay,
-            "explaination"  : toastObj.explaination,
-            "what"          : toastObj.what,
-            "code"          : toastObj.code,
-            "type"          : toastObj.type,
-            "popupType"     : toastObj.popupType
-        }
-        toastLoader.model.append(toastItem)
-        popup.open()
+    ToastHost {
+        id: toastHost
+        objectName: "toastHost"
+        isScreenBase: popupHost.dataList.count == 0 ? true : false
     }
 
     QPopupInfoTwoButtons {

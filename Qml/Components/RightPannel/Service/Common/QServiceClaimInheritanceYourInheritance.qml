@@ -27,6 +27,7 @@ import QRCodeItem 1.0
 import DataPool 1.0
 import DRACO_CODE 1.0
 import EWARNING 1.0
+import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Chats"
@@ -150,10 +151,19 @@ Item {
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {
-                        ServiceSetting.servicesTag.updateInheritanceCheckStatus("isWithdrawBitcoin", true)
+                        var _input = {
+                            "isWithdrawBitcoin": true
+                        }
+                        vm.withdrawBitcoinClicked(_input)
                     }
                 }
             }
+        }
+    }
+    InheritanceUnlockedViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
         }
     }
 }

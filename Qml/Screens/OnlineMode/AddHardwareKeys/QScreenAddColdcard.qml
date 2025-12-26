@@ -306,7 +306,6 @@ QScreenAdd {
                     type: eTypeE
                     enabled: _refresh.contentItem.isEnable()
                     onButtonClicked: {
-                        stateScreen.setScreenFlow("eSCREEN_LOADING")
                         _refresh.contentItem.addDevice()
                     }
                 }
@@ -408,7 +407,7 @@ QScreenAdd {
         } else {
             var onlyUseForClaim = SignerManagement.currentSigner.onlyUseForClaim !== undefined && SignerManagement.currentSigner.onlyUseForClaim
             if (onlyUseForClaim) {
-                ServiceSetting.servicesTag.requestDownloadWalletViaImportFile(inputtingIndex.device_xfp, 0)
+                ServiceSetting.servicesTag.requestDownloadWalletViaImportFile(filePath, 0)
             } else {
                 var has = SignerManagement.currentSigner.has
                 var hasSecond = SignerManagement.currentSigner.hasSecond

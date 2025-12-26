@@ -81,7 +81,7 @@ QScreenAdd {
                             width: 346
                             height: 300
                             anchors.verticalCenter: parent.verticalCenter
-                            source: "qrc:/Images/Images/trezor-illustration.svg"
+                            source: "qrc:/Images/Images/jade-illustration.svg"
                         }
                     }
                     Item {
@@ -103,8 +103,8 @@ QScreenAdd {
                                 id: _guide
                                 width: parent.width
                                 readonly property var content_map: [
-                                    {height: 84, headline:STR.STR_QML_818, content: STR.STR_QML_1537 , icon: "qrc:/Images/Images/1.Active.svg" },
-                                    {height: 112, headline:STR.STR_QML_095, content: STR.STR_QML_820 , icon: "qrc:/Images/Images/2.Active.svg" },
+                                    {height: 112, headline:STR.STR_QML_1928, content: STR.STR_QML_1537 , icon: "qrc:/Images/Images/1.Active.svg" },
+                                    {height: 84, headline:STR.STR_QML_1930, content: STR.STR_QML_1931 , icon: "qrc:/Images/Images/2.Active.svg" },
                                 ]
                                 model: content_map.length
                                 Rectangle {
@@ -122,27 +122,31 @@ QScreenAdd {
                                             width: 310
                                             height: _item.height
                                             spacing: 4
-                                            QText {
+                                            QLato {
                                                 width: 310
                                                 text: _item.headline
-                                                color: "#031F2B"
-                                                font.family: "Lato"
                                                 font.pixelSize: 16
                                                 font.weight: Font.DemiBold
                                                 horizontalAlignment: Text.AlignLeft
                                                 verticalAlignment: Text.AlignVCenter
                                             }
-                                            QText {
+                                            QLato {
+                                                id: _term
                                                 width: 310
                                                 text: _item.content
-                                                color: "#031F2B"
-                                                font.family: "Lato"
                                                 font.pixelSize: 16
+                                                textFormat: Text.RichText
                                                 lineHeightMode: Text.FixedHeight
                                                 lineHeight: 28
                                                 wrapMode: Text.WordWrap
                                                 horizontalAlignment: Text.AlignLeft
                                                 verticalAlignment: Text.AlignVCenter
+                                                onLinkActivated: Qt.openUrlExternally("https://help.blockstream.com/hc/en-us/articles/19629901272345-Set-up-Jade")
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: _term.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                    acceptedButtons: Qt.NoButton
+                                                }
                                             }
                                         }
                                     }
@@ -199,7 +203,6 @@ QScreenAdd {
                     type: eTypeE
                     enabled: _refresh.contentItem.isEnable()
                     onButtonClicked: {
-                        stateScreen.setScreenFlow("eSCREEN_LOADING")
                         _refresh.contentItem.addDevice()
                     }
                 }

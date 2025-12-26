@@ -32,6 +32,7 @@ import "../../../../Components/customizes/Buttons"
 import "../../../../../localization/STR_QML.js" as STR
 
 Item {
+    property bool isTransaction : false
     Row {
         anchors.fill: parent
         spacing: 4
@@ -45,7 +46,7 @@ Item {
         }
         Column {
             id: column
-            anchors{ 
+            anchors{
                 top: parent.top
                 topMargin: 8
             }
@@ -53,9 +54,10 @@ Item {
             spacing: 2
             Row {
                 width: parent.width
-                height: 20
+                height: isTransaction ? 40 : 20
                 spacing: 4
                 QLato {
+                    id: firstLine
                     width: paintedWidth
                     height: 20
                     text: miniscript.firstLine
@@ -64,12 +66,15 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                 }
                 QLato {
-                    width: paintedWidth
-                    height: 20
+                    width: parent.width - firstLine.paintedWidth - 4
+                    height: isTransaction ? 40 : 20
                     text: getTitle()
                     font.weight: Font.Normal
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
+                    lineHeight: 20
+                    lineHeightMode: Text.FixedHeight
+                    wrapMode: Text.WrapAnywhere
                 }
             }
             QLato {

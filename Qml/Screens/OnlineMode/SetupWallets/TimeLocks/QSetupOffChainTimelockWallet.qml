@@ -33,11 +33,21 @@ QOnScreenContentTypeA {
     anchors.centerIn: parent
     label.text: STR.STR_QML_2055
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onNextClicked: {
+        var _edit = {
+            "activation_date": valueDate,
+            "activation_timezone": valueTimezone
+        }
+        inheritancePlanInfo.editPlanInfo(_edit)
+        closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+    }
 
-    property var    inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property var    planInfo: inheritancePlanInfo.planInfo
     property string walletName: ServiceSetting.walletInfo.walletName
     property int    walletType: ServiceSetting.walletInfo.walletType
+    property string valueTimezone: ServiceSetting.walletInfo.timezones.selectedTimezone
+    property string valueDate: planInfo.activation_date
 
     content: Item {
         Column {
@@ -83,18 +93,6 @@ QOnScreenContentTypeA {
                         boxWidth: parent.width
                         boxHeight: 48
                         textInputted: ServiceSetting.walletInfo.timezones.selectedTimezone
-                        onTextInputtedChanged: {
-                            if(!_input_date.isValid){
-                                _input_date.isValid = true
-                                _input_date.errorText = ""
-                            }
-                            _input_date.showError = false;
-                            var _time = {
-                                "valueTimezone"  : _input_timezone.textInputted,
-                                "valueDate"      : planInfo.activation_date,
-                            }
-                            // dashInfo.walletSetupTimeLock(_time)
-                        }
                     }
                     QIcon {
                         iconSize: 24
@@ -133,16 +131,7 @@ QOnScreenContentTypeA {
                         textInputted: _calendarInput.dateString
                         input.placeholderText: planInfo.activation_date
                         onTextInputtedChanged: {
-                            if(!_input_date.isValid){
-                                _input_date.isValid = true
-                                _input_date.errorText = ""
-                            }
-                            _input_date.showError = false;
-                            var _time = {
-                                "valueTimezone"  : planInfo.activation_timezone,
-                                "valueDate"      : _input_date.textInputted
-                            }
-                            // dashInfo.walletSetupTimeLock(_time)
+                            valueDate = _input_date.textInputted
                         }
                     }
                     QIcon {

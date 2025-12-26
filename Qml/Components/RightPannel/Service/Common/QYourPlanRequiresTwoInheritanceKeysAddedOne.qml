@@ -63,7 +63,7 @@ QOnScreenContentTypeA {
     bottomRight: QTextButton {
         width: label.paintedWidth + 16 * 2
         height: 48
-        label.text: STR.STR_QML_1999
+        label.text: STR.STR_QML_2025
         label.font.pixelSize: 16
         type: eTypeE
         onButtonClicked: {

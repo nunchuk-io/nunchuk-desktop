@@ -201,12 +201,4 @@ QScreen {
             
         }
     }
-    QPopupSetupOffChainTimelockWallet {
-        id: _popupSetupAnOffChainTimelock
-    }
-
-    QPopupInfo{
-        id:_claimInheritanceViaMobile
-        contentText: STR.STR_QML_2060
-    }
 }

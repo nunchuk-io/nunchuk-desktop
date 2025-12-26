@@ -1783,7 +1783,7 @@ int qUtils::GetPurposeFromPath(const QString &path)
     QStringList parts = p.split('/');
 
     if (parts.size() < 2) {
-        qWarning() << "Invalid derivation path:" << path;
+        DBG_INFO << "Invalid derivation path:" << path;
         return -1;
     }
 
@@ -1802,20 +1802,61 @@ int qUtils::GetPurposeFromPath(const QString &path)
 // ----------------------------
 int qUtils::GetCoinTypeFromPath(const QString &path)
 {
-    QString p = normalizePath(path);
-    QStringList parts = p.split('/');
+    // QString p = normalizePath(path);
+    // QStringList parts = p.split('/');
 
-    if (parts.size() < 3) {
-        qWarning() << "Invalid derivation path:" << path;
+    // if (parts.size() < 3) {
+    //     DBG_INFO << "Invalid derivation path:" << path;
+    //     return -1;
+    // }
+
+    // QString coinStr = parts[2];
+    // coinStr.remove("'");
+
+    // bool ok = false;
+    // int coinType = coinStr.toInt(&ok);
+    // return ok ? coinType : -1;
+    QString p = normalizePath(path).trimmed();
+
+    // Handle leading "m" or "m/"
+    if (p == "m") {
+        DBG_INFO << "Derivation path contains only 'm' (no components):" << path;
+        return -1;
+    }
+    if (p.startsWith("m/")) {
+        p = p.mid(2);
+    }
+
+    // Split path components
+    QStringList parts = p.split('/', Qt::SkipEmptyParts);
+
+    // Expected minimum structure: purpose/coin_type
+    if (parts.size() < 2) {
+        DBG_INFO << "Derivation path does not contain a coin_type component:" << path;
         return -1;
     }
 
-    QString coinStr = parts[2];
-    coinStr.remove("'");
+    QString coinStr = parts[1].trimmed();
+    if (coinStr.isEmpty()) {
+        DBG_INFO << "Empty coin_type component in derivation path:" << path;
+        return -1;
+    }
+
+    // Remove hardened suffix if present (', h, or H)
+    QChar last = coinStr.at(coinStr.size() - 1);
+    if (last == '\'' || last == 'h' || last == 'H') {
+        coinStr.chop(1);
+    }
 
     bool ok = false;
     int coinType = coinStr.toInt(&ok);
-    return ok ? coinType : -1;
+    if (!ok) {
+        DBG_INFO << "Unable to parse coin type from derivation path component:"
+                   << parts[1] << "full path:" << path;
+        return -1;
+    }
+
+    return coinType;
 }
 
 QJsonObject qUtils::SingleSignertoJsonObject(const nunchuk::SingleSigner &single) {

@@ -50,15 +50,12 @@ Worker *Worker::create(QThread *thread)
     return mInstance;
 }
 
-void Worker::slotStartCreateMasterSigner(const QString &name,
-                                         const int deviceIndex)
+void Worker::slotStartCreateMasterSigner(const QString &name, const QString xfp)
 {
     QWarningMessage msg;
     AppModel::instance()->setAddSignerStep(0);
     AppModel::instance()->setAddSignerPercentage(0);
-    QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name,
-                                                             deviceIndex,
-                                                             msg);
+    QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, xfp, msg);
     AppModel::instance()->setAddSignerPercentage(100);
     AppModel::instance()->setWalletsUsingSigner({});
     if((int)EWARNING::WarningType::NONE_MSG == msg.type() && ret){
@@ -144,16 +141,13 @@ void Worker::slotStartScanDevices(const QVariant &data) {
         QString masterSignerId = maps["singleSigner_masterSignerId"].toString();
         if (masterSignerId.isEmpty()) {
             QString fingerPrint = maps["singleSigner_masterFingerPrint"].toString();
-            int deviceIndex = deviceList->getDeviceIndexByXfp(fingerPrint);
-            if (deviceIndex >= 0) {
-                QString name = maps["singleSigner_name"].toString();
-                msg->resetWarningMessage();
-                QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, deviceIndex, *msg);
-                if ((int)EWARNING::WarningType::NONE_MSG == msg->type()) {
-                    masterSignerId = ret->id();
-                } else {
-                    masterSignerId = fingerPrint;
-                }
+            QString name = maps["singleSigner_name"].toString();
+            msg->resetWarningMessage();
+            QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, fingerPrint, *msg);
+            if ((int)EWARNING::WarningType::NONE_MSG == msg->type()) {
+                masterSignerId = ret->id();
+            } else {
+                masterSignerId = fingerPrint;
             }
         }
         if (!masterSignerId.isEmpty()) {    

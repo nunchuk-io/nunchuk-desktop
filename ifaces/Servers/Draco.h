@@ -482,6 +482,13 @@ public:
     bool ClaimingWalletUpdate(const QString &local_id, const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
     bool ClaimingWalletDelete(const QString &local_id, QJsonObject &output, QString &errormsg);
     bool ClaimingWalletList(QJsonObject &output, QString &errormsg);
+
+    // Claiming wallets transaction
+    QJsonObject ClaimingWalletTransactionGetList(const QString &wallet_id);
+    QJsonObject ClaimingWalletTransactionGetOne(const QString &wallet_id, const QString &transaction_id);
+    bool ClaimingWalletTransactionCancel(const QString &wallet_id, const QString &transaction_id);
+    bool ClaimingWalletTransactionRbf(const QString &wallet_id, const QString &transaction_id, const QString &psbt, QJsonObject &output, QString &errormsg);
+    bool ClaimingWalletTransactionSync(const QString &wallet_id, const QString &transaction_id, const QString &psbt, QJsonObject &output, QString &errormsg);
 private:
     Draco();
     ~Draco();

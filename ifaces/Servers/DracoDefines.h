@@ -312,6 +312,14 @@ enum CMD_IDX {
     CLAIMING_WALLET_DELETE_BY_ID,
     CLAIMING_WALLET_LIST,
 
+    // Claimming wallet transaction
+    CLAIMING_WALLET_TX_GET_LIST,
+    CLAIMING_WALLET_TX_GET_ONE,
+    CLAIMING_WALLET_TX_CREATE_UPDATE,
+    CLAIMING_WALLET_TX_CREATE_BATCH,
+    CLAIMING_WALLET_TX_CANCEL,
+    CLAIMING_WALLET_TX_RBF,
+
     CMD_MAX
 };
 }
@@ -823,6 +831,14 @@ const QMap<int, QString> commands {
     { Premium::CMD_IDX::CLAIMING_WALLET_UPDATE_BY_ID   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}") },
     { Premium::CMD_IDX::CLAIMING_WALLET_DELETE_BY_ID   , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}") },
     { Premium::CMD_IDX::CLAIMING_WALLET_LIST           , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets") },
+
+    // Claiming wallets transactions
+    { Premium::CMD_IDX::CLAIMING_WALLET_TX_GET_LIST     , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}/transactions") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_TX_GET_ONE      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}/transactions/{transaction_id}") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_TX_CREATE_UPDATE, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}/transactions") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_TX_CREATE_BATCH , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}/transactions/batch") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_TX_CANCEL       , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}/transactions/{transaction_id}") },
+    { Premium::CMD_IDX::CLAIMING_WALLET_TX_RBF          , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("claiming-wallets/{local_id}/transactions/{transaction_id}/rbf") },
 };
 
 class DRACO_CODE: public QObject

@@ -54,7 +54,12 @@ bool QScreenDelegate::showScreen(const APPLICATION_STATE *scr, QVariant msg)
             if(NULL != scr){
                 scr->funcEntry(msg);
             }
-            ret = QMetaObject::invokeMethod(m_rootObject, JS_SCREEN_TRANSITION_FUNCTION/*, Qt::QueuedConnection*/);
+            QObject *screenHost = m_rootObject->findChild<QObject*>("screenHost");
+            if (!screenHost) {
+                DBG_WARN << "ScreenHost not found";
+                return false;
+            }
+            ret = QMetaObject::invokeMethod(screenHost, JS_SCREEN_TRANSITION_FUNCTION/*, Qt::QueuedConnection*/);
             if(NULL != m_CurrentScreen){
                 m_CurrentScreen->funcExit(msg);
             }

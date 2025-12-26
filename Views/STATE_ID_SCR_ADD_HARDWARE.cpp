@@ -46,20 +46,19 @@ void EVT_SCAN_HARDWARE_DEVICE_REQUEST_HANDLER(QVariant msg)
 
 void EVT_ADD_HARDWARE_DEVICE_REQUEST_HANDLER(QVariant msg)
 {
-    DBG_INFO << msg;
-    QString signerNameInputted = msg.toMap().value("signerNameInputted").toString();
-    int deviceIndexSelected    = msg.toMap().value("deviceIndexSelected").toInt();
-    DeviceListModel *deviceList = QAssistedDraftWallets::IsByzantine() ? QGroupWallets::instance()->refreshDeviceList() : QUserWallets::instance()->refreshDeviceList();
-    if (deviceList && AppModel::instance()->deviceList()) {
-        QDevicePtr selectedDv = deviceList->getDeviceByIndex(deviceIndexSelected);
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString signerNameInputted = maps.value("signerNameInputted").toString();
+    QString xfpSelected    = maps.value("xfpSelected").toString();
+    if (auto deviceList = AppModel::instance()->deviceList()) {
+        QDevicePtr selectedDv = deviceList->getDeviceByXfp(xfpSelected);
         if (selectedDv) {
-            int actualIndex = AppModel::instance()->deviceList()->getDeviceIndexByXfp(selectedDv->masterFingerPrint());
+            int actualIndex = deviceList->getDeviceIndexByXfp(xfpSelected);
             if (selectedDv.data()->needsPinSent() || selectedDv.data()->needsPassPhraseSent()) {
                 AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
             } else {
                 AppModel::instance()->setAddSignerWizard(2);//eADD_LOADING: 2
                 DBG_INFO << signerNameInputted << actualIndex;
-                AppModel::instance()->startCreateMasterSigner(signerNameInputted, actualIndex);
+                AppModel::instance()->startCreateMasterSigner(signerNameInputted, selectedDv->masterFingerPrint());
             }
         }
     }

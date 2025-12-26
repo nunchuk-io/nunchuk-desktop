@@ -174,7 +174,6 @@ QScreenAdd {
                 type: eTypeE
                 enabled: _refresh.contentItem.isEnable()
                 onButtonClicked: {
-                    stateScreen.setScreenFlow("eSCREEN_LOADING")
                     _refresh.contentItem.addDevice()
                 }
             }

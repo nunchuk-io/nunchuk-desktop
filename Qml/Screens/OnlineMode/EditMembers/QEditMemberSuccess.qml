@@ -40,13 +40,9 @@ Item {
         width: popupWidth
         height: popupHeight
         anchors.centerIn: parent
-        sourceComponent: {
-            if (reqiredSignature.type === "SECURITY_QUESTION") {
-                return security_question
-            } else {
-                return _ConfirmEmail
-            }
-        }
+        sourceComponent: (ServiceSetting.servicesTag
+                          && ServiceSetting.servicesTag.reqiredSignatures
+                          && (reqiredSignature.type === "SECURITY_QUESTION")) ? security_question : _ConfirmEmail
     }
 
     Component {

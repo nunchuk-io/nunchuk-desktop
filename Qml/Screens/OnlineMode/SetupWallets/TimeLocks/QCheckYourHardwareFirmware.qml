@@ -71,6 +71,7 @@ QOnScreenContentTypeA {
                         text: guideWeb.arg(linkWeb)
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 28
+                        textFormat: Text.RichText
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter

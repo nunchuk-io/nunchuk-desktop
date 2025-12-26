@@ -62,7 +62,7 @@ QPopupOverlayScreen {
         id: your_inheritance_key
         QYourInheritanceKey {
             onCloseClicked: _infoPopup.close()
-            onPrevClicked: stateScreen.backScreen()
+            onPrevClicked: _infoPopup.close()
             onNextClicked: stateScreen.setScreenFlow("important-notice-about-passphrase")
         }
     }
@@ -71,7 +71,7 @@ QPopupOverlayScreen {
         id: important_notice_about_passphrase
         QImportantNoticeAboutPassphraseOnchain {
             onCloseClicked: _infoPopup.close()
-            onPrevClicked: stateScreen.backScreen()
+            onPrevClicked: _infoPopup.close()
             onNextClicked: {
                 _infoPopup.close()
                 _infoPopup.nextClicked()

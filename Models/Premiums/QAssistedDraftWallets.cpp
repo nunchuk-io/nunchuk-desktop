@@ -242,7 +242,7 @@ void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
                 info["new_account_index"] = 0;
             }
             QString magic = info.value("magic").toString();
-            info["onlyUseForClaim"] = magic != "";
+            info["onlyUseForClaimBanner"] = magic != "";
             QSignerManagement::instance()->setCurrentSigner(info);
             QString wallet_type = info.value("wallet_type").toString();
             ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
@@ -636,7 +636,8 @@ void QAssistedDraftWallets::requestVerifySingleSignerViaConnectDevice(const int 
         auto currentSigerInfo = QSignerManagement::instance()->currentSignerJs();
         auto xfpSelected = currentSigerInfo.value("xfp").toString();
         DBG_INFO << "index: " << index << "verifyType: " << verifyType << "currentSigerInfo: " << currentSigerInfo;
-        auto deviceList = refreshDeviceList();
+        QWarningMessage msg;
+        QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
         if (deviceList) {
             auto device = deviceList->getDeviceByIndex(qMax(0, index));
             if (device) {

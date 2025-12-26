@@ -4679,9 +4679,11 @@
                           </UML:StateVertex.container>
                           <UML:StateVertex.outgoing>
                             <UML:Transition xmi.idref="2ybbx-e5eeb1497e75bb2493d7d087123d6a92"/>
+                            <UML:Transition xmi.idref="11zp-33b828ba861ba6541dc89b468ec1d8b6"/>
                           </UML:StateVertex.outgoing>
                           <UML:StateVertex.incoming>
                             <UML:Transition xmi.idref="2m1gx-e5eeb1497e75bb2493d7d087123d6a92"/>
+                            <UML:Transition xmi.idref="11zp-33b828ba861ba6541dc89b468ec1d8b6"/>
                           </UML:StateVertex.incoming>
                           <UML:State.entry>
                             <UML:Action xmi.id="1k60k-e5eeb1497e75bb2493d7d087123d6a92" name="SCR_INHERITANCE_TRANSACTION_DETAILS_Entry" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
@@ -4692,6 +4694,22 @@
                           <UML:State.doActivity>
                             <UML:Action xmi.id="1k60l-e5eeb1497e75bb2493d7d087123d6a92" name="NONE" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
                           </UML:State.doActivity>
+                          <UML:State.internalTransition>
+                            <UML:Transition xmi.id="11zp-33b828ba861ba6541dc89b468ec1d8b6" name="EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION+%2F+EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION_HANDLER" version="0" unSolvedFlag="false">
+                              <UML:Transition.effect>
+                                <UML:Action xmi.id="l3a-4a81d33c0ebde58b2a0d396d32fb34fa" name="EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION_HANDLER" version="0" unSolvedFlag="false" isAsynchronous="false" actionType="5"></UML:Action>
+                              </UML:Transition.effect>
+                              <UML:Transition.trigger>
+                                <UML:Event xmi.id="l39-4a81d33c0ebde58b2a0d396d32fb34fa" name="EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION" version="0" unSolvedFlag="false"></UML:Event>
+                              </UML:Transition.trigger>
+                              <UML:Transition.source>
+                                <UML:StateVertex xmi.idref="6tue-e5eeb1497e75bb2493d7d087123d6a92"/>
+                              </UML:Transition.source>
+                              <UML:Transition.target>
+                                <UML:StateVertex xmi.idref="6tue-e5eeb1497e75bb2493d7d087123d6a92"/>
+                              </UML:Transition.target>
+                            </UML:Transition>
+                          </UML:State.internalTransition>
                         </UML:CompositeState>
                         <UML:CompositeState xmi.id="2gt2-e5eeb1497e75bb2493d7d087123d6a92" name="SCR_INHERITANCE_WITHDRAW_BALANCE%5BLAYER%3A%3ALAYER_ONSCREEN%5D" version="0" unSolvedFlag="false" isConcurrent="true" isOrthogonal="false" isRegion="true">
                           <UML:StateVertex.container>

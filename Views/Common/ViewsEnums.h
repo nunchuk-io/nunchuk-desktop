@@ -911,166 +911,167 @@ public:
     enum EVT_STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS
     {
         EVT_STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_MIN=EVT_STATE_ID_SCR_INHERITANCE_CONFIRM_TRANSACTION_MAX+1, // 593
-        EVT_INHERITANCE_TRANSACTION_DETAILS_BACK                                                                   , // 594
-        EVT_STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_MAX                                                       , // 595
+        EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION                                                                 , // 594
+        EVT_INHERITANCE_TRANSACTION_DETAILS_BACK                                                                   , // 595
+        EVT_STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_MAX                                                       , // 596
     };
     enum EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE
     {
-        EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_MIN=EVT_STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_MAX+1, // 596
-        EVT_INHERITANCE_CREATE_DRAFT_TX_REQUEST                                                                 , // 597
-        EVT_INHERITANCE_NEW_TRANSACTION_REQ                                                                     , // 598
-        EVT_INHERITANCE_WITHDRAW_BALANCE_BACK                                                                   , // 599
-        EVT_INHERITANCE_CONFIRM_TRANSACTION_REQUEST                                                             , // 600
-        EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_MAX                                                       , // 601
+        EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_MIN=EVT_STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS_MAX+1, // 597
+        EVT_INHERITANCE_CREATE_DRAFT_TX_REQUEST                                                                 , // 598
+        EVT_INHERITANCE_NEW_TRANSACTION_REQ                                                                     , // 599
+        EVT_INHERITANCE_WITHDRAW_BALANCE_BACK                                                                   , // 600
+        EVT_INHERITANCE_CONFIRM_TRANSACTION_REQUEST                                                             , // 601
+        EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_MAX                                                       , // 602
     };
     enum EVT_STATE_ID_SCR_ADD_HARDWARE_ASK
     {
-        EVT_STATE_ID_SCR_ADD_HARDWARE_ASK_MIN=EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_MAX+1, // 602
-        EVT_ADD_HARDWARE_ASK_ENTER                                                               , // 603
-        EVT_STATE_ID_SCR_ADD_HARDWARE_ASK_MAX                                                    , // 604
+        EVT_STATE_ID_SCR_ADD_HARDWARE_ASK_MIN=EVT_STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE_MAX+1, // 603
+        EVT_ADD_HARDWARE_ASK_ENTER                                                               , // 604
+        EVT_STATE_ID_SCR_ADD_HARDWARE_ASK_MAX                                                    , // 605
     };
     enum EVT_STATE_ID_SCR_ADD_HARDWARE
     {
-        EVT_STATE_ID_SCR_ADD_HARDWARE_MIN=EVT_STATE_ID_SCR_ADD_HARDWARE_ASK_MAX+1, // 605
-        EVT_SCAN_HARDWARE_DEVICE_REQUEST                                         , // 606
-        EVT_ADD_HARDWARE_DEVICE_REQUEST                                          , // 607
-        EVT_STATE_ID_SCR_ADD_HARDWARE_MAX                                        , // 608
+        EVT_STATE_ID_SCR_ADD_HARDWARE_MIN=EVT_STATE_ID_SCR_ADD_HARDWARE_ASK_MAX+1, // 606
+        EVT_SCAN_HARDWARE_DEVICE_REQUEST                                         , // 607
+        EVT_ADD_HARDWARE_DEVICE_REQUEST                                          , // 608
+        EVT_STATE_ID_SCR_ADD_HARDWARE_MAX                                        , // 609
     };
     enum EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE
     {
-        EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_MIN=EVT_STATE_ID_SCR_ADD_HARDWARE_MAX+1, // 609
-        EVT_SELECT_WALLET_REQUEST                                                            , // 610
-        EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_MAX                                    , // 611
+        EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_MIN=EVT_STATE_ID_SCR_ADD_HARDWARE_MAX+1, // 610
+        EVT_SELECT_WALLET_REQUEST                                                            , // 611
+        EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_MAX                                    , // 612
     };
     enum EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN
     {
-        EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_MIN=EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_MAX+1, // 612
-        EVT_UPDATE_ACTIVATION_DATE_REQUEST                                                                 , // 613
-        EVT_UPDATE_MESSAGE_REQUEST                                                                         , // 614
-        EVT_UPDATE_BUFFER_PERIOD_REQUEST                                                                   , // 615
-        EVT_UPDATE_NOTIFICATION_PREFERENCE_REQ                                                             , // 616
-        EVT_NOT_UPDATE_ANY_NOTI_REQ                                                                        , // 617
-        EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_MAX                                                    , // 618
+        EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_MIN=EVT_STATE_ID_SCR_SELECT_WALLET_CO_SIGN_POLICE_MAX+1, // 613
+        EVT_UPDATE_ACTIVATION_DATE_REQUEST                                                                 , // 614
+        EVT_UPDATE_MESSAGE_REQUEST                                                                         , // 615
+        EVT_UPDATE_BUFFER_PERIOD_REQUEST                                                                   , // 616
+        EVT_UPDATE_NOTIFICATION_PREFERENCE_REQ                                                             , // 617
+        EVT_NOT_UPDATE_ANY_NOTI_REQ                                                                        , // 618
+        EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_MAX                                                    , // 619
     };
     enum EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS
     {
-        EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS_MIN=EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_MAX+1, // 619
-        EVT_UPDATE_YOUR_SECRET_REQUEST                                                           , // 620
-        EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS_MAX                                                  , // 621
+        EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS_MIN=EVT_STATE_ID_SCR_EDIT_YOUR_INHERITANCE_PLAN_MAX+1, // 620
+        EVT_UPDATE_YOUR_SECRET_REQUEST                                                           , // 621
+        EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS_MAX                                                  , // 622
     };
     enum EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST
     {
-        EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST_MIN=EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS_MAX+1, // 622
-        EVT_ADD_EXIST_HARDWARE_REQUEST                                                   , // 623
-        EVT_ADD_NEW_HARDWARE_REQUEST                                                     , // 624
-        EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST_MAX                                          , // 625
+        EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST_MIN=EVT_STATE_ID_SCR_SHARE_YOUR_SECRETS_MAX+1, // 623
+        EVT_ADD_EXIST_HARDWARE_REQUEST                                                   , // 624
+        EVT_ADD_NEW_HARDWARE_REQUEST                                                     , // 625
+        EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST_MAX                                          , // 626
     };
     enum EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO
     {
-        EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO_MIN=EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST_MAX+1, // 626
-        EVT_DASHBOARD_ALERT_INFO_ENTER                                                     , // 627
-        EVT_ADD_HARDWARE_KEY_EXIST_REQ                                                     , // 628
-        EVT_ADD_HARDWARE_KEY_REQUEST                                                       , // 629
-        EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO_MAX                                          , // 630
+        EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO_MIN=EVT_STATE_ID_SCR_ADD_HARDWARE_EXIST_MAX+1, // 627
+        EVT_DASHBOARD_ALERT_INFO_ENTER                                                     , // 628
+        EVT_ADD_HARDWARE_KEY_EXIST_REQ                                                     , // 629
+        EVT_ADD_HARDWARE_KEY_REQUEST                                                       , // 630
+        EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO_MAX                                          , // 631
     };
     enum EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS
     {
-        EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_MIN=EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO_MAX+1, // 631
-        EVT_KEY_HEALTH_CHECK_STATUS_ENTER                                                       , // 632
-        EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_MAX                                            , // 633
+        EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_MIN=EVT_STATE_ID_SCR_DASHBOARD_ALERT_INFO_MAX+1, // 632
+        EVT_KEY_HEALTH_CHECK_STATUS_ENTER                                                       , // 633
+        EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_MAX                                            , // 634
     };
     enum EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING
     {
-        EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING_MIN=EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_MAX+1, // 634
-        EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST                                                    , // 635
-        EVT_HEALTH_CHECK_STARTING_CLOSE                                                          , // 636
-        EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING_MAX                                               , // 637
+        EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING_MIN=EVT_STATE_ID_SCR_KEY_HEALTH_CHECK_STATUS_MAX+1, // 635
+        EVT_HEALTH_CHECK_ACTION_ENTER_REQUEST                                                    , // 636
+        EVT_HEALTH_CHECK_STARTING_CLOSE                                                          , // 637
+        EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING_MAX                                               , // 638
     };
     enum EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS
     {
-        EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_MIN=EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING_MAX+1, // 638
-        EVT_DASHBOARD_ALERT_SUCCESS_ENTER_REQUEST                                                , // 639
-        EVT_DASHBOARD_ALERT_SUCCESS_CLOSE                                                        , // 640
-        EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_MAX                                             , // 641
+        EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_MIN=EVT_STATE_ID_SCR_HEALTH_CHECK_STARTING_MAX+1, // 639
+        EVT_DASHBOARD_ALERT_SUCCESS_ENTER_REQUEST                                                , // 640
+        EVT_DASHBOARD_ALERT_SUCCESS_CLOSE                                                        , // 641
+        EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_MAX                                             , // 642
     };
     enum EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION
     {
-        EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION_MIN=EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_MAX+1, // 642
-        EVT_INPUT_SECURITY_QUESTION_REQUEST                                                        , // 643
-        EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ                                                     , // 644
-        EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION_MAX                                               , // 645
+        EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION_MIN=EVT_STATE_ID_SCR_DASHBOARD_ALERT_SUCCESS_MAX+1, // 643
+        EVT_INPUT_SECURITY_QUESTION_REQUEST                                                        , // 644
+        EVT_SETUP_ANSWER_SECURITY_QUESTION_REQ                                                     , // 645
+        EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION_MAX                                               , // 646
     };
     enum EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION
     {
-        EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_MIN=EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION_MAX+1, // 646
-        EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ                                                            , // 647
-        EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK                                                           , // 648
-        EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_MAX                                               , // 649
+        EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_MIN=EVT_STATE_ID_SCR_SETUP_SECURITY_QUESTION_MAX+1, // 647
+        EVT_INPUT_ANSWER_SECURITY_QUESTION_REQ                                                            , // 648
+        EVT_SETUP_ANSWER_SECURITY_QUESTION_BACK                                                           , // 649
+        EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_MAX                                               , // 650
     };
     enum EVT_STATE_ID_SCR_RECURRING_PAYMENTS
     {
-        EVT_STATE_ID_SCR_RECURRING_PAYMENTS_MIN=EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_MAX+1, // 650
-        EVT_RECURRING_PAYMENTS_ENTER                                                                 , // 651
-        EVT_STATE_ID_SCR_RECURRING_PAYMENTS_MAX                                                      , // 652
+        EVT_STATE_ID_SCR_RECURRING_PAYMENTS_MIN=EVT_STATE_ID_SCR_SETUP_ANSWER_SECURITY_QUESTION_MAX+1, // 651
+        EVT_RECURRING_PAYMENTS_ENTER                                                                 , // 652
+        EVT_STATE_ID_SCR_RECURRING_PAYMENTS_MAX                                                      , // 653
     };
     enum EVT_STATE_ID_SCR_ONBOARDING
     {
-        EVT_STATE_ID_SCR_ONBOARDING_MIN=EVT_STATE_ID_SCR_RECURRING_PAYMENTS_MAX+1, // 653
-        EVT_ONBOARDING_ACTION_REQUEST                                            , // 654
-        EVT_ONBOARDING_CLOSE                                                     , // 655
-        EVT_STATE_ID_SCR_ONBOARDING_MAX                                          , // 656
+        EVT_STATE_ID_SCR_ONBOARDING_MIN=EVT_STATE_ID_SCR_RECURRING_PAYMENTS_MAX+1, // 654
+        EVT_ONBOARDING_ACTION_REQUEST                                            , // 655
+        EVT_ONBOARDING_CLOSE                                                     , // 656
+        EVT_STATE_ID_SCR_ONBOARDING_MAX                                          , // 657
     };
     enum EVT_STATE_ID_SCR_SELECT_SERVER
     {
-        EVT_STATE_ID_SCR_SELECT_SERVER_MIN=EVT_STATE_ID_SCR_ONBOARDING_MAX+1, // 657
-        EVT_SELECT_SERVER_ENTER                                             , // 658
-        EVT_STATE_ID_SCR_SELECT_SERVER_MAX                                  , // 659
+        EVT_STATE_ID_SCR_SELECT_SERVER_MIN=EVT_STATE_ID_SCR_ONBOARDING_MAX+1, // 658
+        EVT_SELECT_SERVER_ENTER                                             , // 659
+        EVT_STATE_ID_SCR_SELECT_SERVER_MAX                                  , // 660
     };
     enum EVT_STATE_ID_SCR_CHANGE_EMAIL
     {
-        EVT_STATE_ID_SCR_CHANGE_EMAIL_MIN=EVT_STATE_ID_SCR_SELECT_SERVER_MAX+1, // 660
-        EVT_CHANGE_EMAIL_ENTER                                                , // 661
-        EVT_STATE_ID_SCR_CHANGE_EMAIL_MAX                                     , // 662
+        EVT_STATE_ID_SCR_CHANGE_EMAIL_MIN=EVT_STATE_ID_SCR_SELECT_SERVER_MAX+1, // 661
+        EVT_CHANGE_EMAIL_ENTER                                                , // 662
+        EVT_STATE_ID_SCR_CHANGE_EMAIL_MAX                                     , // 663
     };
     enum EVT_STATE_ID_SCR_REPLACE_SELECT_KEY
     {
-        EVT_STATE_ID_SCR_REPLACE_SELECT_KEY_MIN=EVT_STATE_ID_SCR_CHANGE_EMAIL_MAX+1, // 663
-        EVT_REPLACE_SELECT_KEY_ENTER                                               , // 664
-        EVT_STATE_ID_SCR_REPLACE_SELECT_KEY_MAX                                    , // 665
+        EVT_STATE_ID_SCR_REPLACE_SELECT_KEY_MIN=EVT_STATE_ID_SCR_CHANGE_EMAIL_MAX+1, // 664
+        EVT_REPLACE_SELECT_KEY_ENTER                                               , // 665
+        EVT_STATE_ID_SCR_REPLACE_SELECT_KEY_MAX                                    , // 666
     };
     enum EVT_STATE_ID_SCR_REPLACE_KEYS
     {
-        EVT_STATE_ID_SCR_REPLACE_KEYS_MIN=EVT_STATE_ID_SCR_REPLACE_SELECT_KEY_MAX+1, // 666
-        EVT_REPLACE_KEYS_ENTER                                                     , // 667
-        EVT_STATE_ID_SCR_REPLACE_KEYS_MAX                                          , // 668
+        EVT_STATE_ID_SCR_REPLACE_KEYS_MIN=EVT_STATE_ID_SCR_REPLACE_SELECT_KEY_MAX+1, // 667
+        EVT_REPLACE_KEYS_ENTER                                                     , // 668
+        EVT_STATE_ID_SCR_REPLACE_KEYS_MAX                                          , // 669
     };
     enum EVT_STATE_ID_SCR_EDIT_MEMBERS
     {
-        EVT_STATE_ID_SCR_EDIT_MEMBERS_MIN=EVT_STATE_ID_SCR_REPLACE_KEYS_MAX+1, // 669
-        EVT_EDIT_MEMBERS_ENTER_REQUEST                                       , // 670
-        EVT_EDIT_MEMBERS_CLOSE                                               , // 671
-        EVT_STATE_ID_SCR_EDIT_MEMBERS_MAX                                    , // 672
+        EVT_STATE_ID_SCR_EDIT_MEMBERS_MIN=EVT_STATE_ID_SCR_REPLACE_KEYS_MAX+1, // 670
+        EVT_EDIT_MEMBERS_ENTER_REQUEST                                       , // 671
+        EVT_EDIT_MEMBERS_CLOSE                                               , // 672
+        EVT_STATE_ID_SCR_EDIT_MEMBERS_MAX                                    , // 673
     };
     enum EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB
     {
-        EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB_MIN=EVT_STATE_ID_SCR_EDIT_MEMBERS_MAX+1, // 673
-        EVT_SIGN_IN_VIA_XPUB_ENTER                                               , // 674
-        EVT_SIGN_IN_VIA_XPUB_CLOSE                                               , // 675
-        EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB_MAX                                    , // 676
+        EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB_MIN=EVT_STATE_ID_SCR_EDIT_MEMBERS_MAX+1, // 674
+        EVT_SIGN_IN_VIA_XPUB_ENTER                                               , // 675
+        EVT_SIGN_IN_VIA_XPUB_CLOSE                                               , // 676
+        EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB_MAX                                    , // 677
     };
     enum EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL
     {
-        EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL_MIN=EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB_MAX+1, // 677
-        EVT_COIN_DETAILS_CONTROL_ENTER                                                   , // 678
-        EVT_COIN_DETAILS_CONTROL_CLOSE                                                   , // 679
-        EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL_MAX                                        , // 680
+        EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL_MIN=EVT_STATE_ID_SCR_SIGN_IN_VIA_XPUB_MAX+1, // 678
+        EVT_COIN_DETAILS_CONTROL_ENTER                                                   , // 679
+        EVT_COIN_DETAILS_CONTROL_CLOSE                                                   , // 680
+        EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL_MAX                                        , // 681
     };
     enum EVT_STATE_ID_SCR_SETUP_GROUP_WALLET
     {
-        EVT_STATE_ID_SCR_SETUP_GROUP_WALLET_MIN=EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL_MAX+1, // 681
-        EVT_SETUP_GROUP_WALLET_ENTER                                                       , // 682
-        EVT_SETUP_GROUP_WALLET_BACK                                                        , // 683
-        EVT_STATE_ID_SCR_SETUP_GROUP_WALLET_MAX                                            , // 684
+        EVT_STATE_ID_SCR_SETUP_GROUP_WALLET_MIN=EVT_STATE_ID_SCR_COIN_DETAILS_CONTROL_MAX+1, // 682
+        EVT_SETUP_GROUP_WALLET_ENTER                                                       , // 683
+        EVT_SETUP_GROUP_WALLET_BACK                                                        , // 684
+        EVT_STATE_ID_SCR_SETUP_GROUP_WALLET_MAX                                            , // 685
     };
 
 };

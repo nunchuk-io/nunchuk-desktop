@@ -3966,3 +3966,22 @@ bool nunchukiface::RevealPreimage(const std::string &wallet_id, const std::strin
     }
     return ret;
 }
+
+std::string nunchukiface::GetWalletExportData(const std::string &wallet_id, nunchuk::ExportFormat format, QWarningMessage &msg)
+{
+    std::string ret = "";
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetWalletExportData(wallet_id, format);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}

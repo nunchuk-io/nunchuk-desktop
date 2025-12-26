@@ -20,6 +20,8 @@
 
 
 #include "STATE_ID_SCR_INHERITANCE_TRANSACTION_DETAILS.h"
+#include "AppModel.h"
+#include "Transactions/TransactionHelper.h"
 
 void SCR_INHERITANCE_TRANSACTION_DETAILS_Entry(QVariant msg) {
 
@@ -33,3 +35,48 @@ void EVT_INHERITANCE_TRANSACTION_DETAILS_BACK_HANDLER(QVariant msg) {
 
 }
 
+void EVT_INHERITANCE_TRANSACTION_DETAILS_ACTION_HANDLER(QVariant msg) {
+    QMap<QString, QVariant> maps = msg.toMap();
+    QString type = maps["type"].toString();
+    DBG_INFO << type;
+    if (type == "address-to-verify") {
+        auto address = maps["address"].toString();
+        helper::transaction::verifyAddress(address);
+    }
+    else if (type == "memo-notify") {
+        auto memo = maps["memo"].toString();
+        helper::transaction::setMemo(memo);
+    }
+    else if (type == "scan-device") {
+        helper::transaction::scanDevice(msg);
+    }
+    else if (type == "claim-tx-sign") {
+        auto xfp = maps["xfp"].toString();
+        helper::transaction::signRequest(xfp);
+    }
+    else if (type == "claim-tx-import-qr") {
+        helper::transaction::importQr(msg);
+    }
+    else if (type == "claim-tx-import") {
+        auto file = maps["file"].toString();
+        helper::transaction::importFile(msg);
+    }
+    else if (type == "claim-tx-export") {
+        helper::transaction::exportFile(msg);
+    }
+    else if (type == "register-wallet") {
+        // helper::transaction::registerWallet(msg);
+    }
+    else if (type == "force-sync-claim-tx") {
+        // helper::transaction::forceSyncWalletDb(msg);
+    }
+    else if (type == "claim-tx-export-qr") {
+        helper::transaction::exportQr(msg);
+    }
+    else if (type == "claim-tx-export-bbqr") {
+        // helper::transaction::exportBbqr(msg);
+    }
+    else if (type == "tx-broadcast") {
+        helper::transaction::broadcast(msg);
+    }
+}

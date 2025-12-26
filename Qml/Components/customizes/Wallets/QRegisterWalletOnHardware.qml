@@ -25,6 +25,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.wallets.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -34,12 +35,20 @@ import "../../../Components/customizes/QRCodes"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
+    id: root
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
     label.text: ""
     extraHeader: Item {}
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onCloseClicked: {
+        reqCloseTo(NUNCHUCKTYPE.CURRENT_TAB)
+        vm.close();
+    }
+    function reqCloseTo(tab) {
+        if (typeof(closeTo) === "function")
+            closeTo(tab);
+    }
     property var walletInfo: AppModel.walletInfo
     Item {
         anchors {
@@ -80,10 +89,28 @@ QOnScreenContentTypeB {
                 lineHeight: 28
                 wrapMode: Text.WordWrap
             }
+            QLato {
+                width: 550
+                text: STR.STR_QML_2064
+                verticalAlignment: Text.AlignVCenter
+                lineHeightMode: Text.FixedHeight
+                lineHeight: 28
+                wrapMode: Text.WordWrap
+                visible: vm.event == RegisterWalletOnHardwareViewModel.WithdrawBitcoin
+            }
+            QWarningBgMulti {
+                width: 528
+                visible: vm.event == RegisterWalletOnHardwareViewModel.WithdrawBitcoin
+                height: 64
+                icon: ""
+                txt.text: STR.STR_QML_2063
+            }
         }
+        
     }
     onPrevClicked: {
-        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+        reqCloseTo(NUNCHUCKTYPE.CURRENT_TAB)
+        vm.back()
     }
     bottomRight: Row {
         spacing: 12
@@ -94,7 +121,8 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+                reqCloseTo(NUNCHUCKTYPE.CURRENT_TAB)
+                vm.cancel()
             }
         }
         QButtonLargeTail {
@@ -384,5 +412,15 @@ QOnScreenContentTypeB {
     QQrExportResultPDF {
         id: qrcodeExportResult
         model: AppModel.qrExported
+    }
+    RegisterWalletOnHardwareViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
+            FlowManager.currentFlow.bind(vm)
+            if (vm.event == RegisterWalletOnHardwareViewModel.WithdrawBitcoin) {
+                root.walletInfo = vm.walletInfo
+            }            
+        }
     }
 }

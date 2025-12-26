@@ -434,31 +434,41 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
             QDateTime now = QDateTime::currentDateTimeUtc().toTimeZone(tz);
             qint64 secsRemaining = now.secsTo(dt);
             QString valueRemaining;
+            QString valueFrom = "today";
             if (secsRemaining <= 0) {
                 valueRemaining = "expired";
             } else {
                 int days = secsRemaining / (24 * 3600);
-                int hours = (secsRemaining % (24 * 3600)) / 3600;
-                int minutes = (secsRemaining % 3600) / 60;
                 QStringList parts;
-                if (days > 0)
+                if (days > 0){
                     parts << QString("%1 day%2").arg(days).arg(days > 1 ? "s" : "");
-                if (hours > 0)
-                    parts << QString("%1 hour%2").arg(hours).arg(hours > 1 ? "s" : "");
-                if (minutes > 0)
-                    parts << QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
-
+                }
+                else{
+                    int hours = (secsRemaining % (24 * 3600)) / 3600;
+                    int minutes = (secsRemaining % 3600) / 60;
+                    valueFrom = "now";
+                    if (hours > 0){
+                        parts << QString("%1 hour%2").arg(hours).arg(hours > 1 ? "s" : "");
+                    }
+                    if (minutes > 0){
+                        parts << QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+                    }
+                }
                 valueRemaining = parts.join(" ");
             }
             absolute_time_data["valueRemaining"] = valueRemaining;
+            absolute_time_data["valueFrom"]      = valueFrom;
+            firstLineObj["hasUnlocked"] = secsRemaining > 0 ? false : true;
             firstLineObj["absoluteTimestamp"]  = QJsonObject::fromVariantMap(absolute_time_data);
         }
         else if (lockType == nunchuk::Timelock::Based::HEIGHT_LOCK) {
             firstLineObj["absoluteBlockheight"] = (double)absolute_lock;
+            firstLineObj["hasUnlocked"] = absolute_lock > 0 ? false : true;
         }
         else {
             firstLineObj["absoluteTimestamp"] = "N/A";
             firstLineObj["absoluteBlockheight"] = 0;
+            firstLineObj["hasUnlocked"] = true;
         }
         firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(firstLineObj);
@@ -497,14 +507,17 @@ QJsonArray MiniscriptWallet::createTreeMiniscript(const nunchuk::ScriptNode &nod
             relative_time_data["valueHour"] = hour;
             relative_time_data["valueMinute"] = minute;
             relative_time_data["valueDisplay"] = valueDisplay;
+            firstLineObj["hasUnlocked"] = relative_lock > 0 ? false : true;
             firstLineObj["relativeTimestamp"] = QJsonObject::fromVariantMap(relative_time_data);
         }
         else if (lockType == nunchuk::Timelock::Based::HEIGHT_LOCK) {
+            firstLineObj["hasUnlocked"] = relative_lock > 0 ? false : true;
             firstLineObj["relativeBlockheight"] = (double)relative_lock;
         }
         else {
             firstLineObj["relativeTimestamp"] = 0;
             firstLineObj["relativeBlockheight"] = 0;
+            firstLineObj["hasUnlocked"] = true;
         }
         firstLineObj["levels"] = QJsonValue::fromVariant(qUtils::toVariant(levels));
         treeLines.append(firstLineObj);
@@ -844,6 +857,7 @@ void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks)
         QVariantMap obj;
         QString valueNodeStr;
         QString valueRemainingStr;
+        QString valueFrom = "today";
         bool isLocked = false;
 
         if (timeUnit() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
@@ -855,10 +869,13 @@ void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks)
             if (days > 0) {
                 valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
                 isLocked = true;
-            } else {
-                valueRemainingStr = "";
             }
-        } else {
+            else {
+                valueRemainingStr = "";
+                valueFrom = "now";
+            }
+        }
+        else {
             QLocale locale(QLocale::English);
             int64_t currentHeight = AppModel::instance()->blockHeight();
             int64_t remain = val - currentHeight;
@@ -867,8 +884,10 @@ void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks)
                 QString remainStr = locale.toString(remain);
                 valueRemainingStr = remainStr + (remain == 1 ? " block left" : " blocks left");
                 isLocked = true;
-            } else {
+            }
+            else {
                 valueRemainingStr = "";
+                valueFrom = "now";
             }
         }
 
@@ -878,6 +897,7 @@ void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks)
         obj["valueIndex"] = i;
         obj["valueRemaining"] = valueRemainingStr;
         obj["valueLocked"] = isLocked;
+        obj["valueFrom"] = valueFrom;
         ret << obj;
     }
 
@@ -887,6 +907,7 @@ void MiniscriptWallet::setTimelocklist(const std::vector<int64_t> timelocks)
         emptyObj["valueIndex"] = ret.size();
         emptyObj["valueLocked"] = anyLocked;
         emptyObj["valueRemaining"] = anyLocked ? "" : "Unlocked";
+        emptyObj["valueFrom"] = "today";
         ret << emptyObj;
     }
     setTimeLocked(anyLocked);
@@ -921,24 +942,31 @@ void MiniscriptWallet::updateTimeMiniscript(const QString &key, const QVariant &
         QDateTime now = QDateTime::currentDateTimeUtc().toTimeZone(tz);
         qint64 secsRemaining = now.secsTo(dt);
         QString valueRemaining;
+        QString valueFrom = "today";
         if (secsRemaining <= 0) {
             valueRemaining = "expired";
-        } else {
+        }
+        else {
             int days = secsRemaining / (24 * 3600);
-            int hours = (secsRemaining % (24 * 3600)) / 3600;
-            int minutes = (secsRemaining % 3600) / 60;
             QStringList parts;
-            if (days > 0)
+            if (days > 0){
                 parts << QString("%1 day%2").arg(days).arg(days > 1 ? "s" : "");
-            if (hours > 0)
-                parts << QString("%1 hour%2").arg(hours).arg(hours > 1 ? "s" : "");
-            if (minutes > 0)
-                parts << QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
-
+            }
+            else {
+                int hours = (secsRemaining % (24 * 3600)) / 3600;
+                int minutes = (secsRemaining % 3600) / 60;
+                valueFrom = "now";
+                if (hours > 0){
+                    parts << QString("%1 hour%2").arg(hours).arg(hours > 1 ? "s" : "");
+                }
+                if (minutes > 0){
+                    parts << QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+                }
+            }
             valueRemaining = parts.join(" ");
         }
         absolute_data["valueRemaining"] = valueRemaining;
-
+        absolute_data["valueFrom"]      = valueFrom;
         m_timeMiniData[key] = absolute_data;
     }
     else if(qUtils::strCompare("relativeTimestamp", key)) {
@@ -984,6 +1012,7 @@ void MiniscriptWallet::clearTimeMiniscript(const QString &userInput) {
     absolute_time_data["valueDate"] = datetime.toString("MM/dd/yyyy");
     absolute_time_data["valueTime"] = time.toString("hh:mm");
     absolute_time_data["valueRemaining"] = "90d";
+    absolute_time_data["valueFrom"]      = "today";
     m_timeMiniData["absoluteTimestamp"] = absolute_time_data;
 
     QVariantMap relative_time_data;

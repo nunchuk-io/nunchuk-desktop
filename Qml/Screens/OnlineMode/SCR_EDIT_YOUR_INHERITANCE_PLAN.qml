@@ -32,13 +32,15 @@ import "../../Components/customizes/Chats"
 import "../../Components/customizes/Texts"
 import "../../Components/customizes/Buttons"
 import "../OnlineMode/Inheritances"
+import "../OnlineMode/SetupWallets/TimeLocks"
 import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     property var inheritancePlanInfo: ServiceSetting.walletInfo.inheritancePlanInfo
     property int actionPlan: inheritancePlanInfo.actionPlan
     readonly property var map_screens: [
-        {action_plan: ServiceType.IE_ACTIVATION_DATE,       screen_component: _edit_setup_an_activation_date},
+        // {action_plan: ServiceType.IE_ACTIVATION_DATE,       screen_component: _edit_setup_an_activation_date},
+        {action_plan: ServiceType.IE_ACTIVATION_DATE,       screen_component: _edit_setup_offchain_timelock},
         {action_plan: ServiceType.IE_LEAVE_MESSAGE,         screen_component: _edit_leave_a_message},
         {action_plan: ServiceType.IE_NOTIFICATION,          screen_component: _edit_notification_preferences},
         {action_plan: ServiceType.IE_BUFFER_PERIOD,         screen_component: _edit_setup_buffer_period},
@@ -53,7 +55,6 @@ QScreen {
         id: _edit_setup_an_activation_date
         QEditInheritanceSetupAnActivationDate {
             planInfo: inheritancePlanInfo.planInfo
-
         }
     }
     Component {
@@ -75,13 +76,10 @@ QScreen {
             planInfo: inheritancePlanInfo.planInfo
         }
     }
-
-
-
-
-
-
-
-
-
+    Component {
+        id: _edit_setup_offchain_timelock
+        QSetupOffChainTimelockWallet {
+            planInfo: inheritancePlanInfo.planInfo
+        }
+    }
 }

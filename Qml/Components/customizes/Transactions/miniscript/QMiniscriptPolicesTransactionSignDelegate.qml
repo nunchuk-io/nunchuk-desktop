@@ -95,4 +95,17 @@ QMiniscriptPolicesDelegate {
             }
         }
     }
+
+    function getAfterOlder() {
+        return after_older_tmp
+    }
+    function getAfterOlderHeight() {
+        return 48
+    }
+    Component {
+        id: after_older_tmp
+        QAfterOlderComponentTransaction {
+
+        }
+    }
 }

@@ -86,7 +86,6 @@ QOnScreenContentTypeA {
             }
         }
         state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
-        refreshDeviceList: walletInfo.deviceList
         Connections {
             target: walletInfo
             onDeviceListChanged: {

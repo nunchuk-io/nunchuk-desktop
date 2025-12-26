@@ -48,11 +48,19 @@ QScreen {
                 QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
             }
             onSignalCreateTransaction: {
-                createTxBusyBox.open()
-                timerCreateTx.restart()
-                var input = { type: "create-transaction",
-                            fee: msg}
-                QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
+                var walletType = AppModel.transactionInfo.walletType
+                if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                    var input = { type: "create-transaction-miniscript",
+                                fee: msg}
+                    QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
+                } else {
+                    createTxBusyBox.open()
+                    timerCreateTx.restart()
+                    var input = { type: "create-transaction",
+                                fee: msg}
+                    QMLHandle.signalNotifySendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ, input)
+                }
+                
             }
             onRequestSort: {
             }

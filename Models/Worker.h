@@ -52,7 +52,7 @@ private:
     static Worker *mInstance;
 public slots:
     void slotStartCreateMasterSigner(const QString &name,
-                                     const int deviceIndex);
+                                     const QString xfp);
 
     void slotStartCreateRemoteSigner(const QString &name,
                                      const QString &xpub,
@@ -376,8 +376,8 @@ public slots:
                                           int type,
                                           int code);
 signals:
-    void startCreateMasterSigner(const QString id,
-                                 const int deviceIndex);
+    void startCreateMasterSigner(const QString name,
+                                 const QString xfp);
 
     void startCreateRemoteSigner(const QString &name,
                                  const QString &xpub,

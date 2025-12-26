@@ -46,6 +46,7 @@ Row {
             height: 24
             Row {
                 anchors.fill: parent
+                spacing: 4
                 QBadge {
                     id: _center1
                     color: "#EAEAEA"

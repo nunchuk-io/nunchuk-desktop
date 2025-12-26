@@ -37,7 +37,8 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1950
-    property var user: ClientController.user
+    property var    user: ClientController.user
+    property var    walletInfo: AppModel.walletInfo
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     readonly property var hb_description_map: [
         {height: 40,  description: STR.STR_QML_1889 },
@@ -56,25 +57,40 @@ QOnScreenContentTypeA {
         var n = dashInfo.nInfo
         var allowInheritance = dashInfo.allowInheritance
         if (m === 2 && n === 4) {
-            return "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.png"
-        } else if (m === 3 && n === 5) {
-            return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.png"
-                                    : "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-off.png"
-        } else {
-            // Default fallback
-            return "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-off.png"
+            return "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.svg"
+        }
+        else if (m === 3 && n === 5) {
+            return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.svg"
+                                    : "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg"
+        }
+        else {
+            return "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg"
         }
     }
     function guideTextMap() {
-        if (user.isHoneyBadgerUser) {
+        if (walletInfo.isHoneyBadger) {
             return hb_description_map
-        } else if (user.isHoneyBadgerPremierUser || user.isByzantineUserPro) {
+        }
+        else if (walletInfo.isHoneyBadgerPremier || walletInfo.isByzantinePro) {
             return hb_premier_description_map;
-        } else if (user.isFreeUser) {
+        }
+        else if (walletInfo.isFreeWallet) {
             return free_description_map;
+        }
+        else {
+            return hb_description_map;
+        }
+    }
+    function guideInheritance() {
+        var m = dashInfo.mInfo
+        var n = dashInfo.nInfo
+        if (m === 2 && n === 4) {
+            return STR.STR_QML_940_one
+        } else if (m === 3 && n === 5) {
+            return STR.STR_QML_940_two
         } else {
             // Default fallback
-            return hb_description_map;
+            return ""
         }
     }
     content: Item {
@@ -85,7 +101,9 @@ QOnScreenContentTypeA {
                 height: 512
                 radius: 24
                 color: "#D0E2FF"
-                QPicture {
+                QSvgImage {
+                    width: 346
+                    height: width * (implicitHeight / implicitWidth)
                     anchors.centerIn: parent
                     source: guideImageSource()
                 }
@@ -142,12 +160,13 @@ QOnScreenContentTypeA {
                     }
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1891
+                        text: guideInheritance()
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
+                        visible: dashInfo.allowInheritance
                     }
                 }
             }

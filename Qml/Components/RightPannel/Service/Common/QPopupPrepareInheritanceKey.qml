@@ -54,7 +54,7 @@ QPopupOverlayScreen {
         { screen: "restore-seed-phrase-to-hardware-device",   screen_component: restore_seed_phrase_to_hardware_device },
         { screen: "your-plan-requires-two-inheritance-keys-added-one",  screen_component: your_plan_requires_two_inheritance_keys_added_one },
         { screen: "recover-an-existing-seed",               screen_component: _recoverAnExistingSeed },
-        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
+        { screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     content: {
@@ -144,7 +144,7 @@ QPopupOverlayScreen {
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateScreen.backScreen()
             onNextClicked: {
-                _infoPopup.close()
+                stateScreen.setScreenFlow("prepare-inheritance-key")
             }
         }
     }
@@ -154,9 +154,6 @@ QPopupOverlayScreen {
         QRecoverAnExistingSeed {            
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateScreen.backScreen()
-            onNextClicked: {
-                ServiceSetting.servicesTag.requestDownloadWalletViaSeedPhrase(mnemonicstr)
-            }
         }
     }
 
@@ -203,6 +200,34 @@ QPopupOverlayScreen {
                     }
                 }
             }
+        }
+    }
+    QPopupInfoTwoButtons {
+        id: _info
+        signal yesClicked()
+        title: STR.STR_QML_661
+        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        funcs: [
+            function() { yesClicked() },
+            function() {}
+        ]
+    }
+    Connections {
+        target: AppModel
+        onNotifySignerExist: {
+            showPopupInfo(isSoftware, fingerPrint)
+        }
+    }
+    function showPopupInfo(isSoftware, fingerPrint){
+        if (isSoftware) {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = STR.STR_QML_1284
+            _info.open()
+        }
+        else {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = ""
+            _info.open()
         }
     }
 

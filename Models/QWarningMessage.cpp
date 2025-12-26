@@ -142,3 +142,8 @@ void QWarningMessage::resetWarningMessage()
     setType((int)EWARNING::WarningType::NONE_MSG);
     emit contentDisplayChanged();
 }
+
+bool QWarningMessage::isSuccess() const
+{
+    return type_ == (int)EWARNING::WarningType::NONE_MSG;
+}

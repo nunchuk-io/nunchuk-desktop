@@ -38,6 +38,7 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    property string guideDescriptionOne: STR.STR_QML_1926
     property string guideDescriptionTwo: STR.STR_QML_1927
     property string guideExportString: ""
     content: Item {
@@ -52,7 +53,7 @@ QOnScreenContentTypeA {
                     width: 346
                     height: 300
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "qrc:/Images/Images/coldcard-illustration.svg"
+                    source: "qrc:/Images/Images/jade-illustration.svg"
                 }
             }
             Item {
@@ -63,7 +64,7 @@ QOnScreenContentTypeA {
                     spacing: 0
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1926
+                        text: guideDescriptionOne
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap
@@ -73,6 +74,7 @@ QOnScreenContentTypeA {
                     Item {
                         width: parent.width
                         height: 20
+                        visible: guideDescriptionTwo !== ""
                     }
                     QLato {
                         width: parent.width
@@ -82,6 +84,7 @@ QOnScreenContentTypeA {
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
+                        visible: guideDescriptionTwo !== ""
                     }
                     Item {
                         width: parent.width
@@ -124,7 +127,7 @@ QOnScreenContentTypeA {
                                         }
                                         QLato {
                                             id: _term
-                                            width: 310
+                                            width: 305
                                             text: _item.content
                                             textFormat: Text.RichText
                                             lineHeightMode: Text.FixedHeight
@@ -132,7 +135,7 @@ QOnScreenContentTypeA {
                                             wrapMode: Text.Wrap
                                             horizontalAlignment: Text.AlignLeft
                                             verticalAlignment: Text.AlignVCenter
-                                            onLinkActivated: Qt.openUrlExternally("https://coldcard.com/docs/quick")
+                                            onLinkActivated: Qt.openUrlExternally("https://help.blockstream.com/hc/en-us/articles/19629901272345-Set-up-Jade")
                                             MouseArea {
                                                 anchors.fill: parent
                                                 cursorShape: _term.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor

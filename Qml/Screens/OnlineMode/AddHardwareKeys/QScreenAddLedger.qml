@@ -128,7 +128,7 @@ QScreenAdd {
                                             QText {
                                                 width: 310
                                                 text: _item.content
-                                                color: "#031F2B"
+                                                // color: "#031F2B"
                                                 font.family: "Lato"
                                                 font.pixelSize: 16
                                                 lineHeightMode: Text.FixedHeight
@@ -136,6 +136,8 @@ QScreenAdd {
                                                 wrapMode: Text.WordWrap
                                                 horizontalAlignment: Text.AlignLeft
                                                 verticalAlignment: Text.AlignVCenter
+                                                textFormat: Text.RichText
+                                                onLinkActivated: Qt.openUrlExternally(link)
                                             }
                                         }
                                     }
@@ -173,7 +175,6 @@ QScreenAdd {
                 type: eTypeE
                 enabled: _refresh.contentItem.isEnable()
                 onButtonClicked: {
-                    stateScreen.setScreenFlow("eSCREEN_LOADING")
                     _refresh.contentItem.addDevice()
                 }
             }

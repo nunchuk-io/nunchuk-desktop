@@ -1946,7 +1946,8 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                 if (msgtype.contains("io.nunchuk.custom.group_wallet_created", Qt::CaseInsensitive) ||
                     msgtype.contains("io.nunchuk.custom.group_wallet_deleted", Qt::CaseInsensitive) ||
                     msgtype.contains("io.nunchuk.custom.group_wallet_name_changed", Qt::CaseInsensitive) ||
-                    msgtype.contains("io.nunchuk.custom.group_membership_request_created", Qt::CaseInsensitive)) {
+                    msgtype.contains("io.nunchuk.custom.group_membership_request_created", Qt::CaseInsensitive))
+                {
                     AppModel::instance()->requestCreateUserWallets();
                 }
             }
@@ -2036,6 +2037,12 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                 if (dashboard && dashboard->showDashBoard()) {
                     dashboard->GetKeyReplacementStatus();
                 }
+            }
+            else if(msgtype.contains("io.nunchuk.custom.claiming_wallet_created", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.claiming_wallet_deleted", Qt::CaseInsensitive)
+                       || msgtype.contains("io.nunchuk.custom.claiming_wallet_updated", Qt::CaseInsensitive))
+            {
+                AppModel::instance()->requestCreateUserWallets();
             }
             else {
                 // for honey badger

@@ -55,7 +55,7 @@ void EVT_ADD_HARDWARE_SIGNER_TO_WALLET_MASTER_SIGNER_HANDLER(QVariant msg) {
                         AppModel::instance()->showToast(0, STR_CPP_095, EWARNING::WarningType::WARNING_MSG);
                     }
                     else {
-                        AppModel::instance()->startCreateMasterSigner(key_name, deviceIndexSelected);
+                        AppModel::instance()->startCreateMasterSigner(key_name, selectedDv->masterFingerPrint());
                     }
                 }
             };

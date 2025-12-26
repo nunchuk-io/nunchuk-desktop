@@ -33,18 +33,20 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Signers.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
+import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
 
 Item {
     property string title: ""
     property int    state_id: EVT.STATE_ID_SCR_ADD_HARDWARE
     property string selected_xfp: ""
-    property var refreshDeviceList: draftWallet.refreshDeviceList
+    property string signerName: ""
     property alias mDevicelist: devicelist
     Item {
         width: 539
@@ -85,18 +87,19 @@ Item {
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                 }
-                QRefreshButtonA {
+                QRefreshButtonB {
                     width: 174
                     height: 48
                     label: STR.STR_QML_105
                     fontPixelSize: 16
                     color: "transparent"
                     border.color: "transparent"
+                    isLoading: vm.isLoading
                     anchors {
                         right: parent.right
                         verticalCenter: parent.verticalCenter
                     }
-                    onButtonClicked: scanDevice()
+                    onButtonClicked: vm.scanDevice()
                 }
             }
             Rectangle {
@@ -106,19 +109,20 @@ Item {
                 width: 539
                 height: 452
                 radius: 8
-                QRefreshButtonA {
+                QRefreshButtonB {
                     width: 174
                     height: 48
                     label: STR.STR_QML_105
                     fontPixelSize: 16
                     color: "transparent"
                     border.color: "transparent"
+                    isLoading: vm.isLoading
                     anchors {
                         right: parent.right
                         top: parent.top
                         topMargin: 6
                     }
-                    onButtonClicked: scanDevice()
+                    onButtonClicked: vm.scanDevice()
                 }
                 QListView {
                     id: devicelist
@@ -126,7 +130,7 @@ Item {
                     visible: devicelist.count
                     width: parent.width
                     height: Math.min(230, (devicelist.count*44) + ((devicelist.count-1)*8))
-                    model: refreshDeviceList
+                    model: vm.deviceList
                     anchors {
                         left: parent.left
                         leftMargin: 12
@@ -201,20 +205,58 @@ Item {
         }
     }
 
-    property string signerName: ""
-    function scanDevice() {
-        AppModel.startScanDevices(state_id)
-    }
     function addDevice() {
-        if(devicelist.currentIndex !== -1){
-            var masterSignerObj = {
-                "signerNameInputted"    : signerName,
-                "deviceIndexSelected"   : devicelist.currentIndex
-            };
-            QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_DEVICE_REQUEST, masterSignerObj)
+        var masterSignerObj = {
+            "signerNameInputted"    : signerName,
+            "xfpSelected"          : selected_xfp
+        };
+        if (vm.startCreateMaster(masterSignerObj)) {
+            stateScreen.setScreenFlow("eSCREEN_LOADING")
         }
     }
     function isEnable() {
         return devicelist.currentIndex !== -1
+    }
+    function yesClickedHandler() {
+        var masterSignerObj = {
+            "signerNameInputted"    : signerName,
+            "xfpSelected"          : selected_xfp
+        };
+        vm.forceCreateMaster(masterSignerObj)
+        stateScreen.setScreenFlow("eSCREEN_LOADING")
+    }
+    QPopupInfoTwoButtons {
+        id: _info
+        title: STR.STR_QML_661
+        labels: [STR.STR_QML_433,STR.STR_QML_432]
+        funcs: [
+            function() { yesClickedHandler() },
+            function() {}
+        ]
+    }
+    function showPopupInfo(isSoftware, fingerPrint){
+        if (isSoftware) {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = STR.STR_QML_1284
+            _info.open()
+        }
+        else {
+            _info.contentText = STR.STR_QML_1283.arg(fingerPrint.toUpperCase())
+            _info.contentTextTwo = ""
+            _info.open()
+        }
+    }
+    RefreshDevicesViewModel {
+        id: vm
+        tag: _HARDWARE_TAG
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
+        }
+    }
+    Connections {
+        target: vm
+        onNotifySignerExist: {
+            showPopupInfo(isSoftware, selected_xfp)
+        }
     }
 }

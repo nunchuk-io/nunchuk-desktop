@@ -46,28 +46,28 @@ QOnScreenContentTypeB {
 
     readonly property var hb_description_map: [
         {height: 40,  description: STR.STR_QML_1889 },
-        {height: 40,  description: STR.STR_QML_1890 },
+        {height: 40,  description: STR.STR_QML_1890 + STR.STR_QML_2061},
     ]
     readonly property var hb_premier_description_map: [
         {height: 40,  description: STR.STR_QML_1892 },
-        {height: 40,  description: STR.STR_QML_1893 },
+        {height: 40,  description: STR.STR_QML_1893 + STR.STR_QML_2061},
     ]
     readonly property var free_description_map: [
         {height: 40,  description: STR.STR_QML_1892 },
-        {height: 40,  description: STR.STR_QML_1893 },
+        {height: 40,  description: STR.STR_QML_1893 + STR.STR_QML_2061},
     ]
     function guideImageSource() {
         var m = dashInfo.mInfo
         var n = dashInfo.nInfo
         var allowInheritance = dashInfo.allowInheritance
         if (m === 2 && n === 4) {
-            return "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.png"
+            return "qrc:/Images/Images/inheritance-illustration-2-of-4-and-1-of-3.svg"
         } else if (m === 3 && n === 5) {
-            return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.png"
-                                    : "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-off.png"
+            return allowInheritance ? "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4.svg"
+                                    : "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg"
         } else {
             // Default fallback
-            return "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-off.png"
+            return "qrc:/Images/Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg"
         }
     }
     function guideTextMap() {
@@ -99,9 +99,9 @@ QOnScreenContentTypeB {
                     height: 456
                     radius: 24
                     color: "#D0E2FF"
-                    QPictureSmooth {
+                    QSvgImage {
                         width: 346
-                        height: 229
+                        height: width * (implicitHeight / implicitWidth)
                         anchors.verticalCenter: parent.verticalCenter
                         source: guideImageSource()
                     }

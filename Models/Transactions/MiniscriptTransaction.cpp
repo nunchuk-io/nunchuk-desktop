@@ -495,6 +495,12 @@ void MiniscriptTransaction::setSigningPathSelected(const QString &path) {
 }
 
 QVariantList MiniscriptTransaction::miniTreeForSigning() {
+    auto wallet = AppModel::instance()->walletList()->getWalletById(walletId());
+    if (!wallet) {
+        DBG_ERROR << "Wallet info is not available";
+        return {};
+    }
+    DBG_INFO << "isScriptPath:" << isScriptPath();
     if (isScriptPath()) {
         return miniTreeForSigningScriptPath();
     }
@@ -718,7 +724,6 @@ QJsonArray MiniscriptTransaction::createTreeMiniscriptTransaction(
         }
         break;
     }
-
     case nunchuk::ScriptNode::Type::HASH160:
     case nunchuk::ScriptNode::Type::HASH256:
     case nunchuk::ScriptNode::Type::RIPEMD160:

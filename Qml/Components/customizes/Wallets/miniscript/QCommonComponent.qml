@@ -109,8 +109,8 @@ Item {
                     }
                     QIconText {
                         icon: "qrc:/Images/Images/PendingSignatures.png"
-                        visible: miniscript.txStatus == NUNCHUCKTYPE.PENDING_NONCE || miniscript.txStatus == NUNCHUCKTYPE.PENDING_SIGNATURES
-                        text.text: miniscript.txStatus == NUNCHUCKTYPE.PENDING_NONCE ? STR.str_QML_1884(miniscript.pendingNonce) : STR.str_QML_220(miniscript.pendingSignature)
+                        visible: miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE || miniscript.txStatus === NUNCHUCKTYPE.PENDING_SIGNATURES
+                        text.text: miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE ? STR.str_QML_1884(miniscript.pendingNonce) : STR.str_QML_220(miniscript.pendingSignature)
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -122,12 +122,11 @@ Item {
                         verticalCenter: parent.verticalCenter
                     }
                     hasSigned: miniscript.m > miniscript.pendingNonce
-                    visible: miniscript.txStatus == NUNCHUCKTYPE.PENDING_NONCE || 
-                                miniscript.txStatus == NUNCHUCKTYPE.PENDING_SIGNATURES ||
-                                miniscript.txStatus == NUNCHUCKTYPE.READY_TO_BROADCAST
+                    visible: miniscript.txStatus === NUNCHUCKTYPE.PENDING_NONCE ||
+                                miniscript.txStatus === NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                miniscript.txStatus === NUNCHUCKTYPE.READY_TO_BROADCAST
                     txStatus: miniscript.txStatus
                 }
-
             }
             
             QLato {
@@ -221,5 +220,4 @@ Item {
             }
         }
     }
-    
 }

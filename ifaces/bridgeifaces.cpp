@@ -383,22 +383,17 @@ nunchuk::HealthStatus bridge::nunchukHealthCheckSingleSigner(const QSingleSigner
     }
 }
 
-QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
-                                                   const int deviceIndex,
-                                                   QWarningMessage &msg)
-{
-    QString devicePathSelected = "";
-    if(NULL != AppModel::instance()->deviceList()){
-        devicePathSelected = AppModel::instance()->deviceList()->getDevicePathByIndex(deviceIndex);
-        QDeviceListModelPtr devices = bridge::nunchukGetDevices(msg);
-        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-            if(devices){
-                QDevicePtr selectedDv = devices->getDeviceByPath(devicePathSelected);
-                QString in_message = qUtils::QGenerateRandomMessage();
-                AppModel::instance()->setNewKeySignMessage(in_message);
-                if(selectedDv.data()){
-                    AppModel::instance()->setAddSignerStep(1);
-#if 0 //SKIP HEALTHCHECK //Redundant
+QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QString &xfp, QWarningMessage &msg) {
+    QDeviceListModelPtr devices = bridge::nunchukGetDevices(msg);
+    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+        if (devices) {
+            QDevicePtr selectedDv = devices->getDeviceByXfp(xfp);
+            int deviceIndex = devices->getDeviceIndexByXfp(xfp);
+            QString in_message = qUtils::QGenerateRandomMessage();
+            AppModel::instance()->setNewKeySignMessage(in_message);
+            if (selectedDv.data()) {
+                AppModel::instance()->setAddSignerStep(1);
+#if 0 // SKIP HEALTHCHECK //Redundant
                     ENUNCHUCK::HealthStatus healthResult = (ENUNCHUCK::HealthStatus)nunchukHealthCheckMasterSigner(selectedDv.data()->masterFingerPrint(),
                                                                                                                    in_message,
                                                                                                                    out_signature,
@@ -407,33 +402,28 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString& name,
                     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
                         if(ENUNCHUCK::HealthStatus::SUCCESS == healthResult){
 #endif
-                            nunchuk::Device dv(selectedDv.data()->type().toStdString(),
-                                               selectedDv.data()->path().toStdString(),
-                                               selectedDv.data()->model().toStdString(),
-                                               selectedDv.data()->masterFingerPrint().toStdString(),
-                                               selectedDv.data()->needsPassPhraseSent(),
-                                               selectedDv.data()->needsPinSent());
-                            AppModel::instance()->setAddSignerStep(2);
-                            nunchuk::MasterSigner masterSigner = nunchukiface::instance()->CreateMasterSigner(name.toStdString(), dv, msg);
-                            if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-                                QMasterSignerPtr signer =  QMasterSignerPtr(new QMasterSigner(masterSigner));
-                                signer.data()->setMessage(in_message);
-#if 0 //SKIP HEALTHCHECK //Redundant
+                nunchuk::Device dv(selectedDv.data()->type().toStdString(), selectedDv.data()->path().toStdString(), selectedDv.data()->model().toStdString(),
+                                   selectedDv.data()->masterFingerPrint().toStdString(), selectedDv.data()->needsPassPhraseSent(),
+                                   selectedDv.data()->needsPinSent());
+                AppModel::instance()->setAddSignerStep(2);
+                nunchuk::MasterSigner masterSigner = nunchukiface::instance()->CreateMasterSigner(name.toStdString(), dv, msg);
+                if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+                    QMasterSignerPtr signer = QMasterSignerPtr(new QMasterSigner(masterSigner));
+                    signer.data()->setMessage(in_message);
+#if 0 // SKIP HEALTHCHECK //Redundant
                                 signer.data()->setHealth((int)healthResult);
 #endif
-                                signer.data()->setDeviceIndex(deviceIndex);
-                                return signer;
-                            }
-#if 0 //SKIP HEALTHCHECK //Redundant
+                    signer.data()->setDeviceIndex(deviceIndex);
+                    return signer;
+                }
+#if 0 // SKIP HEALTHCHECK //Redundant
                         }
                     }
 #endif
-                }
-                else {
-                    msg.setCode(-12);
-                    msg.setType((int)EWARNING::WarningType::EXCEPTION_MSG);
-                    msg.setWhat("Device not found, please check your device.");
-                }
+            } else {
+                msg.setCode(-12);
+                msg.setType((int)EWARNING::WarningType::EXCEPTION_MSG);
+                msg.setWhat("Device not found, please check your device.");
             }
         }
     }
@@ -2101,10 +2091,10 @@ nunchuk::SingleSigner bridge::nunchukParseQRSigners(const QStringList &qr_data, 
             }
         }
         if (!foundNetworkMatch) {
-            msg.setWarningMessage(-101, "No signer found with purpose 48'", EWARNING::WarningType::EXCEPTION_MSG);
-        }
-        else if (!foundNetworkMatch) {
             msg.setWarningMessage(-102, "No signer found matching the current network", EWARNING::WarningType::EXCEPTION_MSG);
+        }
+        else if (!foundPurposeMatch) {
+            msg.setWarningMessage(-101, "No signer found with purpose m/48h'", EWARNING::WarningType::EXCEPTION_MSG);
         }
         else if (!foundAccountMatch) {
             msg.setWarningMessage(-103, "No signer found matching the account index", EWARNING::WarningType::EXCEPTION_MSG);
@@ -2417,12 +2407,6 @@ QStringList bridge::nunchukExportQRTransaction(const QString &wallet_id, const Q
         }
     }
     return result;
-}
-
-QString bridge::nunchukGetWalletExportData(const nunchuk::Wallet &wallet, nunchuk::ExportFormat format)
-{
-    QWarningMessage msg;
-    return QString::fromStdString(nunchukiface::instance()->GetWalletExportData(wallet, format, msg));
 }
 
 bool bridge::IsMyAddress(const QString &wallet_id, const QString &address, QWarningMessage &msg)

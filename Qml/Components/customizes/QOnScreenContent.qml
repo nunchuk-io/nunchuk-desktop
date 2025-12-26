@@ -23,6 +23,7 @@ import QtGraphicalEffects 1.12
 import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
+import Core.ViewModel 1.0
 import "../origins"
 import "../customizes/Texts"
 import "../customizes/Buttons"
@@ -48,6 +49,7 @@ Item {
     property bool sameOffset: true
     property bool isShowLine: false
     property int  minWidth: -1
+    property alias vmContext: _vmContext
     signal closeClicked()
     MouseArea {
         anchors.fill: parent
@@ -152,5 +154,8 @@ Item {
             bottomMargin: 102
             horizontalCenter: parent.horizontalCenter
         }
+    }
+    ViewModelContext {
+        id: _vmContext
     }
 }
