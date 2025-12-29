@@ -8,29 +8,28 @@
 #include <functional>
 
 namespace core::threads {
-template <typename Result> 
-class WorkerConcurrent final  {
-
+template <typename Result> class WorkerConcurrent final {
   public:
     using Task = std::function<Result()>;
-    using Callback = std::function<void(Result)>;
+    using Callback = std::function<void(const Result &)>;
 
-    WorkerConcurrent() = default;
+    WorkerConcurrent();
     ~WorkerConcurrent();
 
     bool run(Task task, Callback cb);
-    
     bool isRunning() const;
 
   private:
     void onFinished();
 
   private:
-    std::atomic_bool m_alive{true};
     std::atomic_bool m_running{false};
+    std::atomic_bool m_destroyed{false};
 
     QFuture<Result> m_future;
     QFutureWatcher<Result> m_watcher;
+
+    std::mutex m_cbMutex;
     Callback m_callback;
 };
 } // namespace core::threads

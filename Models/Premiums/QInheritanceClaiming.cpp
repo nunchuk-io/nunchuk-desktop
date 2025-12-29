@@ -518,38 +518,50 @@ QJsonArray QInheritanceClaiming::inheritanceKeys() const {
 }
 
 bool QInheritanceClaiming::requestDownloadWalletWithIndexAsync(const QString &xfp) {
-    nunchuk::SingleSigner outSigner;
-    auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-    bool ret = draftWallet->checkAndGetSingleSigner(xfp, 0, outSigner);
-    if (ret) {
-        return requestDownloadWallet(outSigner);
-    } else {
-        DBG_INFO << "Cannot find signer with xfp:" << xfp;
-    }
+    runInConcurrent([this, xfp]() ->bool{
+        nunchuk::SingleSigner outSigner;
+        auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
+        bool ret = draftWallet->checkAndGetSingleSigner(xfp, 0, outSigner);
+        if (ret) {
+            return requestDownloadWallet(outSigner);
+        } else {
+            DBG_INFO << "Cannot find signer with xfp:" << xfp;
+        }
+        return ret;
+    },[](bool ret) {
+    });
     return false;
 }
 
 bool QInheritanceClaiming::requestDownloadWalletViaQR(const QStringList &qr_data) {
-    QWarningMessage msg;
-    nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
-    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        return requestDownloadWallet(qrSigner);
-    } else {
-        AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
-        return false;
-    }
+    runInConcurrent([this, qr_data]() ->bool{
+        QWarningMessage msg;
+        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+            return requestDownloadWallet(qrSigner);
+        } else {
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    },[](bool ret) {
+    });
+    return false;
 }
  
 bool QInheritanceClaiming::requestDownloadWalletViaImportFile(const QString &fileName) {
-    QWarningMessage msg;
-    QString file_path = qUtils::QGetFilePath(fileName);
-    nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
-    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-        return requestDownloadWallet(fileSigner);
-    } else {
-        AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
-        return false;
-    }
+    runInConcurrent([this, fileName]() ->bool{
+        QWarningMessage msg;
+        QString file_path = qUtils::QGetFilePath(fileName);
+        nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
+        if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+            return requestDownloadWallet(fileSigner);
+        } else {
+            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    },[](bool ret) {
+    });
+    return false;
 }
 
 bool QInheritanceClaiming::requestDownloadWallet(const nunchuk::SingleSigner &single) {
@@ -634,19 +646,23 @@ bool QInheritanceClaiming::GetClaimingWalletInfo(const QString &local_id) {
 
 bool QInheritanceClaiming::requestDownloadWalletViaSeedPhrase(const QString &mnemonic) {
     DBG_INFO << mnemonic;
-    bool checkmnemonic = qUtils::CheckMnemonic(mnemonic);
-    if(checkmnemonic){
-        auto signer = RecoverAnExistingSeed(mnemonic);
-        if (!signer.get_master_fingerprint().empty()) {
-            return requestDownloadWallet(signer);
-        } else {
+    runInConcurrent([this, mnemonic]() ->bool{
+        bool checkmnemonic = qUtils::CheckMnemonic(mnemonic);
+        if(checkmnemonic){
+            auto signer = RecoverAnExistingSeed(mnemonic);
+            if (!signer.get_master_fingerprint().empty()) {
+                return requestDownloadWallet(signer);
+            } else {
+                AppModel::instance()->setMnemonic("-101");
+                AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
+            }        
+        }
+        else{
             AppModel::instance()->setMnemonic("-101");
             AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
-        }        
-    }
-    else{
-        AppModel::instance()->setMnemonic("-101");
-        AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
-    }
+        }
+        return checkmnemonic;
+    },[](bool ret) {
+    });
     return false;
 }

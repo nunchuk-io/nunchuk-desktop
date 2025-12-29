@@ -25,9 +25,4 @@ namespace core::usecase {
     inline QString valueToString(const UseCaseInput& v) {
         return v.toLogString();
     }
-    
-    template<typename T>
-    QString valueToString(const T&) {
-        return "<value>";
-    }
 }

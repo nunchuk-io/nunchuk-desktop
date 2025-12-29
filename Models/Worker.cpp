@@ -127,20 +127,15 @@ void Worker::slotStartScanDevices(const QVariant &data) {
     std::vector<nunchuk::Device> deviceListResult {};
     if (AppModel::instance()->isSignIn()) {
         deviceListResult = qUtils::GetDevices(bridge::hwiPath(), *msg);
-    } else {
+    }
+    else {
         deviceListResult = bridge::nunchukGetOriginDevices(*msg);
     }
 
     if(msg && msg->type() == (int)EWARNING::WarningType::NONE_MSG) {
-        QDeviceListModelPtr deviceList(new DeviceListModel());
-        for (nunchuk::Device it : deviceListResult) {
-            QDevicePtr device = QDevicePtr(new QDevice(it));
-            deviceList.data()->addDevice(device);
-        }
-        
         QString masterSignerId = maps["singleSigner_masterSignerId"].toString();
-        if (masterSignerId.isEmpty()) {
-            QString fingerPrint = maps["singleSigner_masterFingerPrint"].toString();
+        QString fingerPrint = maps["singleSigner_masterFingerPrint"].toString();
+        if (masterSignerId.isEmpty() && !fingerPrint.isEmpty()) {
             QString name = maps["singleSigner_name"].toString();
             msg->resetWarningMessage();
             QMasterSignerPtr ret = bridge::nunchukCreateMasterSigner(name, fingerPrint, *msg);

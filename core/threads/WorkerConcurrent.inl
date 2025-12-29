@@ -2,9 +2,21 @@
 
 namespace core::threads {
 
+template <typename Result> WorkerConcurrent<Result>::WorkerConcurrent() {
+    QObject::connect(&m_watcher, &QFutureWatcherBase::finished,  &m_watcher, [this]() { onFinished(); }, Qt::DirectConnection);
+}
+
 template <typename Result> WorkerConcurrent<Result>::~WorkerConcurrent() {
-    m_alive.store(false);
-    m_callback = nullptr;
+    m_destroyed.store(true);
+
+    // Ngăn signal bắn vào object đã chết
+    QObject::disconnect(&m_watcher, nullptr, nullptr, nullptr);
+
+    // KHÔNG wait → không treo
+    {
+        std::lock_guard lock(m_cbMutex);
+        m_callback = nullptr;
+    }
 }
 
 template <typename Result> bool WorkerConcurrent<Result>::run(Task task, Callback cb) {
@@ -12,19 +24,12 @@ template <typename Result> bool WorkerConcurrent<Result>::run(Task task, Callbac
         return false;
     }
 
-    m_alive.store(true);
-    m_callback = std::move(cb);
+    {
+        std::lock_guard lock(m_cbMutex);
+        m_callback = std::move(cb);
+    }
 
-    m_future = QtConcurrent::run([task = std::move(task)] {
-        return task(); // run to completion
-    });
-
-    QObject::connect(
-        &m_watcher,
-        &QFutureWatcher<Result>::finished,
-        [this]() { onFinished(); }
-    );
-
+    m_future = QtConcurrent::run(std::move(task));
     m_watcher.setFuture(m_future);
     return true;
 }
@@ -36,15 +41,20 @@ template <typename Result> bool WorkerConcurrent<Result>::isRunning() const {
 template <typename Result> void WorkerConcurrent<Result>::onFinished() {
     m_running.store(false);
 
-    if (!m_alive.load()) {
-        m_callback = nullptr; // ❗ Worker đã chết → bỏ kết quả
+    if (m_destroyed.load()) {
         return;
     }
 
-    if (m_callback) {
-        m_callback(m_future.result());
+    Callback cb;
+    {
+        std::lock_guard lock(m_cbMutex);
+        cb = std::move(m_callback);
+        m_callback = nullptr;
     }
-    m_callback = nullptr;
+
+    if (cb) {
+        cb(m_future.result());
+    }
 }
 
 } // namespace core::threads
