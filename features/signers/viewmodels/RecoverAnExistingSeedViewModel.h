@@ -15,8 +15,8 @@ class RecoverAnExistingSeedViewModel : public ActionViewModel {
     ~RecoverAnExistingSeedViewModel() override = default;
 
   public slots:
-    void forceCreateMaster(QVariant msg);
-    bool startCreateMaster(QVariant msg);
+    void recoverViaExistingSeed(QVariant msg);
+    bool checkExistingKey(QVariant msg);
   signals:
     void notifySignerExist(bool isSoftware, const QString fingerPrint);
   private:

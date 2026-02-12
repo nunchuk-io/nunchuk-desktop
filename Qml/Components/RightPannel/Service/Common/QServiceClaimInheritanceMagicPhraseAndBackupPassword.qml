@@ -1,3 +1,18 @@
+import "../../../../../localization/STR_QML.js" as STR
+import "./../../../customizes"
+import "./../../../customizes/Buttons"
+import "./../../../customizes/Chats"
+import "./../../../customizes/Texts"
+import "./../../../origins"
+import DRACO_CODE 1.0
+import DataPool 1.0
+import EWARNING 1.0
+import Features.Claiming.ViewModels 1.0
+import HMIEVENTS 1.0
+import NUNCHUCKTYPE 1.0
+import QRCodeItem 1.0
+import Qt.labs.platform 1.1
+import QtGraphicalEffects 1.0
 /**************************************************************************
  * This file is part of the Nunchuk software (https://nunchuk.io/)        *
  * Copyright (C) 2020-2022 Enigmo								          *
@@ -19,52 +34,46 @@
  **************************************************************************/
 import QtQuick 2.12
 import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import Qt.labs.platform 1.1
-import HMIEVENTS 1.0
-import NUNCHUCKTYPE 1.0
-import QRCodeItem 1.0
-import DataPool 1.0
-import DRACO_CODE 1.0
-import EWARNING 1.0
-import "./../../../origins"
-import "./../../../customizes"
-import "./../../../customizes/Chats"
-import "./../../../customizes/Texts"
-import "./../../../customizes/Buttons"
-import "../../../../../localization/STR_QML.js" as STR
 
 Item {
     property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
     property int _eINPUT_MAGICPHRASE: 0
-    property int _eINPUT_BACKUPPWD  : 1
+    property int _eINPUT_BACKUPPWD: 1
     property int _eINPUT_INHERITANCE: 2
     property int currentInputMode: _eINPUT_MAGICPHRASE
     property string magicphrase_inputted: ""
 
     Column {
         id: _claim
+
         anchors.fill: parent
         spacing: 24
-        anchors{
+
+        anchors {
             left: parent.left
             leftMargin: 24
             top: parent.top
             topMargin: 24
         }
+
         Rectangle {
             id: banner
+
             width: parent.width - 24
             height: parent.height * 0.42
             radius: 24
             color: "#D0E2FF"
+
             QPicture {
                 anchors.centerIn: parent
                 source: "qrc:/Images/Images/claim-inheritance-illustration.svg"
             }
+
         }
+
         QText {
             id: title
+
             text: STR.STR_QML_747
             color: "#031F2B"
             font.family: "Montserrat"
@@ -75,12 +84,14 @@ Item {
         Item {
             width: parent.width
             height: parent.height - banner.height - title.height - 48
+
             Loader {
                 anchors.fill: parent
-                sourceComponent: currentInputMode === _eINPUT_MAGICPHRASE ? inputMagicphrase :
-                                 currentInputMode === _eINPUT_BACKUPPWD   ? inputBackuppwd   : inputInheritanceKey
+                sourceComponent: currentInputMode === _eINPUT_MAGICPHRASE ? inputMagicphrase : currentInputMode === _eINPUT_BACKUPPWD ? inputBackuppwd : inputInheritanceKey
             }
+
         }
+
     }
 
     ListModel {
@@ -89,17 +100,55 @@ Item {
 
     Component {
         id: inputMagicphrase
+
         Item {
+            function claimClear() {
+                magicPhrase.textInputted = "";
+                magicphrase_inputted = "";
+            }
+
+            function searchingText(str) {
+                // SPIT TEXT
+                const words = str.split(" ");
+                const lastIdx = words.length - 1;
+                const lastWord = words[lastIdx];
+                modelSearch.clear();
+                for (var i = 0; i < AppModel.suggestMnemonics.length; i++) {
+                    if (str === "") {
+                        var data = {
+                            "mnemonic": AppModel.suggestMnemonics[i]
+                        };
+                        modelSearch.append(data);
+                    } else {
+                        var currentText = AppModel.suggestMnemonics[i].toLowerCase().substring(0, lastWord.length);
+                        if (currentText.toLowerCase() === lastWord.toLowerCase()) {
+                            var datafilter = {
+                                "mnemonic": AppModel.suggestMnemonics[i]
+                            };
+                            modelSearch.append(datafilter);
+                        }
+                    }
+                }
+                sglst.currentIndex = 0;
+                return true;
+            }
+
             anchors.fill: parent
+            Component.onCompleted: {
+                claimClear();
+            }
+
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    suggestionList.enterKeyRequest()
+                    suggestionList.enterKeyRequest();
                 }
             }
+
             Column {
                 width: parent.width
                 spacing: 16
+
                 QText {
                     text: STR.STR_QML_2062
                     color: "#031F2B"
@@ -107,58 +156,82 @@ Item {
                     font.pixelSize: 16
                     font.weight: Font.Normal
                 }
+
                 QTextInputBoxTypeB {
                     id: magicPhrase
+
                     label: STR.STR_QML_749
                     boxWidth: 537
                     boxHeight: 48
                     isValid: true
                     onTextInputtedChanged: {
-                        if(!magicPhrase.isValid){
-                            magicPhrase.isValid = true
-                            magicPhrase.errorText = ""
+                        if (!magicPhrase.isValid) {
+                            magicPhrase.isValid = true;
+                            magicPhrase.errorText = "";
                         }
                         magicPhrase.showError = false;
-
-                        var targetY = magicPhrase.y + magicPhrase.height
-                        var targetX = magicPhrase.x
-                        if(textBoxFocus){
-                            sglst.currentIndex = 0
-                            searchingText(magicPhrase.textInputted)
+                        var targetY = magicPhrase.y + magicPhrase.height;
+                        var targetX = magicPhrase.x;
+                        if (textBoxFocus) {
+                            sglst.currentIndex = 0;
+                            searchingText(magicPhrase.textInputted);
                         }
                     }
                     onTextBoxFocusChanged: {
-                        if(textBoxFocus){
-                            sglst.currentIndex = 0
-                            suggestionList.y = magicPhrase.y + magicPhrase.height
-                            suggestionList.x = magicPhrase.x
-                            searchingText(magicPhrase.textInputted)
-                        }
-                        else{
-                            sglst.currentIndex = -1
+                        if (textBoxFocus) {
+                            sglst.currentIndex = 0;
+                            suggestionList.y = magicPhrase.y + magicPhrase.height;
+                            suggestionList.x = magicPhrase.x;
+                            searchingText(magicPhrase.textInputted);
+                        } else {
+                            sglst.currentIndex = -1;
                         }
                     }
-                    onDownKeyRequest: {suggestionList.downKeyRequest()  }
-                    onUpKeyRequest:   {suggestionList.upKeyRequest()    }
-                    onEnterKeyRequest:{suggestionList.enterKeyRequest() }
-                    onTabKeyRequest: { suggestionList.enterKeyRequest() }
+                    onDownKeyRequest: {
+                        suggestionList.downKeyRequest();
+                    }
+                    onUpKeyRequest: {
+                        suggestionList.upKeyRequest();
+                    }
+                    onEnterKeyRequest: {
+                        suggestionList.enterKeyRequest();
+                    }
+                    onTabKeyRequest: {
+                        suggestionList.enterKeyRequest();
+                    }
 
                     Item {
                         id: suggestionList
-                        width: suggestionList.visible ? magicPhrase.width : 0
-                        height: suggestionList.visible ? Math.min(sglst.contentHeight + 10, 250): 0
-                        visible: sglst.currentIndex !== -1
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {}
+
+                        function downKeyRequest() {
+                            sglst.downKeyRequest();
                         }
 
-                        function downKeyRequest() {sglst.downKeyRequest() }
-                        function upKeyRequest()   {sglst.upKeyRequest()   }
-                        function enterKeyRequest(){sglst.enterKeyRequest()}
+                        function upKeyRequest() {
+                            sglst.upKeyRequest();
+                        }
+
+                        function enterKeyRequest() {
+                            sglst.enterKeyRequest();
+                        }
+
+                        width: suggestionList.visible ? magicPhrase.width : 0
+                        height: suggestionList.visible ? Math.min(sglst.contentHeight + 10, 250) : 0
+                        visible: sglst.currentIndex !== -1
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                            }
+                        }
 
                         Rectangle {
                             id: bg
+
+                            radius: 4
+                            color: "#FFFFFF"
+                            visible: false
+
                             anchors {
                                 fill: parent
                                 leftMargin: 5
@@ -166,9 +239,7 @@ Item {
                                 topMargin: 5
                                 bottomMargin: 5
                             }
-                            radius: 4
-                            color: "#FFFFFF"
-                            visible: false
+
                         }
 
                         DropShadow {
@@ -179,39 +250,22 @@ Item {
                             samples: 24
                             color: Qt.rgba(0, 0, 0, 0.4)
                             source: bg
+
                             ListView {
                                 id: sglst
-                                anchors.centerIn: parent
-                                width: parent.width - 10
-                                height: suggestionList.visible ? Math.min(sglst.contentHeight, 240): 0
-                                model: modelSearch
-                                clip: true
-                                ScrollBar.vertical: ScrollBar { active: true }
-                                delegate: Rectangle {
-                                    width: sglst.width
-                                    property bool shown: textsuggest.visible
-                                    height: 240/10
-                                    color: suggestMouse.containsMouse ? "#F1FAFE" : "#FFFFFF"
-                                    QText {
-                                        id: textsuggest
-                                        anchors.left: parent.left
-                                        text: modelData
-                                        color: suggestMouse.pressed ?"#031F2B" :  (suggestMouse.containsMouse || sglst.currentIndex === index) ? "#35ABEE" : "#031F2B"
-                                        font.pixelSize: 16
-                                        font.weight: (suggestMouse.containsMouse || sglst.currentIndex === index) ? Font.ExtraBold : Font.Normal
-                                    }
 
-                                    MouseArea {
-                                        id: suggestMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {sglst.mouseKeyRequest(index)}
-                                    }
+                                function downKeyRequest() {
+                                    if (sglst.currentIndex < sglst.count - 1)
+                                        sglst.currentIndex += 1;
+
                                 }
 
-                                function downKeyRequest() { if(sglst.currentIndex < sglst.count - 1) {sglst.currentIndex += 1}; }
-                                function upKeyRequest() {if(sglst.currentIndex > 0) {sglst.currentIndex -= 1};}
+                                function upKeyRequest() {
+                                    if (sglst.currentIndex > 0)
+                                        sglst.currentIndex -= 1;
+
+                                }
+
                                 function enterKeyRequest() {
                                     if (sglst.currentIndex !== -1) {
                                         var splitString = magicPhrase.textInputted.split(" ");
@@ -220,96 +274,140 @@ Item {
                                         sglst.currentIndex = -1;
                                     }
                                 }
+
                                 function mouseKeyRequest(index) {
-                                    if(index !== -1) {
+                                    if (index !== -1) {
                                         var splitString = magicPhrase.textInputted.split(" ");
                                         splitString[splitString.length - 1] = modelSearch.get(index).mnemonic;
                                         magicPhrase.textInputted = splitString.toString(" ");
                                     }
                                     sglst.currentIndex = -1;
                                 }
+
+                                anchors.centerIn: parent
+                                width: parent.width - 10
+                                height: suggestionList.visible ? Math.min(sglst.contentHeight, 240) : 0
+                                model: modelSearch
+                                clip: true
+
+                                ScrollBar.vertical: ScrollBar {
+                                    active: true
+                                }
+
+                                delegate: Rectangle {
+                                    property bool shown: textsuggest.visible
+
+                                    width: sglst.width
+                                    height: 240 / 10
+                                    color: suggestMouse.containsMouse ? "#F1FAFE" : "#FFFFFF"
+
+                                    QText {
+                                        id: textsuggest
+
+                                        anchors.left: parent.left
+                                        text: modelData
+                                        color: suggestMouse.pressed ? "#031F2B" : (suggestMouse.containsMouse || sglst.currentIndex === index) ? "#35ABEE" : "#031F2B"
+                                        font.pixelSize: 16
+                                        font.weight: (suggestMouse.containsMouse || sglst.currentIndex === index) ? Font.ExtraBold : Font.Normal
+                                    }
+
+                                    MouseArea {
+                                        id: suggestMouse
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            sglst.mouseKeyRequest(index);
+                                        }
+                                    }
+
+                                }
+
                             }
+
                         }
+
                     }
+
                 }
+
             }
+
             Rectangle {
                 width: parent.width + 24
                 height: 80
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 color: "#FFFFFF"
+
                 Rectangle {
                     width: parent.width
                     height: 1
                     color: "#DEDEDE"
                 }
+
                 QTextButton {
-                    width: label.paintedWidth + 2*16
+                    width: label.paintedWidth + 2 * 16
                     height: 48
+                    label.text: STR.STR_QML_265
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: {
+                        magicphrase_inputted = magicPhrase.textInputted;
+                        vm.claimInit(magicphrase_inputted);
+                    }
+
                     anchors {
                         right: parent.right
                         rightMargin: 24
                         verticalCenter: parent.verticalCenter
                     }
-                    label.text: STR.STR_QML_265
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        magicphrase_inputted = magicPhrase.textInputted
-                        var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
-                        if (typeof(data.code) !== `undefined`) {
-                        } else if(data.wallet_type === "MINISCRIPT"){
-                            var is_existing_wallet = data.is_existing_wallet ? data.is_existing_wallet : false
-                            if(!is_existing_wallet){
-                                _prepareInheritanceKey.onChainClaim(data)
-                            }
-                        } else {
-                            currentInputMode = _eINPUT_BACKUPPWD
-                        }
-                    }
-                }
-            }
-            Component.onCompleted: {
-                claimClear()
-            }
-            function claimClear() {
-                magicPhrase.textInputted = ""
-                magicphrase_inputted = ""
-            }
-            function searchingText(str){
-                // SPIT TEXT
-                const words = str.split(" ");
-                const lastIdx = words.length - 1;
-                const lastWord = words[lastIdx];
 
-                modelSearch.clear()
-                for(var i = 0; i < AppModel.suggestMnemonics.length; i++){
-                    if(str === ""){
-                        var data = {'mnemonic': AppModel.suggestMnemonics[i]};
-                        modelSearch.append(data)
-                    }
-                    else{
-                        var currentText = AppModel.suggestMnemonics[i].toLowerCase().substring(0, lastWord.length)
-                        if (currentText.toLowerCase() === lastWord.toLowerCase()){
-                            var datafilter = {'mnemonic': AppModel.suggestMnemonics[i]};
-                            modelSearch.append(datafilter)
-                        }
-                    }
                 }
-                sglst.currentIndex = 0
-                return true
+
             }
+
+            MagicPhraseAndBackupPasswordViewModel {
+                id: vm
+
+                Component.onCompleted: {
+                    vm.attachContext(vmContext);
+                }
+            }
+
+            Connections {
+                target: vm
+                onGotoOnChain: {
+                    _prepareInheritanceKey.onChainClaim(inheritance_key_count);
+                }
+                onGotoOffChain: {
+                    currentInputMode = _eINPUT_BACKUPPWD;
+                }
+            }
+
         }
+
     }
 
     Component {
         id: inputBackuppwd
+
         Item {
+            function backuppwdClear() {
+                backupPassword.textInputted = "";
+                backupPassword_two.textInputted = "";
+            }
+
             anchors.fill: parent
+            Component.onCompleted: {
+                backuppwdClear();
+            }
+
             Column {
                 width: parent.width
                 spacing: 16
+
                 QText {
                     text: STR.STR_QML_1987
                     color: "#031F2B"
@@ -317,34 +415,39 @@ Item {
                     font.pixelSize: 16
                     font.weight: Font.Normal
                 }
+
                 QTextInputBoxTypeB {
                     id: backupPassword
+
                     label: STR.STR_QML_727
                     boxWidth: 537
                     boxHeight: 48
                     isValid: true
                     onTextInputtedChanged: {
-                        if(!backupPassword.isValid){
-                            backupPassword.isValid = true
-                            backupPassword.errorText = ""
+                        if (!backupPassword.isValid) {
+                            backupPassword.isValid = true;
+                            backupPassword.errorText = "";
                         }
                         backupPassword.showError = false;
                     }
                 }
+
                 QTextInputBoxTypeB {
                     id: backupPassword_two
+
                     label: STR.STR_QML_727_optinal
                     boxWidth: 537
                     boxHeight: 48
                     isValid: true
                     onTextInputtedChanged: {
-                        if(!backupPassword_two.isValid){
-                            backupPassword_two.isValid = true
-                            backupPassword_two.errorText = ""
+                        if (!backupPassword_two.isValid) {
+                            backupPassword_two.isValid = true;
+                            backupPassword_two.errorText = "";
                         }
                         backupPassword_two.showError = false;
                     }
                 }
+
             }
 
             Rectangle {
@@ -353,50 +456,51 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 color: "#FFFFFF"
+
                 Rectangle {
                     width: parent.width
                     height: 1
                     color: "#DEDEDE"
                 }
+
                 QTextButton {
-                    width: label.paintedWidth + 2*16
+                    width: label.paintedWidth + 2 * 16
                     height: 48
+                    label.text: STR.STR_QML_265
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    onButtonClicked: {
+                        var input = {
+                            "magic": magicphrase_inputted,
+                            "backupPassword": backupPassword.textInputted,
+                            "backupPasswordTwo": backupPassword_two.textInputted
+                        };
+                        console.log("EVT_CLAIM_INHERITANCE_CHECK_REQUEST input:", input);
+                        QMLHandle.signalNotifySendEvent(EVT.EVT_CLAIM_INHERITANCE_CHECK_REQUEST, input);
+                    }
+
                     anchors {
                         right: parent.right
                         rightMargin: 24
                         verticalCenter: parent.verticalCenter
                     }
-                    label.text: STR.STR_QML_265
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        // var data = ServiceSetting.servicesTag.inheritanceClaimInit(magicphrase_inputted)
-                        var input = {
-                            "magic"             :magicphrase_inputted,
-                            "backupPassword"    :backupPassword.textInputted,
-                            "backupPasswordTwo" :backupPassword_two.textInputted
-                        }
-                        console.log("EVT_CLAIM_INHERITANCE_CHECK_REQUEST input:", input)
-                        QMLHandle.signalNotifySendEvent(EVT.EVT_CLAIM_INHERITANCE_CHECK_REQUEST,input)
-                    }
+
                 }
+
             }
 
-            Component.onCompleted: {
-                backuppwdClear()
-            }
-            function backuppwdClear() {
-                backupPassword.textInputted = ""
-                backupPassword_two.textInputted = ""
-            }
         }
+
     }
 
     Component {
         id: inputInheritanceKey
+
         Rectangle {
             anchors.fill: parent
             color: "LightGray"
         }
+
     }
+
 }

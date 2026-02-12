@@ -27,6 +27,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Common.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -36,9 +37,8 @@ import "../../../../localization/STR_QML.js" as STR
 
 Popup {
     id: _timezone
-    property var    selectedWalletInfo: AppModel.newWalletInfo
-    property string selectedTimezone: selectedWalletInfo.timezones.selectedTimezone
-    property int    selectedIndex: selectedWalletInfo.timezones.currentIndex
+    readonly property string selectedTimezone: vm.timezones.selectedTimezone
+    property alias timelockVM: vm
     modal: true
     focus: true
     width: 350
@@ -64,8 +64,8 @@ Popup {
             id: timezonelist
             anchors.fill: parent
             anchors.margins: 16
-            model: selectedWalletInfo.timezones
-            currentIndex: selectedIndex
+            model: vm.timezones
+            currentIndex: vm.timezones.currentIndex
             clip: true
             snapMode: ListView.SnapToItem
             delegate:  Item {
@@ -92,7 +92,7 @@ Popup {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        selectedWalletInfo.timezones.currentIndex = index;
+                        vm.timezones.currentIndex = index;
                         _timezone.close();
                     }
                 }
@@ -109,5 +109,12 @@ Popup {
         samples: 30
         color: "#aa000000"
         source: timezoneBoxMask
+    }
+
+    TimezoneViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
+        }
     }
 }

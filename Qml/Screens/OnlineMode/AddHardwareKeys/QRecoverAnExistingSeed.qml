@@ -255,7 +255,7 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeE
             onButtonClicked: {
-                addDevice()
+                addDevice()               
             }
         }
     }
@@ -263,13 +263,16 @@ QOnScreenContentTypeB {
         var masterSignerObj = {
             "mnemonicstr"          : mnemonicstr
         };
-        vm.startCreateMaster(masterSignerObj)
+        if (vm.checkExistingKey(masterSignerObj)) {
+            nextClicked()
+        }
     }
     function yesClickedHandler() {
         var masterSignerObj = {
             "mnemonicstr"          : mnemonicstr
         };
-        vm.forceCreateMaster(masterSignerObj)
+        vm.recoverViaExistingSeed(masterSignerObj)
+        nextClicked()
     }
     QPopupInfoTwoButtons {
         id: _info

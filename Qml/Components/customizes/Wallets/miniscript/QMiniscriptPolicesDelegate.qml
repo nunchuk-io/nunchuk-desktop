@@ -224,7 +224,7 @@ Item {
         return after_older
     }
     function getAfterOlderHeight() {
-        return 58
+        return 70
     }
     Component {
         id: common

@@ -1,4 +1,6 @@
 #include "RecoverAnExistingSeedViewModel.h"
+#include "claiming/flows/OnChainClaimingFlow.h"
+#include "generated_qml_keys.hpp"
 #include "localization/STR_CPP.h"
 #include "core/ui/UiServices.inc"
 #include "Premiums/QWalletServicesTag.h"
@@ -7,13 +9,14 @@
 namespace features::signers::viewmodels {
 using namespace core::viewmodels;
 using namespace features::signers::usecases;
+using features::claiming::flows::OnChainClaimingFlow;
 
 RecoverAnExistingSeedViewModel::RecoverAnExistingSeedViewModel(QObject *parent) 
 : ActionViewModel(parent) {
 
 }
 
-void RecoverAnExistingSeedViewModel::forceCreateMaster(QVariant msg) {
+void RecoverAnExistingSeedViewModel::recoverViaExistingSeed(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString mnemonicstr = maps.value("mnemonicstr").toString();
     CreateSoftwareInput input;
@@ -24,7 +27,8 @@ void RecoverAnExistingSeedViewModel::forceCreateMaster(QVariant msg) {
     input.keyName = m_signerNammingUC.addParameter(ctx()->appModel()).getInheritanceNameKey();
     m_createSoftwareSignerUC.executeAsync(input, [this, mnemonicstr](core::usecase::Result<CreateSoftwareResult> result) {
         if (result.isSuccess()) {
-            ctx()->serviceSetting()->servicesTagPtr()->requestDownloadWalletViaSeedPhrase(mnemonicstr);
+            GUARD_SERVICE_TAG();
+            serviceTag->requestDownloadWalletViaSeedPhrase(mnemonicstr);
         } else {
             emit showToast(-1, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
         }
@@ -32,7 +36,7 @@ void RecoverAnExistingSeedViewModel::forceCreateMaster(QVariant msg) {
 }
 
 
-bool RecoverAnExistingSeedViewModel::startCreateMaster(QVariant msg) {
+bool RecoverAnExistingSeedViewModel::checkExistingKey(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString mnemonicstr = maps.value("mnemonicstr").toString();
     QString xfpSelected    = qUtils::GetMasterFingerprint(mnemonicstr, "");
@@ -57,7 +61,7 @@ bool RecoverAnExistingSeedViewModel::startCreateMaster(QVariant msg) {
         return false;
     }
     else {
-        forceCreateMaster(msg);
+        recoverViaExistingSeed(msg);
         return true;
     }
 }

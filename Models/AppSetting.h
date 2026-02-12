@@ -37,17 +37,17 @@
 #define TESTNET_SERVER   "testnet.nunchuk.io:50001"
 #define SIGNET_SERVER    "ssl://mempool.space:60602"
 
-template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
 class QWalletCached {
 public:
     QWalletCached(){}
-    T1 groupId;
-    T2 slug;
-    T3 myRole;
-    T4 status;
-    T5 backedup;
-    T6 hideFiatCurrency;
-    T7 registered;
+    QString groupId;
+    QString slug;
+    QString myRole;
+    QString status;
+    bool backedup;
+    bool hideFiatCurrency;
+    bool registered;
+    bool isClaimed;
 };
 
 class  NunchukSettings : public QSettings {
@@ -253,23 +253,9 @@ public:
     QString currency();
     void setCurrency(QString currency);
 
-    void setWalletCached(QString id, QWalletCached<QString /*group id*/,
-                                                   QString /*group slug*/,
-                                                   QString /*group role*/,
-                                                   QString /*wallet status*/,
-                                                   bool    /*wallet cached*/,
-                                                   bool    /*wallet hide fiat currency*/,
-                                                   bool    /*wallet registered*/
-                                                   > input);
+    void setWalletCached(QString id, QWalletCached input);
 
-    bool getwalletCached(QString id, QWalletCached<QString /*group id*/,
-                                                   QString /*group slug*/,
-                                                   QString /*group role*/,
-                                                   QString /*wallet status*/,
-                                                   bool    /*wallet cached*/,
-                                                   bool    /*wallet hide fiat currency*/,
-                                                   bool    /*wallet registered*/
-                                                   > &output);
+    bool getwalletCached(QString id, QWalletCached &output);
     void deleteWalletCached(QString id);
 
     void setTransactionKeysetIndex(QString id, const int keyset_index);

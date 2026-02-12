@@ -243,6 +243,7 @@ void WalletListModel::addWallet(const QWalletPtr &wallet)
         beginResetModel();
         m_data.append(wallet);
         endResetModel();
+        emit walletCountChanged();
     }
 }
 
@@ -386,6 +387,7 @@ bool WalletListModel::removeWallet(const QWalletPtr it)
     beginResetModel();
     m_data.removeAll(it);
     endResetModel();
+    emit walletCountChanged();
     return true;
 }
 
@@ -395,6 +397,7 @@ void WalletListModel::removeWallet(const QString &walletId)
     foreach (QWalletPtr it, m_data) {
         if(qUtils::strCompare(walletId, it.data()->walletId())){
             m_data.removeOne(it);
+            emit walletCountChanged();
             break;
         }
     }

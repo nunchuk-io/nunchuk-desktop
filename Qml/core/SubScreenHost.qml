@@ -27,10 +27,24 @@ Item {
     Repeater {
         id: creator
         transformOrigin: Item.TopLeft
-        Loader {
-            id: loader
-            anchors.centerIn: parent
-            source: dataSource
+        Item {
+            id: subScreenItem
+            width: QAPP_DEVICE_WIDTH
+            height: QAPP_DEVICE_HEIGHT
+            Rectangle {
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.7)
+                scale: 5
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: { subScreenItem.focus = true }
+            }
+            Loader {
+                id: loader
+                anchors.centerIn: parent
+                source: dataSource
+            }
         }
     }
     function subScreen_Transition(Onsdata, popCount) {

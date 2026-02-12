@@ -21,6 +21,8 @@ import QtQuick 2.4
 import QtQuick.Controls 2.3
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
+import Features.Wallets.ViewModels 1.0
+import Features.Draftwallets.OnChain.ViewModels 1.0
 import "../../../../Components/origins"
 import "../../../../Components/customizes"
 import "../../../../Components/customizes/Texts"
@@ -229,7 +231,88 @@ QOnScreenContentTypeB {
                         Loader {
                             width: parent.width
                             // height: 72
-                            sourceComponent: _timeLockReplaced
+                            sourceComponent: vm.isShowBlockHeight ? _blockHeightLock : _timeLockReplaced
+                            Component {
+                                id: _blockHeightLock
+                                Column {
+                                    spacing: 4
+                                    QDashRectangle {
+                                        width: 346
+                                        height: 72
+                                        radius: 8
+                                        isDashed: false
+                                        borderWitdh: isDashed ? 2 : 1
+                                        borderColor: isDashed ? "#031F2B" : "#DEDEDE"
+                                        color: vm.valueDate !== oldVM.valueDate ? "#A7F0BA" : "#FFFFFF"
+                                        Row {
+                                            anchors {
+                                                fill: parent
+                                                margins: 12
+                                            }
+                                            spacing: 12
+                                            QBadge {
+                                                width: 48
+                                                height: 48
+                                                radius: 48
+                                                iconSize: 24
+                                                icon: "qrc:/Images/Images/Timer.svg"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                color: "#F5F5F5"
+                                            }
+                                            Column {
+                                                width: 150
+                                                height: 40
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                spacing: 4
+                                                QLato {
+                                                    width: 150
+                                                    height: 20
+                                                    text: qsTr("Est. %1 %2").arg(vm.valueDate).arg(vm.valueTime)
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                QLato {
+                                                    width: 150
+                                                    height: 16
+                                                    font.pixelSize: 12
+                                                    text: qsTr("%1 %2").arg(utils.formatAmount(qsTr("%1").arg(vm.blockHeight))).arg(STR.STR_QML_188)
+                                                    horizontalAlignment: Text.AlignLeft
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                            }
+                                        }
+                                        QTextButton {
+                                            anchors {
+                                                verticalCenter: parent.verticalCenter
+                                                right: parent.right
+                                                rightMargin: 12
+                                            }
+                                            width: label.paintedWidth + 2*20
+                                            height: 36
+                                            type: eTypeB
+                                            label.text: STR.STR_QML_1413
+                                            label.font.pixelSize: 16
+                                            onButtonClicked: {
+                                                vm.onConfigureClicked()
+                                            }
+                                        }
+                                    }
+                                    Row {
+                                        spacing: 4
+                                        visible: vm.valueDate !== oldVM.valueDate
+                                        QSvgImage {
+                                            width: 16
+                                            height: 16
+                                            source: "qrc:/Images/Images/replace.svg"
+                                        }
+                                        QLato {
+                                            text: STR.STR_QML_2054.arg(qsTr("%1 %2").arg(oldVM.valueDate).arg(oldVM.valueTime))
+                                            font.pixelSize: 12
+                                            color: "#031F2B"
+                                        }
+                                    }
+                                }
+                            }
                             Component {
                                 id: _timeLockReplaced
                                 Column {
@@ -241,7 +324,7 @@ QOnScreenContentTypeB {
                                         isDashed: false
                                         borderWitdh: isDashed ? 2 : 1
                                         borderColor: isDashed ? "#031F2B" : "#DEDEDE"
-                                        color: dashInfo.timelockReplacementDisp.trim() !== dashInfo.timeLock.trim() ? "#A7F0BA" : "#FFFFFF"
+                                        color: vm.valueDate !== oldVM.valueDate ? "#A7F0BA" : "#FFFFFF"
                                         Row {
                                             anchors {
                                                 fill: parent
@@ -272,7 +355,7 @@ QOnScreenContentTypeB {
                                                 QLato {
                                                     width: 150
                                                     height: 20
-                                                    text: dashInfo.timelockReplacementDisp
+                                                    text: qsTr("%1 %2").arg(vm.valueDate).arg(vm.valueTime)
                                                     horizontalAlignment: Text.AlignLeft
                                                     verticalAlignment: Text.AlignVCenter
                                                 }
@@ -290,20 +373,20 @@ QOnScreenContentTypeB {
                                             label.text: STR.STR_QML_1413
                                             label.font.pixelSize: 16
                                             onButtonClicked: {
-                                                _popupSetupAnOnChainTimelock.open()
+                                                vm.onConfigureClicked()
                                             }
                                         }
                                     }
                                     Row {
                                         spacing: 4
-                                        visible: dashInfo.timelockReplacementDisp.trim() !== dashInfo.timeLock.trim()
+                                        visible: vm.valueDate !== oldVM.valueDate
                                         QSvgImage {
                                             width: 16
                                             height: 16
                                             source: "qrc:/Images/Images/replace.svg"
                                         }
                                         QLato {
-                                            text: STR.STR_QML_2054.arg(dashInfo.timeLock)
+                                            text: STR.STR_QML_2054.arg(qsTr("%1 %2").arg(oldVM.valueDate).arg(oldVM.valueTime))
                                             font.pixelSize: 12
                                             color: "#031F2B"
                                         }
@@ -325,11 +408,9 @@ QOnScreenContentTypeB {
     }
 
     bottomRight: Item{}
-
-    QPopupSetupOnChainTimelockWallet {
-        id: _popupSetupAnOnChainTimelock
+     QmlUtils {
+        id: utils
     }
-
     QInheritanceConfigureGuide {
         id: _inheritanceConfigureGuide
         onNextClicked: {
@@ -375,5 +456,18 @@ QOnScreenContentTypeB {
 
     QBackupSeedPhraseFlow {
         id: _backupSeedPhraseFlow
+    }
+
+    ReplaceKeyOrChangeTimelockViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
+        }
+    }
+    LetConfigureYourWalletViewModel {
+        id: oldVM
+        Component.onCompleted: {
+            oldVM.attachContext(vmContext)
+        }
     }
 }

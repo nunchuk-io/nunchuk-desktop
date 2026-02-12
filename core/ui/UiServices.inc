@@ -1,3 +1,4 @@
+#include "core/ui/GuardMacros.h"
 #include "core/flow/FlowManager.h"
 #include "core/screen/ScreenManager.h"
 #include "core/orchestrator/AppOrchestrator.h"
@@ -6,3 +7,6 @@
 #include "core/subscreen/SubScreenManager.h"
 #include "AppModel.h"
 #include "ServiceSetting.h"
+#include "Chats/ClientController.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QWalletServicesTag.h"

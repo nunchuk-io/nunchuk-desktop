@@ -114,17 +114,52 @@ Rectangle {
                 maxLength: 280
                 enabled: (inputObject.toType === "Input")
                 disabledColor: "#FFFFFF"
-                input.rightPadding: 36
-                textInputted: inputObject.toAddress
+                input.rightPadding: 100
+                textInputted: sendDelegateRoot.toAddress //inputObject.toAddress
                 onTextInputtedChanged: {
-                    if(AppModel.walletInfo.isValidAddress(addressInput.textInputted)) {
+                    if (!addressInput.enabled)
+                        return
+
+                    if (addressInput.textInputted.length === 0) {
                         addressInput.isValid = true
+                        addressInput.showError = false
+                        sendDelegateRoot.toAddress = ""
+                        return
+                    }
+
+                    if (AppModel.walletInfo.isValidAddress(addressInput.textInputted)) {
+                        addressInput.isValid = true
+                        addressInput.showError = false
                         addressInput.errorText = ""
-                        addressInput.showError = false;
                         sendDelegateRoot.toAddress = addressInput.textInputted
-                    } else {
-                        if (addressInput.isValid) {
-                            addressInput.isValid = false
+                    }
+                    else {
+                        addressInput.isValid = false
+                    }
+                }
+                onTypingFinished: { waitPaste.restart() }
+                onPasteKeyRequest: { waitPaste.restart() }
+
+                Timer {
+                    id: waitPaste
+                    interval: 50
+                    running: false
+                    repeat: false
+                    onTriggered: {
+                        addressInput.pasteBitcoinURI()
+                    }
+                }
+                function pasteBitcoinURI() {
+                    if(addressInput.textInputted !== ""){
+                        var uriData = AppModel.walletInfo.parsingURI(addressInput.textInputted)
+                        if(uriData.address !== ""){
+                            sendDelegateRoot.toAddress = uriData.address
+                        }
+                        if(uriData.amount !== ""){
+                            sendDelegateRoot.toAmount = uriData.amount
+                        }
+
+                        if (!addressInput.isValid) {
                             AppModel.showToast(-1, STR.STR_QML_1184, EWARNING.ERROR_MSG);
                             sendDelegateRoot.toAddress = ""
                         }

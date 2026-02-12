@@ -23,4 +23,6 @@ class ScanDeviceUsecase : public core::usecase::AsyncUseCase<ScanDeviceUsecase, 
   core::usecase::Result<ScanDeviceResult> execute(const ScanDeviceInput &input) override;
 };
 
+#undef FIELDS_RESULT
+#undef FIELDS_INPUT
 } // namespace features::signers::usecases

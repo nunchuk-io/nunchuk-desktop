@@ -20,6 +20,7 @@ class ViewModelContext : public QObject {
     AppModel *appModel() const;
     ServiceSetting *serviceSetting() const;
     FlowManager *flowManager() const;
+    QGroupWallets *groupWallets() const;
 
   private:
     AppContext *m_appCtx{nullptr};

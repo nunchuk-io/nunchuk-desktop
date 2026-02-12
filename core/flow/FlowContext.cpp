@@ -47,4 +47,11 @@ ServiceSetting *FlowContext::serviceSetting() const {
     return nullptr;
 }
 
+ClientController *FlowContext::clientController() const {
+    if (m_appCtx) {
+        return m_appCtx->clientController();
+    }
+    return nullptr;
+}
+
 } // namespace core::flow

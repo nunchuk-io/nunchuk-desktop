@@ -185,7 +185,7 @@ QString qUtils::GenerateMnemonic() {
 }
 
 bool qUtils::CheckMnemonic(const QString &mnemonic) {
-    return nunchuk::Utils::CheckMnemonic(mnemonic.toStdString());
+    return nunchuk::Utils::CheckMnemonic(mnemonic.trimmed().toStdString());
 }
 
 QStringList qUtils::GetBIP39WordList() {
@@ -206,7 +206,7 @@ void qUtils::SetPassPhrase(const QString &storage_path, const QString &account, 
 nunchuk::Wallet qUtils::ParseWalletDescriptor(const QString &descs, QWarningMessage &msg) {
     nunchuk::Wallet ret(false);
     try {
-        ret = nunchuk::Utils::ParseWalletDescriptor(descs.toStdString());
+        ret = nunchuk::Utils::ParseWalletDescriptor(descs.trimmed().toStdString());
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -262,15 +262,15 @@ std::vector<nunchuk::PrimaryKey> qUtils::GetPrimaryKeys(const QString &storage_p
 }
 
 QString qUtils::GetMasterFingerprint(const QString &mnemonic, const QString &passphrase) {
-    return QString::fromStdString(nunchuk::Utils::GetMasterFingerprint(mnemonic.toStdString(), passphrase.toStdString()));
+    return QString::fromStdString(nunchuk::Utils::GetMasterFingerprint(mnemonic.trimmed().toStdString(), passphrase.toStdString()));
 }
 
 QString qUtils::GetPrimaryKeyAddress(const QString &mnemonic, const QString &passphrase) {
-    return QString::fromStdString(nunchuk::Utils::GetPrimaryKeyAddress(mnemonic.toStdString(), passphrase.toStdString()));
+    return QString::fromStdString(nunchuk::Utils::GetPrimaryKeyAddress(mnemonic.trimmed().toStdString(), passphrase.toStdString()));
 }
 
 QString qUtils::SignLoginMessage(const QString &mnemonic, const QString &passphrase, const QString &message) {
-    return QString::fromStdString(nunchuk::Utils::SignLoginMessage(mnemonic.toStdString(), passphrase.toStdString(), message.toStdString()));
+    return QString::fromStdString(nunchuk::Utils::SignLoginMessage(mnemonic.trimmed().toStdString(), passphrase.toStdString(), message.toStdString()));
 }
 
 void qUtils::SetChain(nunchuk::Chain chain) {
@@ -384,10 +384,10 @@ nunchuk::Transaction qUtils::DecodeDummyTx(const nunchuk::Wallet &wallet, const 
 }
 
 nunchuk::Transaction qUtils::DecodeTx(const nunchuk::Wallet &wallet, const QString &psbt, const nunchuk::Amount &sub_amount, const nunchuk::Amount &fee,
-                                      const nunchuk::Amount &fee_rate, QWarningMessage &msg) {
+                                      const nunchuk::Amount &fee_rate, bool subtract_fee_from_amount, QWarningMessage &msg) {
     nunchuk::Transaction ret;
     try {
-        ret = nunchuk::Utils::DecodeTx(wallet, psbt.toStdString(), sub_amount, fee, fee_rate);
+        ret = nunchuk::Utils::DecodeTx(wallet, psbt.toStdString(), sub_amount, fee, fee_rate, subtract_fee_from_amount);
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -595,7 +595,7 @@ bool qUtils::IsValidAddress(const QString &address) {
     QWarningMessage msg;
     bool ret{false};
     try {
-        ret = nunchuk::Utils::IsValidAddress(address.toStdString());
+        ret = nunchuk::Utils::IsValidAddress(address.trimmed().toStdString());
     } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
@@ -603,6 +603,24 @@ bool qUtils::IsValidAddress(const QString &address) {
         DBG_INFO << "THROW EXCEPTION" << e.what();
         msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
+    DBG_INFO << ret << address;
+    return ret;
+}
+
+bool qUtils::IsSilentPaymentAddress(const QString &address)
+{
+    QWarningMessage msg;
+    bool ret{false};
+    try {
+        ret = nunchuk::Utils::IsSilentPaymentAddress(address.trimmed().toStdString());
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    DBG_INFO << ret << address;
     return ret;
 }
 
@@ -1553,14 +1571,22 @@ std::vector<uint8_t> qUtils::HexToBytes(const QString& hex) {
 
 QDateTime qUtils::convertTimestampToDateTime(qint64 timestamp, const QString& timezoneId)
 {
+    bool isMilliSeconds = (qAbs(timestamp) >= 1000000000000LL); // >= 1e12
+
     QTimeZone targetTimeZone(timezoneId.toUtf8());
-    if (!targetTimeZone.isValid()) {
-        return QDateTime::fromSecsSinceEpoch(timestamp, Qt::UTC);
+    QDateTime dateTimeUtc;
+
+    if (isMilliSeconds) {
+        dateTimeUtc = QDateTime::fromMSecsSinceEpoch(timestamp, Qt::UTC);
+    } else {
+        dateTimeUtc = QDateTime::fromSecsSinceEpoch(timestamp, Qt::UTC);
     }
 
-    QDateTime dateTimeUtc = QDateTime::fromSecsSinceEpoch(timestamp, Qt::UTC);
-    QDateTime finalDateTime = dateTimeUtc.toTimeZone(targetTimeZone);
-    return finalDateTime;
+    if (!targetTimeZone.isValid()) {
+        return dateTimeUtc;
+    }
+
+    return dateTimeUtc.toTimeZone(targetTimeZone);
 }
 
 QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
@@ -1888,4 +1914,27 @@ QJsonObject qUtils::SingleSignertoJsonObject(const nunchuk::SingleSigner &single
     obj["key_index"] = 0;
 
     return obj;
+}
+
+bool qUtils::isEmailSyntax(const QString& str) {
+    static const QRegularExpression emailFormatRegex(
+        R"((^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$))",
+        QRegularExpression::CaseInsensitiveOption
+        );
+    return emailFormatRegex.match(str).hasMatch();
+}
+
+nunchuk::BtcUri qUtils::ParseBtcUri(const QString &value, QWarningMessage &msg)
+{
+    nunchuk::BtcUri ret;
+    try {
+        ret = nunchuk::Utils::ParseBtcUri(value.toStdString());
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &ex) {
+        DBG_INFO << "THROW EXCEPTION" << ex.what();
+        msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
 }

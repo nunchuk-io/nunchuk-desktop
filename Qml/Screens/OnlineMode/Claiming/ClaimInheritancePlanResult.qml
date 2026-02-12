@@ -18,21 +18,43 @@
  *                                                                        *
  **************************************************************************/
 import QtQuick 2.4
-import "../../../../Components/customizes/Popups"
-import "../../../OnlineMode/SetupWallets/TimeLocks"
+import QtQuick.Controls 2.3
+import QtGraphicalEffects 1.12
+import HMIEVENTS 1.0
+import EWARNING 1.0
+import NUNCHUCKTYPE 1.0
+import DataPool 1.0
+import Features.Common.ViewModels 1.0
+import "../../../Components/origins"
+import "../../../Components/customizes"
+import "../../../Components/customizes/Chats"
+import "../../../Components/customizes/Texts"
+import "../../../Components/customizes/Buttons"
+import "../../OnlineMode/AddHardwareKeys"
 
-QPopupOverlayScreen {
-    id: _infoPopup
-    content: setup_an_on_chain_timelock
-    Component {
-        id: setup_an_on_chain_timelock
-        QSetupOnChainTimelockWallet {
-            onCloseClicked: _infoPopup.close()
-            onPrevClicked: _infoPopup.close()
-            onNextClicked: {
-                dashInfo.walletSetupTimeLock({}, true)
-                _infoPopup.close()
+QScreenAddKeyResult {
+    isSuccess: false
+    resultTitle: vm.title
+    resultSubtitle: vm.description
+    onCloseClicked: vm.close()
+    bottomRight: Row {
+        spacing: 12
+        QTextButton {
+            width: label.paintedWidth + 32
+            height: 48
+            label.text: STR.STR_QML_777
+            label.font.pixelSize: 16
+            type: eTypeE
+            onButtonClicked: {
+                vm.close()
             }
+        }
+    }
+    BaseGuideViewModel {
+        id: vm
+        Component.onCompleted: {
+            FlowManager.currentFlow.bind(vm)
+            vm.attachContext(vmContext)
         }
     }
 }

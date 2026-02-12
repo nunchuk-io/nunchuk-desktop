@@ -10,9 +10,10 @@ InheritanceUnlockedViewModel::InheritanceUnlockedViewModel(QObject *parent)
 }
 
 void InheritanceUnlockedViewModel::withdrawBitcoinClicked(QVariant msg) {
+    GUARD_FLOW_MANAGER()
     QMap<QString, QVariant> maps = msg.toMap();
     maps["isRegistered"] = isRegistered;
-    auto flow = ctx()->flowManager()->startFlow<RegisterWalletOnHardwareFlow>();
+    auto flow = flowMng->startFlow<RegisterWalletOnHardwareFlow>();
     flow->withdrawBitcoinClicked(QVariant::fromValue(maps));
     if (!isRegistered) {
         isRegistered = true;

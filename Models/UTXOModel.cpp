@@ -999,21 +999,48 @@ QVariantList UTXO::timelocklist()
         QVariantMap obj;
         QString valueNodeStr;
         QString valueRemainingStr;
-        bool isLocked = false;
+        QString remainingString  = "";
+        qint64  remainingNumeric = 0;
+        bool    needVisibleWarning = false;
+        bool    isLocked = false;
 
         if (timelockbase() == (int)nunchuk::Timelock::Based::TIME_LOCK) {
+            DBG_INFO << val << QDateTime::currentDateTimeUtc().toTime_t();
             QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
             valueNodeStr = dt.toString("MM/dd/yyyy");
             QDate dateNode = dt.date();
             QDate today = QDateTime::currentDateTimeUtc().date();
             int days = today.daysTo(dateNode);
+            remainingNumeric = days;
             if (days > 0) {
                 valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
+                remainingString  = QString::number(days) + (days == 1 ? " day" : " days");
                 isLocked = true;
-            } else {
-                valueRemainingStr = "";
+                needVisibleWarning = days < 7;
             }
-        } else {
+            else {
+                qint64 secondsTo = QDateTime::currentDateTimeUtc().secsTo(dt);
+                qint64 hours = secondsTo / 3600;
+                qint64 minutes = (secondsTo % 3600) / 60;
+                if (hours >= 1) {
+                    valueRemainingStr = QString::number(hours) + (hours == 1 ? " hour left" : " hours left");
+                    remainingString  = QString::number(hours) + (hours == 1 ? " hour" : " hours");
+                    isLocked = true;
+                }
+                else if (minutes >= 1) {
+                    valueRemainingStr = QString::number(minutes) + (minutes == 1 ? " minute left" : " minutes left");
+                    remainingString  = QString::number(minutes) + (minutes == 1 ? " minute" : " minutes");
+                    isLocked = true;
+                }
+                else {
+                    valueRemainingStr = "";
+                    remainingString = "";
+                    remainingNumeric = 0;
+                    isLocked = false;
+                }
+            }
+        }
+        else {
             QLocale locale(QLocale::English);
             int64_t currentHeight = AppModel::instance()->blockHeight();
             int64_t remain = val - currentHeight;
@@ -1021,6 +1048,9 @@ QVariantList UTXO::timelocklist()
             if (val > currentHeight) {
                 QString remainStr = locale.toString(remain);
                 valueRemainingStr = remainStr + (remain == 1 ? " block left" : " blocks left");
+                remainingString  = remainStr + (remain == 1 ? " block" : " blocks");
+                remainingNumeric = remain;
+                needVisibleWarning = remain < 1008;
                 isLocked = true;
             } else {
                 valueRemainingStr = "";
@@ -1031,8 +1061,11 @@ QVariantList UTXO::timelocklist()
 
         obj["valueNode"] = valueNodeStr;
         obj["valueIndex"] = i;
-        obj["valueRemaining"] = valueRemainingStr;
         obj["valueLocked"] = isLocked;
+        obj["valueRemaining"] = valueRemainingStr;
+        obj["valueRemainingString"]  = remainingString;
+        obj["valueRemainingNumeric"] = remainingNumeric;
+        obj["valueNeedVisibleWarning"] = needVisibleWarning;
         ret << obj;
     }
 
@@ -1040,8 +1073,11 @@ QVariantList UTXO::timelocklist()
         QVariantMap emptyObj;
         emptyObj["valueNode"] = "";
         emptyObj["valueIndex"] = ret.size();
-        emptyObj["valueLocked"] = anyLocked;
+        emptyObj["valueLocked"] = false;
         emptyObj["valueRemaining"] = anyLocked ? "" : "Unlocked";
+        emptyObj["valueRemainingString"]  = "";
+        emptyObj["valueRemainingNumeric"] = 0;
+        emptyObj["valueNeedVisibleWarning"] = false;
         ret << emptyObj;
     }
     setTimeLocked(anyLocked);
@@ -1569,6 +1605,70 @@ void QUTXOListModel::selectAll(bool select)
     endResetModel();
     emit selectedCountChanged();
     emit amountChanged();
+}
+
+QString QUTXOListModel::spendableDisplay()
+{
+    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+        QLocale locale(QLocale::English);
+        return locale.toString(spendableSats());
+    }
+    else{
+        return spendableBTC();
+    }
+}
+
+qint64 QUTXOListModel::spendableSats()
+{
+    foreach (QUTXOPtr it, m_data) {
+        DBG_INFO << it.data()->isLocked() << it.data()->amountSats();
+        if(!it.data()->isLocked()){
+            m_spendableSats += it.data()->amountSats();
+        }
+    }
+    return m_spendableSats;
+}
+
+QString QUTXOListModel::spendableBTC()
+{
+    return qUtils::QValueFromAmount(spendableSats());
+}
+
+QString QUTXOListModel::spendableCurency()
+{
+    return qUtils::currencyLocale(spendableSats());
+}
+
+void QUTXOListModel::setSpendableSats(qint64 sats)
+{
+    if (m_spendableSats != sats) {
+        m_spendableSats = sats;
+        emit spendableChanged();
+    }
+}
+
+QVariantMap QUTXOListModel::timelockInfo()
+{
+    QVariantMap ret;
+    qint64 minValue = std::numeric_limits<qlonglong>::max();
+    for (int i = 0; i < m_data.count(); i++) {
+        if(auto utxo = m_data.at(i).data()) {
+            QVariantList timelocklist = utxo->timelocklist();
+            for (const auto &item : timelocklist) {
+                QVariantMap map = item.toMap();
+                DBG_INFO << "timelockInfo map:" << map;
+                if (map.contains("valueRemainingNumeric") && map.contains("valueNode")) {
+                    qint64 value = map["valueRemainingNumeric"].toLongLong();
+                    QString valueNode = map["valueNode"].toString();
+                    if (value > 0 && (value < minValue) && (valueNode != "")) {
+                        minValue = value;
+                        ret = map;
+                    }
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 bool sortbyAmountAscending(const QUTXOPtr &v1, const QUTXOPtr &v2)

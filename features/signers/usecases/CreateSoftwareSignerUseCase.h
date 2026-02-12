@@ -26,4 +26,6 @@ class CreateSoftwareSignerUseCase : public core::usecase::AsyncUseCase<CreateSof
   core::usecase::Result<CreateSoftwareResult> execute(const CreateSoftwareInput &input) override;
 };
 
+#undef FIELDS_RESULT
+#undef FIELDS_INPUT
 } // namespace features::signers::usecases

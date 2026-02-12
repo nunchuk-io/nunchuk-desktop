@@ -514,7 +514,6 @@ bool BaseTransaction::useScriptPath()
 
 void BaseTransaction::setUseScriptPath(bool data, bool cached)
 {
-    DBG_INFO << "EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER" << data;
     if (m_useScriptPath != data){
         m_useScriptPath = data;
         emit useScriptPathChanged();
@@ -1134,10 +1133,9 @@ QString BaseTransaction::serverKeyMessage() const
     return m_serverKeyMessage;
 }
 
-void BaseTransaction::setServerKeyMessage(const QJsonObject &data)
+void BaseTransaction::setServerKeyMessage(const QJsonObject &transaction)
 {
     if (status() == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES) {
-        QJsonObject transaction = data.value("transaction").toObject();
         QJsonObject spending_limit_reached  = transaction.value("spending_limit_reached").toObject();
         double time = transaction.value("sign_time_milis").toDouble();
         if (!spending_limit_reached.isEmpty()) {
@@ -1148,7 +1146,7 @@ void BaseTransaction::setServerKeyMessage(const QJsonObject &data)
         }
         else{}
         bool is_cosigning  = transaction.value("is_cosigning").toBool();
-        DBG_INFO << "FIXME is_cosigning" << is_cosigning << m_serverKeyMessage;
+        DBG_INFO << "FIXME is_cosigning" << is_cosigning << m_serverKeyMessage << transaction;
         setIsCosigning(is_cosigning);
         emit serverKeyMessageChanged();
     } else {

@@ -112,9 +112,9 @@ void QSignerManagement::requestCreateSoftwareSigner(const QString &signername, c
     if (QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_PRIMARY_KEY &&
         QEventProcessor::instance()->currentFlow() != (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY) {
         DBG_INFO << "signername" << signername << replace;
-        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase, replace);
+        AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic.trimmed(), passphrase, replace);
     } else {
-        requestCreateSoftwareSignerPrimaryKey(signername, mnemonic, passphrase, replace);
+        requestCreateSoftwareSignerPrimaryKey(signername, mnemonic.trimmed(), passphrase, replace);
     }
 }
 void QSignerManagement::requestCreateSoftwareSignerXprv(const QString &name, const QString &xprv, bool replace) {

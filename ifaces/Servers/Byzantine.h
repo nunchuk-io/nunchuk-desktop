@@ -69,6 +69,7 @@ public:
     bool DraftWalletAddKey(const QString group_id, const QString request_id, const QJsonObject data, QJsonObject &output);
 
     bool GetCurrentGroupWallet(const QString group_id, QJsonObject& output, QString &errormsg);
+    bool GetWalletGroupWallet(const QString group_id, const QString &wallet_id, QJsonObject& output, QString &errormsg);
     bool GetCurrentGroupDraftWallet(const QString group_id, QJsonObject& output, QString &errormsg);
     bool GetAllListRequestAddKey(const QString &group_id, QJsonObject &output, QString &errormsg);
     bool DeleteRequestAddKey(const QString &group_id, const QString &request_id);
@@ -292,10 +293,10 @@ public:
     bool DraftWalletDownloadBackupFile(const QString& group_id, const QString& xfp, QJsonObject& output, QString& errormsg);
     bool DraftWalletUploadBackupFile(const QString& group_id, const QMap<QString, QVariant>& requestBody, QJsonObject& output, QString& errormsg);
 
-    bool DraftWalletUpdateTimelock(const QString& group_id, const QString& timezone, const qint64 timelock, QJsonObject& output, QString& errormsg);
+    bool DraftWalletUpdateTimelock(const QString& group_id, const QJsonObject& request_body, QJsonObject& output, QString& errormsg);
     bool DraftWalletSignerVerify(const QString &group_id, const QString& xfp, const QString& type, QString& errormsg);
 
-    bool walletChangeTimelock(const QString &wallet_id, const QString& group_id, const QString& timezone, const qint64 timelock, const QString &verify_token, QJsonObject& output);
+    bool walletChangeTimelock(const QString &wallet_id, const QString& group_id, const QJsonObject& request_body, const QString &verify_token, QJsonObject& output);
 private:
     QRestPtr  m_rest;
 };

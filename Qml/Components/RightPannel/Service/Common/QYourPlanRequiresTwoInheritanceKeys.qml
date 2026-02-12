@@ -31,7 +31,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1997.arg(claimData.inheritance_key_count)
+    label.text: STR.STR_QML_1997.arg(inheritance_key_count)
     content: Item {
         Row {
             spacing: 36
@@ -49,7 +49,7 @@ QOnScreenContentTypeA {
                     spacing: 24
                     QLato {
                         width: parent.width
-                        text: STR.STR_QML_1998.arg(claimData.inheritance_key_count)
+                        text: STR.STR_QML_1998.arg(inheritance_key_count)
                         lineHeightMode: Text.FixedHeight
                         lineHeight: 20
                         wrapMode: Text.WordWrap

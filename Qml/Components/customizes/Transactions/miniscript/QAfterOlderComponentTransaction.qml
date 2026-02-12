@@ -34,7 +34,7 @@ import "../../../../Components/customizes/Wallets/miniscript"
 import "../../../../../localization/STR_QML.js" as STR
 
 Item {
-    property bool hasUnlocked: miniscript.hasUnlocked != undefined ? miniscript.hasUnlocked : false
+    property bool hasUnlocked: miniscript.hasUnlocked !== undefined ? miniscript.hasUnlocked : false
 
     QAfterOlderComponent {
         id: baseCommon

@@ -261,6 +261,8 @@ public slots:
     QString addressPath(const QString &address);
     QString addressBalance(const QString &address);
     bool    markAddressUsed(const QString &address);
+
+    QVariantMap parsingURI(const QString &uri);
 };
 typedef OurSharedPointer<Wallet> QWalletPtr;
 #endif // BASEWALLET_H

@@ -11,6 +11,7 @@
 #include "TransactionModel.h"
 #include "ServiceSetting.h"
 #include "WalletModel.h"
+#include "features/claiming/usecases/InitializeInheritanceClaimingUseCase.h"
 
 // Forward declarations for external types used
 namespace nunchuk {
@@ -19,6 +20,8 @@ namespace nunchuk {
     class SingleSigner;
     class MasterSigner;
 }
+
+using features::claiming::usecases::InitializeInheritanceClaimingResult;
 
 class QInheritanceClaiming  : public QStateFlow
 {
@@ -47,7 +50,7 @@ public:
     Q_INVOKABLE bool inheritanceCreateTx(const QJsonObject &data, const QStringList &authos);
     Q_INVOKABLE void setInheritanceAddress(const QString &to_wallet_id);
     Q_INVOKABLE void setInheritanceAddressNewTransaction(const QString &address);
-    Q_INVOKABLE bool inheritanceCreateDraftTransaction(double fee_rate = 1000.0, bool anti_fee_sniping = false);
+    Q_INVOKABLE bool inheritanceCreateDraftTransaction(double fee_rate = 1000.0, bool anti_fee_sniping = false, bool subtract_fee_from_amount = false);
     Q_INVOKABLE bool inheritanceSignTransaction();
     bool inheritanceUpdateLibTransaction();
 
@@ -71,19 +74,20 @@ public:
     QJsonObject inheritanceClaimPlanJs() const { return m_inheritanceClaimPlan; }
     QJsonObject inheritanceCheckStatusJs() const { return m_inheritanceCheckStatus; }
 
-    Q_INVOKABLE QVariant inheritanceClaimInit(const QString& magic);
     void clearInheritanceKeys();
-    QJsonObject claimInitJson() const;
+    void setClaimInit(const InitializeInheritanceClaimingResult& init);
+    void claimInitSaveBsms(const QString& bsms, const nunchuk::Wallet& wallet);
     nunchuk::SingleSigner RecoverAnExistingSeed(const QString &mnemonic);
-    bool GetClaimingWalletInfo(const QString &local_id);
+    void onChainProcessErrorCode(int error_code, const QString &error_msg);
 public slots:
     QJsonArray inheritanceKeys() const;
+    bool requestDownloadWallet();
+    bool requestClaimInheritanceFromSigner(const nunchuk::SingleSigner &signer);
+
+    bool requestDownloadWalletViaSeedPhrase(const QString &seedPhrase);
     bool requestDownloadWalletWithIndexAsync(const QString &xfp);
     bool requestDownloadWalletViaQR(const QStringList &qr_data);
     bool requestDownloadWalletViaImportFile(const QString &fileName);
-    bool requestDownloadWallet(const nunchuk::SingleSigner &single);
-    bool requestDownloadWallet();
-    bool requestDownloadWalletViaSeedPhrase(const QString &seedPhrase);
     
 signals:
     // Signals mirrored from QWalletServicesTag for claim logic
@@ -106,7 +110,7 @@ private:
     inheritance_t mInheritance = {};
     std::vector<nunchuk::SingleSigner> single_signers;
     std::vector<nunchuk::MasterSigner> master_signers;
-    QJsonObject m_claimInitJson{};
+    InitializeInheritanceClaimingResult m_claimInit {};
     QJsonArray m_inheritanceKeys{};
     QJsonObject m_walletInfoClaim{};
     QJsonObject m_claimWallet{};

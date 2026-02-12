@@ -17,4 +17,6 @@ class DownloadWalletUseCase : public core::usecase::AsyncUseCase<DownloadWalletU
   core::usecase::Result<QJsonObject> execute(const DownloadWalletInput &input) override;
 };
 
+#undef FIELDS_RESULT
+#undef FIELDS_INPUT
 } // namespace features::claiming::usecases

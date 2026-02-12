@@ -57,7 +57,7 @@ void EVT_INHERITANCE_CREATE_DRAFT_TX_FEE_REQ_HANDLER(QVariant msg)
         if(!manualFee) feeRate = AppModel::instance()->fastestFeeOrigin();//default value
         bool antiFeeSnipping = maps.value("antiFeeSnipping").toBool();
         DBG_INFO << "subtract:" << subtractFromFeeAmout << "| manual Output:" << manualOutput << "| manual Fee:" << manualFee << "| free rate:" << feeRate;
-        return ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction(feeRate, antiFeeSnipping);
+        return ServiceSetting::instance()->servicesTagPtr()->inheritanceCreateDraftTransaction(feeRate, antiFeeSnipping, subtractFromFeeAmout);
     };
     if (type == "update-fee") {
         draft_tx_fee(fee_input);

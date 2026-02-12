@@ -34,6 +34,7 @@ import "../../../../../localization/STR_QML.js" as STR
 Item {
     property bool isTransaction : false
     Row {
+        id: rowContent
         anchors.fill: parent
         spacing: 4
         QIcon {
@@ -54,12 +55,12 @@ Item {
             spacing: 2
             Row {
                 width: parent.width
-                height: isTransaction ? 40 : 20
+                // height: isTransaction ? 40 : 20
                 spacing: 4
                 QLato {
                     id: firstLine
                     width: paintedWidth
-                    height: 20
+                    // height: 20
                     text: miniscript.firstLine
                     font.weight: Font.Normal
                     horizontalAlignment: Text.AlignLeft
@@ -67,7 +68,7 @@ Item {
                 }
                 QLato {
                     width: parent.width - firstLine.paintedWidth - 4
-                    height: isTransaction ? 40 : 20
+                    // height: isTransaction ? 40 : 20
                     text: getTitle()
                     font.weight: Font.Normal
                     horizontalAlignment: Text.AlignLeft

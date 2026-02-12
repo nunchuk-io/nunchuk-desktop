@@ -185,6 +185,7 @@ public:
     QSingleSignerPtr clone();
 
 private:
+    QString m_signername = "";
     QString xpub_ = "";
     QString public_key_ = "";
     QString derivation_path_ = "";
@@ -219,12 +220,14 @@ private:
     bool m_need_backup {false};
     bool m_isLocalSigner {false};
     bool m_taprootSupported {false};
+
 private:
     QString timeGapCalculation(QDateTime in);
     QString timeGapCalculationShort(QDateTime in);
 
 signals:
     void nameChanged();
+    void requestResolveSignerName(QString& xfp);
     void xpubChanged();
     void publickeyChanged();
     void derivationPathChanged();

@@ -133,6 +133,7 @@ nunchuk::Transaction DecodeTx(const nunchuk::Wallet& wallet,
                               const nunchuk::Amount& sub_amount,
                               const nunchuk::Amount& fee,
                               const nunchuk::Amount& fee_rate,
+                              bool subtract_fee_from_amount, 
                               QWarningMessage& msg);
 
 QString CreateRequestToken(const QString& signature,
@@ -161,6 +162,8 @@ QStringList DeriveAddresses(const nunchuk::Wallet& wallet, int from_index, int t
 int GetIndexFromPath(const QString& path);
 
 bool IsValidAddress(const QString& address);
+
+bool IsSilentPaymentAddress(const QString& address);
 
 QString GetBip32DerivationPath(const nunchuk::WalletType& wallet_type, const nunchuk::AddressType& address_type);
 
@@ -316,5 +319,8 @@ int GetCoinTypeFromPath(const QString &path);
 
 QJsonObject SingleSignertoJsonObject(const nunchuk::SingleSigner &single);
 
+bool isEmailSyntax(const QString& str);
+
+nunchuk::BtcUri ParseBtcUri(const QString& value, QWarningMessage &msg);
 }
 #endif // QUTILS_H

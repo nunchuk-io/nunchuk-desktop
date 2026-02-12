@@ -108,6 +108,7 @@ public:
 
     bool sortByCoinAge();
     void setSortByCoinAge(const int data);
+
 public slots:
     void requestForAllCoins(const QVariant &act);
     void requestForLockedAllCoins(const QVariant &act);
@@ -117,11 +118,13 @@ public slots:
     void requestImportBIP329(const QString& filePath);
     void requestConsolidateMakeTransaction(const QVariant &msg);
     void requestSyncSelectCoinForMakeTransaction(const QVariant &msg);
+
 private:
     void GetCoinControlUserWallet();
     void GetCoinControlGroupWallet();
     void UpdateCoinControlUserWallet();
     void UpdateCoinControlGroupWallet();
+
 signals:
     void isViewCoinShowChanged();
     void coinFlowChanged();

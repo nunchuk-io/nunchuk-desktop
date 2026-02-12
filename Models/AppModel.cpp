@@ -482,7 +482,7 @@ QString AppModel::getMnemonic() const
 void AppModel::setMnemonic(const QString &mnemonic)
 {
     if(m_mnemonic != mnemonic){
-        m_mnemonic = mnemonic;
+        m_mnemonic = mnemonic.trimmed();
         emit mnemonicChanged();
     }
 }
@@ -727,11 +727,7 @@ void AppModel::requestSyncWalletDb(const QString &wallet_id)
 
 void AppModel::requestCreateUserWallets()
 {
-    QtConcurrent::run([]() {
-        WalletsMng->GetListWallet(USER_WALLET);
-        WalletsMng->GetListWallet(GROUP_WALLET);
-        AppModel::instance()->startReloadUserDb();
-    });
+
 }
 
 void AppModel::requestSyncSharedWallets()

@@ -258,6 +258,7 @@ QScreen {
                                     };
                                     QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST, masterSignerObj)
                                 }
+                                _info.close()
                             }
                         }
                     }

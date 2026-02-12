@@ -150,29 +150,15 @@ QString QInheritancePlan::formatDateTime() const {
 
 QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
 {
-    auto wallet = walletInfoPtr();
-    if (wallet.isNull()) return data;
-    auto dashBoard = dashBoardPtr();
-    if (dashBoard.isNull()) return data;
-    nunchuk::WalletType wallet_type = wallet->nunchukWallet().get_wallet_type();
-    if (wallet_type == nunchuk::WalletType::MINISCRIPT) {
-        data["activation_date"] = dashBoard->timeLock();
-        data["activation_timezone"] = wallet->timezones()->selectedTimezone();
-        data["activation_timezone_local"] = wallet->timezones()->localTimezone();
+    long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble()/1000);
+    if (activation_time_milis > 0) {
+        data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).toString(formatDateTime());
     }
     else {
-        long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble()/1000);
-        if (activation_time_milis > 0) {
-            data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).toString(formatDateTime());
-        }
-        else {
-            data["activation_date"] = "";
-        }
-        DBG_INFO << data;
-        data["activation_timezone"] = qUtils::formatTimeZoneString(data["timezone"].toString());
-        data["activation_timezone_local"] = wallet->timezones()->localTimezone();
-        wallet->timezones()->setSelectedTimezone(data["activation_timezone"].toString());
+        data["activation_date"] = "";
     }
+    DBG_INFO << data;
+    data["activation_timezone"] = qUtils::formatTimeZoneString(data["timezone"].toString());
     
     QJsonArray emails = data.value("notification_emails").toArray();
     if (emails.size() > 0) {
@@ -230,24 +216,24 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
 
 void QInheritancePlan::GetInheritancePlan()
 {
-    QPointer<QInheritancePlan> safeThis(this);
-    runInThread([safeThis]() ->QJsonObject{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QWalletPtr w = ptrLamda->walletInfoPtr();
-        if (w.isNull() || (w.data()->status() == "REPLACED")) return {};
-        QJsonObject response;
-        QString errormsg;
-        Draco::instance()->inheritanceGetPlan(w->walletId(), w->groupId(), response, errormsg);
-        return response["inheritance"].toObject();
-    },[safeThis](QJsonObject inheritance) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if (!inheritance.isEmpty()) {
-            DBG_INFO << inheritance;
-            ptrLamda->m_planInfoCurrent = ptrLamda->ConvertToDisplayQml(inheritance);
-            ptrLamda->setPlanInfo(ptrLamda->ConvertToDisplayQml(inheritance));
-            if (auto dash = ptrLamda->dashBoardPtr()) {
-                if (auto tag = dash->servicesTagPtr()) {
-                    tag->setListInheritantPlans();
+    QWalletPtr w = walletInfoPtr();
+    if (w.isNull() || (w.data()->status() == "REPLACED")) return;
+
+    using namespace features::inheritance::usecases;
+    GetInheritancePlanInput input;
+    input.wallet_id = wallet_id();
+    input.group_id = w->groupId();
+    m_getInheritancePlanUC.executeAsync(input, [this](core::usecase::Result<GetInheritancePlanResult> result){
+        if (result.isSuccess()) {
+            auto inheritance = result.value().inheritance;            
+            if (!inheritance.isEmpty()) {
+                DBG_INFO << inheritance;
+                m_planInfoCurrent = ConvertToDisplayQml(inheritance);
+                setPlanInfo(ConvertToDisplayQml(inheritance));
+                if (auto dash = dashBoardPtr()) {
+                    if (auto tag = dash->servicesTagPtr()) {
+                        tag->setListInheritantPlans();
+                    }
                 }
             }
         }

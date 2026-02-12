@@ -11,5 +11,14 @@ class OnChainClaimingFlow : public core::flow::BaseFlow {
     QString id() const override {
         return "OnChainClaimingFlow";
     }
+    void passClaimingError(int code, const QString& message);
+  public slots:
+    void bind(QObject* vm) override;
+  private:
+    QString getTitleByErrorCode(int code);
+  private:
+    int m_errorCode{0};
+    QString m_errorMessage;
+
 };
 } // namespace features::claiming::flows

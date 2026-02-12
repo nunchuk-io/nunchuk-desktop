@@ -48,6 +48,7 @@ void EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST_HANDLER(QVariant msg) {
     if(AppModel::instance()->deviceList()){
         QDevicePtr selectedDv = AppModel::instance()->deviceList()->getDeviceByIndex(deviceIndexSelected);
         if (selectedDv) {
+            QString xfpSelected = selectedDv->masterFingerPrint();
             bool isSubscribed = ClientController::instance()->isSubscribed();
             auto request = [&]() {
                 if(selectedDv){
@@ -60,19 +61,28 @@ void EVT_ADD_HARDWARE_SIGNER_ADD_MASTER_SIGNER_REQUEST_HANDLER(QVariant msg) {
                 }
             };
             if (isSubscribed) {
-                if (AppModel::instance()->masterSignerListPtr()->containsFingerPrint(selectedDv->masterFingerPrint())) {
-                    if (yesBtn) {
-                        request();
+                if (yesBtn) {
+                    request();
+                }
+                auto masterList = AppModel::instance()->masterSignerListPtr();
+                auto remoteList = AppModel::instance()->remoteSignerListPtr();
+                if (masterList->containsFingerPrint(xfpSelected)) {
+                    auto oldKey = masterList->getMasterSignerByXfp(xfpSelected);
+                    if (oldKey->originMasterSigner().get_type() == nunchuk::SignerType::SOFTWARE) {
+                        emit AppModel::instance()->notifySignerExist(true, xfpSelected);
+                    } else {
+                        emit AppModel::instance()->notifySignerExist(false, xfpSelected);
                     }
-                    else {
-                        auto oldKey = AppModel::instance()->masterSignerListPtr()->getMasterSignerByXfp(selectedDv->masterFingerPrint());
-                        if (oldKey->originMasterSigner().get_type() == nunchuk::SignerType::SOFTWARE) {
-                            emit AppModel::instance()->notifySignerExist(true, selectedDv->masterFingerPrint());
-                        } else {
-                            emit AppModel::instance()->notifySignerExist(false, selectedDv->masterFingerPrint());
-                        }
+                } 
+                else if (remoteList->containsFingerPrint(xfpSelected)) {
+                    auto oldKey = remoteList->getSingleSignerByFingerPrint(xfpSelected);
+                    if (oldKey->originSingleSigner().get_type() == nunchuk::SignerType::SOFTWARE) {
+                        emit AppModel::instance()->notifySignerExist(true, xfpSelected);
+                    } else {
+                        emit AppModel::instance()->notifySignerExist(false, xfpSelected);
                     }
-                } else {
+                }
+                else {
                     request();
                 }
             } else {

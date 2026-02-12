@@ -40,7 +40,7 @@ import "../../../../../localization/STR_QML.js" as STR
 QPopupOverlayScreen {
     id: _infoPopup
     signal nextClicked()
-    property var claimData
+    property int inheritance_key_count: 0
     property bool isKeyHolderLimited: false
     property bool isMiniscript: true
     QScreenStateFlow {
@@ -54,7 +54,6 @@ QPopupOverlayScreen {
         { screen: "restore-seed-phrase-to-hardware-device",   screen_component: restore_seed_phrase_to_hardware_device },
         { screen: "your-plan-requires-two-inheritance-keys-added-one",  screen_component: your_plan_requires_two_inheritance_keys_added_one },
         { screen: "recover-an-existing-seed",               screen_component: _recoverAnExistingSeed },
-        { screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     content: {
@@ -67,15 +66,15 @@ QPopupOverlayScreen {
         }
     }
 
-    function onChainClaimSecond(claimData) {
-        _infoPopup.claimData = claimData
+    function onChainClaimSecond(inheritance_key_count) {
+        _infoPopup.inheritance_key_count = inheritance_key_count
         stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys-added-one")
         _infoPopup.open()
     }
 
-    function onChainClaim(claimData) {
-        _infoPopup.claimData = claimData
-        if (claimData.inheritance_key_count == 1) {
+    function onChainClaim(inheritance_key_count) {
+        _infoPopup.inheritance_key_count = inheritance_key_count
+        if (inheritance_key_count == 1) {
             stateScreen.setScreenFlow("prepare-inheritance-key")
         } else {
             stateScreen.setScreenFlow("your-plan-requires-two-inheritance-keys")
@@ -154,6 +153,9 @@ QPopupOverlayScreen {
         QRecoverAnExistingSeed {            
             onCloseClicked: _infoPopup.close()
             onPrevClicked: stateScreen.backScreen()
+            onNextClicked: {
+                _infoPopup.close()
+            }
         }
     }
 
@@ -180,28 +182,6 @@ QPopupOverlayScreen {
         }
     }
 
-     Component {
-        id: _resultClaimInheritancePlan
-        QScreenAddKeyResult {
-            isSuccess: false
-            resultTitle: STR.STR_QML_2045
-            resultSubtitle: STR.STR_QML_2046
-            onCloseClicked: _infoPopup.close()
-            bottomRight: Row {
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_097
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        _infoPopup.close()
-                    }
-                }
-            }
-        }
-    }
     QPopupInfoTwoButtons {
         id: _info
         signal yesClicked()
@@ -235,11 +215,9 @@ QPopupOverlayScreen {
         target: ServiceSetting.servicesTag
         onResultClaimInheritanceAlert: {
             if (result === "CLAIM_INHERITANCE_SECOND_KEY") {
-                _infoPopup.onChainClaimSecond(claimData)
+                _infoPopup.onChainClaimSecond(inheritance_key_count)
             } else if (result === "CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS") {
                 _infoPopup.close()
-            } else if (result === "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR") {
-                stateScreen.setScreenFlow("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR")
             }
         }
     }

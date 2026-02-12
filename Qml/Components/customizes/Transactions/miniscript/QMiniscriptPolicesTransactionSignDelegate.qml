@@ -73,6 +73,7 @@ QMiniscriptPolicesDelegate {
             }
         }
     }
+
     function getKeyHeight() {
         if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
             if (miniscript.keyObj.singleSigner_derivationPath !== undefined && miniscript.keyObj.singleSigner_derivationPath !== null && useDerivationPath) {
@@ -84,9 +85,19 @@ QMiniscriptPolicesDelegate {
             return 48
         }
     }
+
     function getCommon() {
         return commonTmp
     }
+
+    function getAfterOlder() {
+        return after_older_tmp
+    }
+
+    function getAfterOlderHeight() {
+        return 70
+    }
+
     Component {
         id: commonTmp
         QCommonComponentTransaction {
@@ -96,12 +107,6 @@ QMiniscriptPolicesDelegate {
         }
     }
 
-    function getAfterOlder() {
-        return after_older_tmp
-    }
-    function getAfterOlderHeight() {
-        return 48
-    }
     Component {
         id: after_older_tmp
         QAfterOlderComponentTransaction {

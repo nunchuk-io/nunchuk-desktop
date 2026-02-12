@@ -20,4 +20,6 @@ class GetClaimingWalletUseCase : public core::usecase::AsyncUseCase<GetClaimingW
   core::usecase::Result<GetClaimingWalletResult> execute(const GetClaimingWalletInput &input) override;
 };
 
+#undef FIELDS_RESULT
+#undef FIELDS_INPUT
 } // namespace features::claiming::usecases

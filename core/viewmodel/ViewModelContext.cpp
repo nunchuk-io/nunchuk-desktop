@@ -55,4 +55,11 @@ FlowManager *ViewModelContext::flowManager() const {
     return nullptr;
 }
 
+QGroupWallets *ViewModelContext::groupWallets() const {
+    if (m_appCtx) {
+        return m_appCtx->groupWallets();
+    }
+    return nullptr;
+}
+
 } // namespace core::viewmodels

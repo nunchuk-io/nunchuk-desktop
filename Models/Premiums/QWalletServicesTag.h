@@ -57,7 +57,7 @@ class QWalletServicesTag : public QInheritanceClaiming
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList securityQuestions   READ securityQuestions      NOTIFY securityQuestionChanged)
-    Q_PROPERTY(QVariantList periods     READ periods        CONSTANT)
+    Q_PROPERTY(QVariantList periods             READ periods                CONSTANT)
     Q_PROPERTY(QString untilTime                READ untilTime              NOTIFY untilTimeChanged)
     // Keep non-claim list properties in this class
     Q_PROPERTY(QStringList listInheritantPlans  READ listInheritantPlans    NOTIFY listInheritantPlansChanged)
@@ -65,7 +65,7 @@ class QWalletServicesTag : public QInheritanceClaiming
     Q_PROPERTY(QStringList listLocked           READ listLocked             NOTIFY listLockedChanged)
     Q_PROPERTY(QStringList listPolicy           READ listPolicy             NOTIFY listPolicyChanged)
 
-    Q_PROPERTY(QVariant keyRecovery             READ keyRecovery        CONSTANT)
+    Q_PROPERTY(QVariant keyRecovery             READ keyRecovery            CONSTANT)
     Q_PROPERTY(QVariant setupConfig             READ setupConfig            NOTIFY setupConfigChanged)
 
 public:

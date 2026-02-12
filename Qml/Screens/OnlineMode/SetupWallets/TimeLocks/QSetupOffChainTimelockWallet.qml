@@ -19,6 +19,7 @@
  **************************************************************************/
 import QtQuick 2.4
 import NUNCHUCKTYPE 1.0
+import Features.Inheritance.OffChain.ViewModels 1.0
 import "../../../../Components/origins"
 import "../../../../Components/customizes"
 import "../../../../Components/customizes/Texts"
@@ -32,22 +33,12 @@ QOnScreenContentTypeA {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_2055
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onCloseClicked: vm.close()
+    onPrevClicked: vm.close()
     onNextClicked: {
-        var _edit = {
-            "activation_date": valueDate,
-            "activation_timezone": valueTimezone
-        }
-        inheritancePlanInfo.editPlanInfo(_edit)
-        closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+        vm.timeLockContinueClicked()
+        vm.close()
     }
-
-    property var    planInfo: inheritancePlanInfo.planInfo
-    property string walletName: ServiceSetting.walletInfo.walletName
-    property int    walletType: ServiceSetting.walletInfo.walletType
-    property string valueTimezone: ServiceSetting.walletInfo.timezones.selectedTimezone
-    property string valueDate: planInfo.activation_date
 
     content: Item {
         Column {
@@ -92,7 +83,10 @@ QOnScreenContentTypeA {
                         labelComponent.font.pixelSize: 16
                         boxWidth: parent.width
                         boxHeight: 48
-                        textInputted: ServiceSetting.walletInfo.timezones.selectedTimezone
+                        textInputted: _timezoneInput.selectedTimezone
+                        onTextInputtedChanged: {
+                            vm.valueTimezone = _input_timezone.textInputted
+                        }
                     }
                     QIcon {
                         iconSize: 24
@@ -115,7 +109,13 @@ QOnScreenContentTypeA {
                     }
                     QPopupTimezone {
                         id: _timezoneInput
-                        selectedWalletInfo: ServiceSetting.walletInfo
+                    }
+
+                    Connections {
+                        target: vm
+                        onValueTimezoneChanged: {
+                            _timezoneInput.timelockVM.timezones.setSelectedTimezone(vm.valueTimezone)
+                        }
                     }
                 }
                 Item {
@@ -129,9 +129,9 @@ QOnScreenContentTypeA {
                         boxWidth: parent.width
                         boxHeight: 48
                         textInputted: _calendarInput.dateString
-                        input.placeholderText: planInfo.activation_date
+                        input.placeholderText: vm.valueDate
                         onTextInputtedChanged: {
-                            valueDate = _input_date.textInputted
+                            vm.valueDate = _input_date.textInputted
                         }
                     }
                     QIcon {
@@ -150,21 +150,10 @@ QOnScreenContentTypeA {
                         cursorShape: Qt.PointingHandCursor
                         propagateComposedEvents: true
                         onClicked: {
-                            var parts = planInfo.activation_date.split("/")
-                            var dated = new Date(parts[2], parts[0] - 1, parts[1])
-                            _calendarInput.selectedDate = dated
                             _calendarInput.open()
                         }
                     }
-                    QPopupCalendar {
-                        id: _calendarInput
-                        minimumDate: new Date()
-                        selectedDate: {
-                            var parts = planInfo.activation_date.split("/")
-                            return new Date(parts[2], parts[0] - 1, parts[1])
-                        }
-                        dateString: planInfo.activation_date
-                    }
+                    
                 }
             }
         }
@@ -175,6 +164,25 @@ QOnScreenContentTypeA {
             icon: "qrc:/Images/Images/info-60px.svg"
             txt.text: STR.STR_QML_2059
             anchors.bottom: parent.bottom
+        }
+    }
+    function textSlice(value) {
+        return value.length > 25 ? value.slice(0, 22) + "..." : value
+    }
+    QPopupCalendar {
+        id: _calendarInput
+        minimumDate: null
+        selectedDate: {
+            var parts = vm.valueDate.split("/")
+            return new Date(parts[2], parts[0] - 1, parts[1])
+        }
+        dateString: vm.valueDate
+    }
+    SetupAnOffChainTimelockViewModel {
+        id: vm
+        Component.onCompleted: {
+            FlowManager.currentFlow.bind(vm)
+            vm.attachContext(vmContext)
         }
     }
 }

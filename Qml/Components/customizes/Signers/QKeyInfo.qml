@@ -173,9 +173,10 @@ QOnScreenContentTypeA {
                     return ls
                 }
                 enables: [true, true, true]
-                visibles: [ (signerType === NUNCHUCKTYPE.SOFTWARE || signerType === NUNCHUCKTYPE.HARDWARE),
+                visibles: [
+                    (signerType === NUNCHUCKTYPE.SOFTWARE || signerType === NUNCHUCKTYPE.HARDWARE),
                     isTopXPubs,
-                    signerType !== NUNCHUCKTYPE.FOREIGN_SOFTWARE
+                    true
                 ]
                 functions: {
                     var ls = [];

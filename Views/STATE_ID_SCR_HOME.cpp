@@ -224,12 +224,7 @@ void EVT_HOME_TRANSACTION_INFO_REQUEST_HANDLER(QVariant msg) {
                     }
                 }
             }
-            if(wallet.data()->isAssistedWallet()){
-                QJsonObject data = wallet.data()->GetServerKeyInfo(txid);
-                if(!data.isEmpty()){
-                    it->setServerKeyMessage(data);
-                }
-            }
+            wallet.data()->GetAsisstedTx(txid);
             it->setHasMoreBtn(true);
         }
         AppModel::instance()->setTransactionInfo(it);

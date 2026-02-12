@@ -608,33 +608,31 @@ QVariant MiniscriptTransaction::timelockedUntil() {
 void MiniscriptTransaction::loadTimelockedUntil() {
 
     QString txid = this->txid();
+    QJsonObject lockedObj = {};
+    lockedObj["hasLocked"] = false;
+    lockedObj["activeUntil"] = "";
+    lockedObj["enabledBroadcastTxBtn"] = true;
     if (txid.isEmpty()) {
         DBG_ERROR << "Transaction ID is empty, cannot load timelocked until";
+        m_timelockedUntil = (QJsonValue::fromVariant(lockedObj));
         return;
     }
     QString walletId = this->walletId();
     if (walletId.isEmpty()) {
         DBG_ERROR << "Wallet ID is empty, cannot load timelocked until";
+        m_timelockedUntil = (QJsonValue::fromVariant(lockedObj));
         return;
     }
-
-    DBG_INFO << walletId << ", txid:" << txid << this;
-
     auto locked = bridge::nunchukGetTimelockedUntil(walletId, txid);
-    int64_t block_height = bridge::nunchukBlockHeight();
-    QJsonObject lockedObj = {};
-    lockedObj["hasLocked"] = false;
-    lockedObj["activeUntil"] = "";
-    lockedObj["enabledBroadcastTxBtn"] = true;
-
-    // std::string miniscript = AppModel::instance()->walletInfo()->miniscript().toStdString();
-    // std::vector<std::string> keypaths;
-    // nunchuk::ScriptNode script_node = qUtils::GetScriptNode(miniscript, keypaths);
-    // nunchuk::Timelock timelock = nunchuk::Timelock::FromK(false, script_node.get_k());
-    // nunchuk::Timelock::Based lockType = timelock.based();
-    DBG_INFO << "locked.first:" << locked.first << ", locked.second:" << (int)locked.second << ", block_height:" << block_height;
+    int64_t block_height = bridge::nunchukBlockHeight();   
 
     if (locked.first > 0) {
+        DBG_INFO << "locked.first:" << locked.first
+                 << ", locked.second:" << (int)locked.second
+                 << ", block_height:" << block_height
+                 << ", block_height:" << walletId
+                 << ", txid:" << txid << this;
+
         if (locked.second == nunchuk::Timelock::Based::HEIGHT_LOCK) {
             if (static_cast<int64_t>(locked.first) > block_height) {
                 lockedObj["hasLocked"] = true;

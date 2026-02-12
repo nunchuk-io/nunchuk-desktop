@@ -40,7 +40,6 @@ QScreenAdd {
         {screen: "eSCREEN_LOADING",        screen_component: _loadingScreen},
         {screen: "eSCREEN_SUCCESS",        screen_component: _result},
         {screen: "eSCREEN_ERROR",          screen_component: _result},
-        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     Loader {
@@ -137,7 +136,7 @@ QScreenAdd {
                                                 horizontalAlignment: Text.AlignLeft
                                                 verticalAlignment: Text.AlignVCenter
                                                 textFormat: Text.RichText
-                                                onLinkActivated: Qt.openUrlExternally(link)
+                                                onLinkActivated: Qt.openUrlExternally("https://www.ledger.com/start")
                                             }
                                         }
                                     }
@@ -197,28 +196,6 @@ QScreenAdd {
             resultTitle: isSuccess ? STR.STR_QML_827 : STR.STR_QML_964
             resultSubtitle: isSuccess ? STR.STR_QML_828 : ""
             onDoneClicked: doneOrTryAgainAddHardwareKey(isSuccess)
-        }
-    }
-
-    Component {
-        id: _resultClaimInheritancePlan
-        QScreenAddKeyResult {
-            isSuccess: false
-            resultTitle: STR.STR_QML_2045
-            resultSubtitle: STR.STR_QML_2046
-            bottomRight: Row {
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_097
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                    }
-                }
-            }
         }
     }
 }

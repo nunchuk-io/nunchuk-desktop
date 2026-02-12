@@ -160,7 +160,8 @@ QScreen {
             }
             function updateAddressType() {
                 newWalletInfo.walletAddressType = addressTypeSelection.typeOption
-                newWalletInfo.walletType = walletConfig.option === "miniscript" ? NUNCHUCKTYPE.MINISCRIPT : NUNCHUCKTYPE.MULTI_SIG
+                newWalletInfo.walletType = walletConfig.option === "miniscript" ? NUNCHUCKTYPE.MINISCRIPT :
+                                                                                  newWalletInfo.walletAddressType == NUNCHUCKTYPE.TAPROOT ? NUNCHUCKTYPE.SINGLE_SIG : NUNCHUCKTYPE.MULTI_SIG
             }
             function addressType() {
                 return addressTypeSelection.typeOption

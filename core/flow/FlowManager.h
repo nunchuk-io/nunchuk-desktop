@@ -1,36 +1,37 @@
 #pragma once
 #include "core/flow/BaseFlow.h"
-#include <QObject>
 #include <QMap>
+#include <QObject>
 #include <QString>
 #include <memory>
 
 namespace app {
 class AppContext;
 }
+
 namespace core::flow {
+
 using app::AppContext;
+
 class FlowManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(BaseFlow *currentFlow READ currentFlow NOTIFY currentFlowChanged)
+
   public:
     explicit FlowManager(AppContext *ctx, QObject *parent = nullptr);
 
-    BaseFlow *currentFlow() const {
-        return m_currentFlow;
-    }
+    BaseFlow *currentFlow() const;
 
-    template <typename T> T *startFlow() {
-        FlowContext *flowCtx = new FlowContext(m_ctx);
-        auto flow = new T(flowCtx, this);
-        m_flows[flow->id()] = flow;
-        m_currentFlow = flow;
-        emit currentFlowChanged(m_currentFlow);
-        emit flowStarted(flow);
-        return flow;
-    }
+    template <typename T, typename... Args> T *startFlow(Args &&...args);
+
+    template <class T> void stopFlow();
 
     void stopFlow(const QString &id);
+
+    void stopAll();
+
+  private:
+    void stopCurrentUiFlow();
 
   signals:
     void flowStarted(BaseFlow *flow);
@@ -40,6 +41,8 @@ class FlowManager : public QObject {
   private:
     QMap<QString, BaseFlow *> m_flows;
     AppContext *m_ctx;
-    BaseFlow *m_currentFlow = nullptr;
+    BaseFlow *m_currentUiFlow = nullptr;
 };
+
 } // namespace core::flow
+#include "FlowManager.inl"

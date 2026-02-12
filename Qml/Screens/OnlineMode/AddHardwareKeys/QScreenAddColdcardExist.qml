@@ -49,7 +49,6 @@ QScreenAdd {
         {screen: "_IMPORTANT_NOTICE",                   screen_component: _importantNotice},
         {screen: "_BACKUP_PASSPHRASE",                  screen_component: _passPhraseBackup},
         {screen: "_BACKUP_COLDCARD",                    screen_component: _backupCOLDCARD},
-        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
     Loader {
         width: popupWidth
@@ -399,28 +398,6 @@ QScreenAdd {
             resultTitle: STR.STR_QML_913
             resultSubtitle: STR.STR_QML_828
             onDoneClicked: doneAddHardwareKey()
-        }
-    }
-
-    Component {
-        id: _resultClaimInheritancePlan
-        QScreenAddKeyResult {
-            isSuccess: false
-            resultTitle: STR.STR_QML_2045
-            resultSubtitle: STR.STR_QML_2046
-            bottomRight: Row {
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_097
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                    }
-                }
-            }
         }
     }
     function doneOrTryAgainAddColdcardKey(isSuccess) {

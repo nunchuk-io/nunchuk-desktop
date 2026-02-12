@@ -7,6 +7,7 @@
 #include "miniscript/timeline.h"
 #include "TypeDefine.h"
 #include <QTimeZone>
+#include "features/common/models/QWalletTimezoneModel.h"
 
 class ScriptNodeHelper : public QObject {
     Q_OBJECT
@@ -45,50 +46,8 @@ public:
     Q_ENUM(TimelockType)
 };
 
-class QWalletTimezoneModel : public QAbstractListModel
-{
-    Q_OBJECT
-    Q_PROPERTY(int          currentIndex        READ currentIndex       WRITE setCurrentIndex       NOTIFY currentIndexChanged)
-    Q_PROPERTY(QString      selectedTimezone    READ selectedTimezone                               NOTIFY currentIndexChanged)
-public:
-    QWalletTimezoneModel();
-    ~QWalletTimezoneModel();
-
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-    QString formatTimeZone(const QTimeZone &tz) const;
-    qint64 offsetFromUtc(const QTimeZone &tz) const;
-
-    void timezones();
-    void printAllTimezones() const;
-    enum Timezones {
-        timezone_id_Role,
-        timezone_name_Role,
-        timezone_offsetFromUtc_Role,
-    };
-
-    int currentIndex();
-    void setCurrentIndex(int newCurrentIndex);
-
-    QString selectedTimezone();
-    QByteArray selectedTimezoneId();
-    void setSelectedTimezone(const QByteArray &timezone);
-    QByteArray convertFormattedToTimezoneId(const QString &formatted);
-    void setSelectedTimezone(const QString &formatted);
-    QString localTimezone();
-signals:
-    void currentIndexChanged();
-
-private:
-    static QList<QByteArray>  m_timezones;
-    static QByteArray         m_systemTimezone;
-    QByteArray                m_selectedTimezone;
-    int                       m_currentIndex {-1};
-};
-typedef OurSharedPointer<QWalletTimezoneModel> QWalletTimezoneModelPtr;
-
+using features::common::models::QWalletTimezoneModelPtr;
+using features::common::models::QWalletTimezoneModel;
 
 #define CreateMiniscript public
 #define Miniscript public
@@ -109,6 +68,7 @@ class MiniscriptWallet : public SandboxWallet {
     Q_PROPERTY(QWalletTimezoneModel*   timezones        READ timezones                                                      NOTIFY timezonesChanged)
     Q_PROPERTY(QVariantList            timelocklist     READ timelocklist                                                   NOTIFY timelocklistChanged)
     Q_PROPERTY(bool                    timeLocked       READ timeLocked                                                     NOTIFY timeLockedChanged)
+    Q_PROPERTY(QVariant                timelockInfo     READ timelockInfo                                                   NOTIFY utxoListChanged)
 
 public:
     MiniscriptWallet(const nunchuk::Wallet &w);
@@ -185,6 +145,8 @@ CreateMiniscript:
     bool timeLocked() const;
     void setTimeLocked(bool newTimeLocked);
 
+    QVariantMap timelockInfo();
+
 public slots:
     bool isValidTapscriptTemplate(const QString &userInput);
     bool isValidMiniscriptTemplate(const QString &userInput);
@@ -225,7 +187,6 @@ signals:
     void timezonesChanged();
     void needTopUpXpub();
     void timelocklistChanged();
-
     void timeLockedChanged();
 
 private:
@@ -245,6 +206,7 @@ private:
     QMap<QString, int> m_defaultKeys;
     bool m_needCheckDuplicate {false};
     QVariantList m_timelocklist {};
+    QVariantMap  m_timelockInfo {};
     bool    m_timeLocked {false};
     struct CheckBoxInfo {
         bool hasCheckBox {false};

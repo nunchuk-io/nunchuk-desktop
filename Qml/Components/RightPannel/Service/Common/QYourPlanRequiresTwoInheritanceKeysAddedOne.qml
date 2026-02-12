@@ -31,7 +31,7 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    label.text: STR.STR_QML_1997.arg(claimData.inheritance_key_count)
+    label.text: STR.STR_QML_1997.arg(inheritance_key_count)
     content: Item {
         Row {
             spacing: 36

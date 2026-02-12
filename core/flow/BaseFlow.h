@@ -11,6 +11,9 @@ class BaseFlow : public QObject {
     explicit BaseFlow(FlowContext* ctx, QObject *parent = nullptr);
     virtual ~BaseFlow() = default;
     virtual QString id() const = 0;
+    virtual bool isBackground() const { return false; }
+    virtual void start() {};
+    virtual void stop() {};
   public slots:
     virtual void bind(QObject* vm) {
         Q_UNUSED(vm)

@@ -117,7 +117,7 @@ QOnScreenContentTypeA {
                                             wrapMode: Text.Wrap
                                             horizontalAlignment: Text.AlignLeft
                                             verticalAlignment: Text.AlignVCenter
-                                            onLinkActivated: Qt.openUrlExternally("https://coldcard.com/docs/quick")
+                                            onLinkActivated: Qt.openUrlExternally("https://help.blockstream.com/hc/en-us/articles/19629901272345-Set-up-Jade")
                                             MouseArea {
                                                 anchors.fill: parent
                                                 cursorShape: _term.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor

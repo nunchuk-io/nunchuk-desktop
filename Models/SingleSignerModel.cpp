@@ -38,6 +38,26 @@ QSingleSigner::QSingleSigner(const nunchuk::SingleSigner& singleKey):
 {
     convert(singleKey);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+
+    connect(this, &QSingleSigner::requestResolveSignerName, this, [this](const QString& xfp) {
+        QString resolved = "";
+        if (AppModel::instance()->masterSignerList()) {
+            resolved = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(xfp);
+        }
+        if (resolved.isEmpty() && AppModel::instance()->remoteSignerList()) {
+            resolved = AppModel::instance()->remoteSignerList()->getRemoteSignerNameByFingerPrint(xfp);
+        }
+        if (!resolved.isEmpty()) {
+            DBG_INFO << "Resolved m_signername"
+                     << "xfp" << xfp
+                     << "index" << accountIndex()
+                     << "from" << m_signername
+                     << "to" << resolved
+                     << this;
+            m_signername = resolved;
+            emit nameChanged();
+        }
+    }, Qt::QueuedConnection);
 }
 
 QSingleSigner::~QSingleSigner() {}
@@ -67,28 +87,23 @@ nunchuk::PrimaryKey QSingleSigner::originPrimaryKey()
 }
 
 QString QSingleSigner::name() {
-    if(email() != ""){
-        return email();
+    if(m_signername == "" || m_signername.isNull() || m_signername.isEmpty()){
+        m_signername = QString::fromStdString(singleSigner_.get_name()).trimmed();
     }
-    else{
-        QString signer_name = QString::fromStdString(singleSigner_.get_name()).trimmed();
-        if(qUtils::strCompare("import", signer_name.trimmed()) && AppModel::instance()->masterSignerList()){
-            QString master_name = AppModel::instance()->masterSignerList()->getMasterSignerNameByFingerPrint(masterFingerPrint());
-            if(master_name != ""){
-                signer_name = master_name;
-            }
-        }
-        if(qUtils::strCompare("import", signer_name.trimmed()) && AppModel::instance()->remoteSignerList()){
-            QString master_name = AppModel::instance()->remoteSignerList()->getRemoteSignerNameByFingerPrint(masterFingerPrint());
-            if(master_name != ""){
-                signer_name = master_name;
-            }
-        }
-        return signer_name;
+
+    if(!qUtils::isEmailSyntax(m_signername) && email() != ""){
+        m_signername = email();
     }
+
+    if(qUtils::strCompare("import", m_signername.trimmed())){
+        QString xfp = masterFingerPrint();
+        emit requestResolveSignerName(xfp);
+    }
+    return m_signername;
 }
 
 void QSingleSigner::setName(const QString &d) {
+    m_signername = d;
     singleSigner_.set_name(d.toStdString());
     emit nameChanged();
 }

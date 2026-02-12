@@ -17,4 +17,6 @@ class SignerNammingUseCase : public core::usecase::AsyncUseCase<SignerNammingUse
     AppModel *m_model{nullptr};
 };
 
+#undef FIELDS_RESULT
+#undef FIELDS_INPUT
 } // namespace features::signers::usecases

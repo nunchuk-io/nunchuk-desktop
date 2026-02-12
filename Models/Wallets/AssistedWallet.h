@@ -36,7 +36,7 @@ class AssistedWallet : public SharedWallet, public Slugs
     Q_PROPERTY(bool         isHoneyBadgerPremier                    READ isHoneyBadgerPremier                                   CONSTANT)
     Q_PROPERTY(bool         isByzantinePro                          READ isByzantinePro                                         CONSTANT)
     Q_PROPERTY(bool         isFreeWallet                            READ isFreeWallet                                         CONSTANT)
-
+    Q_PROPERTY(bool         isClaimed                               READ isClaimed                                    CONSTANT)
 
 public:
     AssistedWallet(const nunchuk::Wallet &w);
@@ -48,8 +48,7 @@ public:
 
     QVariant dashboardInfo() const;
 
-    QVariant serverKeyInfo() const;
-    QJsonObject GetServerKeyInfo(const QString &txid);
+    QVariant serverKeyInfo() const;    
 
     QVariant inheritancePlanInfo() const;
 
@@ -66,6 +65,8 @@ public:
     QString walletNameDisplay() override;
 
     bool isByzantineGuardian();
+
+    bool isClaimed() const;
 public:
     QStringList slugs() const final;
     QString slug() const;
@@ -84,6 +85,7 @@ public:
     void SignAsisstedTxs(const QString &tx_id, const QString &psbt, const QString &memo);
     bool RbfAsisstedTxs(const QString &tx_id, const QString &psbt);
     void UpdateWallet(const QString &name, const QString &description) override;
+    void GetAsisstedTx(const QString &txid);
 
     bool DeleteAssistedWallet();
     bool DeleteWalletRequiredSignatures();
@@ -103,28 +105,12 @@ public:
     QVariant dummyTx() const;
 protected:
     //User wallet
-    void GetUserTxs();
-    void GetUserCancelledTxs();
     void GetUserTxNotes();
     QString GetUserTxNote(const QString &txid);
-    QTransactionPtr SyncUserTxs(const nunchuk::Transaction &tx);
-    void UpdateUserTxs(const QString &txid, const QString &memo);
-    void CancelUserTxs(const QString &txid);
-    void CreateUserTxs(const QString &txid, const QString &psbt, const QString &memo);
-    void SignUserTxs(const QString &tx_id, const QString &psbt, const QString &memo);
-    void UpdateUserWallet(const QString &name, const QString &description);
 
     //Group Assisted wallet
-    void GetGroupTxs();
-    void GetGroupCancelledTxs();
     void GetGroupTxNotes();
     QString GetGroupTxNote(const QString &txid);
-    QTransactionPtr SyncGroupTxs(const nunchuk::Transaction &tx);
-    void UpdateGroupTxs(const QString &txid, const QString &memo);
-    void CancelGroupTxs(const QString &txid);
-    void CreateGroupTxs(const QString &txid, const QString &psbt, const QString &memo);
-    void SignGroupTxs(const QString &tx_id, const QString &psbt, const QString &memo);
-    void UpdateGroupWallet(const QString &name, const QString &description);
 private:
     QWalletDummyTxPtr dummyTxPtr() const;
 signals:

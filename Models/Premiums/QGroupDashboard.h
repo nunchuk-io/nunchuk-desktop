@@ -8,7 +8,6 @@
 #include <nunchuk.h>
 #include "Premiums/QBasePremium.h"
 #include <QTimer>
-#include "UseCase/TimeLockUseCase.h"
 
 class AlertEnum : public QObject
 {
@@ -127,9 +126,6 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
     Q_PROPERTY(QVariantList editMembers           READ editMembers                              NOTIFY editMembersChanged)
     Q_PROPERTY(QString  timeLock                  READ timeLock                                 NOTIFY draftWalletChanged)
-    Q_PROPERTY(QVariant timeLockSet               READ timeLockSet                              NOTIFY timeLockSetChanged)
-    Q_PROPERTY(QString  timelockReplacementDisp   READ timelockReplacementDisp                  NOTIFY timelockReplacementChanged)
-    Q_PROPERTY(QVariant timelockReplacement       READ timelockReplacement                      NOTIFY timelockReplacementChanged)
 
 public:
     QGroupDashboard(const QString& wallet_id);
@@ -255,15 +251,8 @@ public:
     bool RequestConfirmationCodeEditMembers();
     QJsonObject bodyEditMembers();
     QString timeLock() const;
-    QVariant timeLockSet() const;
-    QString  timelockReplacementDisp() const;
-    QVariant timelockReplacement() const;
-    void setTimelockReplacement(const QJsonObject &timelock);
-    void clearTimeLock();
 
 public slots:
-    void draftWalletSetupTimeLock(const QVariant &datetime, bool isPutServer = false);
-    void walletSetupTimeLock(const QVariant &datetime, bool isPutServer = false);
     bool requestStartKeyReplacement(const QString &tag);
     bool requestStartKeyCreate(const QString &tag, bool isFirst = false);
     
@@ -307,8 +296,6 @@ signals:
 
     void editMembersChanged();
     void editMembersSuccessChanged();
-    void timeLockSetChanged();
-    void timelockReplacementChanged();
     void replacementKeysChanged();
 private:
     QJsonObject m_groupInfo {};
@@ -333,10 +320,7 @@ private:
     bool m_groupChatExisted {false};
     QJsonArray m_editMembers;
     QTimer *mTimer {nullptr};
-    QJsonObject m_timeLockSet;
     QJsonObject m_keyReplacementInfo;
-    QJsonObject m_timeLockReplacement;
-    TimeLockUseCase m_timeLockUseCase;
 };
 void registerAddKey();
 #endif // QGROUPDASHBOARD_H

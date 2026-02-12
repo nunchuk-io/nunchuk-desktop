@@ -17,10 +17,10 @@ bool PrimaryKeyAccount::replacePrimaryKey(const QString &mnemonic, const QString
         return false;
     QString curAddress = QString::fromStdString(curKey->originPrimaryKey().get_address());
     QString curUsername = QString::fromStdString(curKey->originPrimaryKey().get_account());
-    QString address = qUtils::GetPrimaryKeyAddress(mnemonic, passphrase);
+    QString address = qUtils::GetPrimaryKeyAddress(mnemonic.trimmed(), passphrase);
     QString nonce = Draco::instance()->pkey_manual_nonce(curAddress, curUsername, address, "change_pkey");
     QString curSignature = bridge::SignLoginMessage(curKey->id(), nonce);
-    QString new_signature = qUtils::SignLoginMessage(mnemonic, passphrase, nonce);
+    QString new_signature = qUtils::SignLoginMessage(mnemonic.trimmed(), passphrase, nonce);
     return Draco::instance()->pkey_change_pkey(address, curSignature, new_signature);
 }
 
@@ -30,17 +30,17 @@ void PrimaryKeyAccount::requestCreateSoftwareSignerPrimaryKey(const QString &sig
     dataMap["type"] = "seed";
     dataMap["signername"] = signername;
     dataMap["passphrase"] = passphrase;
-    dataMap["mnemonic"] = mnemonic;
+    dataMap["mnemonic"] = mnemonic.trimmed();
     dataMap["replace"] = replace;
 
     qUtils::SetChain((nunchuk::Chain)AppSetting::instance()->primaryServer());
-    QString fingerprint = qUtils::GetMasterFingerprint(mnemonic, passphrase);
+    QString fingerprint = qUtils::GetMasterFingerprint(mnemonic.trimmed(), passphrase);
 
     dataMap["username"] = fingerprint;
     updatePrimaryKeyData(dataMap);
     if (QEventProcessor::instance()->currentFlow() == (int)ENUNCHUCK::IN_FLOW::FLOW_REPLACE_PRIMARY_KEY) {
-        if (replacePrimaryKey(mnemonic, passphrase)) {
-            AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic, passphrase);
+        if (replacePrimaryKey(mnemonic.trimmed(), passphrase)) {
+            AppModel::instance()->startCreateSoftwareSigner(signername, mnemonic.trimmed(), passphrase);
         }
     } else {
         QEventProcessor::instance()->sendEvent(E::EVT_PRIMARY_KEY_CONFIGURATION_REQUEST);

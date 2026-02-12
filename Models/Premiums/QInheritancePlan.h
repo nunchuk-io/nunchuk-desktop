@@ -8,6 +8,7 @@
 #include <nunchuk.h>
 #include "QBasePremium.h"
 #include "Servers/DracoDefines.h"
+#include "features/inheritance/usecases/GetInheritancePlanUseCase.h"
 
 class QInheritancePlan : public QBasePremium
 {
@@ -91,6 +92,7 @@ private:
     QJsonObject m_planInfoCurrent;
     QJsonObject m_planInfoOld;
     QJsonObject m_planInfoNew;
+    features::inheritance::usecases::GetInheritancePlanUseCase m_getInheritancePlanUC;
 };
 
 #endif // QINHERITANCEPLAN_H

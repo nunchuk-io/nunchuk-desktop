@@ -27,6 +27,8 @@ class AppContext : public QObject {
     SubScreenManager *subScreenManager() const;
     AppModel *appModel() const;
     ServiceSetting *serviceSetting() const;
+    ClientController *clientController() const;
+    QGroupWallets *groupWallets() const;
 
   private:
     ScreenManager *m_screenManager;
@@ -37,5 +39,7 @@ class AppContext : public QObject {
     SubScreenManager *m_subScreenManager;
     AppModel *m_appModel;
     ServiceSetting *m_serviceSetting;
+    ClientController *m_clientController;
+    QGroupWallets *m_groupWallets;
 };
 } // namespace app

@@ -5,7 +5,7 @@
  *                                                                        *
  * This program is free software; you can redistribute it and/or          *
  * modify it under the terms of the GNU General Public License            *
- * as published by the Free Software Foundation; either version 3         *
+ * as published by the Free Software Foundation; either version 3         * 
  * of the License, or (at your option) any later version.                 *
  *                                                                        *
  * This program is distributed in the hope that it will be useful,        *
@@ -1910,13 +1910,9 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                         {
                             if(AppModel::instance()->walletList()){
                                 QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_id);
-                                if(wallet && wallet.data()->isAssistedWallet()){
+                                if(wallet){
                                     QTransactionPtr trans = wallet.data()->SyncAssistedTxs(tx);
-                                    if (trans) {
-                                        QJsonObject data = wallet.data()->GetServerKeyInfo(trans->txid());
-                                        if(!data.isEmpty()){
-                                            trans->setServerKeyMessage(data);
-                                        }
+                                    if (trans && wallet.data()->transactionHistory()) {
                                         DBG_INFO << trans.data()->memo();
                                         wallet.data()->transactionHistory()->updateTransaction(trans->txid(), trans);
                                         if(AppModel::instance()->transactionInfo()){

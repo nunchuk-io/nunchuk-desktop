@@ -129,20 +129,19 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                      << "| antiFeeSnipping:" << antiFeeSnipping
                      << "| use_keyset_index:" << use_keyset_index;
 
-            QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->walletId()));
-            if(transaction->inputCoins()){
-                for (int i = 0; i < transaction->inputCoins()->rowCount(); i++) {
-                    QUTXOPtr it = transaction->inputCoins()->getUTXOByIndex(i);
+            QUTXOListModelPtr inputs_in = QUTXOListModelPtr(new QUTXOListModel(AppModel::instance()->walletInfo()->walletId()));
+            if(auto input_coins = transaction->inputCoins()) {
+                for (int i = 0; i < input_coins->rowCount(); i++) {
+                    QUTXOPtr it = input_coins->getUTXOByIndex(i);
                     if(it.data()){
-                        DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->amountSats();
-                        inputs->addUTXO(it.data()->getUnspentOutput());
+                        inputs_in->addUTXO(it.data()->getUnspentOutput());
                     }
                 }
             }
 
             QMap<QString, qint64> outputs;
-            if(AppModel::instance()->destinationList()){
-                outputs = AppModel::instance()->destinationList()->getOutputs();
+            if(auto destination_list = AppModel::instance()->destinationList()){
+                outputs = destination_list->getOutputs();
             }
             QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
             if(wallet){
@@ -153,7 +152,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                         QNunchukMatrixEvent evtmatrix = matrixbrigde::InitTransaction(room_id,
                                                                                       outputs,
                                                                                       memo,
-                                                                                      inputs,
+                                                                                      inputs_in,
                                                                                       feeRate,
                                                                                       subtractFromFeeAmout,
                                                                                       msginit);
@@ -192,7 +191,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                         trans = bridge::nunchukCreateTransaction(wallet_id,
                                                                  outputs,
                                                                  memo,
-                                                                 inputs,
+                                                                 inputs_in,
                                                                  feeRate,
                                                                  subtractFromFeeAmout,
                                                                  {},
@@ -220,9 +219,7 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                             trans->setUseScriptPath(use_script_path);
                             AppModel::instance()->setTransactionInfo(trans);
                             wallet.data()->AssignTagsToTxChange();
-                            if(wallet.data()->isAssistedWallet()){
-                                wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());
-                            }
+                            wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());
                             AppModel::instance()->requestSyncWalletDb(wallet_id);
                             QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                             if (!unUseAddress.isEmpty()) {

@@ -37,6 +37,7 @@
 #include "nunchuckiface.h"
 #include "qUtils.h"
 #include "bridgeWallet.h"
+#include "bridgeTransaction.h"
 
 using namespace std;
 #define MAX_UNUSED_ADDR 20

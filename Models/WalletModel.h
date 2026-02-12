@@ -55,7 +55,7 @@ class WalletListModel : public QAbstractListModel
     Q_OBJECT
     Q_PROPERTY(bool isContainsPremier   READ isContainsPremier                              NOTIFY containsGroupChanged)
     Q_PROPERTY(bool isContainsGroup     READ existGroupWallet                               NOTIFY containsGroupChanged)
-    Q_PROPERTY(int  count               READ count                                          NOTIFY containsGroupChanged)
+    Q_PROPERTY(int  count               READ count                                          NOTIFY walletCountChanged)
     Q_PROPERTY(int  unReadMessageCount  READ unReadMessageCount                             NOTIFY unReadMessageCountChanged)
     Q_PROPERTY(int  currentIndex        READ currentIndex           WRITE setCurrentIndex   NOTIFY currentIndexChanged)
     Q_PROPERTY(Wallet* currentWallet    READ currentWallet                                  NOTIFY currentIndexChanged)
@@ -167,6 +167,7 @@ private:
     QWalletPtr m_currentWallet {nullptr};
 
 signals:
+    void walletCountChanged();
     void containsGroupChanged();
     void currentIndexChanged();
     void unReadMessageCountChanged();

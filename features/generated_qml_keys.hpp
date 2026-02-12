@@ -31,6 +31,8 @@ QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceplatformkey
 QML_KEY_IN(qml::components::rightpannel::service::byzantine, qservicesubscriberrightpannel, "qml.components.rightpannel.service.byzantine.qservicesubscriberrightpannel");
 QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaning, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaning");
 QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaningdetail, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaningdetail");
+QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaningdetailoffchain, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaningdetailoffchain");
+QML_KEY_IN(qml::components::rightpannel::service::byzantine, qserviceviewinheritanceplaningdetailonchain, "qml.components.rightpannel.service.byzantine.qserviceviewinheritanceplaningdetailonchain");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpoliciesbroadcastanddelay, "qml.components.rightpannel.service.common.qpoliciesbroadcastanddelay");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpoliciescosigningspendinglimit, "qml.components.rightpannel.service.common.qpoliciescosigningspendinglimit");
 QML_KEY_IN(qml::components::rightpannel::service::common, qpoliciesspendinglimit, "qml.components.rightpannel.service.common.qpoliciesspendinglimit");
@@ -58,6 +60,8 @@ QML_KEY_IN(qml::components::rightpannel::service::honeybadger_ironhand, qservice
 QML_KEY_IN(qml::components::rightpannel::service::honeybadger_ironhand, qservicesubscriberrightpannel, "qml.components.rightpannel.service.honeybadger-ironhand.qservicesubscriberrightpannel");
 QML_KEY_IN(qml::components::rightpannel::service::honeybadger_ironhand, qserviceviewinheritanceplaning, "qml.components.rightpannel.service.honeybadger-ironhand.qserviceviewinheritanceplaning");
 QML_KEY_IN(qml::components::rightpannel::service::honeybadger_ironhand, qserviceviewinheritanceplaningdetail, "qml.components.rightpannel.service.honeybadger-ironhand.qserviceviewinheritanceplaningdetail");
+QML_KEY_IN(qml::components::rightpannel::service::honeybadger_ironhand, qserviceviewinheritanceplaningdetailoffchain, "qml.components.rightpannel.service.honeybadger-ironhand.qserviceviewinheritanceplaningdetailoffchain");
+QML_KEY_IN(qml::components::rightpannel::service::honeybadger_ironhand, qserviceviewinheritanceplaningdetailonchain, "qml.components.rightpannel.service.honeybadger-ironhand.qserviceviewinheritanceplaningdetailonchain");
 QML_KEY_IN(qml::components::rightpannel::setting, qsettingabout, "qml.components.rightpannel.setting.qsettingabout");
 QML_KEY_IN(qml::components::rightpannel::setting, qsettingaccountsettings, "qml.components.rightpannel.setting.qsettingaccountsettings");
 QML_KEY_IN(qml::components::rightpannel::setting, qsettingdatabaseencrytion, "qml.components.rightpannel.setting.qsettingdatabaseencrytion");
@@ -411,6 +415,7 @@ QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qscreenaddtrezorask, "qml.
 QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qscreenaddtrezorexist, "qml.screens.onlinemode.addhardwarekeys.qscreenaddtrezorexist");
 QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qscreenresultfinalize, "qml.screens.onlinemode.addhardwarekeys.qscreenresultfinalize");
 QML_KEY_IN(qml::screens::onlinemode::addhardwarekeys, qselectpassphrasequestion, "qml.screens.onlinemode.addhardwarekeys.qselectpassphrasequestion");
+QML_KEY_IN(qml::screens::onlinemode::claiming, claiminheritanceplanresult, "qml.screens.onlinemode.claiming.claiminheritanceplanresult");
 QML_KEY_IN(qml::screens::onlinemode::coins, qchangetagsintransaction, "qml.screens.onlinemode.coins.qchangetagsintransaction");
 QML_KEY_IN(qml::screens::onlinemode::coins, qcoinage, "qml.screens.onlinemode.coins.qcoinage");
 QML_KEY_IN(qml::screens::onlinemode::coins, qcoinancestry, "qml.screens.onlinemode.coins.qcoinancestry");
@@ -628,12 +633,11 @@ QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qimportantnoticeab
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qinheritanceconfigureguide, "qml.screens.onlinemode.setupwallets.timelocks.qinheritanceconfigureguide");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qletconfigureyourwallet, "qml.screens.onlinemode.setupwallets.timelocks.qletconfigureyourwallet");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qpopupcheckyourfirmware, "qml.screens.onlinemode.setupwallets.timelocks.qpopupcheckyourfirmware");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qpopupsetuponchaintimelockdraftwallet, "qml.screens.onlinemode.setupwallets.timelocks.qpopupsetuponchaintimelockdraftwallet");
-QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qpopupsetuponchaintimelockwallet, "qml.screens.onlinemode.setupwallets.timelocks.qpopupsetuponchaintimelockwallet");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qreaddblockstreamjadeviaqr, "qml.screens.onlinemode.setupwallets.timelocks.qreaddblockstreamjadeviaqr");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qreaddcoldcardguideviafile, "qml.screens.onlinemode.setupwallets.timelocks.qreaddcoldcardguideviafile");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qreaddcoldcardguideviaqr, "qml.screens.onlinemode.setupwallets.timelocks.qreaddcoldcardguideviaqr");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetupoffchaintimelockwallet, "qml.screens.onlinemode.setupwallets.timelocks.qsetupoffchaintimelockwallet");
+QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetuponchaintimelock, "qml.screens.onlinemode.setupwallets.timelocks.qsetuponchaintimelock");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetuponchaintimelockdraftwallet, "qml.screens.onlinemode.setupwallets.timelocks.qsetuponchaintimelockdraftwallet");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qsetuponchaintimelockwallet, "qml.screens.onlinemode.setupwallets.timelocks.qsetuponchaintimelockwallet");
 QML_KEY_IN(qml::screens::onlinemode::setupwallets::timelocks, qverifyyourinheritancekeyseedphraseguide, "qml.screens.onlinemode.setupwallets.timelocks.qverifyyourinheritancekeyseedphraseguide");

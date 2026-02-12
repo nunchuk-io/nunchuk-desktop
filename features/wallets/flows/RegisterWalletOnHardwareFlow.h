@@ -15,7 +15,7 @@ class RegisterWalletOnHardwareFlow : public core::flow::BaseFlow {
         return "RegisterWalletOnHardwareFlow";
     }
   public slots:
-    void bind(QObject* vm);
+    void bind(QObject* vm) override;
 
     void withdrawBitcoinClicked(QVariant msg);
     

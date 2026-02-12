@@ -19,6 +19,7 @@ class FlowContext : public QObject {
     SubScreenManager *subScreenManager() const;
     AppModel *appModel() const;
     ServiceSetting *serviceSetting() const;
+    ClientController *clientController() const;
 
   private:
     AppContext *m_appCtx{nullptr};

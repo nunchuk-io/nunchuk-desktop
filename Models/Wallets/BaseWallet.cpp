@@ -755,7 +755,14 @@ void BaseWallet::setValueKeyset(int index)
 
 bool BaseWallet::isValidAddress(const QString &address)
 {
-    return qUtils::IsValidAddress(address);
+    bool isValid = qUtils::IsValidAddress(address);
+    bool isSilent = qUtils::IsSilentPaymentAddress(address);
+    if(isValid || isSilent){
+        return true;
+    }
+    QString message = QString("Invalid address: %1").arg(address);
+    AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
+    return false;
 }
 
 QString BaseWallet::addressPath(const QString &address)
@@ -786,5 +793,65 @@ bool BaseWallet::markAddressUsed(const QString &address)
             this->setunUsedAddressList(unused_addr);
         });
     }
+    return ret;
+}
+
+QVariantMap BaseWallet::parsingURI(const QString &uri)
+{
+    DBG_INFO << uri;
+    QVariantMap ret;
+    ret["address"] = QString("");
+    ret["amount"]  = QVariant("");
+    ret["label"]   = QString("");
+    ret["message"] = QString("");
+
+    if (uri.trimmed().isEmpty() || uri.trimmed() == "")
+        return ret;
+
+    QString normalized = uri.trimmed();
+
+    // Cho phép không có scheme
+    if (!normalized.startsWith("bitcoin:", Qt::CaseInsensitive)) {
+        normalized = "bitcoin:" + normalized;
+    }
+
+    QUrl url(normalized, QUrl::StrictMode);
+
+    if (!url.isValid())
+        return ret;
+
+    // ==== ADDRESS ====
+    // bitcoin:<address>
+    // bitcoin://<address>
+    QString address;
+
+    if (!url.path().isEmpty()) {
+        address = url.path();
+        if (address.startsWith('/'))
+            address.remove(0, 1);
+    } else {
+        address = url.host();
+    }
+
+    ret["address"] = address;
+
+    // ==== QUERY PARAMS ====
+    QUrlQuery query(url);
+
+    if (query.hasQueryItem("amount")) {
+        bool ok = false;
+        double amount = query.queryItemValue("amount").toDouble(&ok);
+        if (ok)
+            ret["amount"] = amount;
+    }
+
+    if (query.hasQueryItem("label")) {
+        ret["label"] = query.queryItemValue("label", QUrl::FullyDecoded);
+    }
+
+    if (query.hasQueryItem("message")) {
+        ret["message"] = query.queryItemValue("message", QUrl::FullyDecoded);
+    }
+
     return ret;
 }

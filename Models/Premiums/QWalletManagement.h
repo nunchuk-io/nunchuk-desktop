@@ -15,10 +15,11 @@ public:
     static QWalletManagement *instance();
     explicit QWalletManagement();
     virtual ~QWalletManagement();
-    void GetListWallet(int mode);
+    void GetListWallet();
     void UpdateSigner(const QJsonObject &signer);
     void SyncDeleteWallets(int mode);
     void UpdateSyncWalletFlows();
+    void StoreWalletsInfo(const QJsonArray &walletArray);
     QString UpdateSyncWalletFlows(bool yes, bool no);
     WalletIdList wallets() const;
     GroupIdList groupIds() const;

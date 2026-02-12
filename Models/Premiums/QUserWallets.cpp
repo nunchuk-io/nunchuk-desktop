@@ -40,7 +40,7 @@ void QUserWallets::GetDraftWallet()
         else {
             QJsonObject info;
             info["status"] = "PENDING_WALLET";
-            info["id"] = draft_wallet["id"];
+            info["id"] = draft_wallet["id"].toString().left(5);
             QJsonObject user;
             DracoUser   me   = ClientController::instance()->getMe();
             user["id"] = me.id;

@@ -31,6 +31,7 @@
         <file>Qml/Components/customizes/QTooltip.qml</file>
         <file>Qml/Components/origins/QMouseArea.qml</file>
         <file>Qml/Components/customizes/QNumPad.qml</file>
+        <file>Qml/Components/origins/QmlUtils.qml</file>
         <file>Qml/Components/customizes/QSeedSelectionItem.qml</file>
         <file>Qml/Components/customizes/QPassphraseInput.qml</file>
         <file>Qml/Screens/LocalMode/SCR_ADD_HARDWARE_SIGNER.qml</file>
@@ -721,7 +722,6 @@
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QInputtingIndex.qml</file>
         <file>Qml/Components/customizes/services/QInheritanceDetailsOnChain.qml</file>
         <file>Qml/Components/customizes/services/QInheritanceHowItWorks.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupOnChainTimelockDraftWallet.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOnChainTimelockDraftWallet.qml</file>
         <file>Qml/Components/customizes/Popups/QAnalogClock.qml</file>
         <file>Qml/Components/customizes/Popups/QPopupAnalogClock.qml</file>
@@ -741,12 +741,17 @@
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QScreenAddKeyBusyLoadingState.qml</file>
         <file>Qml/Components/customizes/Signers/QReplaceRequestKey.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOnChainTimelockWallet.qml</file>
-        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QPopupSetupOnChainTimelockWallet.qml</file>
         <file>Qml/Screens/OnlineMode/AddHardwareKeys/QRecoverAnExistingSeed.qml</file>
         <file>Qml/Components/origins/QSupportedKeys.qml</file>
         <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOffChainTimelockWallet.qml</file>
         <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceOnChainTransactionDetails.qml</file>
         <file>Qml/Screens/OnlineMode/Inheritances/QInheritanceTransactionDetailsClaimed.qml</file>
+        <file>Qml/Screens/OnlineMode/SetupWallets/TimeLocks/QSetupOnChainTimelock.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServiceViewInheritancePlaningDetailOffChain.qml</file>
+        <file>Qml/Components/RightPannel/Service/Byzantine/QServiceViewInheritancePlaningDetailOnChain.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOffChain.qml</file>
+        <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOnChain.qml</file>
+        <file>Qml/Screens/OnlineMode/Claiming/ClaimInheritancePlanResult.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>

@@ -915,20 +915,20 @@ void AppSetting::setCurrency(QString currency)
     emit currencyChanged();
 }
 
-void AppSetting::setWalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool, bool> input)
+void AppSetting::setWalletCached(QString id, QWalletCached input)
 {
     QByteArray dataByteArray;
     QDataStream stream(&dataByteArray, QIODevice::WriteOnly);
-    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup << input.hideFiatCurrency << input.registered;
+    stream << input.groupId << input.slug << input.myRole << input.status << input.backedup << input.hideFiatCurrency << input.registered << input.isClaimed;
     NunchukSettings::setValue(id, dataByteArray);
 }
 
-bool AppSetting::getwalletCached(QString id, QWalletCached<QString, QString, QString, QString, bool, bool, bool> &output)
+bool AppSetting::getwalletCached(QString id, QWalletCached &output)
 {
     if(NunchukSettings::contains(id)){
         QByteArray dataByteArray = NunchukSettings::value(id).toByteArray();
         QDataStream stream(&dataByteArray, QIODevice::ReadOnly);
-        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup >> output.hideFiatCurrency >> output.registered;
+        stream >> output.groupId >> output.slug >> output.myRole >> output.status >> output.backedup >> output.hideFiatCurrency >> output.registered >> output.isClaimed;
         return true;
     }
     return false;
@@ -1171,12 +1171,14 @@ void AppSetting::updateFavoriteAddress(const QString &label, const QString &addr
 
 bool AppSetting::validateAddress(const QString &address)
 {
-    bool ret =qUtils::IsValidAddress(address);;
-    // if(!ret){
-    //     QString message = QString("Invalid address: %1").arg(address);
-    //     AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
-    // }
-    return ret;
+    bool isValid = qUtils::IsValidAddress(address);
+    bool isSilent = qUtils::IsSilentPaymentAddress(address);
+    if(isValid || isSilent){
+        return true;
+    }
+    QString message = QString("Invalid address: %1").arg(address);
+    AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
+    return false;
 }
 
 int AppSetting::feeSetting()

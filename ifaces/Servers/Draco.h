@@ -472,14 +472,14 @@ public:
 
     // Mini script
     bool GetWalletSetupConfig(QJsonObject &output, QString &errormsg);
-    bool DraftWalletUpdateTimelock(const QString& timezone, const qint64 new_timelock, QJsonObject &output, QString &errormsg);
+    bool DraftWalletUpdateTimelock(const QJsonObject& request_body, QJsonObject &output, QString &errormsg);
 
     // Replace or change timelock
-    bool walletChangeTimelock(const QString &wallet_id, const QString &timezone, const qint64 new_timelock, const QString &verify_token, QJsonObject &output);
+    bool walletChangeTimelock(const QString &wallet_id, const QJsonObject& request_body, const QString &verify_token, QJsonObject &output);
 
     // Claiming wallets
     bool ClaimingWalletGet(const QString &local_id, QJsonObject &output, QString &errormsg);
-    bool ClaimingWalletUpdate(const QString &local_id, const QJsonObject &request_body, QJsonObject &output, QString &errormsg);
+    bool ClaimingWalletUpdate(const QString &local_id, const QString &name, const QString &description, QJsonObject &output, QString &errormsg);
     bool ClaimingWalletDelete(const QString &local_id, QJsonObject &output, QString &errormsg);
     bool ClaimingWalletList(QJsonObject &output, QString &errormsg);
 
@@ -488,7 +488,10 @@ public:
     QJsonObject ClaimingWalletTransactionGetOne(const QString &wallet_id, const QString &transaction_id);
     bool ClaimingWalletTransactionCancel(const QString &wallet_id, const QString &transaction_id);
     bool ClaimingWalletTransactionRbf(const QString &wallet_id, const QString &transaction_id, const QString &psbt, QJsonObject &output, QString &errormsg);
-    bool ClaimingWalletTransactionSync(const QString &wallet_id, const QString &transaction_id, const QString &psbt, QJsonObject &output, QString &errormsg);
+    bool ClaimingWalletTransactionSync(const QString &wallet_id, const QString &psbt, QJsonObject &output, QString &errormsg);
+    bool CancelClaimingWalletTransactionGetList(const QString &wallet_id, int offset, int limit, QJsonObject &output, QString &errormsg);
+
+    bool TimeLockConvert(const QJsonObject& requestBody, QJsonObject &result);
 private:
     Draco();
     ~Draco();

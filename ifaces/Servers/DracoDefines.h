@@ -320,6 +320,8 @@ enum CMD_IDX {
     CLAIMING_WALLET_TX_CANCEL,
     CLAIMING_WALLET_TX_RBF,
 
+    TIMELOCK_CONVERT,
+
     CMD_MAX
 };
 }
@@ -353,6 +355,7 @@ enum CMD_IDX {
     GROUP_WALLETS_ONE_PERMISSION,
     GROUP_WALLETS_DEFAULT_PERMISSION,
     GROUP_WALLETS_GET_CURRENT,
+    GROUP_WALLETS_GET_WALLET,
 
     //Assisted Draft Wallets
     GROUP_DRAFT_WALLETS_ADD_KEY,
@@ -713,6 +716,7 @@ const QMap<int, QString> commands {
     { Group::CMD_IDX::GROUP_WALLETS_DEFAULT_PERMISSION  , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("permissions/default") },
     { Group::CMD_IDX::GROUP_WALLETS_GET_CURRENT         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/current") },
     { Group::CMD_IDX::GROUP_WALLET_REMOVE_WALLET        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}") },
+    { Group::CMD_IDX::GROUP_WALLETS_GET_WALLET        , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}") },    
     { Group::CMD_IDX::GROUP_WALLET_REMOVE_WALLET_REQUIRED_SIGNATURES, QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/calculate-required-signatures") },
     { Group::CMD_IDX::GROUP_WALLET_GET_ALIAS            , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/alias") },
     { Group::CMD_IDX::GROUP_WALLET_UPDATE_ALIAS         , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/wallets/{wallet_id_or_local_id}/alias") },
@@ -823,6 +827,8 @@ const QMap<int, QString> commands {
     // Miniscript
     { Command::Premium::CONFIG_WALLET_SETUP                      , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("configs/setup") },
     { Command::Premium::DRAFT_WALLET_TIMELOCK                    , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("draft-wallets/timelock") },
+    { Command::Premium::TIMELOCK_CONVERT                         , QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("timelock/convert") },
+    
     // Group Miniscript
     { Command::Group::GROUP_DRAFT_WALLET_TIMELOCK                , QString("%1/%2").arg(DRAGON_GROUP_WALLETS_URL).arg("groups/{group_id}/draft-wallets/timelock") },
 
@@ -863,6 +869,7 @@ public:
         INHERITANCE_803 = 803,
         INHERITANCE_829 = 829,
         INHERITANCE_830 = 830,
+        INHERITANCE_831 = 831,
         LOGIN_NEW_DEVICE = 841,
         ACCOUNT_NOT_ACTIVATED = 1000,
         RESPONSE_OK  = 0,

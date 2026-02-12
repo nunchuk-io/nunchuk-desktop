@@ -25,6 +25,7 @@ import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import Qt.labs.platform 1.1
 import DataPool 1.0
+import Features.Wallets.ViewModels 1.0
 import "../../Components/customizes/Wallets"
 import "../../Components/origins"
 import "../../Components/customizes/Texts"
@@ -36,7 +37,7 @@ Rectangle {
     id: walletsRoot
     color: "transparent"
     signal askDeny(var deny)
-    property int count: walletList.count
+    property int  count: walletList.count + pendingList.count + pendingGroupList.count
     property bool isPending: pendingList.count > 0 ? true : false
     width: parent.width
     height: (parent.height - 215)/2
@@ -258,6 +259,12 @@ Rectangle {
                 running: true
                 onTriggered: busyIdct.running = false
             }
+        }
+    }
+    WalletListViewModel {
+        id: vm
+        Component.onCompleted: {
+            vm.attachContext(vmContext)
         }
     }
 }

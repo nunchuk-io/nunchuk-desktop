@@ -44,7 +44,6 @@ QScreenAdd {
         {screen: "eSCREEN_LOADING",  screen_component: loadingState},
         {screen: "eSCREEN_REFRESH_DEVICE",    screen_component: _scanDevices},
         {screen: "eSCREEN_SUCCESS",         screen_component: addKeysuccess},
-        {screen: "eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR", screen_component: _resultClaimInheritancePlan},
     ]
 
     Loader {
@@ -302,27 +301,6 @@ QScreenAdd {
             resultTitle: STR.STR_QML_931
             resultSubtitle: STR.STR_QML_828
             onDoneClicked: doneAddHardwareKey()
-        }
-    }
-    Component {
-        id: _resultClaimInheritancePlan
-        QScreenAddKeyResult {
-            isSuccess: false
-            resultTitle: STR.STR_QML_2045
-            resultSubtitle: STR.STR_QML_2046
-            bottomRight: Row {
-                spacing: 12
-                QTextButton {
-                    width: 120
-                    height: 48
-                    label.text: STR.STR_QML_097
-                    label.font.pixelSize: 16
-                    type: eTypeE
-                    onButtonClicked: {
-                        closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-                    }
-                }
-            }
         }
     }
 }

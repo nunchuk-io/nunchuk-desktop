@@ -17,6 +17,8 @@ AppContext::AppContext(QObject *parent)
 , m_subScreenManager(new SubScreenManager(this))
 , m_appModel(AppModel::instance())
 , m_serviceSetting(ServiceSetting::instance())
+, m_clientController(ClientController::instance())
+, m_groupWallets(QGroupWallets::instance())
  {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -51,6 +53,14 @@ AppModel *AppContext::appModel() const {
 
 ServiceSetting *AppContext::serviceSetting() const {
     return m_serviceSetting;
+}
+
+ClientController *AppContext::clientController() const {
+    return m_clientController;
+}
+
+QGroupWallets *AppContext::groupWallets() const {
+    return m_groupWallets;
 }
 
 } // namespace app

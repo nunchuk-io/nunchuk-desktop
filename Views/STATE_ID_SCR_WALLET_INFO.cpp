@@ -57,8 +57,12 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
     if(wallet){
         QString wallet_id = wallet->walletId();
         if (wallet->isDeleting()) {
+            // Store wallet_id before sync call - the wallet pointer may become invalid
+            // during nested event loop in secQuesAnswer()
             if (ServiceSetting::instance()->servicesTagPtr()->secQuesAnswer()) {
-                if (wallet->DeleteAssistedWallet()) {
+                // Re-fetch wallet pointer after sync call as the original may be invalid
+                QWalletPtr walletPtr = AppModel::instance()->walletListPtr()->getWalletById(wallet_id);
+                if (walletPtr && walletPtr->DeleteAssistedWallet()) {
                     QWarningMessage msgwarning;
                     bool ret = bridge::nunchukDeleteWallet(wallet_id, msgwarning);
                     if(ret && (int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
@@ -76,7 +80,8 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
             }
         }
         else {
-            if (wallet->isAssistedWallet()) {
+            DBG_INFO << "DELETE WALLET ID:" << wallet_id << wallet->slugs();
+            if (wallet->slugs().size() > 0) {
                 QMap<QString, QVariant> data;
                 data["state_id"] = E::STATE_ID_SCR_WALLET_INFO;
                 data["wallet_id"] = wallet->walletId();

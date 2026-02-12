@@ -21,6 +21,12 @@ import QtQuick 2.12
 import QtQuick.Controls 2.0
 import QtGraphicalEffects 1.0
 import Qt.labs.platform 1.1
+import HMIEVENTS 1.0
+import NUNCHUCKTYPE 1.0
+import QRCodeItem 1.0
+import DataPool 1.0
+import DRACO_CODE 1.0
+import EWARNING 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Texts"
@@ -105,7 +111,7 @@ Rectangle {
                                 Rectangle {
                                     width: parent.width
                                     height: 4
-                                    color: (modelData.valueLocked) ?  "#DEDEDE" : "#031F2B"
+                                    color: (modelData.valueLocked) ? "#031F2B" : "#DEDEDE"
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Rectangle {
@@ -126,7 +132,6 @@ Rectangle {
                                     visible: (modelData.valueRemaining !== "")
                                 }
                             }
-
                             Item {
                                 id: nodeLock
                                 width: 20
@@ -158,12 +163,13 @@ Rectangle {
                         Rectangle {
                             width: parent.width/2
                             height: 4
-                            color: coin_timelocked ? "#DEDEDE": "#031F2B"
+                            color: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? "#DEDEDE" : (coin_timelocked && repeaterNode.count > 2) ? "#031F2B" : "#DEDEDE"
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QIcon {
                             iconSize: 24
-                            source: coin_timelocked ? "qrc:/Images/Images/CaretRightGray.svg" : "qrc:/Images/Images/CaretRight.svg"
+                            source: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? "qrc:/Images/Images/CaretRightGray.svg" :
+                                                                                                                  (coin_timelocked  && repeaterNode.count > 2) ? "qrc:/Images/Images/CaretRight.svg" : "qrc:/Images/Images/CaretRightGray.svg"
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
                         }
@@ -196,7 +202,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: 4
-            color: coin_timelocked ? "#DEDEDE": "#031F2B"
+            color: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? "#DEDEDE" : (coin_timelocked  && repeaterNode.count > 2) ? "#031F2B" : "#DEDEDE"
             anchors.verticalCenter: parent.verticalCenter
         }
     }

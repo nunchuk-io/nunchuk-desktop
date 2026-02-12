@@ -17,6 +17,10 @@
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QUserWallets.h"
 #include "Signers/QSignerManagement.h"
+#include "generated_qml_keys.hpp"
+#include "features/claiming/flows/OnChainClaimingFlow.h"
+#include "app/AppContext.h"
+#include "core/ui/UiServices.inc"
 
 QInheritanceClaiming::QInheritanceClaiming()
     : QStateFlow()
@@ -230,16 +234,17 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
         qint64 tx_fee = qUtils::QAmountFromValue(fee);               // fee in BTC
         qint64 tx_fee_rate = qUtils::QAmountFromValue(fee_rate);     // fee_rate in BTC
         qint64 tx_sub_amount = qUtils::QAmountFromValue(sub_amount); // sub amount in BTC
+        bool subtract_fee_from_amount = result["subtract_fee_from_amount"].toBool();
         // HANDLE RESULT
-        if (m_claimInitJson.value("wallet_type").toString() != "MINISCRIPT") {
+        if (m_claimInit.wallet_type != "MINISCRIPT") {
             mInheritance.wallet = nunchuk::Wallet("", 1, 1, single_signers, nunchuk::AddressType::NATIVE_SEGWIT, false, 0, true);
         }        
 
         QWarningMessage msg;
-        mInheritance.tx = qUtils::DecodeTx(mInheritance.wallet, psbt, tx_sub_amount, tx_fee, tx_fee_rate, msg);
+        mInheritance.tx = qUtils::DecodeTx(mInheritance.wallet, psbt, tx_sub_amount, tx_fee, tx_fee_rate, subtract_fee_from_amount, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             mInheritance.tx.set_change_index(change_pos); // set change index to i
-            QString wallet_type = m_claimInitJson.value("wallet_type").toString();
+            QString wallet_type = m_claimInit.wallet_type;
             if (qUtils::strCompare(wallet_type, "MINISCRIPT")) {
                 mInheritance.tx.set_wallet_type(nunchuk::WalletType::MINISCRIPT);
             }
@@ -263,7 +268,7 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
                 if (!states.isEmpty() && states.last() == E::STATE_ID_SCR_INHERITANCE_WITHDRAW_BALANCE) {
                     DBG_INFO << "Entry here ";
                     QEventProcessor::instance()->sendEvent(E::EVT_INHERITANCE_CONFIRM_TRANSACTION_REQUEST);
-                }
+                }           
             }
         } else {
             AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
@@ -273,17 +278,20 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
 }
 
 bool QInheritanceClaiming::inheritanceUpdateLibTransaction() {
-    QString wallet_type = m_claimInitJson.value("wallet_type").toString();
     mInheritance.tx.set_wallet_type(nunchuk::WalletType::MINISCRIPT);
     QWarningMessage _msg;
     auto wallet_local_id = QString::fromStdString(mInheritance.wallet.get_id());
     QString psbt = m_claimTransaction["psbt"].toString();
-    bridge::nunchukImportPsbt(wallet_local_id, psbt, _msg);
+    auto trans = bridge::nunchukImportPsbt(wallet_local_id, psbt, _msg);
     QString id = m_claimTransaction.value("transaction_id").toString();
     QString hex = m_claimTransaction.value("hex").toString();
     QString reject_msg = m_claimTransaction.value("reject_msg").toString();
     DBG_INFO << "Update inheritance lib transaction id:" << id;
+    
     if ((int)EWARNING::WarningType::NONE_MSG == _msg.type()) {
+        if (auto wallet = AppModel::instance()->walletListPtr()->getWalletById(wallet_local_id)) {
+            wallet->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());
+        }    
         return true;
     }
     return false;
@@ -307,11 +315,11 @@ void QInheritanceClaiming::setInheritanceAddressNewTransaction(const QString &ad
     mInheritance.m_destinationAddress = address;
 }
 
-bool QInheritanceClaiming::inheritanceCreateDraftTransaction(double fee_rate, bool anti_fee_sniping) {
+bool QInheritanceClaiming::inheritanceCreateDraftTransaction(double fee_rate, bool anti_fee_sniping, bool subtract_fee_from_amount) {
     const constexpr auto NONE_MSG = (int)EWARNING::WarningType::NONE_MSG;
     int64_t amount = m_claimInheritanceCustomAmount;
     QJsonObject body;
-    body["magic"] = m_claimInitJson["magic"].toString();
+    body["magic"] = m_claimInit.magic;
     body["address"] = mInheritance.m_destinationAddress;
     body["fee_rate"] = qUtils::QValueFromAmount(fee_rate);
     if (anti_fee_sniping) {
@@ -321,6 +329,7 @@ bool QInheritanceClaiming::inheritanceCreateDraftTransaction(double fee_rate, bo
         body["amount"] = qUtils::QValueFromAmount(amount);
     }
     body["bsms"] = m_walletInfoClaim.value("bsms").toString();
+    body["subtract_fee_from_amount"] = subtract_fee_from_amount;
 
     QJsonObject data;
     data["nonce"] = Draco::instance()->randomNonce();
@@ -355,7 +364,7 @@ bool QInheritanceClaiming::inheritanceSignTransaction() {
             trans->setIsClaimTx(true);
             AppModel::instance()->setTransactionInfo(trans);
         }
-        return inheritanceClaimRequest(mInheritance.wallet, tx, m_claimInitJson["magic"].toString());
+        return inheritanceClaimRequest(mInheritance.wallet, tx, m_claimInit.magic);
     } else {
         AppModel::instance()->showToast(msgwarning.code(), msgwarning.what(), (EWARNING::WarningType)msgwarning.type());
     }
@@ -441,76 +450,17 @@ void QInheritanceClaiming::clearInheritance() {
     setInheritanceClaimPlan(data);
 }
 
-QVariant QInheritanceClaiming::inheritanceClaimInit(const QString& magic) {
-    QJsonObject result;
-    bool ret = Draco::instance()->inheritanceClaimInit(magic, result);
-    DBG_INFO << result;
-    if (ret) {
-        QString wallet_local_id = result.value("wallet_local_id").toString();
-        int inheritance_key_count = result.value("inheritance_key_count").toInt();
-        m_claimInitJson = result;
-        m_claimInitJson["magic"] = magic;
-        clearInheritanceKeys();
-        if (!wallet_local_id.isEmpty()) {
-            QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(wallet_local_id);
-            if (!wallet.isNull()) {
-                mInheritance.wallet = wallet->nunchukWallet();
-                QWarningMessage msg;
-                QString bsms = bridge::wallet::GetWalletExportData(mInheritance.wallet, nunchuk::ExportFormat::BSMS, msg);
-                if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-                    m_walletInfoClaim["bsms"] = bsms;
-                    ServiceSetting::instance()->setWalletInfo(wallet);
-                    emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
-                    inheritanceClaimStatus(magic);
-                    result["is_existing_wallet"] = true;
-                    return QVariant::fromValue(result);
-                }
-            }
-        }
-    
-        if (inheritance_key_count > 0) {
-            ServiceSetting::instance()->CreateAssignAvailableSigners("MINISCRIPT");
-        }
-        return QVariant::fromValue(result);
-    } else {
-        int response_code = result.value("code").toInt();
-        QString errormsg = result.value("message").toString();
-        switch (response_code) {
-        case DRACO_CODE::INHERITANCE_801:
-            // show popup: Invalid phrase. Please try again
-            AppModel::instance()->showToast(0, STR_CPP_115, EWARNING::WarningType::ERROR_MSG);
-            break;
-        case DRACO_CODE::INHERITANCE_802:
-            // show popup: It looks like the original subscription has expired for more than 3 years.
-            //             To claim the inheritance, please reactivate the plan first by visiting nunchuk.io/claim.
-            emit isExpiredAlert();
-            break;
-        case DRACO_CODE::INHERITANCE_803:
-            // show popup: Your inheritance plan has not been activated yet. Please try again later.
-            emit hasNotBeenActivatedYetAlert();
-            break;
-        case DRACO_CODE::INHERITANCE_829:
-            // show popup: Please come back later
-            emit comeBackLaterAlert(errormsg);
-            break;
-        case DRACO_CODE::INHERITANCE_830:
-            // show popup: Security deposit required
-            emit securityDepositRequiredAlert(errormsg);
-            break;
-        default:
-            AppModel::instance()->showToast(response_code, "Invalid Magic Phrase", EWARNING::WarningType::EXCEPTION_MSG);
-            break;
-        }
-        return QVariant::fromValue(result);
-    }
-}
-
 void QInheritanceClaiming::clearInheritanceKeys() {
     m_inheritanceKeys = QJsonArray{};
 }
 
-QJsonObject QInheritanceClaiming::claimInitJson() const { 
-    return m_claimInitJson; 
+void QInheritanceClaiming::setClaimInit(const InitializeInheritanceClaimingResult& init) {
+    m_claimInit = init;
+}
+
+void QInheritanceClaiming::claimInitSaveBsms(const QString& bsms, const nunchuk::Wallet& wallet) {
+    m_walletInfoClaim["bsms"] = bsms;
+    mInheritance.wallet = wallet;
 }
 
 QJsonArray QInheritanceClaiming::inheritanceKeys() const { 
@@ -519,11 +469,11 @@ QJsonArray QInheritanceClaiming::inheritanceKeys() const {
 
 bool QInheritanceClaiming::requestDownloadWalletWithIndexAsync(const QString &xfp) {
     runInConcurrent([this, xfp]() ->bool{
-        nunchuk::SingleSigner outSigner;
+        nunchuk::SingleSigner signer;
         auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-        bool ret = draftWallet->checkAndGetSingleSigner(xfp, 0, outSigner);
+        bool ret = draftWallet->checkAndGetSingleSigner(xfp, 0, signer);
         if (ret) {
-            return requestDownloadWallet(outSigner);
+            return requestClaimInheritanceFromSigner(signer);
         } else {
             DBG_INFO << "Cannot find signer with xfp:" << xfp;
         }
@@ -536,9 +486,10 @@ bool QInheritanceClaiming::requestDownloadWalletWithIndexAsync(const QString &xf
 bool QInheritanceClaiming::requestDownloadWalletViaQR(const QStringList &qr_data) {
     runInConcurrent([this, qr_data]() ->bool{
         QWarningMessage msg;
-        nunchuk::SingleSigner qrSigner = bridge::nunchukParseQRSigners(qr_data, 0, msg);
+        nunchuk::SingleSigner signer = bridge::nunchukParseQRSigners(qr_data, 0, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-            return requestDownloadWallet(qrSigner);
+            bool ret = requestClaimInheritanceFromSigner(signer);
+            return ret;
         } else {
             AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
             return false;
@@ -554,9 +505,9 @@ bool QInheritanceClaiming::requestDownloadWalletViaImportFile(const QString &fil
         QString file_path = qUtils::QGetFilePath(fileName);
         nunchuk::SingleSigner fileSigner = bridge::nunchukParseJSONSigners(file_path, 0, nunchuk::SignerType::AIRGAP, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
-            return requestDownloadWallet(fileSigner);
+            bool ret = requestClaimInheritanceFromSigner(fileSigner);
+            return ret;
         } else {
-            AppModel::instance()->showToast(msg.code(), msg.what(), EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     },[](bool ret) {
@@ -564,33 +515,84 @@ bool QInheritanceClaiming::requestDownloadWalletViaImportFile(const QString &fil
     return false;
 }
 
-bool QInheritanceClaiming::requestDownloadWallet(const nunchuk::SingleSigner &single) {
-    auto keyObj = qUtils::SingleSignertoJsonObject(single);
+bool QInheritanceClaiming::requestClaimInheritanceFromSigner(const nunchuk::SingleSigner &signer) {
+    auto keyObj = qUtils::SingleSignertoJsonObject(signer);
+    auto contains = [this, keyObj]() -> bool {
+        for (const auto& existingKey : m_inheritanceKeys) {
+            if (existingKey.toObject().value("xfp") == keyObj.value("xfp")) {
+                return true;
+            }
+        }
+        return false;
+    };
+    if (contains()) {
+        DBG_INFO << "Key already added:" << keyObj;
+        emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_SECOND_KEY");
+        return false;
+    } else {
+        DBG_INFO << "Adding key:" << keyObj;
+    }
     m_inheritanceKeys.append(keyObj);
-    int inheritance_key_count = claimInitJson().value("inheritance_key_count").toInt();
     int inheritance_key_added_count = inheritanceKeys().size();
-    DBG_INFO << "inheritance_key_count:" << inheritance_key_count << "inheritance_key_added_count:" << inheritance_key_added_count;
-    if (inheritance_key_added_count == 1 && inheritance_key_count == 2) {
+    DBG_INFO << "inheritance_key_count:" << m_claimInit.inheritance_key_count << "inheritance_key_added_count:" << inheritance_key_added_count;
+    if (inheritance_key_added_count == 1 && m_claimInit.inheritance_key_count == 2) {
         // add more keys
         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
         emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_SECOND_KEY");
-    } else if (inheritance_key_added_count == inheritance_key_count) {
+    }
+    else if (inheritance_key_added_count == m_claimInit.inheritance_key_count) {
         return requestDownloadWallet();
     }
     return false;
+}
+
+using features::claiming::flows::OnChainClaimingFlow;
+void QInheritanceClaiming::onChainProcessErrorCode(int error_code, const QString &error_msg) {
+    auto flowMng = app::AppContext::instance()->flowManager();
+    auto subMng = app::AppContext::instance()->subScreenManager();
+    switch (error_code) {
+    case DRACO_CODE::INHERITANCE_801:
+        // show popup: Invalid phrase. Please try again
+        AppModel::instance()->showToast(0, STR_CPP_115, EWARNING::WarningType::ERROR_MSG);
+        break;
+    case DRACO_CODE::INHERITANCE_802:
+        // show popup: It looks like the original subscription has expired for more than 3 years.
+        //             To claim the inheritance, please reactivate the plan first by visiting nunchuk.io/claim.
+        emit isExpiredAlert();
+        break;
+    case DRACO_CODE::INHERITANCE_831:
+    case DRACO_CODE::INHERITANCE_803: {
+        // show popup: Your inheritance plan has not been activated yet. Please try again later.
+        auto flow = flowMng->startFlow<OnChainClaimingFlow>();
+        flow->passClaimingError(error_code, error_msg);
+        subMng->show(qml::screens::onlinemode::claiming::claiminheritanceplanresult);
+    }    break;
+    case DRACO_CODE::INHERITANCE_829:
+        // show popup: Please come back later
+        emit comeBackLaterAlert(error_msg);
+        break;
+    case DRACO_CODE::INHERITANCE_830:
+        // show popup: Security deposit required
+        emit securityDepositRequiredAlert(error_msg);
+        break;
+    default:
+        AppModel::instance()->showToast(error_code, "Invalid Magic Phrase", EWARNING::WarningType::EXCEPTION_MSG);
+        break;
+    }
 }
 
 bool QInheritanceClaiming::requestDownloadWallet() {
     bool ret{false};
     QJsonObject output;
     QJsonObject body;
-    auto claimInit = claimInitJson();
-    body["magic"] = claimInit.value("magic").toString();
+    body["magic"] = m_claimInit.magic;
     body["keys"] = inheritanceKeys();
     ret = Draco::instance()->inheritanceClaimDownloadWallet(body, output);
     DBG_INFO << "body:" << body << "output:" << output;
     if (!ret) {
-        QSignerManagement::instance()->setScreenFlow("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR");
+        int code = output.value("code").toInt();
+        QString message = output.value("message").toString();
+        onChainProcessErrorCode(code, message);
     } else {
         m_walletInfoClaim = output.value("wallet").toObject();
         QString bsms = m_walletInfoClaim.value("bsms").toString();
@@ -599,6 +601,20 @@ bool QInheritanceClaiming::requestDownloadWallet() {
             mInheritance.wallet = qUtils::ParseWalletDescriptor(bsms, msg);
             mInheritance.wallet.set_name("Inheritance Wallet");
             bridge::nunchukCreateWallet(mInheritance.wallet, true, msg);
+            QString wallet_id = QString::fromStdString(mInheritance.wallet.get_id());
+            {
+                QWalletCached cachedData;
+                cachedData.groupId = m_walletInfoClaim.value("group_id").toString();
+                cachedData.slug = m_walletInfoClaim.value("slug").toString();
+                cachedData.myRole = m_walletInfoClaim.value("role").toString();
+                cachedData.status = m_walletInfoClaim.value("status").toString();
+                cachedData.backedup = true;
+                cachedData.hideFiatCurrency = m_walletInfoClaim.value("hide_fiat_currency").toBool();
+                cachedData.registered = true;
+                cachedData.isClaimed = true;
+                AppSetting::instance()->setWalletCached(wallet_id, cachedData);
+            }
+
             if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
                 QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
                 AppModel::instance()->startReloadWallets();
@@ -612,10 +628,9 @@ bool QInheritanceClaiming::requestDownloadWallet() {
             ServiceSetting::instance()->setWalletInfo(wallet);
             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             emit resultClaimInheritanceAlert("CLAIM_INHERITANCE_PLAN_RESULT_SUCCESS");
-            inheritanceClaimStatus(claimInit.value("magic").toString());
+            inheritanceClaimStatus(m_claimInit.magic);
         } else {
-            emit resultClaimInheritanceAlert("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR");
-            QSignerManagement::instance()->setScreenFlow("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR");
+            onChainProcessErrorCode(DRACO_CODE::INHERITANCE_831, "No inheritance plan found");
         }
         
     }
@@ -623,36 +638,23 @@ bool QInheritanceClaiming::requestDownloadWallet() {
 }
 
 nunchuk::SingleSigner QInheritanceClaiming::RecoverAnExistingSeed(const QString &mnemonic) {
-    QString fingerprint = qUtils::GetMasterFingerprint(mnemonic, "");
+    QString fingerprint = qUtils::GetMasterFingerprint(mnemonic.trimmed(), "");
     nunchuk::SingleSigner outSigner("","","","",{}, "", 0,"");
     auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
     bool ret = draftWallet->checkAndGetSingleSigner(fingerprint, 0, outSigner);
     return outSigner;
 }
 
-bool QInheritanceClaiming::GetClaimingWalletInfo(const QString &local_id) {
-    QJsonObject output;
-    QString errormsg;
-    bool ret = Draco::instance()->ClaimingWalletGet(local_id, output, errormsg);
-    DBG_INFO << "local_id:" << local_id << " output:" << output;
-    if (ret) {
-        m_claimWallet = output.value("wallet").toObject();
-    } else {
-        emit resultClaimInheritanceAlert("eSCREEN_CLAIM_INHERITANCE_PLAN_RESULT_ERROR");
-        AppModel::instance()->showToast(0, errormsg, EWARNING::WarningType::ERROR_MSG);
-    }
-    return ret;
-}
-
 bool QInheritanceClaiming::requestDownloadWalletViaSeedPhrase(const QString &mnemonic) {
     DBG_INFO << mnemonic;
     runInConcurrent([this, mnemonic]() ->bool{
-        bool checkmnemonic = qUtils::CheckMnemonic(mnemonic);
+        bool checkmnemonic = qUtils::CheckMnemonic(mnemonic.trimmed());
         if(checkmnemonic){
-            auto signer = RecoverAnExistingSeed(mnemonic);
+            auto signer = RecoverAnExistingSeed(mnemonic.trimmed());
             if (!signer.get_master_fingerprint().empty()) {
-                return requestDownloadWallet(signer);
-            } else {
+                return requestClaimInheritanceFromSigner(signer);
+            }
+            else {
                 AppModel::instance()->setMnemonic("-101");
                 AppModel::instance()->showToast(0, STR_CPP_081, EWARNING::WarningType::ERROR_MSG);
             }        

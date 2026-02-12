@@ -33,7 +33,6 @@ import "../../Components/customizes/Chats"
 import "../../Components/customizes/Transactions"
 import "../../Components/customizes/Wallets"
 import "../../Components/customizes/Popups"
-import "../../../localization/STR_QML.js" as STR
 
 Item {
     id: _item
@@ -117,7 +116,6 @@ Item {
                 }                
             }
         }
-
         Repeater {
             model: walletInfo.replaceGroups
             Item {
@@ -238,7 +236,6 @@ Item {
                 }
             }
         }
-
         QAreaWalletDetail{
             id: _walletDes
             width: _item.width
@@ -700,9 +697,47 @@ Item {
                 }
             }
         }
+        Rectangle {
+            id: timelockNoti
+            property bool needTobeVisibleWarning: walletInfo.timelockInfo.valueNeedVisibleWarning
+
+            width: _item.width
+            height: 60
+            radius: 8
+            color:  timelockNoti.needTobeVisibleWarning? "#FDEBD2" : "#EAEAEA"
+            visible: (walletInfo.walletBalanceSats > 0) && (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) && walletInfo.timeLocked && walletInfo.timelockInfo.valueRemainingNumeric > 0
+            Row {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 8
+                QIcon {
+                    iconSize: 36
+                    anchors.verticalCenter: parent.verticalCenter
+                    source: timelockNoti.needTobeVisibleWarning? "qrc:/Images/Images/warning_amber-60px.png" : "qrc:/Images/Images/info-60px.svg"
+                }
+                QLato {
+                    width: parent.width - 48
+                    height: 36
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.pixelSize: 16
+                    // lineHeightMode: Text.FixedHeight
+                    // lineHeight: 28
+                    wrapMode: Text.WordWrap
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignLeft
+                    text: STR.STR_QML_2078.arg(walletInfo.timelockInfo.valueRemainingString)
+                    textFormat: Text.RichText
+                    onLinkActivated: {
+                        if(walletInfo.utxoList.count > 0){
+                            walletInfo.isViewCoinShow = true
+                        }
+                    }
+                }
+            }
+        }
         Item {
             width: _item.width
-            height: _item.height * 0.49
+            height: (_item.visible ? (_item.height - timelockNoti.height - 24) : _item.height) * 0.49
             Row {
                 id: trans_lbl
                 height: 24

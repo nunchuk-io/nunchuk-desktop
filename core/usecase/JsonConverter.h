@@ -51,16 +51,7 @@ struct JsonConverter
     template<typename T>
     static QJsonValue toJsonValue(const T&)
     {
-        qWarning().noquote()
-            << "[UseCase][JsonConverter]"
-            << "No JSON converter defined for type:"
-            << typeid(T).name();
-
-        // Option 1: undefined
         return QJsonValue(QJsonValue::Undefined);
-
-        // Option 2 (nếu muốn field luôn hợp lệ JSON):
-        // return QJsonValue(QJsonValue::Null);
     }
 };
 

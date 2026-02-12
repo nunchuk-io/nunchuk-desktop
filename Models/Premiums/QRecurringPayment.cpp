@@ -420,7 +420,7 @@ bool QRecurringPayment::ImportAddressesWallet(const QStringList addresses)
     QWarningMessage msg;
     for (QString addr : list)
     {
-        bool isValid = qUtils::IsValidAddress(addr);
+        bool isValid = AppSetting::instance()->validateAddress(addr);
         bool isMyAddress = bridge::IsMyAddress(wallet_id(), addr, msg);
         if (!isValid) {
             QString message = QString("Invalid address: %1").arg(addr);

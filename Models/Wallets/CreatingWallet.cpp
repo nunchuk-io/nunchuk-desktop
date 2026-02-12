@@ -28,7 +28,7 @@ bool CreatingWallet::needBackup() const
     if (isReplaced() || isAssistedWallet()) {
         return false; // Replaced or assisted wallets do not require backup
     }
-    QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
+    QWalletCached data;
     bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
     if(ret){
         return !data.backedup;
@@ -41,7 +41,7 @@ void CreatingWallet::setNeedBackup(const bool data)
     if (isReplaced() || isAssistedWallet()) {
         return; // Replaced or assisted wallets do not require backup
     }
-    QWalletCached<QString, QString, QString, QString, bool, bool, bool> cache;
+    QWalletCached cache;
     cache.groupId   = groupId();
     cache.slug      = slug();
     cache.myRole    = myRole();
@@ -57,7 +57,7 @@ bool CreatingWallet::needRegistered() const
     if (isReplaced() || isAssistedWallet()) {
         return false; // Replaced or assisted wallets do not require registration
     }
-    QWalletCached<QString, QString, QString, QString, bool, bool, bool> data;
+    QWalletCached data;
     bool ret = AppSetting::instance()->getwalletCached(walletId(), data);
     if(ret){
         return !data.registered;
@@ -70,7 +70,7 @@ void CreatingWallet::setNeedRegistered(const bool data)
     if (isReplaced() || isAssistedWallet()) {
         return; // Replaced or assisted wallets do not require registration
     }
-    QWalletCached<QString, QString, QString, QString, bool, bool, bool> cache;
+    QWalletCached cache;
     cache.groupId   = groupId();
     cache.slug      = slug();
     cache.myRole    = myRole();
@@ -144,7 +144,9 @@ bool CreatingWallet::confirmAndAssignKeysToWallet()
     const auto wallet_n = walletN();
     const auto wallet_type = wallet_n > 1 ? ENUNCHUCK::WalletType::MULTI_SIG : ENUNCHUCK::WalletType::SINGLE_SIG;
     const auto address_type = static_cast<ENUNCHUCK::AddressType>(walletAddressType());
+    DBG_INFO << "wallet_n:" << wallet_n << "wallet_type:" << static_cast<int>(wallet_type);
     setWalletType(static_cast<int>(wallet_type));
+
     const auto available_signers = assignAvailableSigners();
     if (!available_signers) {
         DBG_WARN << "assignAvailableSigners() returned null";

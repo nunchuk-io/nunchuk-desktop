@@ -192,6 +192,25 @@ Rectangle {
                             }
                         }
 
+                        Rectangle {
+                            color: "#F5F5F5"
+                            radius: 24
+                            anchors.verticalCenter: parent.verticalCenter
+                            implicitHeight: spendableCoin.height + 8
+                            implicitWidth: spendableCoin.width + 16
+                            visible: !isSearching
+                            QLato {
+                                id: spendableCoin
+                                text: "Spendable now: " + walletInfo.utxoList.spendableDisplay + " " + RoomWalletData.unitValue
+                                color: "#031F2B"
+                                font.pixelSize: 12
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WrapAnywhere
+                                anchors.centerIn: parent
+                                font.weight: Font.Bold
+                            }
+                        }
+
                         QSearchingBox {
                             id: searchbox
                             visible: isSearching

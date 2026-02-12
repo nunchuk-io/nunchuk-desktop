@@ -571,10 +571,32 @@ bool Byzantine::GetCurrentGroupWallet(const QString group_id, QJsonObject &outpu
         }
         else{
             errormsg = response_msg;
-            DBG_INFO << response_code << response_msg;
-#if 0 //NO NEED
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
-#endif
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
+bool Byzantine::GetWalletGroupWallet(const QString group_id, const QString &wallet_id, QJsonObject& output, QString &errormsg) {
+    if (group_id.isEmpty()) return false;
+    QJsonObject data;
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Group::CMD_IDX::GROUP_WALLETS_GET_WALLET];
+    cmd.replace("{group_id}", group_id);
+    cmd.replace("{wallet_id_or_local_id}", wallet_id);
+    QJsonObject jsonObj = m_rest->getSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        QJsonObject errorObj = jsonObj["error"].toObject();
+        int response_code = errorObj["code"].toInt();
+        QString response_msg = errorObj["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = response_msg;
             return false;
         }
     }
@@ -2740,7 +2762,7 @@ bool Byzantine::DraftWalletUploadBackupFile(const QString& group_id, const QMap<
     return false;
 }
 
-bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QString& timezone, const qint64 timelock, QJsonObject &output, QString &errormsg)
+bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QJsonObject& request_body, QJsonObject &output, QString &errormsg)
 {
     if (group_id.isEmpty()) return false;
     int     reply_code = -1;
@@ -2748,13 +2770,7 @@ bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QString
     QString cmd = commands[Group::CMD_IDX::GROUP_DRAFT_WALLET_TIMELOCK];
     cmd.replace("{group_id}", group_id);
 
-    QJsonObject data;
-    QJsonObject value;
-    value["value"] = timelock;
-    value["timezone"] = timezone;
-    data["timelock"] = value;
-
-    QJsonObject jsonObj = m_rest->putSync(cmd, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
@@ -2798,7 +2814,7 @@ bool Byzantine::DraftWalletSignerVerify(const QString &group_id, const QString& 
     return false;
 }
 
-bool Byzantine::walletChangeTimelock(const QString &wallet_id, const QString &group_id, const QString &timezone, const qint64 timelock, const QString &verify_token, QJsonObject &output)
+bool Byzantine::walletChangeTimelock(const QString &wallet_id, const QString &group_id, const QJsonObject& request_body, const QString &verify_token, QJsonObject &output)
 {
     if (group_id.isEmpty()) return false;
     int     reply_code = -1;
@@ -2807,16 +2823,10 @@ bool Byzantine::walletChangeTimelock(const QString &wallet_id, const QString &gr
     cmd.replace("{group_id}", group_id);
     cmd.replace("{wallet_id_or_local_id}", wallet_id);
 
-    QJsonObject data;
-    QJsonObject value;
-    value["value"] = timelock;
-    value["timezone"] = timezone;
-    data["timelock"] = value;
-
     QMap<QString, QString> params;
     params["Verify-token"] = verify_token;
 
-    QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, data, reply_code, reply_msg);
+    QJsonObject jsonObj = m_rest->postSync(cmd, {}, params, request_body, reply_code, reply_msg);
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();

@@ -308,21 +308,27 @@ typedef OurSharedPointer<UTXO> QUTXOPtr;
 class QUTXOListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int selectedCount        READ selectedCount      NOTIFY selectedCountChanged)
-    Q_PROPERTY(int count                READ count              NOTIFY countChanged)
-    Q_PROPERTY(qint64  amountSats       READ amountSats         NOTIFY amountChanged)
-    Q_PROPERTY(QString  amountDisplay   READ amountDisplay      NOTIFY amountChanged)
-    Q_PROPERTY(QString  amountCurrency  READ amountCurrency     NOTIFY amountChanged)
-    Q_PROPERTY(bool isChecked           READ isChecked          NOTIFY selectedCountChanged)
-    Q_PROPERTY(bool isPartiallyChecked  READ isPartiallyChecked NOTIFY selectedCountChanged)
-    Q_PROPERTY(bool isUnChecked         READ isUnChecked        NOTIFY selectedCountChanged)
-    Q_PROPERTY(int countVisible         READ countVisible       NOTIFY countVisibleChanged)
-    Q_PROPERTY(int lockedCount          READ lockedCount        NOTIFY selectedCountChanged)
-    Q_PROPERTY(int selectedLockedCount  READ selectedLockedCount     NOTIFY selectedCountChanged)
-    Q_PROPERTY(bool isFiltered          READ isFiltered         NOTIFY countVisibleChanged)
-    Q_PROPERTY(QVariant filter          READ filter             NOTIFY countVisibleChanged)
-    Q_PROPERTY(QString  totalDisplay    READ totalDisplay       CONSTANT)
-    Q_PROPERTY(QString  totalCurrency   READ totalCurrency      CONSTANT)
+    Q_PROPERTY(int      selectedCount           READ selectedCount                                         NOTIFY selectedCountChanged)
+    Q_PROPERTY(int      count                   READ count                                                 NOTIFY countChanged)
+    Q_PROPERTY(qint64   amountSats              READ amountSats                                            NOTIFY amountChanged)
+    Q_PROPERTY(QString  amountDisplay           READ amountDisplay                                         NOTIFY amountChanged)
+    Q_PROPERTY(QString  amountCurrency          READ amountCurrency                                        NOTIFY amountChanged)
+    Q_PROPERTY(bool     isChecked               READ isChecked                                             NOTIFY selectedCountChanged)
+    Q_PROPERTY(bool     isPartiallyChecked      READ isPartiallyChecked                                    NOTIFY selectedCountChanged)
+    Q_PROPERTY(bool     isUnChecked             READ isUnChecked                                           NOTIFY selectedCountChanged)
+    Q_PROPERTY(int      countVisible            READ countVisible                                          NOTIFY countVisibleChanged)
+    Q_PROPERTY(int      lockedCount             READ lockedCount                                           NOTIFY selectedCountChanged)
+    Q_PROPERTY(int      selectedLockedCount     READ selectedLockedCount                                   NOTIFY selectedCountChanged)
+    Q_PROPERTY(bool     isFiltered              READ isFiltered                                            NOTIFY countVisibleChanged)
+    Q_PROPERTY(QVariant filter                  READ filter                                                NOTIFY countVisibleChanged)
+    Q_PROPERTY(QString  totalDisplay            READ totalDisplay                                          CONSTANT)
+    Q_PROPERTY(QString  totalCurrency           READ totalCurrency                                         CONSTANT)
+
+    // spendable
+    Q_PROPERTY(QString   spendableDisplay       READ spendableDisplay                                      NOTIFY spendableChanged)
+    Q_PROPERTY(qint64    spendableSats          READ spendableSats              WRITE setSpendableSats     NOTIFY spendableChanged)
+    Q_PROPERTY(QString   spendableBTC           READ spendableBTC                                          NOTIFY spendableChanged)
+    Q_PROPERTY(QString   spendableCurency       READ spendableCurency                                      NOTIFY spendableChanged)
 
 public:
     QUTXOListModel(QString wallet_id);
@@ -390,10 +396,19 @@ public:
     QList<QUTXOPtr> fullList() const;
     void clearAll();
 
+    QString spendableDisplay();
+    qint64  spendableSats();
+    QString spendableBTC();
+    QString spendableCurency();
+    void setSpendableSats(qint64 sats);
+    QVariantMap timelockInfo();
+
 signals:
+    void amountChanged();
     void countChanged();
     void selectedCountChanged();
     void countVisibleChanged();
+    void spendableChanged();
 
 public slots:
     void selectAll(bool select = true);
@@ -414,8 +429,8 @@ private:
             }
         }
     } filter_t;
-signals:
-    void amountChanged();
+
+    qint64  m_spendableSats {0};
 };
 typedef OurSharedPointer<QUTXOListModel> QUTXOListModelPtr;
 

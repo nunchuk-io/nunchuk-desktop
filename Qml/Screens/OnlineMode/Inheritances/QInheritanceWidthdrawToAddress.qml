@@ -64,17 +64,24 @@ QOnScreenContentTypeB {
                         input.rightPadding: 36
                         textInputted: destinationAddress
                         onTextInputtedChanged: {
-                            if(AppSetting.validateAddress(addressInput.textInputted)) {
+                            if (!addressInput.enabled)
+                                return
+
+                            if (addressInput.textInputted.length === 0) {
                                 addressInput.isValid = true
+                                addressInput.showError = false
+                                sendDelegateRoot.toAddress = ""
+                                return
+                            }
+
+                            if (AppSetting.validateAddress(addressInput.textInputted)) {
+                                addressInput.isValid = true
+                                addressInput.showError = false
                                 addressInput.errorText = ""
-                                addressInput.showError = false;
-                                destinationAddress = addressInput.textInputted
-                            } else {
-                                if (addressInput.isValid) {
-                                    addressInput.isValid = false
-                                    AppModel.showToast(-1, STR.STR_QML_1184, EWARNING.ERROR_MSG);
-                                    destinationAddress = ""
-                                }
+                                sendDelegateRoot.toAddress = addressInput.textInputted
+                            }
+                            else {
+                                addressInput.isValid = false
                             }
                         }
                     }

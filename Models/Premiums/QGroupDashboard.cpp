@@ -31,8 +31,7 @@ QString IntToString(const int type) {
 }
 
 QGroupDashboard::QGroupDashboard(const QString& wallet_id)
-    : QBasePremium(wallet_id),
-        m_timeLockUseCase(this)
+    : QBasePremium(wallet_id)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
@@ -40,7 +39,6 @@ QGroupDashboard::QGroupDashboard(const QString& wallet_id)
     connect(CLIENT_INSTANCE, &ClientController::byzantineRoomDeleted,   this, &QGroupDashboard::byzantineRoomDeleted);
     mTimer = new QTimer(this);
     connect(mTimer, &QTimer::timeout, this, &QGroupDashboard::updateProgress);
-    clearTimeLock();
 }
 
 QGroupDashboard::~QGroupDashboard()
@@ -353,7 +351,6 @@ void QGroupDashboard::GetWalletInfo()
             if (ptrLamda->walletInfoPtr() && ptrLamda->walletInfoPtr()->serverKeyPtr()) {
                 ptrLamda->walletInfoPtr()->serverKeyPtr()->UpdateFromWallet(wallet);
             }
-            ptrLamda->clearTimeLock();
         }
     });
 }
@@ -393,7 +390,6 @@ void QGroupDashboard::GetDraftWalletInfo()
             ptrLamda->m_signerInfo = signers;
             ptrLamda->m_walletDraftInfo = draft_wallet;
             ptrLamda->UpdateKeys(draft_wallet);
-            ptrLamda->clearTimeLock();
         }
     });
 }
@@ -698,15 +694,7 @@ bool QGroupDashboard::GetKeyReplacementStatus()
     }
     if (ret) {
         DBG_INFO << output;
-        m_keyReplacementInfo  = output["status"].toObject();
-        auto timelock = m_keyReplacementInfo["timelock"].toObject();
-        if (!timelock.isEmpty()) {
-            setTimelockReplacement(timelock);
-        } else {
-            setTimelockReplacement(m_walletInfo.value("timelock").toObject());
-            clearTimeLock();
-        }
-        
+        m_keyReplacementInfo  = output["status"].toObject();        
         preparingKeyTobeReplaced();
     }
     return ret;
@@ -1934,169 +1922,6 @@ QString QGroupDashboard::timeLock() const {
     QString formatted = dt.toString("MM/dd/yyyy HH:mm");
     DBG_INFO << formatted << timezone;
     return timestamp == 0 ? "" : formatted;
-}
-
-void QGroupDashboard::clearTimeLock() {
-    auto info = m_walletInfo.isEmpty() ? m_walletDraftInfo : m_walletInfo;
-    QJsonObject timelock = info.value("timelock").toObject();
-    DBG_INFO << timelock;
-    if (timelock.isEmpty()) {
-        auto wallet = walletInfoPtr();
-        if (!wallet) return;
-        QDateTime dt = QDateTime::currentDateTime();
-        dt = dt.addYears(5);
-        QString formattedDate = dt.toString("MM/dd/yyyy");
-        QString formattedTime = dt.toString("HH:mm");
-        QJsonObject formatted;
-        formatted["valueDate"] = formattedDate;
-        formatted["valueTime"] = formattedTime;
-        formatted["valueTimezone"] = wallet->timezones()->selectedTimezone();
-        m_timeLockSet = formatted;
-        emit timeLockSetChanged();
-    } else {
-        auto wallet = walletInfoPtr();
-        if (!wallet) return;
-        qint64 timestamp = timelock.value("value").toVariant().toULongLong();
-        QString timezone = timelock.value("timezone").toString();
-        QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
-        wallet->timezones()->setSelectedTimezone(timezone);
-        QString formattedDate = dt.date().toString("MM/dd/yyyy");
-        QString formattedTime = dt.time().toString("HH:mm");
-        QJsonObject formatted;
-        formatted["valueDate"] = formattedDate;
-        formatted["valueTime"] = formattedTime;
-        formatted["valueTimezone"] = timezone;
-        m_timeLockSet = formatted;
-        emit timeLockSetChanged();
-    }
-}
-
-QVariant QGroupDashboard::timeLockSet() const {    
-    return QVariant::fromValue(m_timeLockSet);
-}
-
-QString QGroupDashboard::timelockReplacementDisp() const
-{
-    QJsonObject timelock = m_timeLockReplacement;
-    qint64 timestamp = timelock.value("value").toVariant().toULongLong();
-    QString timezone = timelock.value("timezone").toString();
-    QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
-    QString formatted = dt.toString("MM/dd/yyyy HH:mm");
-    DBG_INFO << formatted << timezone;
-    return timestamp == 0 ? "" : formatted;
-}
-
-void QGroupDashboard::setTimelockReplacement(const QJsonObject &timelock)
-{
-    auto wallet = walletInfoPtr();
-    if (!wallet) return;
-    m_timeLockReplacement = timelock;
-    DBG_INFO << m_timeLockReplacement;
-    qint64  timestamp = m_timeLockReplacement.value("value").toVariant().toULongLong();
-    QString timezone = m_timeLockReplacement.value("timezone").toString();
-    QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
-    m_timeLockReplacement["valueDate"] = dt.toString("MM/dd/yyyy");
-    m_timeLockReplacement["valueTime"] = dt.toString("HH:mm");
-    m_timeLockReplacement["valueTimezone"] = timezone;
-    wallet->timezones()->setSelectedTimezone(timezone);
-    emit timelockReplacementChanged();
-}
-
-QVariant QGroupDashboard::timelockReplacement() const
-{
-    return QVariant::fromValue(m_timeLockReplacement);
-}
-
-void QGroupDashboard::draftWalletSetupTimeLock(const QVariant &datetime, bool isPutServer) {
-    if (isPutServer) {
-        QString date = m_timeLockSet.value("valueDate").toString();
-        QString time = m_timeLockSet.value("valueTime").toString();
-        QString timezone = m_timeLockSet.value("valueTimezone").toString();
-        QString timezoneId = qUtils::extractTimeZoneId(timezone);
-        QDateTime dt = QDateTime::fromString(date + " " + time, "MM/dd/yyyy HH:mm");
-        QTimeZone tz(timezoneId.toUtf8());
-        if (!tz.isValid()) {
-            // Fallback to UTC
-            dt.setTimeSpec(Qt::UTC);
-        } else {
-            dt.setTimeZone(tz);
-        }
-        qint64 timestamp = dt.toSecsSinceEpoch();
-        QPointer<QGroupDashboard> safeThis(this);
-        runInConcurrent([safeThis, timestamp, timezoneId]() ->bool{
-            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-            QJsonObject output;
-            QString error_msg = "";
-            bool ret {false};
-            if (ptrLamda->isUserWallet() || ptrLamda->isUserDraftWallet()) {
-                ret = Draco::instance()->DraftWalletUpdateTimelock(timezoneId, timestamp, output, error_msg);
-            } else {
-                ret = Byzantine::instance()->DraftWalletUpdateTimelock(ptrLamda->groupId(), timezoneId, timestamp, output, error_msg);
-            }
-            return ret;
-        },[safeThis](bool ret) {
-            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-            if (ret) {
-                ptrLamda->GetDraftWalletInfo();
-            }
-        });
-    } else {
-        auto maps = datetime.toMap();
-        if (!maps.isEmpty()) {
-            m_timeLockSet["valueDate"] = maps["valueDate"].toString();
-            m_timeLockSet["valueTime"] = maps["valueTime"].toString();
-            m_timeLockSet["valueTimezone"] = maps["valueTimezone"].toString();
-            emit timeLockSetChanged(); 
-        }             
-    }
-}
-
-void QGroupDashboard::walletSetupTimeLock(const QVariant &datetime, bool isPutServer)
-{
-    if (isPutServer) {
-        QString date = m_timeLockReplacement.value("valueDate").toString();
-        QString time = m_timeLockReplacement.value("valueTime").toString();
-        QString timezone = m_timeLockReplacement.value("valueTimezone").toString();
-        QString timezoneId = qUtils::extractTimeZoneId(timezone);
-        QString verifyToken = servicesTagPtr()->passwordToken();
-        QDateTime dt = QDateTime::fromString(date + " " + time, "MM/dd/yyyy HH:mm");
-        QTimeZone tz(timezoneId.toUtf8());
-        if (!tz.isValid()) {
-            // Fallback to UTC
-            dt.setTimeSpec(Qt::UTC);
-        } else {
-            dt.setTimeZone(tz);
-        }
-        qint64 timestamp = dt.toSecsSinceEpoch();
-        QPointer<QGroupDashboard> safeThis(this);
-        runInConcurrent([safeThis, timestamp, timezoneId, verifyToken]() ->bool{
-            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-            QJsonObject output;
-            bool ret {false};
-            if (ptrLamda->isUserWallet() || ptrLamda->isUserDraftWallet()) {
-                ret = Draco::instance()->walletChangeTimelock(ptrLamda->wallet_id(), timezoneId, timestamp, verifyToken, output);
-            } else {
-                ret = Byzantine::instance()->walletChangeTimelock(ptrLamda->wallet_id(), ptrLamda->groupId(), timezoneId, timestamp, verifyToken, output);
-            }
-            DBG_INFO << "output:" << output << "ret:" << ret;
-            return ret;
-        },[safeThis](bool ret) {
-                            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-                            if (ret) {
-                                ptrLamda->GetDraftWalletInfo();
-                                ptrLamda->GetKeyReplacementStatus();
-                                emit ptrLamda->timelockReplacementChanged();
-                            }
-                        });
-    } else {
-        auto maps = datetime.toMap();
-        if (!maps.isEmpty()) {
-            m_timeLockReplacement["valueDate"] = maps["valueDate"].toString();
-            m_timeLockReplacement["valueTime"] = maps["valueTime"].toString();
-            m_timeLockReplacement["valueTimezone"] = maps["valueTimezone"].toString();
-            emit timelockReplacementChanged();
-        }
-    }
 }
 
 bool QGroupDashboard::enoughKeyAdded(const QString& xfp) {
