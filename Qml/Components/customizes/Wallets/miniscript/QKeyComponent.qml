@@ -39,7 +39,6 @@ Item {
     }
     property var showEdit: true
     signal bip32PathClick(string key, string xfp, string path)
-    signal viewPoliciesRequest()
 
     Row {
         anchors.fill: parent
@@ -122,7 +121,9 @@ Item {
         
             QLato {
                 width: parent.width
-                visible: miniscript.keyObj !== null && miniscript.keyObj !== undefined && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
+                visible: miniscript.keyObj !== null
+                         && miniscript.keyObj !== undefined
+                         && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                 text: {
                     if (miniscript.keyObj.single_signer_device_cardid !== "") {
                         var card_id_text = miniscript.keyObj.single_signer_device_cardid
@@ -139,7 +140,9 @@ Item {
             }
             QLato {
                 width: paintedWidth + 4 + 12
-                visible: miniscript.keyObj !== null && miniscript.keyObj !== undefined && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
+                visible: miniscript.keyObj !== null
+                         && miniscript.keyObj !== undefined
+                         && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
                 text: qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath)
                 color: miniscript.keyStrCount > 1 ? "#CF4018": "#757575"
                 horizontalAlignment: Text.AlignLeft
@@ -154,7 +157,8 @@ Item {
                         verticalCenter: parent.verticalCenter
                         right: parent.right
                     }
-                    visible: (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SOFTWARE || miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.HARDWARE) && showEdit
+                    visible: (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SOFTWARE || miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.HARDWARE)
+                             && showEdit
                 }
                 MouseArea {
                     visible: _icon.visible
@@ -166,27 +170,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    QTextButton {
-        width: label.paintedWidth + 16*2
-        height: 36
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.right: parent.right
-        label.text: STR.STR_QML_1348
-        label.font.pixelSize: 12
-        type: eTypeB
-        visible: !showEdit && walletInfo && (walletInfo !== undefined) && (walletInfo.isReplaced === false)
-                 && (myRole !== "FACILITATOR_ADMIN") && (myRole !== "")
-                 && (miniscript.keyObj !== null) && (miniscript.keyObj !== undefined) && (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SERVER)
-        onButtonClicked: {
-            viewPoliciesRequest()
-            var objectRequest = {
-                "requestType": "viewPolicies",
-                "requestData": walletInfo.walletId
-            }
-            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
         }
     }
 }

@@ -148,7 +148,9 @@ Item {
         label.font.pixelSize: 12
         type: eTypeB
         enabled: !walletInfo.isLocked
-        visible: dataSingle.single_type === NUNCHUCKTYPE.SERVER && !walletInfo.isReplaced && myRole !== "FACILITATOR_ADMIN"
+        visible: dataSingle.single_type === NUNCHUCKTYPE.SERVER
+                 && !walletInfo.isReplaced
+                 && myRole !== "FACILITATOR_ADMIN"
         onButtonClicked: {
             viewPoliciesRequest()
         }

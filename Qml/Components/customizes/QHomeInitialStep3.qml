@@ -705,7 +705,10 @@ Item {
             height: 60
             radius: 8
             color:  timelockNoti.needTobeVisibleWarning? "#FDEBD2" : "#EAEAEA"
-            visible: (walletInfo.walletBalanceSats > 0) && (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT) && walletInfo.timeLocked && walletInfo.timelockInfo.valueRemainingNumeric > 0
+            visible: (walletInfo.walletBalanceSats > 0)
+                     && (walletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT)
+                     /*&& walletInfo.timeLocked*/
+                     && (walletInfo.timelockInfo.valueRemainingNumeric > 0)
             Row {
                 anchors.fill: parent
                 anchors.margins: 12

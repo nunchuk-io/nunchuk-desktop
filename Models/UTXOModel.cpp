@@ -996,6 +996,7 @@ QVariantList UTXO::timelocklist()
 
     for (int i = 0; i < (int)timelocks.size(); ++i) {
         int64_t val = timelocks[i];
+
         QVariantMap obj;
         QString valueNodeStr;
         QString valueRemainingStr;
@@ -1011,11 +1012,11 @@ QVariantList UTXO::timelocklist()
             QDate dateNode = dt.date();
             QDate today = QDateTime::currentDateTimeUtc().date();
             int days = today.daysTo(dateNode);
-            remainingNumeric = days;
             if (days > 0) {
                 valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
                 remainingString  = QString::number(days) + (days == 1 ? " day" : " days");
                 isLocked = true;
+                remainingNumeric = days;
                 needVisibleWarning = days < 7;
             }
             else {
@@ -1025,11 +1026,13 @@ QVariantList UTXO::timelocklist()
                 if (hours >= 1) {
                     valueRemainingStr = QString::number(hours) + (hours == 1 ? " hour left" : " hours left");
                     remainingString  = QString::number(hours) + (hours == 1 ? " hour" : " hours");
+                    remainingNumeric = 1;
                     isLocked = true;
                 }
                 else if (minutes >= 1) {
                     valueRemainingStr = QString::number(minutes) + (minutes == 1 ? " minute left" : " minutes left");
                     remainingString  = QString::number(minutes) + (minutes == 1 ? " minute" : " minutes");
+                    remainingNumeric = 1;
                     isLocked = true;
                 }
                 else {
@@ -1656,7 +1659,6 @@ QVariantMap QUTXOListModel::timelockInfo()
             QVariantList timelocklist = utxo->timelocklist();
             for (const auto &item : timelocklist) {
                 QVariantMap map = item.toMap();
-                DBG_INFO << "timelockInfo map:" << map;
                 if (map.contains("valueRemainingNumeric") && map.contains("valueNode")) {
                     qint64 value = map["valueRemainingNumeric"].toLongLong();
                     QString valueNode = map["valueNode"].toString();

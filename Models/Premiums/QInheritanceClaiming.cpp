@@ -241,6 +241,7 @@ bool QInheritanceClaiming::inheritanceCreateTx(const QJsonObject &data, const QS
         }        
 
         QWarningMessage msg;
+        DBG_INFO << "hadv3 psbt:" << psbt << " sub_amount:" << sub_amount << " fee:" << fee << " fee_rate:" << fee_rate << " change_pos:" << change_pos << " subtract_fee_from_amount:" << subtract_fee_from_amount;
         mInheritance.tx = qUtils::DecodeTx(mInheritance.wallet, psbt, tx_sub_amount, tx_fee, tx_fee_rate, subtract_fee_from_amount, msg);
         if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
             mInheritance.tx.set_change_index(change_pos); // set change index to i

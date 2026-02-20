@@ -81,7 +81,7 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
         }
         else {
             DBG_INFO << "DELETE WALLET ID:" << wallet_id << wallet->slugs();
-            if (wallet->slugs().size() > 0) {
+            if (wallet->isAssistedWallet() || wallet->isClaimed()) {
                 QMap<QString, QVariant> data;
                 data["state_id"] = E::STATE_ID_SCR_WALLET_INFO;
                 data["wallet_id"] = wallet->walletId();

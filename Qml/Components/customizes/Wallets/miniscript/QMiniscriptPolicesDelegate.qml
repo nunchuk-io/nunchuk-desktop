@@ -153,7 +153,7 @@ Item {
                 if (miniscript.lockType === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
                     return qsTr("After %1").arg(miniscript.relativeTimestamp.valueDisplay)
                 } else if (miniscript.lockType === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
-                    return qsTr("After %1 blocks").arg(miniscript.relativeBlockheight)
+                    return qsTr("After %1 block%2").arg(miniscript.relativeBlockheight).arg(miniscript.relativeBlockheight > 1 ? "s" : "")
                 }
             }
             case ScriptNodeHelper.Type.AFTER: {

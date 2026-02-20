@@ -33,6 +33,8 @@ import "../../../../../localization/STR_QML.js" as STR
 
 QMiniscriptPolicesDelegate {
     property var itemData: miniscript.keyObj
+    signal viewPoliciesRequest()
+    property string myRole: newWalletInfo.groupId !== "" ? newWalletInfo.myRole : ""
     Component {
         id: keyCoponent
         QKeyComponent {
@@ -53,6 +55,28 @@ QMiniscriptPolicesDelegate {
                 single_isReplaced: itemData.single_signer_isReplaced
                 single_keyReplaced: itemData.single_signer_keyReplaced
             }
+        }
+    }
+    QTextButton {
+        width: label.paintedWidth + 16*2
+        height: 36
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+        label.text: STR.STR_QML_1348
+        label.font.pixelSize: 12
+        type: eTypeB
+        visible: miniscript.keyObj !== null
+                 && miniscript.keyObj !== undefined
+                 && miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SERVER
+                 && !newWalletInfo.isClaimed
+                 && (myRole !== "FACILITATOR_ADMIN")
+        onButtonClicked: {
+            viewPoliciesRequest()
+            var objectRequest = {
+                "requestType": "viewPolicies",
+                "requestData": newWalletInfo.walletId
+            }
+            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
         }
     }
 }
