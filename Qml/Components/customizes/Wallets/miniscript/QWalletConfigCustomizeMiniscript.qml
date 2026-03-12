@@ -28,7 +28,7 @@ import "../../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     width: 360
-    height: 192
+    height: customizeMiniscriptCol.height
     radius: 8
     border.color: "#DEDEDE"
     border.width: 1
@@ -40,6 +40,7 @@ Rectangle {
     signal miniscriptEdit()
     signal miniscriptDelete()
     Column {
+        id: customizeMiniscriptCol
         width: parent.width
         spacing: 12
         Rectangle {
@@ -57,7 +58,7 @@ Rectangle {
                 id: _title
                 font.weight: Font.Normal
                 font.pixelSize: 16
-                text: STR.STR_QML_1498
+                text: STR.STR_QML_1801
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 anchors {
@@ -94,7 +95,6 @@ Rectangle {
         Loader {
             id: miniscriptLoader
             width: parent.width
-            height: 116
             sourceComponent: miniscript === "" ? _addMiniscript : _hadMiniscript
         }
 
@@ -104,11 +104,7 @@ Rectangle {
                 width: parent.width
                 anchors {
                     left: parent.left
-                    right: parent.right
-                    top: parent.top
                     leftMargin: 12
-                    rightMargin: 12
-                    topMargin: 12
                 }
                 spacing: 16
                 QLato {
@@ -118,7 +114,7 @@ Rectangle {
                     text: STR.STR_QML_1874
                     lineHeightMode: Text.FixedHeight
                     lineHeight: 20
-                    wrapMode: Text.WrapAnywhere
+                    wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -281,18 +277,18 @@ Rectangle {
                         ]
                     }
                 }
+                Item { width: parent.width; height: 1 }
             }
         }
 
         Component {
             id: _hadMiniscript
-            Item {
+            Column {
                 width: parent.width
-                height: 152
+                spacing: 12
                 QTextArea  {
                     id: _customize
                     width: parent.width
-                    height: 152
                     background: Item{}
                     color: colorText
                     text: miniscript
@@ -304,10 +300,6 @@ Rectangle {
                 Item {
                     width: parent.width
                     height: 16
-                    anchors {
-                        bottom: parent.bottom
-                        bottomMargin: -12
-                    }
                     Row {
                         anchors {
                             verticalCenter: parent.verticalCenter
@@ -344,6 +336,7 @@ Rectangle {
                         }                        
                     }
                 }
+                Item { width: parent.width; height: 1 }
             }
         }
     }

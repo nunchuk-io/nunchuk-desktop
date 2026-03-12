@@ -227,7 +227,7 @@ Rectangle {
 
                 Rectangle {
                     width: 846
-                    height: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? 80 : 60
+                    height: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE ? 60 : 80
                     radius: 8
                     color: "#EAEAEA"
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -243,7 +243,8 @@ Rectangle {
                         }
                         QLato {
                             width: parent.width - 48
-                            text: walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? STR.STR_QML_1883 : STR.STR_QML_1878
+                            text: walletInfo.timelockType === (ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE +1) ? STR.STR_QML_2078 :
+                                                                                                                     walletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE ? STR.STR_QML_1883 : STR.STR_QML_1878
                             font.pixelSize: 16
                             verticalAlignment: Text.AlignVCenter
                             wrapMode: Text.WordWrap

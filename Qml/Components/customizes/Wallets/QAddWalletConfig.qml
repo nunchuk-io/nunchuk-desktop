@@ -145,7 +145,6 @@ Column {
                         QWalletConfigCustomizeMiniscript {
                             id: btn
                             width: _walletConfig.width
-                            height: 192
                             radius: 8
                             selected: option === modelData.id
                             opacity: btn.enabled ? 1.0 : (btn.selected ? 1.0 : 0.4)

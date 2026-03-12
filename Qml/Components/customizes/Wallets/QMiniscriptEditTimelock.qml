@@ -30,7 +30,6 @@ import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/Popups"
-import "../../../../localization/STR_QML.js" as STR
 
 Column {
     width: 350
@@ -134,9 +133,35 @@ Column {
             }
         }
     }
+    function checkAndContinue() {
+        var isValid = true;
+        if (timelockInputLoader.item) {
+            isValid = timelockInputLoader.item.isValid();
+        }
+        if (!isValid) {
+            if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE &&
+                newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
+                // Handle absolute time lock case (if needed)
+            } else if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_ABSOLUTE &&
+                       newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
+                AppModel.showToast(0, STR.STR_QML_1887, EWARNING.ERROR_MSG);
+            } else if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE &&
+                       newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
+                AppModel.showToast(0, STR.STR_QML_2102, EWARNING.ERROR_MSG);
+            } else if (newWalletInfo.timelockType === ScriptNodeHelper.TimelockType.LOCKTYPE_RELATIVE &&
+                       newWalletInfo.timeUnit === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
+                AppModel.showToast(0, STR.STR_QML_1888, EWARNING.ERROR_MSG);
+            }
+        }
+        return isValid;
+    }
+
     Component {
         id: unlockAfterAFixedDate
         Column {
+            function isValid() {
+                return true
+            }
             width: parent.width
             spacing: 12
             QLato {
@@ -146,6 +171,7 @@ Column {
                 textFormat: Text.RichText
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
+                visible: false
             }
             Item {
                 width: 350
@@ -287,6 +313,9 @@ Column {
     Component {
         id: unlockAfterBlockNumber
         Item {
+            function isValid() {
+                return _inputblockAbs.isValid
+            }
             width: parent.width
             height: 88
             Column {
@@ -301,13 +330,13 @@ Column {
                     boxHeight: 48
                     textInputted: newWalletInfo.timeMini.absoluteBlockheight
                     input.placeholderText: AppModel.blockHeight + 4320
-                    isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblockAbs.textInputted))) && (parseInt(_inputblockAbs.textInputted) <= 499999999)
+                    isValid: (textInputted !== "") && _inputblockAbs.isValidBlockHeight(_inputblockAbs.textInputted)
                     errorText: STR.STR_QML_1887
                     validator: RegExpValidator {
                         regExp: /^$|^[0-9]+$/
                     }
                     onTypingFinished: {
-                        if(isValid && !Number.isNaN(parseInt(_inputblockAbs.textInputted)) && (parseInt(_inputblockAbs.textInputted) <= 499999999)){
+                        if(_inputblockAbs.isValidBlockHeight(_inputblockAbs.textInputted)){
                             newWalletInfo.updateTimeMiniscript("absoluteBlockheight", parseInt(_inputblockAbs.textInputted));
                         }
                     }
@@ -315,6 +344,10 @@ Column {
                         if(!isValid){
                             AppModel.showToast(0, STR.STR_QML_1887, EWARNING.ERROR_MSG);
                         }
+                    }
+                    function isValidBlockHeight(input) {
+                        var blockHeight = parseInt(input);
+                        return !Number.isNaN(blockHeight) && blockHeight <= 499999999 && blockHeight > AppModel.blockHeight;
                     }
                 }
                 QLato {
@@ -332,6 +365,9 @@ Column {
     Component {
         id: unlockAfterTimePeriodDays
         Item {
+            function isValid() {
+                return input_days.isValid
+            }
             width: parent.width
             height: 72
             Column {
@@ -344,6 +380,7 @@ Column {
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
+                    visible: false
                 }
                 Row {
                     spacing: 12
@@ -355,22 +392,29 @@ Column {
                         boxHeight: 48
                         textInputted: newWalletInfo.timeMini.relativeTimestamp.valueDay
                         input.placeholderText: "90"
-                        isValid: textInputted !== ""
+                        isValid: textInputted !== "" && input_days.isValidDays(textInputted)
                         validator: RegExpValidator {
-                            // Regex cho phép:
-                            // - 1–9
-                            // - 10–99
-                            // - 100–299
-                            // - 300–388
-                            regExp: /^([1-9]|[1-9][0-9]|[1-2][0-9][0-9]|3[0-8][0-8]?|38[0-8])$/
+                            // Regex chỉ cho phép nhập số
+                            regExp: /^[0-9]*$/
                         }
                         onTypingFinished: {
-                            var relative_time = {
-                                "valueDay"      : input_days.textInputted,
-                                "valueHour"     : input_hours.textInputted,
-                                "valueMinute"   : input_minutes.textInputted
+                            if(input_days.isValidDays(input_days.textInputted)){
+                                var relative_time = {
+                                    "valueDay"      : input_days.textInputted,
+                                    "valueHour"     : input_hours.textInputted,
+                                    "valueMinute"   : input_minutes.textInputted
+                                }
+                                newWalletInfo.updateTimeMiniscript("relativeTimestamp", relative_time);
                             }
-                            newWalletInfo.updateTimeMiniscript("relativeTimestamp", relative_time);
+                        }
+                        onIsValidChanged: {
+                            if(!isValid){
+                                AppModel.showToast(0, STR.STR_QML_2102, EWARNING.ERROR_MSG);
+                            }
+                        }
+                        function isValidDays(input) {
+                            var days = parseInt(input);
+                            return !Number.isNaN(days) && days <= 388;
                         }
                     }
                     QTextInputBoxTypeB {
@@ -422,6 +466,9 @@ Column {
     Component {
         id: unlockAfterTimePeriodBlocks
         Item {
+            function isValid() {
+                return _inputblocks.isValid
+            }
             width: parent.width
             height: 72
             QTextInputBoxTypeB {
@@ -433,13 +480,13 @@ Column {
                 boxHeight: 48
                 textInputted: newWalletInfo.timeMini.relativeBlockheight
                 input.placeholderText: "4320"
-                isValid: (textInputted !== "") && (!Number.isNaN(parseInt(_inputblocks.textInputted))) && (parseInt(_inputblocks.textInputted) < 65535)
+                isValid: (textInputted !== "") && _inputblocks.isValidBlockHeight(_inputblocks.textInputted)
                 errorText: STR.STR_QML_1888
                 validator: RegExpValidator {
                     regExp: /^$|^[0-9]+$/
                 }
                 onTypingFinished: {
-                    if(isValid && !Number.isNaN(parseInt(_inputblocks.textInputted)) && (parseInt(_inputblocks.textInputted) < 65535)){
+                    if(_inputblocks.isValidBlockHeight(_inputblocks.textInputted)){
                         newWalletInfo.updateTimeMiniscript("relativeBlockheight", parseInt(_inputblocks.textInputted));
                     }
                 }
@@ -447,6 +494,10 @@ Column {
                     if(!isValid){
                         AppModel.showToast(0, STR.STR_QML_1888, EWARNING.ERROR_MSG);
                     }
+                }
+                function isValidBlockHeight(input) {
+                    var blockHeight = parseInt(input);
+                    return !Number.isNaN(blockHeight) && blockHeight <= 65535
                 }
             }
         }

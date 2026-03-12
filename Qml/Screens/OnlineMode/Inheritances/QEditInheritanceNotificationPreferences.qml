@@ -75,7 +75,15 @@ QOnScreenContentTypeB {
                 height: walletType !== NUNCHUCKTYPE.MINISCRIPT ? 280 : 330
                 requestlist: emails.length === 0 ? [] : emails.split(",")
                 onEmailUpdated: {
-                    emails = requestlist.join(",")
+                    var emails_valid = [];
+                    for(var i = 0; i < requestlist.length; i ++){
+                        var emailAddress = requestlist[i]
+                        var isValid = validateEmail(emailAddress)
+                        if(isValid){
+                            emails_valid[emails_valid.length] = emailAddress
+                        }
+                    }
+                    emails = emails_valid.join(",")
                 }
             }
             QCheckBoxButton{
@@ -110,7 +118,7 @@ QOnScreenContentTypeB {
                 }
                 QLato {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: STR.STR_QML_869
+                    text: walletType === NUNCHUCKTYPE.MINISCRIPT ? STR.STR_QML_2103 : STR.STR_QML_869
                     width: 660
                     height: 56
                     wrapMode: Text.WordWrap
@@ -120,7 +128,15 @@ QOnScreenContentTypeB {
             }
         }
     }
-
+    bottomLeft: QButtonTextLink {
+        width: 80
+        height: 48
+        label: STR.STR_QML_059
+        fontPixelSize: 16
+        onButtonClicked: {
+            prevClicked()
+        }
+    }
     bottomRight: Row {
         spacing: 12
         QTextButton {
@@ -130,7 +146,8 @@ QOnScreenContentTypeB {
             label.font.pixelSize: 16
             type: eTypeB
             onButtonClicked: {
-                closeTo(NUNCHUCKTYPE.SERVICE_TAB)
+                _Notification.contentItem.requestFinishInputEmail()
+                confirmations.open()
             }
         }
         QTextButton {
@@ -141,10 +158,7 @@ QOnScreenContentTypeB {
             type: eTypeE
             onButtonClicked: {
                 _Notification.contentItem.requestFinishInputEmail()
-                _Notification.nextClicked()
-                if(walletType === NUNCHUCKTYPE.MINISCRIPT){
-                    onchainSetupNotificationPreferences.open()
-                }
+                _timer.restart()
             }
         }
     }
@@ -170,6 +184,29 @@ QOnScreenContentTypeB {
                 "display_emails": emails
             }
             inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+            onchainSetupNotificationPreferences.open()
+        }
+    }
+
+    Timer {
+        id: _timer
+        interval: 300
+        repeat: false
+        running: false
+        onTriggered: {
+            _Notification.nextClicked()
+        }
+    }
+
+    QConfirmYesNoPopup {
+        id: confirmations
+        contentText: STR.STR_QML_2104
+        leftBtnLabel: "Add email"
+        rightBtnLabel: "Continue"
+        onConfirmNo: close()
+        onConfirmYes: {
+            close()
+            _Notification.nextClicked()
         }
     }
 
@@ -269,14 +306,12 @@ QOnScreenContentTypeB {
                                             switchOn: emails_preference ? emails_preference.email_me_wallet_config : false
                                             anchors.verticalCenter: parent.verticalCenter
                                             onSwitchOnChanged: {
-                                                if(!switchOn){
-                                                    var _editOnchain = {
-                                                        "setup_type" : "owner",
-                                                        "setup_email": ClientController.user.email,
-                                                        "email_me_wallet_config": email_me_wallet_config_switch.switchOn
-                                                    }
-                                                    inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                var _editOnchain = {
+                                                    "setup_type" : "owner",
+                                                    "setup_email": ClientController.user.email,
+                                                    "email_me_wallet_config": email_me_wallet_config_switch.switchOn
                                                 }
+                                                inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
                                             }
                                         }
                                     }
@@ -290,7 +325,7 @@ QOnScreenContentTypeB {
                             }
 
                             Repeater {
-                                model: emails_preference.beneficiary_notifications.length
+                                model: emails_preference && emails_preference.beneficiary_notifications ? emails_preference.beneficiary_notifications.length : 0
                                 Rectangle {
                                     width: _itempreferences.width
                                     height: emailItems.implicitHeight+32
@@ -340,16 +375,14 @@ QOnScreenContentTypeB {
                                                 switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].notify_timelock_expires : false
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 onSwitchOnChanged: {
-                                                    if(!switchOn){
-                                                        var _editOnchain = {
-                                                            "setup_type" : "preference",
-                                                            "setup_email": emails_preference.beneficiary_notifications[index].email,
-                                                            "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
-                                                            "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
-                                                            "include_wallet_config": include_wallet_config_switch.switchOn
-                                                        }
-                                                        inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                    var _editOnchain = {
+                                                        "setup_type" : "preference",
+                                                        "setup_email": emails_preference.beneficiary_notifications[index].email,
+                                                        "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
+                                                        "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
+                                                        "include_wallet_config": include_wallet_config_switch.switchOn
                                                     }
+                                                    inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
                                                 }
                                             }
                                         }
@@ -380,16 +413,14 @@ QOnScreenContentTypeB {
                                                 switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].notify_wallet_changes : false
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 onSwitchOnChanged: {
-                                                    if(!switchOn){
-                                                        var _editOnchain = {
-                                                            "setup_type" : "preference",
-                                                            "setup_email": emails_preference.beneficiary_notifications[index].email,
-                                                            "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
-                                                            "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
-                                                            "include_wallet_config": include_wallet_config_switch.switchOn
-                                                        }
-                                                        inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                    var _editOnchain = {
+                                                        "setup_type" : "preference",
+                                                        "setup_email": emails_preference.beneficiary_notifications[index].email,
+                                                        "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
+                                                        "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
+                                                        "include_wallet_config": include_wallet_config_switch.switchOn
                                                     }
+                                                    inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
                                                 }
                                             }
                                         }
@@ -420,16 +451,14 @@ QOnScreenContentTypeB {
                                                 switchOn: emails_preference.beneficiary_notifications[index] ? emails_preference.beneficiary_notifications[index].include_wallet_config : false
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 onSwitchOnChanged: {
-                                                    if(!switchOn){
-                                                        var _editOnchain = {
-                                                            "setup_type" : "preference",
-                                                            "setup_email": emails_preference.beneficiary_notifications[index].email,
-                                                            "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
-                                                            "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
-                                                            "include_wallet_config": include_wallet_config_switch.switchOn
-                                                        }
-                                                        inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
+                                                    var _editOnchain = {
+                                                        "setup_type" : "preference",
+                                                        "setup_email": emails_preference.beneficiary_notifications[index].email,
+                                                        "notify_timelock_expires": notify_timelock_expires_switch.switchOn,
+                                                        "notify_wallet_changes": notify_wallet_changes_switch.switchOn,
+                                                        "include_wallet_config": include_wallet_config_switch.switchOn
                                                     }
+                                                    inheritancePlanInfo.editPlanInfoOnchain(_editOnchain)
                                                 }
                                             }
                                         }

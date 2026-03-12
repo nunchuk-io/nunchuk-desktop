@@ -34,7 +34,7 @@ import "../../../../localization/STR_QML.js" as STR
 Item {
     id: _item
     property string title: ""
-    property var inheritance
+    property var  inheritance
     property bool isCancel: false
     property bool isOnChain: false
 
@@ -73,25 +73,26 @@ Item {
                     }
                     Rectangle {
                         width: 539
-                        height: (inheritance.activation_timezone.length > 0 && inheritance.activation_date.length > 0) ? 70 : 52
+                        implicitHeight: _activationCol.height + 32 //(inheritance.activation_timezone.length > 0 && inheritance.activation_date.length > 0) ? 70 : 52
                         color: "#F5F5F5"
+                        radius: 12
                         Column {
-                            anchors.fill: parent
-                            anchors.margins: 16
+                            id: _activationCol
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 16
                             spacing: 2
                             QLato {
                                 width: 539
-                                height: paintedHeight
-                                text: inheritance.activation_date
+                                text: isOnChain ? GroupWallet.dashboardInfo.timelockDisplay : inheritance.activation_date
                                 font.weight: Font.Normal
                                 horizontalAlignment: Text.AlignLeft
                                 verticalAlignment: Text.AlignVCenter
                             }
                             QLato {
                                 width: 539
-                                height: paintedHeight
                                 font.pixelSize: 12
-                                text: inheritance.activation_timezone
+                                text: isOnChain ? GroupWallet.dashboardInfo.timelockObj.timezone : inheritance.activation_timezone
                                 font.weight: Font.Normal
                                 horizontalAlignment: Text.AlignLeft
                                 verticalAlignment: Text.AlignVCenter
@@ -113,7 +114,8 @@ Item {
                     Rectangle {
                         width: 539
                         height: 52
-                        color: "#F5F5F5"                        
+                        color: "#F5F5F5"
+                        radius: 12
                         QLato {
                             width: 539
                             anchors {

@@ -184,12 +184,12 @@ Item {
             case ScriptNodeHelper.Type.OLDER: return STR.STR_QML_1853
             case ScriptNodeHelper.Type.AFTER: {
                 if (miniscript.lockType === ScriptNodeHelper.TimelockBased.TIME_LOCK) {
-                    if(miniscript.absoluteTimestamp.valueRemaining === "" || miniscript.absoluteTimestamp.valueRemaining === "expired") {
+                    var ts = miniscript.absoluteTimestamp
+                    if (!ts || !ts.valueRemaining || ts.valueRemaining === "expired"){
                         return ""
                     }
-                    else {
-                        return STR.STR_QML_1855.arg(miniscript.absoluteTimestamp.valueRemaining).arg(miniscript.absoluteTimestamp.valueFrom)
-                    }
+                    var fromText = ts.valueFrom ? ts.valueFrom : ""
+                    return STR.STR_QML_1855.arg(ts.valueRemaining).arg(fromText)
                 }
                 else if (miniscript.lockType === ScriptNodeHelper.TimelockBased.HEIGHT_LOCK) {
                     var blockRemaining = Math.max(0, parseInt(miniscript.absoluteBlockheight) - AppModel.blockHeight)

@@ -33,6 +33,7 @@ import "../../../Components/customizes/Popups"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
+    id: walletTemplateMultisig
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
@@ -145,11 +146,19 @@ QOnScreenContentTypeA {
                 }
             }
         }
+        function onBtnNextClicked() {
+            if (isTimeEditting) {
+                if (!configLoader.item.checkAndContinue()) {
+                    return
+                }
+            }
+            if(newWalletInfo.miniscriptTemplateSelected(templateMiniscript)) {
+                switchEnterMiniScript()
+            }
+        }
     }
     onNextClicked: {
-        if(newWalletInfo.miniscriptTemplateSelected(templateMiniscript)) {
-            switchEnterMiniScript()
-        }
+        walletTemplateMultisig.contentItem.onBtnNextClicked()
     }
 
     Component {
@@ -340,6 +349,9 @@ QOnScreenContentTypeA {
             QMiniscriptEditTimelock {
                 id: timelockEditComponent
                 anchors.horizontalCenter: parent.horizontalCenter
+            }
+            function checkAndContinue() {
+                return timelockEditComponent.checkAndContinue()
             }
         }
     }

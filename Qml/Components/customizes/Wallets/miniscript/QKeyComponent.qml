@@ -152,7 +152,7 @@ Item {
                 QIcon {
                     id: _icon
                     iconSize: 12
-                    source: "qrc:/Images/Images/editBIP32.svg"
+                    source: miniscript.keyStrCount > 1 ? "qrc:/Images/Images/editBIP32_red.svg" : "qrc:/Images/Images/editBIP32.svg"
                     anchors {
                         verticalCenter: parent.verticalCenter
                         right: parent.right

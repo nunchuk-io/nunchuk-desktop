@@ -72,14 +72,6 @@ Column {
                 Repeater {
                     id: emailrepeat
                     model: dataInput.requestlist.length
-                    function validateEmail(email) {
-                        if(Draco.pkey_username_availability(email)){
-                            return true;
-                        }else{
-                            var re = /\S+@\S+\.\S+/;
-                            return re.test(email);
-                        }
-                    }
                     Rectangle {
                         id: background
                         width: emailelement.width + 16
@@ -92,7 +84,7 @@ Column {
                             height: 24
                             anchors.centerIn: parent
                             spacing: 6
-                            property bool isemail: emailrepeat.validateEmail(dataInput.requestlist[index])
+                            property bool isemail: dataInput.validateEmail(dataInput.requestlist[index])
                             QIcon {
                                 iconSize: 24
                                 source: emailelement.isemail ? "qrc:/Images/Images/check_circle_outline_24px.png"
@@ -138,10 +130,11 @@ Column {
                     }
                     function finishInputEmail(){
                         if(emailinput.text !== ""){
+                            var isValid = dataInput.isVaildAll()
                             dataInput.requestlist[dataInput.requestlist.length] = emailinput.text
                             emailrepeat.model = dataInput.requestlist.length
                             emailinput.text = ""
-                            dataInput.errorAlert = !dataInput.isVaildAll()
+                            dataInput.errorAlert = !isValid
                             emailUpdated()
                         }
                     }
@@ -153,13 +146,21 @@ Column {
         var ret = true;
         for(var i = 0; i < dataInput.requestlist.length; i ++){
             var emailAddress = dataInput.requestlist[i]
-            ret = ret && emailrepeat.validateEmail(emailAddress)
+            ret = ret && dataInput.validateEmail(emailAddress)
         }
         return ret;
     }
-
     function requestFinishInputEmail() {
         emailinput.finishInputEmail()
+    }
+    function validateEmail(email) {
+        if(Draco.pkey_username_availability(email)){
+            return true;
+        }
+        else{
+            var re = /\S+@\S+\.\S+/;
+            return re.test(email);
+        }
     }
 
     Row{

@@ -101,7 +101,6 @@ Loader {
                     newWalletInfo.newWalletM = 1;
                     newWalletInfo.newWalletN = 1;
                 }
-
                 newWalletInfo.screenFlow = templateName;
             }
             onEnterCustomMiniscript: (option) => {

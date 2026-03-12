@@ -107,19 +107,20 @@ QOnScreenContentTypeB {
                         isEnabled: sandbox.isCreate
                         addressType: addressTypeSelection.typeOption
                         onSelectMiniscriptTemplate: (templateName) => {
-                            updateAddressType()
-                            _miniTmpSwitch.selectedTemplate(templateName)
-                        }
+                                                        newWalletInfo.clearTimeMiniscript(templateName)
+                                                        updateAddressType()
+                                                        _miniTmpSwitch.selectedTemplate(templateName)
+                                                    }
                         onEnterCustomMiniscript: (option) => {
-                            updateAddressType()
-                            _miniTmpSwitch.enterCustom(option)
-                        }
+                                                     updateAddressType()
+                                                     _miniTmpSwitch.enterCustom(option)
+                                                 }
                         onMiniscriptEdit: () => {
-                            _miniTmpSwitch.switchEnterMiniScript()
-                        }
+                                              _miniTmpSwitch.switchEnterMiniScript()
+                                          }
                         onMiniscriptDelete: () => {
-                            newWalletInfo.customizeMiniscript = ""
-                        }
+                                                newWalletInfo.customizeMiniscript = ""
+                                            }
                     }
                 }
             }

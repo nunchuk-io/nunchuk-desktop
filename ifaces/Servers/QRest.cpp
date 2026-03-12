@@ -1334,7 +1334,6 @@ QJsonObject QRest::doPutSync(const QString &cmd, QJsonObject data, int &reply_co
     QEventLoop eventLoop;
     QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
-    DBG_INFO << QString(reply->readAll());
     if (reply->error() == QNetworkReply::NoError) {
         reply_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply_msg  = reply->errorString();

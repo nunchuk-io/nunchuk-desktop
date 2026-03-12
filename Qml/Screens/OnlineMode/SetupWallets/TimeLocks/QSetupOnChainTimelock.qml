@@ -202,7 +202,6 @@ QOnScreenContentTypeA {
                                 }
                             }
                             onInvalidDateAlert: {
-                                console.log("hadv3 invalid timelock data signal received");
                                 _invalidDateAlert.open()
                             }
                         }

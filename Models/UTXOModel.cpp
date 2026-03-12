@@ -1009,38 +1009,47 @@ QVariantList UTXO::timelocklist()
             DBG_INFO << val << QDateTime::currentDateTimeUtc().toTime_t();
             QDateTime dt = QDateTime::fromSecsSinceEpoch(val, Qt::UTC);
             valueNodeStr = dt.toString("MM/dd/yyyy");
-            QDate dateNode = dt.date();
-            QDate today = QDateTime::currentDateTimeUtc().date();
-            int days = today.daysTo(dateNode);
-            if (days > 0) {
-                valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
-                remainingString  = QString::number(days) + (days == 1 ? " day" : " days");
-                isLocked = true;
-                remainingNumeric = days;
-                needVisibleWarning = days < 7;
+            qint64 secondsTo = QDateTime::currentDateTimeUtc().secsTo(dt);
+            if (secondsTo <= 0) {
+                valueRemainingStr = "";
+                remainingString = "";
+                remainingNumeric = 0;
+                isLocked = false;
+                needVisibleWarning = false;
             }
             else {
-                qint64 secondsTo = QDateTime::currentDateTimeUtc().secsTo(dt);
-                qint64 hours = secondsTo / 3600;
+                qint64 days = secondsTo / 86400;
+                qint64 hours = (secondsTo % 86400) / 3600;
                 qint64 minutes = (secondsTo % 3600) / 60;
-                if (hours >= 1) {
-                    valueRemainingStr = QString::number(hours) + (hours == 1 ? " hour left" : " hours left");
-                    remainingString  = QString::number(hours) + (hours == 1 ? " hour" : " hours");
-                    remainingNumeric = 1;
-                    isLocked = true;
+
+                if (days > 0) {
+                    valueRemainingStr = QString::number(days) + (days == 1 ? " day left" : " days left");
+                    remainingString   = QString::number(days) + (days == 1 ? " day" : " days");
+                    remainingNumeric  = days;
+                    needVisibleWarning = days < 7;
                 }
-                else if (minutes >= 1) {
-                    valueRemainingStr = QString::number(minutes) + (minutes == 1 ? " minute left" : " minutes left");
-                    remainingString  = QString::number(minutes) + (minutes == 1 ? " minute" : " minutes");
-                    remainingNumeric = 1;
-                    isLocked = true;
+                else if (hours > 0) {
+                    valueRemainingStr = QString::number(hours) + (hours == 1 ? " hour left" : " hours left");
+                    remainingString   = QString::number(hours) + (hours == 1 ? " hour" : " hours");
+                    remainingNumeric  = 1;
+                    needVisibleWarning = true;
                 }
                 else {
-                    valueRemainingStr = "";
-                    remainingString = "";
-                    remainingNumeric = 0;
-                    isLocked = false;
+                    double hourDecimal = minutes / 60.0;
+                    double rounded = qRound(hourDecimal * 10.0) / 10.0;
+                    QString hourStr;
+                    if (qFuzzyCompare(rounded, floor(rounded))) {
+                        hourStr = QString::number(static_cast<int>(rounded));
+                    } else {
+                        hourStr = QString::number(rounded, 'f', 1);
+                    }
+                    // valueRemainingStr = hourStr + " hour left";
+                    valueRemainingStr = QString::number(minutes) + (minutes == 1 ? " minute left" : " minutes left");
+                    remainingString   = hourStr + " hour";
+                    remainingNumeric  = 1;
+                    needVisibleWarning = true;
                 }
+                isLocked = true;
             }
         }
         else {
@@ -1625,7 +1634,8 @@ qint64 QUTXOListModel::spendableSats()
 {
     foreach (QUTXOPtr it, m_data) {
         DBG_INFO << it.data()->isLocked() << it.data()->amountSats();
-        if(!it.data()->isLocked()){
+        // if(!it.data()->isLocked()){
+        if(!it.data()->timeLocked()){
             m_spendableSats += it.data()->amountSats();
         }
     }

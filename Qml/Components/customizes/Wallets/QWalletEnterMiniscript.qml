@@ -40,7 +40,7 @@ QOnScreenContentTypeA {
     signal miniscriptEntered(string miniscript)
     property string colorText: "#031F2B"
     content: Item {
-        QTextAreaBoxTypeA  {
+        QTextAreaBoxTypeAScrollable {
             id: _customize
             boxWidth: 728
             boxHeight: 482

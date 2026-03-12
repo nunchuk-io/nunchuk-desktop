@@ -169,6 +169,45 @@ QVariant QGroupDashboard::inviter() const
     return QVariant::fromValue(inviterInfo());
 }
 
+QString QGroupDashboard::timelockDisplay()
+{
+    if (!m_walletInfo.contains("timelock") || !m_walletInfo["timelock"].isObject()){
+        return QString();
+    }
+    QJsonObject timelockObj = m_walletInfo["timelock"].toObject();
+    QString based = timelockObj.value("based").toString();
+
+    qint64 value = timelockObj.value("value").toVariant().toLongLong();
+    QString timezoneStr = timelockObj.value("timezone").toString();
+
+    if (value <= 0){
+        return QString();
+    }
+
+    // convert unix timestamp -> UTC
+    QDateTime utcTime = QDateTime::fromSecsSinceEpoch(value, Qt::UTC);
+
+    // apply timezone
+    QTimeZone tz(timezoneStr.toUtf8());
+    if (!tz.isValid()){
+        tz = QTimeZone::systemTimeZone();   // fallback
+    }
+
+    QDateTime localTime = utcTime.toTimeZone(tz);
+
+    return localTime.toString("MM/dd/yyyy HH:mm");
+}
+
+QVariantMap QGroupDashboard::timelockObj()
+{
+    if (!m_walletInfo.contains("timelock") || !m_walletInfo["timelock"].isObject()) {
+        return QVariantMap();
+    }
+    QJsonObject timelockObj = m_walletInfo["timelock"].toObject();
+    QVariantMap timelockMap = timelockObj.toVariantMap();
+    return timelockMap;
+}
+
 QJsonObject QGroupDashboard::walletJson() const
 {
     return m_walletInfo;

@@ -5050,6 +5050,7 @@ bool Draco::DraftWalletUpdateTimelock(const QJsonObject& request_body, QJsonObje
     QString reply_msg  = "";
     QString cmd = commands[Premium::CMD_IDX::DRAFT_WALLET_TIMELOCK];
     QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
+    DBG_INFO << request_body << jsonObj;
     if(reply_code == DRACO_CODE::SUCCESSFULL){
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();

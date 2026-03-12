@@ -126,6 +126,9 @@ class QGroupDashboard : public QBasePremium
     Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
     Q_PROPERTY(QVariantList editMembers           READ editMembers                              NOTIFY editMembersChanged)
     Q_PROPERTY(QString  timeLock                  READ timeLock                                 NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantMap timelockObj            READ timelockObj                              NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString timelockDisplay            READ timelockDisplay                          NOTIFY groupInfoChanged)
+
 
 public:
     QGroupDashboard(const QString& wallet_id);
@@ -147,6 +150,10 @@ public:
     QVariantList members() const;
     QVariantList memberSignatures();
     QVariant inviter() const;
+
+    QString timelockDisplay();
+    QVariantMap timelockObj();
+
     QJsonObject walletJson() const;
     QJsonObject walletDraftJson() const;
     void GetMemberInfo();

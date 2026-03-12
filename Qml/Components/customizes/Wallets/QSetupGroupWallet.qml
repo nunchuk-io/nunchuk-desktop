@@ -48,7 +48,7 @@ QOnScreenContentTypeA {
         }
     }
     extraHeader: Item {}
-    property var sandbox:       AppModel.newWalletInfo.sandbox
+    property var sandbox: AppModel.newWalletInfo.sandbox
     onCloseClicked: {
         if (sandbox.isCreate || sandbox.isReplace) {
             closeTo(NUNCHUCKTYPE.CURRENT_TAB)
@@ -199,34 +199,40 @@ QOnScreenContentTypeA {
                         type: "create-replace-wallet-sandbox"
                     }
                     QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                } else if (sandbox.isRecovery) {
+                }
+                else if (sandbox.isRecovery) {
                     _input = {
                         type: "review-group-sandbox"
                     }
                     QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                } else {
+                }
+                else {
                     if (sandbox.checkWaitingOthers()) {
                         _waiting_for_other.open()
-                    } else {
+                    }
+                    else {
                         if (sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
                             _input = {
                                 type: "review-group-sandbox"
                             }
                             QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                        } else {
+                        }
+                        else {
                             if (sandbox.addressType === NUNCHUCKTYPE.TAPROOT) {
                                 if (sandbox.groupN === 1) {
                                     _input = {
                                         type: "review-group-sandbox"
                                     }
                                     QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
-                                } else {
+                                }
+                                else {
                                     _input = {
                                         type: "switch-to-intro-taproot"
                                     }
                                     QMLHandle.sendEvent(EVT.EVT_SETUP_GROUP_WALLET_ENTER, _input)
                                 }
-                            } else {
+                            }
+                            else {
                                 _input = {
                                     type: "review-group-sandbox"
                                 }

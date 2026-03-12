@@ -232,7 +232,7 @@ void QAssistedDraftWallets::addHardwareFromBanner(const QString &request_id) {
             m_request = hardware;
             QJsonObject keyInfo = info.value("key").toObject();
             QJsonArray key_indices = info.value("key_indices").toArray();
-            if (!keyInfo.isEmpty()) {
+            if (!keyInfo.isEmpty() || key_indices.size() == 1) {
                 info["key_index"] = key_indices.last().toInt(-1);
                 info["has"] = true;
                 info["new_account_index"] = 1;

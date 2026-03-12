@@ -505,7 +505,7 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_490, "N/A")
     DEFINE_STRING_PROPERTY(STR_QML_491, "Sending to")
     DEFINE_STRING_PROPERTY(STR_QML_492, "Confirmed")
-    DEFINE_STRING_PROPERTY(STR_QML_493, "Enough signatures collected")
+    DEFINE_STRING_PROPERTY(STR_QML_493, "Enough conditions satisfied")
     DEFINE_STRING_PROPERTY(STR_QML_494, "signatures")
     DEFINE_STRING_PROPERTY(STR_QML_495, "signature")
     DEFINE_STRING_PROPERTY(STR_QML_496, "Sign transaction")
@@ -1621,7 +1621,7 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1647, "Register wallet on hardware")
     DEFINE_STRING_PROPERTY(STR_QML_1648, "If you have a hardware key in your multisig wallet, you might be required to register the wallet with the hardware before the key can be used. \\n Choose the export option according to your hardware type. Please check the vendor's manual.")
     DEFINE_STRING_PROPERTY(STR_QML_1649, "Export configuration")
-    DEFINE_STRING_PROPERTY(STR_QML_1650, "Changing the address type will remove all added keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_1650, "Changing the wallet config to miniscirpt will remove all added keys.")
     DEFINE_STRING_PROPERTY(STR_QML_1651, "Number of keys assigned to the wallet (up to 15).")
     DEFINE_STRING_PROPERTY(STR_QML_1652, "Required keys")
     DEFINE_STRING_PROPERTY(STR_QML_1653, "Number of signatures required to unlock funds.")
@@ -1828,7 +1828,7 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1885, "Zen Hodl")
     DEFINE_STRING_PROPERTY(STR_QML_1886, "Locks coins immediately when deposited and only allows spending after the timelock expires")
     DEFINE_STRING_PROPERTY(STR_QML_1887, "Please enter a value between the current block height and 499999999")
-    DEFINE_STRING_PROPERTY(STR_QML_1888, "Invalid block height. Enter a value between 0 and 65535 blocks.")
+    DEFINE_STRING_PROPERTY(STR_QML_1888, "Invalid block height. Enter a value between 0 and 65534 blocks.")
     DEFINE_STRING_PROPERTY(STR_QML_1889, "<b>Before the timelock</b>: spending requires two signatures from a 2-of-4 multisig:")
     DEFINE_STRING_PROPERTY(STR_QML_1890, "<b>After the timelock</b>: spending only requires one signature from a 1-of-3 multisig.")
     DEFINE_STRING_PROPERTY(STR_QML_1891, "\\nAmong your keys, select one key to be the inheritance key.")
@@ -2018,7 +2018,7 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2075, "The timelock date cannot be in the past. Please select a future date.")
     DEFINE_STRING_PROPERTY(STR_QML_2076, "Change on-chain timelock")
     DEFINE_STRING_PROPERTY(STR_QML_2077, "Timelock is active")
-    DEFINE_STRING_PROPERTY(STR_QML_2078, "Timelock expiring in %1. <a href='%1' style=\"color:#031F2B\">View coins</a>.")
+    DEFINE_STRING_PROPERTY(STR_QML_2078, "Timelock expiring in %1. <a href='%1' style=\"color:#031F2B; font-weight:bold\">View coins</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_2079, "How would you like to proceed?")
     DEFINE_STRING_PROPERTY(STR_QML_2080, "I have a hardware device initialized with the inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_2081, "I have a Backup Password for the inheritance key")
@@ -2043,6 +2043,10 @@ class AppStrings : public QObject
     
     DEFINE_STRING_PROPERTY(STR_QML_2100, "Add inheritance keys")
     DEFINE_STRING_PROPERTY(STR_QML_2101, "Funds become claimable after:")
+    DEFINE_STRING_PROPERTY(STR_QML_2102, "Invalid value. Timelock must not exceed 388 days")
+    DEFINE_STRING_PROPERTY(STR_QML_2103, "You are still personally responsible for sharing the Magic Phrase and inheritance key seed phrase with the Beneficiary. The notification email won’t include these information.")
+    DEFINE_STRING_PROPERTY(STR_QML_2104, "If you don’t provide a Beneficiary’s email address, you’ll need to share all inheritance plan updates with them manually. Are you sure you want to continue?")
+
 public:
     static AppStrings& instance();
     explicit AppStrings(QObject *parent = nullptr);

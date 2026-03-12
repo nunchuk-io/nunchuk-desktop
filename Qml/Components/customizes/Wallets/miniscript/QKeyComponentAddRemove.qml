@@ -80,7 +80,11 @@ QKeyComponent {
                     }
                 } else {
                     // Use for Flow Create Group Wallet
-                    return hasKey ? STR.STR_QML_1134 : STR.STR_QML_941
+                    if (hasKey) {
+                        return keyObj.single_signer_is_local ? STR.STR_QML_1134 : ""
+                    } else {
+                        return STR.STR_QML_941
+                    }
                 }
             } else {
                 // Fallback for when sandbox is not available

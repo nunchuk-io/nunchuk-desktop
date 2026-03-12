@@ -104,19 +104,20 @@ QScreen {
                             addressType: addressTypeSelection.typeOption
                             visible: walletOptType === NUNCHUCKTYPE.E_GROUP_WALLET
                             onSelectMiniscriptTemplate: (templateName) => {
-                                updateAddressType()
-                                _miniTmpSwitch.selectedTemplate(templateName)
-                            }
+                                                            newWalletInfo.clearTimeMiniscript(templateName)
+                                                            updateAddressType()
+                                                            _miniTmpSwitch.selectedTemplate(templateName)
+                                                        }
                             onEnterCustomMiniscript: (option) => {
-                                updateAddressType()
-                                _miniTmpSwitch.enterCustom(option)
-                            }
+                                                         updateAddressType()
+                                                         _miniTmpSwitch.enterCustom(option)
+                                                     }
                             onMiniscriptEdit: () => {
-                                _miniTmpSwitch.switchEnterMiniScript()
-                            }
+                                                  _miniTmpSwitch.switchEnterMiniScript()
+                                              }
                             onMiniscriptDelete: () => {
-                                newWalletInfo.customizeMiniscript = ""
-                            }
+                                                    newWalletInfo.customizeMiniscript = ""
+                                                }
                         }
                     }
                 }

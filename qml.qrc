@@ -752,6 +752,7 @@
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOffChain.qml</file>
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOnChain.qml</file>
         <file>Qml/Screens/OnlineMode/Claiming/ClaimInheritancePlanResult.qml</file>
+        <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeAScrollable.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>
@@ -1159,6 +1160,7 @@
         <file>Images/jade-illustration.svg</file>
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.png</file>
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg</file>
+        <file>Images/editBIP32_red.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

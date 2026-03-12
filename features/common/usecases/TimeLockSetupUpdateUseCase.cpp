@@ -18,6 +18,9 @@ Result<TimeLockSetupUpdateResult> TimeLockSetupUpdateUseCase::execute(const Time
     QJsonObject output;
     QString error_msg = "";
     bool ret{false};
+
+    DBG_INFO << data << input.based;
+
     if (qUtils::isValidGroup(input.group_id)) {
         ret = Byzantine::instance()->DraftWalletUpdateTimelock(input.group_id, data, output, error_msg);
     } else {

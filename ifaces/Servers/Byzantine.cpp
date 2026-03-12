@@ -2771,6 +2771,7 @@ bool Byzantine::DraftWalletUpdateTimelock(const QString &group_id, const QJsonOb
     cmd.replace("{group_id}", group_id);
 
     QJsonObject jsonObj = m_rest->putSync(cmd, request_body, reply_code, reply_msg);
+    DBG_INFO << jsonObj;
     if (reply_code == DRACO_CODE::SUCCESSFULL) {
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();

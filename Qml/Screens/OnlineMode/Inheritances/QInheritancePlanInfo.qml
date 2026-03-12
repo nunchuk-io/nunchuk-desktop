@@ -40,7 +40,7 @@ QOnScreenContentTypeB {
     property string walletName: AppModel.walletInfo.walletName
     property string description: ""
     property string descriptionHb: ""
-    property var planInfo
+    property var  planInfo
     property bool planIsCancel: false
     property int    walletType: AppModel.walletInfo.walletType
     width: popupWidth

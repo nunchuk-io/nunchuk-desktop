@@ -23,7 +23,7 @@ MiniscriptWallet::MiniscriptWallet(const nunchuk::Wallet &w) :
     SandboxWallet{w},
     m_timezones(QWalletTimezoneModelPtr(new QWalletTimezoneModel()))
 {
-    clearTimeMiniscript();
+    QObject::connect(this, SIGNAL(walletChanged()), this, SIGNAL(utxoListChanged()));
 }
 
 void MiniscriptWallet::convert(const nunchuk::Wallet w) {
@@ -43,13 +43,30 @@ void MiniscriptWallet::convertToMiniscript(const nunchuk::Wallet &w) {
         return;
     nunchuk::MiniscriptTimeline timeline(tmpl);
     setTimeUnit(static_cast<int>(timeline.get_lock_type())); // TIME_LOCK, HEIGHT_LOCK
-    if (timeline.get_absolute_locks().size() > 0) {
+    auto absoluteLocks = timeline.get_absolute_locks();
+    auto relativeLocks = timeline.get_relative_locks();
+
+    if (!absoluteLocks.empty() && !relativeLocks.empty()) {
+        // MIX
+        int type_mix = static_cast<int>(nunchuk::Timelock::Type::LOCKTYPE_RELATIVE) + 1;
+        std::vector<int64_t>  mix_timelocks;
+        mix_timelocks.insert(mix_timelocks.end(), absoluteLocks.begin(), absoluteLocks.end());
+        mix_timelocks.insert(mix_timelocks.end(), relativeLocks.begin(), relativeLocks.end());
+        DBG_INFO << "MiniscriptWallet::convertToMiniscript: MIX timelocks:" << mix_timelocks.size();
+
+        setTimelockType(type_mix);
+        setTimelocklist(mix_timelocks);
+    }
+    else if (!absoluteLocks.empty()) {
         setTimelockType(static_cast<int>(nunchuk::Timelock::Type::LOCKTYPE_ABSOLUTE));
         setTimelocklist(timeline.get_absolute_locks());
     }
-    else if (timeline.get_relative_locks().size() > 0) {
+    else if (!relativeLocks.empty()) {
         setTimelockType(static_cast<int>(nunchuk::Timelock::Type::LOCKTYPE_RELATIVE));
         setTimelocklist(timeline.get_relative_locks());
+    }
+    else {
+        // NONE
     }
 
     std::vector<std::string> tmp;    
@@ -262,6 +279,7 @@ quint64 MiniscriptWallet::timeMiniValue() const {
     quint64 value = 0;
     nunchuk::Timelock::Type timelock_type = static_cast<nunchuk::Timelock::Type>(timelockType());
     nunchuk::Timelock::Based timelock_based = static_cast<nunchuk::Timelock::Based>(timeUnit());
+
     if (timelock_type == nunchuk::Timelock::Type::LOCKTYPE_ABSOLUTE && timelock_based == nunchuk::Timelock::Based::TIME_LOCK) {
         QByteArray selectedTimezone = timezonesPtr()->selectedTimezoneId();
         QString date_str = m_timeMiniData["absoluteTimestamp"].toMap().value("valueDate").toString();
@@ -935,8 +953,9 @@ QString MiniscriptWallet::miniscript() const
 
 void MiniscriptWallet::updateTimeMiniscript(const QString &key, const QVariant &value) {
 
-    if (m_timeMiniData[key] == value)
+    if (m_timeMiniData[key] == value){
         return;
+    }
 
     if(qUtils::strCompare("absoluteTimestamp", key)) {
         QString date_str = value.toMap().value("valueDate").toString();
@@ -944,39 +963,57 @@ void MiniscriptWallet::updateTimeMiniscript(const QString &key, const QVariant &
         QString valueDisplay = (time_str != "00:00") ? date_str + " " + time_str : date_str;
         QVariantMap absolute_data;
         absolute_data["valueDisplay"] = valueDisplay;
-        absolute_data["valueDate"] = date_str;
-        absolute_data["valueTime"] = time_str;
-
+        absolute_data["valueDate"]    = date_str;
+        absolute_data["valueTime"]    = time_str;
         QByteArray selectedTimezone = timezonesPtr()->selectedTimezoneId();
         QTimeZone tz(selectedTimezone);
+        if (!tz.isValid()){
+            tz = QTimeZone::systemTimeZone();
+        }
         QDate date = QDate::fromString(date_str, "MM/dd/yyyy");
         QTime time = QTime::fromString(time_str, "hh:mm");
+        if (!date.isValid() || !time.isValid()) {
+            absolute_data["valueRemaining"] = "expired";
+            absolute_data["valueFrom"]      = "";
+            m_timeMiniData[key] = absolute_data;
+            return;
+        }
         QDateTime dt(date, time, tz);
         QDateTime now = QDateTime::currentDateTimeUtc().toTimeZone(tz);
-        qint64 secsRemaining = now.secsTo(dt);
+        qint64  secsRemaining = now.secsTo(dt);
         QString valueRemaining;
-        QString valueFrom = "today";
+        QString valueFrom;
+
         if (secsRemaining <= 0) {
             valueRemaining = "expired";
-        }
-        else {
-            int days = secsRemaining / (24 * 3600);
-            QStringList parts;
-            if (days > 0){
-                parts << QString("%1 day%2").arg(days).arg(days > 1 ? "s" : "");
-            }
-            else {
-                int hours = (secsRemaining % (24 * 3600)) / 3600;
-                int minutes = (secsRemaining % 3600) / 60;
-                valueFrom = "now";
+            valueFrom = "";
+        } else {
+            int days    = secsRemaining / 86400;
+            int hours   = (secsRemaining % 86400) / 3600;
+            int minutes = (secsRemaining % 3600) / 60;
+            int seconds = secsRemaining % 60;
+
+            if (days >= 1) {
+                valueRemaining = QString("%1 day%2").arg(days).arg(days > 1 ? "s" : "");
+                valueFrom = "today";
+            } else {
+                QStringList parts;
                 if (hours > 0){
                     parts << QString("%1 hour%2").arg(hours).arg(hours > 1 ? "s" : "");
                 }
                 if (minutes > 0){
                     parts << QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
                 }
+
+                if (seconds > 0 && hours == 0) {
+                    parts << QString("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
+                }
+                if (parts.isEmpty()){
+                    parts << "less than a second";
+                }
+                valueRemaining = parts.join(" ");
+                valueFrom = "now";
             }
-            valueRemaining = parts.join(" ");
         }
         absolute_data["valueRemaining"] = valueRemaining;
         absolute_data["valueFrom"]      = valueFrom;
@@ -1035,7 +1072,7 @@ void MiniscriptWallet::clearTimeMiniscript(const QString &userInput) {
     relative_time_data["valueDisplay"] = "90d";
     m_timeMiniData["relativeTimestamp"] = relative_time_data;
 
-    m_timeMiniData["absoluteBlockheight"] = 4320;
+    m_timeMiniData["absoluteBlockheight"] = AppModel::instance()->blockHeight() + 4320;
     m_timeMiniData["relativeBlockheight"] = 4320;
     emit timeMiniChanged();
 }

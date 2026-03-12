@@ -83,6 +83,7 @@ void QInheritancePlan::setPlanInfo(QJsonObject plan_info)
 
 QVariant QInheritancePlan::planInfoNew() const
 {
+    DBG_INFO << m_planInfoNew;
     return QVariant::fromValue(m_planInfoNew);
 }
 

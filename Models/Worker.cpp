@@ -1287,7 +1287,9 @@ void Controller::slotFinishBackupWallet(QString what,
 void Controller::slotFinishBalanceChanged(const QString &id,
                                           const qint64 balance)
 {
-
+    if(AppModel::instance()->walletInfo() && qUtils::strCompare(id, AppModel::instance()->walletInfo()->walletId())){
+        AppModel::instance()->walletInfo()->RequestGetCoins();
+    }
 }
 
 void Controller::slotFinishTransactionChanged(const QString &tx_id,

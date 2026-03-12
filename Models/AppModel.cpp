@@ -35,6 +35,12 @@
 #include "OnBoardingModel.h"
 #include "QThreadForwarder.h"
 
+#include "features/wallets/usecases/SyncWalletFromRemoteUseCase.h"
+using features::wallets::usecases::SyncWalletFromRemoteUseCase;
+using features::wallets::usecases::SyncWalletFromRemoteInput;
+using features::wallets::usecases::SyncWalletFromRemoteResult;
+SyncWalletFromRemoteUseCase m_syncWalletFromRemoteUC;
+
 class QEmpyTask : public QRunnable {
 public:
     void run() override {
@@ -727,7 +733,11 @@ void AppModel::requestSyncWalletDb(const QString &wallet_id)
 
 void AppModel::requestCreateUserWallets()
 {
-
+    SyncWalletFromRemoteInput input;
+    m_syncWalletFromRemoteUC.executeAsync(input, [](core::usecase::Result<SyncWalletFromRemoteResult> result) {
+        AppModel::instance()->startReloadUserDb();
+        AppModel::instance()->requestSyncGroups();
+    });
 }
 
 void AppModel::requestSyncSharedWallets()
