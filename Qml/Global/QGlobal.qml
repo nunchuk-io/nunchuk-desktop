@@ -53,6 +53,7 @@ QtObject {
         {id:14, normal: "transparent", hover: "#1A333D",                   disable: "transparent", clicked: "transparent"},
         {id:15, normal: "transparent", hover: "transparent",               disable: "transparent", clicked: "transparent"},
         {id:16, normal: color1,        hover: color1,                      disable: color1,        clicked: color1},
+        {id:17, normal: "#F5F5F5",     hover: "#EAEAEA",                 disable: "#EAEAEA",     clicked: "#F5F5F5"},
     ]
     property var borderColor: [
         {id: 0, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "#F6D65D"},
@@ -72,6 +73,7 @@ QtObject {
         {id:14, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
         {id:15, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
         {id:16, normal: color1,        hover: color1,                      disable: color1,            clicked: color1},
+        {id:17, normal: "transparent", hover: "transparent",               disable: "transparent",     clicked: "transparent"},
     ]
     property var textColor: [
         {id: 0, normal: "#031F2B",     hover: "#C9DEF1",     disable: "#C9DEF1",     clicked: "#031F2B"},
@@ -91,6 +93,7 @@ QtObject {
         {id:14, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
         {id:15, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
         {id:16, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
+        {id:17, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
     ]
 
     function signers(type){

@@ -19,25 +19,15 @@
  **************************************************************************/
 import QtQuick 2.12
 import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import Qt.labs.platform 1.1
-import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
-import QRCodeItem 1.0
-import DataPool 1.0
-import DRACO_CODE 1.0
-import EWARNING 1.0
 import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Chats"
 import "./../../../customizes/Texts"
 import "./../../../customizes/Buttons"
-import "../../../../../localization/STR_QML.js" as STR
 
 Item {
-    property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
-
     Column {
         anchors.fill: parent
         spacing: 24
@@ -66,14 +56,14 @@ Item {
                 }
                 QMontserrat {
                     width: parent.width
-                    text: inheritanceInfo.balance + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC" : " sats")
+                    text: vm.balanceDisplay + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC" : " sats")
                     font.pixelSize: 32
                     font.weight: Font.Medium
                     horizontalAlignment: Text.AlignHCenter
                 }
                 QLato {
                     width: parent.width
-                    text: qsTr("%1 %2").arg(AppSetting.currency).arg(inheritanceInfo.balanceCurrency)
+                    text: qsTr("%1 %2").arg(AppSetting.currency).arg(vm.balanceCurrency)
                     font.pixelSize: 20
                     font.weight: Font.Normal
                     horizontalAlignment: Text.AlignHCenter
@@ -118,7 +108,7 @@ Item {
                             top: parent.top
                             topMargin: 12
                         }
-                        text: inheritanceInfo.note
+                        text: vm.note
                         color: "#000000"
                         font.family: "Lato"
                         font.pixelSize: 16
@@ -135,26 +125,24 @@ Item {
                     bottomMargin: 16
                 }
                 QTextButton {
-                    width: 71
+                    width: label.paintedWidth + 32
                     height: 48
-                    label.text: STR.STR_QML_777
+                    label.text: STR.STR_QML_2105
                     label.font.pixelSize: 16
                     type: eTypeB
+                    visible: !vm.isOffClaim
                     onButtonClicked: {
-                        ServiceSetting.servicesTag.clearInheritance()
+                        vm.viewWalletClicked()
                     }
                 }
                 QTextButton {
-                    width: 158
+                    width: label.paintedWidth + 32
                     height: 48
                     label.text: STR.STR_QML_1735
                     label.font.pixelSize: 16
                     type: eTypeE
                     onButtonClicked: {
-                        var _input = {
-                            "isWithdrawBitcoin": true
-                        }
-                        vm.withdrawBitcoinClicked(_input)
+                        vm.withdrawBitcoinClicked()
                     }
                 }
             }
@@ -162,8 +150,5 @@ Item {
     }
     InheritanceUnlockedViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
 }

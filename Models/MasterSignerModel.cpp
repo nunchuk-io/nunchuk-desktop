@@ -19,12 +19,11 @@
  *                                                                        *
  **************************************************************************/
 #include "MasterSignerModel.h"
-
 #include <QQmlEngine>
-
 #include "Servers/Draco.h"
 #include "ViewsEnums.h"
-#include "bridgeifaces.h"
+#include "core/utils/Utils.h"
+#include "core/bridge/ExternalBridges.h"
 
 QMasterSigner::QMasterSigner() : isDraft(true) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);

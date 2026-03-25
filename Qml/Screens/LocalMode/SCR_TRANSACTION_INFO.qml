@@ -190,26 +190,37 @@ QScreen {
             onNewMemoNotify: {
                 QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SET_MEMO_REQUEST, newMemo);
             }
-            onKeySignRequest: {
-                signingBusyBox.signerType = signer.single_signer_type;
-                signingBusyBox.open();
-                timerSigningTx.fingerPrint = signer.singleSigner_masterFingerPrint;
-                timerSigningTx.restart();
-            }
-            onKeyScanRequest: {
-                QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST);
-            }
-            onKeyExportRequest: {
-                requestExportPSBT();
-            }
-            onKeyImportRequest: {
-                openfileDialog.open();
-            }
             onKeyEnterPreImageInput: {
                 enterPreimage.clearText()
                 enterPreimage.hashData = hashData
                 enterPreimage.typeNode = typeNode                
                 enterPreimage.open()
+            }
+            signerEvents: {
+                "sign": function(signer) { 
+                    signingBusyBox.signerType = signer.single_signer_type;
+                    signingBusyBox.open();
+                    timerSigningTx.fingerPrint = signer.singleSigner_masterFingerPrint;
+                    timerSigningTx.restart();
+                },
+                "scan": function(signer) { 
+                    QMLHandle.sendEvent(EVT.EVT_TRANSACTION_SCAN_DEVICE_REQUEST);
+                },
+                "exportQr": function(signer) { 
+                    requestExportViaQR()
+                },
+                "exportBBQR": function(signer) { 
+                    requestExportViaBBQR()
+                },
+                "exportFile": function(signer) { 
+                    requestExportPSBT()
+                },
+                "importQr": function(signer) { 
+                    qrcodeImport.open()
+                },
+                "importFile": function(signer) { 
+                    openfileDialog.open()
+                }
             }
         }
 

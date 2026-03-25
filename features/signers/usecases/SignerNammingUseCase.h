@@ -1,9 +1,9 @@
 #pragma once
+#include "core/ui/UiForward.h"
+#include "core/usecase/DefineUseCase.h"
 #include <QObject>
 #include <QString>
-#include "core/usecase/DefineUseCase.h"
 #include <nunchuk.h>
-#include "core/ui/UiForward.h"
 
 namespace features::signers::usecases {
 
@@ -11,10 +11,12 @@ class SignerNammingUseCase : public core::usecase::AsyncUseCase<SignerNammingUse
   public:
     SignerNammingUseCase &addParameter(AppModel *model);
     QString getInheritanceNameKey();
+    QString getNormalNameKey(const QString &baseName);
 
   protected:
     core::usecase::Result<QString> execute(const QString &input) override;
     AppModel *m_model{nullptr};
+    int m_nextInheritanceKeyIndex{-1};
 };
 
 #undef FIELDS_RESULT

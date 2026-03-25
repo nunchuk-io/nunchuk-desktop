@@ -19,23 +19,14 @@
  **************************************************************************/
 import QtQuick 2.12
 import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import Qt.labs.platform 1.1
-import HMIEVENTS 1.0
-import NUNCHUCKTYPE 1.0
-import QRCodeItem 1.0
-import DataPool 1.0
-import DRACO_CODE 1.0
-import EWARNING 1.0
+import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Chats"
 import "./../../../customizes/Texts"
 import "./../../../customizes/Buttons"
-import "../../../../../localization/STR_QML.js" as STR
 
 Item {
-    property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
     Column {
         anchors.fill: parent
         spacing: 24
@@ -81,7 +72,7 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                 }
                 QText {
-                    text: STR.STR_QML_774_.arg(inheritance.remaining_display_name)
+                    text: STR.STR_QML_774_.arg(vm.remaining_display_name)
                     color: "#031F2B"
                     font.family: "Lato"
                     font.pixelSize: 16
@@ -105,9 +96,13 @@ Item {
                 label.font.pixelSize: 16
                 type: eTypeE
                 onButtonClicked: {
-                    ServiceSetting.servicesTag.clearBufferPeriodCountdown()
+                    vm.next()
                 }
             }
         }
+    }
+
+    BufferPeriodHasStartedViewModel {
+        id: vm
     }
 }

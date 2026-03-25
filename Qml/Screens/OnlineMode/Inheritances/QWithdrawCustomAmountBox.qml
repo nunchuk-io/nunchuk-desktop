@@ -30,7 +30,6 @@ import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
 import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
-import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: sendDelegateRoot
@@ -111,7 +110,7 @@ Rectangle {
             }
             QButtonTextLink {
                 height: 24
-                label: STR.STR_QML_262
+                label: STR.STR_QML_2112
                 displayIcon: false
                 btnText.font.underline: true
                 anchors.top: amountInput.top

@@ -31,7 +31,6 @@ import "../../customizes/Texts"
 import "../../customizes/Buttons"
 import "../../customizes/Signers"
 import "../../customizes/Chats"
-import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: roomRoot
@@ -56,10 +55,12 @@ Rectangle {
     property string myRole: ""
     property bool   isValueKey: false
     property bool   enableValuekeyset: AppModel.walletInfo.enableValuekeyset
-    signal signRequest()
-    signal scanRequest()
-    signal exportRequest()
-    signal importRequest()
+    property var signerEvents
+    function menuClicked(action, data) {
+        if (signerEvents[action]) {
+            signerEvents[action](data);
+        }
+    }
 
     Column {
         id: columnItem
@@ -273,7 +274,9 @@ Rectangle {
                 type: eTypeE
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                onButtonClicked: { signRequest() }
+                onButtonClicked: {
+                    menuClicked("sign", model)                
+                 }
             }
         }
     }
@@ -289,7 +292,9 @@ Rectangle {
                 fontPixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                onButtonClicked: { scanRequest() }
+                onButtonClicked: { 
+                    menuClicked("scan", model)                 
+                }
             }
         }
     }
@@ -311,29 +316,103 @@ Rectangle {
                     signOptionMenu.open()
                 }
             }
-            QContextMenu {
+            QMultiContextMenu {
                 id: signOptionMenu
-                menuWidth: 250
-                labels: [
-                    STR.STR_QML_294,
-                    STR.STR_QML_252,
-                ]
-                icons: [
-                    "qrc:/Images/Images/ExportFile.svg",
-                    "qrc:/Images/Images/importFile.svg",
-                ]
-                onItemClicked: {
-                    switch(index){
-                    case 0: // Export transaction
-                        exportRequest()
-                        break;
-                    case 1: // Import signature
-                        importRequest()
-                        break;
-                    default:
-                        break;
+                menuWidth: 300
+                subMenuWidth: 300
+                property var exportMessage: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_114,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            signOptionMenu.close()
+                            menuClicked("exportQr", model)
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_1531,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            signOptionMenu.close()
+                            menuClicked("exportBBQR", model)
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_2097,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            signOptionMenu.close()
+                            menuClicked("exportFile", model)
+                        }
                     }
-                }
+                ]                 
+                property var importMessage: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_302,
+                        icon: "qrc:/Images/Images/importFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            signOptionMenu.close()
+                            menuClicked("importQr", model)
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_677,
+                        icon: "qrc:/Images/Images/importFile.svg",
+                        iconRight: "",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: null,
+                        action: function() {
+                            signOptionMenu.close()
+                            menuClicked("importFile", model)
+                        }
+                    }
+                ]
+                mapMenu: [
+                    {
+                        visible: true,
+                        label: STR.STR_QML_294,
+                        icon: "qrc:/Images/Images/ExportFile.svg",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: exportMessage,
+                        action: function() {
+                        }
+                    },
+                    {
+                        visible: true,
+                        label: STR.STR_QML_252,
+                        icon: "qrc:/Images/Images/importFile.svg",
+                        iconRight: "qrc:/Images/Images/right-arrow-dark.svg",
+                        color: "#031F2B",
+                        enable: true,
+                        subMenu: importMessage,
+                        action: function() {
+                        }
+                    }
+                ]
             }
         }
     }

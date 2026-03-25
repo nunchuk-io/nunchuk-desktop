@@ -20,7 +20,6 @@
 import NUNCHUCKTYPE 1.0
 import HMIEVENTS 1.0
 import QtQuick 2.4
-import Core.ViewModel 1.0
 import "../origins"
 
 Item {
@@ -34,7 +33,6 @@ Item {
     enabled: isOnTop
     signal eventReceiver(int event, int data)
     property alias background: background
-    property alias vmContext: _vmContext
     Component.onCompleted: {QMLHandle.doRegisterQML(root)}
     Component.onDestruction: {QMLHandle.unRegisterQML(root)}
     Rectangle {
@@ -64,8 +62,5 @@ Item {
             QMLHandle.sendEvent(EVT.EVT_ONS_CLOSE_ALL_REQUEST)
             break;
         }
-    }
-    ViewModelContext {
-        id: _vmContext
     }
 }

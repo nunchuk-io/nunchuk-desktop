@@ -19,92 +19,100 @@
  **************************************************************************/
 import QtQuick 2.12
 import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import Qt.labs.platform 1.1
-import HMIEVENTS 1.0
-import NUNCHUCKTYPE 1.0
-import QRCodeItem 1.0
-import DataPool 1.0
-import DRACO_CODE 1.0
-import EWARNING 1.0
-import "./../../../origins"
-import "./../../../customizes"
-import "./../../../customizes/Chats"
-import "./../../../customizes/Texts"
-import "./../../../customizes/Buttons"
-import "../../../../../localization/STR_QML.js" as STR
+import Features.RightPanel.ViewModels 1.0
+import "./../../../../core"
 
-Item {
-    property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
-    property var inheritanceCheckStatus: ServiceSetting.servicesTag.inheritanceCheckStatus
-    property var inheritanceClaimPlan: ServiceSetting.servicesTag.inheritanceClaimPlan
-    property var buffer_period_countdown: inheritanceClaimPlan.buffer_period_countdown
-    property var inheritance: inheritanceClaimPlan.inheritance
-
-    Loader {
-        anchors.fill: parent
-        sourceComponent: {
-            var is_valid = inheritanceCheckStatus.is_valid
-            var is_paid = inheritanceCheckStatus.is_paid
-            var is_expired = inheritanceCheckStatus.is_expired
-            
-            if (buffer_period_countdown) {
-                return _buffer_period_has_started
-            }
-            if (inheritance) {
-                return your_inheritance()
-            }
-            if (is_valid || !is_paid || !inheritanceCheckStatus) {
-                return _magic_phrase_and_backup_password
-            }
-        }
-    }
-
-    function your_inheritance() {
-        var isWithdrawBitcoin = inheritanceCheckStatus.isWithdrawBitcoin
-        if (isWithdrawBitcoin) {
-            return _your_inheritance_withdraw_bitcoin
-        } else {
-            return _your_inheritance_congratulations
-        }
-    }
-
-    Connections {
-        target: ServiceSetting.servicesTag
-        onNotPaidAlert: {
-            _InfoVer.notPaidAlert()
-        }
-        onIsExpiredAlert: {
-            _InfoVer.isExpiredAlert()
-        }
-        onHasNotBeenActivatedYetAlert: {
-            _info1.open()
-        }
-        onComeBackLaterAlert: {
-            _info1.comeBackLaterAlert(errormsg)
-        }
-        onSecurityDepositRequiredAlert:  {
-            _InfoVer.securityDepositRequiredAlert(errormsg)
-        }
-    }
-    Component {
-        id: _magic_phrase_and_backup_password
-        QServiceClaimInheritanceMagicPhraseAndBackupPassword {
-        }
-    }
-    Component {
-        id: _your_inheritance_congratulations
-        QServiceClaimInheritanceYourInheritance {
-        }
-    }
-    Component {
-        id: _your_inheritance_withdraw_bitcoin
-        QServiceClaimInheritanceWithdrawBitcoin {
-        }
-    }
-    Component {
-        id: _buffer_period_has_started
-        QServiceClaimInheritanceBufferPeriodHasStarted {
-        }
+RightPanelNavigator {
+    id: navigator
+    ClaimInheritanceViewModel {
+        id: vm
     }
 }
+
+// Item {
+    // property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
+    // property var inheritanceCheckStatus: ServiceSetting.servicesTag.inheritanceCheckStatus
+    // property var inheritanceClaimPlan: ServiceSetting.servicesTag.inheritanceClaimPlan
+    // property var buffer_period_countdown: inheritanceClaimPlan.buffer_period_countdown
+    // property var inheritance: inheritanceClaimPlan.inheritance
+
+    // RightPanelNavigator {
+    //     id: navigator
+    // }
+
+    
+
+    // Connections {
+    //     target: navigator
+    //     function onReady() {
+    //         vm.initialize()
+    //     }
+    // }
+
+    // Loader {
+    //     anchors.fill: parent
+    //     sourceComponent: {
+    //         var is_valid = inheritanceCheckStatus.is_valid
+    //         var is_paid = inheritanceCheckStatus.is_paid
+    //         var is_expired = inheritanceCheckStatus.is_expired
+            
+    //         if (buffer_period_countdown) {
+    //             return _buffer_period_has_started
+    //         }
+    //         if (inheritance) {
+    //             return your_inheritance()
+    //         }
+    //         if (is_valid || !is_paid || !inheritanceCheckStatus) {
+    //             return _magic_phrase_and_backup_password
+    //         }
+    //     }
+    // }
+
+    // function your_inheritance() {
+    //     var isWithdrawBitcoin = inheritanceCheckStatus.isWithdrawBitcoin
+    //     if (isWithdrawBitcoin) {
+    //         return _your_inheritance_withdraw_bitcoin
+    //     } else {
+    //         return _your_inheritance_congratulations
+    //     }
+    // }
+
+    // Connections {
+    //     target: ServiceSetting.servicesTag
+    //     onNotPaidAlert: {
+    //         _InfoVer.notPaidAlert()
+    //     }
+    //     onIsExpiredAlert: {
+    //         _InfoVer.isExpiredAlert()
+    //     }
+    //     onHasNotBeenActivatedYetAlert: {
+    //         _info1.open()
+    //     }
+    //     onComeBackLaterAlert: {
+    //         _info1.comeBackLaterAlert(errormsg)
+    //     }
+    //     onSecurityDepositRequiredAlert:  {
+    //         _InfoVer.securityDepositRequiredAlert(errormsg)
+    //     }
+    // }
+    // Component {
+    //     id: _magic_phrase_and_backup_password
+    //     QServiceClaimInheritanceMagicPhraseAndBackupPassword {
+    //     }
+    // }
+    // Component {
+    //     id: _your_inheritance_congratulations
+    //     QServiceClaimInheritanceYourInheritance {
+    //     }
+    // }
+    // Component {
+    //     id: _your_inheritance_withdraw_bitcoin
+    //     QServiceClaimInheritanceWithdrawBitcoin {
+    //     }
+    // }
+    // Component {
+    //     id: _buffer_period_has_started
+    //     QServiceClaimInheritanceBufferPeriodHasStarted {
+    //     }
+    // }
+// }

@@ -6,6 +6,7 @@ namespace core::viewmodels {
 using app::AppContext;
 using core::popup::PopupManager;
 using core::screen::ScreenManager;
+using core::screen::RightPanelNavigator;
 using core::toast::ToastManager;
 using core::subscreen::SubScreenManager;
 using core::flow::FlowManager;
@@ -21,6 +22,9 @@ class ViewModelContext : public QObject {
     ServiceSetting *serviceSetting() const;
     FlowManager *flowManager() const;
     QGroupWallets *groupWallets() const;
+    RightPanelNavigator *rightPanelNavigator() const;
+    AppSetting *appSetting() const;
+    ClientController *clientController() const;
 
   private:
     AppContext *m_appCtx{nullptr};

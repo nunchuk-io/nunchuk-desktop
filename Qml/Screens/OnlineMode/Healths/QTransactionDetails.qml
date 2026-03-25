@@ -72,24 +72,35 @@ QOnScreenContentTypeA {
             }
             QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _memo)
         }
-        onKeySignRequest: {
-            signingBusyBox.signerType = signer.single_signer_type
-            signingBusyBox.open()
-            timerSigningTx.fingerPrint = signer.singleSigner_masterFingerPrint
-            timerSigningTx.restart()
-        }
-        onKeyScanRequest: {
-            var _scanDevice = {
-                type: "scan-device",
+        signerEvents: {
+            "sign": function(signer) { 
+                signingBusyBox.signerType = signer.single_signer_type
+                signingBusyBox.open()
+                timerSigningTx.fingerPrint = signer.singleSigner_masterFingerPrint
+                timerSigningTx.restart()
+            },
+            "scan": function(signer) { 
+                var _scanDevice = {
+                    type: "scan-device",
+                }
+                QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _scanDevice )
+            },
+            "exportQr": function(signer) { 
+                requestExportViaQR()
+            },
+            "exportBBQR": function(signer) { 
+                requestExportViaBBQR()
+            },
+            "exportFile": function(signer) { 
+                requestExportPSBT()
+            },
+            "importQr": function(signer) { 
+                qrcodeImport.open()
+            },
+            "importFile": function(signer) { 
+                openfileDialog.open()
             }
-            QMLHandle.sendEvent(EVT.EVT_DUMMY_TRANSACTION_ACTION_ENTER_REQUEST, _scanDevice )
         }
-        onKeyExportRequest: {
-            requestExportPSBT()
-        }
-        onKeyImportRequest: {
-            openfileDialog.open()
-        }        
     }
     bottomLeft: Item {}
     bottomRight: Row {

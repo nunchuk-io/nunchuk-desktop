@@ -6,18 +6,16 @@ namespace features::wallets::viewmodels {
 using namespace core::viewmodels;
 using features::wallets::flows::SyncWalletFromRemoteFlow;
 
-WalletListViewModel::WalletListViewModel(QObject *parent) 
-: ActionViewModel(parent)
-{
-}
+WalletListViewModel::WalletListViewModel(QObject *parent) : ActionViewModel(parent) {}
 
+WalletListViewModel::~WalletListViewModel() {
+    GUARD_FLOW_MANAGER()
+    flowMng->stopFlow<SyncWalletFromRemoteFlow>();
+}
 
 void WalletListViewModel::onInit() {
-    ctx()->flowManager()->startFlow<SyncWalletFromRemoteFlow>();
-}
-
-void WalletListViewModel::onDispose() {
-    ctx()->flowManager()->stopFlow<SyncWalletFromRemoteFlow>();
+    GUARD_FLOW_MANAGER()
+    flowMng->startFlow<SyncWalletFromRemoteFlow>();
 }
 
 } // namespace features::wallets::viewmodels

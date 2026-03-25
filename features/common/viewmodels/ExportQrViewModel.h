@@ -8,6 +8,5 @@ class ExportQrViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit ExportQrViewModel(QObject *parent = nullptr);
-    ~ExportQrViewModel() override = default;
 };
 } // namespace features::common::viewmodels

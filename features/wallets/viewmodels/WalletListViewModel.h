@@ -9,9 +9,7 @@ class WalletListViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit WalletListViewModel(QObject *parent = nullptr);
-    ~WalletListViewModel() override = default;
-
+    ~WalletListViewModel();
     void onInit() override;
-    void onDispose() override;
 };
 } // namespace features::wallets::viewmodels

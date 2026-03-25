@@ -56,6 +56,48 @@ void QGroupWalletDummyTx::setDummyTxData(QJsonObject data)
     }
 }
 
+void QGroupWalletDummyTx::setSigninDummyTxData(const QJsonObject &data, const QString &bsms)
+{
+    m_tx = data;
+    if(!m_tx.isEmpty() && dashBoardPtr()){
+        if (auto dashboard = dashBoardPtr()) {
+            dashboard->setDummyTxAlert(data);
+        }
+        if (auto serverKey = serverKeyPtr()) {
+            serverKey->UpdateFromDummyTx(m_tx);
+        }
+        if (auto inheritance = inheritancePlanPtr()) {
+            inheritance->UpdateFromDummyTx(m_tx);
+        }
+        // Convert tx
+        QString request_body    = m_tx["request_body"].toString();
+
+        QWarningMessage warningmsg;
+        nunchuk::Wallet wallet = qUtils::ParseWalletDescriptor(bsms, warningmsg);
+        if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+            warningmsg.resetWarningMessage();
+
+            DBG_INFO << (int)wallet.get_wallet_type() << (int)wallet.get_wallet_template() << wallet.get_id();
+
+            QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, request_body, warningmsg);
+            if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type()){
+                warningmsg.resetWarningMessage();
+                nunchuk::Transaction tx = qUtils::DecodeDummyTx(wallet, tx_to_sign, warningmsg);
+                if((int)EWARNING::WarningType::NONE_MSG == warningmsg.type() && transactionPtr()){
+                    transactionPtr()->setNunchukTransaction(tx);
+                    transactionPtr()->setWalletId(QString::fromStdString(wallet.get_id()));
+                    transactionPtr()->setTxJson(m_tx);
+                    DBG_INFO << transactionPtr()->isDummyTx();
+                }
+            }
+        }
+        if (transactionPtr()) {
+            emit transactionPtr()->nunchukTransactionChanged();
+        }
+        emit transactionInfoChanged();
+    }
+}
+
 bool QGroupWalletDummyTx::requestForceSyncTx(const QString &group_id, const QString &wallet_id, const QString &txid)
 {
     bool ret = false;

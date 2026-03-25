@@ -1,18 +1,16 @@
 #include "RegisterWalletOnHardwareViewModel.h"
+#include "core/bridge/ExternalBridges.h"
+#include "core/restapi/RestApi.h"
 #include "core/ui/UiServices.inc"
+#include "core/utils/Utils.h"
 
 namespace features::wallets::viewmodels {
 using namespace core::viewmodels;
 // using namespace features::wallets::usecases;
 
 RegisterWalletOnHardwareViewModel::RegisterWalletOnHardwareViewModel(QObject *parent) 
-: ActionViewModel(parent),
-m_walletInfo(QWalletPtr(new Wallet())) {
+: ActionViewModel(parent){
 
-}
-
-Wallet* RegisterWalletOnHardwareViewModel::walletInfo() const {
-    return m_walletInfo.data();
 }
 
 RegisterWalletOnHardwareViewModel::FlowEvent RegisterWalletOnHardwareViewModel::event() const {
@@ -26,9 +24,9 @@ void RegisterWalletOnHardwareViewModel::setEvent(RegisterWalletOnHardwareViewMod
 }
 
 void RegisterWalletOnHardwareViewModel::onInit() {
-    if (auto wallet = ctx()->serviceSetting()->walletInfoPtr()) {
-        m_walletInfo = wallet;
-        emit walletInfoChanged();
+    auto walletPtr = bridge::convertWallet(nunWallet());
+    if (walletPtr) {
+        setwalletInfo(walletPtr);
     }
 }
 

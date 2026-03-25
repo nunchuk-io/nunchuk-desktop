@@ -9,9 +9,10 @@ class BaseGuideViewModel : public BaseViewModel {
   Q_OBJECT
   public:
     explicit BaseGuideViewModel(QObject *parent = nullptr) : BaseViewModel(parent) {}
-    virtual ~BaseGuideViewModel() = default;
     DEFINE_QT_PROPERTY(QString, headline)
     DEFINE_QT_PROPERTY(QString, title)
+    DEFINE_QT_PROPERTY(QString, subtitle)
+    DEFINE_QT_PROPERTY(QString, descriptionOneLine)
     DEFINE_QT_PROPERTY(QString, description)
 
 };

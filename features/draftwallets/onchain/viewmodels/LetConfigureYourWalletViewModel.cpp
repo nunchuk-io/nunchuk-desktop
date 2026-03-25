@@ -25,10 +25,6 @@ void LetConfigureYourWalletViewModel::onInit() {
     });
 }
 
-void LetConfigureYourWalletViewModel::onDispose() {
-    
-}
-
 void LetConfigureYourWalletViewModel::onConfigureClicked() {
     GUARD_SUB_SCREEN_MANAGER()
     subMng->show(qml::screens::onlinemode::setupwallets::timelocks::qsetuponchaintimelockdraftwallet);

@@ -11,10 +11,8 @@ class LetConfigureYourWalletViewModel : public OnChainTimelockViewModel {
     Q_OBJECT
   public:
     explicit LetConfigureYourWalletViewModel(QObject *parent = nullptr);
-    ~LetConfigureYourWalletViewModel() override = default;
 
     void onInit() override;
-    void onDispose() override;
   public slots:
     void onConfigureClicked();
   private:

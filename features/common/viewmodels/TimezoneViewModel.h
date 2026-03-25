@@ -13,10 +13,8 @@ class TimezoneViewModel : public ActionViewModel {
     Q_PROPERTY(QWalletTimezoneModel *timezones READ timezones NOTIFY timezonesChanged)
   public:
     explicit TimezoneViewModel(QObject *parent = nullptr);
-    ~TimezoneViewModel() override = default;
 
     void onInit() override;
-    void onDispose() override;
 
     QWalletTimezoneModel *timezones() const;
     QWalletTimezoneModelPtr timezonesPtr() const;

@@ -1,6 +1,7 @@
 namespace core {
 namespace screen {
 class ScreenManager;
+class RightPanelNavigator;
 }
 namespace toast {
 class ToastManager;
@@ -25,3 +26,4 @@ class ServiceSetting;
 class ClientController;
 class QGroupWallets;
 class QWalletServicesTag;
+class AppSetting;

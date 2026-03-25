@@ -22,11 +22,11 @@
 #include "AppSetting.h"
 #include "QOutlog.h"
 #include "ifaces/Servers/Draco.h"
-#include <QCryptographicHash>
-#include <QJsonDocument>
-#include <QHash>
-#include <boost/algorithm/string.hpp>
 #include "utils/enumconverter.hpp"
+#include <QCryptographicHash>
+#include <QHash>
+#include <QJsonDocument>
+#include <boost/algorithm/string.hpp>
 
 QString qUtils::deviceId() {
     QString deviceId = QSysInfo::machineUniqueId();
@@ -329,6 +329,24 @@ QString qUtils::CreateRequestToken(const QString &signature, const QString &fing
     return ret;
 }
 
+bool qUtils::SplitRequestToken(const QString &token, QString &signature, QString &fingerprint) {
+    signature = "";
+    fingerprint = "";
+
+    if (token.isEmpty()) {
+        return false;
+    }
+
+    int sep = token.indexOf('.');
+    if (sep <= 0 || sep >= token.size() - 1) {
+        return false;
+    }
+
+    fingerprint = token.left(sep);
+    signature = token.mid(sep + 1);
+    return !fingerprint.isEmpty() && !signature.isEmpty();
+}
+
 QString qUtils::GetPartialSignature(const nunchuk::SingleSigner &signer, const QString &signed_psbt) {
     QString ret = "";
     try {
@@ -493,8 +511,7 @@ uint qUtils::GetCurrentTimeSecond() {
     return QDateTime::currentDateTime().toTime_t();
 }
 
-QString qUtils::GetTimeString(uint time_second, bool is_relative)
-{
+QString qUtils::GetTimeString(uint time_second, bool is_relative) {
     if (is_relative) {
         if (time_second < 60)
             return QStringLiteral("%1 seconds").arg(time_second);
@@ -508,8 +525,7 @@ QString qUtils::GetTimeString(uint time_second, bool is_relative)
             return QStringLiteral("%1 months").arg(time_second / 2592000);
         else
             return QStringLiteral("%1 years").arg(time_second / 31536000);
-    }
-    else {
+    } else {
         QDateTime dateTime = QDateTime::fromSecsSinceEpoch(time_second, Qt::UTC);
         return dateTime.toString("MM/dd/yyyy");
     }
@@ -540,10 +556,10 @@ nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags) {
     return result;
 }
 
-QStringList qUtils::ExportQRTransaction(const QString &tx_to_sign, QWarningMessage &msg) {
+QStringList qUtils::ExportQRTransaction(const QString &psbt, QWarningMessage &msg) {
     QStringList result{};
     try {
-        std::vector<std::string> data = nunchuk::Utils::ExportKeystoneTransaction(tx_to_sign.toStdString());
+        std::vector<std::string> data = nunchuk::Utils::ExportKeystoneTransaction(psbt.toStdString());
         result.reserve(data.size());
         for (std::string tag : data) {
             result.append(QString::fromStdString(tag));
@@ -607,8 +623,7 @@ bool qUtils::IsValidAddress(const QString &address) {
     return ret;
 }
 
-bool qUtils::IsSilentPaymentAddress(const QString &address)
-{
+bool qUtils::IsSilentPaymentAddress(const QString &address) {
     QWarningMessage msg;
     bool ret{false};
     try {
@@ -829,7 +844,7 @@ QString qUtils::ImportDataViaFile(const QString &filepath) {
             QTextStream in(&file);
             QString fileContent = in.readAll();
             file.close();
-            return fileContent;
+            return fileContent.trimmed();
         }
     }
     return "";
@@ -1028,7 +1043,7 @@ std::string qUtils::MiniscriptTemplateToMiniscript(const std::string &miniscript
 }
 
 std::string qUtils::TapscriptTemplateToTapscript(const std::string &tapscript_template, const std::map<std::string, nunchuk::SingleSigner> &signers,
-                                                std::vector<std::string> &keypaths) {
+                                                 std::vector<std::string> &keypaths) {
     try {
         return nunchuk::Utils::TapscriptTemplateToTapscript(tapscript_template, signers, keypaths);
     } catch (const nunchuk::BaseException &ex) {
@@ -1086,7 +1101,8 @@ bool qUtils::IsPreimageRevealed(const std::string &psbt, const std::vector<uint8
     return false;
 }
 
-std::string qUtils::ExpandingMultisigMiniscriptTemplate(int m, int n, int new_n, bool reuse_signers, const nunchuk::Timelock &timelock, nunchuk::AddressType address_type, QWarningMessage &msg) {
+std::string qUtils::ExpandingMultisigMiniscriptTemplate(int m, int n, int new_n, bool reuse_signers, const nunchuk::Timelock &timelock,
+                                                        nunchuk::AddressType address_type, QWarningMessage &msg) {
     try {
         return nunchuk::Utils::ExpandingMultisigMiniscriptTemplate(m, n, new_n, reuse_signers, timelock, address_type);
     } catch (const nunchuk::BaseException &ex) {
@@ -1099,7 +1115,8 @@ std::string qUtils::ExpandingMultisigMiniscriptTemplate(int m, int n, int new_n,
     return "";
 }
 
-std::string qUtils::DecayingMultisigMiniscriptTemplate(int m, int n, int new_m, bool reuse_signers, const nunchuk::Timelock &timelock, nunchuk::AddressType address_type, QWarningMessage &msg) {
+std::string qUtils::DecayingMultisigMiniscriptTemplate(int m, int n, int new_m, bool reuse_signers, const nunchuk::Timelock &timelock,
+                                                       nunchuk::AddressType address_type, QWarningMessage &msg) {
     try {
         return nunchuk::Utils::DecayingMultisigMiniscriptTemplate(m, n, new_m, reuse_signers, timelock, address_type);
     } catch (const nunchuk::BaseException &ex) {
@@ -1126,7 +1143,7 @@ std::string qUtils::FlexibleMultisigMiniscriptTemplate(int m, int n, int new_m, 
     return "";
 }
 
-std::string qUtils::ZenHodlMiniscriptTemplate(int m, int n, const nunchuk::Timelock& timelock, nunchuk::AddressType address_type, QWarningMessage &msg) {
+std::string qUtils::ZenHodlMiniscriptTemplate(int m, int n, const nunchuk::Timelock &timelock, nunchuk::AddressType address_type, QWarningMessage &msg) {
     try {
         return nunchuk::Utils::ZenHodlMiniscriptTemplate(m, n, timelock, address_type);
     } catch (const nunchuk::BaseException &ex) {
@@ -1164,25 +1181,36 @@ std::vector<nunchuk::CoinsGroup> qUtils::GetCoinsGroupedBySubPolicies(const nunc
 }
 
 nunchuk::AddressType qUtils::AddressTypeFromStr(const QString &str) {
-    if( str == "ANY" ) return nunchuk::AddressType::ANY;
-    if( str == "LEGACY" ) return nunchuk::AddressType::LEGACY;
-    if( str == "NESTED_SEGWIT" ) return nunchuk::AddressType::NESTED_SEGWIT;
-    if( str == "NATIVE_SEGWIT" ) return nunchuk::AddressType::NATIVE_SEGWIT;
-    if( str == "TAPROOT" ) return nunchuk::AddressType::TAPROOT;
+    if (str == "ANY")
+        return nunchuk::AddressType::ANY;
+    if (str == "LEGACY")
+        return nunchuk::AddressType::LEGACY;
+    if (str == "NESTED_SEGWIT")
+        return nunchuk::AddressType::NESTED_SEGWIT;
+    if (str == "NATIVE_SEGWIT")
+        return nunchuk::AddressType::NATIVE_SEGWIT;
+    if (str == "TAPROOT")
+        return nunchuk::AddressType::TAPROOT;
     return nunchuk::AddressType::ANY; // Default case, should be handled properly
 }
 
 nunchuk::WalletTemplate qUtils::WalletTemplateFromStr(const QString &str) {
-    if (str == "DEFAULT") return nunchuk::WalletTemplate::DEFAULT;
-    if (str == "DISABLE_KEY_PATH") return nunchuk::WalletTemplate::DISABLE_KEY_PATH;
+    if (str == "DEFAULT")
+        return nunchuk::WalletTemplate::DEFAULT;
+    if (str == "DISABLE_KEY_PATH")
+        return nunchuk::WalletTemplate::DISABLE_KEY_PATH;
     return nunchuk::WalletTemplate::DEFAULT;
 }
 
 nunchuk::WalletType qUtils::WalletTypeFromStr(const QString &str) {
-    if (str == "MULTI_SIG") return nunchuk::WalletType::MULTI_SIG;
-    if (str == "SINGLE_SIG") return nunchuk::WalletType::SINGLE_SIG;
-    if (str == "ESCROW") return nunchuk::WalletType::ESCROW;
-    if (str == "MINISCRIPT") return nunchuk::WalletType::MINISCRIPT;
+    if (str == "MULTI_SIG")
+        return nunchuk::WalletType::MULTI_SIG;
+    if (str == "SINGLE_SIG")
+        return nunchuk::WalletType::SINGLE_SIG;
+    if (str == "ESCROW")
+        return nunchuk::WalletType::ESCROW;
+    if (str == "MINISCRIPT")
+        return nunchuk::WalletType::MINISCRIPT;
     return nunchuk::WalletType::MULTI_SIG; // Default case, should be handled properly
 }
 
@@ -1190,7 +1218,8 @@ nunchuk::ScriptNodeId qUtils::ScriptNodeIdFromString(const QString &path) {
     nunchuk::ScriptNodeId id;
     QStringList list = path.split(".");
     for (const QString &item : list) {
-        if (item.isEmpty()) continue; // Skip empty items
+        if (item.isEmpty())
+            continue; // Skip empty items
         try {
             int index = item.toInt();
             id.push_back(index);
@@ -1214,8 +1243,9 @@ QString qUtils::ScriptNodeIdToString(const nunchuk::ScriptNodeId &id) {
 
 nunchuk::SigningPath qUtils::SigningPathFromStringList(const QStringList &path) {
     nunchuk::SigningPath result;
-    for(const QString &item : path) {
-        if (item.isEmpty()) continue; // Skip empty items
+    for (const QString &item : path) {
+        if (item.isEmpty())
+            continue; // Skip empty items
         try {
             auto id = ScriptNodeIdFromString(item);
             result.push_back(id);
@@ -1234,33 +1264,31 @@ QStringList qUtils::SigningPathToStringList(const nunchuk::SigningPath &path) {
     return result;
 }
 
-const nunchuk::ScriptNode* qUtils::FindScriptNodeById(const nunchuk::ScriptNode& root, const nunchuk::ScriptNodeId& id) {
+const nunchuk::ScriptNode *qUtils::FindScriptNodeById(const nunchuk::ScriptNode &root, const nunchuk::ScriptNodeId &id) {
     // Check if the current node matches the ID
     if (root.get_id() == id) {
         return &root;
-      }
-    
-      // Recursively search in the sub-nodes
-      for (const auto& sub_node : root.get_subs()) {
-        const nunchuk::ScriptNode* result = FindScriptNodeById(sub_node, id);
+    }
+
+    // Recursively search in the sub-nodes
+    for (const auto &sub_node : root.get_subs()) {
+        const nunchuk::ScriptNode *result = FindScriptNodeById(sub_node, id);
         if (result != nullptr) {
-          return result;
+            return result;
         }
-      }
-    
-      // Return nullptr if no match is found
-      return nullptr;
+    }
+
+    // Return nullptr if no match is found
+    return nullptr;
 }
 
-QJsonObject qUtils::JsonDeepMerge(const QJsonObject& a, const QJsonObject& b) {
+QJsonObject qUtils::JsonDeepMerge(const QJsonObject &a, const QJsonObject &b) {
     QJsonObject result = a;
     for (auto it = b.begin(); it != b.end(); ++it) {
-        if (result.contains(it.key()) &&
-            result[it.key()].isObject() &&
-            it.value().isObject()) {
+        if (result.contains(it.key()) && result[it.key()].isObject() && it.value().isObject()) {
             result[it.key()] = JsonDeepMerge(result[it.key()].toObject(), it.value().toObject());
         } else {
-            result[it.key()] = it.value();  // Overwrite
+            result[it.key()] = it.value(); // Overwrite
         }
     }
     return result;
@@ -1286,7 +1314,7 @@ QString qUtils::getDateFromTimestamp(qint64 timestamp, const QTimeZone &tz) {
 }
 
 qint64 qUtils::getDaysFromTimestamp(qint64 timestamp, const QTimeZone &tz) {
-    QDateTime dt  = QDateTime::fromSecsSinceEpoch(timestamp, tz);
+    QDateTime dt = QDateTime::fromSecsSinceEpoch(timestamp, tz);
     QDateTime now = QDateTime::currentDateTime();
     return now.date().daysTo(dt.date());
 }
@@ -1303,8 +1331,8 @@ QString qUtils::localTimeZoneString() {
     return QString("%1 (GMT%2%3:%4)")
         .arg(name)
         .arg(sign)
-        .arg(QString::number(abs(hours)).rightJustified(2,'0'))
-        .arg(QString::number(minutes).rightJustified(2,'0'));
+        .arg(QString::number(abs(hours)).rightJustified(2, '0'))
+        .arg(QString::number(minutes).rightJustified(2, '0'));
 }
 
 QByteArray qUtils::serializeSigningPath(const nunchuk::SigningPath path) {
@@ -1370,8 +1398,7 @@ QString qUtils::incrementZeroIndex(const QString &path) {
     return parts.join('/');
 }
 
-int qUtils::getIndexAt(const QString &path, int pos)
-{
+int qUtils::getIndexAt(const QString &path, int pos) {
     if (!path.startsWith("m"))
         return -1;
 
@@ -1397,14 +1424,14 @@ int qUtils::getIndexAt(const QString &path, int pos)
     return ok ? value : -1;
 }
 
-nunchuk::SingleSigner qUtils::toSingleSigner(const nunchuk::MasterSigner& master) {
+nunchuk::SingleSigner qUtils::toSingleSigner(const nunchuk::MasterSigner &master) {
     std::string name = master.get_name();
 
     nunchuk::Device dev = master.get_device();
 
-    std::string xpub;              
-    std::string public_key;        
-    std::string derivation_path;   
+    std::string xpub;
+    std::string public_key;
+    std::string derivation_path;
 
     std::string master_fingerprint = dev.get_master_fingerprint();
 
@@ -1421,34 +1448,26 @@ nunchuk::SingleSigner qUtils::toSingleSigner(const nunchuk::MasterSigner& master
     bool visible = master.is_visible();
 
     // Construct SingleSigner object
-    return nunchuk::SingleSigner(
-        name,
-        xpub,
-        public_key,
-        derivation_path,
-        {},
-        master_fingerprint,
-        last_health_check,
-        master_signer_id,
-        /* used = */ false,
-        signer_type,
-        tags,
-        visible
-    );
+    return nunchuk::SingleSigner(name, xpub, public_key, derivation_path, {}, master_fingerprint, last_health_check, master_signer_id,
+                                 /* used = */ false, signer_type, tags, visible);
 }
 
 // Tìm đóng tương ứng cho '(' hoặc '{' tại pos (trả về index đóng hoặc -1)
 static int findMatchingBracket(const QString &s, int pos) {
-    if (pos < 0 || pos >= s.size()) return -1;
+    if (pos < 0 || pos >= s.size())
+        return -1;
     QChar open = s[pos];
     QChar close = (open == '(') ? ')' : (open == '{' ? '}' : QChar());
-    if (close.isNull()) return -1;
+    if (close.isNull())
+        return -1;
     int depth = 1;
     for (int i = pos + 1; i < s.size(); ++i) {
-        if (s[i] == open) ++depth;
+        if (s[i] == open)
+            ++depth;
         else if (s[i] == close) {
             --depth;
-            if (depth == 0) return i;
+            if (depth == 0)
+                return i;
         }
     }
     return -1;
@@ -1456,13 +1475,17 @@ static int findMatchingBracket(const QString &s, int pos) {
 
 // Quyết định có inline cặp (open..close) hay không
 static bool canInlineRange(const QString &s, int open, int close, int maxInlineLen) {
-    if (open < 0 || close <= open) return true;
+    if (open < 0 || close <= open)
+        return true;
     int len = close - open - 1;
-    if (len <= 0) return true;
-    if (len > maxInlineLen) return false;
+    if (len <= 0)
+        return true;
+    if (len > maxInlineLen)
+        return false;
     // nếu nội dung có newline thì không inline
     QString inner = s.mid(open + 1, len);
-    if (inner.contains('\n')) return false;
+    if (inner.contains('\n'))
+        return false;
     // Đơn giản: nếu ngắn (< threshold) thì inline tốt
     return true;
 }
@@ -1497,37 +1520,38 @@ QString qUtils::formatMiniscript(const QString &input, int indentSize, int maxIn
                 indent += indentSize;
                 out << QString(indent, ' ');
             }
-        }
-        else if (c == ',') {
+        } else if (c == ',') {
             // chuẩn hoá: nếu trong inline => ", " ; nếu trong multiline => ",\n<indent>"
             bool topInline = (!inlineStack.isEmpty() && inlineStack.last());
             if (topInline) {
                 out << ", ";
                 // bỏ các khoảng trắng sau dấu phẩy trong input (chuẩn hoá spacing)
                 int j = i + 1;
-                while (j < n && input[j].isSpace()) ++j;
+                while (j < n && input[j].isSpace())
+                    ++j;
                 i = j - 1;
             } else {
                 out << ",\n" << QString(indent, ' ');
                 int j = i + 1;
-                while (j < n && input[j].isSpace()) ++j;
+                while (j < n && input[j].isSpace())
+                    ++j;
                 i = j - 1;
             }
-        }
-        else if (c == ')' || c == '}') {
+        } else if (c == ')' || c == '}') {
             bool isInline = (!inlineStack.isEmpty() && inlineStack.last());
-            if (!inlineStack.isEmpty()) inlineStack.removeLast();
+            if (!inlineStack.isEmpty())
+                inlineStack.removeLast();
 
             if (isInline) {
                 out << c;
             } else {
                 out << "\n";
                 indent -= indentSize;
-                if (indent < 0) indent = 0;
+                if (indent < 0)
+                    indent = 0;
                 out << QString(indent, ' ') << c;
             }
-        }
-        else {
+        } else {
             out << c;
         }
     }
@@ -1536,7 +1560,7 @@ QString qUtils::formatMiniscript(const QString &input, int indentSize, int maxIn
 }
 
 // Convert vector<uint8_t> -> hex string
-std::string qUtils::bytesToHex(const std::vector<uint8_t>& data) {
+std::string qUtils::bytesToHex(const std::vector<uint8_t> &data) {
     std::ostringstream oss;
     oss << std::hex << std::setfill('0');
     for (uint8_t byte : data) {
@@ -1546,7 +1570,7 @@ std::string qUtils::bytesToHex(const std::vector<uint8_t>& data) {
 }
 
 // Convert hex string -> vector<uint8_t>
-std::vector<uint8_t> qUtils::hexToBytes(const std::string& hex) {
+std::vector<uint8_t> qUtils::hexToBytes(const std::string &hex) {
     if (hex.size() % 2 != 0) {
         return {};
     }
@@ -1562,15 +1586,14 @@ std::vector<uint8_t> qUtils::hexToBytes(const std::string& hex) {
     return bytes;
 }
 
-QString qUtils::BytesToHex(const std::vector<uint8_t>& data) {
+QString qUtils::BytesToHex(const std::vector<uint8_t> &data) {
     return QString::fromStdString(bytesToHex(data));
 }
-std::vector<uint8_t> qUtils::HexToBytes(const QString& hex) {
+std::vector<uint8_t> qUtils::HexToBytes(const QString &hex) {
     return hexToBytes(hex.toStdString());
 }
 
-QDateTime qUtils::convertTimestampToDateTime(qint64 timestamp, const QString& timezoneId)
-{
+QDateTime qUtils::convertTimestampToDateTime(qint64 timestamp, const QString &timezoneId) {
     bool isMilliSeconds = (qAbs(timestamp) >= 1000000000000LL); // >= 1e12
 
     QTimeZone targetTimeZone(timezoneId.toUtf8());
@@ -1589,8 +1612,7 @@ QDateTime qUtils::convertTimestampToDateTime(qint64 timestamp, const QString& ti
     return dateTimeUtc.toTimeZone(targetTimeZone);
 }
 
-QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
-{
+QString qUtils::formatTimeZoneString(const QString &timezoneIdInput) {
     QString tzInput = timezoneIdInput.trimmed();
     QTimeZone targetZone(tzInput.toUtf8());
 
@@ -1601,8 +1623,7 @@ QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
     if (!targetZone.isValid()) {
         // regex: optional whitespace, (GMT|UTC) case-insensitive, optional space,
         // optional sign, 1-2 digit hours, optional :mm or mm
-        static const QRegularExpression re(R"(^\s*(?:GMT|UTC)\s*([+-])?(\d{1,2})(?::?(\d{2}))?\s*$)",
-                                           QRegularExpression::CaseInsensitiveOption);
+        static const QRegularExpression re(R"(^\s*(?:GMT|UTC)\s*([+-])?(\d{1,2})(?::?(\d{2}))?\s*$)", QRegularExpression::CaseInsensitiveOption);
         const QRegularExpressionMatch m = re.match(tzInput);
         if (m.hasMatch()) {
             parsedFromGmt = true;
@@ -1619,10 +1640,8 @@ QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
             int absSec = qAbs(offsetSec);
             int h = absSec / 3600;
             int mm = (absSec % 3600) / 60;
-            normalizedId = QString("GMT%1%2:%3")
-                               .arg(signDisplay)
-                               .arg(QString::number(h).rightJustified(2, '0'))
-                               .arg(QString::number(mm).rightJustified(2, '0'));
+            normalizedId =
+                QString("GMT%1%2:%3").arg(signDisplay).arg(QString::number(h).rightJustified(2, '0')).arg(QString::number(mm).rightJustified(2, '0'));
 
             // Construct a fixed-offset QTimeZone
             targetZone = QTimeZone(offsetSec);
@@ -1652,10 +1671,8 @@ QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
     const int minutes = (absSec % 3600) / 60;
     const QString sign = (offsetSec >= 0) ? "+" : "-";
 
-    const QString gmtString = QString("GMT%1%2:%3")
-                                  .arg(sign)
-                                  .arg(QString::number(hours).rightJustified(2, '0'))
-                                  .arg(QString::number(minutes).rightJustified(2, '0'));
+    const QString gmtString =
+        QString("GMT%1%2:%3").arg(sign).arg(QString::number(hours).rightJustified(2, '0')).arg(QString::number(minutes).rightJustified(2, '0'));
 
     // If we parsed from a GMT input, show the normalizedId (e.g. "GMT+07:00"), else show original ID
     const QString displayId = parsedFromGmt ? normalizedId : timezoneIdInput;
@@ -1663,9 +1680,8 @@ QString qUtils::formatTimeZoneString(const QString& timezoneIdInput)
     return QString("%1 (%2)").arg(displayId, gmtString);
 }
 
-QString qUtils::extractTimeZoneId(const QString& formattedString)
-{
-    auto normalizeId = [](const QByteArray& id) -> QString {
+QString qUtils::extractTimeZoneId(const QString &formattedString) {
+    auto normalizeId = [](const QByteArray &id) -> QString {
         QTimeZone tz(id);
         return tz.isValid() ? QString::fromUtf8(tz.id()) : QString();
     };
@@ -1674,9 +1690,7 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
     const QString input = formattedString.trimmed();
     int paren = input.indexOf(" (");
     const QString leading = (paren > 0) ? input.left(paren).trimmed() : input;
-    const QString inside  = (paren > 0 && input.endsWith(')'))
-                                ? input.mid(paren + 2, input.size() - paren - 3).trimmed()
-                                : QString();
+    const QString inside = (paren > 0 && input.endsWith(')')) ? input.mid(paren + 2, input.size() - paren - 3).trimmed() : QString();
 
     // 2) If leading part is already a valid IANA zone, return it normalized
     if (!leading.isEmpty()) {
@@ -1686,21 +1700,19 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
     }
 
     // 3) Map common Windows time zone names to IANA (Qt version without ianaIdsForWindowsId)
-    static const QHash<QString, QString> windowsToIana {
-        { "Pacific Standard Time", "America/Los_Angeles" },
-        { "Eastern Standard Time", "America/New_York" },
-        { "Central Standard Time", "America/Chicago" },
-        { "Mountain Standard Time", "America/Denver" },
-        { "China Standard Time", "Asia/Shanghai" },
-        { "Tokyo Standard Time", "Asia/Tokyo" },
-        { "India Standard Time", "Asia/Kolkata" },
-        { "W. Europe Standard Time", "Europe/Berlin" },
-        { "Central European Standard Time", "Europe/Berlin" },
-        { "Brazil Standard Time", "America/Sao_Paulo" },
-        { "Greenwich Standard Time", "Etc/UTC" },
-        { "UTC", "Etc/UTC" },
-        { "GMT", "Etc/UTC" }
-    };
+    static const QHash<QString, QString> windowsToIana{{"Pacific Standard Time", "America/Los_Angeles"},
+                                                       {"Eastern Standard Time", "America/New_York"},
+                                                       {"Central Standard Time", "America/Chicago"},
+                                                       {"Mountain Standard Time", "America/Denver"},
+                                                       {"China Standard Time", "Asia/Shanghai"},
+                                                       {"Tokyo Standard Time", "Asia/Tokyo"},
+                                                       {"India Standard Time", "Asia/Kolkata"},
+                                                       {"W. Europe Standard Time", "Europe/Berlin"},
+                                                       {"Central European Standard Time", "Europe/Berlin"},
+                                                       {"Brazil Standard Time", "America/Sao_Paulo"},
+                                                       {"Greenwich Standard Time", "Etc/UTC"},
+                                                       {"UTC", "Etc/UTC"},
+                                                       {"GMT", "Etc/UTC"}};
     if (!leading.isEmpty()) {
         QString key = leading;
         if (windowsToIana.contains(key)) {
@@ -1715,8 +1727,10 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
         s = s.trimmed();
 
         // Strip known prefixes
-        if (s.startsWith("UTC", Qt::CaseInsensitive)) s = s.mid(3).trimmed();
-        else if (s.startsWith("GMT", Qt::CaseInsensitive)) s = s.mid(3).trimmed();
+        if (s.startsWith("UTC", Qt::CaseInsensitive))
+            s = s.mid(3).trimmed();
+        else if (s.startsWith("GMT", Qt::CaseInsensitive))
+            s = s.mid(3).trimmed();
 
         if (s.compare("", Qt::CaseInsensitive) == 0)
             return "Etc/UTC";
@@ -1731,22 +1745,31 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
         bool ok = false;
         if (s.contains(':')) {
             const auto parts = s.split(':');
-            if (parts.size() != 2) return QString();
-            h = parts[0].toInt(&ok); if (!ok) return QString();
-            m = parts[1].toInt(&ok); if (!ok) return QString();
+            if (parts.size() != 2)
+                return QString();
+            h = parts[0].toInt(&ok);
+            if (!ok)
+                return QString();
+            m = parts[1].toInt(&ok);
+            if (!ok)
+                return QString();
         } else {
             if (s.size() <= 2) {
-                h = s.toInt(&ok); if (!ok) return QString();
+                h = s.toInt(&ok);
+                if (!ok)
+                    return QString();
             } else if (s.size() == 4) {
-                bool okh=false, okm=false;
+                bool okh = false, okm = false;
                 h = s.left(2).toInt(&okh);
-                m = s.mid(2,2).toInt(&okm);
-                if (!okh || !okm) return QString();
+                m = s.mid(2, 2).toInt(&okm);
+                if (!okh || !okm)
+                    return QString();
             } else {
                 return QString();
             }
         }
-        if (h < 0 || h > 14 || m < 0 || m > 59) return QString();
+        if (h < 0 || h > 14 || m < 0 || m > 59)
+            return QString();
 
         const int sign = (signChar == '-') ? -1 : 1;
         const int seconds = sign * (h * 3600 + m * 60);
@@ -1759,16 +1782,17 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
     // Try: inside "(GMT+...)" first, then leading if it's an offset form
     if (!inside.isEmpty()) {
         QString id = parseOffsetToId(inside);
-        if (!id.isEmpty()) return id;
+        if (!id.isEmpty())
+            return id;
     }
     {
         QString id = parseOffsetToId(leading);
-        if (!id.isEmpty()) return id;
+        if (!id.isEmpty())
+            return id;
     }
 
     // 5) Handle plain "UTC"/"GMT"
-    if (leading.compare("UTC", Qt::CaseInsensitive) == 0 ||
-        leading.compare("Etc/UTC", Qt::CaseInsensitive) == 0 ||
+    if (leading.compare("UTC", Qt::CaseInsensitive) == 0 || leading.compare("Etc/UTC", Qt::CaseInsensitive) == 0 ||
         leading.compare("GMT", Qt::CaseInsensitive) == 0) {
         return "Etc/UTC";
     }
@@ -1778,9 +1802,10 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
     if (!leading.isEmpty()) {
         const auto now = QDateTime::currentDateTime();
         const auto ids = QTimeZone::availableTimeZoneIds();
-        for (const auto& id : ids) {
+        for (const auto &id : ids) {
             QTimeZone tz(id);
-            if (!tz.isValid()) continue;
+            if (!tz.isValid())
+                continue;
             if (tz.abbreviation(now).compare(leading, Qt::CaseInsensitive) == 0)
                 return QString::fromUtf8(tz.id());
         }
@@ -1791,8 +1816,7 @@ QString qUtils::extractTimeZoneId(const QString& formattedString)
 }
 
 // Normalize a path: h → '
-static QString normalizePath(const QString &path)
-{
+static QString normalizePath(const QString &path) {
     QString p = path.trimmed();
     p.replace("H", "'");
     p.replace("h", "'");
@@ -1803,8 +1827,7 @@ static QString normalizePath(const QString &path)
 // Get Purpose from path
 // (44, 49, 84, ...)
 // ----------------------------
-int qUtils::GetPurposeFromPath(const QString &path)
-{
+int qUtils::GetPurposeFromPath(const QString &path) {
     QString p = normalizePath(path);
     QStringList parts = p.split('/');
 
@@ -1826,8 +1849,7 @@ int qUtils::GetPurposeFromPath(const QString &path)
 // (0: Bitcoin mainnet,
 //  60: Ethereum, ...)
 // ----------------------------
-int qUtils::GetCoinTypeFromPath(const QString &path)
-{
+int qUtils::GetCoinTypeFromPath(const QString &path) {
     // QString p = normalizePath(path);
     // QStringList parts = p.split('/');
 
@@ -1877,8 +1899,7 @@ int qUtils::GetCoinTypeFromPath(const QString &path)
     bool ok = false;
     int coinType = coinStr.toInt(&ok);
     if (!ok) {
-        DBG_INFO << "Unable to parse coin type from derivation path component:"
-                   << parts[1] << "full path:" << path;
+        DBG_INFO << "Unable to parse coin type from derivation path component:" << parts[1] << "full path:" << path;
         return -1;
     }
 
@@ -1916,16 +1937,12 @@ QJsonObject qUtils::SingleSignertoJsonObject(const nunchuk::SingleSigner &single
     return obj;
 }
 
-bool qUtils::isEmailSyntax(const QString& str) {
-    static const QRegularExpression emailFormatRegex(
-        R"((^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$))",
-        QRegularExpression::CaseInsensitiveOption
-        );
+bool qUtils::isEmailSyntax(const QString &str) {
+    static const QRegularExpression emailFormatRegex(R"((^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$))", QRegularExpression::CaseInsensitiveOption);
     return emailFormatRegex.match(str).hasMatch();
 }
 
-nunchuk::BtcUri qUtils::ParseBtcUri(const QString &value, QWarningMessage &msg)
-{
+nunchuk::BtcUri qUtils::ParseBtcUri(const QString &value, QWarningMessage &msg) {
     nunchuk::BtcUri ret;
     try {
         ret = nunchuk::Utils::ParseBtcUri(value.toStdString());
@@ -1937,4 +1954,75 @@ nunchuk::BtcUri qUtils::ParseBtcUri(const QString &value, QWarningMessage &msg)
         msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     return ret;
+}
+
+QString qUtils::GenerateColdCardHealthCheckMessage(const QString &derivation_path, const QString &message, nunchuk::AddressType address_type,
+                                                   QWarningMessage &msg) {
+    try {
+        return QString::fromStdString(nunchuk::Utils::GenerateColdCardHealthCheckMessage(derivation_path.toStdString(), message.toStdString(), address_type));
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &ex) {
+        DBG_INFO << "THROW EXCEPTION" << ex.what();
+        msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return "";
+}
+
+QStringList qUtils::ExportBBQRJSON(const QString &value, QWarningMessage &msg) {
+    try {
+        std::vector<std::string> qr_data = nunchuk::Utils::ExportBBQRJSON(value.toStdString());
+        QStringList result;
+        result.reserve(qr_data.size());
+        for (const auto &item : qr_data) {
+            result.append(QString::fromStdString(item));
+        }
+        return result;
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &ex) {
+        DBG_INFO << "THROW EXCEPTION" << ex.what();
+        msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return {};
+}
+
+QString qUtils::ExtractColdcardMessageSignature(const QStringList &qr_data, QWarningMessage &msg) {
+    QStringList in = qr_data;
+    in.removeDuplicates();
+    try {
+        std::vector<std::string> qr_strings;
+        qr_strings.reserve(in.size());
+        for (const auto &item : in) {
+            const QString normalized = item.trimmed();
+            if (normalized.isEmpty()) {
+                continue;
+            }
+            qr_strings.push_back(normalized.toStdString());
+        }
+
+        return QString::fromStdString(nunchuk::Utils::ExtractColdcardMessageSignature(qr_strings));
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what() << in;
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &ex) {
+        DBG_INFO << "THROW EXCEPTION" << ex.what();
+        msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return "";
+}
+
+QString qUtils::ExtractColdcardMessageSignature(const QString &value, QWarningMessage &msg) {
+    try {
+        return QString::fromStdString(nunchuk::Utils::ExtractColdcardMessageSignature(value.toStdString()));
+    } catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    } catch (std::exception &ex) {
+        DBG_INFO << "THROW EXCEPTION" << ex.what();
+        msg.setWarningMessage(-1, ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return "";
 }

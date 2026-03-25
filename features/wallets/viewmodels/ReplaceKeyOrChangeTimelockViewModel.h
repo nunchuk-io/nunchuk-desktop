@@ -13,10 +13,8 @@ class ReplaceKeyOrChangeTimelockViewModel : public OnChainTimelockViewModel {
     Q_OBJECT
   public:
     explicit ReplaceKeyOrChangeTimelockViewModel(QObject *parent = nullptr);
-    ~ReplaceKeyOrChangeTimelockViewModel() override = default;
 
     void onInit() override;
-    void onDispose() override;
   public slots:
     void onConfigureClicked();
   private:

@@ -12,7 +12,6 @@ class OnChainTimelockViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit OnChainTimelockViewModel(QObject *parent = nullptr);
-    ~OnChainTimelockViewModel() override = default;
 
     DEFINE_QT_PROPERTY(QString, valueTime)
     DEFINE_QT_PROPERTY(QString, valueDate)

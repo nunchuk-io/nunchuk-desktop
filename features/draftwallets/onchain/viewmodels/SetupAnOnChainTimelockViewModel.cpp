@@ -25,9 +25,6 @@ void SetupAnOnChainTimelockViewModel::onInit() {
     });
 }
 
-void SetupAnOnChainTimelockViewModel::onDispose() {
-}
-
 void SetupAnOnChainTimelockViewModel::setupTimeLock() {
     GUARD_DASHBOARD()
     TimeLockSetupUpdateInput input;

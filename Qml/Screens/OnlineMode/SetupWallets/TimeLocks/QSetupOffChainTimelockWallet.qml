@@ -180,9 +180,5 @@ QOnScreenContentTypeA {
     }
     SetupAnOffChainTimelockViewModel {
         id: vm
-        Component.onCompleted: {
-            FlowManager.currentFlow.bind(vm)
-            vm.attachContext(vmContext)
-        }
     }
 }

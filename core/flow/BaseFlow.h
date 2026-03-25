@@ -3,6 +3,7 @@
 #include <QObject>
 #include "FlowResult.h"
 #include "FlowContext.h"
+#include "QWarningMessage.h"
 
 namespace core::flow {
 class BaseFlow : public QObject {
@@ -20,7 +21,9 @@ class BaseFlow : public QObject {
     }
   signals:
     void finished(FlowResult event);
+    void showToast(int code, const QString &what, EWARNING::WarningType type);
   protected:
+    void baseConnectSignals();
     FlowContext *ctx() const {
         Q_ASSERT(m_ctx);
         return m_ctx;
@@ -29,3 +32,4 @@ class BaseFlow : public QObject {
     FlowContext* m_ctx;
 };
 } // namespace core::flow
+#include "QOutlog.h"

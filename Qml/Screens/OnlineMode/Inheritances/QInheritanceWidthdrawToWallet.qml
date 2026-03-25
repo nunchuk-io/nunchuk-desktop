@@ -32,7 +32,6 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/QRCodes"
 import "../../OnlineMode/Inheritances"
-import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id:_withdraw
@@ -43,7 +42,7 @@ QOnScreenContentTypeB {
     extraHeader: Item {}
     property string walletId: ""
     property int currentSelect: -1
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onCloseClicked: vm.close()
     content: Item {
         id: _item
         Column {
@@ -92,20 +91,13 @@ QOnScreenContentTypeB {
             }
         }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onPrevClicked: vm.close()
     onNextClicked: {
-        if (isValid()) {
-            AppModel.showToast(-1, STR.STR_QML_816, EWARNING.ERROR_MSG);
-        } else {
-            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_CREATE_DRAFT_TX_REQUEST,walletId)
-        }
+        vm.createTransactionToWallet(walletId)
     }
 
     WithdrawSelectWalletViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
 }
 

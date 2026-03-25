@@ -34,7 +34,7 @@ QListView {
     delegate: switch(delegateType) {
               case _RadioTypeA: return _TypeA
               case _RadioTypeB: return _TypeB
-              default: return _TypeA
+              default: return customizeDelegate()
               }
 
     function radioSelect() {
@@ -43,6 +43,10 @@ QListView {
 
     function setRadioSelect(id, data) {
 
+    }
+
+    function customizeDelegate() {
+        return _TypeA
     }
 
     Component {

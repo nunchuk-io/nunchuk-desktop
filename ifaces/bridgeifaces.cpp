@@ -2393,8 +2393,13 @@ nunchuk::Wallet bridge::nunchukGetOriginWallet(const QString &wallet_id, QWarnin
 
 nunchuk::Transaction bridge::nunchukImportQRTransaction(const QString &wallet_id, const QList<QString> &qr_data, QWarningMessage &msg)
 {
+    QStringList in = qr_data;
+    in.removeDuplicates();
+    if (in.isEmpty()) {
+        return {};
+    }
     std::vector<std::string> qr_result;
-    for (QString it : qr_data) {
+    for (QString it : in) {
         qr_result.push_back(it.toStdString());
     }
     nunchuk::Transaction trans_result = nunchukiface::instance()->ImportKeystoneTransaction(wallet_id.toStdString(), qr_result, msg);

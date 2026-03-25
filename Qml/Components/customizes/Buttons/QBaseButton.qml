@@ -45,6 +45,7 @@ Item {
 
     readonly property int eTypeP: 15
     readonly property int eTypeQ: 16
+    readonly property int eTypeR: 17
 
     // Click state
     readonly property int eNORMAL: 0

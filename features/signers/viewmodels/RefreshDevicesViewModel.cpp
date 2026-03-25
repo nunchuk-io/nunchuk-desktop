@@ -15,24 +15,8 @@ const QMap<QString, QString> map_keys = {
 };
 
 RefreshDevicesViewModel::RefreshDevicesViewModel(QObject *parent) 
-: LoadingViewModel(parent), 
-m_deviceList(new DeviceListModel()) {
-
-}
-
-DeviceListModel *RefreshDevicesViewModel::deviceList() const {
-    return m_deviceList.data();
-}
-
-QString RefreshDevicesViewModel::tag() const {
-    return m_tag;
-}
-
-void RefreshDevicesViewModel::setTag(const QString &tag) {
-    if (m_tag != tag) {
-        m_tag = tag;
-        emit tagChanged();
-    }
+: BaseViewModel(parent) {
+    setisLoading(false);
 }
 
 void RefreshDevicesViewModel::forceCreateMaster(QVariant msg) {
@@ -51,26 +35,28 @@ void RefreshDevicesViewModel::forceCreateMaster(QVariant msg) {
 }
 
 void RefreshDevicesViewModel::scanDevice() {
+    GUARD_CLIENT_CONTROLLER()
     ScanDeviceInput input;
-    input.isLoginRequired = true;
+    input.isLoginRequired = clientCtrl->isNunchukLoggedIn();
     input.deviceType = map_keys.value(m_tag, "");
-    setIsLoading(true);
+    setisLoading(true);
     DBG_INFO << "Start scanning devices..." << m_tag;
     m_scanDeviceUsecase.executeAsync(input, [this](core::usecase::Result<ScanDeviceResult> result) {
         if (result.isSuccess()) {
-            if (m_deviceList) {
-                m_deviceList->clearList();
+            QDeviceListModelPtr deviceListModel = QDeviceListModelPtr(new DeviceListModel());
+            if (deviceListModel) {
+                deviceListModel->clearList();
                 const auto &devices = result.value().devices;
                 for (const auto &device : devices) {
                     QDevicePtr devicePtr = QDevicePtr(new QDevice(device));
-                    m_deviceList->addDevice(devicePtr);
+                    deviceListModel->addDevice(devicePtr);
                 }
-                emit deviceListChanged();
+                setdeviceList(deviceListModel);
             }
         } else {
             // Handle error (e.g., log it, show a message, etc.)
         }
-        setIsLoading(false);
+        setisLoading(false);
     });
 }
 

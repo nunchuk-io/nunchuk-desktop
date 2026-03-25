@@ -26,8 +26,4 @@ void ViewInheritancePlanViewModel::onInit() {
     });
 }
 
-void ViewInheritancePlanViewModel::onDispose() {
-    
-}
-
 } // namespace features::inheritance::onchain::viewmodels

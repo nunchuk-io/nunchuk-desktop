@@ -52,9 +52,5 @@ QScreenAddKeyResult {
     }
     BaseGuideViewModel {
         id: vm
-        Component.onCompleted: {
-            FlowManager.currentFlow.bind(vm)
-            vm.attachContext(vmContext)
-        }
     }
 }

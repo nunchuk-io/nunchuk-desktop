@@ -26,6 +26,7 @@ import "../../../../localization/STR_QML.js" as STR
 QButtonLargeTail {
     id: advancedBtn
     property alias funcs: imExContextMenu.functions
+    property var visibles: [true, true, true, true, true]
     width: 240
     height: 48
     type: eSECONDARY
@@ -39,6 +40,7 @@ QButtonLargeTail {
     QContextMenu {
         id: imExContextMenu
         menuWidth: 200
+        visibles: advancedBtn.visibles
         labels: [
             STR.STR_QML_300,
             STR.STR_QML_114,

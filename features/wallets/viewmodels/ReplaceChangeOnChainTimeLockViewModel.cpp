@@ -26,9 +26,6 @@ void ReplaceChangeOnChainTimeLockViewModel::onInit() {
     });
 }
 
-void ReplaceChangeOnChainTimeLockViewModel::onDispose() {
-}
-
 void ReplaceChangeOnChainTimeLockViewModel::setupTimeLock() {
     GUARD_DASHBOARD()
     GUARD_SERVICE_TAG()

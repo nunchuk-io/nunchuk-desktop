@@ -3985,3 +3985,125 @@ std::string nunchukiface::GetWalletExportData(const std::string &wallet_id, nunc
     }
     return ret;
 }
+
+std::string nunchukiface::GetSignerMasterXprv(const std::string &signer_id, QWarningMessage &msg){
+    std::string ret = "";
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSignerMasterXprv(signer_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = "";
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = "";
+    }
+    return ret;
+}
+
+bool nunchukiface::HasSignerMasterXprv(const std::string &signer_id, QWarningMessage &msg) {
+    bool ret = false;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->HasSignerMasterXprv(signer_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    return ret;
+}
+
+bool nunchukiface::HasSignerMnemonic(const std::string& signer_id, QWarningMessage &msg) {
+    bool ret = false;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->HasSignerMnemonic(signer_id);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    return ret;
+}
+
+bool nunchukiface::IsValidSignerPassphrase(const std::string& mastersigner_id, const std::string& passphrase, QWarningMessage &msg) {
+    bool ret = false;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->IsValidSignerPassphrase(mastersigner_id, passphrase);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = false;
+    }
+    return ret;
+}
+
+std::string nunchukiface::GetSignerMnemonic(const std::string& signer_id, const std::string& passphrase, QWarningMessage &msg) {
+    std::string ret = "";
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetSignerMnemonic(signer_id, passphrase);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = "";
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+        ret = "";
+    }
+    return ret;
+}
+
+nunchuk::MasterSigner nunchukiface::CreateMasterSigner(const std::string &name,
+                                                       const nunchuk::Device &device,
+                                                       std::function<bool (int)> progress,
+                                                       QWarningMessage &msg)
+{
+    nunchuk::MasterSigner ret("", nunchuk::Device(""), 0);
+    try {
+        if (nunchuk_instance_[nunchukMode()]) {
+            ret = nunchuk_instance_[nunchukMode()]->CreateMasterSigner(name, device, progress);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}

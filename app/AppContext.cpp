@@ -19,6 +19,8 @@ AppContext::AppContext(QObject *parent)
 , m_serviceSetting(ServiceSetting::instance())
 , m_clientController(ClientController::instance())
 , m_groupWallets(QGroupWallets::instance())
+, m_rightPanelNavigator(new RightPanelNavigator(this))
+, m_appSetting(AppSetting::instance())
  {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -61,6 +63,14 @@ ClientController *AppContext::clientController() const {
 
 QGroupWallets *AppContext::groupWallets() const {
     return m_groupWallets;
+}
+
+RightPanelNavigator *AppContext::rightPanelNavigator() const {
+    return m_rightPanelNavigator;
+}
+
+AppSetting *AppContext::appSetting() const {
+    return m_appSetting;
 }
 
 } // namespace app

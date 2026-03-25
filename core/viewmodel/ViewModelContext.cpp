@@ -3,9 +3,7 @@
 #include "core/ui/UiServices.inc"
 
 namespace core::viewmodels {
-ViewModelContext::ViewModelContext(QObject *parent)
-    : QObject(parent), m_appCtx(app::AppContext::instance()) {
-}
+ViewModelContext::ViewModelContext(QObject *parent) : QObject(parent), m_appCtx(app::AppContext::instance()) {}
 ScreenManager *ViewModelContext::screenManager() const {
     if (m_appCtx) {
         return m_appCtx->screenManager();
@@ -58,6 +56,27 @@ FlowManager *ViewModelContext::flowManager() const {
 QGroupWallets *ViewModelContext::groupWallets() const {
     if (m_appCtx) {
         return m_appCtx->groupWallets();
+    }
+    return nullptr;
+}
+
+RightPanelNavigator *ViewModelContext::rightPanelNavigator() const {
+    if (m_appCtx) {
+        return m_appCtx->rightPanelNavigator();
+    }
+    return nullptr;
+}
+
+AppSetting *ViewModelContext::appSetting() const {
+    if (m_appCtx) {
+        return m_appCtx->appSetting();
+    }
+    return nullptr;
+}
+
+ClientController *ViewModelContext::clientController() const {
+    if (m_appCtx) {
+        return m_appCtx->clientController();
     }
     return nullptr;
 }

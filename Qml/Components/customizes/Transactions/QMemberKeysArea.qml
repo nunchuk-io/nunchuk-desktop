@@ -34,10 +34,7 @@ import "../../../../localization/STR_QML.js" as STR
 Item {
     id: _item
     property var transactionInfo
-    signal keySignRequest(var signer)
-    signal keyScanRequest
-    signal keyExportRequest
-    signal keyImportRequest
+    property var signerEvents
     property int pendingSignature: 0
     property bool isDummy: false
     property string myRole: ""
@@ -115,18 +112,7 @@ Item {
                     is_cosigning: transactionInfo.isCosigning
                     accountIndex: model.single_signer_account_index
                     myRole: _item.myRole
-                    onSignRequest: {
-                        keySignRequest(model)
-                    }
-                    onScanRequest: {
-                        keyScanRequest()
-                    }
-                    onExportRequest: {
-                        keyExportRequest()
-                    }
-                    onImportRequest: {
-                        keyImportRequest()
-                    }
+                    signerEvents: _item.signerEvents
                 }
                 section
                 {

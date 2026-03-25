@@ -26,9 +26,6 @@ void ReplaceKeyOrChangeTimelockViewModel::onInit() {
     });
 }
 
-void ReplaceKeyOrChangeTimelockViewModel::onDispose() {
-}
-
 void ReplaceKeyOrChangeTimelockViewModel::onConfigureClicked() {
     GUARD_SUB_SCREEN_MANAGER()
     subMng->show(qml::screens::onlinemode::setupwallets::timelocks::qsetuponchaintimelockwallet);

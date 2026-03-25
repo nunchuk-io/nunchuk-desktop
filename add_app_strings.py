@@ -82,8 +82,9 @@ class AppStringsAdder:
             with open(self.app_strings_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            # Match the public: section that comes after DEFINE_STRING_PROPERTY entries
-            insert_pattern = r'(\npublic:\s*\n\s*static AppStrings)'
+            # Match the public: section (allow indentation/blank lines)
+            # and insert right before it.
+            insert_pattern = r'(\n\s*public:\s*\n\s*static\s+AppStrings)'
             match = re.search(insert_pattern, content)
             
             if match:

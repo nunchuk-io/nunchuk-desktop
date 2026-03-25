@@ -6,3 +6,10 @@
 // Registers a single ViewModel type
 #define REGISTER_VIEWMODEL(T) \
     qmlRegisterType<T>(uri, VIEWMODEL_MAJOR, VIEWMODEL_MINOR, #T);
+
+#define REGISTER_QML_ENUM_NS(QML_NAME) \
+    qmlRegisterUncreatableMetaObject(                     \
+        staticMetaObject,                             \
+        uri, VIEWMODEL_MAJOR, VIEWMODEL_MINOR, #QML_NAME, \
+        "Enums only"                                      \
+    );

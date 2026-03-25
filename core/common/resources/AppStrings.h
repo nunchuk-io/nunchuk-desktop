@@ -5,8 +5,7 @@
 #include "StringProperty.h"
 
 namespace core::common::resources {
-class AppStrings : public QObject
-{
+class AppStrings : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
@@ -84,15 +83,18 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_069, "Multisig")
     DEFINE_STRING_PROPERTY(STR_QML_070, "Single-sig")
     DEFINE_STRING_PROPERTY(STR_QML_071, "Get XPUBs")
-    DEFINE_STRING_PROPERTY(STR_QML_072, "To create new wallets, additional XPUBs from the key are needed. Please plug in your key device, unlock, and press \"Get XPUBs\"")
+    DEFINE_STRING_PROPERTY(STR_QML_072,
+                           "To create new wallets, additional XPUBs from the key are needed. Please plug in your key device, unlock, and press \"Get XPUBs\"")
     DEFINE_STRING_PROPERTY(STR_QML_073, "Create Wallet")
     DEFINE_STRING_PROPERTY(STR_QML_074, "Get XPUBs for key:")
     DEFINE_STRING_PROPERTY(STR_QML_075, "Nunchuk is processing your key information")
     DEFINE_STRING_PROPERTY(STR_QML_076, "Creating new wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_077, "Please save the wallet configuration file (.bsms). You can use it to recover your wallet later using any BSMS-compatible software. BSMS is defined in BIP-0129: Bitcoin Secure Multisig Setup.")
+    DEFINE_STRING_PROPERTY(STR_QML_077, "Please save the wallet configuration file (.bsms). You can use it to recover your wallet later using any "
+                                        "BSMS-compatible software. BSMS is defined in BIP-0129: Bitcoin Secure Multisig Setup.")
     DEFINE_STRING_PROPERTY(STR_QML_078, "Save BSMS File")
     DEFINE_STRING_PROPERTY(STR_QML_079, "I'll do this later")
-    DEFINE_STRING_PROPERTY(STR_QML_080, "*Note that this backup strictly contains information about the wallet. It does not include information on seeds or private keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_080,
+                           "*Note that this backup strictly contains information about the wallet. It does not include information on seeds or private keys.")
     DEFINE_STRING_PROPERTY(STR_QML_081, "Your wallet is almost ready")
     DEFINE_STRING_PROPERTY(STR_QML_082, "Wrapping up...")
     DEFINE_STRING_PROPERTY(STR_QML_083, "Add key")
@@ -110,7 +112,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_095, "Unlock the device")
     DEFINE_STRING_PROPERTY(STR_QML_096, "To unlock the device, you might need to enter a <b>PIN</b> and/or a <b>PASSPHRASE</b> directly on the device screen.")
     DEFINE_STRING_PROPERTY(STR_QML_097, "Continue")
-    DEFINE_STRING_PROPERTY(STR_QML_098, "A software key will be generated locally on this device. <b>Deleting the app will also delete the software key.</b> Please make sure to:")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_098, "A software key will be generated locally on this device. <b>Deleting the app will also delete the software key.</b> Please make sure to:")
     DEFINE_STRING_PROPERTY(STR_QML_099, "Recover existing key")
     DEFINE_STRING_PROPERTY(STR_QML_100, "Create new key")
     DEFINE_STRING_PROPERTY(STR_QML_101, "Add a hardware key")
@@ -152,7 +155,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_140, "Please sign this message on your device")
     DEFINE_STRING_PROPERTY(STR_QML_141, "Please Confirm on the Key Device")
     DEFINE_STRING_PROPERTY(STR_QML_142, "Seed phrase")
-    DEFINE_STRING_PROPERTY(STR_QML_143, "Please take a moment to write down this seed phrase. It's the backup for your key. <b>This app will only show the seed phrase once.</b>")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_143, "Please take a moment to write down this seed phrase. It's the backup for your key. <b>This app will only show the seed phrase once.</b>")
     DEFINE_STRING_PROPERTY(STR_QML_144, "Never share the recovery phrase with anyone. Avoid having a digital copy.")
     DEFINE_STRING_PROPERTY(STR_QML_145, "Key Info (Air-Gapped)")
     DEFINE_STRING_PROPERTY(STR_QML_146, "The Key has been added successfully!")
@@ -191,7 +195,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_179, "Port")
     DEFINE_STRING_PROPERTY(STR_QML_180, "Proxy name")
     DEFINE_STRING_PROPERTY(STR_QML_181, "Proxy password")
-    DEFINE_STRING_PROPERTY(STR_QML_182, "If you switch to Core for the first time and your wallet has a history, a blockchain rescan would be needed to reconstruct the wallet. This process might take some time.")
+    DEFINE_STRING_PROPERTY(STR_QML_182, "If you switch to Core for the first time and your wallet has a history, a blockchain rescan would be needed to "
+                                        "reconstruct the wallet. This process might take some time.")
     DEFINE_STRING_PROPERTY(STR_QML_183, "RPC host")
     DEFINE_STRING_PROPERTY(STR_QML_184, "RPC Port")
     DEFINE_STRING_PROPERTY(STR_QML_185, "RPC username")
@@ -210,7 +215,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_198, "Change addresses")
     DEFINE_STRING_PROPERTY(STR_QML_199, "Unused address (%1)")
     DEFINE_STRING_PROPERTY(STR_QML_200, "Used address (%1)")
-    DEFINE_STRING_PROPERTY(STR_QML_201, "An address is marked as used as soon as money is deposited into it. For better privacy, reusing addresses is not recommended.")
+    DEFINE_STRING_PROPERTY(STR_QML_201,
+                           "An address is marked as used as soon as money is deposited into it. For better privacy, reusing addresses is not recommended.")
     DEFINE_STRING_PROPERTY(STR_QML_202, "Generate new address")
     DEFINE_STRING_PROPERTY(STR_QML_203, "UNUSED")
     DEFINE_STRING_PROPERTY(STR_QML_204, "USED")
@@ -237,7 +243,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_224, "AMT")
     DEFINE_STRING_PROPERTY(STR_QML_225, "Customize fee setting")
     DEFINE_STRING_PROPERTY(STR_QML_226, "Subtract fee from send amount")
-    DEFINE_STRING_PROPERTY(STR_QML_227, "The fee will be deducted from the amount being sent. The recipient will receive less bitcoins than you enter in the amount field.")
+    DEFINE_STRING_PROPERTY(STR_QML_227,
+                           "The fee will be deducted from the amount being sent. The recipient will receive less bitcoins than you enter in the amount field.")
     DEFINE_STRING_PROPERTY(STR_QML_228, "Manual fee rate")
     DEFINE_STRING_PROPERTY(STR_QML_229, "You may bump the fee rate later using Replace By Fee.")
     DEFINE_STRING_PROPERTY(STR_QML_230, "The new fee rate needs to be higher than %1.")
@@ -281,7 +288,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_267, "Key name")
     DEFINE_STRING_PROPERTY(STR_QML_268, "Set a passphrase (optional)")
     DEFINE_STRING_PROPERTY(STR_QML_268_PKEY, "Set a passphrase")
-    DEFINE_STRING_PROPERTY(STR_QML_269, "Passphrase adds another layer of security to your key. You will need to enter the passphrase every time you sign using this key. You can think of it as the 25th word of your seed phrase. Passphrase is optional.")
+    DEFINE_STRING_PROPERTY(STR_QML_269, "Passphrase adds another layer of security to your key. You will need to enter the passphrase every time you sign "
+                                        "using this key. You can think of it as the 25th word of your seed phrase. Passphrase is optional.")
     DEFINE_STRING_PROPERTY(STR_QML_270, "<b>Passphrase</b>")
     DEFINE_STRING_PROPERTY(STR_QML_271, "Confirm passphrase")
     DEFINE_STRING_PROPERTY(STR_QML_272, "Please back up your passphrase along with the seed. You will need both to recover your key.")
@@ -328,7 +336,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_313, "UNSPENT OUTPUT")
     DEFINE_STRING_PROPERTY(STR_QML_314, "CONFIRMATIONS")
     DEFINE_STRING_PROPERTY(STR_QML_315, "UTXO Data")
-    DEFINE_STRING_PROPERTY(STR_QML_316, "Coldcard requires a multisig configuration file before it can sign transactions. Please choose \"Export\" > \"Export To Coldcard\", then copy the resulting file over to Coldcard.")
+    DEFINE_STRING_PROPERTY(STR_QML_316, "Coldcard requires a multisig configuration file before it can sign transactions. Please choose \"Export\" > \"Export "
+                                        "To Coldcard\", then copy the resulting file over to Coldcard.")
     DEFINE_STRING_PROPERTY(STR_QML_317, "Wallet name")
     DEFINE_STRING_PROPERTY(STR_QML_318, "Wallet description")
     DEFINE_STRING_PROPERTY(STR_QML_319, "Wallet type")
@@ -346,7 +355,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_332, "Delete wallet")
     DEFINE_STRING_PROPERTY(STR_QML_333, "*Export data do not include seeds or private keys.")
     DEFINE_STRING_PROPERTY(STR_QML_334, "Confirmation")
-    DEFINE_STRING_PROPERTY(STR_QML_335, "Once you delete the wallet, all your data (and metadata such as transaction private notes) will be gone. We recommend backing up the wallet descriptors or database, if you want to recover the wallet later.")
+    DEFINE_STRING_PROPERTY(STR_QML_335, "Once you delete the wallet, all your data (and metadata such as transaction private notes) will be gone. We recommend "
+                                        "backing up the wallet descriptors or database, if you want to recover the wallet later.")
     DEFINE_STRING_PROPERTY(STR_QML_336, "Assign key")
     DEFINE_STRING_PROPERTY(STR_QML_337, "Assign at least 1 key to the wallet")
     DEFINE_STRING_PROPERTY(STR_QML_338, "slot left in the wallet")
@@ -355,7 +365,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_341, "Got it")
     DEFINE_STRING_PROPERTY(STR_QML_342, "Backup")
     DEFINE_STRING_PROPERTY(STR_QML_343, "Please save your wallet configuration")
-    DEFINE_STRING_PROPERTY(STR_QML_344, "Losing the wallet configuration file alone does not compromise your funds, but you should still keep it safe to protect your privacy, as whoever has the configuration can monitor transactions in the wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_344, "Losing the wallet configuration file alone does not compromise your funds, but you should still keep it safe to "
+                                        "protect your privacy, as whoever has the configuration can monitor transactions in the wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_345, "Tip: you need both the keys and the configuration to perform a wallet recovery.")
     DEFINE_STRING_PROPERTY(STR_QML_346, "I'll do this later")
     DEFINE_STRING_PROPERTY(STR_QML_347, "Export wallet configuration")
@@ -432,8 +443,11 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_418, "Forgot password?")
     DEFINE_STRING_PROPERTY(STR_QML_419, "Sign in")
     DEFINE_STRING_PROPERTY(STR_QML_420, "Continue as guest")
-    DEFINE_STRING_PROPERTY(STR_QML_421, "By creating an account or continuing as guest, you agree to our <a href='%1'>Terms and Conditions</a> and <a href='%2'>Privacy Policy</a>")
-    DEFINE_STRING_PROPERTY(STR_QML_422, "We have created an account for you at <b>%1</b> and sent a temporary password to this email. Please change your password. <a href='%1'>Resend password</a>.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_421,
+        "By creating an account or continuing as guest, you agree to our <a href='%1'>Terms and Conditions</a> and <a href='%2'>Privacy Policy</a>")
+    DEFINE_STRING_PROPERTY(STR_QML_422, "We have created an account for you at <b>%1</b> and sent a temporary password to this email. Please change your "
+                                        "password. <a href='%1'>Resend password</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_423, "Account does not exist")
     DEFINE_STRING_PROPERTY(STR_QML_424, "Enter confirmation code")
     DEFINE_STRING_PROPERTY(STR_QML_425, "Enter the confirmation code we sent to your email. <a href='dummycode.tbd'>Resend code</a>")
@@ -486,7 +500,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_471, "No name")
     DEFINE_STRING_PROPERTY(STR_QML_472, "Members")
     DEFINE_STRING_PROPERTY(STR_QML_473, "Would you like to create a collaborative wallet?")
-    DEFINE_STRING_PROPERTY(STR_QML_474, "A collaborative wallet is one of the safest ways to store your bitcoin because it eliminates single points of failure. Want to learn more about collaborative wallets? <a href='%1'>Read our guide.</a>")
+    DEFINE_STRING_PROPERTY(STR_QML_474, "A collaborative wallet is one of the safest ways to store your bitcoin because it eliminates single points of "
+                                        "failure. Want to learn more about collaborative wallets? <a href='%1'>Read our guide.</a>")
     DEFINE_STRING_PROPERTY(STR_QML_475, "No, thanks")
     DEFINE_STRING_PROPERTY(STR_QML_476, "Create a collaborative wallet")
     DEFINE_STRING_PROPERTY(STR_QML_477, "Delivered")
@@ -595,7 +610,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_587, "Please name your wallet")
     DEFINE_STRING_PROPERTY(STR_QML_588, "Developer settings")
     DEFINE_STRING_PROPERTY(STR_QML_589, "Debug mode")
-    DEFINE_STRING_PROPERTY(STR_QML_590, "You might not be able to read encrypted messages from the original device. A Device Verification feature will allow you to do so in the feature. Follow us on Twitter for updates.")
+    DEFINE_STRING_PROPERTY(STR_QML_590, "You might not be able to read encrypted messages from the original device. A Device Verification feature will allow "
+                                        "you to do so in the feature. Follow us on Twitter for updates.")
     DEFINE_STRING_PROPERTY(STR_QML_591, "Type contact's email or username")
     DEFINE_STRING_PROPERTY(STR_QML_592, "Get started")
     DEFINE_STRING_PROPERTY(STR_QML_593, "Multi-device sync (experimental)")
@@ -604,7 +620,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_596, "Ok")
     DEFINE_STRING_PROPERTY(STR_QML_597, "Guest mode")
     DEFINE_STRING_PROPERTY(STR_QML_598, "Guest mode allows you to create keys and wallets without an account. Please consider the following before using-")
-    DEFINE_STRING_PROPERTY(STR_QML_599, "Keys and wallets created in guest mode are stored locally. They will not be removed until you manually delete them or uninstall the app.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_599, "Keys and wallets created in guest mode are stored locally. They will not be removed until you manually delete them or uninstall the app.")
     DEFINE_STRING_PROPERTY(STR_QML_600, "Messaging and collaborative multisig wallets (*) are currently not available in guest mode.")
     DEFINE_STRING_PROPERTY(STR_QML_601, "*A collaborative multisig wallet is a wallet where you co-manage bitcoin with other people.")
     DEFINE_STRING_PROPERTY(STR_QML_602, "Send a message")
@@ -635,7 +652,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_627, "Do more with Nunchuk")
     DEFINE_STRING_PROPERTY(STR_QML_628, "Create an account or sign in to unlock push notifications, multiple group wallets, and more.")
     DEFINE_STRING_PROPERTY(STR_QML_629, "Primary Key account")
-    DEFINE_STRING_PROPERTY(STR_QML_630, "A Primary Key is a dual-purpose key that can be used both for account-based authentication and for signing Bitcoin transactions.")
+    DEFINE_STRING_PROPERTY(STR_QML_630,
+                           "A Primary Key is a dual-purpose key that can be used both for account-based authentication and for signing Bitcoin transactions.")
     DEFINE_STRING_PROPERTY(STR_QML_631, "A Primary Key account is an account that does not require any personal information, including email addresses.")
     DEFINE_STRING_PROPERTY(STR_QML_632, "Sign in remotely via QR")
     DEFINE_STRING_PROPERTY(STR_QML_633, "Sign in manually")
@@ -647,7 +665,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_639, "The default username is the fingerprint (XFP) of your Primary Key. You can change this to something else.")
     DEFINE_STRING_PROPERTY(STR_QML_640, "Username")
     DEFINE_STRING_PROPERTY(STR_QML_641, "Primary Key")
-    DEFINE_STRING_PROPERTY(STR_QML_642, "Are you sure you don't want a passphrase? A Primary Key without a passphrase means that your account is unprotected. Anyone who has access to your device can access all your data, including your wallets.")
+    DEFINE_STRING_PROPERTY(STR_QML_642, "Are you sure you don't want a passphrase? A Primary Key without a passphrase means that your account is unprotected. "
+                                        "Anyone who has access to your device can access all your data, including your wallets.")
     DEFINE_STRING_PROPERTY(STR_QML_643, "Sign in via Primary Key")
     DEFINE_STRING_PROPERTY(STR_QML_644, "Please enter the seed phrase.")
     DEFINE_STRING_PROPERTY(STR_QML_645, "Passphrase")
@@ -663,22 +682,30 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_655, "Add or sign in remotely")
     DEFINE_STRING_PROPERTY(STR_QML_656, "Primary Key name")
     DEFINE_STRING_PROPERTY(STR_QML_657, "Replace Primary Key")
-    DEFINE_STRING_PROPERTY(STR_QML_658, "A Primary Key is a dual-purpose key that can be used both for account-based authentication and for signing Bitcoin transactions. Please note the following:")
-    DEFINE_STRING_PROPERTY(STR_QML_659, "If you choose to proceed, your Primary Key will be replaced with a new one. Your current Primary Key will be downgraded to a regular key.")
-    DEFINE_STRING_PROPERTY(STR_QML_660, "If you have assigned the current Primary Key to any wallets, those wallets will remain unchanged. You will need the existing key in order to sign transactions in those wallets. Please do not delete it if there is still a balance.")
+    DEFINE_STRING_PROPERTY(STR_QML_658, "A Primary Key is a dual-purpose key that can be used both for account-based authentication and for signing Bitcoin "
+                                        "transactions. Please note the following:")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_659,
+        "If you choose to proceed, your Primary Key will be replaced with a new one. Your current Primary Key will be downgraded to a regular key.")
+    DEFINE_STRING_PROPERTY(STR_QML_660, "If you have assigned the current Primary Key to any wallets, those wallets will remain unchanged. You will need the "
+                                        "existing key in order to sign transactions in those wallets. Please do not delete it if there is still a balance.")
     DEFINE_STRING_PROPERTY(STR_QML_626_, "Receive address")
     DEFINE_STRING_PROPERTY(STR_QML_661, "Warning")
     DEFINE_STRING_PROPERTY(STR_QML_662, "Deleting this collaborative wallet will also delete the corresponding chat. Are you sure you want to delete?")
     DEFINE_STRING_PROPERTY(STR_QML_663, "Could not change the passhrase for database")
     DEFINE_STRING_PROPERTY(STR_QML_664, "Change the passhrase for database successfully!")
-    DEFINE_STRING_PROPERTY(STR_QML_665, "Passphrase adds another layer of security to your key. You will need to enter the passphrase every time you use this key. You can think of it as the 25th word of your seed phrase.")
+    DEFINE_STRING_PROPERTY(STR_QML_665, "Passphrase adds another layer of security to your key. You will need to enter the passphrase every time you use this "
+                                        "key. You can think of it as the 25th word of your seed phrase.")
     DEFINE_STRING_PROPERTY(STR_QML_666, "We strongly recommend adding a passphrase for your Primary Key.")
     DEFINE_STRING_PROPERTY(STR_QML_667, "Wrong passphrase")
     DEFINE_STRING_PROPERTY(STR_QML_668, "Copied to clipboard")
-    DEFINE_STRING_PROPERTY(STR_QML_669, "Neither this account nor this key has a passphrase. Anyone who has access to your device can use this key to sign malicious transactions.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_669,
+        "Neither this account nor this key has a passphrase. Anyone who has access to your device can use this key to sign malicious transactions.")
     DEFINE_STRING_PROPERTY(STR_QML_670, "I understand the risk")
     DEFINE_STRING_PROPERTY(STR_QML_671, "Could not create account")
-    DEFINE_STRING_PROPERTY(STR_QML_672, "Are you sure you want to delete this account? All your keys and wallets will be removed. Please make sure that you have backups.")
+    DEFINE_STRING_PROPERTY(STR_QML_672,
+                           "Are you sure you want to delete this account? All your keys and wallets will be removed. Please make sure that you have backups.")
     DEFINE_STRING_PROPERTY(STR_QML_673, "Please type DELETE to confirm.")
     DEFINE_STRING_PROPERTY(STR_QML_674, "Export wallet to BitBox")
     DEFINE_STRING_PROPERTY(STR_QML_675, "Encrypted")
@@ -695,7 +722,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_686, "Force refresh (advanced)")
     DEFINE_STRING_PROPERTY(STR_QML_687, "Are you sure you want to sign this transaction")
     DEFINE_STRING_PROPERTY(STR_QML_688, "Please use the mobile app to sign with this key.")
-    DEFINE_STRING_PROPERTY(STR_QML_689_free, "Are you sure you want to perform a force refresh? This process will clear this wallet's existing data (including notes and pending transactions) and attempt to re-sync it with the blockchain.")
+    DEFINE_STRING_PROPERTY(STR_QML_689_free, "Are you sure you want to perform a force refresh? This process will clear this wallet's existing data (including "
+                                             "notes and pending transactions) and attempt to re-sync it with the blockchain.")
     DEFINE_STRING_PROPERTY(STR_QML_689, "Are you sure you want to perform a force refresh?")
     DEFINE_STRING_PROPERTY(STR_QML_690, "The wallet has been refreshed")
     DEFINE_STRING_PROPERTY(STR_QML_691, "Copy transaction ID")
@@ -710,8 +738,10 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_700, "Order new hardware")
     DEFINE_STRING_PROPERTY(STR_QML_701, "Support")
     DEFINE_STRING_PROPERTY(STR_QML_702, "Emergency")
-    DEFINE_STRING_PROPERTY(STR_QML_703, "If you feel that there is an imminent threat or just want to disable wallet access \\n temporarily, you can activate the emergency lockdown. Please note the following:")
-    DEFINE_STRING_PROPERTY(STR_QML_704, "Once you have entered the lockdown, no one—including yourself—will be able to \\n sign in to your account and access your wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_703, "If you feel that there is an imminent threat or just want to disable wallet access \\n temporarily, you can activate "
+                                        "the emergency lockdown. Please note the following:")
+    DEFINE_STRING_PROPERTY(STR_QML_704,
+                           "Once you have entered the lockdown, no one—including yourself—will be able to \\n sign in to your account and access your wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_705, "There is no way to end the lockdown early.")
     DEFINE_STRING_PROPERTY(STR_QML_706, "Access will be automatically re-enabled once the lockdown period ends.")
     DEFINE_STRING_PROPERTY(STR_QML_707, "Get additional wallets")
@@ -726,8 +756,10 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_719, "Please answer the following question. Answer is case-sensitive.")
     DEFINE_STRING_PROPERTY(STR_QML_720, "Your account is now under lockdown")
     DEFINE_STRING_PROPERTY(STR_QML_721, "The lockdown will last <b>%1</b>.")
-    DEFINE_STRING_PROPERTY(STR_QML_722, "If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \\n TAPSIGNER's private key using the encrypted backup from the server. Please note the \\n following:")
-    DEFINE_STRING_PROPERTY(STR_QML_723, "Once you have entered the lockdown, no one—including yourself—will \\n be able to sign in to your account and access your wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_722, "If you lost a TAPSIGNER or the card malfunctions, this procedure will recover the \\n TAPSIGNER's private key using "
+                                        "the encrypted backup from the server. Please note the \\n following:")
+    DEFINE_STRING_PROPERTY(STR_QML_723,
+                           "Once you have entered the lockdown, no one—including yourself—will \\n be able to sign in to your account and access your wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_724, "There is no way to end the lockdown early.")
     DEFINE_STRING_PROPERTY(STR_QML_725, "Enter Backup Password")
     DEFINE_STRING_PROPERTY(STR_QML_726, "Please enter the Backup Password for [<b>%1</b>] (card ID: <b>••%2</b>).")
@@ -736,16 +768,21 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_728, "The key recovery procedure currently only supports TAPSIGNER.")
     DEFINE_STRING_PROPERTY(STR_QML_729, "Please select the TAPSIGNER you want to recover")
     DEFINE_STRING_PROPERTY(STR_QML_730, "TAPSIGNER recovered")
-    DEFINE_STRING_PROPERTY(STR_QML_731, "Your TAPSIGNER's private key has been successfully recovered and \\n converted into a software key. Please note the following:")
+    DEFINE_STRING_PROPERTY(STR_QML_731,
+                           "Your TAPSIGNER's private key has been successfully recovered and \\n converted into a software key. Please note the following:")
     DEFINE_STRING_PROPERTY(STR_QML_732, "The software key is stored on this device")
     DEFINE_STRING_PROPERTY(STR_QML_733, "You can continue signing transactions using this software key")
-    DEFINE_STRING_PROPERTY(STR_QML_734, "If you suspect that someone has gained possession of the key, we recommend that you roll \\n over your balance to a new wallet.")
-    DEFINE_STRING_PROPERTY(STR_QML_735, "You can order new hardware by using the referral links on our website. Sign in and navigate to the Hardware Replacement page.")
+    DEFINE_STRING_PROPERTY(STR_QML_734,
+                           "If you suspect that someone has gained possession of the key, we recommend that you roll \\n over your balance to a new wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_735,
+                           "You can order new hardware by using the referral links on our website. Sign in and navigate to the Hardware Replacement page.")
     DEFINE_STRING_PROPERTY(STR_QML_736, "Inheritance planning")
     DEFINE_STRING_PROPERTY(STR_QML_737, "Claim an inheritance")
     DEFINE_STRING_PROPERTY(STR_QML_738, "Platform key co-signing policies")
     DEFINE_STRING_PROPERTY(STR_QML_739, "TAPSIGNER has been recovered.")
-    DEFINE_STRING_PROPERTY(STR_QML_740, "The password is printed on the back of the TAPSIGNER. You should have had a copy of this \\n when setting up the TAPSIGNER for the first time.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_740,
+        "The password is printed on the back of the TAPSIGNER. You should have had a copy of this \\n when setting up the TAPSIGNER for the first time.")
     DEFINE_STRING_PROPERTY(STR_QML_741, "Local currency (%1)")
     DEFINE_STRING_PROPERTY(STR_QML_742, "Local currency")
     DEFINE_STRING_PROPERTY(STR_QML_743, "Need support? Chat with an expert")
@@ -755,20 +792,24 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_747, "Claim inheritance")
     DEFINE_STRING_PROPERTY(STR_QML_748, "Please enter the Magic Phrase and Backup Password")
     DEFINE_STRING_PROPERTY(STR_QML_749, "Magic Phrase")
-    DEFINE_STRING_PROPERTY(STR_QML_750, "It looks like the original subscription has expired for more than 3 years. To claim the inheritance, please reactivate the plan first by visiting nunchuk.io/claim.")
+    DEFINE_STRING_PROPERTY(STR_QML_750, "It looks like the original subscription has expired for more than 3 years. To claim the inheritance, please "
+                                        "reactivate the plan first by visiting nunchuk.io/claim.")
     DEFINE_STRING_PROPERTY(STR_QML_751, "Take me to reactivate the plan")
     DEFINE_STRING_PROPERTY(STR_QML_752, "Your inheritance plan has not been activated yet. Please try again later.")
     DEFINE_STRING_PROPERTY(STR_QML_753, "Become a subscriber to get access to our services.")
     DEFINE_STRING_PROPERTY(STR_QML_754, "Get more out of Nunchuk with an assisted wallet")
     DEFINE_STRING_PROPERTY(STR_QML_755, "Here are some of the things that you can do with an assisted wallet:")
     DEFINE_STRING_PROPERTY(STR_QML_756, "No single point of failure")
-    DEFINE_STRING_PROPERTY(STR_QML_757, "Eliminate single points of failure by using multisig: two keys are always required for spending. The loss of any one key will not compromise your funds.")
-    DEFINE_STRING_PROPERTY(STR_QML_759, "Plan your inheritance in a non-custodial way and ensure that your bitcoins can be safely passed on to your loved ones. Compatible with existing estate plans.")
+    DEFINE_STRING_PROPERTY(STR_QML_757, "Eliminate single points of failure by using multisig: two keys are always required for spending. The loss of any one "
+                                        "key will not compromise your funds.")
+    DEFINE_STRING_PROPERTY(STR_QML_759, "Plan your inheritance in a non-custodial way and ensure that your bitcoins can be safely passed on to your loved "
+                                        "ones. Compatible with existing estate plans.")
     DEFINE_STRING_PROPERTY(STR_QML_762, "Lock your wallet access when there is a security threat or when you go off the grid.")
     DEFINE_STRING_PROPERTY(STR_QML_763, "Flexible spending policies")
     DEFINE_STRING_PROPERTY(STR_QML_764, "Set up scheduled payments, extra security measures when withdrawing large amounts of bitcoins, and more.")
     DEFINE_STRING_PROPERTY(STR_QML_765, "Cloud backups and assisted recovery")
-    DEFINE_STRING_PROPERTY(STR_QML_766, "Have peace of mind knowing that your wallet backups are encrypted and stored securely in the cloud. Assisted recovery is a breeze.")
+    DEFINE_STRING_PROPERTY(STR_QML_766,
+                           "Have peace of mind knowing that your wallet backups are encrypted and stored securely in the cloud. Assisted recovery is a breeze.")
     DEFINE_STRING_PROPERTY(STR_QML_767, "In-app chat support")
     DEFINE_STRING_PROPERTY(STR_QML_768, "Chat to an expert directly within the app when you run into issues.")
     DEFINE_STRING_PROPERTY(STR_QML_770, "Tell me more")
@@ -809,7 +850,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_804, "Continue to save changes")
     DEFINE_STRING_PROPERTY(STR_QML_805, "Discard changes")
     DEFINE_STRING_PROPERTY(STR_QML_806, "Increasing the co-signing spending limit requires signing a dummy transaction. Please do so via the mobile app.")
-    DEFINE_STRING_PROPERTY(STR_QML_807, "The estimated fee is calculated using current market conditions. You can set your own fee by toggling the customize fee setting.")
+    DEFINE_STRING_PROPERTY(STR_QML_807,
+                           "The estimated fee is calculated using current market conditions. You can set your own fee by toggling the customize fee setting.")
     DEFINE_STRING_PROPERTY(STR_QML_808, "Please set a delay that is less than 168 hours.")
     DEFINE_STRING_PROPERTY(STR_QML_809, "Transactions with fee too low might get kicked out of the mempool. Are you sure you want to continue?")
     DEFINE_STRING_PROPERTY(STR_QML_810, "Add Ledger to your assisted wallet")
@@ -824,7 +866,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_819, "Follow Ledger's instruction on how to set up your device with a seed phrase.")
     DEFINE_STRING_PROPERTY(STR_QML_820, "To unlock the device, you might need to enter a PIN and/or a PASSPHRASE directly on the device screen.")
     DEFINE_STRING_PROPERTY(STR_QML_821, "Install the Bitcoin app")
-    DEFINE_STRING_PROPERTY(STR_QML_822, "If you haven't already, install the Bitcoin (BTC) app on the Ledger device. Please refer to <a href='%1' style=\"color:#031F2B\">Ledger's guide</a>.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_822,
+        "If you haven't already, install the Bitcoin (BTC) app on the Ledger device. Please refer to <a href='%1' style=\"color:#031F2B\">Ledger's guide</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_824, "Please ensure that the Ledger device is connected to this computer, and click on Refresh.")
     DEFINE_STRING_PROPERTY(STR_QML_825, "Configure gap limit (advanced)")
     DEFINE_STRING_PROPERTY(STR_QML_826, "Adding Ledger... Please keep your device connected.")
@@ -842,8 +886,11 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_838, "Which wallet do you want to select?")
     DEFINE_STRING_PROPERTY(STR_QML_839, "This feature is only available with an assisted wallet. Please create one first.")
     DEFINE_STRING_PROPERTY(STR_QML_840, "No Trezor devices have been detected. Please try again.")
-    DEFINE_STRING_PROPERTY(STR_QML_841, "You have <b>%1</b> remaining assisted wallets. You can get additional wallets through our website. Sign in and navigate to the Plan and Invoices page.")
-    DEFINE_STRING_PROPERTY(STR_QML_842, "You have <b>%1</b> remaining assisted wallet. You can get additional wallet through our website. Sign in and navigate to the Plan and Invoices page.")
+    DEFINE_STRING_PROPERTY(STR_QML_841, "You have <b>%1</b> remaining assisted wallets. You can get additional wallets through our website. Sign in and "
+                                        "navigate to the Plan and Invoices page.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_842,
+        "You have <b>%1</b> remaining assisted wallet. You can get additional wallet through our website. Sign in and navigate to the Plan and Invoices page.")
     DEFINE_STRING_PROPERTY(STR_QML_843, "Review your plan")
     DEFINE_STRING_PROPERTY(STR_QML_844, "Cancel inheritance plan")
     DEFINE_STRING_PROPERTY(STR_QML_845, "Wallet subject to inheritance:")
@@ -856,7 +903,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_852, "Nofication preferences")
     DEFINE_STRING_PROPERTY(STR_QML_853, "Continue to finalize changes")
     DEFINE_STRING_PROPERTY(STR_QML_854, "Set up an Activation Date")
-    DEFINE_STRING_PROPERTY(STR_QML_855, "<b>Only on or after this date</b>, a Beneficiary or Trustee can claim the inheritance. \\n You can change the Activation Date later via the Services tab.")
+    DEFINE_STRING_PROPERTY(STR_QML_855, "<b>Only on or after this date</b>, a Beneficiary or Trustee can claim the inheritance. \\n You can change the "
+                                        "Activation Date later via the Services tab.")
     DEFINE_STRING_PROPERTY(STR_QML_856, "Even with the correct Magic Phrase and Backup Password, one cannot claim the inheritance before this date.")
     DEFINE_STRING_PROPERTY(STR_QML_857, "Update activation date")
     DEFINE_STRING_PROPERTY(STR_QML_858, "Would you like to leave a message?")
@@ -864,13 +912,19 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_860, "Note")
     DEFINE_STRING_PROPERTY(STR_QML_861, "Update message")
     DEFINE_STRING_PROPERTY(STR_QML_862, "Set up buffer period")
-    DEFINE_STRING_PROPERTY(STR_QML_863, "A buffer period is extra time that you can add after the claimant has provided \\n the secrets and before the inheritance can be claimed. The buffer period \\n helps you prevent unauthorized claims. \\n \\n An email notification will be sent when the buffer period begins.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_863,
+        "A buffer period is extra time that you can add after the claimant has provided \\n the secrets and before the inheritance can be claimed. The buffer "
+        "period \\n helps you prevent unauthorized claims. \\n \\n An email notification will be sent when the buffer period begins.")
     DEFINE_STRING_PROPERTY(STR_QML_864, "Update buffer period")
     DEFINE_STRING_PROPERTY(STR_QML_865, "Notification preferences")
-    DEFINE_STRING_PROPERTY(STR_QML_866, "On the Activation Date, would you like us to notify the Beneficiary or Trustee of the inheritance plan? If so, please provide an email address.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_866,
+        "On the Activation Date, would you like us to notify the Beneficiary or Trustee of the inheritance plan? If so, please provide an email address.")
     DEFINE_STRING_PROPERTY(STR_QML_867, "Beneficiary's or Trustee's email address")
     DEFINE_STRING_PROPERTY(STR_QML_868, "Also notify them today")
-    DEFINE_STRING_PROPERTY(STR_QML_869, "You are still personally responsible for sharing the Magic Phrase and Backup Password with the Beneficiary or Trustee. The notification email won't include these information.")
+    DEFINE_STRING_PROPERTY(STR_QML_869, "You are still personally responsible for sharing the Magic Phrase and Backup Password with the Beneficiary or "
+                                        "Trustee. The notification email won't include these information.")
     DEFINE_STRING_PROPERTY(STR_QML_870, "Update notification preferences")
     DEFINE_STRING_PROPERTY(STR_QML_871, "I don't want any notifications")
     DEFINE_STRING_PROPERTY(STR_QML_872, "Are you sure want to discard the changes?")
@@ -880,21 +934,32 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_877, "7-day buffer")
     DEFINE_STRING_PROPERTY(STR_QML_878, "I don't need a buffer period")
     DEFINE_STRING_PROPERTY(STR_QML_879, "Recommended")
-    DEFINE_STRING_PROPERTY(STR_QML_880, "The Magic Phrase and Backup Password must be shared with the party or \\n parties eligible for the inheritance. Please select your option:")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_880,
+        "The Magic Phrase and Backup Password must be shared with the party or \\n parties eligible for the inheritance. Please select your option:")
     DEFINE_STRING_PROPERTY(STR_QML_881, "Direct inheritance")
-    DEFINE_STRING_PROPERTY(STR_QML_882, "The Beneficiary has full control over the inheritance. Upon the \\n Activation Date, they can claim the inheritance for themselves.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_882, "The Beneficiary has full control over the inheritance. Upon the \\n Activation Date, they can claim the inheritance for themselves.")
     DEFINE_STRING_PROPERTY(STR_QML_883, "Indirect inheritance")
-    DEFINE_STRING_PROPERTY(STR_QML_884, "A Trustee has full control over the inheritance. Upon the Activation \\n Date, the Trustee can help the Beneficiary claim the inheritance on their behalf.")
+    DEFINE_STRING_PROPERTY(STR_QML_884, "A Trustee has full control over the inheritance. Upon the Activation \\n Date, the Trustee can help the Beneficiary "
+                                        "claim the inheritance on their behalf.")
     DEFINE_STRING_PROPERTY(STR_QML_885, "Joint control")
-    DEFINE_STRING_PROPERTY(STR_QML_886, "The Beneficiary and the Trustee have joint control over the \\n inheritance. Upon the Activation Date, the Beneficiary and Trustee \\n will need to combine their secrets in order to claim the \\n inheritance.")
+    DEFINE_STRING_PROPERTY(STR_QML_886, "The Beneficiary and the Trustee have joint control over the \\n inheritance. Upon the Activation Date, the "
+                                        "Beneficiary and Trustee \\n will need to combine their secrets in order to claim the \\n inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_887, "Please share these two secrets with the \\n Beneficiary:")
     DEFINE_STRING_PROPERTY(STR_QML_888, "The plan's Magic Phrase.")
-    DEFINE_STRING_PROPERTY(STR_QML_889, "The Backup Password for the encrypted \\n backup, which can be found on the back of \\n the TAPSIGNER designated for inheritance. \\n (It might be listed under “Backup key”).")
-    DEFINE_STRING_PROPERTY(STR_QML_890, "You are solely responsible for sharing \\n the Magic Phrase and Backup \\n Password with the Beneficiary. Failure to \\n share will result in the inheritance \\n being unclaimable.")
+    DEFINE_STRING_PROPERTY(STR_QML_889, "The Backup Password for the encrypted \\n backup, which can be found on the back of \\n the TAPSIGNER designated for "
+                                        "inheritance. \\n (It might be listed under “Backup key”).")
+    DEFINE_STRING_PROPERTY(STR_QML_890, "You are solely responsible for sharing \\n the Magic Phrase and Backup \\n Password with the Beneficiary. Failure to "
+                                        "\\n share will result in the inheritance \\n being unclaimable.")
     DEFINE_STRING_PROPERTY(STR_QML_891, "Please share these two secrets with the Trustee:")
-    DEFINE_STRING_PROPERTY(STR_QML_892, "<b></b>Please share one secret with the Beneficiary and \\n the other secret with the Trustee. <b>Neither party \\n should have both secrets.</b>")
-    DEFINE_STRING_PROPERTY(STR_QML_893, "You are solely responsible for sharing the Magic Phrase and Backup \\n Password with the Trustee. Failure to \\n share will result in the inheritance \\n being unclaimable.")
-    DEFINE_STRING_PROPERTY(STR_QML_894, "You are solely responsible for sharing \\n the Magic Phrase and Backup \\n Password with the Beneficiary and the \\n Trustee. Failure to share will result in \\n the inheritance being unclaimable.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_892,
+        "<b></b>Please share one secret with the Beneficiary and \\n the other secret with the Trustee. <b>Neither party \\n should have both secrets.</b>")
+    DEFINE_STRING_PROPERTY(STR_QML_893, "You are solely responsible for sharing the Magic Phrase and Backup \\n Password with the Trustee. Failure to \\n "
+                                        "share will result in the inheritance \\n being unclaimable.")
+    DEFINE_STRING_PROPERTY(STR_QML_894, "You are solely responsible for sharing \\n the Magic Phrase and Backup \\n Password with the Beneficiary and the \\n "
+                                        "Trustee. Failure to share will result in \\n the inheritance being unclaimable.")
     DEFINE_STRING_PROPERTY(STR_QML_895, "This transaction includes unconfirmed coins.")
     DEFINE_STRING_PROPERTY(STR_QML_897, "Canceling the inheritance requires signing a dummy transaction. Please do so via the mobile app.")
     DEFINE_STRING_PROPERTY(STR_QML_898, "Wired")
@@ -926,7 +991,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_924, "It looks like you want to add BitBox as a hardware key to an assisted wallet. Would you like to do it now?")
     DEFINE_STRING_PROPERTY(STR_QML_925, "We noticed that you already have a BitBox in your key manager")
     DEFINE_STRING_PROPERTY(STR_QML_926, "Follow BitBox's instruction on how to set up your device with a seed phrase.")
-    DEFINE_STRING_PROPERTY(STR_QML_927, "To unlock the device, you might need to use the BitBox's companion app. Please close the BitBox's companion app after you have unlocked the device.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_927,
+        "To unlock the device, you might need to use the BitBox's companion app. Please close the BitBox's companion app after you have unlocked the device.")
     DEFINE_STRING_PROPERTY(STR_QML_928, "No BitBox devices have been detected. Please try again.")
     DEFINE_STRING_PROPERTY(STR_QML_929, "Please ensure that the BitBox device is connected to this computer, and click on Refresh")
     DEFINE_STRING_PROPERTY(STR_QML_930, "Adding BitBox... Please keep your device connected")
@@ -982,8 +1049,10 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_976, "Last checked: More than 6 months ago")
     DEFINE_STRING_PROPERTY(STR_QML_977, "Last checked: More than 1 year ago")
     DEFINE_STRING_PROPERTY(STR_QML_978, "Health check procedure")
-    DEFINE_STRING_PROPERTY(STR_QML_979, "To complete a health check, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Please use the key that you want to health check to sign.")
-    DEFINE_STRING_PROPERTY(STR_QML_980, "The dummy transaction uses a fake input and does not move any of your real bitcoins. It will not be broadcast and will be immediately removed afterwards.")
+    DEFINE_STRING_PROPERTY(STR_QML_979, "To complete a health check, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own "
+                                        "wallet. Please use the key that you want to health check to sign.")
+    DEFINE_STRING_PROPERTY(STR_QML_980, "The dummy transaction uses a fake input and does not move any of your real bitcoins. It will not be broadcast and "
+                                        "will be immediately removed afterwards.")
     DEFINE_STRING_PROPERTY(STR_QML_981, "Sign dummy transaction")
     DEFINE_STRING_PROPERTY(STR_QML_982, "Health check procedure")
     DEFINE_STRING_PROPERTY(STR_QML_983, "This signer is connected")
@@ -991,9 +1060,11 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_985, "Cancel health check")
     DEFINE_STRING_PROPERTY(STR_QML_986, "Health check request has been canceled")
     DEFINE_STRING_PROPERTY(STR_QML_987, "Health check request sent")
-    DEFINE_STRING_PROPERTY(STR_QML_988, "The keyholders have been notified of the health check request. Once the request is completed, the health status will be updated in the group dashboard.")
+    DEFINE_STRING_PROPERTY(STR_QML_988, "The keyholders have been notified of the health check request. Once the request is completed, the health status will "
+                                        "be updated in the group dashboard.")
     DEFINE_STRING_PROPERTY(STR_QML_989, "Please register this wallet with your air-gapped device")
-    DEFINE_STRING_PROPERTY(STR_QML_990, "You must register this wallet with your air-gapped device before you can use it to sign transactions. \\n \\n Please do so by scanning the QR code on the next screen using your device.")
+    DEFINE_STRING_PROPERTY(STR_QML_990, "You must register this wallet with your air-gapped device before you can use it to sign transactions. \\n \\n Please "
+                                        "do so by scanning the QR code on the next screen using your device.")
     DEFINE_STRING_PROPERTY(STR_QML_991, "You must register this wallet with your COLDCARD before you can use it to sign transactions.")
     DEFINE_STRING_PROPERTY(STR_QML_992, "You must register this wallet with your BitBox before you can use it to sign transactions.")
     DEFINE_STRING_PROPERTY(STR_QML_993, "Show wallet QR code")
@@ -1011,9 +1082,11 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1003, "Byzantine")
     DEFINE_STRING_PROPERTY(STR_QML_1004, "Try signing again")
     DEFINE_STRING_PROPERTY(STR_QML_1005, "Register wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1006, "Looks like the health check has failed. Note that you might need to register the wallet with the device before it can be used to sign transactions. \\n \\n What would you like to do?")
+    DEFINE_STRING_PROPERTY(STR_QML_1006, "Looks like the health check has failed. Note that you might need to register the wallet with the device before it "
+                                         "can be used to sign transactions. \\n \\n What would you like to do?")
     DEFINE_STRING_PROPERTY(STR_QML_1007, "Accessing the wallet configuration")
-    DEFINE_STRING_PROPERTY(STR_QML_1008, "To access the wallet configuration file or export it to your device later, navigate to the wallet → View wallet config → Export.")
+    DEFINE_STRING_PROPERTY(STR_QML_1008,
+                           "To access the wallet configuration file or export it to your device later, navigate to the wallet → View wallet config → Export.")
     DEFINE_STRING_PROPERTY(STR_QML_1009, "Spending limit")
     DEFINE_STRING_PROPERTY(STR_QML_1010, "<b>%1</b> (%2) is requesting to make the following changes to the platform key co-signing policies.")
     DEFINE_STRING_PROPERTY(STR_QML_1011, "Continue (%1 signature%2 pending)")
@@ -1024,7 +1097,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1018, "Please claim your key by performing a key health check. Select your key and continue.")
     DEFINE_STRING_PROPERTY(STR_QML_1019, "Roll over to a new assisted wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1020, "Group wallets")
-    DEFINE_STRING_PROPERTY(STR_QML_1021, "Collaboratively create group wallets with others. Manage keys distributedly, control member access or chat privately.")
+    DEFINE_STRING_PROPERTY(STR_QML_1021,
+                           "Collaboratively create group wallets with others. Manage keys distributedly, control member access or chat privately.")
     DEFINE_STRING_PROPERTY(STR_QML_1022, "Services are currently not available for observers.")
     DEFINE_STRING_PROPERTY(STR_QML_1023, "Key security tip")
     DEFINE_STRING_PROPERTY(STR_QML_1024, "For maximum security, keep your keys geographically distributed.")
@@ -1034,20 +1108,28 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1028_bottom, "We've sent a code to <b>%1</b>. Please enter it above.")
     DEFINE_STRING_PROPERTY(STR_QML_1028_top, "We've sent a code to <b>%1</b>. Please enter it below.")
     DEFINE_STRING_PROPERTY(STR_QML_1029, "%1 is now under lockdown")
-    DEFINE_STRING_PROPERTY(STR_QML_1030, "The platform key will only co-sign transactions if the total amount spent has not \\n exceeded the spending limit. You can bypass the spending limit by signing transactions \\n using two of your own keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_1030, "The platform key will only co-sign transactions if the total amount spent has not \\n exceeded the spending limit. "
+                                         "You can bypass the spending limit by signing transactions \\n using two of your own keys.")
     DEFINE_STRING_PROPERTY(STR_QML_1031, "Member %1")
     DEFINE_STRING_PROPERTY(STR_QML_1032, "Apply the same limit to all members")
     DEFINE_STRING_PROPERTY(STR_QML_1033, "Lockdown in progress")
     DEFINE_STRING_PROPERTY(STR_QML_1034, "<b>%1</b> (%2) is requesting to cancel the inheritance plan for <b>%3:</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1035, "<b>%1</b> (%2) is requesting to create the inheritance plan for <b>%3:</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1036, "<b>%1</b> (%2) is requesting to make the following changes to the inheritance plan for <b>%3:</b>")
-    DEFINE_STRING_PROPERTY(STR_QML_1012, "To authorize the changes, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
-    DEFINE_STRING_PROPERTY(STR_QML_1013, "The dummy transaction uses a fake input and does not move any of your real bitcoins. It will not be broadcast and will be immediately removed afterwards.")
-    DEFINE_STRING_PROPERTY(STR_QML_1037, "To authorize the changes, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
-    DEFINE_STRING_PROPERTY(STR_QML_1038, "To authorize the inheritance planning request, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
-    DEFINE_STRING_PROPERTY(STR_QML_1039, "Two signatures are required to cancel the inheritance plan. \\n \\n In order to cancel the plan, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1012, "To authorize the changes, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own "
+                                         "wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
+    DEFINE_STRING_PROPERTY(STR_QML_1013, "The dummy transaction uses a fake input and does not move any of your real bitcoins. It will not be broadcast and "
+                                         "will be immediately removed afterwards.")
+    DEFINE_STRING_PROPERTY(STR_QML_1037,
+                           "To authorize the changes, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1038,
+                           "To authorize the inheritance planning request, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your "
+                           "own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
+    DEFINE_STRING_PROPERTY(STR_QML_1039, "Two signatures are required to cancel the inheritance plan. \\n \\n In order to cancel the plan, you will be asked "
+                                         "to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1040, "The dummy transaction will not be broadcast and will be immediately removed afterwards.")
-    DEFINE_STRING_PROPERTY(STR_QML_1041, "To authorize this recurring payment, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
+    DEFINE_STRING_PROPERTY(STR_QML_1041, "To authorize this recurring payment, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to "
+                                         "your own wallet. Since more than one signature is required, other keyholders in the group will also be notified.")
     DEFINE_STRING_PROPERTY(STR_QML_1042, "<b>%1</b> (%2) is requesting to set up the inheritance plan for <b>%3</b>.")
     DEFINE_STRING_PROPERTY(STR_QML_1043, "Note that the person in charge of the plan will be able to access sensitive data that unlocks the inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_1044, "Approve (%1 signature%2 pending)")
@@ -1060,21 +1142,26 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1050, "Add COLDCARD via a file")
     DEFINE_STRING_PROPERTY(STR_QML_1051, "Confirm recovery")
     DEFINE_STRING_PROPERTY(STR_QML_1052, "Key recovery request sent")
-    DEFINE_STRING_PROPERTY(STR_QML_1053, "For security, the key recovery request needs to be approved by at least another keyholder. Please resume once the request has been approved.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1053,
+        "For security, the key recovery request needs to be approved by at least another keyholder. Please resume once the request has been approved.")
     DEFINE_STRING_PROPERTY(STR_QML_1054, "Key recovery approved")
     DEFINE_STRING_PROPERTY(STR_QML_1055, "The keyholder can now continue with the key recovery process on their device.")
     DEFINE_STRING_PROPERTY(STR_QML_1056, "A recovery request for this key already exists.")
     DEFINE_STRING_PROPERTY(STR_QML_1057, "Key recovery requested")
-    DEFINE_STRING_PROPERTY(STR_QML_1058, "To approve the key recovery, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1058,
+                           "To approve the key recovery, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1059, "The inheritance plan has been set up")
     DEFINE_STRING_PROPERTY(STR_QML_1060, "Update security questions")
     DEFINE_STRING_PROPERTY(STR_QML_1061, "Set up security questions")
-    DEFINE_STRING_PROPERTY(STR_QML_1062, "Fill in the security questions and answers below. They will be used to prevent unauthorized access to security-sensitive features. Answers are case-sensitive.")
+    DEFINE_STRING_PROPERTY(STR_QML_1062, "Fill in the security questions and answers below. They will be used to prevent unauthorized access to "
+                                         "security-sensitive features. Answers are case-sensitive.")
     DEFINE_STRING_PROPERTY(STR_QML_1063, "Please write your question")
     DEFINE_STRING_PROPERTY(STR_QML_1064, "Confirm new security questions")
     DEFINE_STRING_PROPERTY(STR_QML_1065, "Recurring payments")
     DEFINE_STRING_PROPERTY(STR_QML_1066, "Add recurring payment")
-    DEFINE_STRING_PROPERTY(STR_QML_1067, "Recurring payments allow you to automatically create transactions that send bitcoins to a predefined destination wallet or addresses at scheduled intervals.")
+    DEFINE_STRING_PROPERTY(STR_QML_1067, "Recurring payments allow you to automatically create transactions that send bitcoins to a predefined destination "
+                                         "wallet or addresses at scheduled intervals.")
     DEFINE_STRING_PROPERTY(STR_QML_1068, "Add recurring payment")
     DEFINE_STRING_PROPERTY(STR_QML_1069, "Please name the payment.")
     DEFINE_STRING_PROPERTY(STR_QML_1070, "Use percentage")
@@ -1085,7 +1172,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1075, "How would you like the percentage to be calculated?")
     DEFINE_STRING_PROPERTY(STR_QML_1076, "Please specify the destination for the payment.")
     DEFINE_STRING_PROPERTY(STR_QML_1077, "Use a destination wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1078, "The recurring payment will be sent to the first available (unused) addresses in the wallet. To set the destination wallet, import the wallet configuration for that wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1078, "The recurring payment will be sent to the first available (unused) addresses in the wallet. To set the destination "
+                                         "wallet, import the wallet configuration for that wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1079, "Use whitelisted addresses")
     DEFINE_STRING_PROPERTY(STR_QML_1080, "Enter a percentage")
     DEFINE_STRING_PROPERTY(STR_QML_1081, "The recurring payment will automatically rotate among the whitelisted addresses.")
@@ -1116,11 +1204,13 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1106, "No end date")
     DEFINE_STRING_PROPERTY(STR_QML_1107, "Please select the fee rate for the recurring payment.")
     DEFINE_STRING_PROPERTY(STR_QML_1108, "Priority fee rate")
-    DEFINE_STRING_PROPERTY(STR_QML_1109, "Typically allow the payment to be confirmed in 1 block. Recommended if the payment is of time-sensitive nature or must be reliably settled at the earliest.")
+    DEFINE_STRING_PROPERTY(STR_QML_1109, "Typically allow the payment to be confirmed in 1 block. Recommended if the payment is of time-sensitive nature or "
+                                         "must be reliably settled at the earliest.")
     DEFINE_STRING_PROPERTY(STR_QML_1110, "Standard fee rate")
     DEFINE_STRING_PROPERTY(STR_QML_1111, "Typically allow the payment to be confirmed in 2 blocks.")
     DEFINE_STRING_PROPERTY(STR_QML_1112, "Economy fee rate")
-    DEFINE_STRING_PROPERTY(STR_QML_1113, "Typically allow the payment to be confirmed in 3 blocks or more. Maximum fee savings. However when fees spike it could take much longer and the payment might subsequently need to be fee-bumped and signed again.")
+    DEFINE_STRING_PROPERTY(STR_QML_1113, "Typically allow the payment to be confirmed in 3 blocks or more. Maximum fee savings. However when fees spike it "
+                                         "could take much longer and the payment might subsequently need to be fee-bumped and signed again.")
     DEFINE_STRING_PROPERTY(STR_QML_1114, "Change date")
     DEFINE_STRING_PROPERTY(STR_QML_1115, "Please note that the date that you've chosen for the start date might not repeat for the cycle selected.")
     DEFINE_STRING_PROPERTY(STR_QML_1116, "Would you like to allow the platform key to automatically co-sign the payment?")
@@ -1133,8 +1223,12 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1121, "Skip")
     DEFINE_STRING_PROPERTY(STR_QML_1122, "Would you like to add a transaction note to this recurring payment?")
     DEFINE_STRING_PROPERTY(STR_QML_1123, "Recurring payment")
-    DEFINE_STRING_PROPERTY(STR_QML_1124, "This recurring payment enable the platform key to automatically co-sign. Only 1 signature (from any keyholder) is required for each payment.")
-    DEFINE_STRING_PROPERTY(STR_QML_1124_3_of_5, "This recurring payment enables the platform key to automatically co-sign. Two signatures (from any keyholder) are required for each payment.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1124,
+        "This recurring payment enable the platform key to automatically co-sign. Only 1 signature (from any keyholder) is required for each payment.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1124_3_of_5,
+        "This recurring payment enables the platform key to automatically co-sign. Two signatures (from any keyholder) are required for each payment.")
     DEFINE_STRING_PROPERTY(STR_QML_1125, "Destination (wallet)")
     DEFINE_STRING_PROPERTY(STR_QML_1126, "Payments will be sent to the first available addresses in the wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1127, "Fee rate")
@@ -1156,9 +1250,12 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1143, "Sort A → Z")
     DEFINE_STRING_PROPERTY(STR_QML_1144, "Sort Z → A")
     DEFINE_STRING_PROPERTY(STR_QML_1145, "Cancel this payment")
-    DEFINE_STRING_PROPERTY(STR_QML_1146, "To cancel this recurring payment, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
-    DEFINE_STRING_PROPERTY(STR_QML_1147, "A recurring payments allow you to automatically create transactions that send bitcoins to a predefined destination wallet or addresses at scheduled intervals.")
-    DEFINE_STRING_PROPERTY(STR_QML_1148, "The recurring payment needs to be approved by all keyholders in the group wallet, and can be canceled by any keyholder at any time.")
+    DEFINE_STRING_PROPERTY(STR_QML_1146,
+                           "To cancel this recurring payment, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1147, "A recurring payments allow you to automatically create transactions that send bitcoins to a predefined destination "
+                                         "wallet or addresses at scheduled intervals.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1148, "The recurring payment needs to be approved by all keyholders in the group wallet, and can be canceled by any keyholder at any time.")
     DEFINE_STRING_PROPERTY(STR_QML_1149, "Recurring payment request")
     DEFINE_STRING_PROPERTY(STR_QML_1150, "<b>%1</b> (%2) is requesting to add a recurring payment.")
     DEFINE_STRING_PROPERTY(STR_QML_1151, "Review recurring payment")
@@ -1181,7 +1278,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1168, "Please enter a valid date.")
     DEFINE_STRING_PROPERTY(STR_QML_1169, "Key fingerprint does not match. Please make sure that you use the correct key device.")
     DEFINE_STRING_PROPERTY(STR_QML_1170, "Observing")
-    DEFINE_STRING_PROPERTY(STR_QML_1171, "Would you like to customize the account used for this key? Using a new account per wallet helps prevent key reuse and improve privacy.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1171, "Would you like to customize the account used for this key? Using a new account per wallet helps prevent key reuse and improve privacy.")
     DEFINE_STRING_PROPERTY(STR_QML_1172, "Last used account")
     DEFINE_STRING_PROPERTY(STR_QML_1173, "New account")
     DEFINE_STRING_PROPERTY(STR_QML_1174, "Old fee rate")
@@ -1196,7 +1294,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1183, "New fee rate must be higher than old fee rate")
     DEFINE_STRING_PROPERTY(STR_QML_1184, "Invalid address")
     DEFINE_STRING_PROPERTY(STR_QML_1185, "Set alias")
-    DEFINE_STRING_PROPERTY(STR_QML_1186, "The alias will show up as the wallet name locally on your devices. Removing \\n the alias will revert the wallet name back to the default name set by the group.")
+    DEFINE_STRING_PROPERTY(STR_QML_1186, "The alias will show up as the wallet name locally on your devices. Removing \\n the alias will revert the wallet "
+                                         "name back to the default name set by the group.")
     DEFINE_STRING_PROPERTY(STR_QML_1187, "Wallet alias")
     DEFINE_STRING_PROPERTY(STR_QML_1188, "Wallet aliases used by other members")
     DEFINE_STRING_PROPERTY(STR_QML_1189, "Remove alias")
@@ -1230,26 +1329,36 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1217, "Disconnected")
     DEFINE_STRING_PROPERTY(STR_QML_1218, "How will you use Nunchuk?")
     DEFINE_STRING_PROPERTY(STR_QML_1219, "Assisted wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1220, "For those who are new to Bitcoin, need expert guidance, or want advanced features such as inheritance planning or multi-user wallets.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1220, "For those who are new to Bitcoin, need expert guidance, or want advanced features such as inheritance planning or multi-user wallets.")
     DEFINE_STRING_PROPERTY(STR_QML_1221, "Unassisted wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1222, "For those who are comfortable with doing everything themselves.")
     DEFINE_STRING_PROPERTY(STR_QML_1223, "I'll explore on my own")
-    DEFINE_STRING_PROPERTY(STR_QML_1224, "Freely create hot wallets, watch-only wallets, or state-of-the-art multisig wallets that work with a plethora of hardware signing devices. Choose one that fits your need. \\n \\n To quickly create a hot wallet for immediate use, click the button below. You can back it up later.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1224,
+        "Freely create hot wallets, watch-only wallets, or state-of-the-art multisig wallets that work with a plethora of hardware signing devices. Choose one "
+        "that fits your need. \\n \\n To quickly create a hot wallet for immediate use, click the button below. You can back it up later.")
     DEFINE_STRING_PROPERTY(STR_QML_1225, "Create hot wallet now")
     DEFINE_STRING_PROPERTY(STR_QML_1226, "Create a hot wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1227, "A hot wallet is a wallet that is frequently connected to the Internet. \\n \\n For securing large amounts of funds, consider moving to a cold wallet, a multisig wallet or an assisted multisig wallet for better security.")
+    DEFINE_STRING_PROPERTY(STR_QML_1227, "A hot wallet is a wallet that is frequently connected to the Internet. \\n \\n For securing large amounts of funds, "
+                                         "consider moving to a cold wallet, a multisig wallet or an assisted multisig wallet for better security.")
     DEFINE_STRING_PROPERTY(STR_QML_1228, "Learn more about assisted wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1229, "An assisted wallet is a wallet that comes with expert guidance and help along every step of your Bitcoin journey, either from a qualified Bitcoin Advisor or our platform. Here are some of the things that you can do with an assisted wallet:")
+    DEFINE_STRING_PROPERTY(STR_QML_1229,
+                           "An assisted wallet is a wallet that comes with expert guidance and help along every step of your Bitcoin journey, either from a "
+                           "qualified Bitcoin Advisor or our platform. Here are some of the things that you can do with an assisted wallet:")
     DEFINE_STRING_PROPERTY(STR_QML_1230, "No single point of failure")
-    DEFINE_STRING_PROPERTY(STR_QML_1231, "Eliminate single points of failure by using multisig: two keys are always required for spending. The loss of any one key will not compromise your funds.")
+    DEFINE_STRING_PROPERTY(STR_QML_1231, "Eliminate single points of failure by using multisig: two keys are always required for spending. The loss of any one "
+                                         "key will not compromise your funds.")
     DEFINE_STRING_PROPERTY(STR_QML_1232, "Inheritance planning")
-    DEFINE_STRING_PROPERTY(STR_QML_1233, "Plan your inheritance in a non-custodial way and ensure that your bitcoins can be safely passed on to your loved ones. Compatible with existing estate plans.")
+    DEFINE_STRING_PROPERTY(STR_QML_1233, "Plan your inheritance in a non-custodial way and ensure that your bitcoins can be safely passed on to your loved "
+                                         "ones. Compatible with existing estate plans.")
     DEFINE_STRING_PROPERTY(STR_QML_1234, "Emergency lockdown")
     DEFINE_STRING_PROPERTY(STR_QML_1235, "Lock your wallet access when there is a security threat or when you go off the grid.")
     DEFINE_STRING_PROPERTY(STR_QML_1236, "Flexible spending policies")
     DEFINE_STRING_PROPERTY(STR_QML_1237, "Set up scheduled payments, extra security measures when withdrawing large amounts of bitcoins, and more.")
     DEFINE_STRING_PROPERTY(STR_QML_1238, "Cloud backups and assisted recovery")
-    DEFINE_STRING_PROPERTY(STR_QML_1239, "Have peace of mind knowing that your wallet backups are encrypted and stored securely in the cloud. Assisted recovery is a breeze.")
+    DEFINE_STRING_PROPERTY(STR_QML_1239,
+                           "Have peace of mind knowing that your wallet backups are encrypted and stored securely in the cloud. Assisted recovery is a breeze.")
     DEFINE_STRING_PROPERTY(STR_QML_1240, "In-app chat support")
     DEFINE_STRING_PROPERTY(STR_QML_1241, "Chat to an expert directly within the app when you run into issues.")
     DEFINE_STRING_PROPERTY(STR_QML_1242, "Hardware key discounts")
@@ -1260,17 +1369,22 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1247, "Get more out of Nunchuk with an assisted wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1248, "Visit our website")
     DEFINE_STRING_PROPERTY(STR_QML_1249, "Create wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1250, "Use a multisig wallet for maximum safety. A multisig wallet has multiple keys—if one is compromised, your fund is still safe.")
+    DEFINE_STRING_PROPERTY(STR_QML_1250,
+                           "Use a multisig wallet for maximum safety. A multisig wallet has multiple keys—if one is compromised, your fund is still safe.")
     DEFINE_STRING_PROPERTY(STR_QML_1251, "Hot wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1252, "Quickly create a wallet for immediate use—no existing keys required. Back up later.")
     DEFINE_STRING_PROPERTY(STR_QML_1253, "Recover existing wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1254, "Recover hot wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1255, "Create now")
-    DEFINE_STRING_PROPERTY(STR_QML_1256, "Your advisor should have sent you an invitation to join a group wallet. If you don't see one yet, ask them to resend the invitation. \\n \\n If you already signed up, please sign in.")
+    DEFINE_STRING_PROPERTY(STR_QML_1256, "Your advisor should have sent you an invitation to join a group wallet. If you don't see one yet, ask them to resend "
+                                         "the invitation. \\n \\n If you already signed up, please sign in.")
     DEFINE_STRING_PROPERTY(STR_QML_1257, "Select a country")
     DEFINE_STRING_PROPERTY(STR_QML_1258, "Learn more about Nunchuk assisted services")
     DEFINE_STRING_PROPERTY(STR_QML_1259, "Send query")
-    DEFINE_STRING_PROPERTY(STR_QML_1260, "If you are looking for a white-glove, personalized service offered by a Bitcoin Advisor, enter your country and email address below, and we'll send you the best Bitcoin Advisors in your area. \\n \\n Alternatively, check out the assisted services offered by our platform.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1260,
+        "If you are looking for a white-glove, personalized service offered by a Bitcoin Advisor, enter your country and email address below, and we'll send "
+        "you the best Bitcoin Advisors in your area. \\n \\n Alternatively, check out the assisted services offered by our platform.")
     DEFINE_STRING_PROPERTY(STR_QML_1261, "Create new assisted wallet (%1 remaining)")
     DEFINE_STRING_PROPERTY(STR_QML_1262, "Custom wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1263, "Your email address")
@@ -1279,11 +1393,14 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1266, "Seed phrase")
     DEFINE_STRING_PROPERTY(STR_QML_1267, "Do it now")
     DEFINE_STRING_PROPERTY(STR_QML_1268, "This action cannot be repeated. Please make sure that you are ready before proceeding.")
-    DEFINE_STRING_PROPERTY(STR_QML_1269, "Please take a moment to write down this seed phrase. It's the backup for your key. <b>This app will only show the seed phrase once.</b>")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1269, "Please take a moment to write down this seed phrase. It's the backup for your key. <b>This app will only show the seed phrase once.</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1270, "Never share the recovery phrase with anyone. Avoid having a digital copy.")
     DEFINE_STRING_PROPERTY(STR_QML_1271, "Confirm seed phrase")
     DEFINE_STRING_PROPERTY(STR_QML_1272, "Please confirm the seed phrase.")
-    DEFINE_STRING_PROPERTY(STR_QML_1273, "<b>You won't be able to view the seed phrase again in the app.</b> Please make sure that you have it backed up, or risk losing your funds.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1273,
+        "<b>You won't be able to view the seed phrase again in the app.</b> Please make sure that you have it backed up, or risk losing your funds.")
     DEFINE_STRING_PROPERTY(STR_QML_1274, "Review seed phrase")
     DEFINE_STRING_PROPERTY(STR_QML_1275, "I've backed it up")
     DEFINE_STRING_PROPERTY(STR_QML_1276, "I'll do it later")
@@ -1299,7 +1416,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1286, "Finney")
     DEFINE_STRING_PROPERTY(STR_QML_1287, "Finney Pro")
     DEFINE_STRING_PROPERTY(STR_QML_1288, "Scan QR")
-    DEFINE_STRING_PROPERTY(STR_QML_1289, "The software key (%1) was upgraded to a hardware key from another device. Do you want to remove the software key from this device?")
+    DEFINE_STRING_PROPERTY(STR_QML_1289,
+                           "The software key (%1) was upgraded to a hardware key from another device. Do you want to remove the software key from this device?")
     DEFINE_STRING_PROPERTY(STR_QML_1290, "The software key (%1) will be removed from this device. \\n Please tap 'Delete key' to confirm.")
     DEFINE_STRING_PROPERTY(STR_QML_1291, "Delete key")
     DEFINE_STRING_PROPERTY(STR_QML_1292, "Whom do you like to request signature from?")
@@ -1311,12 +1429,14 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1298, "Add server")
     DEFINE_STRING_PROPERTY(STR_QML_1299, "Enter the server's address")
     DEFINE_STRING_PROPERTY(STR_QML_1300, "Keep group chat history for:")
-    DEFINE_STRING_PROPERTY(STR_QML_1301, "For instructions on how to connect to your own node, please refer to <a href='%1' style=\"color:#031F2B\">this guide</a>.")
+    DEFINE_STRING_PROPERTY(STR_QML_1301,
+                           "For instructions on how to connect to your own node, please refer to <a href='%1' style=\"color:#031F2B\">this guide</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_1302, "New email")
     DEFINE_STRING_PROPERTY(STR_QML_1303, "Change email")
     DEFINE_STRING_PROPERTY(STR_QML_1304, "Update email")
     DEFINE_STRING_PROPERTY(STR_QML_1305, "Confirm email")
-    DEFINE_STRING_PROPERTY(STR_QML_1306, "To change the email address associated with the account, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1306, "To change the email address associated with the account, you will be asked to sign a dummy transaction that sends "
+                                         "10,000 sat (%1 %2) to your own wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1307, "Changing email from <b>%1</b> to <b>%2.</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1308, "Cancel change")
     DEFINE_STRING_PROPERTY(STR_QML_1309, "Email is invalid")
@@ -1348,13 +1468,16 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1335, "Remove from saved addresses")
     DEFINE_STRING_PROPERTY(STR_QML_1336, "Are you sure you want to remove <b>%1</b> from the saved addresses?")
     DEFINE_STRING_PROPERTY(STR_QML_1337, "Select a destination")
-    DEFINE_STRING_PROPERTY(STR_QML_1338, "For privacy and security reasons, reusing addresses is generally not recommended in Bitcoin. Only save and reuse an address if you must.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1338,
+        "For privacy and security reasons, reusing addresses is generally not recommended in Bitcoin. Only save and reuse an address if you must.")
     DEFINE_STRING_PROPERTY(STR_QML_1339, "Address of recipient %1")
     DEFINE_STRING_PROPERTY(STR_QML_1340, "Cancel key replacement")
     DEFINE_STRING_PROPERTY(STR_QML_1341, "%1 is currently being replaced.")
     DEFINE_STRING_PROPERTY(STR_QML_1342, "Please use the mobile app to continue creating a new wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1343, "If you are a wallet admin, please use the mobile app to continue creating a new wallet.")
-    DEFINE_STRING_PROPERTY(STR_QML_1344, "For security, please note that a decrease in the co-signing delay will only become effective after an amount of time equal to the current delay has passed.")
+    DEFINE_STRING_PROPERTY(STR_QML_1344, "For security, please note that a decrease in the co-signing delay will only become effective after an amount of time "
+                                         "equal to the current delay has passed.")
     DEFINE_STRING_PROPERTY(STR_QML_1345, "Deactivated")
     DEFINE_STRING_PROPERTY(STR_QML_1346, "Please continue transferring funds using the mobile app.")
     DEFINE_STRING_PROPERTY(STR_QML_1347, "Please replace key(s) using the mobile app.")
@@ -1370,12 +1493,16 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1357, "Please select your account type")
     DEFINE_STRING_PROPERTY(STR_QML_1358, "I have a paid subscription")
     DEFINE_STRING_PROPERTY(STR_QML_1359, "I have a Primary Key account")
-    DEFINE_STRING_PROPERTY(STR_QML_1360, "To verify that you are the account owner, please enter the master public key (XPUB) of one of the keys in your assisted wallets. You can find the XPUBs in your wallet configuration (BSMS file). You can also paste in the entire BSMS file.")
+    DEFINE_STRING_PROPERTY(STR_QML_1360,
+                           "To verify that you are the account owner, please enter the master public key (XPUB) of one of the keys in your assisted wallets. "
+                           "You can find the XPUBs in your wallet configuration (BSMS file). You can also paste in the entire BSMS file.")
     DEFINE_STRING_PROPERTY(STR_QML_1361, "Enter XPUB")
-    DEFINE_STRING_PROPERTY(STR_QML_1362, "To sign in to your account, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1362,
+                           "To sign in to your account, you will be asked to sign a dummy transaction that sends 10,000 sat (%1 %2) to your own wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1363, "Replace key(s)")
     DEFINE_STRING_PROPERTY(STR_QML_1364, "If a key in a wallet is lost or has been compromised, you can replace it here.")
-    DEFINE_STRING_PROPERTY(STR_QML_1365, "Note that replacing a key with a new one will create a brand new wallet. You will need to transfer the existing balance over to the new wallet afterwards.")
+    DEFINE_STRING_PROPERTY(STR_QML_1365, "Note that replacing a key with a new one will create a brand new wallet. You will need to transfer the existing "
+                                         "balance over to the new wallet afterwards.")
     DEFINE_STRING_PROPERTY(STR_QML_1366, "Which key would you like to replace?")
     DEFINE_STRING_PROPERTY(STR_QML_1367, "Replace one or multiple keys.")
     DEFINE_STRING_PROPERTY(STR_QML_1368, "Replace")
@@ -1383,9 +1510,11 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1370, "Back up the key")
     DEFINE_STRING_PROPERTY(STR_QML_1371, "The backup will allow you to recover the key in worst case scenarios.")
     DEFINE_STRING_PROPERTY(STR_QML_1372, "Keep this device safe")
-    DEFINE_STRING_PROPERTY(STR_QML_1373, "Since the software key resides on this device, keeping the device safe will prevent the software key from being compromised.")
+    DEFINE_STRING_PROPERTY(STR_QML_1373,
+                           "Since the software key resides on this device, keeping the device safe will prevent the software key from being compromised.")
     DEFINE_STRING_PROPERTY(STR_QML_1374, "Upgrade software keys to hardware keys for improved security.")
-    DEFINE_STRING_PROPERTY(STR_QML_1375, "A new wallet that includes the new key(s) has been created. The new wallet will get the original wallet's name. The original wallet will be renamed as %1.")
+    DEFINE_STRING_PROPERTY(STR_QML_1375, "A new wallet that includes the new key(s) has been created. The new wallet will get the original wallet's name. The "
+                                         "original wallet will be renamed as %1.")
     DEFINE_STRING_PROPERTY(STR_QML_1376, "For best security, please keep your keys stored in physically distributed locations.")
     DEFINE_STRING_PROPERTY(STR_QML_1377, "Congratulations! A new wallet has been created")
     DEFINE_STRING_PROPERTY(STR_QML_1378, "Create new seed")
@@ -1395,9 +1524,12 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1381, "Transfer funds")
     DEFINE_STRING_PROPERTY(STR_QML_1382, "Transfer all funds from the old wallet to <b>%1</b>.")
     DEFINE_STRING_PROPERTY(STR_QML_1383, "Remove unused keys")
-    DEFINE_STRING_PROPERTY(STR_QML_1384, "Upon completion of the roll-over process, keys that are associated with your old wallet and are no longer used will automatically be removed.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1384,
+        "Upon completion of the roll-over process, keys that are associated with your old wallet and are no longer used will automatically be removed.")
     DEFINE_STRING_PROPERTY(STR_QML_1385, "Existing balance")
-    DEFINE_STRING_PROPERTY(STR_QML_1386, "By default, all existing coins will be consolidated into a single coin in the new wallet. If you want to organize and segregate your coins for various purposes, please create the transactions manually.")
+    DEFINE_STRING_PROPERTY(STR_QML_1386, "By default, all existing coins will be consolidated into a single coin in the new wallet. If you want to organize "
+                                         "and segregate your coins for various purposes, please create the transactions manually.")
     DEFINE_STRING_PROPERTY(STR_QML_1387, "I'll create transactions manually")
     DEFINE_STRING_PROPERTY(STR_QML_1388, "Continue, I'm fine consolidating all coins")
     DEFINE_STRING_PROPERTY(STR_QML_1389, "Continue to transfer funds")
@@ -1408,8 +1540,13 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1394, "Collaboratively create family or group wallets. Manage keys distributedly, control member access and chat privately.")
     DEFINE_STRING_PROPERTY(STR_QML_1395, "Role")
     DEFINE_STRING_PROPERTY(STR_QML_1396, "Facilitator admin")
-    DEFINE_STRING_PROPERTY(STR_QML_1397, "Can add or remove group members. \\nCan make changes to inheritance planning. Can make changes to wallet policies. Can activate emergency lockdown. Can view key health status. Can perform key health check. Can perform key recovery. Can create coin tags or collections. Can edit transaction notes. Can participate in group chat. Can view transactions. Can create transactions. Can sign transactions.")
-    DEFINE_STRING_PROPERTY(STR_QML_1398, "Can view key health status. \\nCan perform key health check. Can perform key recovery. Can participate in group chat. Can view transactions. Can create transactions. Can sign transactions.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1397,
+        "Can add or remove group members. \\nCan make changes to inheritance planning. Can make changes to wallet policies. Can activate emergency lockdown. "
+        "Can view key health status. Can perform key health check. Can perform key recovery. Can create coin tags or collections. Can edit transaction notes. "
+        "Can participate in group chat. Can view transactions. Can create transactions. Can sign transactions.")
+    DEFINE_STRING_PROPERTY(STR_QML_1398, "Can view key health status. \\nCan perform key health check. Can perform key recovery. Can participate in group "
+                                         "chat. Can view transactions. Can create transactions. Can sign transactions.")
     DEFINE_STRING_PROPERTY(STR_QML_1399, "Can perform key health check. \\nCan perform key recovery. Can sign transactions.")
     DEFINE_STRING_PROPERTY(STR_QML_1400, "Can add group members. \\nCan request key health check. Can participate in group chat.")
     DEFINE_STRING_PROPERTY(STR_QML_1401, "Can view transactions.")
@@ -1417,7 +1554,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1403, "Select a role")
     DEFINE_STRING_PROPERTY(STR_QML_1404, "Only an admin can downgrade a member's role.")
     DEFINE_STRING_PROPERTY(STR_QML_1405, "Choose between single and multi-signature setups. Existing keys required.")
-    DEFINE_STRING_PROPERTY(STR_QML_1406, "<b>You won't be able to view the seed phrase again in the app.</b> Please make sure that you have it backed up, or risk losing your funds.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1406,
+        "<b>You won't be able to view the seed phrase again in the app.</b> Please make sure that you have it backed up, or risk losing your funds.")
     DEFINE_STRING_PROPERTY(STR_QML_1407, "View coins")
     DEFINE_STRING_PROPERTY(STR_QML_1408, "Coins")
     DEFINE_STRING_PROPERTY(STR_QML_1409, "Select all")
@@ -1504,7 +1643,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1490, "Export transaction invoices")
     DEFINE_STRING_PROPERTY(STR_QML_1491, "Unused address")
     DEFINE_STRING_PROPERTY(STR_QML_1492, "Used addresses")
-    DEFINE_STRING_PROPERTY(STR_QML_1493, "An address is marked as used as soon as money is deposited into it. \\nFor better privacy, reusing addresses is not recommended.")
+    DEFINE_STRING_PROPERTY(STR_QML_1493,
+                           "An address is marked as used as soon as money is deposited into it. \\nFor better privacy, reusing addresses is not recommended.")
     DEFINE_STRING_PROPERTY(STR_QML_1494, "Mark address as used")
     DEFINE_STRING_PROPERTY(STR_QML_1495, "Verify address on device")
     DEFINE_STRING_PROPERTY(STR_QML_1496, "Current selection")
@@ -1520,7 +1660,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1506, "Password must contain at least one uppercase letter")
     DEFINE_STRING_PROPERTY(STR_QML_1507, "Password must contain at least one special character")
     DEFINE_STRING_PROPERTY(STR_QML_1508, "<b><a href='No' style=\"color:#031F2B\">%1 %2 selected</a> •</b> Please select at least %3 %4")
-    DEFINE_STRING_PROPERTY(STR_QML_1509, "This transaction generates a change coin. Would you like the change coin to inherit the tags from the parent coin(s)?")
+    DEFINE_STRING_PROPERTY(STR_QML_1509,
+                           "This transaction generates a change coin. Would you like the change coin to inherit the tags from the parent coin(s)?")
     DEFINE_STRING_PROPERTY(STR_QML_1510, "Tags from parent coin(s)")
     DEFINE_STRING_PROPERTY(STR_QML_1511, "Assign tags")
     DEFINE_STRING_PROPERTY(STR_QML_1512, "Don't assign any tags")
@@ -1530,7 +1671,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1516, "Coin collection")
     DEFINE_STRING_PROPERTY(STR_QML_1517, "A coin collection allows you to automate coin management tasks. Here's how you create a collection:")
     DEFINE_STRING_PROPERTY(STR_QML_1518, "Create a filter")
-    DEFINE_STRING_PROPERTY(STR_QML_1519, "Specify which coins will be added to the collection. A filter can be applied to fresh new coins only, or both new coins and existing coins.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1519,
+        "Specify which coins will be added to the collection. A filter can be applied to fresh new coins only, or both new coins and existing coins.")
     DEFINE_STRING_PROPERTY(STR_QML_1520, "Set action")
     DEFINE_STRING_PROPERTY(STR_QML_1521, "Select the action you want to automatically apply to the coins in the collection.")
     DEFINE_STRING_PROPERTY(STR_QML_1522, "Filter")
@@ -1548,7 +1691,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1534, "Honey Badger Premier")
     DEFINE_STRING_PROPERTY(STR_QML_1535, "Add Blockstream Jade")
     DEFINE_STRING_PROPERTY(STR_QML_1536, "It looks like you want to add Blockstream Jade as a hardware key to an assisted wallet. Would you like to do it now?")
-    DEFINE_STRING_PROPERTY(STR_QML_1537, "Follow Blockstream's instructions on how to set up Jade with a seed phrase. Refer to <a href='%1' style=\"color:#031F2B\">this starter guide</a>.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1537,
+        "Follow Blockstream's instructions on how to set up Jade with a seed phrase. Refer to <a href='%1' style=\"color:#031F2B\">this starter guide</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_1538, "Please ensure that the Blockstream Jade device is connected to this computer, and click on Refresh.")
     DEFINE_STRING_PROPERTY(STR_QML_1539, "We noticed that you already have Blockstream Jade in your key manager.")
     DEFINE_STRING_PROPERTY(STR_QML_1540, "Adding Blockstream Jade... Please keep your device connected.")
@@ -1574,23 +1719,29 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1600, "Inheritance")
     DEFINE_STRING_PROPERTY(STR_QML_1601, "Add inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_1602, "Add hardware key")
-    DEFINE_STRING_PROPERTY(STR_QML_1603, "Currently, COLDCARD and TAPSIGNER are supported for the inheritance key. To add TAPSIGNER as the inheritance key, please use the mobile app.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1603,
+        "Currently, COLDCARD and TAPSIGNER are supported for the inheritance key. To add TAPSIGNER as the inheritance key, please use the mobile app.")
     DEFINE_STRING_PROPERTY(STR_QML_1604, "I don't have a passphrase")
     DEFINE_STRING_PROPERTY(STR_QML_1605, "I have a passphrase")
     DEFINE_STRING_PROPERTY(STR_QML_1606, "Are you using a passphrase with your COLDCARD?")
     DEFINE_STRING_PROPERTY(STR_QML_1607, "A BIP39 passphrase is an extra word added to the seed phrase as another layer of security.")
     DEFINE_STRING_PROPERTY(STR_QML_1608, "Important notice about passphrase")
-    DEFINE_STRING_PROPERTY(STR_QML_1609, "Using a passphrase for the inheritance key greatly complicates the setup and increases the risk of errors, both for you and the Beneficiary. <b>We strongly recommend using an inheritance key without a passphrase.</b>")
+    DEFINE_STRING_PROPERTY(STR_QML_1609, "Using a passphrase for the inheritance key greatly complicates the setup and increases the risk of errors, both for "
+                                         "you and the Beneficiary. <b>We strongly recommend using an inheritance key without a passphrase.</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1610, "Continue, I know what I'm doing")
     DEFINE_STRING_PROPERTY(STR_QML_1611, "Use another key (without passphrase)")
     DEFINE_STRING_PROPERTY(STR_QML_1612, "Passphrase backup reminder")
-    DEFINE_STRING_PROPERTY(STR_QML_1613, "If you use a key with a passphrase, ensure you export the correct file when backing up the inheritance key from the COLDCARD in the next step.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1613,
+        "If you use a key with a passphrase, ensure you export the correct file when backing up the inheritance key from the COLDCARD in the next step.")
     DEFINE_STRING_PROPERTY(STR_QML_1614, "The encrypted backup file must include the passphrase for the inheritance protocol to function correctly.")
     DEFINE_STRING_PROPERTY(STR_QML_1615, "The Backup Password")
     DEFINE_STRING_PROPERTY(STR_QML_1616, "The Backup Password for the encrypted backup, which can be found on the device designated for inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_1617, "TAPSIGNER")
     DEFINE_STRING_PROPERTY(STR_QML_1618, "COLDCARD")
-    DEFINE_STRING_PROPERTY(STR_QML_1619, "The Backup Password can be found on the back of the TAPSIGNER designated for inheritance. (It might be listed under “Backup key”).")
+    DEFINE_STRING_PROPERTY(STR_QML_1619,
+                           "The Backup Password can be found on the back of the TAPSIGNER designated for inheritance. (It might be listed under “Backup key”).")
     DEFINE_STRING_PROPERTY(STR_QML_1620, "The Backup Password (12 words) that was displayed on the COLDCARD device when you created the backup file.")
     DEFINE_STRING_PROPERTY(STR_QML_1621, "Import encrypted backup")
     DEFINE_STRING_PROPERTY(STR_QML_1622, "C﻿hoose one of the following options to import the encrypted backup file:")
@@ -1613,13 +1764,18 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1639, "Multisig configuration")
     DEFINE_STRING_PROPERTY(STR_QML_1640, "After creating a group wallet, only members with added keys can access it. Wallet link will expire.")
     DEFINE_STRING_PROPERTY(STR_QML_1641, "Please save your BSMS file")
-    DEFINE_STRING_PROPERTY(STR_QML_1642, "The BSMS file stores your wallet configuration. \\n Losing the BSMS file alone does not compromise your funds, but you should still keep it safe to protect your privacy. Anyone who has the file can monitor transactions in the wallet.")
+    DEFINE_STRING_PROPERTY(STR_QML_1642,
+                           "The BSMS file stores your wallet configuration. \\n Losing the BSMS file alone does not compromise your funds, but you should "
+                           "still keep it safe to protect your privacy. Anyone who has the file can monitor transactions in the wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1643, "You need both the keys and the BSMS file to recover your wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1644, "Cancel group wallet")
-    DEFINE_STRING_PROPERTY(STR_QML_1645, "Are you sure you want to cancel the group wallet setup? Canceling will invalidate the session link and remove all associated data.")
+    DEFINE_STRING_PROPERTY(STR_QML_1645,
+                           "Are you sure you want to cancel the group wallet setup? Canceling will invalidate the session link and remove all associated data.")
     DEFINE_STRING_PROPERTY(STR_QML_1646, "Save wallet configuration")
     DEFINE_STRING_PROPERTY(STR_QML_1647, "Register wallet on hardware")
-    DEFINE_STRING_PROPERTY(STR_QML_1648, "If you have a hardware key in your multisig wallet, you might be required to register the wallet with the hardware before the key can be used. \\n Choose the export option according to your hardware type. Please check the vendor's manual.")
+    DEFINE_STRING_PROPERTY(STR_QML_1648,
+                           "If you have a hardware key in your multisig wallet, you might be required to register the wallet with the hardware before the key "
+                           "can be used. \\n Choose the export option according to your hardware type. Please check the vendor's manual.")
     DEFINE_STRING_PROPERTY(STR_QML_1649, "Export configuration")
     DEFINE_STRING_PROPERTY(STR_QML_1650, "Changing the wallet config to miniscirpt will remove all added keys.")
     DEFINE_STRING_PROPERTY(STR_QML_1651, "Number of keys assigned to the wallet (up to 15).")
@@ -1640,10 +1796,12 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1666, "Are you sure you want to cancel the group wallet recovery?")
     DEFINE_STRING_PROPERTY(STR_QML_1667, "Cancel recover wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1668, "Incorrect key")
-    DEFINE_STRING_PROPERTY(STR_QML_1669, "The key you added doesn't match any of the keys associated with this wallet. Please use the original key to restore access.")
+    DEFINE_STRING_PROPERTY(STR_QML_1669,
+                           "The key you added doesn't match any of the keys associated with this wallet. Please use the original key to restore access.")
     DEFINE_STRING_PROPERTY(STR_QML_1670, "Recover wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1671, "Waiting for other devices")
-    DEFINE_STRING_PROPERTY(STR_QML_1672, "Almost there! Other devices in the group need to come online briefly to securely share their keys with this one. Once ready, tap “Create wallet” again to finish setting up.")
+    DEFINE_STRING_PROPERTY(STR_QML_1672, "Almost there! Other devices in the group need to come online briefly to securely share their keys with this one. "
+                                         "Once ready, tap “Create wallet” again to finish setting up.")
     DEFINE_STRING_PROPERTY(STR_QML_1673, "Invalid BIP32 path format")
     DEFINE_STRING_PROPERTY(STR_QML_1674, "BIP32 path")
     DEFINE_STRING_PROPERTY(STR_QML_1675, "Shared")
@@ -1658,20 +1816,29 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1684, "Key not found. Please connect the key device to this computer and click Continue.")
     DEFINE_STRING_PROPERTY(STR_QML_1685, "Signer exists")
     DEFINE_STRING_PROPERTY(STR_QML_1686, "Taproot address")
-    DEFINE_STRING_PROPERTY(STR_QML_1687, "Enhance your privacy and reduce transaction fees with a Taproot address. Your transactions appear like regular ones, keeping details confidential, and the smaller transaction size lowers your costs.")
+    DEFINE_STRING_PROPERTY(STR_QML_1687, "Enhance your privacy and reduce transaction fees with a Taproot address. Your transactions appear like regular ones, "
+                                         "keeping details confidential, and the smaller transaction size lowers your costs.")
     DEFINE_STRING_PROPERTY(STR_QML_1688, "To use Taproot, please note the following:")
     DEFINE_STRING_PROPERTY(STR_QML_1689, "Withdraw support")
-    DEFINE_STRING_PROPERTY(STR_QML_1690, "If you're sending bitcoin from an exchange or service to this wallet, please confirm they support sending to Bech32m (Taproot) addresses. <b>If you're unsure, you may want to first withdraw to a non-Taproot Nunchuk wallet and then transfer from there to this Taproot wallet to ensure your funds arrive safely.</b>")
+    DEFINE_STRING_PROPERTY(STR_QML_1690, "If you're sending bitcoin from an exchange or service to this wallet, please confirm they support sending to Bech32m "
+                                         "(Taproot) addresses. <b>If you're unsure, you may want to first withdraw to a non-Taproot Nunchuk wallet and then "
+                                         "transfer from there to this Taproot wallet to ensure your funds arrive safely.</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1691, "Hardware support")
-    DEFINE_STRING_PROPERTY(STR_QML_1692, "If you plan to use hardware keys in the wallet, please make sure that they support Taproot as well. If you're unsure, use software keys only.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1692,
+        "If you plan to use hardware keys in the wallet, please make sure that they support Taproot as well. If you're unsure, use software keys only.")
     DEFINE_STRING_PROPERTY(STR_QML_1693, "Configure Value Keyset")
-    DEFINE_STRING_PROPERTY(STR_QML_1694, "Among the keys assigned to the wallet, please select the keys to create the Value Keyset. Signing transactions with the Value Keyset will help maximize privacy and fee savings.")
+    DEFINE_STRING_PROPERTY(STR_QML_1694, "Among the keys assigned to the wallet, please select the keys to create the Value Keyset. Signing transactions with "
+                                         "the Value Keyset will help maximize privacy and fee savings.")
     DEFINE_STRING_PROPERTY(STR_QML_1695, "Value Key")
     DEFINE_STRING_PROPERTY(STR_QML_1696, "Configure wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1697, "Keys not yet supporting Taproot")
     DEFINE_STRING_PROPERTY(STR_QML_1698, "Assign signers")
-    DEFINE_STRING_PROPERTY(STR_QML_1699, "Some worry quantum computers could crack the Value Keyset's cryptography, but experts see that threat as remote. If you'd rather be cautious, disable the Value Keyset.")
-    DEFINE_STRING_PROPERTY(STR_QML_1700, "A Taproot feature called key path spending allows a specific subset of keys (the Value Keyset) to sign transactions in a way that maximizes privacy and fee savings. Alternatively, you can disable the Value Keyset to use script path spending only.")
+    DEFINE_STRING_PROPERTY(STR_QML_1699, "Some worry quantum computers could crack the Value Keyset's cryptography, but experts see that threat as remote. If "
+                                         "you'd rather be cautious, disable the Value Keyset.")
+    DEFINE_STRING_PROPERTY(STR_QML_1700,
+                           "A Taproot feature called key path spending allows a specific subset of keys (the Value Keyset) to sign transactions in a way that "
+                           "maximizes privacy and fee savings. Alternatively, you can disable the Value Keyset to use script path spending only.")
     DEFINE_STRING_PROPERTY(STR_QML_1701, "Enable Value Keyset")
     DEFINE_STRING_PROPERTY(STR_QML_1702, "Disable Value Keyset")
     DEFINE_STRING_PROPERTY(STR_QML_1703, "Cancel key replacement")
@@ -1681,7 +1848,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1707, "Replace key(s) and set up a new group wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1708, "Key replacement in progress")
     DEFINE_STRING_PROPERTY(STR_QML_1709, "About <b>%1 sat/vB</b> when not using the Value Keyset")
-    DEFINE_STRING_PROPERTY(STR_QML_1710, "Please save the BSMS file. It is the backup for your wallet configuration. <b><a href='dummycode.tbd' style=\"color:#031F2B\">Do it now.</a></b>")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1710,
+        "Please save the BSMS file. It is the backup for your wallet configuration. <b><a href='dummycode.tbd' style=\"color:#031F2B\">Do it now.</a></b>")
     DEFINE_STRING_PROPERTY(STR_QML_1711, "Selected keys to assign to the wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1712, "Value Keyset")
     DEFINE_STRING_PROPERTY(STR_QML_1713, "Export as PDF")
@@ -1691,7 +1860,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1717, "Lowest fee, longest wait time")
     DEFINE_STRING_PROPERTY(STR_QML_1718, "Balanced fee and speed")
     DEFINE_STRING_PROPERTY(STR_QML_1719, "Fastest processing, higher fee")
-    DEFINE_STRING_PROPERTY(STR_QML_1720, "A software key will be generated locally on this device. To ensure security, keep this device safe to prevent unauthorized access. <b>Deleting the app will also delete the software key.</b>")
+    DEFINE_STRING_PROPERTY(STR_QML_1720, "A software key will be generated locally on this device. To ensure security, keep this device safe to prevent "
+                                         "unauthorized access. <b>Deleting the app will also delete the software key.</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1721, "Create and back up key now")
     DEFINE_STRING_PROPERTY(STR_QML_1722, "Create key now, back up later")
     DEFINE_STRING_PROPERTY(STR_QML_1723, "Recover key via XPRV")
@@ -1703,13 +1873,18 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1729, "Anti-fee sniping")
     DEFINE_STRING_PROPERTY(STR_QML_1730, "Adds the latest block height to the PSBT to prevent fee sniping attacks.")
     DEFINE_STRING_PROPERTY(STR_QML_1731, "Back up COLDCARD")
-    DEFINE_STRING_PROPERTY(STR_QML_1732, "In the upcoming steps, you'll use your COLDCARD to back up the key and encrypt the backup file. Once encrypted, the file can be uploaded to our server. \\n The encrypted backup will later be used to recover the inheritance key on the Beneficiary's device when they claim the inheritance.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1732,
+        "In the upcoming steps, you'll use your COLDCARD to back up the key and encrypt the backup file. Once encrypted, the file can be uploaded to our "
+        "server. \\n The encrypted backup will later be used to recover the inheritance key on the Beneficiary's device when they claim the inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_1733, "Please back up your key. <b><a href='dummycode.tbd' style=\"color:#031F2B\">Do it now.</a></b>")
     DEFINE_STRING_PROPERTY(STR_QML_1734, "Pending backup")
     DEFINE_STRING_PROPERTY(STR_QML_1735, "Withdraw bitcoin")
     DEFINE_STRING_PROPERTY(STR_QML_1736, "Withdraw a custom amount")
     DEFINE_STRING_PROPERTY(STR_QML_1737, "Withdraw full balance now")
-    DEFINE_STRING_PROPERTY(STR_QML_1738, "You now have the option to withdraw a small amount first and withdraw the remaining balance later, or withdraw the entire balance at once.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1738,
+        "You now have the option to withdraw a small amount first and withdraw the remaining balance later, or withdraw the entire balance at once.")
     DEFINE_STRING_PROPERTY(STR_QML_1739, "Add a wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1740, "You don't have any keys yet")
     DEFINE_STRING_PROPERTY(STR_QML_1741, "Please add a key before adding a wallet.")
@@ -1726,7 +1901,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1752, "Default fee rate")
     DEFINE_STRING_PROPERTY(STR_QML_1753, "Select the default fee rate for your transactions")
     DEFINE_STRING_PROPERTY(STR_QML_1754, "Automatic fee selection")
-    DEFINE_STRING_PROPERTY(STR_QML_1755, "Applies when a transaction has multiple signing policies with different fees. Automatically selects the highest fee if the difference is below your configured threshold.")
+    DEFINE_STRING_PROPERTY(STR_QML_1755, "Applies when a transaction has multiple signing policies with different fees. Automatically selects the highest fee "
+                                         "if the difference is below your configured threshold.")
     DEFINE_STRING_PROPERTY(STR_QML_1756, "Enable Anti-Fee Sniping")
     DEFINE_STRING_PROPERTY(STR_QML_1757, "Adds the latest block height to the PSBT to prevent fee sniping attacks.")
     DEFINE_STRING_PROPERTY(STR_QML_1758, "Fee difference threshold (%)")
@@ -1737,14 +1913,20 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1763, "Threshold must be greater than 0")
     DEFINE_STRING_PROPERTY(STR_QML_1764, "To update automatic fee selection selection, go to <b><a href='dummycode.tbd'>Fee Settings</a></b>.")
     DEFINE_STRING_PROPERTY(STR_QML_1770, "This wallet must be backed up before it can be deleted. Please back it up first.")
-    DEFINE_STRING_PROPERTY(STR_QML_1771, "The hot wallet containing this key must be backed up before this key can be used in another wallet. Please back it up first")
-    DEFINE_STRING_PROPERTY(STR_QML_1772, "Your hot wallet has not been backed up yet. Deleting this key means losing access to your hot wallet forever. Are you sure you want to delete this key?")
+    DEFINE_STRING_PROPERTY(STR_QML_1771,
+                           "The hot wallet containing this key must be backed up before this key can be used in another wallet. Please back it up first")
+    DEFINE_STRING_PROPERTY(STR_QML_1772, "Your hot wallet has not been backed up yet. Deleting this key means losing access to your hot wallet forever. Are "
+                                         "you sure you want to delete this key?")
     DEFINE_STRING_PROPERTY(STR_QML_1773, "The key in this wallet has been deleted. The wallet cannot be backed up.")
     DEFINE_STRING_PROPERTY(STR_QML_1799, "You currently have a collaborative wallet in this chat. Are you sure you want to delete the chat?")
     DEFINE_STRING_PROPERTY(STR_QML_1800, "Withdrawal in progress...")
     DEFINE_STRING_PROPERTY(STR_QML_1801, "Miniscript")
     DEFINE_STRING_PROPERTY(STR_QML_1802, "Build custom spending rules with signatures, timelocks, and hashlocks.")
-    DEFINE_STRING_PROPERTY(STR_QML_1803, "Miniscript is a structured language for writing Bitcoin scripts in a more efficient, composable, and analyzable way. It simplifies complex spending conditions by allowing logical combinations of signatures, timelocks, and hashlocks. \\n With Miniscript, users can create flexible wallet rules while ensuring security and compatibility with Bitcoin's scripting system. This makes it ideal for advanced multisig setups, automated recovery mechanisms, and custom wallet logic.")
+    DEFINE_STRING_PROPERTY(STR_QML_1803,
+                           "Miniscript is a structured language for writing Bitcoin scripts in a more efficient, composable, and analyzable way. It simplifies "
+                           "complex spending conditions by allowing logical combinations of signatures, timelocks, and hashlocks. \\n With Miniscript, users "
+                           "can create flexible wallet rules while ensuring security and compatibility with Bitcoin's scripting system. This makes it ideal "
+                           "for advanced multisig setups, automated recovery mechanisms, and custom wallet logic.")
     DEFINE_STRING_PROPERTY(STR_QML_1805, "Select miniscript template")
     DEFINE_STRING_PROPERTY(STR_QML_1806, "Expanding multisig")
     DEFINE_STRING_PROPERTY(STR_QML_1807, "Number of required signatures stays the same, but more possible signers can be added over time")
@@ -1764,7 +1946,9 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1821, "Please come back later")
     DEFINE_STRING_PROPERTY(STR_QML_1822, "Your request has been received. Please return in %1 hours to continue.")
     DEFINE_STRING_PROPERTY(STR_QML_1823, "Security deposit required")
-    DEFINE_STRING_PROPERTY(STR_QML_1824, "Please complete a security deposit to continue your claim. \\n The deposit will be refunded if your claim succeeds, but not refunded if it fails.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1824,
+        "Please complete a security deposit to continue your claim. \\n The deposit will be refunded if your claim succeeds, but not refunded if it fails.")
     DEFINE_STRING_PROPERTY(STR_QML_1825, "Go to website to deposit")
     DEFINE_STRING_PROPERTY(STR_QML_1826, "Number of signatures required")
     DEFINE_STRING_PROPERTY(STR_QML_1827, "Total number of keys")
@@ -1774,22 +1958,26 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1831, "Absolute time")
     DEFINE_STRING_PROPERTY(STR_QML_1832, "Unlock after a fixed point (specific date or block)")
     DEFINE_STRING_PROPERTY(STR_QML_1833, "Relative time")
-    DEFINE_STRING_PROPERTY(STR_QML_1834, "Unlocks after a set period from the time coins are received. Transfers within the same wallet will reset the timelock.")
+    DEFINE_STRING_PROPERTY(STR_QML_1834,
+                           "Unlocks after a set period from the time coins are received. Transfers within the same wallet will reset the timelock.")
     DEFINE_STRING_PROPERTY(STR_QML_1835, "Time unit")
     DEFINE_STRING_PROPERTY(STR_QML_1836, "Timestamp")
     DEFINE_STRING_PROPERTY(STR_QML_1837, "Unlock after a specific time (Unix timestamp)")
     DEFINE_STRING_PROPERTY(STR_QML_1838, "Block height")
     DEFINE_STRING_PROPERTY(STR_QML_1839, "Unlock after a specific block number")
-    DEFINE_STRING_PROPERTY(STR_QML_1840, "<span style='font-weight:600; color:#031F2B;'>Unlock after a fixed date & time</span> <span style='font-weight:300; color:#757575;'> (UTC time)</span>")
+    DEFINE_STRING_PROPERTY(STR_QML_1840, "<span style='font-weight:600; color:#031F2B;'>Unlock after a fixed date & time</span> <span style='font-weight:300; "
+                                         "color:#757575;'> (UTC time)</span>")
     DEFINE_STRING_PROPERTY(STR_QML_1841, "Unlock after the target block number")
-    DEFINE_STRING_PROPERTY(STR_QML_1842, "<span style='font-weight:600; color:#031F2B;'>Unlock after a fixed date & time</span> <span style='font-weight:300; color:#757575;'> (days, hours, minutes)</span>")
+    DEFINE_STRING_PROPERTY(STR_QML_1842, "<span style='font-weight:600; color:#031F2B;'>Unlock after a fixed date & time</span> <span style='font-weight:300; "
+                                         "color:#757575;'> (days, hours, minutes)</span>")
     DEFINE_STRING_PROPERTY(STR_QML_1843, "Current Bitcoin block height is %1")
     DEFINE_STRING_PROPERTY(STR_QML_1844, "Policies")
     DEFINE_STRING_PROPERTY(STR_QML_1845, "Constant")
     DEFINE_STRING_PROPERTY(STR_QML_1846, "Key path")
     DEFINE_STRING_PROPERTY(STR_QML_1848, "Requires M of N conditions.")
     DEFINE_STRING_PROPERTY(STR_QML_1849, "Requires M of N keys.")
-    DEFINE_STRING_PROPERTY(STR_QML_1850, "If the first condition is met, the second must also be met. If the first condition isn't met, the third must be met instead. \\n(Note: Timelocks cannot revoke an earlier spend path.)")
+    DEFINE_STRING_PROPERTY(STR_QML_1850, "If the first condition is met, the second must also be met. If the first condition isn't met, the third must be met "
+                                         "instead. \\n(Note: Timelocks cannot revoke an earlier spend path.)")
     DEFINE_STRING_PROPERTY(STR_QML_1851, "Both conditions must be satisfied.")
     DEFINE_STRING_PROPERTY(STR_QML_1852, "Only one condition needs to be satisfied.")
     DEFINE_STRING_PROPERTY(STR_QML_1853, "From the time the coins are received.")
@@ -1803,7 +1991,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1861, "Please back up your wallet configuration.")
     DEFINE_STRING_PROPERTY(STR_QML_1862, "You might need to register the wallet on your hardware device.")
     DEFINE_STRING_PROPERTY(STR_QML_1863, "Choose signing path")
-    DEFINE_STRING_PROPERTY(STR_QML_1864, "Select the policy you'll use to sign this spend. After selection, only that policy can sign and broadcast the transaction.")
+    DEFINE_STRING_PROPERTY(STR_QML_1864,
+                           "Select the policy you'll use to sign this spend. After selection, only that policy can sign and broadcast the transaction.")
     DEFINE_STRING_PROPERTY(STR_QML_1865, "Choose signing policy")
     DEFINE_STRING_PROPERTY(STR_QML_1866, "Estimated fee")
     DEFINE_STRING_PROPERTY(STR_QML_1867, "Show BIP32 path")
@@ -1816,13 +2005,16 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1874, "No miniscript added yet. Start creating your own spending rules.")
     DEFINE_STRING_PROPERTY(STR_QML_1875, "Timelocked")
     DEFINE_STRING_PROPERTY(STR_QML_1876, "Better privacy and lower fees. Requires all keys.")
-    DEFINE_STRING_PROPERTY(STR_QML_1877, "To add an existing key, additional XPUBs from the device are needed. Please plug in your key device, unlock, and press \"Top up XPUBs\"")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1877, "To add an existing key, additional XPUBs from the device are needed. Please plug in your key device, unlock, and press \"Top up XPUBs\"")
     DEFINE_STRING_PROPERTY(STR_QML_1878, "Move coins with a soon-expiring timelock to another address in this wallet to reset the timelock.")
     DEFINE_STRING_PROPERTY(STR_QML_1879, "Timelock timeline:")
     DEFINE_STRING_PROPERTY(STR_QML_1880, "Sort by coin age")
     DEFINE_STRING_PROPERTY(STR_QML_1881, "Enter")
     DEFINE_STRING_PROPERTY(STR_QML_1882, "Enter preimage in hex")
-    DEFINE_STRING_PROPERTY(STR_QML_1883, "Absolute timelocks can't be reset. After expiry, consider moving funds to a new wallet with the same policies if you want to reuse them.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1883,
+        "Absolute timelocks can't be reset. After expiry, consider moving funds to a new wallet with the same policies if you want to reuse them.")
     DEFINE_STRING_PROPERTY(STR_QML_1884_S, "Pending 1 nonce")
     DEFINE_STRING_PROPERTY(STR_QML_1884_M, "Pending %1 nonces")
     DEFINE_STRING_PROPERTY(STR_QML_1885, "Zen Hodl")
@@ -1839,17 +2031,24 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1896, "Timelock")
     DEFINE_STRING_PROPERTY(STR_QML_1897, "Check your Ledger firmware")
     DEFINE_STRING_PROPERTY(STR_QML_1898, "Your Ledger must support Miniscript for on-chain timelocks. Please make sure the device is running <b>%1</b>.")
-    DEFINE_STRING_PROPERTY(STR_QML_1899, "To check or update Ledger firmware, please follow <a href='%1' style=\"text-decoration:none; color:#0051CF\">Ledger's instructions.</a>")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1899, "To check or update Ledger firmware, please follow <a href='%1' style=\"text-decoration:none; color:#0051CF\">Ledger's instructions.</a>")
     DEFINE_STRING_PROPERTY(STR_QML_1900, "Check your Jade firmware")
     DEFINE_STRING_PROPERTY(STR_QML_1901, "Your Jade must support Miniscript for on-chain timelocks. Please make sure the device is running <b>%1</b>.")
-    DEFINE_STRING_PROPERTY(STR_QML_1902, "To check or update Jade firmware, please follow <a href='%1' style=\"text-decoration:none; color:#0051CF\">Blockstream's instructions.</a>")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1902,
+        "To check or update Jade firmware, please follow <a href='%1' style=\"text-decoration:none; color:#0051CF\">Blockstream's instructions.</a>")
     DEFINE_STRING_PROPERTY(STR_QML_1903, "Check your COLDCARD firmware")
     DEFINE_STRING_PROPERTY(STR_QML_1904, "Your COLDCARD must support Miniscript for on-chain timelocks. Please make sure the device is running <b>%1</b>.")
-    DEFINE_STRING_PROPERTY(STR_QML_1905, "To check or update COLDCARD firmware, please follow <a href='%1' style=\"text-decoration:none; color:#0051CF\">COLDCARD's instructions.</a>")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1905,
+        "To check or update COLDCARD firmware, please follow <a href='%1' style=\"text-decoration:none; color:#0051CF\">COLDCARD's instructions.</a>")
     DEFINE_STRING_PROPERTY(STR_QML_1906, "Back up your inheritance key seed phrase")
-    DEFINE_STRING_PROPERTY(STR_QML_1907, "<b>Please back up the inheritance key seed phrase on a steel plate, or a durable format that is non-digital.</b> You will need to share this seed phrase backup with your Beneficiary so they can access the inheritance.")
+    DEFINE_STRING_PROPERTY(STR_QML_1907, "<b>Please back up the inheritance key seed phrase on a steel plate, or a durable format that is non-digital.</b> You "
+                                         "will need to share this seed phrase backup with your Beneficiary so they can access the inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_1908, "Turn on your hardware signing device")
-    DEFINE_STRING_PROPERTY(STR_QML_1909, "Refer to your device's instruction manual and find the option to view or back up the recovery words for this key (12 or 24 words)")
+    DEFINE_STRING_PROPERTY(STR_QML_1909,
+                           "Refer to your device's instruction manual and find the option to view or back up the recovery words for this key (12 or 24 words)")
     DEFINE_STRING_PROPERTY(STR_QML_1910, "Write each word in the correct sequence and check the spelling carefully")
     DEFINE_STRING_PROPERTY(STR_QML_1911, "Verify your inheritance key seed phrase")
     DEFINE_STRING_PROPERTY(STR_QML_1912, "We recommend verifying now to confirm that your seed phrase backup works.")
@@ -1857,17 +2056,21 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1914, "Would you like to verify the backup now?")
     DEFINE_STRING_PROPERTY(STR_QML_1915, "Verify now")
     DEFINE_STRING_PROPERTY(STR_QML_1916, "Skip verification")
-    DEFINE_STRING_PROPERTY(STR_QML_1917, "Refer to your inheritance key device's instruction manual and locate the option to <b>Wipe the seed or Set a temporary seed</b>. If you choose to wipe the seed, make sure the existing seed has also been backed up.")
+    DEFINE_STRING_PROPERTY(STR_QML_1917, "Refer to your inheritance key device's instruction manual and locate the option to <b>Wipe the seed or Set a "
+                                         "temporary seed</b>. If you choose to wipe the seed, make sure the existing seed has also been backed up.")
     DEFINE_STRING_PROPERTY(STR_QML_1918, "Locate the option to <b>Restore from a BIP39 seed phrase</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1919, "Enter the inheritance key seed phrase carefully on the device")
-    DEFINE_STRING_PROPERTY(STR_QML_1920, "Once the device is loaded with the seed phrase, <b>re-add the restored key</b> to the Nunchuk app to verify that its public key matches the public key of your inheritance key")
+    DEFINE_STRING_PROPERTY(STR_QML_1920, "Once the device is loaded with the seed phrase, <b>re-add the restored key</b> to the Nunchuk app to verify that its "
+                                         "public key matches the public key of your inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_1921, "Re-add COLDCARD")
     DEFINE_STRING_PROPERTY(STR_QML_1922, "Add COLDCARD via QR")
     DEFINE_STRING_PROPERTY(STR_QML_1923, "Re-add Jade")
     DEFINE_STRING_PROPERTY(STR_QML_1924, "Re-add Ledger")
     DEFINE_STRING_PROPERTY(STR_QML_1925, "Add Blockstream Jade via QR (%1/2)")
-    DEFINE_STRING_PROPERTY(STR_QML_1926, "Each hardware device must be added twice, with both keys (before and after the timelock) coming from the same device but using different derivation paths.")
-    DEFINE_STRING_PROPERTY(STR_QML_1927, "Please add a key for the spending path <b>after the timelock</b>. On your device, select <b>account 0</b> for this spending path.")
+    DEFINE_STRING_PROPERTY(STR_QML_1926, "Each hardware device must be added twice, with both keys (before and after the timelock) coming from the same device "
+                                         "but using different derivation paths.")
+    DEFINE_STRING_PROPERTY(STR_QML_1927,
+                           "Please add a key for the spending path <b>after the timelock</b>. On your device, select <b>account 0</b> for this spending path.")
     DEFINE_STRING_PROPERTY(STR_QML_1928, "Initialize Jade")
     DEFINE_STRING_PROPERTY(STR_QML_1929, "Refer to <a href='%1' style=\"color:#031F2B\">this starter guide</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_1930, "Unlock Jade")
@@ -1876,17 +2079,22 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1933, "Options → Wallet → Export Xpub → Options → Wallet → Multisig → Enter → Account Index → <b>Enter account 0</b>")
     DEFINE_STRING_PROPERTY(STR_QML_1934, "Scan QR code")
     DEFINE_STRING_PROPERTY(STR_QML_1935, "Scan the QR code on the next screen.")
-    DEFINE_STRING_PROPERTY(STR_QML_1937, "Now add the second key from the same Jade for the spending path <b>before the timelock</b>. On your device, select <b>account %1</b> for this spending path.")
+    DEFINE_STRING_PROPERTY(STR_QML_1937, "Now add the second key from the same Jade for the spending path <b>before the timelock</b>. On your device, select "
+                                         "<b>account %1</b> for this spending path.")
     DEFINE_STRING_PROPERTY(STR_QML_1938, "Add COLDCARD via QR (%1/2)")
-    DEFINE_STRING_PROPERTY(STR_QML_1939, "Navigate to Advanced/Tools → Export Wallet → Generic JSON → Select 1 to Enter Account → <b>Enter Account %1</b> → QR.")
+    DEFINE_STRING_PROPERTY(STR_QML_1939,
+                           "Navigate to Advanced/Tools → Export Wallet → Generic JSON → Select 1 to Enter Account → <b>Enter Account %1</b> → QR.")
     DEFINE_STRING_PROPERTY(STR_QML_1940, "Let's configure your wallet")
     DEFINE_STRING_PROPERTY(STR_QML_1941, "Your inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_1942, "The inheritance key is used to claim funds and spend from the wallet after the timelock.")
-    DEFINE_STRING_PROPERTY(STR_QML_1943, "<b>If you do not already have a BIP39 seed phrase, view it on your device or generate a new one.</b> Either a 12-word or 24-word seed phrase is acceptable (12 words are sufficient). Keep it secret.")
+    DEFINE_STRING_PROPERTY(STR_QML_1943, "<b>If you do not already have a BIP39 seed phrase, view it on your device or generate a new one.</b> Either a "
+                                         "12-word or 24-word seed phrase is acceptable (12 words are sufficient). Keep it secret.")
     DEFINE_STRING_PROPERTY(STR_QML_1944, "You will later share this seed phrase backup with your Beneficiary so they can access the inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_1945, "A passphrase is an optional \"extra word\" added to your 12 or 24-word seed phrase.")
-    DEFINE_STRING_PROPERTY(STR_QML_1946, "<b>We strongly advise against using a passphrase for the inheritance key.</b> It significantly complicates the recovery process and increases the risk of errors for your Beneficiary.")
-    DEFINE_STRING_PROPERTY(STR_QML_1946Two, "If you still choose to use a passphrase, you must ensure it is shared with your Beneficiary along with the seed phrase backup.")
+    DEFINE_STRING_PROPERTY(STR_QML_1946, "<b>We strongly advise against using a passphrase for the inheritance key.</b> It significantly complicates the "
+                                         "recovery process and increases the risk of errors for your Beneficiary.")
+    DEFINE_STRING_PROPERTY(STR_QML_1946Two,
+                           "If you still choose to use a passphrase, you must ensure it is shared with your Beneficiary along with the seed phrase backup.")
     DEFINE_STRING_PROPERTY(STR_QML_1947, "Continue to add the inheritance key to the wallet on the next screen.")
     DEFINE_STRING_PROPERTY(STR_QML_1948, "Your device may use a different term for the seed phrase, such as \"recovery phrase\" or \"mnemonic.\"")
     DEFINE_STRING_PROPERTY(STR_QML_1949, "Export Account 0 XPUB from COLDCARD")
@@ -1900,8 +2108,10 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1957, "<b>Cons</b>: Claiming the inheritance depends on Nunchuk services being available.")
     DEFINE_STRING_PROPERTY(STR_QML_1958, "On-chain timelock")
     DEFINE_STRING_PROPERTY(STR_QML_1959, "Enforced on Bitcoin")
-    DEFINE_STRING_PROPERTY(STR_QML_1960, "<b>Pros</b>: Your Beneficiary can claim the inheritance with or without Nunchuk's assistance once the timelock expires.")
-    DEFINE_STRING_PROPERTY(STR_QML_1961, "<b>Cons</b>: Changing the timelock requires creating a new wallet and moving funds, though Nunchuk can help automate this.")
+    DEFINE_STRING_PROPERTY(STR_QML_1960,
+                           "<b>Pros</b>: Your Beneficiary can claim the inheritance with or without Nunchuk's assistance once the timelock expires.")
+    DEFINE_STRING_PROPERTY(STR_QML_1961,
+                           "<b>Cons</b>: Changing the timelock requires creating a new wallet and moving funds, though Nunchuk can help automate this.")
     DEFINE_STRING_PROPERTY(STR_QML_1962, "You can change the plan later (new wallet required). Not sure which to choose? Read the in-depth comparison.")
     DEFINE_STRING_PROPERTY(STR_QML_1963, "Select inheritance plan type")
     DEFINE_STRING_PROPERTY(STR_QML_1964, "Verify")
@@ -1913,16 +2123,27 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1970, "Split the secrets between the Beneficiary and the Trustee.")
     DEFINE_STRING_PROPERTY(STR_QML_1971, "The plan's Magic Phrase and the wallet configuration (BSMS file). At least one is required to recover the wallet.")
     DEFINE_STRING_PROPERTY(STR_QML_1972, "The seed phrase of the inheritance key.")
-    DEFINE_STRING_PROPERTY(STR_QML_1973, "The Trustee keeps the plan's Magic Phrase and the wallet configuration (BSMS file). At least one is required to recover the wallet.")
-    DEFINE_STRING_PROPERTY(STR_QML_1974, "You are solely responsible for sharing these items with the Beneficiary. If you do not share these items, the inheritance cannot be claimed.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1973, "The Trustee keeps the plan's Magic Phrase and the wallet configuration (BSMS file). At least one is required to recover the wallet.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1974,
+        "You are solely responsible for sharing these items with the Beneficiary. If you do not share these items, the inheritance cannot be claimed.")
     DEFINE_STRING_PROPERTY(STR_QML_1975, "The Beneficiary keeps the seed phrase of the inheritance key.")
     DEFINE_STRING_PROPERTY(STR_QML_1976, "How it works")
     DEFINE_STRING_PROPERTY(STR_QML_1977, "Continue")
-    DEFINE_STRING_PROPERTY(STR_QML_1978, "With the secrets you provided, there are <a href='https://nunchuk.io/howtoclaim'><font color='#21739B'>two ways</font></a> for the Beneficiary to access and claim the funds:")
-    DEFINE_STRING_PROPERTY(STR_QML_1979, "<div style='line-height:1.4;'> <b>With Nunchuk service</b><br> Guided claim using the Magic Phrase and the inheritance key. </div>")
-    DEFINE_STRING_PROPERTY(STR_QML_1980, "<div style='line-height:1.4;'> <b>Without Nunchuk service (fallback option)</b><br> Self‑serve claim using the wallet configuration file (BSMS file) and the inheritance key.<br> In this method, the BSMS file replaces the Magic Phrase. The Beneficiary does not depend on the Nunchuk service for recovery. </div>")
-    DEFINE_STRING_PROPERTY(STR_QML_1981, "<div style='line-height:1.4;'> <b>Without Nunchuk service (fallback option)</b><br> Self‑serve claim using the wallet configuration file (BSMS file) and the inheritance key.<br> In this method, the BSMS file replaces the Magic Phrase. The Trustee does not depend on the Nunchuk service for recovery. </div>")
-    DEFINE_STRING_PROPERTY(STR_QML_1982, "<div style='line-height:1.4;'> <b>Without Nunchuk service (fallback option)</b><br> Self‑serve claim using the wallet configuration file (BSMS file) and the inheritance key.<br> In this method, the BSMS file replaces the Magic Phrase. The Beneficiary and the Trustee do not depend on the Nunchuk service for recovery. </div>")
+    DEFINE_STRING_PROPERTY(STR_QML_1978, "With the secrets you provided, there are <a href='https://nunchuk.io/howtoclaim'><font color='#21739B'>two "
+                                         "ways</font></a> for the Beneficiary to access and claim the funds:")
+    DEFINE_STRING_PROPERTY(STR_QML_1979,
+                           "<div style='line-height:1.4;'> <b>With Nunchuk service</b><br> Guided claim using the Magic Phrase and the inheritance key. </div>")
+    DEFINE_STRING_PROPERTY(STR_QML_1980, "<div style='line-height:1.4;'> <b>Without Nunchuk service (fallback option)</b><br> Self‑serve claim using the "
+                                         "wallet configuration file (BSMS file) and the inheritance key.<br> In this method, the BSMS file replaces the Magic "
+                                         "Phrase. The Beneficiary does not depend on the Nunchuk service for recovery. </div>")
+    DEFINE_STRING_PROPERTY(STR_QML_1981, "<div style='line-height:1.4;'> <b>Without Nunchuk service (fallback option)</b><br> Self‑serve claim using the "
+                                         "wallet configuration file (BSMS file) and the inheritance key.<br> In this method, the BSMS file replaces the Magic "
+                                         "Phrase. The Trustee does not depend on the Nunchuk service for recovery. </div>")
+    DEFINE_STRING_PROPERTY(STR_QML_1982, "<div style='line-height:1.4;'> <b>Without Nunchuk service (fallback option)</b><br> Self‑serve claim using the "
+                                         "wallet configuration file (BSMS file) and the inheritance key.<br> In this method, the BSMS file replaces the Magic "
+                                         "Phrase. The Beneficiary and the Trustee do not depend on the Nunchuk service for recovery. </div>")
     DEFINE_STRING_PROPERTY(STR_QML_1983, "The Beneficiary needs the following to claim the inheritance:")
     DEFINE_STRING_PROPERTY(STR_QML_1984, "<b>Inheritance key</b> (XFP: %1)")
     DEFINE_STRING_PROPERTY(STR_QML_1985, "These can be used after the on-chain timelock:")
@@ -1933,12 +2154,15 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_1990, "Time zone")
     DEFINE_STRING_PROPERTY(STR_QML_1991, "Invalid Magic Phrase")
     DEFINE_STRING_PROPERTY(STR_QML_1992, "Set up an on-chain timelock")
-    DEFINE_STRING_PROPERTY(STR_QML_1993, "Your inheritance plan includes an on-chain timelock enforced by the Bitcoin network. After it expires, the Beneficiary can claim the funds autonomously using the required secrets.")
-    DEFINE_STRING_PROPERTY(STR_QML_1994, "<b>The lock is immutable.</b> Once set, the unlock time cannot be changed. To adjust it later, you must create a new wallet and migrate your funds. A guided feature is available in the Wallet Config screen.")
+    DEFINE_STRING_PROPERTY(STR_QML_1993, "Your inheritance plan includes an on-chain timelock enforced by the Bitcoin network. After it expires, the "
+                                         "Beneficiary can claim the funds autonomously using the required secrets.")
+    DEFINE_STRING_PROPERTY(STR_QML_1994, "<b>The lock is immutable.</b> Once set, the unlock time cannot be changed. To adjust it later, you must create a new "
+                                         "wallet and migrate your funds. A guided feature is available in the Wallet Config screen.")
     DEFINE_STRING_PROPERTY(STR_QML_1995, "Recommendation: Set a duration of 5 to 10 years to minimize the need for future migrations.")
     DEFINE_STRING_PROPERTY(STR_QML_1996, "Even with the inheritance key, the Beneficiary cannot claim funds before the timelock expires.")
     DEFINE_STRING_PROPERTY(STR_QML_1997, "Your plan requires %1 inheritance keys")
-    DEFINE_STRING_PROPERTY(STR_QML_1998, "To unlock this inheritance plan, you must add %1 inheritance keys that belong to this plan. Start by adding the first inheritance key.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_1998, "To unlock this inheritance plan, you must add %1 inheritance keys that belong to this plan. Start by adding the first inheritance key.")
     DEFINE_STRING_PROPERTY(STR_QML_1999, "Add the first inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_2000, "Prepare inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_2001, "As part of your inheritance plan, you should have received either:")
@@ -1948,8 +2172,10 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2005, "I have a hardware device initialized with the inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_2006, "I have a seed phrase backup for the inheritance key")
     DEFINE_STRING_PROPERTY(STR_QML_2007, "Recover inheritance key")
-    DEFINE_STRING_PROPERTY(STR_QML_2008, "For best security, import the seed phrase into a hardware signing device before verification. This keeps the private key offline and secure during the claiming process.")
-    DEFINE_STRING_PROPERTY(STR_QML_2009, "If you do not have a hardware device, you can import the seed phrase directly into Nunchuk. Only do this on a clean, malware-free device, and make sure Nunchuk was downloaded from the official app stores or repository.")
+    DEFINE_STRING_PROPERTY(STR_QML_2008, "For best security, import the seed phrase into a hardware signing device before verification. This keeps the private "
+                                         "key offline and secure during the claiming process.")
+    DEFINE_STRING_PROPERTY(STR_QML_2009, "If you do not have a hardware device, you can import the seed phrase directly into Nunchuk. Only do this on a clean, "
+                                         "malware-free device, and make sure Nunchuk was downloaded from the official app stores or repository.")
     DEFINE_STRING_PROPERTY(STR_QML_2010, "Use hardware device")
     DEFINE_STRING_PROPERTY(STR_QML_2011, "Enter seed phrase directly")
     DEFINE_STRING_PROPERTY(STR_QML_2012, "Restore seed phrase to hardware device")
@@ -1972,7 +2198,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2029, "Automatically send a backup of the wallet config in the owner's email inbox.")
     DEFINE_STRING_PROPERTY(STR_QML_2030, "Send them an email once the timelock has expired.")
     DEFINE_STRING_PROPERTY(STR_QML_2031, "Send them an email whenever the wallet configuration changes (including today).")
-    DEFINE_STRING_PROPERTY(STR_QML_2032, "Attach the wallet configuration (BSMS file) to the emails. This person will be able to view the wallet's balance and transaction history. This file is required to claim the inheritance without the Nunchuk service.")
+    DEFINE_STRING_PROPERTY(STR_QML_2032, "Attach the wallet configuration (BSMS file) to the emails. This person will be able to view the wallet's balance and "
+                                         "transaction history. This file is required to claim the inheritance without the Nunchuk service.")
     DEFINE_STRING_PROPERTY(STR_QML_2033, "The plan's secrets must be shared with the party or parties eligible for the inheritance. Please select your option:")
     DEFINE_STRING_PROPERTY(STR_QML_2034, "The Beneficiary has full control. After the timelock, they can claim the funds themselves.")
     DEFINE_STRING_PROPERTY(STR_QML_2035, "A Trustee has full control. After the timelock, the Trustee claims the funds on the Beneficiary's behalf.")
@@ -1981,8 +2208,11 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2038, "<b>Inheritance key %1</b> (XFP: %2)")
     DEFINE_STRING_PROPERTY(STR_QML_2039, "Seed phrase of inheritance key %1 you backed up earlier")
     DEFINE_STRING_PROPERTY(STR_QML_2040, "Add Blockstream Jade via QR")
-    DEFINE_STRING_PROPERTY(STR_QML_2041, "Please re-add the key for the spending path <b>after the timelock</b> to verify. On your device, select <b>account 0</b> for this spending path.")
-    DEFINE_STRING_PROPERTY(STR_QML_2042, "Navigate to Advanced/Tools → Export Wallet → Generic JSON → Select 1 to Enter Account → <b>Enter Account %1</b> → OK.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_2041,
+        "Please re-add the key for the spending path <b>after the timelock</b> to verify. On your device, select <b>account 0</b> for this spending path.")
+    DEFINE_STRING_PROPERTY(STR_QML_2042,
+                           "Navigate to Advanced/Tools → Export Wallet → Generic JSON → Select 1 to Enter Account → <b>Enter Account %1</b> → OK.")
     DEFINE_STRING_PROPERTY(STR_QML_2043, "Export XPUB from Jade")
     DEFINE_STRING_PROPERTY(STR_QML_2044, "Options → Wallet → Export Xpub → Options → Wallet → Multisig → Enter → Account Index → <b>Enter account %1</b>.")
     DEFINE_STRING_PROPERTY(STR_QML_2045, "No inheritance plan found")
@@ -1998,7 +2228,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2055, "Set up an off-chain timelock")
     DEFINE_STRING_PROPERTY(STR_QML_2056, "<b>Only on or after this date</b> can a Beneficiary or Trustee claim the inheritance.")
     DEFINE_STRING_PROPERTY(STR_QML_2057, "You can change the timelock later via the Services tab.")
-    DEFINE_STRING_PROPERTY(STR_QML_2058, "We recommend setting a timelock not too far in the future (e.g., 2 years from now). Review the plan annually and adjust the date if necessary to avoid long-term uncertainties.")
+    DEFINE_STRING_PROPERTY(STR_QML_2058, "We recommend setting a timelock not too far in the future (e.g., 2 years from now). Review the plan annually and "
+                                         "adjust the date if necessary to avoid long-term uncertainties.")
     DEFINE_STRING_PROPERTY(STR_QML_2059, "Even with the correct Magic Phrase and Backup Password, one cannot claim the inheritance before this date.")
     DEFINE_STRING_PROPERTY(STR_QML_2060, "This feature is currently not supported on desktop. Please use a mobile device to perform this action.")
     DEFINE_STRING_PROPERTY(STR_QML_2061, "The keyset remains the same, minus the Platform key.")
@@ -2008,12 +2239,17 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2065, "Add COLDCARD via QR")
     DEFINE_STRING_PROPERTY(STR_QML_2066, "Add COLDCARD via file")
     DEFINE_STRING_PROPERTY(STR_QML_2067, "Add Blockstream Jade via QR")
-    DEFINE_STRING_PROPERTY(STR_QML_2068, "Now add the second key from the same COLDCARD for the spending path <b>before the timelock</b>. On your device, select <b>account %1</b> for this spending path.")
+    DEFINE_STRING_PROPERTY(STR_QML_2068, "Now add the second key from the same COLDCARD for the spending path <b>before the timelock</b>. On your device, "
+                                         "select <b>account %1</b> for this spending path.")
     DEFINE_STRING_PROPERTY(STR_QML_2069, "This date and time is an estimate only. Funds are locked strictly by Block Height %1, regardless of calendar time.")
     DEFINE_STRING_PROPERTY(STR_QML_2070, "Block-Based Timelock")
-    DEFINE_STRING_PROPERTY(STR_QML_2071, "Dates after Jan 19, 2038 exceed the limit for time-based timelocks. We have automatically switched to a block-based timelock instead. \n\n Note: The actual unlock time for a block-based timelock may fluctuate by several weeks or months depending on the network hashing power.")
+    DEFINE_STRING_PROPERTY(
+        STR_QML_2071,
+        "Dates after Jan 19, 2038 exceed the limit for time-based timelocks. We have automatically switched to a block-based timelock instead. \n\n Note: The "
+        "actual unlock time for a block-based timelock may fluctuate by several weeks or months depending on the network hashing power.")
     DEFINE_STRING_PROPERTY(STR_QML_2072, "Confirm timelock duration")
-    DEFINE_STRING_PROPERTY(STR_QML_2073, "You are locking these funds for approximately %1 years. Your Beneficiary cannot access these funds until the lock expires, even if you pass away sooner. Are you sure?")
+    DEFINE_STRING_PROPERTY(STR_QML_2073, "You are locking these funds for approximately %1 years. Your Beneficiary cannot access these funds until the lock "
+                                         "expires, even if you pass away sooner. Are you sure?")
     DEFINE_STRING_PROPERTY(STR_QML_2074, "Invalid date")
     DEFINE_STRING_PROPERTY(STR_QML_2075, "The timelock date cannot be in the past. Please select a future date.")
     DEFINE_STRING_PROPERTY(STR_QML_2076, "Change on-chain timelock")
@@ -2027,8 +2263,8 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2084, "I want to claim an inheritance. %1.")
     DEFINE_STRING_PROPERTY(STR_QML_2085, "Verify Inheritance Key")
     DEFINE_STRING_PROPERTY(STR_QML_2086, "Do you want to add an existing key?")
-    DEFINE_STRING_PROPERTY(STR_QML_2087, "Recovery via seed")
-    DEFINE_STRING_PROPERTY(STR_QML_2088, "Recovery via XPRV")
+    DEFINE_STRING_PROPERTY(STR_QML_2087, "Recover via seed")
+    DEFINE_STRING_PROPERTY(STR_QML_2088, "Recover via XPRV")
     DEFINE_STRING_PROPERTY(STR_QML_2089, "Invalid seed phrase. Please try again.")
     DEFINE_STRING_PROPERTY(STR_QML_2090, "Please enter XPRV.")
     DEFINE_STRING_PROPERTY(STR_QML_2091, "XPRV")
@@ -2039,20 +2275,34 @@ class AppStrings : public QObject
     DEFINE_STRING_PROPERTY(STR_QML_2096, "Import signature")
     DEFINE_STRING_PROPERTY(STR_QML_2097, "Export via file")
     DEFINE_STRING_PROPERTY(STR_QML_2098, "Export completed")
-    DEFINE_STRING_PROPERTY(STR_QML_2099, "Continue on COLDCARD via: \nAdvanced/Tools > File Management > Sign Text File.\nOnce signing is done, select <b>Import signature.</b>")
-    
+    DEFINE_STRING_PROPERTY(
+        STR_QML_2099, "<p style='margin:0 0 10px 0;'>Continue on COLDCARD via:</p><p style='margin:0 0 10px 0;'>Advanced/Tools > File Management > Sign Text File.</p><p style='margin:0;'>Once signing is done, select <b>Import signature.</b></p>")
     DEFINE_STRING_PROPERTY(STR_QML_2100, "Add inheritance keys")
     DEFINE_STRING_PROPERTY(STR_QML_2101, "Funds become claimable after:")
     DEFINE_STRING_PROPERTY(STR_QML_2102, "Invalid value. Timelock must not exceed 388 days")
-    DEFINE_STRING_PROPERTY(STR_QML_2103, "You are still personally responsible for sharing the Magic Phrase and inheritance key seed phrase with the Beneficiary. The notification email won’t include these information.")
-    DEFINE_STRING_PROPERTY(STR_QML_2104, "If you don’t provide a Beneficiary’s email address, you’ll need to share all inheritance plan updates with them manually. Are you sure you want to continue?")
+    DEFINE_STRING_PROPERTY(STR_QML_2103, "Transaction has been broadcast")
+    DEFINE_STRING_PROPERTY(STR_QML_2104, "The transaction has been rejected by network rules.")
+    DEFINE_STRING_PROPERTY(STR_QML_2105, "View wallet")
+    DEFINE_STRING_PROPERTY(STR_QML_2106, "Invalid password. Unable to restore backup.")
+    DEFINE_STRING_PROPERTY(STR_QML_2107, "Missing Backup Passwords")
+    DEFINE_STRING_PROPERTY(STR_QML_2108, "Signed")
+    DEFINE_STRING_PROPERTY(STR_QML_2109, "Continue on COLDCARD via:")
+    DEFINE_STRING_PROPERTY(STR_QML_2110, "Advanced/Tools > File Management > Sign Text File.")
+    DEFINE_STRING_PROPERTY(STR_QML_2111, "Once signing is done, select <b>Import signature</b>.")
+    DEFINE_STRING_PROPERTY(STR_QML_2112, "Send all remaining")
+
+    DEFINE_STRING_PROPERTY(STR_QML_2113, "You are still personally responsible for sharing the Magic Phrase and inheritance key seed phrase with the Beneficiary. The notification email won’t include these information.")
+    DEFINE_STRING_PROPERTY(STR_QML_2114, "If you don’t provide a Beneficiary’s email address, you’ll need to share all inheritance plan updates with them manually. Are you sure you want to continue?")
+    DEFINE_STRING_PROPERTY(STR_QML_2115, "Backup password already in use. Please choose a different one.")
+    DEFINE_STRING_PROPERTY(STR_QML_2116, "Invalid or unreadable QR code. Please try again.")
+    DEFINE_STRING_PROPERTY(STR_QML_2117, "Invalid signature. Please try again.")
 
 public:
     static AppStrings& instance();
     explicit AppStrings(QObject *parent = nullptr);
 
-private:
+  private:
     static AppStrings *s_instance;
 };
-}  // namespace core::common::resources
+} // namespace core::common::resources
 #define Strings core::common::resources::AppStrings::instance()

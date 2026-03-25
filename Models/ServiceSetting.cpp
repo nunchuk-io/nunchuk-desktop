@@ -103,47 +103,6 @@ void ServiceSetting::clearWalletInfo() {
     emit walletInfoChanged();
 }
 
-void ServiceSetting::handleClaimInheritance(const QVariant &msg) {
-    const auto maps = msg.toMap();
-    const QString type = maps.value("type").toString();
-    const bool isShowScreen = maps.value("isShowScreen").toBool();
-
-    if (type == "withdraw-a-custom-amount") {
-        ServiceSetting::instance()->setScreenFlow(type);
-        QEventProcessor::instance()->sendEvent(E::EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST);
-        return;
-    }
-
-    const int64_t amount = maps.value("amount").toLongLong();
-    DBG_INFO << " Claim inheritance amount: " << amount;
-    servicesTagPtr()->setClaimInheritanceCustomAmount(amount);
-
-    if (type == "withdraw-to-a-nunchuk-wallet") {
-        const int keyCount = AppModel::instance()->masterSignerList()->rowCount() + AppModel::instance()->remoteSignerList()->rowCount();
-        const int walletCount = AppModel::instance()->walletList()->rowCount();
-
-        if (walletCount == 0 && keyCount <= 0) {
-            ServiceSetting::instance()->setScreenFlow("inheritance-claim-empty-key");
-            if (isShowScreen) {
-                QEventProcessor::instance()->sendEvent(E::EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST);
-            }
-            return;
-        }
-
-        if (walletCount == 0) {
-            OnBoardingModel::instance()->setScreenFlow("claimAddAWallet");
-            QEventProcessor::instance()->sendEvent(E::EVT_ONBOARDING_REQUEST);
-            DBG_INFO << "Request show screen: You don't have a wallet yet.";
-            return;
-        }
-    }
-
-    ServiceSetting::instance()->setScreenFlow(type);
-    if (isShowScreen) {
-        QEventProcessor::instance()->sendEvent(E::EVT_INHERITANCE_WITHDRAW_BALANCE_REQUEST);
-    }    
-}
-
 const QMap<QString, int> mapTagkeys = {
     {"LEDGER",   (int)Key::ADD_LEDGER},
     {"TREZOR",   (int)Key::ADD_TREZOR},

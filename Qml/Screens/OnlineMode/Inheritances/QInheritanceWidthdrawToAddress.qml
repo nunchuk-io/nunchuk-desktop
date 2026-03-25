@@ -19,10 +19,9 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
-import HMIEVENTS 1.0
-import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -30,7 +29,6 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/QRCodes"
 import "../../OnlineMode/Inheritances"
-import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id: _newTran
@@ -39,9 +37,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_786
-    property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
-    property var claimInheritanceCustomAmount: ServiceSetting.servicesTag.claimInheritanceCustomAmount
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onCloseClicked: vm.close()
 
     content: Item {
         Column {
@@ -70,7 +66,7 @@ QOnScreenContentTypeB {
                             if (addressInput.textInputted.length === 0) {
                                 addressInput.isValid = true
                                 addressInput.showError = false
-                                sendDelegateRoot.toAddress = ""
+                                destinationAddress = ""
                                 return
                             }
 
@@ -78,7 +74,7 @@ QOnScreenContentTypeB {
                                 addressInput.isValid = true
                                 addressInput.showError = false
                                 addressInput.errorText = ""
-                                sendDelegateRoot.toAddress = addressInput.textInputted
+                                destinationAddress = addressInput.textInputted
                             }
                             else {
                                 addressInput.isValid = false
@@ -120,11 +116,7 @@ QOnScreenContentTypeB {
                         isValid: true
                         enabled: false
                         disabledColor: "#EAEAEA"
-                        textInputted: if (claimInheritanceCustomAmount === 0) {
-                            inheritanceInfo.balance
-                        } else {
-                            convertFromSatoshi(false, claimInheritanceCustomAmount)
-                        }
+                        textInputted: convertFromSatoshi(false, vm.withdrawAmountSats)
                     }
                     QLato {
                         color: "#595959"
@@ -170,17 +162,17 @@ QOnScreenContentTypeB {
         onButtonClicked: _newTran.nextClicked()
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onPrevClicked: vm.close()
     onNextClicked: {
-        if (isValid()) {
-            AppModel.showToast(-1, STR.STR_QML_816, EWARNING.ERROR_MSG)
-        } else {
-            QMLHandle.sendEvent(EVT.EVT_INHERITANCE_NEW_TRANSACTION_REQ, destinationAddress)
-        }
+        vm.createTransactionToAddress(destinationAddress)
     }
 
     RegExpValidator { id: intValidator; regExp: /^[1-9][0-9]*$/ }
-    RegExpValidator { id: doubleValidator; regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }    
+    RegExpValidator { id: doubleValidator; regExp: /^(?:0|[1-9][0-9]*)(\.\d{1,8})?$/ }
+
+    WidthdrawToAddressViewModel {
+        id: vm
+    }
 }
 
 

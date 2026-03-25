@@ -15,11 +15,9 @@ class SetupAnOnChainTimelockViewModel : public OnChainTimelockViewModel {
     Q_OBJECT
   public:
     explicit SetupAnOnChainTimelockViewModel(QObject *parent = nullptr);
-    ~SetupAnOnChainTimelockViewModel() override = default;
 
   public slots:
     void onInit() override;
-    void onDispose() override;
     void setupTimeLock();
     void close() override;
   private:

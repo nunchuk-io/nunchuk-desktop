@@ -16,10 +16,6 @@ void TimezoneViewModel::onInit() {
     // ctx()->flowManager()->startFlow<SyncWalletFromRemoteFlow>();
 }
 
-void TimezoneViewModel::onDispose() {
-    // ctx()->flowManager()->stopFlow<SyncWalletFromRemoteFlow>();
-}
-
 QWalletTimezoneModel *TimezoneViewModel::timezones() const
 {
     return m_timezones.data();

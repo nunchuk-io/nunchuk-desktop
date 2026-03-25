@@ -54,4 +54,18 @@ ClientController *FlowContext::clientController() const {
     return nullptr;
 }
 
+RightPanelNavigator *FlowContext::rightPanelNavigator() const {
+    if (m_appCtx) {
+        return m_appCtx->rightPanelNavigator();
+    }
+    return nullptr;
+}
+
+AppSetting *FlowContext::appSetting() const {
+    if (m_appCtx) {
+        return m_appCtx->appSetting();
+    }
+    return nullptr;
+}
+
 } // namespace core::flow

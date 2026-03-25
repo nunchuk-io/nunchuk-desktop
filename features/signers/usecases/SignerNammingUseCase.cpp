@@ -1,7 +1,7 @@
 #include "SignerNammingUseCase.h"
-#include "qUtils.h"
-#include "ifaces/bridgeifaces.h"
+#include "core/bridge/ExternalBridges.h"
 #include "core/ui/UiServices.inc"
+#include "core/utils/Utils.h"
 
 namespace features::signers::usecases {
 using namespace core::usecase;
@@ -51,11 +51,40 @@ Result<QString> SignerNammingUseCase::execute(const QString &input) {
     }
     std::sort(listId.begin(), listId.end());
     QString nameKey = listId.isEmpty() ? input : QString("%1 #%2").arg(input).arg(QString::fromStdString(std::to_string(listId.last() + 1)));
-    
+
     return Result<QString>::success(nameKey);
 }
 
 QString SignerNammingUseCase::getInheritanceNameKey() {
-    return execute("Inheritance key").value();
+    const QString baseName = "Inheritance key";
+    if (m_nextInheritanceKeyIndex < 0) {
+        const QString firstName = execute(baseName).value();
+        if (qUtils::strCompare(firstName, baseName)) {
+            m_nextInheritanceKeyIndex = 1;
+            return firstName;
+        }
+
+        const QString prefix = QString("%1 #").arg(baseName);
+        if (firstName.startsWith(prefix)) {
+            bool isOK = false;
+            const int index = firstName.mid(prefix.length()).toInt(&isOK);
+            if (isOK) {
+                m_nextInheritanceKeyIndex = index + 1;
+                return firstName;
+            }
+        }
+
+        m_nextInheritanceKeyIndex = 1;
+        return firstName;
+    }
+
+    const QString nextName = QString("%1 #%2").arg(baseName).arg(m_nextInheritanceKeyIndex);
+    m_nextInheritanceKeyIndex++;
+    return nextName;
 }
+
+QString SignerNammingUseCase::getNormalNameKey(const QString &baseName) {
+    return execute(baseName).value();
 }
+
+} // namespace features::signers::usecases

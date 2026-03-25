@@ -2,7 +2,6 @@
 #include "core/ui/UiServices.inc"
 #include "Premiums/QWalletServicesTag.h"
 #include "generated_qml_keys.hpp"
-
 #include "features/inheritance/offchain/viewmodels/SetupAnOffChainTimelockViewModel.h"
 
 namespace features::inheritance::offchain::flows {

@@ -37,10 +37,7 @@ Item {
     property int    pendingSignature: 0
     property bool   isDummy: false
     property string myRole: ""
-    signal keySignRequest(var signer)
-    signal keyScanRequest
-    signal keyExportRequest
-    signal keyImportRequest
+    property var signerEvents
     /*========================================*/
     width: 378
     height: 480
@@ -100,19 +97,7 @@ Item {
                 keysetM: transactionInfo.m
                 keysetRemaining: model.single_signer_keyset_remaining
                 isValueKey: model.single_signer_value_key
-
-                onSignRequest: {
-                    keySignRequest(model)
-                }
-                onScanRequest: {
-                    keyScanRequest()
-                }
-                onExportRequest: {
-                    keyExportRequest()
-                }
-                onImportRequest: {
-                    keyImportRequest()
-                }
+                signerEvents: _item.signerEvents
             }
             Component.onCompleted: GlobalData.showOthersKeyset = true
         }
@@ -164,18 +149,7 @@ Item {
                     accountIndex: model.single_signer_account_index
                     myRole: _item.myRole
                     isValueKey: model.single_signer_value_key
-                    onSignRequest: {
-                        keySignRequest(model)
-                    }
-                    onScanRequest: {
-                        keyScanRequest()
-                    }
-                    onExportRequest: {
-                        keyExportRequest()
-                    }
-                    onImportRequest: {
-                        keyImportRequest()
-                    }
+                    signerEvents: _item.signerEvents
                 }
                 section
                 {

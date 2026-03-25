@@ -30,14 +30,9 @@
 #include "MasterSignerModel.h"
 #include "TransactionModel.h"
 #include "QEventProcessor.h"
-#include "nunchuk.h"
+#include "core/common/datatypes/NunchukMetaType.hpp"
 
-Q_DECLARE_METATYPE(nunchuk::Transaction)
-Q_DECLARE_METATYPE(nunchuk::Wallet)
-Q_DECLARE_METATYPE(nunchuk::SingleSigner)
-Q_DECLARE_METATYPE(nunchuk::MasterSigner)
-Q_DECLARE_METATYPE(nunchuk::Device)
-Q_DECLARE_METATYPE(std::vector<nunchuk::Device>)
+
 typedef std::function<void(void)> WorkerFunc;
 Q_DECLARE_METATYPE(WorkerFunc)
 

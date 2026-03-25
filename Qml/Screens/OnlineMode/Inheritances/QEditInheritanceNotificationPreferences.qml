@@ -118,7 +118,7 @@ QOnScreenContentTypeB {
                 }
                 QLato {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: walletType === NUNCHUCKTYPE.MINISCRIPT ? STR.STR_QML_2103 : STR.STR_QML_869
+                    text: walletType === NUNCHUCKTYPE.MINISCRIPT ? STR.STR_QML_2113 : STR.STR_QML_869
                     width: 660
                     height: 56
                     wrapMode: Text.WordWrap
@@ -200,7 +200,7 @@ QOnScreenContentTypeB {
 
     QConfirmYesNoPopup {
         id: confirmations
-        contentText: STR.STR_QML_2104
+        contentText: STR.STR_QML_2114
         leftBtnLabel: "Add email"
         rightBtnLabel: "Continue"
         onConfirmNo: close()

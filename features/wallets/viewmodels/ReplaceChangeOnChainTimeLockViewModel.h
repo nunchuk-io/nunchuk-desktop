@@ -15,11 +15,9 @@ class ReplaceChangeOnChainTimeLockViewModel : public OnChainTimelockViewModel {
     Q_OBJECT
   public:
     explicit ReplaceChangeOnChainTimeLockViewModel(QObject *parent = nullptr);
-    ~ReplaceChangeOnChainTimeLockViewModel() override = default;
 
   public slots:
     void onInit() override;
-    void onDispose() override;
     void setupTimeLock();
   private:
     TimeLockReplacementUpdateUseCase m_timeLockUpdateUC;

@@ -338,7 +338,6 @@
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServicePlatformKeyCoSigningPoliciesDetails.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimAnInheritance.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceBufferPeriodHasStarted.qml</file>
-        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceMagicPhraseAndBackupPassword.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceYourInheritance.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceWithdrawBitcoin.qml</file>
         <file>Qml/Components/LeftPannel/Service/Byzantine/QServiceEmptyStateLeftPannel.qml</file>
@@ -752,6 +751,45 @@
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOffChain.qml</file>
         <file>Qml/Components/RightPannel/Service/HoneyBadger-IronHand/QServiceViewInheritancePlaningDetailOnChain.qml</file>
         <file>Qml/Screens/OnlineMode/Claiming/ClaimInheritancePlanResult.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceInputBackupPassword.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceInputMagicPhrase.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceOptionsProceed.qml</file>
+        <file>Qml/features/signers/QWhichTypeOfKeySelection.qml</file>
+        <file>Qml/features/signers/QColdcardRefreshDevices.qml</file>
+        <file>Qml/features/signers/QHardwareRefreshDevices.qml</file>
+        <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR.qml</file>
+        <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR_1_2.qml</file>
+        <file>Qml/features/signers/onchain/QAddBlockstreamJadeViaQR_2_2.qml</file>
+        <file>Qml/features/signers/onchain/QAddCOLDCARDGuideViaFile.qml</file>
+        <file>Qml/features/signers/onchain/QAddCOLDCARDGuideViaFile_1_2.qml</file>
+        <file>Qml/features/signers/onchain/QAddCOLDCARDGuideViaFile_2_2.qml</file>
+        <file>Qml/features/signers/onchain/QAddCOLDCARDGuideViaQR.qml</file>
+        <file>Qml/features/signers/onchain/QAddCOLDCARDGuideViaQR_1_2.qml</file>
+        <file>Qml/features/signers/onchain/QAddCOLDCARDGuideViaQR_2_2.qml</file>
+        <file>Qml/features/signers/offchain/QAddCOLDCARDGuideViaFile.qml</file>
+        <file>Qml/features/signers/offchain/QAddCOLDCARDGuideViaQR.qml</file>
+        <file>Qml/features/claiming/offchain/QVerifyInheritanceKey.qml</file>
+        <file>Qml/features/claiming/offchain/QSingleSignerVerifyDelegate.qml</file>
+        <file>Qml/features/signers/QAddSoftwareExistingKey.qml</file>
+        <file>Qml/features/signers/QExistingListKey.qml</file>
+        <file>Qml/features/signers/QRecoveryAddSoftwareKey.qml</file>
+        <file>Qml/features/signers/QRecoverViaSeed.qml</file>
+        <file>Qml/features/signers/QRecoverViaXPRV.qml</file>
+        <file>Qml/features/signers/QAddHardwareExistingKey.qml</file>
+        <file>Qml/features/signers/QAddKeyProcessLoading.qml</file>
+        <file>Qml/features/claiming/offchain/QExportCompleted.qml</file>
+        <file>Qml/features/common/QResultSuccess.qml</file>
+        <file>Qml/features/claiming/offchain/QYourPlanRequiresTwoInheritanceKeys.qml</file>
+        <file>Qml/features/claiming/offchain/QYourPlanRequiresTwoInheritanceKeysAddedOne.qml</file>
+        <file>Qml/features/claiming/onchain/QPrepareInheritanceKey.qml</file>
+        <file>Qml/features/claiming/onchain/QRecoverInheritanceKey.qml</file>
+        <file>Qml/features/claiming/onchain/QRestoreSeedPhraseToHardwareDevice.qml</file>
+        <file>Qml/features/claiming/onchain/QYourPlanRequiresTwoInheritanceKeys.qml</file>
+        <file>Qml/features/claiming/onchain/QYourPlanRequiresTwoInheritanceKeysAddedOne.qml</file>
+        <file>Qml/core/RightPanelNavigator.qml</file>
+        <file>Qml/features/claiming/QConfirmTransaction.qml</file>
+        <file>Qml/features/claiming/QTransactionDetails.qml</file>
+        <file>Qml/features/claiming/QTransactionDetailsClaimed.qml</file>
         <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeAScrollable.qml</file>
     </qresource>
     <qresource prefix="/Images">
@@ -1150,6 +1188,7 @@
         <file>Images/star-dark.svg</file>
         <file>Images/prepare-inheritance-key.svg</file>
         <file>Images/recover-inheritance-key.svg</file>
+        <file>Images/verify-inheritance-key.svg</file>
         <file>Images/restore-seed-phrase-to-hardware-device.svg</file>
         <file>Images/your-plan-requires-inheritance-keys-added-one.svg</file>
         <file>Images/your-plan-requires-inheritance-keys.svg</file>

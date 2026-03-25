@@ -1,23 +1,17 @@
 #pragma once
 #include "TypeDefine.h"
 #include "WalletModel.h"
-#include "core/viewmodel/ActionViewModel.h"
+#include "features/claiming/viewmodels/WidthdrawToAddressViewModel.h"
 
 namespace features::claiming::viewmodels {
-using core::viewmodels::ActionViewModel;
-class WithdrawSelectWalletViewModel : public ActionViewModel {
+class WithdrawSelectWalletViewModel : public WidthdrawToAddressViewModel {
     Q_OBJECT
-    Q_PROPERTY(WalletListModel *walletList READ walletList NOTIFY walletListChanged)
+    DEFINE_QT_PROPERTY_PTR(WalletListModel, walletList)
   public:
     explicit WithdrawSelectWalletViewModel(QObject *parent = nullptr);
-    ~WithdrawSelectWalletViewModel() override = default;
-    WalletListModel *walletList() const;
     void createWalletForWithdrawSelect();
     void onInit() override;
-  signals:
-    void walletListChanged();
-
-  private:
-    QWalletListModelPtr m_walletList;
+  public slots:
+    void createTransactionToWallet(const QString& wallet_id);
 };
 } // namespace features::claiming::viewmodels

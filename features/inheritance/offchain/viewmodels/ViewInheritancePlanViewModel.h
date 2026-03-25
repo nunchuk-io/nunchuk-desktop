@@ -11,10 +11,8 @@ class ViewInheritancePlanViewModel : public OffChainTimelockViewModel {
     Q_OBJECT
   public:
     explicit ViewInheritancePlanViewModel(QObject *parent = nullptr);
-    ~ViewInheritancePlanViewModel() override = default;
 
     void onInit() override;
-    void onDispose() override;
   public slots:
     void timeLockEditClicked();
   private:

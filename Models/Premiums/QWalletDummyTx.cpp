@@ -134,10 +134,10 @@ QStringList QWalletDummyTx::ExportPsbtViaQR(const QString& request_body, QWarnin
     nunchuk::Wallet wallet = bridge::nunchukGetOriginWallet(wallet_id(), msg);
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         msg.resetWarningMessage();
-        QString tx_to_sign = qUtils::GetHealthCheckDummyTx(wallet, request_body, msg);
+        QString psbt = qUtils::GetHealthCheckDummyTx(wallet, request_body, msg);
         if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
             msg.resetWarningMessage();
-            QStringList qrtags = qUtils::ExportQRTransaction(tx_to_sign, msg);
+            QStringList qrtags = qUtils::ExportQRTransaction(psbt, msg);
             if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
                 msg.resetWarningMessage();
                 return qrtags;

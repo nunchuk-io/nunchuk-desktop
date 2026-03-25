@@ -881,6 +881,15 @@ public:
 
     std::string GetWalletExportData(const std::string &wallet_id, nunchuk::ExportFormat format, QWarningMessage &msg);
 
+    std::string GetSignerMasterXprv(const std::string &signer_id, QWarningMessage &msg);
+    bool HasSignerMasterXprv(const std::string &signer_id, QWarningMessage &msg);
+    bool HasSignerMnemonic(const std::string& signer_id, QWarningMessage &msg);
+    bool IsValidSignerPassphrase(const std::string& mastersigner_id, const std::string& passphrase, QWarningMessage &msg);
+    std::string GetSignerMnemonic(const std::string& signer_id, const std::string& passphrase, QWarningMessage &msg);
+
+    nunchuk::MasterSigner CreateMasterSigner(const std::string &name, const nunchuk::Device &device,
+                                             std::function<bool /* stop */ (int /* percent */)> progress, QWarningMessage &msg);
+
   private:
     nunchukiface();
     ~nunchukiface();

@@ -2783,7 +2783,6 @@ bool Draco::inheritanceClaimStatus(const QJsonObject& data,
             return true;
         }
         else{
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }
@@ -2827,6 +2826,25 @@ bool Draco::inheritanceClaimDownloadWallet(const QJsonObject &body, QJsonObject 
     return false;
 }
 
+bool Draco::inheritanceClaimSigningChallenge(const QString& magic, QJsonObject &output) {
+    QJsonObject data;
+    data["magic"] = magic;
+    QString cmd = commands[Premium::CMD_IDX::INHERITANCE_CLAIM_SIGNING_CHALLENGE];
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        output = jsonObj["error"].toObject();
+        int response_code = output["code"].toInt();
+        QString response_msg = output["message"].toString();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Draco::inheritanceCreateTx(const QJsonObject& data, const QStringList& authos, QJsonObject &output)
 {
     QMap<QString, QString> params;
@@ -2846,7 +2864,6 @@ bool Draco::inheritanceCreateTx(const QJsonObject& data, const QStringList& auth
             return true;
         }
         else{
-            AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
             return false;
         }
     }

@@ -6,6 +6,7 @@
 namespace core::flow {
 using app::AppContext;
 using core::screen::ScreenManager;
+using core::screen::RightPanelNavigator;
 using core::popup::PopupManager;
 using core::toast::ToastManager;
 using core::subscreen::SubScreenManager;
@@ -20,6 +21,8 @@ class FlowContext : public QObject {
     AppModel *appModel() const;
     ServiceSetting *serviceSetting() const;
     ClientController *clientController() const;
+    RightPanelNavigator *rightPanelNavigator() const;
+    AppSetting *appSetting() const;
 
   private:
     AppContext *m_appCtx{nullptr};

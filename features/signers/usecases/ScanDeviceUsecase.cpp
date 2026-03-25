@@ -1,6 +1,6 @@
 #include "ScanDeviceUsecase.h"
-#include "qUtils.h"
-#include "ifaces/bridgeifaces.h"
+#include "core/bridge/ExternalBridges.h"
+#include "core/utils/Utils.h"
 
 namespace features::signers::usecases {
 using namespace core::usecase;
@@ -16,7 +16,7 @@ Result<ScanDeviceResult> ScanDeviceUsecase::execute(const ScanDeviceInput &input
     }
     if (!input.deviceType.isEmpty()) {
         std::vector<nunchuk::Device> filteredDevices;
-        for (const auto &device : deviceList_result) {
+        for (const auto &device : deviceList_result) {            
             if (QString::fromStdString(device.get_type()).toUpper() == input.deviceType.toUpper()) {
                 filteredDevices.push_back(device);
             }

@@ -74,7 +74,7 @@ Item {
     ToastHost {
         id: toastHost
         objectName: "toastHost"
-        isScreenBase: popupHost.dataList.count == 0 ? true : false
+        isScreenBase: popupHost.dataList.count == 0 && subScreenHost.dataList.count == 0 ? true : false
     }
 
     QPopupInfoTwoButtons {

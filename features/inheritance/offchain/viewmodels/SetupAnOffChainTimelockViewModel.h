@@ -9,10 +9,8 @@ class SetupAnOffChainTimelockViewModel : public OffChainTimelockViewModel {
     Q_OBJECT
   public:
     explicit SetupAnOffChainTimelockViewModel(QObject *parent = nullptr);
-    ~SetupAnOffChainTimelockViewModel() override = default;
 
     void onInit() override;
-    void onDispose() override;
   public slots:
     void timeLockContinueClicked();
     private:

@@ -21,6 +21,7 @@ import QtQuick 2.4
 import QtQuick.Controls 2.3
 import DataPool 1.0
 import NUNCHUCKTYPE 1.0
+import HMIEVENTS 1.0
 import Features.Wallets.ViewModels 1.0
 import Features.Draftwallets.OnChain.ViewModels 1.0
 import "../../../../Components/origins"
@@ -197,7 +198,6 @@ QOnScreenContentTypeB {
                         Item {
                             width: parent.width
                             height: 48
-                            visible: false // TBD
                             QRefreshButtonA {
                                 anchors {
                                     horizontalCenter: parent.horizontalCenter
@@ -400,15 +400,11 @@ QOnScreenContentTypeB {
         }
     }
     onPrevClicked: {
-        closeScreen()
-        // var _continue = {
-        //     type: "cancel-key-replacement",
-        // }
-        // QMLHandle.sendEvent(EVT.EVT_DASHBOARD_ALERT_INFO_ENTER, _continue)
+        _confirm.open()
     }
 
     bottomRight: Item{}
-     QmlUtils {
+    QmlUtils {
         id: utils
     }
     QInheritanceConfigureGuide {
@@ -460,14 +456,21 @@ QOnScreenContentTypeB {
 
     ReplaceKeyOrChangeTimelockViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
     LetConfigureYourWalletViewModel {
         id: oldVM
-        Component.onCompleted: {
-            oldVM.attachContext(vmContext)
+    }
+
+    QConfirmYesNoPopup {
+        id: _confirm
+        title: STR.STR_QML_024
+        contentText: STR.STR_QML_1379
+        onConfirmNo: close()
+        onConfirmYes: {
+            var _continue = {
+                type: "cancel-key-replacement",
+            }
+            QMLHandle.sendEvent(EVT.EVT_DASHBOARD_ALERT_INFO_ENTER, _continue)
         }
     }
 }

@@ -10,6 +10,7 @@
 namespace app {
 using core::flow::FlowManager;
 using core::screen::ScreenManager;
+using core::screen::RightPanelNavigator;
 using core::orchestrator::AppOrchestrator;
 using core::popup::PopupManager;
 using core::toast::ToastManager;
@@ -29,6 +30,8 @@ class AppContext : public QObject {
     ServiceSetting *serviceSetting() const;
     ClientController *clientController() const;
     QGroupWallets *groupWallets() const;
+    RightPanelNavigator *rightPanelNavigator() const;
+    AppSetting *appSetting() const;
 
   private:
     ScreenManager *m_screenManager;
@@ -41,5 +44,7 @@ class AppContext : public QObject {
     ServiceSetting *m_serviceSetting;
     ClientController *m_clientController;
     QGroupWallets *m_groupWallets;
+    RightPanelNavigator *m_rightPanelNavigator;
+    AppSetting *m_appSetting;
 };
 } // namespace app

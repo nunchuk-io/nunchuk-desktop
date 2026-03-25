@@ -3,7 +3,7 @@
 namespace core::threads {
 
 template <typename Result> WorkerConcurrent<Result>::WorkerConcurrent() {
-    QObject::connect(&m_watcher, &QFutureWatcherBase::finished,  &m_watcher, [this]() { onFinished(); }, Qt::DirectConnection);
+    QObject::connect(&m_watcher, &QFutureWatcherBase::finished, &m_watcher, [this]() { onFinished(); }, Qt::QueuedConnection);
 }
 
 template <typename Result> WorkerConcurrent<Result>::~WorkerConcurrent() {
@@ -45,6 +45,11 @@ template <typename Result> void WorkerConcurrent<Result>::onFinished() {
         return;
     }
 
+    // Check if future is valid and has a result before accessing
+    if (!m_future.isFinished() || m_future.isCanceled() || !m_future.isResultReadyAt(0)) {
+        return;
+    }
+
     Callback cb;
     {
         std::lock_guard lock(m_cbMutex);
@@ -53,7 +58,11 @@ template <typename Result> void WorkerConcurrent<Result>::onFinished() {
     }
 
     if (cb) {
-        cb(m_future.result());
+        try {
+            cb(m_future.result());
+        } catch (...) {
+            // Suppress exceptions from result() or callback
+        }
     }
 }
 

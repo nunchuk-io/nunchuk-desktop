@@ -9,7 +9,6 @@ class WalletConfigViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit WalletConfigViewModel(QObject *parent = nullptr);
-    ~WalletConfigViewModel() override = default;
   
 //   public slots:
 //     void asBBQRClicked();

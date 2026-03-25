@@ -15,10 +15,6 @@ void SetupAnOffChainTimelockViewModel::onInit() {
     
 }
 
-void SetupAnOffChainTimelockViewModel::onDispose() {
-    
-}
-
 void SetupAnOffChainTimelockViewModel::timeLockContinueClicked() {
     GUARD_SERVICE_WALLET_INHERITANCE_PLAN()
     QJsonObject timeChange;

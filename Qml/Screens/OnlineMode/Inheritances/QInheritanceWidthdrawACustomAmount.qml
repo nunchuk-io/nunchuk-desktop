@@ -20,10 +20,9 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtGraphicalEffects 1.12
-import HMIEVENTS 1.0
-import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Claiming.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -31,7 +30,6 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/QRCodes"
 import "../../OnlineMode/Inheritances"
-import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id:_customAmount
@@ -39,8 +37,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_1736
-    onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
-    property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
+    onCloseClicked: vm.close()
     content: Item {
         Column {
             id: destColumn
@@ -62,7 +59,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         height: parent.height
-                        text: inheritanceInfo.balance + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC" : " sats")
+                        text: vm.balanceDisplay + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC" : " sats")
                         font.weight: Font.Normal
                         font.pixelSize: 16
                         verticalAlignment: Text.AlignVCenter
@@ -70,7 +67,7 @@ QOnScreenContentTypeB {
                     }
                     QLato {
                         height: parent.height
-                        text: qsTr("(%1%2)").arg(AppSetting.currency).arg(inheritanceInfo.balanceCurrency)
+                        text: qsTr("(%1%2)").arg(AppSetting.currency).arg(vm.balanceCurrency)
                         color: "#757575"
                         font.pixelSize: 12
                         verticalAlignment: Text.AlignVCenter
@@ -83,22 +80,9 @@ QOnScreenContentTypeB {
                 width: 728
                 height: 108
                 onSendAllRequest: {
-                    destination.toAmount = inheritanceInfo.balance
+                    destination.toAmount = vm.balanceDisplay
                 }
             }
-        }
-        function getInputAmount(index){
-            var map_flow = [
-                {flow_action: "withdraw-to-a-nunchuk-wallet",      },
-                {flow_action: "withdraw-to-address",               },                                
-            ]
-            var type = map_flow[index].flow_action
-            var amount = convertToSatoshi(destination.onCurrency, destination.toAmount)
-            var savedObj = {
-                "type": type,
-                "amount": amount,
-            }
-            return savedObj;
         }
         function convertToSatoshi(isCurrency, amount) {
             if(isCurrency) {
@@ -110,8 +94,18 @@ QOnScreenContentTypeB {
                 return amount
             }
         }
+        function withdrawToWallet() {
+            var amount = convertToSatoshi(destination.onCurrency, destination.toAmount)
+            vm.withdrawAmountSats = amount
+            vm.withdrawToWalletClicked()            
+        }
+        function withdrawToAddress() {
+            var amount = convertToSatoshi(destination.onCurrency, destination.toAmount)
+            vm.withdrawAmountSats = amount
+            vm.withdrawToAddressClicked() 
+        }
     }
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onPrevClicked: vm.close()
     onNextClicked: {
         imExContextMenu.x = _customAmount.width - imExContextMenu.width
         imExContextMenu.y = _customAmount.height - 102 - imExContextMenu.height
@@ -128,10 +122,17 @@ QOnScreenContentTypeB {
             "qrc:/Images/Images/wallet-dark.svg",
             "qrc:/Images/Images/spend-dark.svg",
         ]
+        functions: [
+            function() { _customAmount.contentItem.withdrawToWallet() },
+            function() { _customAmount.contentItem.withdrawToAddress() },
+        ]
         onItemClicked: {
-            var inputObj = _customAmount.contentItem.getInputAmount(index)
-            ServiceSetting.handleClaimInheritance(inputObj)
+            var action = imExContextMenu.functions[index]
+            action()
         }
+    }
+    WithdrawACustomAmountViewModel {
+        id: vm
     }
 }
 

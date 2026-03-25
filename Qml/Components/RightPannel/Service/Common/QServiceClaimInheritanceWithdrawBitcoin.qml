@@ -19,24 +19,16 @@
  **************************************************************************/
 import QtQuick 2.12
 import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import Qt.labs.platform 1.1
-import HMIEVENTS 1.0
 import NUNCHUCKTYPE 1.0
-import QRCodeItem 1.0
-import DataPool 1.0
-import DRACO_CODE 1.0
-import EWARNING 1.0
+import Features.Claiming.ViewModels 1.0
 import "./../../../origins"
 import "./../../../customizes"
 import "./../../../customizes/Chats"
 import "./../../../customizes/Texts"
 import "./../../../customizes/Buttons"
 import "./../../../customizes/Lists"
-import "../../../../../localization/STR_QML.js" as STR
 
 Item {
-    property var inheritanceInfo: ServiceSetting.servicesTag.inheritanceInfo
     property string optionSelected: "withdraw-a-custom-amount"
     property var optionList: {
         var ls = []
@@ -72,14 +64,14 @@ Item {
                 }
                 QMontserrat {
                     width: parent.width
-                    text: inheritanceInfo.balance + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC" : " sats")
+                    text: vm.balanceDisplay + (AppSetting.unit === NUNCHUCKTYPE.BTC ? " BTC" : " sats")
                     font.pixelSize: 32
                     font.weight: Font.Medium
                     horizontalAlignment: Text.AlignHCenter
                 }
                 QLato {
                     width: parent.width
-                    text: qsTr("%1 %2").arg(AppSetting.currency).arg(inheritanceInfo.balanceCurrency)
+                    text: qsTr("%1 %2").arg(AppSetting.currency).arg(vm.balanceCurrency)
                     font.pixelSize: 20
                     font.weight: Font.Normal
                     horizontalAlignment: Text.AlignHCenter
@@ -122,7 +114,6 @@ Item {
                     }
                     function setRadioSelect(id, data) {
                         optionSelected = id
-                        ServiceSetting.servicesTag.setClaimInheritanceCustomAmount(0)
                     }
                 }
             }
@@ -142,7 +133,7 @@ Item {
                     iconSize: 24
                     type: eTypeJ
                     onButtonClicked: {
-                        ServiceSetting.servicesTag.updateInheritanceCheckStatus("isWithdrawBitcoin", false)
+                        vm.back()
                     }
                 }
                 QTextButton {
@@ -153,11 +144,7 @@ Item {
                     type: eTypeE
                     visible: optionSelected === "withdraw-a-custom-amount"
                     onButtonClicked: {
-                        var _input = {
-                            "type": optionSelected,
-                            "isShowScreen": true,
-                        }
-                        ServiceSetting.handleClaimInheritance(_input)
+                        vm.customAMountClicked()
                     }
                 }
                 QButtonLargeTail {
@@ -183,21 +170,21 @@ Item {
                             "qrc:/Images/Images/wallet-dark.svg",
                             "qrc:/Images/Images/spend-dark.svg",
                         ]
+                        functions: [
+                            function() { vm.withdrawToWalletClicked() },
+                            function() { vm.withdrawToAddressClicked() },
+                        ]
                         onItemClicked: {
-                            var map_flow = [
-                                {flow_action: "withdraw-to-a-nunchuk-wallet",      },
-                                {flow_action: "withdraw-to-address",               },                                
-                            ]
-                            var type = map_flow[index].flow_action
-                            var _input = {
-                                "type": type,
-                                "isShowScreen": true,
-                            }
-                            ServiceSetting.handleClaimInheritance(_input)
+                            var action = imExContextMenu.functions[index]
+                            action()
                         }
                     }
                 }
             }
         }
+    }
+
+    WithdrawBitcoinViewModel {
+        id: vm
     }
 }

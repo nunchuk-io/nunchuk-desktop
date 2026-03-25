@@ -18,52 +18,47 @@
  *                                                                        *
  **************************************************************************/
 #include "BaseTransaction.h"
-#include "AppSetting.h"
-#include "QtGui/qclipboard.h"
-#include "qUtils.h"
-#include "QOutlog.h"
-#include "bridgeifaces.h"
-#include "Chats/matrixbrigde.h"
 #include "AppModel.h"
+#include "AppSetting.h"
+#include "Chats/matrixbrigde.h"
+#include "Models/TransactionModel.h"
+#include "Premiums/QGroupDashboard.h"
+#include "QOutlog.h"
+#include "QtGui/qclipboard.h"
+#include "Servers/Byzantine.h"
+#include "bridgeifaces.h"
+#include "qUtils.h"
 #include <QQmlEngine>
 #include <nunchukmatrix.h>
-#include "Servers/Byzantine.h"
-#include "Premiums/QGroupDashboard.h"
-#include "Models/TransactionModel.h"
 
-Destination::Destination(): address_(""), amount_(0){
+Destination::Destination() : address_(""), amount_(0) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Destination::Destination(const QString &address, const qint64 amount) : address_(address), amount_(amount){
+Destination::Destination(const QString &address, const qint64 amount) : address_(address), amount_(amount) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 Destination::~Destination() {}
 
-QString Destination::amountDisplay() const
-{
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+QString Destination::amountDisplay() const {
+    if ((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()) {
         QLocale locale(QLocale::English);
         return locale.toString(amountSats());
-    }
-    else{
+    } else {
         return amountBTC();
     }
 }
 
-QString Destination::amountBTC() const
-{
+QString Destination::amountBTC() const {
     return qUtils::QValueFromAmount(amount_);
 }
 
-QString Destination::amountCurrency() const
-{
+QString Destination::amountCurrency() const {
     return qUtils::currencyLocale(amountSats());
 }
 
-qint64 Destination::amountSats() const
-{
+qint64 Destination::amountSats() const {
     return amount_;
 }
 
@@ -71,15 +66,14 @@ QString Destination::address() const {
     return address_;
 }
 
-void Destination::setAddress(const QString &value){
-    if(value != address_){
+void Destination::setAddress(const QString &value) {
+    if (value != address_) {
         address_ = value;
         emit addressChanged();
     }
 }
 
-QString Destination::label()
-{
+QString Destination::label() {
     QStringList fav = AppSetting::instance()->favoriteAddresses();
     for (const QString &item : fav) {
         if (item.contains(address_, Qt::CaseInsensitive)) {
@@ -89,18 +83,20 @@ QString Destination::label()
     return "";
 }
 
-void Destination::setAmount(const qint64 value){
-    if(value != amount_){
+void Destination::setAmount(const qint64 value) {
+    if (value != amount_) {
         amount_ = value;
         emit amountChanged();
     }
 }
 
-DestinationListModel::DestinationListModel(){
+DestinationListModel::DestinationListModel() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-DestinationListModel::~DestinationListModel(){m_data.clear();}
+DestinationListModel::~DestinationListModel() {
+    m_data.clear();
+}
 
 int DestinationListModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
@@ -143,17 +139,15 @@ void DestinationListModel::addDestination(const QString &address, const qint64 a
     }
 }
 
-QMap<QString, qint64> DestinationListModel::getOutputs() const
-{
+QMap<QString, qint64> DestinationListModel::getOutputs() const {
     QMap<QString, qint64> outputs;
-    foreach (QDestinationPtr i , m_data ){
+    foreach (QDestinationPtr i, m_data) {
         outputs[i->address()] = i->amountSats();
     }
     return outputs;
 }
 
-bool DestinationListModel::contains(const QString &address, qint64 &amount)
-{
+bool DestinationListModel::contains(const QString &address, qint64 &amount) {
     for (const auto &dest : std::as_const(m_data)) {
         auto ptr = dest.data();
         if (qUtils::strCompare(address, ptr->address())) {
@@ -164,8 +158,7 @@ bool DestinationListModel::contains(const QString &address, qint64 &amount)
     return false;
 }
 
-qint64 DestinationListModel::getAmountByAddress(const QString &address)
-{
+qint64 DestinationListModel::getAmountByAddress(const QString &address) {
     for (const auto &dest : std::as_const(m_data)) {
         const auto *ptr = dest.data();
         if (address == ptr->address()) {
@@ -175,76 +168,54 @@ qint64 DestinationListModel::getAmountByAddress(const QString &address)
     return 0;
 }
 
-void DestinationListModel::notifyUnitChanged()
-{
+void DestinationListModel::notifyUnitChanged() {
     beginResetModel();
     foreach (QDestinationPtr it, m_data) {
-        if(it.data()){
+        if (it.data()) {
             it.data()->amountChanged();
         }
     }
     endResetModel();
 }
 
-QString DestinationListModel::reciever()
-{
-    if(m_data.count() > 2){
+QString DestinationListModel::reciever() {
+    if (m_data.count() > 2) {
         return "Multiple addresses";
-    }
-    else{
+    } else {
         return (m_data.count() == 0 ? "unknown" : m_data.at(0).data()->address());
     }
 }
 
-void DestinationListModel::clearAll()
-{
+void DestinationListModel::clearAll() {
     m_data.clear();
 }
 
-BaseTransaction::BaseTransaction() :
-    m_destinations(QDestinationListModelPtr(new DestinationListModel())),
-    m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
-    m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))),
-    m_change(QDestinationPtr(new Destination())),
-    m_walletId(""),
-    m_roomId(""),
-    m_initEventId(""),
-    m_createByMe(true),
-    m_serverKeyMessage("")
-{
+BaseTransaction::BaseTransaction()
+    : m_destinations(QDestinationListModelPtr(new DestinationListModel())), m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
+      m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))), m_change(QDestinationPtr(new Destination())), m_walletId(""), m_roomId(""),
+      m_initEventId(""), m_createByMe(true), m_serverKeyMessage("") {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-BaseTransaction::BaseTransaction(const nunchuk::Transaction &tx):
-    m_destinations(QDestinationListModelPtr(new DestinationListModel())),
-    m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
-    m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))),
-    m_change(QDestinationPtr(new Destination())),
-    m_transaction(tx),
-    m_walletId(""),
-    m_roomId(""),
-    m_initEventId(""),
-    m_createByMe(true),
-    m_serverKeyMessage("")
-{
+BaseTransaction::BaseTransaction(const nunchuk::Transaction &tx)
+    : m_destinations(QDestinationListModelPtr(new DestinationListModel())), m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
+      m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))), m_change(QDestinationPtr(new Destination())), m_transaction(tx), m_walletId(""),
+      m_roomId(""), m_initEventId(""), m_createByMe(true), m_serverKeyMessage("") {
     createDestinationList();
 }
 
-BaseTransaction::~BaseTransaction()
-{
+BaseTransaction::~BaseTransaction() {
     m_destinations.clear();
     m_keysets.clear();
     m_signers.clear();
     m_change.clear();
 }
 
-bool BaseTransaction::isReceiveTx() const
-{
+bool BaseTransaction::isReceiveTx() const {
     return m_transaction.is_receive();
 }
 
-void BaseTransaction::setIsReceiveTx(bool receive)
-{
+void BaseTransaction::setIsReceiveTx(bool receive) {
     m_transaction.set_receive(receive);
     emit nunchukTransactionChanged();
 }
@@ -257,10 +228,9 @@ QString BaseTransaction::memo() const {
     return QString::fromStdString(m_transaction.get_memo());
 }
 
-void BaseTransaction::setMemo(const QString &memo)
-{
+void BaseTransaction::setMemo(const QString &memo) {
     DBG_INFO << memo;
-    if(!qUtils::strCompare(memo, QString::fromStdString(m_transaction.get_memo()))){
+    if (!qUtils::strCompare(memo, QString::fromStdString(m_transaction.get_memo()))) {
         m_transaction.set_memo(memo.toStdString());
         bridge::nunchukUpdateTransactionMemo(walletId(), txid(), memo);
         emit nunchukTransactionChanged();
@@ -271,19 +241,16 @@ int BaseTransaction::status() const {
     return (int)m_transaction.get_status();
 }
 
-void BaseTransaction::setStatus(int status)
-{
+void BaseTransaction::setStatus(int status) {
     m_transaction.set_status((nunchuk::TransactionStatus)status);
     emit nunchukTransactionChanged();
 }
 
-const std::vector<nunchuk::KeysetStatus> &BaseTransaction::keysetStatus() const
-{
+const std::vector<nunchuk::KeysetStatus> &BaseTransaction::keysetStatus() const {
     return m_transaction.get_keyset_status();
 }
 
-int BaseTransaction::keysetsCount()
-{
+int BaseTransaction::keysetsCount() {
     return keysetStatus().size();
 }
 
@@ -291,91 +258,77 @@ int BaseTransaction::m() const {
     return m_transaction.get_m();
 }
 
-int BaseTransaction::height() const
-{
+int BaseTransaction::height() const {
     return m_transaction.get_height();
 }
 
-void BaseTransaction::setHeight(const int value){
+void BaseTransaction::setHeight(const int value) {
     m_transaction.set_height(value);
     emit nunchukTransactionChanged();
 }
 
-QString BaseTransaction::feeDisplay() const
-{
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+QString BaseTransaction::feeDisplay() const {
+    if ((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()) {
         QLocale locale(QLocale::English);
         return locale.toString(feeSats());
-    }
-    else{
+    } else {
         return feeBTC();
     }
 }
 
-QString BaseTransaction::feeBTC() const
-{
+QString BaseTransaction::feeBTC() const {
     return qUtils::QValueFromAmount(feeSats());
 }
 
-QString BaseTransaction::feeCurrency() const
-{
+QString BaseTransaction::feeCurrency() const {
     return qUtils::currencyLocale(feeSats());
 }
 
-qint64 BaseTransaction::feeSats() const
-{
+qint64 BaseTransaction::feeSats() const {
     return (qint64)m_transaction.get_fee();
 }
 
-void BaseTransaction::setFee(const qint64 fee)
-{
+void BaseTransaction::setFee(const qint64 fee) {
     m_transaction.set_fee(fee);
     emit nunchukTransactionChanged();
 }
 
-bool BaseTransaction::subtractFromFeeAmount() const
-{
+bool BaseTransaction::subtractFromFeeAmount() const {
     return m_transaction.subtract_fee_from_amount();
 }
 
-QString BaseTransaction::feeRate() const
-{
-    return QString::number((double)feeRateSats()/1000, 'f', 2);
+QString BaseTransaction::feeRate() const {
+    return QString::number((double)feeRateSats() / 1000, 'f', 2);
 }
 
-qint64 BaseTransaction::feeRateSats() const
-{
+qint64 BaseTransaction::feeRateSats() const {
     return m_transaction.get_fee_rate();
 }
 
-QString BaseTransaction::psbt() const
-{
+QString BaseTransaction::psbt() const {
     return QString::fromStdString(m_transaction.get_psbt());
 }
 
-time_t BaseTransaction::scheduleTime(){
+time_t BaseTransaction::scheduleTime() {
     return m_transaction.get_schedule_time();
 }
 
-bool BaseTransaction::isCosigning() const
-{
+bool BaseTransaction::isCosigning() const {
     return m_is_cosigning;
 }
 
-void BaseTransaction::setIsCosigning(bool is_cosigning)
-{
+void BaseTransaction::setIsCosigning(bool is_cosigning) {
     m_is_cosigning = is_cosigning;
 }
 
-bool BaseTransaction::parseQRTransaction(const QStringList &qrtags)
-{
+bool BaseTransaction::parseQRTransaction(const QStringList &qrtags) {
     QStringList in = qrtags;
     in.removeDuplicates();
-    if(in.isEmpty()){
+    if (in.isEmpty()) {
         return false;
     }
     QString wallet_id = walletId();
-    if(ImportQRTransaction(in)){
+    if (ImportQRTransaction(in)) {
         AppModel::instance()->requestSyncWalletDb(wallet_id);
         AppModel::instance()->transactionInfoChanged();
         return true;
@@ -383,42 +336,33 @@ bool BaseTransaction::parseQRTransaction(const QStringList &qrtags)
     return false;
 }
 
-void BaseTransaction::copyTransactionID()
-{
+void BaseTransaction::copyTransactionID() {
     qApp->clipboard()->setText(txid());
 }
 
-void BaseTransaction::requestSignatures(const QString &membership_id)
-{
+void BaseTransaction::requestSignatures(const QString &membership_id) {
     QJsonObject data;
     QString errormsg = "";
     QString groupid = AppModel::instance()->walletInfo() ? AppModel::instance()->walletInfo()->groupId() : "";
     DBG_INFO << groupid << walletId() << txid() << membership_id;
     bool ret = Byzantine::instance()->requestSignature(groupid, walletId(), txid(), membership_id, data, errormsg);
-    if(ret){
+    if (ret) {
         AppModel::instance()->showToast(0, "Signature request sent", EWARNING::WarningType::SUCCESS_MSG);
     }
 }
 
-void BaseTransaction::scheduleBroadcast()
-{
+void BaseTransaction::scheduleBroadcast() {}
 
-}
+void BaseTransaction::cancelTransaction() {}
 
-void BaseTransaction::cancelTransaction()
-{
-
-}
-
-bool BaseTransaction::hasDraftCoinChange()
-{
+bool BaseTransaction::hasDraftCoinChange() {
     createParentCoinTag();
-    if (m_parentCoinsTag.isNull()) return false;
+    if (m_parentCoinsTag.isNull())
+        return false;
     return hasChange() && m_parentCoinsTag->count() > 0;
 }
 
-void BaseTransaction::createParentCoinTag()
-{
+void BaseTransaction::createParentCoinTag() {
     if (!m_parentCoinsTag) {
         m_parentCoinsTag = QCoinTagsModelPtr(new QCoinTagsModel());
     }
@@ -426,7 +370,7 @@ void BaseTransaction::createParentCoinTag()
     QList<int> tags;
     auto inputs = bridge::nunchukGetOriginCoinsFromTxInputs(m_walletId, m_transaction.get_inputs());
     for (nunchuk::UnspentOutput it : inputs) {
-        for (auto tag: it.get_tags()) {
+        for (auto tag : it.get_tags()) {
             tags.append(tag);
         }
     }
@@ -437,101 +381,85 @@ void BaseTransaction::createParentCoinTag()
     emit parentCoinsTagChanged();
 }
 
-bool BaseTransaction::ImportQRTransaction(const QStringList& qrtags)
-{
+bool BaseTransaction::ImportQRTransaction(const QStringList &qrtags) {
     QStringList in = qrtags;
     in.removeDuplicates();
     QString wallet_id = walletId();
     QWarningMessage msg;
     nunchuk::Transaction trans_result = bridge::nunchukImportQRTransaction(wallet_id, in, msg);
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         setNunchukTransaction(trans_result);
         if (roomId() != "") {
             QWarningMessage room_msg;
             nunchuk::RoomTransaction room_tx = matrixbrigde::GetOriginPendingTransaction(roomId(), txid(), room_msg);
-            if((int)EWARNING::WarningType::NONE_MSG == room_msg.type()){
+            if ((int)EWARNING::WarningType::NONE_MSG == room_msg.type()) {
                 setInitEventId(QString::fromStdString(room_tx.get_init_event_id()));
             }
 
             QWarningMessage sign_msg;
             auto signers = singleSignersAssigned();
-            for(QSingleSignerPtr signer : signers->fullList()){
-                if(signer->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP
-                        && signer->signerSigned()
-                        && signers->containsFingerPrint(signer->masterFingerPrint())
-                        && initEventId() != ""){
-                    matrixbrigde::SignAirgapTransaction(initEventId(),
-                                                        signer->masterFingerPrint(),
-                                                        sign_msg);
+            for (QSingleSignerPtr signer : signers->fullList()) {
+                if (signer->signerType() == (int)ENUNCHUCK::SignerType::AIRGAP && signer->signerSigned() &&
+                    signers->containsFingerPrint(signer->masterFingerPrint()) && initEventId() != "") {
+                    matrixbrigde::SignAirgapTransaction(initEventId(), signer->masterFingerPrint(), sign_msg);
                 }
             }
         }
         return true;
-    }
-    else{
+    } else {
         return false;
     }
 }
 
-QString BaseTransaction::feeOtherKeysetDisplay() const
-{
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+QString BaseTransaction::feeOtherKeysetDisplay() const {
+    if ((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()) {
         QLocale locale(QLocale::English);
         return locale.toString(feeOtherKeyset());
-    }
-    else{
+    } else {
         return feeOtherKeysetBTC();
     }
 }
 
-QString BaseTransaction::feeOtherKeysetBTC() const
-{
+QString BaseTransaction::feeOtherKeysetBTC() const {
     return qUtils::QValueFromAmount(feeOtherKeyset());
 }
 
-QString BaseTransaction::feeOtherKeysetCurrency() const
-{
+QString BaseTransaction::feeOtherKeysetCurrency() const {
     return qUtils::currencyLocale(feeOtherKeyset());
 }
 
-qint64 BaseTransaction::feeOtherKeyset() const
-{
+qint64 BaseTransaction::feeOtherKeyset() const {
     return m_fee_otherKeyset;
 }
 
-void BaseTransaction::setFeeOtherKeyset(qint64 data)
-{
+void BaseTransaction::setFeeOtherKeyset(qint64 data) {
     if (m_fee_otherKeyset == data)
         return;
     m_fee_otherKeyset = data;
     emit feeOtherKeysetChanged();
 }
 
-bool BaseTransaction::useScriptPath()
-{
+bool BaseTransaction::useScriptPath() {
     return m_useScriptPath;
 }
 
-void BaseTransaction::setUseScriptPath(bool data, bool cached)
-{
-    if (m_useScriptPath != data){
+void BaseTransaction::setUseScriptPath(bool data, bool cached) {
+    if (m_useScriptPath != data) {
         m_useScriptPath = data;
         emit useScriptPathChanged();
     }
-    if(cached){
+    if (cached) {
         QString tx_id = txid();
         AppSetting::instance()->setTransactionUsescriptpath(tx_id, m_useScriptPath);
     }
     emit useScriptPathChanged();
 }
 
-QString BaseTransaction::txidReplacing() const
-{
+QString BaseTransaction::txidReplacing() const {
     return m_txidReplacing;
 }
 
-void BaseTransaction::setTxidReplacing(const QString &id)
-{
+void BaseTransaction::setTxidReplacing(const QString &id) {
     if (m_txidReplacing == id)
         return;
     m_txidReplacing = id;
@@ -548,9 +476,8 @@ void BaseTransaction::setIsClaimTx(bool is_claim_tx) {
     m_isClaimTx = is_claim_tx;
 }
 
-QUTXOListModel* BaseTransaction::inputCoins()
-{
-    if(!m_inputCoins){
+QUTXOListModel *BaseTransaction::inputCoins() {
+    if (!m_inputCoins) {
         m_inputCoins = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
     }
     std::vector<nunchuk::UnspentOutput> inputs = bridge::nunchukGetOriginCoinsFromTxInputs(m_walletId, m_transaction.get_inputs());
@@ -561,13 +488,11 @@ QUTXOListModel* BaseTransaction::inputCoins()
     return m_inputCoins.data();
 }
 
-QUTXOListModel *BaseTransaction::manualCoins()
-{
+QUTXOListModel *BaseTransaction::manualCoins() {
     return m_manualCoins.data();
 }
 
-void BaseTransaction::createFilteringCoinInCoinSelection()
-{
+void BaseTransaction::createFilteringCoinInCoinSelection() {
     if (m_manualCoins.isNull()) {
         auto newCoins = bridge::nunchukGetOriginUnspentOutputs(m_walletId);
         m_manualCoins = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
@@ -587,13 +512,12 @@ void BaseTransaction::createFilteringCoinInCoinSelection()
     emit manualCoinsChanged();
 }
 
-QUTXOListModelPtr BaseTransaction::GetUtxoListSelected()
-{
+QUTXOListModelPtr BaseTransaction::GetUtxoListSelected() {
     QUTXOListModelPtr inputs = QUTXOListModelPtr(new QUTXOListModel(m_walletId));
-    if(m_manualCoins){
+    if (m_manualCoins) {
         for (int i = 0; i < m_manualCoins->rowCount(); i++) {
             QUTXOPtr it = m_manualCoins->getUTXOByIndex(i);
-            if(it.data() && it.data()->selected()){
+            if (it.data() && it.data()->selected()) {
                 DBG_INFO << "UTXO Selected:" << it.data()->txid() << it.data()->getTags();
                 inputs->addUTXO(it.data()->getUnspentOutput());
             }
@@ -602,57 +526,48 @@ QUTXOListModelPtr BaseTransaction::GetUtxoListSelected()
     return inputs;
 }
 
-QString BaseTransaction::scriptPathFeeRate()
-{
+QString BaseTransaction::scriptPathFeeRate() {
     QString wallet_Id = walletId();
     QWalletPtr wallet = QWalletPtr(NULL);
     if (AppModel::instance()->walletList()) {
         wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(wallet_Id) : QWalletPtr(NULL);
     }
-    if(wallet){
+    if (wallet) {
         setRoomId(wallet->roomId());
         int walletAddressType = wallet->walletAddressType();
         int walletTemplateType = wallet->walletTemplate();
-        int walletType        = wallet->walletType();
-        if((walletAddressType == (int)nunchuk::AddressType::TAPROOT)
-            && ((int)nunchuk::WalletType::MULTI_SIG == walletType)
-            && (walletTemplateType == (int)nunchuk::WalletTemplate::DEFAULT))
-        {
-            int fee_rate  = bridge::GetScriptPathFeeRate(wallet_Id, nunchukTransaction());
-            QString script_path_fee = QString::number((double)fee_rate/1000, 'f', 2);
+        int walletType = wallet->walletType();
+        if ((walletAddressType == (int)nunchuk::AddressType::TAPROOT) && ((int)nunchuk::WalletType::MULTI_SIG == walletType) &&
+            (walletTemplateType == (int)nunchuk::WalletTemplate::DEFAULT)) {
+            int fee_rate = bridge::GetScriptPathFeeRate(wallet_Id, nunchukTransaction());
+            QString script_path_fee = QString::number((double)fee_rate / 1000, 'f', 2);
             return script_path_fee;
         }
     }
     return "";
 }
 
-void BaseTransaction::setTxJson(const QJsonObject &txJs)
-{
+void BaseTransaction::setTxJson(const QJsonObject &txJs) {
     m_txJson = txJs;
 }
 
-QJsonObject BaseTransaction::txJson() const
-{
+QJsonObject BaseTransaction::txJson() const {
     return m_txJson;
 }
 
-void BaseTransaction::setSignatures(const QMap<QString, QString> &signatures)
-{
+void BaseTransaction::setSignatures(const QMap<QString, QString> &signatures) {
     m_signatures = signatures;
 }
 
-QMap<QString, QString> BaseTransaction::signatures() const
-{
+QMap<QString, QString> BaseTransaction::signatures() const {
     return m_signatures;
 }
 
-bool BaseTransaction::hasMoreBtn() const
-{
+bool BaseTransaction::hasMoreBtn() const {
     return m_hasMoreBtn;
 }
 
-void BaseTransaction::setHasMoreBtn(bool has)
-{
+void BaseTransaction::setHasMoreBtn(bool has) {
     if (m_hasMoreBtn == has)
         return;
 
@@ -660,26 +575,22 @@ void BaseTransaction::setHasMoreBtn(bool has)
     emit hasMoreBtnChanged();
 }
 
-QString BaseTransaction::dummyXfp() const
-{
+QString BaseTransaction::dummyXfp() const {
     return {};
 }
 
-bool BaseTransaction::isDummyTx() const
-{
+bool BaseTransaction::isDummyTx() const {
     return false;
 }
 
-QStringList BaseTransaction::hideSignBtns() const
-{
+QStringList BaseTransaction::hideSignBtns() const {
     return {};
 }
 
-bool BaseTransaction::enableRequestSignature()
-{
-    if(AppModel::instance()->walletInfo()){
+bool BaseTransaction::enableRequestSignature() {
+    if (AppModel::instance()->walletInfo()) {
         QString groupid = AppModel::instance()->walletInfo()->groupId();
-        if(groupid != "" && AppModel::instance()->walletInfo()->dashboard()){
+        if (groupid != "" && AppModel::instance()->walletInfo()->dashboard()) {
             QString role = AppModel::instance()->walletInfo()->dashboard()->myRole();
             DBG_INFO << !qUtils::strCompare(role, "OBSERVER");
             return (!qUtils::strCompare(role, "OBSERVER"));
@@ -688,19 +599,16 @@ bool BaseTransaction::enableRequestSignature()
     return false;
 }
 
-bool BaseTransaction::enableScheduleBroadcast()
-{
+bool BaseTransaction::enableScheduleBroadcast() {
     return false;
 }
 
-bool BaseTransaction::enableCancelTransaction()
-{
-    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->isAssistedWallet()){
+bool BaseTransaction::enableCancelTransaction() {
+    if (AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->isAssistedWallet()) {
         QString role = AppModel::instance()->walletInfo()->dashboard() ? AppModel::instance()->walletInfo()->dashboard()->myRole() : "";
-        if(role == ""){
+        if (role == "") {
             return false;
-        }
-        else{
+        } else {
             return !(qUtils::strCompare(role, "OBSERVER"));
         }
     }
@@ -712,8 +620,7 @@ nunchuk::TxInput BaseTransaction::changeInfo() // rename
     return {m_transaction.get_txid(), static_cast<uint32_t>(m_transaction.get_change_index())};
 }
 
-QCoinTagsModel *BaseTransaction::changeCoinsTag()
-{
+QCoinTagsModel *BaseTransaction::changeCoinsTag() {
     if (!m_changeCoinsTag) {
         m_changeCoinsTag = QCoinTagsModelPtr(new QCoinTagsModel());
     }
@@ -724,8 +631,8 @@ QCoinTagsModel *BaseTransaction::changeCoinsTag()
     auto inputs = bridge::nunchukGetOriginCoinsFromTxInputs(m_walletId, tx_inputs);
     QList<int> tags;
     for (nunchuk::UnspentOutput it : inputs) {
-        if (it.get_txid() == tx_input.txid && it.get_vout() == tx_input.vout){
-            for (auto tag: it.get_tags()) {
+        if (it.get_txid() == tx_input.txid && it.get_vout() == tx_input.vout) {
+            for (auto tag : it.get_tags()) {
                 tags.append(tag);
             }
         }
@@ -735,27 +642,25 @@ QCoinTagsModel *BaseTransaction::changeCoinsTag()
     return m_changeCoinsTag.data();
 }
 
-QCoinTagsModel *BaseTransaction::parentCoinsTag()
-{
+QCoinTagsModel *BaseTransaction::parentCoinsTag() {
     return m_parentCoinsTag.data();
 }
 
 bool BaseTransaction::hasChange() const {
     int index_change = m_transaction.get_change_index();
-    if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
+    if (index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
         return true;
-    }
-    else{
+    } else {
         return false;
     }
 }
 
 Destination *BaseTransaction::change() {
-    if(!m_change){
+    if (!m_change) {
         m_change = QDestinationPtr(new Destination());
     }
     int index_change = m_transaction.get_change_index();
-    if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
+    if (index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
         std::pair<std::string, int> change_ret = m_transaction.get_outputs().at(index_change);
         m_change.data()->setAddress(QString::fromStdString(change_ret.first));
         m_change.data()->setAmount(change_ret.second);
@@ -763,57 +668,51 @@ Destination *BaseTransaction::change() {
     return m_change.data();
 }
 
-QString BaseTransaction::blocktimeDisplay() const
-{
-    if(0 >= m_transaction.get_blocktime()){
+QString BaseTransaction::blocktimeDisplay() const {
+    if (0 >= m_transaction.get_blocktime()) {
         return "--/--/----"; // There is no time
-    }
-    else{
-        return QDateTime::fromTime_t(m_transaction.get_blocktime()).toString( "MM/dd/yyyy hh:mm AP");
+    } else {
+        return QDateTime::fromTime_t(m_transaction.get_blocktime()).toString("MM/dd/yyyy hh:mm AP");
     }
 }
 
-time_t BaseTransaction::blocktime() const
-{
+time_t BaseTransaction::blocktime() const {
     return m_transaction.get_blocktime();
 }
 
-QString BaseTransaction::walletId() const
-{
+QString BaseTransaction::walletId() const {
     return m_walletId;
 }
 
-void BaseTransaction::setWalletId(const QString &walletId)
-{
-    if(m_walletId != walletId){
+void BaseTransaction::setWalletId(const QString &walletId) {
+    if (m_walletId != walletId) {
         m_walletId = walletId;
         emit walletIdChanged();
     }
 }
 
 SingleSignerListModel *BaseTransaction::singleSignersAssigned() {
-    QWalletPtr wallet = QWalletPtr(NULL);
-    if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
-        wallet = AppModel::instance()->walletInfoPtr();
-    } else {
-        wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
+    QWalletPtr wallet = AppModel::instance()->walletInfoPtr();
+    if (!qUtils::strCompare(walletId(), wallet ? wallet->walletId() : "")) {
+        if (AppModel::instance()->walletList() && AppModel::instance()->isSignIn()) {
+            wallet = AppModel::instance()->walletInfoPtr();
+        } else {
+            wallet = AppModel::instance()->walletList() ? AppModel::instance()->walletList()->getWalletById(walletId()) : QWalletPtr(NULL);
+        }
     }
     if (wallet) {
         setRoomId(wallet->roomId());
         int walletAddress_Type = wallet->walletAddressType();
         int wallet_Type = wallet->walletType();
-        auto trans = dynamic_cast<Transaction*>(this);
+        auto trans = dynamic_cast<Transaction *>(this);
         if (walletAddress_Type == (int)nunchuk::AddressType::TAPROOT && wallet_Type == (int)nunchuk::WalletType::MULTI_SIG) {
             return taprootKeysetSigners(wallet);
-        }
-        else if (wallet->keyPathActivated() && !trans->isScriptPath()) {
+        } else if (wallet->keyPathActivated() && !trans->isScriptPath()) {
             return taprootMiniscriptSigners(wallet);
-        }
-        else {
+        } else {
             return normalWalletSigners(wallet);
         }
-    }
-    else {
+    } else {
         return (new SingleSignerListModel());
     }
 }
@@ -821,29 +720,27 @@ SingleSignerListModel *BaseTransaction::singleSignersAssigned() {
 SingleSignerListModel *BaseTransaction::taprootKeysetSigners(const QWalletPtr &wallet) {
     if (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::READY_TO_BROADCAST) {
         std::vector<nunchuk::KeysetStatus> keyset_status = keysetStatus();
-        if(wallet->singleSignersAssigned()){
-            if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
+        if (wallet->singleSignersAssigned()) {
+            if (wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()) {
                 wallet->syncCollabKeyname();
             }
             m_keysets = wallet->singleSignersAssigned()->cloneKeysets(keyset_status);
-            if(m_keysets->needSyncNunchukEmail()){
+            if (m_keysets->needSyncNunchukEmail()) {
                 m_keysets = wallet->singleSignersAssigned()->cloneKeysets(keyset_status);
             }
         }
-        if(m_keysets){
-            if(keysetSelected() > 0) {
+        if (m_keysets) {
+            if (keysetSelected() > 0) {
                 m_keysets.data()->requestSortKeysetSelected();
-            }
-            else {
+            } else {
                 m_keysets.data()->requestSortKeyset();
             }
         }
-        if(m_keysets){
+        if (m_keysets) {
             emit m_keysets.data()->keyinfoChanged();
         }
         return m_keysets.data();
-    }
-    else {
+    } else {
         std::map<std::string, bool> final_signers = m_transaction.get_signers();
         if (wallet->singleSignersAssigned()) {
             if (wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()) {
@@ -867,30 +764,28 @@ SingleSignerListModel *BaseTransaction::taprootMiniscriptSigners(const QWalletPt
 }
 
 SingleSignerListModel *BaseTransaction::normalWalletSigners(const QWalletPtr &wallet) {
-    if(wallet->singleSignersAssigned()){
-        if(wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()){
+    if (wallet->singleSignersAssigned()) {
+        if (wallet->isSharedWallet() && wallet->singleSignersAssigned()->needSyncNunchukEmail()) {
             wallet->syncCollabKeyname();
         }
-        if(m_signers.data()->rowCount() == 0){
+        if (m_signers.data()->rowCount() == 0) {
             m_signers = wallet->singleSignersAssigned()->clone();
-        }
-        else{
-            if(m_signers->needSyncNunchukEmail()){
+        } else {
+            if (m_signers->needSyncNunchukEmail()) {
                 m_signers = wallet->singleSignersAssigned()->clone();
             }
         }
     }
-    if(m_signers){
+    if (m_signers) {
         m_signers.data()->initSignatures();
         std::map<std::string, bool> signers = m_transaction.get_signers();
-        for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
+        for (std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++) {
             m_signers.data()->updateSignatures(QString::fromStdString(it->first), it->second, "");
         }
         updateSignaturesForDummyTx();
         m_signers.data()->requestSort(true);
         return m_signers.data();
-    }
-    else {
+    } else {
         return (new SingleSignerListModel());
     }
 }
@@ -915,9 +810,10 @@ SingleSignerListModel *BaseTransaction::allFinalSigners() {
 }
 
 void BaseTransaction::updateSignaturesForDummyTx() {
-    if (m_signers.isNull()) return;
+    if (m_signers.isNull())
+        return;
     DBG_INFO << isDummyTx() << m_txJson.isEmpty() << m_signers->rowCount();
-    if (!m_txJson.isEmpty() || isDummyTx()) {// Use for dummy transaction
+    if (!m_txJson.isEmpty() || isDummyTx()) { // Use for dummy transaction
         if (!m_txJson.isEmpty()) {
             QJsonArray signatures = m_txJson["signatures"].toArray();
             for (auto js : signatures) {
@@ -939,7 +835,7 @@ void BaseTransaction::updateSignaturesForDummyTx() {
                 --i;
             }
             if (!dummyXfp().isEmpty()) {
-                if (dummyXfp() != signer->masterFingerPrint() ) {
+                if (dummyXfp() != signer->masterFingerPrint()) {
                     signer->setHasSignBtn(false);
                 }
             }
@@ -950,15 +846,16 @@ void BaseTransaction::updateSignaturesForDummyTx() {
     }
 }
 
-int BaseTransaction::numberSigned()
-{
+int BaseTransaction::numberSigned() {
     int number_signed = 0;
     std::map<std::string, bool> signers = m_transaction.get_signers();
-    for ( std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++ ){
-        if(it->second) { number_signed++; }
+    for (std::map<std::string, bool>::iterator it = signers.begin(); it != signers.end(); it++) {
+        if (it->second) {
+            number_signed++;
+        }
     }
 
-    if(AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->utxoList()){
+    if (AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->utxoList()) {
         for (auto &item : m_transaction.get_inputs()) {
             AppModel::instance()->walletInfo()->utxoList()->updateSelected(QString::fromStdString(item.txid), item.vout);
         }
@@ -968,50 +865,41 @@ int BaseTransaction::numberSigned()
     return number_signed;
 }
 
-int BaseTransaction::pendingSignatures()
-{
+int BaseTransaction::pendingSignatures() {
     int pending_count = max(0, (m() - numberSigned()));
     return pending_count;
 }
 
-QString BaseTransaction::subtotalCurrency() const
-{
+QString BaseTransaction::subtotalCurrency() const {
     return qUtils::currencyLocale(subtotalSats());
 }
 
-QString BaseTransaction::subtotalDisplay() const
-{
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+QString BaseTransaction::subtotalDisplay() const {
+    if ((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()) {
         QLocale locale(QLocale::English);
         return locale.toString(subtotalSats());
-    }
-    else{
+    } else {
         return subtotalBTC();
     }
 }
 
-qint64 BaseTransaction::subtotalSats() const
-{
+qint64 BaseTransaction::subtotalSats() const {
     return (qint64)m_transaction.get_sub_amount();
 }
 
-QString BaseTransaction::subtotalBTC() const
-{
+QString BaseTransaction::subtotalBTC() const {
     return qUtils::QValueFromAmount(subtotalSats());
 }
 
-QString BaseTransaction::totalCurrency() const
-{
+QString BaseTransaction::totalCurrency() const {
     return qUtils::currencyLocale(totalSats());
 }
 
-QString BaseTransaction::totalDisplay() const
-{
-    if((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()){
+QString BaseTransaction::totalDisplay() const {
+    if ((int)AppSetting::Unit::SATOSHI == AppSetting::instance()->unit()) {
         QLocale locale(QLocale::English);
         return locale.toString(totalSats());
-    }
-    else{
+    } else {
         return totalBTC();
     }
 }
@@ -1020,8 +908,7 @@ qint64 BaseTransaction::totalSats() const {
     qint64 subtotal = subtotalSats();
     qint64 fee = feeSats();
 
-    if ((fee > 0 && subtotal > INT64_MAX - fee) ||
-        (fee < 0 && subtotal < INT64_MIN - fee)) {
+    if ((fee > 0 && subtotal > INT64_MAX - fee) || (fee < 0 && subtotal < INT64_MIN - fee)) {
         DBG_INFO << "Overflow detected!";
         return 0;
     }
@@ -1029,8 +916,7 @@ qint64 BaseTransaction::totalSats() const {
     return subtotal + fee;
 }
 
-QString BaseTransaction::totalBTC() const
-{
+QString BaseTransaction::totalBTC() const {
     return qUtils::QValueFromAmount(totalSats());
 }
 
@@ -1039,7 +925,8 @@ DestinationListModel *BaseTransaction::destinationList() {
 }
 
 void BaseTransaction::createDestinationList() {
-    if(m_destinations.isNull()) return;
+    if (m_destinations.isNull())
+        return;
     m_destinations.data()->clearAll();
     std::vector<nunchuk::TxOutput> addrs;
     if (isReceiveTx()) {
@@ -1060,92 +947,79 @@ void BaseTransaction::createDestinationList() {
     }
 }
 
-QString BaseTransaction::get_replaced_by_txid() const
-{
+QString BaseTransaction::get_replaced_by_txid() const {
     return QString::fromStdString(m_transaction.get_replaced_by_txid());
 }
 
-QString BaseTransaction::get_replace_txid()
-{
+QString BaseTransaction::get_replace_txid() {
     return QString::fromStdString(m_transaction.get_replace_txid());
 }
 
-nunchuk::Transaction BaseTransaction::nunchukTransaction() const
-{
+nunchuk::Transaction BaseTransaction::nunchukTransaction() const {
     return m_transaction;
 }
 
-void BaseTransaction::setNunchukTransaction(const nunchuk::Transaction &tx)
-{
+void BaseTransaction::setNunchukTransaction(const nunchuk::Transaction &tx) {
     DBG_INFO << "TAPROOT-TEST";
     m_transaction = tx;
     createDestinationList();
     emit nunchukTransactionChanged();
 }
 
-QString BaseTransaction::roomId()
-{
-    if(AppModel::instance()->walletList()){
+QString BaseTransaction::roomId() {
+    if (AppModel::instance()->walletList()) {
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId());
-        if(wallet){
+        if (wallet) {
             m_roomId = wallet.data()->roomId();
         }
     }
     return m_roomId;
 }
 
-void BaseTransaction::setRoomId(const QString &roomId)
-{
-    if(m_roomId != roomId){
+void BaseTransaction::setRoomId(const QString &roomId) {
+    if (m_roomId != roomId) {
         m_roomId = roomId;
         emit roomIdChanged();
     }
 }
 
-QString BaseTransaction::initEventId() const
-{
+QString BaseTransaction::initEventId() const {
     return m_initEventId;
 }
 
-void BaseTransaction::setInitEventId(const QString &initEventId)
-{
-    if(m_initEventId != initEventId){
+void BaseTransaction::setInitEventId(const QString &initEventId) {
+    if (m_initEventId != initEventId) {
         m_initEventId = initEventId;
         emit initEventIdChanged();
     }
 }
 
-bool BaseTransaction::createByMe() const
-{
+bool BaseTransaction::createByMe() const {
     return m_createByMe;
 }
 
-void BaseTransaction::setCreateByMe(bool createByMe)
-{
-    if(m_createByMe != createByMe){
+void BaseTransaction::setCreateByMe(bool createByMe) {
+    if (m_createByMe != createByMe) {
         m_createByMe = createByMe;
         emit createByMeChanged();
     }
 }
 
-QString BaseTransaction::serverKeyMessage() const
-{
+QString BaseTransaction::serverKeyMessage() const {
     return m_serverKeyMessage;
 }
 
-void BaseTransaction::setServerKeyMessage(const QJsonObject &transaction)
-{
+void BaseTransaction::setServerKeyMessage(const QJsonObject &transaction) {
     if (status() == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES) {
-        QJsonObject spending_limit_reached  = transaction.value("spending_limit_reached").toObject();
+        QJsonObject spending_limit_reached = transaction.value("spending_limit_reached").toObject();
         double time = transaction.value("sign_time_milis").toDouble();
         if (!spending_limit_reached.isEmpty()) {
             m_serverKeyMessage = spending_limit_reached.value("message").toString();
+        } else if (time != 0) {
+            m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm AP MMM d"));
+        } else {
         }
-        else if(time != 0) {
-            m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString( "hh:mm AP MMM d"));
-        }
-        else{}
-        bool is_cosigning  = transaction.value("is_cosigning").toBool();
+        bool is_cosigning = transaction.value("is_cosigning").toBool();
         DBG_INFO << "FIXME is_cosigning" << is_cosigning << m_serverKeyMessage << transaction;
         setIsCosigning(is_cosigning);
         emit serverKeyMessageChanged();
@@ -1155,13 +1029,11 @@ void BaseTransaction::setServerKeyMessage(const QJsonObject &transaction)
     }
 }
 
-QString BaseTransaction::packageFeeRate()
-{
-    return QString::number((double)m_packageFeeRate/1000, 'f', 2);
+QString BaseTransaction::packageFeeRate() {
+    return QString::number((double)m_packageFeeRate / 1000, 'f', 2);
 }
 
-void BaseTransaction::setPackageFeeRate(int satvKB)
-{
+void BaseTransaction::setPackageFeeRate(int satvKB) {
     if (m_packageFeeRate == satvKB)
         return;
 
@@ -1169,18 +1041,16 @@ void BaseTransaction::setPackageFeeRate(int satvKB)
     emit nunchukTransactionChanged();
 }
 
-QString BaseTransaction::destination()
-{
+QString BaseTransaction::destination() {
     QString ret = "";
     std::vector<nunchuk::TxOutput> addrs;
-    if(isReceiveTx()){
+    if (isReceiveTx()) {
         addrs = m_transaction.get_receive_outputs();
         ret = addrs.size() > 0 ? QString::fromStdString(addrs.at(0).first) : "";
-    }
-    else{
+    } else {
         addrs = m_transaction.get_outputs();
         int index_change = m_transaction.get_change_index();
-        if(index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
+        if (index_change >= 0 && index_change < (int)m_transaction.get_outputs().size()) {
             addrs.erase(addrs.begin() + index_change);
         }
         ret = addrs.size() > 1 ? "Multiple addresses" : addrs.size() > 0 ? QString::fromStdString(addrs.at(0).first) : "";
@@ -1188,8 +1058,7 @@ QString BaseTransaction::destination()
     return ret;
 }
 
-bool BaseTransaction::isCpfp()
-{
+bool BaseTransaction::isCpfp() {
     QWarningMessage msg;
     nunchuk::Amount packageFeeRate{0};
     bool ret = bridge::IsCPFP(walletId(), nunchukTransaction(), packageFeeRate, msg);
@@ -1200,21 +1069,19 @@ bool BaseTransaction::isCpfp()
     return ret;
 }
 
-int BaseTransaction::keysetSelected()
-{
+int BaseTransaction::keysetSelected() {
     QString tx_id = txid();
-    if(m_keysetSelected == -1){
+    if (m_keysetSelected == -1) {
         m_keysetSelected = AppSetting::instance()->getTransactionKeysetIndex(tx_id);
     }
     return m_keysetSelected;
 }
 
-void BaseTransaction::setKeysetSelected(int index, bool cached)
-{
+void BaseTransaction::setKeysetSelected(int index, bool cached) {
     if (m_keysetSelected == index)
         return;
     m_keysetSelected = index;
-    if(cached){
+    if (cached) {
         QString tx_id = txid();
         AppSetting::instance()->setTransactionKeysetIndex(tx_id, m_keysetSelected);
     }
@@ -1229,7 +1096,6 @@ int BaseTransaction::walletType() const {
     return static_cast<int>(m_transaction.get_wallet_type());
 }
 
-void BaseTransaction::refreshScanDevices()
-{
+void BaseTransaction::refreshScanDevices() {
     emit nunchukTransactionChanged();
 }

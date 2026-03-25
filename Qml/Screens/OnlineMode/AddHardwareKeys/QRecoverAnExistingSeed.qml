@@ -38,6 +38,7 @@ QOnScreenContentTypeB {
     height: popupHeight
     anchors.centerIn: parent
     label.text: STR.STR_QML_2053
+    onCloseClicked: vm.close()
     property string mnemonicstr: ""
     content: Item {
         Column {
@@ -245,7 +246,7 @@ QOnScreenContentTypeB {
         }
     }
 
-    onPrevClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
+    onPrevClicked: vm.close()
     bottomRight: Row {
         spacing: 12
         QTextButton {
@@ -297,9 +298,6 @@ QOnScreenContentTypeB {
     }
     RecoverAnExistingSeedViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
     Connections {
         target: vm

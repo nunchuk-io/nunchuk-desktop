@@ -9,7 +9,6 @@ class BBQRRegisterWalletOnColdcardViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit BBQRRegisterWalletOnColdcardViewModel(QObject *parent = nullptr);
-    ~BBQRRegisterWalletOnColdcardViewModel() override = default;
 
 };
 } // namespace features::wallets::viewmodels

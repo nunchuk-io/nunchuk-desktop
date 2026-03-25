@@ -487,8 +487,5 @@ Item {
 
     ViewInheritancePlanViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
 }

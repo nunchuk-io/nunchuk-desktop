@@ -263,8 +263,5 @@ Rectangle {
     }
     WalletListViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
 }

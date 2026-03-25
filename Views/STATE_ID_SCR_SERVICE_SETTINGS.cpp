@@ -50,13 +50,6 @@ void SCR_SERVICE_SETTINGS_Exit(QVariant msg) {
 void EVT_CLAIM_INHERITANCE_CHECK_REQUEST_HANDLER(QVariant msg)
 {
     DBG_INFO << msg.toMap();
-    QMap<QString,QVariant> maps = msg.toMap();
-    QString magic = maps["magic"].toString();
-    QString backupPassword = maps["backupPassword"].toString();
-    QString backupPasswordTwo = maps["backupPasswordTwo"].toString();
-    if (ServiceSetting::instance()->servicesTagPtr()->inheritanceCheck()) {
-        ServiceSetting::instance()->servicesTagPtr()->inheritanceDownloadBackup(magic, backupPassword, backupPasswordTwo);
-    }
 }
 
 void EVT_SERVICE_SUPPORT_REQUEST_HANDLER(QVariant msg) {

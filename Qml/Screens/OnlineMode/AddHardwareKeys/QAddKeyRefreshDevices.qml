@@ -159,7 +159,7 @@ Item {
                                     verticalCenter: parent.verticalCenter
                                 }
                                 iconSize: 24
-                                source: index == devicelist.currentIndex ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
+                                source: index == devicelist.currentIndex && selected_xfp == device_master_fingerprint ? "qrc:/Images/Images/radio-selected-dark.svg" : "qrc:/Images/Images/radio-dark.svg"
                             }
                             Column {
                                 width: 290
@@ -249,9 +249,6 @@ Item {
     RefreshDevicesViewModel {
         id: vm
         tag: _HARDWARE_TAG
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
     Connections {
         target: vm

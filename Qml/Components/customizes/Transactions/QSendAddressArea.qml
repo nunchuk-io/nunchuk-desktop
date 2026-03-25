@@ -73,7 +73,7 @@ Rectangle {
 
             QChangeAddressBlock {
                 id: changeAddress
-                visible: transactionInfo.hasChange
+                visible: transactionInfo.hasChange && !isDummy
                 editShow: {
                     var isShow = false
                     if (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES) {

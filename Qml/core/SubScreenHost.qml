@@ -51,5 +51,6 @@ Item {
         dataList.clear()
         for(var onsCnt = 0; onsCnt < popCount; onsCnt++ ) { var data = {'dataSource': Onsdata[onsCnt]}; dataList.append(data); }
         creator.model = dataList
+        console.log("SubScreenHost - subScreen_Transition - popCount: " + popCount);
     }
 }

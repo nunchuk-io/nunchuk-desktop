@@ -34,10 +34,6 @@ void ViewInheritancePlanViewModel::onInit() {
     });
 }
 
-void ViewInheritancePlanViewModel::onDispose() {
-    
-}
-
 void ViewInheritancePlanViewModel::timeLockEditClicked() {
     GUARD_SUB_SCREEN_MANAGER()
     GUARD_FLOW_MANAGER()

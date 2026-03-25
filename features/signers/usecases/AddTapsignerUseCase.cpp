@@ -1,6 +1,7 @@
 #include "AddTapsignerUseCase.h"
-#include "qUtils.h"
-#include "ifaces/bridgeifaces.h"
+#include "core/bridge/ExternalBridges.h"
+#include "core/restapi/RestApi.h"
+#include "core/utils/Utils.h"
 
 namespace features::signers::usecases {
 using namespace core::usecase;

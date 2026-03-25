@@ -14,6 +14,7 @@ SyncWalletFromRemoteFlow::SyncWalletFromRemoteFlow(FlowContext* ctx, QObject *pa
 
 void SyncWalletFromRemoteFlow::sync() {
     DBG_INFO << "SyncWalletFromRemoteFlow::sync " << CLIENT_INSTANCE->isNunchukLoggedIn() << " === " << CLIENT_INSTANCE->isMatrixLoggedIn();
+    // return; // hard code
     SyncWalletFromRemoteInput input;
     m_syncWalletFromRemoteUC.executeAsync(input, [](core::usecase::Result<SyncWalletFromRemoteResult> result) {
         AppModel::instance()->startReloadUserDb();

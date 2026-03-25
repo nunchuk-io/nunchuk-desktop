@@ -416,8 +416,6 @@ QOnScreenContentTypeB {
     RegisterWalletOnHardwareViewModel {
         id: vm
         Component.onCompleted: {
-            vm.attachContext(vmContext)
-            FlowManager.currentFlow.bind(vm)
             if (vm.event == RegisterWalletOnHardwareViewModel.WithdrawBitcoin) {
                 root.walletInfo = vm.walletInfo
             }            

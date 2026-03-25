@@ -252,6 +252,9 @@ public:
     bool inheritanceClaimDownloadWallet(const QJsonObject& body,
                                 QJsonObject& output);
 
+    bool inheritanceClaimSigningChallenge(const QString& magic,
+                                          QJsonObject& output);
+
     bool inheritanceCreateTx(const QJsonObject& data,
                              const QStringList& authos,
                              QJsonObject& output);
@@ -409,7 +412,7 @@ public:
     bool ResetKeyReplacement(const QString &wallet_id,
                             const QString& passwordToken,
                             QJsonObject& output,
-                            QString &errormsg);
+                            QString& errormsg);
 
     bool VerifyKeyReplacement(const QString &wallet_id,
                               const QString &xfp,

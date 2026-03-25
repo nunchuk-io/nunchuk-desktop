@@ -30,8 +30,5 @@ import "../../../../../localization/STR_QML.js" as STR
 QSetupOnChainTimelock {
     ReplaceChangeOnChainTimeLockViewModel {
         id: vm
-        Component.onCompleted: {
-            vm.attachContext(vmContext)
-        }
     }
 }

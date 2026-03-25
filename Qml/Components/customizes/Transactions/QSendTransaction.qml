@@ -44,12 +44,9 @@ Item {
     property bool isDummy: false
     signal addrToVerify(var addr)
     signal newMemoNotify(var newMemo)
-    signal keySignRequest(var signer)
-    signal keyScanRequest
-    signal keyExportRequest
-    signal keyImportRequest
     signal keyEnterPreImageInput(var hashData, var typeNode)
     property string myRole: ""
+    property var signerEvents
     /*========================================*/
     Row {
         spacing: 30
@@ -102,10 +99,7 @@ Item {
             pendingSignature: _send.pendingSignature
             myRole: _send.myRole
             isDummy: _send.isDummy
-            onKeySignRequest: _send.keySignRequest(signer)
-            onKeyScanRequest: _send.keyScanRequest()
-            onKeyExportRequest: _send.keyExportRequest()
-            onKeyImportRequest: _send.keyImportRequest()
+            signerEvents: _send.signerEvents
         }
     }
     Component {
@@ -115,23 +109,25 @@ Item {
             pendingSignature: _send.pendingSignature
             myRole: _send.myRole
             isDummy: _send.isDummy
-            onKeySignRequest: _send.keySignRequest(signer)
-            onKeyScanRequest: _send.keyScanRequest()
-            onKeyExportRequest: _send.keyExportRequest()
-            onKeyImportRequest: _send.keyImportRequest()
+            signerEvents: _send.signerEvents
+        }
+    }
+    function menuClicked(action, data) {
+        if (signerEvents[action]) {
+            signerEvents[action](data);
         }
     }
     Component {
         id: miniscriptWalletKeys
         QMemberKeysAreaMiniscript {
             transactionInfo: _send.transactionInfo
-            onKeySignRequest: _send.keySignRequest(signer)
-            onKeyScanRequest: _send.keyScanRequest()
+            onKeySignRequest: _send.menuClicked("sign", signer)
+            onKeyScanRequest: _send.menuClicked("scan", null)
             onKeyEnterPreImageInput: {
                 _send.keyEnterPreImageInput(hashData, typeNode)
             }
-            onKeyExportRequest: _send.keyExportRequest()
-            onKeyImportRequest: _send.keyImportRequest()
+            onKeyExportRequest: _send.menuClicked("exportFile", null)
+            onKeyImportRequest: _send.menuClicked("importFile", null)
         }
     }
 }

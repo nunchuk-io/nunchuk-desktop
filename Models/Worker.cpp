@@ -745,21 +745,10 @@ void Worker::slotStartSyncWalletDb(const QString &wallet_id)
     emit finishSyncWalletDb(wallet_id);
 }
 
-Q_DECLARE_METATYPE(nunchuk::SignerTag)
-Q_DECLARE_METATYPE(nunchuk::SignerType)
 Controller::Controller() {
     qRegisterMetaType<Conversation>();
-    qRegisterMetaType<nunchuk::Wallet>();
-    qRegisterMetaType<nunchuk::SingleSigner>();
-    qRegisterMetaType<nunchuk::MasterSigner>();
     qRegisterMetaType<QMasterSignerPtr>();
-    qRegisterMetaType<nunchuk::Transaction>();
     qRegisterMetaType<nunchuk::RoomTransaction>();
-    qRegisterMetaType<nunchuk::Device>();
-    qRegisterMetaType<std::vector<nunchuk::Device> >();
-    qRegisterMetaType<std::vector<nunchuk::Transaction> >();
-    qRegisterMetaType<std::vector<nunchuk::SignerTag> >();
-    qRegisterMetaType<nunchuk::SignerType>();
 
     Worker *worker = Worker::create(&workerThread);
 

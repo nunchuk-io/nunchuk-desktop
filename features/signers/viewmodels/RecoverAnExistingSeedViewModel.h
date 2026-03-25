@@ -12,7 +12,6 @@ class RecoverAnExistingSeedViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit RecoverAnExistingSeedViewModel(QObject *parent = nullptr);
-    ~RecoverAnExistingSeedViewModel() override = default;
 
   public slots:
     void recoverViaExistingSeed(QVariant msg);
