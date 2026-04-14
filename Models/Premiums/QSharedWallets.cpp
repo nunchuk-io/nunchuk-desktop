@@ -1,49 +1,45 @@
 #include "QSharedWallets.h"
+#include "Chats/ClientController.h"
+#include "Models/AppModel.h"
+#include "Models/QWarningMessage.h"
 #include "QEventProcessor.h"
 #include "ViewsEnums.h"
-#include "Models/QWarningMessage.h"
-#include "ifaces/nunchuckiface.h"
-#include "Models/AppModel.h"
-#include "Chats/ClientController.h"
 #include "WalletModel.h"
+#include "core/restapi/RestApi.h"
+#include "ifaces/nunchuckiface.h"
 
-QSharedWallets::QSharedWallets()
-    : m_sandboxList(new GroupSandboxModel())
-{
+QSharedWallets::QSharedWallets() : m_sandboxList(new GroupSandboxModel()) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-void QSharedWallets::clear()
-{
-    if(sandboxList()){
+void QSharedWallets::clear() {
+    if (sandboxList()) {
         sandboxList()->cleardata();
     }
 }
 
-QSharedWallets::~QSharedWallets()
-{
+QSharedWallets::~QSharedWallets() {
     if (m_sandboxList) {
         m_sandboxList->clearOccupied();
     }
     m_sandboxList.clear();
 }
 
-QSharedWallets *QSharedWallets::instance()
-{
+QSharedWallets *QSharedWallets::instance() {
     static QSharedWallets mInstance;
     return &mInstance;
 }
 
-void QSharedWallets::GetAllGroups()
-{
-    if(m_sandboxList.isValid()) {
+void QSharedWallets::GetAllGroups() {
+    DBG_INFO;
+    if (m_sandboxList.isValid()) {
+        DBG_INFO;
         m_sandboxList->GetGroups();
     }
     CreateDeprecatedWallets();
 }
 
-void QSharedWallets::GetGroup(const QString &sandbox_id)
-{
+void QSharedWallets::GetGroup(const QString &sandbox_id) {
     AppModel::instance()->setNewWalletInfo(QWalletPtr(new Wallet()));
     if (auto gw = AppModel::instance()->newWalletInfoPtr()) {
         if (auto sandbox = sandboxListPtr()->GetGroup(sandbox_id)) {
@@ -53,7 +49,7 @@ void QSharedWallets::GetGroup(const QString &sandbox_id)
             sandbox->setScreenFlow("setup-group-wallet");
             sandbox->GetNumberForAGroup();
             sandbox->GetGroup(sandbox_id);
-            sandbox->setSandbox(sandbox->sandbox());            
+            sandbox->setSandbox(sandbox->sandbox());
             QJsonObject json;
             json["type"] = "setup-group-wallet";
             QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
@@ -61,11 +57,10 @@ void QSharedWallets::GetGroup(const QString &sandbox_id)
     }
 }
 
-bool QSharedWallets::CheckGroupConfig()
-{
+bool QSharedWallets::CheckGroupConfig() {
     QWarningMessage msg;
     nunchuk::GroupConfig config = bridge::GetGroupConfig(msg);
-    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
         DBG_INFO << config.get_remain() << config.get_max_keys(nunchuk::AddressType::NATIVE_SEGWIT);
         if (config.get_remain() <= 0) {
             // UI show error: user reach group wallet limit (check Figma for error message)
@@ -73,69 +68,60 @@ bool QSharedWallets::CheckGroupConfig()
             return false;
         }
         m_config = config;
-    }
-    else{
+    } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
     }
     return true;
 }
 
-QGroupSandboxModelPtr QSharedWallets::sandboxListPtr() const
-{
+QGroupSandboxModelPtr QSharedWallets::sandboxListPtr() const {
     return m_sandboxList;
 }
 
-GroupSandboxModel *QSharedWallets::sandboxList() const
-{
+GroupSandboxModel *QSharedWallets::sandboxList() const {
     return sandboxListPtr().data();
 }
 
-int QSharedWallets::currentIndex() const
-{
+int QSharedWallets::currentIndex() const {
     return mCurrentIndex;
 }
 
-void QSharedWallets::setCurrentIndex(int currentIndex)
-{
+void QSharedWallets::setCurrentIndex(int currentIndex) {
     mCurrentIndex = currentIndex;
     emit currentIndexChanged();
 }
 
-nunchuk::GroupConfig QSharedWallets::config() const
-{
+nunchuk::GroupConfig QSharedWallets::config() const {
     return m_config;
 }
 
-QString QSharedWallets::uid()
-{
-    if(m_uid.isEmpty()){
+QString QSharedWallets::uid() {
+    if (m_uid.isEmpty()) {
         GetGroupDeviceUID();
     }
     return m_uid;
 }
 
-void QSharedWallets::GetGroupDeviceUID()
-{
+void QSharedWallets::GetGroupDeviceUID() {
     m_uid = bridge::GetGroupDeviceUID();
 }
 
-bool QSharedWallets::RecoverSandboxWallet(const QString &file_path)
-{
+bool QSharedWallets::RecoverSandboxWallet(const QString &file_path) {
     QString fileContent = qUtils::ImportDataViaFile(file_path);
     QWarningMessage msg;
     nunchuk::Wallet wallet = qUtils::ParseWalletDescriptor(fileContent, msg);
     QWalletPtr w = QWalletPtr(new Wallet(wallet));
-    if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+    if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
         msg.resetWarningMessage();
         bool isGroupWallet = bridge::CheckGroupWalletExists(wallet, msg);
         if (isGroupWallet) {
             w->setWalletName("Group Wallet");
             AppModel::instance()->setNewWalletInfo(w);
             if (auto ptr = w->groupSandboxPtr()) {
-                auto sandbox = CreateSandboxFromRecoverWallet(w);                
+                auto sandbox = CreateSandboxFromRecoverWallet(w);
                 ptr->setSandbox(sandbox);
                 ptr->setFilePathRecovery(file_path);
-                w->globalGroupWalletChanged();
+                w->setIsSandboxWallet(true);
                 w->groupSandboxPtr()->setScreenFlow("setup-group-wallet");
             }
             QJsonObject json;
@@ -152,8 +138,7 @@ bool QSharedWallets::RecoverSandboxWallet(const QString &file_path)
     return false;
 }
 
-nunchuk::GroupSandbox QSharedWallets::CreateSandboxFromRecoverWallet(const QWalletPtr& wallet)
-{
+nunchuk::GroupSandbox QSharedWallets::CreateSandboxFromRecoverWallet(const QWalletPtr &wallet) {
     if (!wallet || !wallet.isValid()) {
         return nunchuk::GroupSandbox{""};
     }
@@ -161,17 +146,15 @@ nunchuk::GroupSandbox QSharedWallets::CreateSandboxFromRecoverWallet(const QWall
     std::string walletid = "";
     try {
         walletid = nWallet.get_id();
-    }
-    catch (const nunchuk::BaseException &ex) {
+    } catch (const nunchuk::BaseException &ex) {
         DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-    }
-    catch (std::exception &e) {
+    } catch (std::exception &e) {
         DBG_INFO << "THROW EXCEPTION" << e.what();
     }
 
     nunchuk::AddressType addressType = nWallet.get_address_type();
     QString name = wallet->walletName().isEmpty() ? "Group Wallet" : wallet->walletName();
-    nunchuk::GroupSandbox sandbox {""};
+    nunchuk::GroupSandbox sandbox{""};
     QWarningMessage msg;
     if (wallet->walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
         QString script_tmpl = nWallet.get_miniscript().empty() ? "" : QString::fromStdString(nWallet.get_miniscript());
@@ -194,8 +177,7 @@ nunchuk::GroupSandbox QSharedWallets::CreateSandboxFromRecoverWallet(const QWall
     return sandbox;
 }
 
-void QSharedWallets::changeToWallet()
-{
+void QSharedWallets::changeToWallet() {
     if (auto groupWalletList = AppModel::instance()->groupWalletList()) {
         if (auto walletList = AppModel::instance()->walletList()) {
             if (auto currentWallet = groupWalletList->currentWalletPtr()) {
@@ -207,33 +189,50 @@ void QSharedWallets::changeToWallet()
     }
 }
 
-bool QSharedWallets::checkSandboxWalletLimit()
-{
+bool QSharedWallets::checkSandboxWalletLimit() {
     return QSharedWallets::instance()->CheckGroupConfig();
 }
 
-QStringList QSharedWallets::deprecatedWallets() const
-{
+QStringList QSharedWallets::deprecatedWallets() const {
     return m_deprecatedWallets;
 }
 
-void QSharedWallets::CreateDeprecatedWallets()
-{
+void QSharedWallets::CreateDeprecatedWallets() {
     QWarningMessage msg;
     m_deprecatedWallets = bridge::GetDeprecatedGroupWallets(msg);
 }
 
-bool QSharedWallets::importQrSandboxWallet(const QStringList qrtags)
-{
+void QSharedWallets::accept(const QString &group_id) {
+    QWarningMessage msg;
+    bridge::JoinGroup(group_id, msg);
+    if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+        GetAllGroups();
+    }
+}
+
+void QSharedWallets::deny(const QString &group_id) {
+    auto sandbox = sandboxListPtr()->GetGroup(group_id);
+    if (sandbox) {
+        QString inviterId = sandbox->inviterId();
+        QString errorMsg;
+        QJsonObject output;
+        bool ret = Shared::instance()->DenySharedWalletInvitation(inviterId, output, errorMsg);
+        if (ret) {
+            GetAllGroups();
+        }
+    }
+}
+
+bool QSharedWallets::importQrSandboxWallet(const QStringList qrtags) {
     QStringList in = qrtags;
     in.removeDuplicates();
-    if(in.isEmpty()){
+    if (in.isEmpty()) {
         return false;
     }
     QWarningMessage msg;
-    nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(),in, msg);
+    nunchuk::Wallet wallet = qUtils::ParseKeystoneWallet((nunchuk::Chain)AppSetting::instance()->primaryServer(), in, msg);
     QWalletPtr w = QWalletPtr(new Wallet(wallet));
-    if(msg.type() == (int)EWARNING::WarningType::NONE_MSG){
+    if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
         msg.resetWarningMessage();
         bool isGroupWallet = bridge::CheckGroupWalletExists(wallet, msg);
         DBG_INFO << "isGroupWallet: " << isGroupWallet;
@@ -244,20 +243,18 @@ bool QSharedWallets::importQrSandboxWallet(const QStringList qrtags)
                 auto sandbox = CreateSandboxFromRecoverWallet(w);
                 ptr->setSandbox(sandbox);
                 ptr->setQrTagsRecovery(in);
-                w->globalGroupWalletChanged();
+                w->setIsSandboxWallet(true);
                 w->groupSandboxPtr()->setScreenFlow("setup-group-wallet");
             }
             QJsonObject json;
             json["type"] = "setup-group-wallet";
             QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST, json);
-        }
-        else {
+        } else {
             QString message = QString("Group wallet not found");
             AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
         }
         return true;
-    }
-    else {
+    } else {
         AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
     }
     return false;

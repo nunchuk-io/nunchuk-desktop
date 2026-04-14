@@ -23,20 +23,26 @@ import DataPool 1.0
 import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
-import "../../../../localization/STR_QML.js" as STR
 
 QPendingGroupWalletBackground {
     id: pendingdelegateRoot
     property string name_group: ""
     property bool   isCurrentIndex: false
+    property string inviter_email: ""
 
+    signal deny()
+    signal accept()
     signal buttonClicked()
-    height: 92
+    height: isInviter ? 148 : 92
     MouseArea {
         hoverEnabled: true
         propagateComposedEvents: true
         anchors.fill: parent
-        onClicked: buttonClicked()
+        onClicked: {
+            if (!isInviter) {
+                buttonClicked()
+            }
+        }
     }
     Rectangle {
         width: 8
@@ -47,7 +53,7 @@ QPendingGroupWalletBackground {
         anchors.left: parent.left
         anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        sourceComponent: pendingItem
+        sourceComponent: isInviter ? inviterItem : pendingItem
     }
     Component {
         id: pendingItem
@@ -93,6 +99,81 @@ QPendingGroupWalletBackground {
                     }
                 }
             }
+        }
+    }
+    Component {
+        id: inviterItem
+        Column {
+            width: pendingdelegateRoot.width - 16
+            Item {
+                width: parent.width
+                height: 44
+                QLato {
+                    text: STR.STR_QML_2146
+                    font.weight: Font.Bold
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    anchors{
+                        left: parent.left
+                        leftMargin: 8
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+            Item {
+                width: parent.width
+                height: 104
+                QLato {
+                    width: 139
+                    anchors{
+                        left: parent.left
+                        leftMargin: 12
+                        verticalCenter: parent.verticalCenter
+                    }
+                    text: STR.STR_QML_2147.arg(inviter_email).arg(name_group)
+                    font.pixelSize: 12
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: 16
+                    color: "#FFFFFF"
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Item {
+                    width: 114
+                    height: 36
+                    visible: isInviter
+                    anchors{
+                            right: parent.right
+                            rightMargin: 0
+                            verticalCenter: parent.verticalCenter
+                        }
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 12
+                        QTextButton {
+                            width: 56
+                            height: 36
+                            label.text: STR.STR_QML_468
+                            label.font.pixelSize: 12
+                            type: eTypeF
+                            onButtonClicked: {
+                                accept()
+                            }
+                        }
+                        QTextButton {
+                            width: 46
+                            height: 36
+                            label.text: STR.STR_QML_946
+                            label.font.pixelSize: 12
+                            type: eTypeO
+                            onButtonClicked: {
+                                deny()
+                            }
+                        }
+                    }
+                }
+            }            
         }
     }
 }

@@ -7,17 +7,14 @@
 #include "Premiums/QBasePremium.h"
 #include "Models/TransactionModel.h"
 
-class QDummyTransaction : public Transaction
-{
+class QDummyTransaction : public Transaction {
     Q_OBJECT
-    Q_PROPERTY(bool isDummyTx                    READ isDummyTx        CONSTANT)
 public:
     QString dummyXfp() const final;
     void setDummyXfp(const QString& xfp);
     bool isDummyTx() const final;
     QStringList hideSignBtns() const final;
     void setHideSignBtns(const QStringList &newHideSignBtns);
-
 private:
     QString     mDummyXfp {};
     QStringList m_hideSignBtns;

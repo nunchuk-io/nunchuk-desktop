@@ -81,4 +81,12 @@ ClientController *ViewModelContext::clientController() const {
     return nullptr;
 }
 
+QSharedWallets *ViewModelContext::sharedWallets() const
+{
+    if (m_appCtx) {
+        return m_appCtx->sharedWallets();
+    }
+    return nullptr;
+}
+
 } // namespace core::viewmodels

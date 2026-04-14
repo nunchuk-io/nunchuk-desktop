@@ -8,9 +8,9 @@ else()
 endif()
 
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 2.3.0)
+    project(Nunchuk VERSION 2.4.0)
 else()
-    project(nunchuk-qt VERSION 2.3.0)
+    project(nunchuk-qt VERSION 2.4.0)
 endif()
 
 
@@ -170,8 +170,8 @@ file(GLOB_RECURSE SOURCES_REGISTERTYPE	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Reg
 file(GLOB_RECURSE SOURCES_VIEWS		CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Views/*.cpp		${CMAKE_SOURCE_DIR}/Views/*.h)
 file(GLOB_RECURSE FEDERATEDAUTH		CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/FederatedAuth/*.cpp	${CMAKE_SOURCE_DIR}/FederatedAuth/*.h)
 file(GLOB_RECURSE SOURCES_CORE		CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/core/*.cpp		${CMAKE_SOURCE_DIR}/core/*.h)
-file(GLOB_RECURSE SOURCES_FEATURES	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/features/*.cpp	${CMAKE_SOURCE_DIR}/features/*.h)
-file(GLOB_RECURSE SOURCES_APP	    CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/app/*.cpp	${CMAKE_SOURCE_DIR}/app/*.h)
+file(GLOB_RECURSE SOURCES_FEATURES	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/features/*.cpp            ${CMAKE_SOURCE_DIR}/features/*.h)
+file(GLOB_RECURSE SOURCES_APP           CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/app/*.cpp                 ${CMAKE_SOURCE_DIR}/app/*.h)
 
 QT5_ADD_RESOURCES(SOURCE_RSCS
     qml.qrc
@@ -238,7 +238,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # add_definitions(-DNEW_ON_CLAIM)
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_definitions(-DENABLE_OUTLOG)
+    # add_definitions(-DENABLE_OUTLOG)
     # Apply flags for Release with debug info
 else()
     # Apply flags for else with debug info

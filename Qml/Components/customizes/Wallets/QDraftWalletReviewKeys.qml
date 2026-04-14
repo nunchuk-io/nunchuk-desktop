@@ -59,6 +59,7 @@ Item {
                         single_derivationPath: singleSigner_derivationPath
                         single_device_cardid: single_signer_device_cardid
                         single_need_Topup_Xpub: single_signer_need_Topup_Xpub
+                        single_platformkeyPolicyType: single_signer_platformkeyPolicyType
                     }
                     onRequestGetXpubs: {
                         newWalletInfo.startGetXpubs(index)

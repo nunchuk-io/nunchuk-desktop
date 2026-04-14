@@ -36,7 +36,7 @@ void EVT_SIGN_IN_VIA_XPUB_ENTER_HANDLER(QVariant msg) {
     DBG_INFO << type;
     if (type == "continue-enter-xpub") {
         QString signature_xpub = maps["signature_xpub"].toString();
-        AppModel::instance()->offChainSignInViaDigitalSignature(signature_xpub);
+        AppModel::instance()->SignInUsingXPUBorWallet(signature_xpub);
     }
 }
 

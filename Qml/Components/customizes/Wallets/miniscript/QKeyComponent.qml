@@ -44,10 +44,12 @@ Item {
         anchors.fill: parent
         spacing: 4
         Loader {
-            sourceComponent: if(miniscript.keyObj != null && miniscript.keyObj != undefined && typeof(tmpColors)!= 'undefined') {
-                colorIcon
-            } else {
-                normalIcon
+            sourceComponent: {
+                if(miniscript.keyObj !== null && miniscript.keyObj !== undefined && typeof(tmpColors)!= 'undefined' && dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM) {
+                    colorIcon
+                } else {
+                    normalIcon
+                }
             }
             anchors {
                 top: parent.top
@@ -58,7 +60,7 @@ Item {
             id: normalIcon
             QIcon {
                 iconSize: 20
-                source: "qrc:/Images/Images/key-dark.svg"
+                source:(dataSingle.single_type === NUNCHUCKTYPE.SERVER || dataSingle.single_type === NUNCHUCKTYPE.PLATFORM )? "qrc:/Images/Images/Device_Icons/server-key-dark.svg" : "qrc:/Images/Images/key-dark.svg"
             }
         }
         Component {
@@ -105,7 +107,7 @@ Item {
                     width: paintedWidth
                     height: 20
                     text: {
-                        if(miniscript.keyObj != null && miniscript.keyObj != undefined) {
+                        if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
                             return miniscript.keyObj.singleSigner_name
                         } else if (miniscript.key !== "") {
                             return qsTr("Key %1").arg(miniscript.key)
@@ -124,6 +126,7 @@ Item {
                 visible: miniscript.keyObj !== null
                          && miniscript.keyObj !== undefined
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
+                         && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM
                 text: {
                     if (miniscript.keyObj.single_signer_device_cardid !== "") {
                         var card_id_text = miniscript.keyObj.single_signer_device_cardid
@@ -143,6 +146,7 @@ Item {
                 visible: miniscript.keyObj !== null
                          && miniscript.keyObj !== undefined
                          && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER
+                         && miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM
                 text: qsTr("BIP32 path: %1").arg(miniscript.keyObj.singleSigner_derivationPath)
                 color: miniscript.keyStrCount > 1 ? "#CF4018": "#757575"
                 horizontalAlignment: Text.AlignLeft
@@ -169,6 +173,14 @@ Item {
                         bip32PathClick(miniscript.key, miniscript.keyObj.singleSigner_masterFingerPrint, miniscript.keyObj.singleSigner_derivationPath)
                     }
                 }
+            }
+            QLato {
+                text: dataSingle.single_platformkeyPolicyType
+                color: "#031F2B"
+                font.pixelSize: 12
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                visible: dataSingle.single_platformkeyPolicyType !== "" && dataSingle.single_type === NUNCHUCKTYPE.PLATFORM
             }
         }
     }

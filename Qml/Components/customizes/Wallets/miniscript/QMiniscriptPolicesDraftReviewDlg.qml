@@ -54,6 +54,7 @@ QMiniscriptPolicesDelegate {
                 single_isOccupied: itemData.single_signer_isOccupied
                 single_isReplaced: itemData.single_signer_isReplaced
                 single_keyReplaced: itemData.single_signer_keyReplaced
+                single_platformkeyPolicyType: itemData.single_signer_platformkeyPolicyType
             }
         }
     }
@@ -67,16 +68,12 @@ QMiniscriptPolicesDelegate {
         type: eTypeB
         visible: miniscript.keyObj !== null
                  && miniscript.keyObj !== undefined
-                 && miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SERVER
+                 && (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.SERVER || miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM)
                  && !newWalletInfo.isClaimed
                  && (myRole !== "FACILITATOR_ADMIN")
+                 && newWalletInfo.walletId !== ""
         onButtonClicked: {
             viewPoliciesRequest()
-            var objectRequest = {
-                "requestType": "viewPolicies",
-                "requestData": newWalletInfo.walletId
-            }
-            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
         }
     }
 }

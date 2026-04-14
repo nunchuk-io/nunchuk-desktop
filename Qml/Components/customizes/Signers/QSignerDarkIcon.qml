@@ -31,6 +31,7 @@ QIcon {
     property int type: -1 //NUNCHUCKTYPE.HARDWARE
     property string typeStr: ""
     property string tag: "" //"COLDCARD"
+    property string iconUrl: ""
     source: {
         var img = ""
         switch(type) {
@@ -41,6 +42,7 @@ QIcon {
         case NUNCHUCKTYPE.NFC: img = "qrc:/Images/Images/Device_Icons/nfc-key-dark.svg"; break
         case NUNCHUCKTYPE.COLDCARD_NFC: img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-dark.svg"; break
         case NUNCHUCKTYPE.SERVER: img = "qrc:/Images/Images/Device_Icons/server-key-dark.svg"; break
+        case NUNCHUCKTYPE.PLATFORM: img = "qrc:/Images/Images/Device_Icons/server-key-dark.svg"; break
         default: img = ""
         }
         if (img === "") {
@@ -81,7 +83,7 @@ QIcon {
                 }
             }
         }
-        return img
+        return iconUrl !== "" ? iconUrl : img
     }
 
 }

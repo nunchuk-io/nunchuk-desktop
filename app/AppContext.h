@@ -8,6 +8,7 @@
 #include "core/ui/UiForward.h"
 
 namespace app {
+
 using core::flow::FlowManager;
 using core::screen::ScreenManager;
 using core::screen::RightPanelNavigator;
@@ -15,6 +16,7 @@ using core::orchestrator::AppOrchestrator;
 using core::popup::PopupManager;
 using core::toast::ToastManager;
 using core::subscreen::SubScreenManager;
+
 class AppContext : public QObject {
     Q_OBJECT
   public:
@@ -32,6 +34,7 @@ class AppContext : public QObject {
     QGroupWallets *groupWallets() const;
     RightPanelNavigator *rightPanelNavigator() const;
     AppSetting *appSetting() const;
+    QSharedWallets *sharedWallets() const;
 
   private:
     ScreenManager *m_screenManager;
@@ -46,5 +49,6 @@ class AppContext : public QObject {
     QGroupWallets *m_groupWallets;
     RightPanelNavigator *m_rightPanelNavigator;
     AppSetting *m_appSetting;
+    QSharedWallets *m_sharedWallets;
 };
 } // namespace app

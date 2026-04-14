@@ -292,7 +292,7 @@ std::vector<nunchuk::MasterSigner> bridge::nunchukGetOriginMasterSigners(QWarnin
 {
     std::vector<nunchuk::MasterSigner> singers = nunchukiface::instance()->GetMasterSigners(msg);
     singers.erase(std::remove_if(singers.begin(), singers.end(), [](const nunchuk::MasterSigner& signer) {
-        return signer.get_type() == nunchuk::SignerType::SERVER;
+        return (signer.get_type() == nunchuk::SignerType::SERVER || signer.get_type() == nunchuk::SignerType::PLATFORM);
     }), singers.end());
     return singers;
 }
@@ -1593,7 +1593,7 @@ std::vector<nunchuk::SingleSigner> bridge::nunchukGetOriginRemoteSigners(QWarnin
 {
     std::vector<nunchuk::SingleSigner> singers = nunchukiface::instance()->GetRemoteSigners(msg);
     singers.erase(std::remove_if(singers.begin(), singers.end(), [](const nunchuk::SingleSigner& signer) {
-        return signer.get_type() == nunchuk::SignerType::SERVER;
+        return (signer.get_type() == nunchuk::SignerType::SERVER  || signer.get_type() == nunchuk::SignerType::PLATFORM);
     }), singers.end());
     return singers;
 }
@@ -1602,7 +1602,7 @@ QSingleSignerListModelPtr bridge::nunchukConvertRemoteSigners(std::vector<nunchu
 {
     QSingleSignerListModelPtr remoteSignerlist(new SingleSignerListModel());
     for (nunchuk::SingleSigner signer : list) {
-        if((int)signer.get_type() == (int)ENUNCHUCK::SignerType::SERVER){
+        if(((int)signer.get_type() == (int)ENUNCHUCK::SignerType::SERVER) || ((int)signer.get_type() == (int)ENUNCHUCK::SignerType::PLATFORM)){
             continue;
         }
         QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(signer));
@@ -3333,4 +3333,121 @@ void bridge::CreateAssignAvailableSigners(nunchuk::AddressType address_type,
             }
             callback(available_signers);
         });
+}
+
+nunchuk::GroupSandbox bridge::EnableGroupPlatformKey(const QString &groupId, const QVector<QString> &names, QWarningMessage &msg)
+{
+    DBG_INFO << "EnableGroupPlatformKey groupId: " << groupId << " names: " << names;
+    std::vector<std::string> stdNames;
+    for (const auto& name : names) {
+        stdNames.push_back(name.toStdString());
+    }
+    nunchuk::GroupSandbox ret = nunchukiface::instance()->EnableGroupPlatformKey(groupId.toStdString(), stdNames, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return nunchuk::GroupSandbox("");
+    }
+}
+
+nunchuk::GroupSandbox bridge::DisableGroupPlatformKey(const QString &groupId, QWarningMessage &msg)
+{
+    nunchuk::GroupSandbox ret = nunchukiface::instance()->DisableGroupPlatformKey(groupId.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return nunchuk::GroupSandbox("");
+    }
+}
+
+nunchuk::GroupSandbox bridge::SetGroupPlatformKeyPolicies(const QString &groupId, const nunchuk::GroupPlatformKeyPolicies &policies, QWarningMessage& msg)
+{
+    nunchuk::GroupSandbox ret = nunchukiface::instance()->SetGroupPlatformKeyPolicies(groupId.toStdString(), policies, msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return nunchuk::GroupSandbox("");
+    }
+}
+
+nunchuk::GroupWalletConfig bridge::GetGroupWalletConfig(const QString &walletId)
+{
+    QWarningMessage msg;
+    nunchuk::GroupWalletConfig ret = nunchukiface::instance()->GetGroupWalletConfig(walletId.toStdString(), msg);
+    if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+        return ret;
+    }
+    else{
+        return nunchuk::GroupWalletConfig();
+    }
+}
+
+void bridge::SetGroupWalletConfig(const QString &walletId, const nunchuk::GroupWalletConfig &config)
+{
+    QWarningMessage msg;
+    nunchukiface::instance()->SetGroupWalletConfig(walletId.toStdString(), config, msg);
+}
+
+nunchuk::GroupPlatformKeyPolicyUpdateRequirement bridge::PreviewGroupPlatformKeyPolicyUpdate(const QString &walletId, const nunchuk::GroupPlatformKeyPolicies &policies, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->PreviewGroupPlatformKeyPolicyUpdate(walletId.toStdString(), policies, msg);
+}
+
+nunchuk::GroupPlatformKeyPolicyUpdateRequirement bridge::RequestGroupPlatformKeyPolicyUpdate(const QString &walletId, const nunchuk::GroupPlatformKeyPolicies &policies, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->RequestGroupPlatformKeyPolicyUpdate(walletId.toStdString(), policies, msg);
+}
+
+std::vector<nunchuk::GroupDummyTransaction> bridge::GetGroupDummyTransactions(const QString &walletId)
+{
+    QWarningMessage msg;
+    return nunchukiface::instance()->GetGroupDummyTransactions(walletId.toStdString(), msg);
+}
+
+nunchuk::GroupDummyTransaction bridge::GetGroupDummyTransaction(const QString &walletId, const QString &dummyTransactionId, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->GetGroupDummyTransaction(walletId.toStdString(), dummyTransactionId.toStdString(), msg);
+}
+
+nunchuk::GroupDummyTransaction bridge::SignGroupDummyTransaction(const QString &walletId, const QString &dummyTransactionId, const QStringList& signatures, QWarningMessage& msg)
+{
+    std::vector<std::string> stdSignatures;
+    for (const auto& sig : signatures) {
+        stdSignatures.push_back(sig.toStdString());
+    }
+    return nunchukiface::instance()->SignGroupDummyTransaction(walletId.toStdString(), dummyTransactionId.toStdString(), stdSignatures, msg);
+}
+
+
+void bridge::CancelGroupDummyTransaction(const QString &walletId, const QString &dummyTransactionId, QWarningMessage& msg)
+{
+    nunchukiface::instance()->CancelGroupDummyTransaction(walletId.toStdString(), dummyTransactionId.toStdString(), msg);
+}
+
+int bridge::GetGroupWalletAlertCount(const QString &walletId, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->GetGroupWalletAlertCount(walletId.toStdString(), msg);
+}
+
+std::vector<nunchuk::GroupWalletAlert> bridge::GetGroupWalletAlerts(const QString &walletId, int page, int pageSize, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->GetGroupWalletAlerts(walletId.toStdString(), page, pageSize, msg);
+}
+
+void bridge::MarkGroupWalletAlertViewed(const QString &walletId, const QString &alertId, QWarningMessage& msg)
+{
+    nunchukiface::instance()->MarkGroupWalletAlertViewed(walletId.toStdString(), alertId.toStdString(), msg);
+}
+
+void bridge::DismissGroupWalletAlert(const QString &walletId, const QString &alertId, QWarningMessage& msg)
+{
+    nunchukiface::instance()->DismissGroupWalletAlert(walletId.toStdString(), alertId.toStdString(), msg);
+}
+
+nunchuk::GroupTransactionState bridge::GetGroupTransactionState(const QString &walletId, const QString &txId, QWarningMessage& msg)
+{
+    return nunchukiface::instance()->GetGroupTransactionState(walletId.toStdString(), txId.toStdString(), msg);
 }

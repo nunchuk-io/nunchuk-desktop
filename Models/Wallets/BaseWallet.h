@@ -200,7 +200,7 @@ public:
     virtual QWalletPtr clone() const;
     std::vector<nunchuk::SingleSigner> localSigners();
     Q_INVOKABLE bool isContainKey(const QString &xfp);
-
+    virtual QString platformkeyPolicyType() { return ""; };
 private:
     mutable QString m_id {""};
     mutable QString m_walletName {""};

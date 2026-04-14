@@ -239,7 +239,7 @@ Item {
                         }
                         QAccountIndexs {
                             height: 16
-                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER  && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
                             accountIndexs: modelData.account_indexs
                             walletType: modelData.wallet_type
                         }
@@ -297,7 +297,7 @@ Item {
                             height: 16
                             color: "#EAEAEA"
                             radius: 20
-                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER  && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
                             QText {
                                 id: signerTypeText
                                 text: GlobalData.signers(modelData.signer_type)
@@ -311,7 +311,7 @@ Item {
                         
                         QAccountIndexs {
                             height: 16
-                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
                             accountIndexs: modelData.account_indexs
                             walletType: modelData.wallet_type
                         }
@@ -386,7 +386,7 @@ Item {
                     }
                     QAccountIndexs {
                         height: 16
-                        visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                        visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
                         accountIndexs: modelData.account_indexs
                         walletType: modelData.wallet_type
                     }
@@ -443,7 +443,7 @@ Item {
                             height: 16
                             color: "#EAEAEA"
                             radius: 20
-                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
                             QText {
                                 id: signerTypeText
                                 text: GlobalData.signers(modelData.signer_type)
@@ -456,7 +456,7 @@ Item {
                         }
                         QAccountIndexs {
                             height: 16
-                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER
+                            visible: modelData.signer_type !== NUNCHUCKTYPE.SERVER && modelData.signer_type !== NUNCHUCKTYPE.PLATFORM
                             accountIndexs: modelData.account_indexs
                             walletType: modelData.wallet_type
                         }

@@ -162,6 +162,7 @@ public:
         COLDCARD_NFC,
         SERVER,
         PORTAL_NFC,
+        PLATFORM,
     };
 
     enum class RoomType {
@@ -1066,5 +1067,43 @@ bool nunchukRevealPreimage(const QString &wallet_id, const QString &tx_id, const
 void CreateAssignAvailableSigners(nunchuk::AddressType address_type,
                                   nunchuk::WalletType wallet_type,
                                   std::function<void(const QSingleSignerListModelPtr&)> callback);
+
+// Platform key Group wallet related
+nunchuk::GroupSandbox EnableGroupPlatformKey(const QString& groupId,
+                                             const QVector<QString>& names,
+                                             QWarningMessage &msg);// call first when user add platform key, // names empty for multisig, slot key name for miniscript
+
+nunchuk::GroupSandbox DisableGroupPlatformKey(const QString& groupId, QWarningMessage &msg);
+
+nunchuk::GroupSandbox SetGroupPlatformKeyPolicies(const QString& groupId,
+                                                  const nunchuk::GroupPlatformKeyPolicies& policies, QWarningMessage &msg);
+
+nunchuk::GroupWalletConfig GetGroupWalletConfig(const QString& walletId);
+
+void SetGroupWalletConfig(const QString& walletId, const nunchuk::GroupWalletConfig& config);
+
+nunchuk::GroupPlatformKeyPolicyUpdateRequirement PreviewGroupPlatformKeyPolicyUpdate(const QString& walletId,
+                                                                                     const nunchuk::GroupPlatformKeyPolicies& policies, QWarningMessage& msg); // call before update to see if it requires dummy tx
+
+nunchuk::GroupPlatformKeyPolicyUpdateRequirement RequestGroupPlatformKeyPolicyUpdate(const QString& walletId,
+                                                                                     const nunchuk::GroupPlatformKeyPolicies& policies, QWarningMessage& msg); // call  to update
+
+std::vector<nunchuk::GroupDummyTransaction> GetGroupDummyTransactions(const QString& walletId);
+
+nunchuk::GroupDummyTransaction GetGroupDummyTransaction(const QString& walletId, const QString& dummyTransactionId, QWarningMessage& msg);
+
+nunchuk::GroupDummyTransaction SignGroupDummyTransaction(const QString& walletId, const QString& dummyTransactionId, const QStringList& signatures, QWarningMessage& msg); // signature = Utils::CreateRequestToken(...)
+
+void CancelGroupDummyTransaction(const QString& walletId, const QString& dummyTransactionId, QWarningMessage& msg);
+
+int GetGroupWalletAlertCount(const QString& walletId, QWarningMessage& msg);
+
+std::vector<nunchuk::GroupWalletAlert> GetGroupWalletAlerts(const QString& walletId, int page, int pageSize, QWarningMessage& msg);
+
+void MarkGroupWalletAlertViewed(const QString& walletId, const QString& alertId, QWarningMessage& msg);
+
+void DismissGroupWalletAlert(const QString& walletId, const QString& alertId, QWarningMessage& msg);
+
+nunchuk::GroupTransactionState GetGroupTransactionState(const QString &walletId, const QString &txId, QWarningMessage &msg);
 }
 #endif // BRIDGEINTERFACE_H

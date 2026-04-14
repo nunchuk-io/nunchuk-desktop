@@ -164,8 +164,6 @@ bool BaseWallet::enableValuekeyset() {
     int wallet_Type = walletType();
     int walletAddress_Type = walletAddressType();
     int walletTemplate_Type = walletTemplate();
-
-    DBG_INFO << "[Mini] enableValuekeyset" << wallet_Type << walletAddress_Type << walletTemplate_Type;
     if (((int)nunchuk::AddressType::TAPROOT == walletAddress_Type) && ((int)nunchuk::WalletType::MULTI_SIG == wallet_Type) &&
         ((int)nunchuk::WalletTemplate::DEFAULT == walletTemplate_Type)) {
         m_enableValuekeyset = true;
@@ -290,6 +288,7 @@ SingleSignerListModel *BaseWallet::singleSignersAssigned() {
                     ret.data()->setValueKey(true);
                 }
             }
+            ret->setPlatformkeyPolicyType(platformkeyPolicyType());
             m_signers->addSingleSigner(ret);
         }
     }

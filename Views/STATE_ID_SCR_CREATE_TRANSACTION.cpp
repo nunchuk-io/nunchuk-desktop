@@ -217,10 +217,10 @@ void EVT_CREATE_TRANSACTION_SIGN_REQUEST_HANDLER(QVariant msg) {
                             trans->setKeysetSelected(use_keyset_index, true);
                             trans->setSigningPathSelected(selectedSigningPath, true);
                             trans->setUseScriptPath(use_script_path);
-                            AppModel::instance()->setTransactionInfo(trans);
                             wallet.data()->AssignTagsToTxChange();
                             wallet.data()->CreateAsisstedTxs(trans->txid(), trans->psbt(), trans->memo());
                             AppModel::instance()->requestSyncWalletDb(wallet_id);
+                            AppModel::instance()->setTransactionInfo(trans);
                             QEventProcessor::instance()->sendEvent(E::EVT_CREATE_TRANSACTION_SIGN_SUCCEED);
                             if (!unUseAddress.isEmpty()) {
                                 QString msg_name = QString("The transaction has been replaced");

@@ -113,6 +113,17 @@ Flickable {
                 QMiniscriptPolicesDraftReviewDlg {
                     width: widthHalf
                     miniscript: modelData
+                    onViewPoliciesRequest: {
+                        if (modelData.keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM) {
+                            vm.onPlatformKeyConfigClicked(newWalletInfo.walletId)
+                        } else {
+                            var objectRequest = {
+                                "requestType": "viewPolicies",
+                                "requestData": newWalletInfo.walletId
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
+                        }
+                    }
                 }
             }
         }
@@ -144,6 +155,17 @@ Flickable {
                 delegate: QMiniscriptPolicesDraftReviewDlg {
                     width: widthHalf
                     miniscript: modelData
+                    onViewPoliciesRequest: {
+                        if (modelData.keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM) {
+                            vm.onPlatformKeyConfigClicked(newWalletInfo.walletId)
+                        } else {
+                            var objectRequest = {
+                                "requestType": "viewPolicies",
+                                "requestData": newWalletInfo.walletId
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
+                        }
+                    }
                 }
             }
         }

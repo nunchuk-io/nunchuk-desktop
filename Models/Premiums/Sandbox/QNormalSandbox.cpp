@@ -29,6 +29,9 @@ QNormalSandbox::~QNormalSandbox()
 
 void QNormalSandbox::initialize()
 {
+    setisInviter(false);
+    setgroupEmail("");
+    setinviterId("");
     connect(QEventProcessor::instance(), &QEventProcessor::stateChanged, this, &QNormalSandbox::slotClearOccupied);
     connect(&m_occupied, &QTimer::timeout, [this]() {
         GetGroup(groupId());
@@ -110,6 +113,40 @@ int QNormalSandbox::walletType() const
     } else {
         return static_cast<int>(nunchuk::WalletType::SINGLE_SIG);
     }
+}
+
+QString QNormalSandbox::platformkeyPolicyType()
+{
+    DBG_INFO << "Check platform key policy type for group: " << groupId();
+    if (m_sandbox.get_platform_key().has_value()) {
+        auto policies = m_sandbox.get_platform_key().value().get_policies();
+        bool has_global_policies = policies.get_global().has_value();
+        if (has_global_policies) {
+            auto global_policy = policies.get_global().value();
+            if(global_policy.get_spending_limit().has_value()) {
+                auto spending_limit = global_policy.get_spending_limit();
+                QString amount = QString::fromStdString(spending_limit.value().get_amount());
+                QString interval = qUtils::GroupSpendingLimitIntervalToString(spending_limit.value().get_interval());
+                QString currency = QString::fromStdString(spending_limit.value().get_currency());
+                QString displayInterval;
+                if (interval == "DAILY") displayInterval = "Day";
+                else if (interval == "WEEKLY") displayInterval = "Week";
+                else if (interval == "MONTHLY") displayInterval = "Month";
+                else if (interval == "YEARLY") displayInterval = "Year";
+                else displayInterval = interval; // fallback
+
+                QString policy_string = QString("%1 %2 / %3").arg(currency, amount, displayInterval);
+                return policy_string;
+            }
+            else {
+                return "No spending limit";
+            }
+        }
+        else {
+            return "Multiple spending limits";
+        }
+    }
+    return "";
 }
 
 QString QNormalSandbox::url() const
@@ -238,34 +275,50 @@ void QNormalSandbox::UpdateGroup(const QString &name, int m, int n, int addType)
 
 void QNormalSandbox::setSandbox(const nunchuk::GroupSandbox &sandbox)
 {
+    bool has_platformkey = sandbox.get_platform_key().has_value();
+    int platformkey_index = has_platformkey ? sandbox.get_platform_key_index().value_or(-1) : -1;
+
+    DBG_INFO << "has_platformkey:" << has_platformkey << "platformkey_index:" << platformkey_index << "Wallet type" << (int)sandbox.get_wallet_type();
+
     QString uid = QSharedWallets::instance()->uid();
     auto find = [&](const int index) -> QSingleSignerPtr {
-        if (index < sandbox.get_signers().size()) {
-            auto signer = sandbox.get_signers().at(index);
-            if (signer.get_master_fingerprint().empty()) {
-                QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
-                if (signer.get_name() == "ADDED") {
-                    // Signer at this index has been added, but its info is encrypted
-                    // Display gray out `placeholder`, don't allow add signer here
-                    return signerPtr;
-                } else if (sandbox.get_occupied().contains(index)) {
-                    // Signer at this index has not been added yet
-                    std::pair<time_t, std::string> ts_uid = sandbox.get_occupied().at(index);
-                    time_t timeout = 5 * 60; // 5 minutes
-                    if (ts_uid.first + timeout > std::time(0) && ts_uid.second != uid.toStdString()) {
-                        // Slot occupied by other device is not timeout
-                        // Display `Occupied`, don't allow add signer here
-                        signerPtr->setIsOccupied(true);
-                    } else {
-                        // Allow add signer here
-                        signerPtr->setIsOccupied(false);
+        DBG_INFO << "Finding signer for index:" << index << has_platformkey << platformkey_index;
+        // Check platform key
+        if(has_platformkey && platformkey_index == index) {
+            QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner());
+            signerPtr->setSignerType((int)ENUNCHUCK::SignerType::PLATFORM);
+            signerPtr->setPlatformkeyPolicyType(platformkeyPolicyType());
+            return signerPtr;
+        }
+        else {
+            if (index < sandbox.get_signers().size()) {
+                auto signer = sandbox.get_signers().at(index);
+                DBG_INFO << "SIGNER TYPE" << (int)signer.get_type();
+                if (signer.get_master_fingerprint().empty()) {
+                    QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
+                    if (signer.get_name() == "ADDED") {
+                        // Signer at this index has been added, but its info is encrypted
+                        // Display gray out `placeholder`, don't allow add signer here
+                        return signerPtr;
+                    } else if (sandbox.get_occupied().contains(index)) {
+                        // Signer at this index has not been added yet
+                        std::pair<time_t, std::string> ts_uid = sandbox.get_occupied().at(index);
+                        time_t timeout = 5 * 60; // 5 minutes
+                        if (ts_uid.first + timeout > std::time(0) && ts_uid.second != uid.toStdString()) {
+                            // Slot occupied by other device is not timeout
+                            // Display `Occupied`, don't allow add signer here
+                            signerPtr->setIsOccupied(true);
+                        } else {
+                            // Allow add signer here
+                            signerPtr->setIsOccupied(false);
+                        }
                     }
+                    return signerPtr;
+                } else {
+                    QWarningMessage msg;
+                    nunchuk::SingleSigner localSigner = bridge::nunchukGetOriginSingleSigner(signer, msg);
+                    return QSingleSignerPtr(new QSingleSigner(localSigner));
                 }
-                return signerPtr;
-            } else {
-                QWarningMessage msg;
-                nunchuk::SingleSigner localSigner = bridge::nunchukGetOriginSingleSigner(signer, msg);
-                return QSingleSignerPtr(new QSingleSigner(localSigner));
             }
         }
         return {};
@@ -635,6 +688,15 @@ void QNormalSandbox::CreateSignerListReviewWallet()
             w->setWalletAddressType(addressType());
             w->setWalletType(walletType());
             w->CreateSignerListReviewWallet(m_sandbox.get_signers());
+            bool has_platformkey = m_sandbox.get_platform_key().has_value();
+            int platformkey_index = has_platformkey ? m_sandbox.get_platform_key_index().value_or(-1) : -1;
+            if(has_platformkey && platformkey_index >= 0 && platformkey_index < m_sandbox.get_signers().size()) {
+                if (auto signer = w->singleSignersAssigned()->getSingleSignerByIndex(platformkey_index)) {
+                    signer->setSignerType((int)ENUNCHUCK::SignerType::PLATFORM);
+                    signer->setPlatformkeyPolicyType(platformkeyPolicyType());
+                }
+            }
+
             if (!w->enableValuekeyset()) {
                 for(auto signer: w->singleSignersAssigned()->fullList()) {
                     signer->setValueKey(false);

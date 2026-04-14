@@ -1,6 +1,5 @@
 #include "KeySetupFlow.h"
 #include "core/ui/UiServices.inc"
-#include "core/ui/GuardMacros.h"
 #include "generated_qml_keys.hpp"
 #include "core/common/resources/AppStrings.h"
 #include "features/signers/viewmodels/AddKeyBaseViewModel.h"

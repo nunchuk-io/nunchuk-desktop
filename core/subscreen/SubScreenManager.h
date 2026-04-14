@@ -23,6 +23,7 @@ class SubScreenManager : public QObject {
 
     Q_INVOKABLE void back();
     Q_INVOKABLE void clear();
+    int count() const;
 
     void onInitialized(QQuickView *view);
 

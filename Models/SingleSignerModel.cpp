@@ -25,6 +25,7 @@
 #include "core/utils/Utils.h"
 #include "utils/enumconverter.hpp"
 #include <QQmlEngine>
+#include "core/common/resources/AppStrings.h"
 
 QSingleSigner::QSingleSigner() : isDraft(true) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -59,7 +60,7 @@ QSingleSigner::~QSingleSigner() {}
 void QSingleSigner::convert(const nunchuk::SingleSigner &src) {
     isDraft = false;
     singleSigner_ = src;
-    if (src.get_type() != nunchuk::SignerType::SERVER) {
+    if (src.get_type() != nunchuk::SignerType::SERVER && src.get_type() != nunchuk::SignerType::PLATFORM) {
         m_isLocalSigner = bridge::nunchukHasSinger(src);
     }
 }
@@ -78,6 +79,11 @@ nunchuk::PrimaryKey QSingleSigner::originPrimaryKey() {
 }
 
 QString QSingleSigner::name() {
+    if (singleSigner_.get_type() == nunchuk::SignerType::PLATFORM ||
+        singleSigner_.get_type() == nunchuk::SignerType::SERVER) {
+        return Strings.STR_QML_957();
+    }
+
     if (m_signername == "" || m_signername.isNull() || m_signername.isEmpty()) {
         m_signername = QString::fromStdString(singleSigner_.get_name()).trimmed();
     }
@@ -606,6 +612,15 @@ bool QSingleSigner::allowAssignToWallet() const {
     return true;
 }
 
+QString QSingleSigner::platformkeyPolicyType() const {
+    return m_platformkeyPolicyType;
+}
+void QSingleSigner::setPlatformkeyPolicyType(const QString &platformkeyPolicyType) {
+    if (m_platformkeyPolicyType != platformkeyPolicyType) {
+        m_platformkeyPolicyType = platformkeyPolicyType;
+    }
+}
+
 QSingleSignerPtr QSingleSigner::clone() {
     QSingleSignerPtr ret = QSingleSignerPtr(new QSingleSigner(this->originSingleSigner()));
     if (ret) {
@@ -723,6 +738,7 @@ QHash<int, QByteArray> SingleSignerListModel::roleSignerNames() {
     roles[single_signer_needPassphrase_Role] = "single_signer_needPassphrase";
     roles[single_signer_needBackup_Role] = "single_signer_needBackup";
     roles[single_signer_allowAssignToWallet_Role] = "single_signer_allowAssignToWallet";
+    roles[single_signer_platformkeyPolicyType_Role] = "single_signer_platformkeyPolicyType";
     return roles;
 }
 
@@ -802,6 +818,8 @@ QVariant SingleSignerListModel::dataSigner(const QSingleSignerPtr &data, int rol
         return data->needBackup();
     case single_signer_allowAssignToWallet_Role:
         return data->allowAssignToWallet();
+    case single_signer_platformkeyPolicyType_Role:
+        return data->platformkeyPolicyType();
     default:
         return QVariant();
     }

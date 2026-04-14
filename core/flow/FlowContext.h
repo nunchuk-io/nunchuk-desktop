@@ -23,7 +23,7 @@ class FlowContext : public QObject {
     ClientController *clientController() const;
     RightPanelNavigator *rightPanelNavigator() const;
     AppSetting *appSetting() const;
-
+    QSharedWallets *sharedWallets() const;
   private:
     AppContext *m_appCtx{nullptr};
 };

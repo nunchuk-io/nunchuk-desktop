@@ -146,7 +146,7 @@ Rectangle {
                 height: parent.height
                 width: typeText.width + 16
                 color: "#EAEAEA"
-                visible: dataMaster.master_type !== NUNCHUCKTYPE.SERVER
+                visible: dataMaster.master_type !== NUNCHUCKTYPE.SERVER && dataMaster.master_type !== NUNCHUCKTYPE.PLATFORM
                 radius: 20
                 QLato {
                     id: typeText

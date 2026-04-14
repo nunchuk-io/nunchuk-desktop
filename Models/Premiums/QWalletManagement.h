@@ -1,21 +1,20 @@
 #ifndef QWALLETMANAGEMENT_H
 #define QWALLETMANAGEMENT_H
 
-#include <QObject>
-#include <QJsonArray>
 #include "QSwitchAPI.h"
 #include "TypeDefine.h"
+#include <QJsonArray>
+#include <QObject>
 #include <nunchuk.h>
 
-#define WalletsMng  QWalletManagement::instance()
-class QWalletManagement : public QObject
-{
+#define WalletsMng QWalletManagement::instance()
+class QWalletManagement : public QObject {
     Q_OBJECT
-public:
+  public:
     static QWalletManagement *instance();
     explicit QWalletManagement();
     virtual ~QWalletManagement();
-    void GetListWallet();
+    void GetListGroupWallet();
     void UpdateSigner(const QJsonObject &signer);
     void SyncDeleteWallets(int mode);
     void UpdateSyncWalletFlows();
@@ -29,34 +28,33 @@ public:
     QJsonObject walletInfo(WalletId wallet_id) const;
     void clear();
 
-    template<typename T>
-    bool contains(WalletId wallet_id);
-    template<typename T>
-    T data(WalletId wallet_id);
-    template<typename T>
-    void CreateData(WalletId wallet_id);
+    template <typename T> bool contains(WalletId wallet_id);
+    template <typename T> T data(WalletId wallet_id);
+    template <typename T> void CreateData(WalletId wallet_id);
 
     void initSignInWallet(WalletId wallet_id);
+    void createDashBoard(WalletId wallet_id);
     void FactoryWorker(WalletId wallet_id, GroupId group_id);
     int activeSize() const;
-public slots:
+  public slots:
     void slotGetListWalletFinish();
     void slotUpdateSigner();
-signals:
+  signals:
     void getListWalletFinish();
     void signalUpdateSigner();
-private:
-    QMap<QString, QString>      mWallets;
-    QMap<QString, QJsonObject>  mWalletsInfo;
-    QList<QGroupDashboardPtr>   mActivedWallets;
-    QList<QServerKeyPtr>        mServerKeys;
-    QList<QInheritancePlanPtr>  mInheritancePlans;
-    QList<QWalletDummyTxPtr>    mDummyTxs;
+
+  private:
+    QMap<QString, QString> mWallets;
+    QMap<QString, QJsonObject> mWalletsInfo;
+    QList<QGroupDashboardPtr> mActivedWallets;
+    QList<QServerKeyPtr> mServerKeys;
+    QList<QInheritancePlanPtr> mInheritancePlans;
+    QList<QWalletDummyTxPtr> mDummyTxs;
     QList<QGroupWalletHealthCheckPtr> mHealths;
     QList<QRecurringPaymentPtr> mRecurringPayments;
-    QJsonArray                  walletArray;
-    QJsonObject                 software_signer;
-    nunchuk::SingleSigner       m_local_signer;
+    QJsonArray walletArray;
+    QJsonObject software_signer;
+    nunchuk::SingleSigner m_local_signer;
 };
 
 #endif // QWALLETMANAGEMENT_H

@@ -2275,8 +2275,8 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2096, "Import signature")
     DEFINE_STRING_PROPERTY(STR_QML_2097, "Export via file")
     DEFINE_STRING_PROPERTY(STR_QML_2098, "Export completed")
-    DEFINE_STRING_PROPERTY(
-        STR_QML_2099, "<p style='margin:0 0 10px 0;'>Continue on COLDCARD via:</p><p style='margin:0 0 10px 0;'>Advanced/Tools > File Management > Sign Text File.</p><p style='margin:0;'>Once signing is done, select <b>Import signature.</b></p>")
+    DEFINE_STRING_PROPERTY(STR_QML_2099, "<p style='margin:0 0 10px 0;'>Continue on COLDCARD via:</p><p style='margin:0 0 10px 0;'>Advanced/Tools > File "
+                                         "Management > Sign Text File.</p><p style='margin:0;'>Once signing is done, select <b>Import signature.</b></p>")
     DEFINE_STRING_PROPERTY(STR_QML_2100, "Add inheritance keys")
     DEFINE_STRING_PROPERTY(STR_QML_2101, "Funds become claimable after:")
     DEFINE_STRING_PROPERTY(STR_QML_2102, "Invalid value. Timelock must not exceed 388 days")
@@ -2291,14 +2291,45 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2111, "Once signing is done, select <b>Import signature</b>.")
     DEFINE_STRING_PROPERTY(STR_QML_2112, "Send all remaining")
 
-    DEFINE_STRING_PROPERTY(STR_QML_2113, "You are still personally responsible for sharing the Magic Phrase and inheritance key seed phrase with the Beneficiary. The notification email won’t include these information.")
-    DEFINE_STRING_PROPERTY(STR_QML_2114, "If you don’t provide a Beneficiary’s email address, you’ll need to share all inheritance plan updates with them manually. Are you sure you want to continue?")
+    DEFINE_STRING_PROPERTY(STR_QML_2113, "You are still personally responsible for sharing the Magic Phrase and inheritance key seed phrase with the "
+                                         "Beneficiary. The notification email won’t include these information.")
+    DEFINE_STRING_PROPERTY(STR_QML_2114, "If you don’t provide a Beneficiary’s email address, you’ll need to share all inheritance plan updates with them "
+                                         "manually. Are you sure you want to continue?")
     DEFINE_STRING_PROPERTY(STR_QML_2115, "Backup password already in use. Please choose a different one.")
     DEFINE_STRING_PROPERTY(STR_QML_2116, "Invalid or unreadable QR code. Please try again.")
     DEFINE_STRING_PROPERTY(STR_QML_2117, "Invalid signature. Please try again.")
+    DEFINE_STRING_PROPERTY(STR_QML_2119, "Platform HSM key for approvals and spend control.")
+    DEFINE_STRING_PROPERTY(STR_QML_2120, "Add platform key")
+    DEFINE_STRING_PROPERTY(STR_QML_2121, "Platform key policies")
+    DEFINE_STRING_PROPERTY(STR_QML_2122, "Global policy")
+    DEFINE_STRING_PROPERTY(STR_QML_2123, "Apply the same spending limit and delay settings to all transactions.")
+    DEFINE_STRING_PROPERTY(STR_QML_2124, "All keys")
+    DEFINE_STRING_PROPERTY(STR_QML_2125, "Auto-broadcast")
+    DEFINE_STRING_PROPERTY(STR_QML_2126, "Per-key policy")
+    DEFINE_STRING_PROPERTY(STR_QML_2127, "Apply custom spending limits and delay settings to transactions from selected keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_2128, "Add per-key policy")
+    DEFINE_STRING_PROPERTY(STR_QML_2129, "Remove platform key")
+    DEFINE_STRING_PROPERTY(STR_QML_2130, "Continue to save changes")
+    DEFINE_STRING_PROPERTY(STR_QML_2131, "Choose how you want to apply rules to your keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_2132, "Apply the same spending limit and delay settings to all keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_2133, "Apply custom spending limits and delay settings to selected keys.")
+    DEFINE_STRING_PROPERTY(STR_QML_2134, "On")
+    DEFINE_STRING_PROPERTY(STR_QML_2135, "Off")
+    DEFINE_STRING_PROPERTY(STR_QML_2136, "The platform will broadcast the transaction once the platform key has co-signed and enough signatures are collected.")
+    DEFINE_STRING_PROPERTY(STR_QML_2137, "Config")
+    DEFINE_STRING_PROPERTY(STR_QML_2138, "Continue (%1 signature%2 pending)")
+    DEFINE_STRING_PROPERTY(STR_QML_2139, "Set a maximum amount for a specific period. When disabled, your spending limit will be unlimited.")
+    DEFINE_STRING_PROPERTY(STR_QML_2140, "For security reasons, changes require a dummy transaction.")
+    DEFINE_STRING_PROPERTY(STR_QML_2141, "For security reasons, changes require a dummy transaction and will only take effect after %1 hours.")
+    DEFINE_STRING_PROPERTY(STR_QML_2142, "There are no new alerts or notifications to display at the moment.")
+    DEFINE_STRING_PROPERTY(STR_QML_2143, "Invites")
+    DEFINE_STRING_PROPERTY(STR_QML_2144, "To include multiple email addresses, separate them by commas or spaces.")
+    DEFINE_STRING_PROPERTY(STR_QML_2145, "Send invite")
+    DEFINE_STRING_PROPERTY(STR_QML_2146, "Wallet invitation")
+    DEFINE_STRING_PROPERTY(STR_QML_2147, "%1 (%2) invited you to join a group wallet.")
 
-public:
-    static AppStrings& instance();
+  public:
+    static AppStrings &instance();
     explicit AppStrings(QObject *parent = nullptr);
 
   private:

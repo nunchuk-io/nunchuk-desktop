@@ -1,68 +1,61 @@
 #include "QGroupDashboard.h"
-#include "ViewsEnums.h"
 #include "Chats/ClientController.h"
-#include "Servers/Draco.h"
-#include "Servers/Byzantine.h"
-#include "QGroupWalletHealthCheck.h"
-#include "QGroupWalletDummyTx.h"
-#include "qUtils.h"
-#include "Premiums/QServerKey.h"
+#include "Premiums/QGroupWallets.h"
 #include "Premiums/QInheritancePlan.h"
-#include "ServiceSetting.h"
-#include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QKeyRecovery.h"
 #include "Premiums/QRecurringPayment.h"
-#include "Premiums/QGroupWallets.h"
+#include "Premiums/QServerKey.h"
 #include "Premiums/QUserWallets.h"
+#include "Premiums/QWalletServicesTag.h"
+#include "QGroupWalletDummyTx.h"
+#include "QGroupWalletHealthCheck.h"
+#include "Servers/Byzantine.h"
+#include "Servers/Draco.h"
+#include "ServiceSetting.h"
 #include "Signers/QSignerManagement.h"
+#include "ViewsEnums.h"
+#include "features/wallets/usecases/GetGroupWalletAlertsUseCase.h"
+#include "qUtils.h"
 
 int StringToInt(const QString &type) {
     const QMetaObject &mo = AlertEnum::staticMetaObject;
-    int enum_index        = mo.indexOfEnumerator("E_Alert_t");
-    QMetaEnum metaEnum    = mo.enumerator(enum_index);
+    int enum_index = mo.indexOfEnumerator("E_Alert_t");
+    QMetaEnum metaEnum = mo.enumerator(enum_index);
     return metaEnum.keyToValue(type.toStdString().c_str());
 }
 
 QString IntToString(const int type) {
     const QMetaObject &mo = AlertEnum::staticMetaObject;
-    int enum_index        = mo.indexOfEnumerator("E_Alert_t");
-    QMetaEnum metaEnum    = mo.enumerator(enum_index);
+    int enum_index = mo.indexOfEnumerator("E_Alert_t");
+    QMetaEnum metaEnum = mo.enumerator(enum_index);
     return QString(metaEnum.valueToKey(type));
 }
 
-QGroupDashboard::QGroupDashboard(const QString& wallet_id)
-    : QBasePremium(wallet_id)
-{
+QGroupDashboard::QGroupDashboard(const QString &wallet_id) : QBasePremium(wallet_id) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-    connect(CLIENT_INSTANCE, &ClientController::byzantineRoomCreated,   this, &QGroupDashboard::byzantineRoomCreated);
-    connect(CLIENT_INSTANCE, &ClientController::byzantineRoomDeleted,   this, &QGroupDashboard::byzantineRoomDeleted);
+    connect(CLIENT_INSTANCE, &ClientController::byzantineRoomCreated, this, &QGroupDashboard::byzantineRoomCreated);
+    connect(CLIENT_INSTANCE, &ClientController::byzantineRoomDeleted, this, &QGroupDashboard::byzantineRoomDeleted);
     mTimer = new QTimer(this);
     connect(mTimer, &QTimer::timeout, this, &QGroupDashboard::updateProgress);
 }
 
-QGroupDashboard::~QGroupDashboard()
-{
-}
+QGroupDashboard::~QGroupDashboard() {}
 
-GroupId QGroupDashboard::groupId() const
-{
+GroupId QGroupDashboard::groupId() const {
     GroupId group_id = WalletsMng->groupId(wallet_id());
     return group_id.isEmpty() ? groupInfo()["id"].toString() : group_id;
 }
 
-QString QGroupDashboard::walletType() const
-{
+QString QGroupDashboard::walletType() const {
     return m_walletInfo.isEmpty() ? m_walletDraftInfo["wallet_type"].toString() : m_walletInfo["wallet_type"].toString();
 }
 
-QJsonObject QGroupDashboard::groupInfo() const
-{
+QJsonObject QGroupDashboard::groupInfo() const {
     return m_groupInfo;
 }
 
-void QGroupDashboard::setGroupInfo(const QJsonObject &groupInfo)
-{
+void QGroupDashboard::setGroupInfo(const QJsonObject &groupInfo) {
     QJsonArray members_old = m_groupInfo["members"].toArray();
     QJsonArray members_new = groupInfo["members"].toArray();
     if (!groupInfo["id"].toString().isEmpty() && (members_old.size() == 0 || members_new.size() != 0)) {
@@ -74,9 +67,9 @@ void QGroupDashboard::setGroupInfo(const QJsonObject &groupInfo)
             if (inviter_user_id == "") {
                 setInviterInfo(member);
             }
-            DracoUser   me   = ClientController::instance()->getMe();
-            QString user_id  = member["user"].toObject()["id"].toString();
-            if(qUtils::strCompare(user_id, me.id)){
+            DracoUser me = ClientController::instance()->getMe();
+            QString user_id = member["user"].toObject()["id"].toString();
+            if (qUtils::strCompare(user_id, me.id)) {
                 setMyInfo(member);
             }
         }
@@ -84,66 +77,58 @@ void QGroupDashboard::setGroupInfo(const QJsonObject &groupInfo)
     }
 }
 
-QString QGroupDashboard::groupStatus() const
-{
+QString QGroupDashboard::groupStatus() const {
     DBG_INFO << groupInfo()["status"].toString();
     return groupInfo()["status"].toString();
 }
 
-QString QGroupDashboard::myRole() const
-{
+QString QGroupDashboard::myRole() const {
     // return "FACILITATOR_ADMIN"; //FIXME TBD
     // DBG_INFO << myInfo()["role"].toString();
     return myInfo()["role"].toString();
 }
 
-QString QGroupDashboard::walletname() const
-{
+QString QGroupDashboard::walletname() const {
     return walletJson()["name"].toString();
 }
 
-QString QGroupDashboard::walletStatus() const
-{
+QString QGroupDashboard::walletStatus() const {
     return walletJson()["status"].toString();
 }
 
-bool QGroupDashboard::isReplaced()
-{
+bool QGroupDashboard::isReplaced() {
     return qUtils::strCompare("REPLACED", walletStatus());
 }
 
-bool QGroupDashboard::accepted() const
-{
-    bool ret {false};
+bool QGroupDashboard::accepted() const {
+    bool ret{false};
+    auto w = walletInfoPtr();
     if (isUserWallet()) {
         ret = true;
-    }
-    else {
+    } else if (w && w->isSandboxWallet()) {
+        ret = true;
+    } else {
         ret = qUtils::strCompare(myInfo()["status"].toString(), "ACTIVE");
     }
     return ret;
 }
 
-QString QGroupDashboard::userName() const
-{
+QString QGroupDashboard::userName() const {
     return inviterInfo()["user"].toObject()["name"].toString();
 }
 
-QString QGroupDashboard::userEmail() const
-{
+QString QGroupDashboard::userEmail() const {
     return inviterInfo()["user"].toObject()["email"].toString();
 }
 
-QVariantList QGroupDashboard::members() const
-{
+QVariantList QGroupDashboard::members() const {
     if (isUserDraftWallet()) {
         return {};
     }
     return groupInfo()["members"].toArray().toVariantList();
 }
 
-QVariantList QGroupDashboard::memberSignatures()
-{
+QVariantList QGroupDashboard::memberSignatures() {
     QJsonArray origin = groupInfo()["members"].toArray();
     QJsonArray result;
     QString my_membership_id = myInfo()["membership_id"].toString();
@@ -152,26 +137,24 @@ QVariantList QGroupDashboard::memberSignatures()
         QJsonObject it = member.toObject();
         QString membership_id = it["membership_id"].toString();
         QString status = it["status"].toString();
-        QString role   = it["role"].toString(); //MASTER, ADMIN, KEYHOLDER, KEYHOLDER_LIMITED, OBSERVER, CUSTOMIZE
+        QString role = it["role"].toString(); // MASTER, ADMIN, KEYHOLDER, KEYHOLDER_LIMITED, OBSERVER, CUSTOMIZE
 
         bool isNotMe = !qUtils::strCompare(my_membership_id, membership_id);
         bool isActived = qUtils::strCompare(status, "ACTIVE");
         bool role_allowed = !qUtils::strCompare(role, "OBSERVER");
-        if(isNotMe && isActived && role_allowed){
+        if (isNotMe && isActived && role_allowed) {
             result.push_back(member);
         }
     }
     return result.toVariantList();
 }
 
-QVariant QGroupDashboard::inviter() const
-{
+QVariant QGroupDashboard::inviter() const {
     return QVariant::fromValue(inviterInfo());
 }
 
-QString QGroupDashboard::timelockDisplay()
-{
-    if (!m_walletInfo.contains("timelock") || !m_walletInfo["timelock"].isObject()){
+QString QGroupDashboard::timelockDisplay() {
+    if (!m_walletInfo.contains("timelock") || !m_walletInfo["timelock"].isObject()) {
         return QString();
     }
     QJsonObject timelockObj = m_walletInfo["timelock"].toObject();
@@ -180,7 +163,7 @@ QString QGroupDashboard::timelockDisplay()
     qint64 value = timelockObj.value("value").toVariant().toLongLong();
     QString timezoneStr = timelockObj.value("timezone").toString();
 
-    if (value <= 0){
+    if (value <= 0) {
         return QString();
     }
 
@@ -189,8 +172,8 @@ QString QGroupDashboard::timelockDisplay()
 
     // apply timezone
     QTimeZone tz(timezoneStr.toUtf8());
-    if (!tz.isValid()){
-        tz = QTimeZone::systemTimeZone();   // fallback
+    if (!tz.isValid()) {
+        tz = QTimeZone::systemTimeZone(); // fallback
     }
 
     QDateTime localTime = utcTime.toTimeZone(tz);
@@ -198,8 +181,7 @@ QString QGroupDashboard::timelockDisplay()
     return localTime.toString("MM/dd/yyyy HH:mm");
 }
 
-QVariantMap QGroupDashboard::timelockObj()
-{
+QVariantMap QGroupDashboard::timelockObj() {
     if (!m_walletInfo.contains("timelock") || !m_walletInfo["timelock"].isObject()) {
         return QVariantMap();
     }
@@ -208,196 +190,238 @@ QVariantMap QGroupDashboard::timelockObj()
     return timelockMap;
 }
 
-QJsonObject QGroupDashboard::walletJson() const
-{
+QJsonObject QGroupDashboard::walletJson() const {
     return m_walletInfo;
 }
 
-QJsonObject QGroupDashboard::walletDraftJson() const
-{
+QJsonObject QGroupDashboard::walletDraftJson() const {
     return m_walletDraftInfo;
 }
 
 void QGroupDashboard::GetMemberInfo()
 {
-    if (isUserWallet() || isReplaced() || isUserDraftWallet()) return;
+    if (isUserWallet() || isReplaced() || isUserDraftWallet()) {
+        return;
+    }
+
+    const QString groupIdSnap = groupId();
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread([safeThis]() ->QJsonObject{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        Byzantine::instance()->GetOneGroupWallets(ptrLamda->groupId(), output, error_msg);
-        return output["group"].toObject();
-    },[safeThis](QJsonObject group) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if(!group.isEmpty()) {
-            ptrLamda->setGroupInfo(group);
+
+    runInThread(
+        this,
+        [groupIdSnap]() -> QJsonObject {
+            QJsonObject output;
+            QString error_msg;
+            Byzantine::instance()->GetOneGroupWallets(groupIdSnap, output, error_msg);
+            return output.value("group").toObject();
+        },
+        [safeThis](QJsonObject group) {
+            if (!safeThis) {
+                return;
+            }
+
+            if (!group.isEmpty()) {
+                safeThis->setGroupInfo(group);
+            }
         }
-    });
+        );
 }
 
 void QGroupDashboard::GetAlertsInfo()
 {
-    if (isReplaced()) return;
+    if (isReplaced()) {
+        return;
+    }
+
+    const bool isDraft = isUserDraftWallet();
+    const bool isUser = isUserWallet();
+    const QString walletId = wallet_id();
+    const QString gid = groupId();
+
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread([safeThis]() -> QJsonArray {
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        bool ret {false};
-        if (ptrLamda->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletGetAlerts(output, error_msg);
-        }
-        else if (ptrLamda->isUserWallet()) {
-            ret = Draco::instance()->GetAlerts(ptrLamda->wallet_id(), output, error_msg);
-        }
-        else {
-            ret = Byzantine::instance()->GetGroupAlerts(ptrLamda->groupId(), output, error_msg);
-        }
-        DBG_INFO << ret;
-        return output["alerts"].toArray();
-    }, [safeThis](QJsonArray alerts) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        QJsonArray v_alerts;
-        for (auto js : alerts) {
-            QJsonObject alert = js.toObject();
-            long int created_time_millis = static_cast<long int>(alert.value("created_time_millis").toDouble() / 1000);
-            QDateTime date_time = QDateTime::fromTime_t(created_time_millis);
-            alert["created_time_millis"] = QString("%1 at %2")
-                                               .arg(date_time.date().toString("MM/dd/yyyy"))
-                                               .arg(date_time.time().toString("hh:mm AP"));
-            QString type = alert["type"].toString();
-            alert["type"] = StringToInt(type);
-            v_alerts.append(alert);
-        }
-        // Optional hard-coded alert (fixed syntax)
-        QJsonObject alertHardCode;
-        alertHardCode["body"] = "IMPORTANT: You might need to register the wallet with your device.";
-        alertHardCode["created_time_millis"] = "11/15/2025 at 09:59 PM";
-        alertHardCode["id"] = "644914284035313664";
-        QJsonObject payload;
-        payload["claim_key"] = false;
-        payload["group_id"] = "644817879908225024";
-        QJsonArray register_key_xfps;
-        register_key_xfps.append("25c523fb");
-        register_key_xfps.append("c0452228");
-        payload["register_key_xfps"] = register_key_xfps;
-        payload["wallet_id"] = "644914281829109760";
-        payload["wallet_local_id"] = "5ut70w3v";
-        alertHardCode["payload"] = payload;
-        alertHardCode["status"] = "READ";
-        alertHardCode["title"] = "A group wallet has been set up";
-        alertHardCode["type"] = 1;
-        alertHardCode["viewable"] = true;
 
-        // Append the hard-coded alert if needed
-        // v_alerts.append(alertHardCode);
+    runInThread(
+        this,
+        [isDraft, isUser, walletId, gid, this]() -> QJsonArray {
+            QJsonObject output;
+            QString error_msg;
 
-        ptrLamda->m_alertInfo["alerts"] = v_alerts;
-        emit ptrLamda->alertInfoChanged();
-        DBG_INFO << ptrLamda->m_alertInfo;
-        ptrLamda->setAlertId(ptrLamda->alertId());
-    });
+            if (isDraft) {
+                Draco::instance()->DraftWalletGetAlerts(output, error_msg);
+            } else if (isUser) {
+                Draco::instance()->GetAlerts(walletId, output, error_msg);
+            } else if (!gid.isEmpty()) {
+                Byzantine::instance()->GetGroupAlerts(gid, output, error_msg);
+            } else {
+                const QJsonArray groupWalletAlerts = GetGroupWalletAlerts();
+                output["alerts"] = groupWalletAlerts;
+            }
+
+            return output.value("alerts").toArray();
+        },
+        [safeThis](QJsonArray alerts) {
+            if (!safeThis) {
+                return;
+            }
+
+            QJsonArray v_alerts;
+
+            for (const auto& js : alerts) {
+                QJsonObject alert = js.toObject();
+
+                const qint64 created_time_secs =
+                    static_cast<qint64>(alert.value("created_time_millis").toDouble() / 1000.0);
+
+                const QDateTime date_time = QDateTime::fromSecsSinceEpoch(created_time_secs);
+                alert["created_time_millis"] =
+                    QString("%1 at %2")
+                        .arg(date_time.date().toString("MM/dd/yyyy"))
+                        .arg(date_time.time().toString("hh:mm AP"));
+
+                const QString type = alert.value("type").toString();
+                alert["type"] = StringToInt(type);
+
+                v_alerts.append(alert);
+            }
+
+            safeThis->m_alertInfo["alerts"] = v_alerts;
+            emit safeThis->alertInfoChanged();
+            safeThis->setAlertId(safeThis->alertId());
+        }
+        );
 }
 
-bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id)
-{
+QJsonArray QGroupDashboard::GetGroupWalletAlerts() {
+    auto wallet = walletInfoPtr();
+    if (!wallet || !wallet->isSandboxWallet()) {
+        return QJsonArray();
+    }
+
+    using namespace features::wallets::usecases;
+
+    GetGroupWalletAlertsInput input;
+    input.wallet_id = wallet->walletId();
+
+    GetGroupWalletAlertsUseCase alertUseCase;
+    auto result = alertUseCase.execute(input);
+
+    if (result.isSuccess()) {
+        return result.value().alerts; // Already converted to QJsonArray by usecase
+    }
+
+    return QJsonArray();
+}
+
+bool QGroupDashboard::MarkAlertAsRead(const QString &alert_id) {
     DBG_INFO << alert_id;
-    if (alert_id.isEmpty()) return false;
+    if (alert_id.isEmpty())
+        return false;
     QPointer<QGroupDashboard> safeThis(this);
-    runInConcurrent([safeThis, alert_id]() ->bool{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        bool ret {false};
-        if (ptrLamda->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletMarkAnAlertAsRead(alert_id, output, error_msg);
-        }
-        else if (ptrLamda->isUserWallet()) {
-            ret = Draco::instance()->MarkAlertAsRead(ptrLamda->wallet_id(), alert_id, output, error_msg);
-        }
-        else {
-            ret = Byzantine::instance()->MarkGroupAlertAsRead(ptrLamda->groupId(), alert_id, output, error_msg);
-        }
-        DBG_INFO << ret << error_msg;
-        return ret;
-    },[safeThis](bool ret) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if(ret) {
-            ptrLamda->GetAlertsInfo();
-        }
-    });
+    runInConcurrent(
+        [safeThis, alert_id]() -> bool {
+            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+            QJsonObject output;
+            QString error_msg = "";
+            bool ret{false};
+            if (ptrLamda->isUserDraftWallet()) {
+                ret = Draco::instance()->DraftWalletMarkAnAlertAsRead(alert_id, output, error_msg);
+            } else if (ptrLamda->isUserWallet()) {
+                ret = Draco::instance()->MarkAlertAsRead(ptrLamda->wallet_id(), alert_id, output, error_msg);
+            } else {
+                ret = Byzantine::instance()->MarkGroupAlertAsRead(ptrLamda->groupId(), alert_id, output, error_msg);
+            }
+            DBG_INFO << ret << error_msg;
+            return ret;
+        },
+        [safeThis](bool ret) {
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+            if (ret) {
+                ptrLamda->GetAlertsInfo();
+            }
+        });
     return true;
 }
 
-bool QGroupDashboard::DismissAlert(const QString &alert_id)
-{
+bool QGroupDashboard::DismissAlert(const QString &alert_id) {
     QPointer<QGroupDashboard> safeThis(this);
-    runInConcurrent([safeThis, alert_id]() ->bool{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        bool ret {false};
-        if (ptrLamda->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletDismissAnAlert(alert_id, output, error_msg);
-        }
-        else if (ptrLamda->isUserWallet()) {
-            ret = Draco::instance()->DismissAlert(ptrLamda->wallet_id(), alert_id, output, error_msg);
-        }
-        else {
-            ret = Byzantine::instance()->DismissGroupAlert(ptrLamda->groupId(), alert_id, output, error_msg);
-        }
-        DBG_INFO << ret << error_msg;
-        return ret;
-    },[safeThis](bool ret) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if(ret) {
-            ptrLamda->GetAlertsInfo();
-        }
-    });
+    runInConcurrent(
+        [safeThis, alert_id]() -> bool {
+            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
+            QJsonObject output;
+            QString error_msg = "";
+            bool ret{false};
+            if (ptrLamda->isUserDraftWallet()) {
+                ret = Draco::instance()->DraftWalletDismissAnAlert(alert_id, output, error_msg);
+            } else if (ptrLamda->isUserWallet()) {
+                ret = Draco::instance()->DismissAlert(ptrLamda->wallet_id(), alert_id, output, error_msg);
+            } else {
+                ret = Byzantine::instance()->DismissGroupAlert(ptrLamda->groupId(), alert_id, output, error_msg);
+            }
+            DBG_INFO << ret << error_msg;
+            return ret;
+        },
+        [safeThis](bool ret) {
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+            if (ret) {
+                ptrLamda->GetAlertsInfo();
+            }
+        });
     return false;
 }
 
-bool QGroupDashboard::dismissAlert()
-{
+bool QGroupDashboard::dismissAlert() {
     return DismissAlert(alertId());
 }
 
 void QGroupDashboard::GetWalletInfo()
 {
-    QPointer<QGroupDashboard> safeThis(this);
-    runInThread([safeThis]() ->QJsonObject{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        if (ptrLamda->isUserDraftWallet()) {
+    const bool isDraft = isUserDraftWallet();
+    const bool isUser = isUserWallet();
+    const QString walletId = wallet_id();
+    const QString gid = groupId();
 
-        } else if (ptrLamda->isUserWallet()) {
-            Draco::instance()->assistedWalletGetInfo(ptrLamda->wallet_id(), output, error_msg);
-        } else {
-            Byzantine::instance()->GetCurrentGroupWallet(ptrLamda->groupId(), output, error_msg);
-        }
-        return output.value("wallet").toObject();
-    },[safeThis](QJsonObject wallet) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if (!wallet.isEmpty()) {
-            ptrLamda->m_walletInfo = wallet;
-            DBG_INFO << wallet;
-            QJsonArray signers = wallet["signers"].toArray();
-            ptrLamda->m_signerInfo = signers;
-            ptrLamda->checkInheritanceWallet();
-            emit ptrLamda->groupInfoChanged();
-            if (ptrLamda->walletInfoPtr() && ptrLamda->walletInfoPtr()->serverKeyPtr()) {
-                ptrLamda->walletInfoPtr()->serverKeyPtr()->UpdateFromWallet(wallet);
+    QPointer<QGroupDashboard> safeThis(this);
+
+    runInThread(
+        this,
+        [isDraft, isUser, walletId, gid]() -> QJsonObject {
+            if (isDraft) {
+                return {};
+            }
+
+            QJsonObject output;
+            QString error_msg;
+
+            if (isUser) {
+                Draco::instance()->assistedWalletGetInfo(walletId, output, error_msg);
+            } else {
+                Byzantine::instance()->GetCurrentGroupWallet(gid, output, error_msg);
+            }
+
+            return output.value("wallet").toObject();
+        },
+        [safeThis](QJsonObject wallet) {
+            if (!safeThis || wallet.isEmpty()) {
+                return;
+            }
+
+            safeThis->m_walletInfo = wallet;
+            safeThis->m_signerInfo = wallet.value("signers").toArray();
+            safeThis->checkInheritanceWallet();
+            emit safeThis->groupInfoChanged();
+
+            if (auto info = safeThis->walletInfoPtr()) {
+                if (info->serverKeyPtr()) {
+                    info->serverKeyPtr()->UpdateFromWallet(wallet);
+                }
             }
         }
-    });
+        );
 }
 
-void QGroupDashboard::checkInheritanceWallet()
-{
+void QGroupDashboard::checkInheritanceWallet() {
     int size = 0;
-    for(auto js : m_signerInfo) {
+    for (auto js : m_signerInfo) {
         QJsonObject signer = js.toObject();
         QJsonArray tags = signer["tags"].toArray();
         if (tags.contains("INHERITANCE")) {
@@ -409,33 +433,42 @@ void QGroupDashboard::checkInheritanceWallet()
 
 void QGroupDashboard::GetDraftWalletInfo()
 {
+    const bool isDraft = isUserDraftWallet();
+    const bool isUser = isUserWallet();
+    const QString gid = groupId();
+
     QPointer<QGroupDashboard> safeThis(this);
-    runInThread([safeThis]() ->QJsonObject{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        bool ret {false};
-        if (ptrLamda->isUserDraftWallet()) {
-            ret = Draco::instance()->DraftWalletGetCurrent(output, error_msg);
-        } else if (!ptrLamda->isUserWallet()){
-            ret = Byzantine::instance()->GetCurrentGroupDraftWallet(ptrLamda->groupId(), output, error_msg);
-        }
-        return output["draft_wallet"].toObject();
-    },[safeThis](QJsonObject draft_wallet) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if (!draft_wallet.isEmpty()) {
+
+    runInThread(
+        this,
+        [isDraft, isUser, gid]() -> QJsonObject {
+            QJsonObject output;
+            QString error_msg;
+
+            if (isDraft) {
+                Draco::instance()->DraftWalletGetCurrent(output, error_msg);
+            } else if (!isUser) {
+                Byzantine::instance()->GetCurrentGroupDraftWallet(gid, output, error_msg);
+            }
+
+            return output.value("draft_wallet").toObject();
+        },
+        [safeThis](QJsonObject draft_wallet) {
+            if (!safeThis || draft_wallet.isEmpty()) {
+                return;
+            }
+
             DBG_INFO << draft_wallet;
-            QJsonArray signers = draft_wallet["signers"].toArray();
-            ptrLamda->m_signerInfo = signers;
-            ptrLamda->m_walletDraftInfo = draft_wallet;
-            ptrLamda->UpdateKeys(draft_wallet);
+            safeThis->m_signerInfo = draft_wallet.value("signers").toArray();
+            safeThis->m_walletDraftInfo = draft_wallet;
+            safeThis->UpdateKeys(draft_wallet);
         }
-    });
+        );
 }
 
-void QGroupDashboard::GetHealthCheckInfo()
-{
-    if (!healthPtr() || wallet_id().isEmpty() || isReplaced()) return;
+void QGroupDashboard::GetHealthCheckInfo() {
+    if (!healthPtr() || wallet_id().isEmpty() || isReplaced())
+        return;
     healthPtr()->GetKeyHealthReminder();
     healthPtr()->GetStatuses();
 }
@@ -455,32 +488,14 @@ QString QGroupDashboard::getOurId() const {
     return our_id;
 }
 
-const QMap<int, QList<int>> mapIndexMultiSig = {
-    {0, {0}},
-    {1, {1}},
-    {2, {2}},
-    {3, {3}},
-    {4, {4}},
-    {5, {5}},
-    {6, {6}}
-};
+const QMap<int, QList<int>> mapIndexMultiSig = {{0, {0}}, {1, {1}}, {2, {2}}, {3, {3}}, {4, {4}}, {5, {5}}, {6, {6}}};
 
-const QMap<int, QList<int>> mapIndexMiniscript = {
-    {0, {0*2, 0*2 + 1}},
-    {1, {1*2, 1*2 + 1}},
-    {2, {2*2, 2*2 + 1}},
-    {3, {3*2, 3*2 + 1}},
-    {4, {4*2, 4*2 + 1}},
-    {5, {5*2, 5*2 + 1}},
-    {6, {6*2, 6*2 + 1}}
-};
+const QMap<int, QList<int>> mapIndexMiniscript = {{0, {0 * 2, 0 * 2 + 1}}, {1, {1 * 2, 1 * 2 + 1}}, {2, {2 * 2, 2 * 2 + 1}}, {3, {3 * 2, 3 * 2 + 1}},
+                                                  {4, {4 * 2, 4 * 2 + 1}}, {5, {5 * 2, 5 * 2 + 1}}, {6, {6 * 2, 6 * 2 + 1}}};
 
 const QMap<QString, int> mapTagkeys = {
-    {"LEDGER",   (int)Key::ADD_LEDGER},
-    {"TREZOR",   (int)Key::ADD_TREZOR},
-    {"COLDCARD", (int)Key::ADD_COLDCARD},
-    {"BITBOX",   (int)Key::ADD_BITBOX},
-    {"JADE",     (int)Key::ADD_JADE},
+    {"LEDGER", (int)Key::ADD_LEDGER}, {"TREZOR", (int)Key::ADD_TREZOR}, {"COLDCARD", (int)Key::ADD_COLDCARD},
+    {"BITBOX", (int)Key::ADD_BITBOX}, {"JADE", (int)Key::ADD_JADE},
 };
 
 QJsonObject QGroupDashboard::createOrUpdateSignerInfo(const QJsonObject &info, int index) {
@@ -510,19 +525,19 @@ QJsonObject QGroupDashboard::createOrUpdateSignerInfo(const QJsonObject &info, i
     } else {
         signer["is_inheritance"] = false;
     }
-    
+
     bool has = signer.value("has").toBool();
     if (!has) {
         signer["new_account_index"] = 0;
     } else {
         signer["new_account_index"] = 1;
-    }    
+    }
     return signer;
 }
 
 QJsonObject QGroupDashboard::CreateAccountIndexAndKeyIndices(const QJsonArray &signers, int idx) {
-    std::function<QJsonObject(const int, const QJsonArray&)> findSigner = [] (const int key_index, const QJsonArray& signers_tmp) {
-        for (const auto& js : signers_tmp) {
+    std::function<QJsonObject(const int, const QJsonArray &)> findSigner = [](const int key_index, const QJsonArray &signers_tmp) {
+        for (const auto &js : signers_tmp) {
             QJsonObject signer = js.toObject();
             int k_index = signer.value("key_index").toInt();
             QString xfp = signer.value("xfp").toString();
@@ -538,7 +553,7 @@ QJsonObject QGroupDashboard::CreateAccountIndexAndKeyIndices(const QJsonArray &s
         QList<int> indices = mapIndexMultiSig.value(idx);
         int key_index = indices.value(0, -1);
         QJsonObject signer = findSigner(key_index, signers);
-        if (signer.isEmpty() ) {
+        if (signer.isEmpty()) {
             signer["key_index"] = key_index;
             signer["account_indexs"] = {};
             signer["account_index"] = 0;
@@ -558,10 +573,10 @@ QJsonObject QGroupDashboard::CreateAccountIndexAndKeyIndices(const QJsonArray &s
     } else if (wallet_type == "MINISCRIPT") {
         // For MINISCRIPT, each logical index maps to two key indices
         QList<int> indices = mapIndexMiniscript.value(idx);
-        const int key_index_first  = indices.value(0, -1);
+        const int key_index_first = indices.value(0, -1);
         const int key_index_second = indices.value(1, -1);
 
-        QJsonObject signer_first  = findSigner(key_index_first,  signers);
+        QJsonObject signer_first = findSigner(key_index_first, signers);
         QJsonObject signer_second = findSigner(key_index_second, signers);
         QJsonObject ret;
 
@@ -572,7 +587,7 @@ QJsonObject QGroupDashboard::CreateAccountIndexAndKeyIndices(const QJsonArray &s
             ret["account_index"] = 0;
         } else if (!signer_first.isEmpty() && !signer_second.isEmpty()) {
             // Both keys present: collect both indices
-            const int index_first  = qUtils::GetIndexFromPath(signer_first.value("derivation_path").toString());
+            const int index_first = qUtils::GetIndexFromPath(signer_first.value("derivation_path").toString());
             const int index_second = qUtils::GetIndexFromPath(signer_second.value("derivation_path").toString());
             QList<QString> accountIndexs{QString::number(index_first), QString::number(index_second)};
             ret = signer_first;
@@ -618,8 +633,7 @@ QJsonObject QGroupDashboard::CreateAccountIndexAndKeyIndices(const QJsonArray &s
     return QJsonObject();
 }
 
-void QGroupDashboard::UpdateKeys(const QJsonObject &data)
-{
+void QGroupDashboard::UpdateKeys(const QJsonObject &data) {
     QJsonObject wallet_config = data["wallet_config"].toObject();
     QString wallet_type = data["wallet_type"].toString();
     bool allow_inheritance = wallet_config["allow_inheritance"].toBool();
@@ -633,18 +647,18 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
     QString our_id = getOurId();
     QJsonArray signers_tmp = signers;
     signers = {};
-    for(int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         QJsonObject signer = CreateAccountIndexAndKeyIndices(signers_tmp, i);
         auto tmp = createOrUpdateSignerInfo(signer, i);
         signers.append(tmp);
     }
     emit WalletsMng->signalUpdateSigner();
-    
+
     QList<QJsonObject> tmp_keys;
 
     bool is_wallet_2_of_4 = (m == 2 && n == 4);
     bool is_wallet_3_of_5 = (m == 3 && n == 5);
-    int  last_index = required_server_key ? n - 1 : n;
+    int last_index = required_server_key ? n - 1 : n;
     bool is_premier = CLIENT_INSTANCE->isByzantinePremier() || isPremierGroup();
     bool hasServer = !CLIENT_INSTANCE->isFinney();
     DBG_INFO << is_premier << allow_inheritance << m_mInfo << m_nInfo;
@@ -663,7 +677,7 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
             bool has = obj["has"].toBool();
             if (!has) {
                 obj["type"] = "SERVER";
-                obj["has"]  = false;
+                obj["has"] = false;
             }
         }
 
@@ -680,8 +694,7 @@ void QGroupDashboard::UpdateKeys(const QJsonObject &data)
     ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
 }
 
-void QGroupDashboard::UpdateReplacementKeys(const QJsonObject &data)
-{
+void QGroupDashboard::UpdateReplacementKeys(const QJsonObject &data) {
     QJsonObject wallet_config = data["wallet_config"].toObject();
     QString wallet_type = data["wallet_type"].toString();
     bool allow_inheritance = wallet_config["allow_inheritance"].toBool();
@@ -695,7 +708,7 @@ void QGroupDashboard::UpdateReplacementKeys(const QJsonObject &data)
     QString our_id = getOurId();
     QJsonArray signers_tmp = signers;
     signers = {};
-    for(int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         QJsonObject signer = CreateAccountIndexAndKeyIndices(signers_tmp, i);
         QString xfp = signer.value("xfp").toString();
         QJsonObject replacementSigner = GetSigerReplacement(xfp);
@@ -720,27 +733,26 @@ void QGroupDashboard::UpdateReplacementKeys(const QJsonObject &data)
     ServiceSetting::instance()->CreateAssignAvailableSigners(wallet_type);
 }
 
-bool QGroupDashboard::GetKeyReplacementStatus()
-{
+bool QGroupDashboard::GetKeyReplacementStatus() {
     QJsonObject output;
     QString errormsg;
-    bool ret {false};
+    bool ret{false};
     if (isUserWallet()) {
         ret = Draco::instance()->GetKeyReplacementStatus(wallet_id(), output, errormsg);
-    }
-    else {
+    } else {
         ret = Byzantine::instance()->GetKeyReplacementStatus(groupId(), wallet_id(), output, errormsg);
     }
     if (ret) {
         DBG_INFO << output;
-        m_keyReplacementInfo  = output["status"].toObject();        
+        m_keyReplacementInfo = output["status"].toObject();
         preparingKeyTobeReplaced();
     }
     return ret;
 }
 
 void QGroupDashboard::CorrectCurrentSignerInfoForReplacementKey(const QString &xfp) {
-    int index_of_xfp = -1;;
+    int index_of_xfp = -1;
+    ;
     for (int i = 0; i < m_replaceKeys.size(); i++) {
         QJsonObject signer = m_replaceKeys.at(i).toObject();
         QJsonArray replacements = signer["replacements"].toArray();
@@ -748,12 +760,12 @@ void QGroupDashboard::CorrectCurrentSignerInfoForReplacementKey(const QString &x
         if (replacements.size() == 0) {
             if (qUtils::strCompare(signer["xfp"].toString(), xfp)) {
                 index_of_xfp = i;
-                break; 
+                break;
             }
         } else {
             if (qUtils::strCompare(old_singer["xfp"].toString(), xfp)) {
                 index_of_xfp = i;
-                break; 
+                break;
             }
         }
     }
@@ -761,8 +773,7 @@ void QGroupDashboard::CorrectCurrentSignerInfoForReplacementKey(const QString &x
     startReplaceKeyAtIndex(index_of_xfp);
 }
 
-QJsonObject QGroupDashboard::GetSigerReplacement(const QString &xfp)
-{
+QJsonObject QGroupDashboard::GetSigerReplacement(const QString &xfp) {
     auto signers = m_keyReplacementInfo["signers"].toArray();
     for (auto js : signers) {
         QJsonObject signer = js.toObject();
@@ -773,8 +784,7 @@ QJsonObject QGroupDashboard::GetSigerReplacement(const QString &xfp)
     return QJsonObject();
 }
 
-QMap<QString, QVariant> QGroupDashboard::requestBodyUploadBackupFile(const QString &xfp, const QString &filePath)
-{
+QMap<QString, QVariant> QGroupDashboard::requestBodyUploadBackupFile(const QString &xfp, const QString &filePath) {
     QString file_path = qUtils::QGetFilePath(filePath);
     QMap<QString, QVariant> body;
     QSingleSignerPtr single = AppModel::instance()->remoteSignerListPtr()->getSingleSignerByFingerPrint(xfp);
@@ -794,14 +804,16 @@ QMap<QString, QVariant> QGroupDashboard::requestBodyUploadBackupFile(const QStri
             body["file"] = file_path;
         } else {
             body["key_name"] = master->name();
-            body["key_type"] = qUtils::GetSignerTypeString(master->originMasterSigner().get_type());;
+            body["key_type"] = qUtils::GetSignerTypeString(master->originMasterSigner().get_type());
+            ;
             body["key_xfp"] = master->fingerPrint();
             body["card_id"] = master->devicePtr()->cardId();
             body["file"] = file_path;
         }
     } else {
         body["key_name"] = single->name();
-        body["key_type"] = qUtils::GetSignerTypeString(single->originSingleSigner().get_type());;
+        body["key_type"] = qUtils::GetSignerTypeString(single->originSingleSigner().get_type());
+        ;
         body["key_xfp"] = single->fingerPrint();
         body["card_id"] = single->cardId();
         body["file"] = file_path;
@@ -815,8 +827,7 @@ QMap<QString, QVariant> QGroupDashboard::requestBodyUploadBackupFile(const QStri
     return filteredMap;
 }
 
-bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QString &filePath)
-{
+bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QString &filePath) {
     if (mTimer != nullptr) {
         AppModel::instance()->setAddSignerPercentage(1);
         mTimer->start(100);
@@ -826,7 +837,7 @@ bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QStr
     QString error_msg = "";
     QMap<QString, QVariant> body = requestBodyUploadBackupFile(xfp, filePath);
     DBG_INFO << wallet_id() << servicesTagPtr()->passwordToken() << body;
-    bool ret {false};
+    bool ret{false};
     if (isUserWallet()) {
         ret = Draco::instance()->ReplacementUploadBackupFile(wallet_id(), servicesTagPtr()->passwordToken(), body, output, error_msg);
     } else {
@@ -840,8 +851,7 @@ bool QGroupDashboard::ReplacementUploadBackupFile(const QString &xfp, const QStr
     return ret;
 }
 
-bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QString &filePath)
-{
+bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QString &filePath) {
     if (mTimer != nullptr) {
         AppModel::instance()->setAddSignerPercentage(1);
         mTimer->start(100);
@@ -850,7 +860,7 @@ bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QStr
     QJsonObject output;
     QString error_msg = "";
     QMap<QString, QVariant> body = requestBodyUploadBackupFile(xfp, filePath);
-    bool ret {false};
+    bool ret{false};
     if (isUserWallet() || isUserDraftWallet()) {
         ret = Draco::instance()->DraftWalletUploadBackupFile(body, output, error_msg);
     } else {
@@ -864,19 +874,16 @@ bool QGroupDashboard::DraftWalletUploadBackupFile(const QString &xfp, const QStr
     return ret;
 }
 
-QJsonObject QGroupDashboard::myInfo() const
-{
+QJsonObject QGroupDashboard::myInfo() const {
     return m_myInfo;
 }
 
-void QGroupDashboard::setMyInfo(const QJsonObject &myInfo)
-{
+void QGroupDashboard::setMyInfo(const QJsonObject &myInfo) {
     m_myInfo = myInfo;
     emit groupInfoChanged();
 }
 
-bool QGroupDashboard::register_wallet()
-{
+bool QGroupDashboard::register_wallet() {
     if (auto dummy = groupDummyTxPtr()) {
         QString current_xfp = dummy->currentXfp();
         return xfpExport(current_xfp);
@@ -884,21 +891,18 @@ bool QGroupDashboard::register_wallet()
     return false;
 }
 
-bool QGroupDashboard::isLocked() const
-{
+bool QGroupDashboard::isLocked() const {
     return groupInfo().contains("is_locked") ? groupInfo()["is_locked"].toBool() : false;
 }
 
-bool QGroupDashboard::registerKeyDone()
-{
+bool QGroupDashboard::registerKeyDone() {
     QJsonObject payload = alertJson()["payload"].toObject();
     if (payload.contains("register_key_xfps")) {
         QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
         bool ret = m_registered_key_xfps.size() == register_key_xfps.size() && m_registered_key_xfps.size() > 0;
         if (ret) {
             dismissAlert();
-        }
-        else if (register_key_xfps.size() == 0) {
+        } else if (register_key_xfps.size() == 0) {
             dismissAlert();
         }
         return ret;
@@ -906,20 +910,21 @@ bool QGroupDashboard::registerKeyDone()
     return false;
 }
 
-bool QGroupDashboard::registerKeyNext()
-{
+bool QGroupDashboard::registerKeyNext() {
     QWalletPtr w = walletInfoPtr();
-    if (w.isNull()) return false;
+    if (w.isNull())
+        return false;
     nunchuk::WalletType wallet_type = w->nunchukWallet().get_wallet_type();
     QJsonObject payload = alertJson()["payload"].toObject();
     QStringList register_key_xfps = payload["register_key_xfps"].toVariant().toStringList();
-    QStringList::iterator not_register = std::find_if_not(register_key_xfps.begin(), register_key_xfps.end(), [this](QString xfp) {return m_registered_key_xfps.contains(xfp);});
+    QStringList::iterator not_register =
+        std::find_if_not(register_key_xfps.begin(), register_key_xfps.end(), [this](QString xfp) { return m_registered_key_xfps.contains(xfp); });
     if (not_register != register_key_xfps.end()) {
         m_registered_key_xfps.append(*not_register);
         if (wallet_type == nunchuk::WalletType::MINISCRIPT) {
             setConfigFlow("register-wallet-hardware");
             registerKeyDone();
-            DBG_INFO << "GROUP_WALLET_SETUP " << "register-wallet-hardware" ;
+            DBG_INFO << "GROUP_WALLET_SETUP " << "register-wallet-hardware";
             return true;
         } else {
             return xfpExport(*not_register);
@@ -928,17 +933,18 @@ bool QGroupDashboard::registerKeyNext()
     return false;
 }
 
-QString QGroupDashboard::alertId() const
-{
+QString QGroupDashboard::alertId() const {
     return alertJson()["id"].toString();
 }
 
-bool QGroupDashboard::canEntryClickAlert()
-{
+void QGroupDashboard::proceedpayload() {
     int flow = alertJson()["type"].toInt();
-    QJsonObject payload = alertJson()["payload"].toObject();
-    DBG_INFO << ".qml " << IntToString(flow) << alertJson();
     setFlow(flow);
+}
+
+bool QGroupDashboard::canEntryClickAlert() {
+    QJsonObject payload = alertJson()["payload"].toObject();
+    DBG_INFO << ".qml " << IntToString(flow()) << alertJson();
     QString dummy_transaction_id = payload["dummy_transaction_id"].toString();
     QString xfp = payload["xfp"].toString();
     if (auto dummy = groupDummyTxPtr()) {
@@ -949,8 +955,8 @@ bool QGroupDashboard::canEntryClickAlert()
             healthPtr()->HealthCheckPendingForTx(dummy_transaction_id);
         }
     }
-    switch ((AlertEnum::E_Alert_t)flow) {
-    case AlertEnum::E_Alert_t::GROUP_WALLET_SETUP:{
+    switch ((AlertEnum::E_Alert_t)flow()) {
+    case AlertEnum::E_Alert_t::GROUP_WALLET_SETUP: {
         if (hasWallet()) {
             GetWalletInfo();
         }
@@ -960,25 +966,23 @@ bool QGroupDashboard::canEntryClickAlert()
         if (isClaimkey) {
             this->setConfigFlow("register-claim");
             return true;
-        }
-        else if (isRegisterkey) {
+        } else if (isRegisterkey) {
             return registerKeyNext();
-        }
-        else{
+        } else {
             this->setConfigFlow("accessing-wallet-configuration");
             return true;
         }
     }
     case AlertEnum::E_Alert_t::CHANGE_TIMELOCK_TYPE:
     case AlertEnum::E_Alert_t::WALLET_PENDING:
-    case AlertEnum::E_Alert_t::GROUP_WALLET_PENDING:{
+    case AlertEnum::E_Alert_t::GROUP_WALLET_PENDING: {
         GetDraftWalletInfo();
         if (hasWallet()) {
             GetWalletInfo();
         }
         return true;
     }
-    case AlertEnum::E_Alert_t::KEY_RECOVERY_APPROVED:{
+    case AlertEnum::E_Alert_t::KEY_RECOVERY_APPROVED: {
         QString key_xfp = payload["key_xfp"].toString();
         return servicesTagPtr()->keyRecoveryPtr()->UserKeysRecoveryKey(key_xfp);
     }
@@ -999,22 +1003,22 @@ bool QGroupDashboard::canEntryClickAlert()
     case AlertEnum::E_Alert_t::UPDATE_SECURITY_QUESTIONS:
     case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN_SUCCESS:
     case AlertEnum::E_Alert_t::KEY_RECOVERY_REQUEST:
-    case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:    
+    case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN:
     case AlertEnum::E_Alert_t::UPDATE_INHERITANCE_PLAN:
     case AlertEnum::E_Alert_t::CANCEL_INHERITANCE_PLAN:
     case AlertEnum::E_Alert_t::UPDATE_SERVER_KEY:
     case AlertEnum::E_Alert_t::REQUEST_INHERITANCE_PLANNING:
     case AlertEnum::E_Alert_t::HEALTH_CHECK_PENDING:
     case AlertEnum::E_Alert_t::BACKUP_WALLET:
-    case AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST:{
+    case AlertEnum::E_Alert_t::HEALTH_CHECK_REQUEST: {
         if (hasWallet()) {
             GetWalletInfo();
         }
         return true;
     }
-    case AlertEnum::E_Alert_t::TRANSACTION_SIGNATURE_REQUEST:{
+    case AlertEnum::E_Alert_t::TRANSACTION_SIGNATURE_REQUEST: {
         return true;
-    }    
+    }
     case AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING: {
         auto signer = GetSigner(xfp);
         payload["keyname"] = signer["name"].toString();
@@ -1024,12 +1028,12 @@ bool QGroupDashboard::canEntryClickAlert()
         payload["key_index"] = signer["key_index"].toInt();
         auto alert = alertJson();
         alert["payload"] = payload;
-        setAlertId(alert);        
+        setAlertId(alert);
         GetKeyReplacementStatus();
         CorrectCurrentSignerInfoForReplacementKey(xfp);
         return true;
     }
-    case AlertEnum::E_Alert_t::KEY_TIMELOCK_UPDATE_PENDING:{
+    case AlertEnum::E_Alert_t::KEY_TIMELOCK_UPDATE_PENDING: {
         auto alert = alertJson();
         setAlertId(alert);
         if (canReplaceKey()) {
@@ -1047,26 +1051,22 @@ bool QGroupDashboard::canEntryClickAlert()
     return false;
 }
 
-bool QGroupDashboard::allowInheritance() const
-{
+bool QGroupDashboard::allowInheritance() const {
     return m_allow_inheritance;
 }
 
-int QGroupDashboard::inheritanceCount() const
-{
+int QGroupDashboard::inheritanceCount() const {
     return m_inheritanceCount;
 }
 
-void QGroupDashboard::setInheritanceCount(int count)
-{
+void QGroupDashboard::setInheritanceCount(int count) {
     if (m_inheritanceCount == count)
         return;
     m_inheritanceCount = count;
     emit inheritanceCountChanged();
 }
 
-void QGroupDashboard::GetGroupChat()
-{
+void QGroupDashboard::GetGroupChat() {
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->GetGroupChat(groupId(), output, error_msg);
@@ -1077,13 +1077,12 @@ void QGroupDashboard::GetGroupChat()
         QString id = history_period["id"].toString();
         setHistoryPeriodId(id);
     } else {
-        //Show error
+        // Show error
         DBG_INFO << error_msg;
     }
 }
 
-void QGroupDashboard::UpdateGroupChat(const QString &history_period_id)
-{
+void QGroupDashboard::UpdateGroupChat(const QString &history_period_id) {
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->UpdateGroupChat(groupId(), history_period_id, output, error_msg);
@@ -1099,18 +1098,16 @@ void QGroupDashboard::UpdateGroupChat(const QString &history_period_id)
         // show toast success
         AppModel::instance()->showToast(0, "Chat settings updated", EWARNING::WarningType::SUCCESS_MSG);
     } else {
-        //Show error
+        // Show error
         DBG_INFO << error_msg;
     }
 }
 
-QString QGroupDashboard::historyPeriodId() const
-{
+QString QGroupDashboard::historyPeriodId() const {
     return mHistoryPeriodId;
 }
 
-void QGroupDashboard::setHistoryPeriodId(const QString &newHistoryPeriodId)
-{
+void QGroupDashboard::setHistoryPeriodId(const QString &newHistoryPeriodId) {
     if (mHistoryPeriodId == newHistoryPeriodId)
         return;
 
@@ -1118,15 +1115,14 @@ void QGroupDashboard::setHistoryPeriodId(const QString &newHistoryPeriodId)
     emit historyPeriodIdChanged();
 }
 
-void QGroupDashboard::getChatInfo()
-{
-    QtConcurrent::run([this](){
+void QGroupDashboard::getChatInfo() {
+    QtConcurrent::run([this]() {
         QJsonObject output;
         QString error_msg = "";
         bool ret = Byzantine::instance()->GetCurrentGroupChat(groupId(), output, error_msg);
-        if(ret){
+        if (ret) {
             DBG_INFO << output;
-            if(output.contains("chat")){
+            if (output.contains("chat")) {
                 QJsonObject chat = output["chat"].toObject();
                 QString room_id = chat["room_id"].toString();
                 DBG_INFO << room_id;
@@ -1137,32 +1133,23 @@ void QGroupDashboard::getChatInfo()
     });
 }
 
-bool QGroupDashboard::groupChatExisted()
-{
+bool QGroupDashboard::groupChatExisted() {
     return m_groupChatExisted;
 }
 
-void QGroupDashboard::setGroupChatExisted(bool existed)
-{
-    if (m_groupChatExisted != existed){
+void QGroupDashboard::setGroupChatExisted(bool existed) {
+    if (m_groupChatExisted != existed) {
         m_groupChatExisted = existed;
         emit groupChatExistedChanged();
     }
 }
 
-bool QGroupDashboard::EditGroupMembers()
-{
+bool QGroupDashboard::EditGroupMembers() {
     QJsonObject output;
     QString error_msg = "";
-    bool ret = Byzantine::instance()->EditGroupMembers(groupId(),
-                                                       servicesTagPtr()->confirmCodeNonceBody(),
-                                                        {},
-                                                       servicesTagPtr()->passwordToken(),
-                                                       servicesTagPtr()->secQuesToken(),
-                                                       servicesTagPtr()->confirmToken(),
-                                                       output,
-                                                       error_msg);
-    if(ret){
+    bool ret = Byzantine::instance()->EditGroupMembers(groupId(), servicesTagPtr()->confirmCodeNonceBody(), {}, servicesTagPtr()->passwordToken(),
+                                                       servicesTagPtr()->secQuesToken(), servicesTagPtr()->confirmToken(), output, error_msg);
+    if (ret) {
         DBG_INFO << output;
         QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_REQUEST);
         GetMemberInfo();
@@ -1170,12 +1157,11 @@ bool QGroupDashboard::EditGroupMembers()
     return ret;
 }
 
-bool QGroupDashboard::CalculateRequireSignaturesForEditingMembers()
-{
+bool QGroupDashboard::CalculateRequireSignaturesForEditingMembers() {
     QJsonObject output;
     QString error_msg = "";
     bool ret = Byzantine::instance()->CalculateRequireSignaturesForEditingMembers(groupId(), bodyEditMembers(), output, error_msg);
-    if(ret){
+    if (ret) {
         DBG_INFO << output;
         QJsonObject resultObj = output["result"].toObject();
         servicesTagPtr()->setReqiredSignatures(resultObj);
@@ -1194,13 +1180,11 @@ bool QGroupDashboard::CalculateRequireSignaturesForEditingMembers()
     return ret;
 }
 
-bool QGroupDashboard::requestStartKeyReplacement(const QString &tag)
-{
+bool QGroupDashboard::requestStartKeyReplacement(const QString &tag) {
     return QSignerManagement::instance()->requestStartKeyReplacement(tag, registerAddKey);
 }
 
-bool QGroupDashboard::requestStartKeyCreate(const QString &tag, bool isFirst)
-{
+bool QGroupDashboard::requestStartKeyCreate(const QString &tag, bool isFirst) {
     DBG_INFO << "isFirst:" << isFirst << "tag:" << tag;
     if (!isFirst) {
         QSignerManagement::instance()->requestStartKeyCreate(tag, registerAddKey);
@@ -1209,32 +1193,32 @@ bool QGroupDashboard::requestStartKeyCreate(const QString &tag, bool isFirst)
         QSignerManagement::instance()->clearExecute();
         registerAddKey();
         qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-        runInConcurrent([]() ->bool{
-            auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance()) : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
-            auto currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
-            QString xfp = currentSignerInfo.value("xfp").toString();
-            QString account1Path = draftWallet->bip32path(xfp, 1);
-            draftWallet->newAccountIndexCached(xfp, 1);
-            if (!account1Path.isEmpty()) {                    
-                bool ret = draftWallet->requestAddOrReplacementWithIndex(xfp, 1);
-                QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
-            } else {
-                draftWallet->resultAddOrUpdateAKeyToDraftWallet("eSCREEN_REFRESH_DEVICE", true);
-                QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
-            }
-            return true;
-        },[](bool ret) {
-            qApp->restoreOverrideCursor();
-        });
+        runInConcurrent(
+            []() -> bool {
+                auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets *>(QGroupWallets::instance())
+                                                                        : dynamic_cast<QAssistedDraftWallets *>(QUserWallets::instance());
+                auto currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
+                QString xfp = currentSignerInfo.value("xfp").toString();
+                QString account1Path = draftWallet->bip32path(xfp, 1);
+                draftWallet->newAccountIndexCached(xfp, 1);
+                if (!account1Path.isEmpty()) {
+                    bool ret = draftWallet->requestAddOrReplacementWithIndex(xfp, 1);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+                } else {
+                    draftWallet->resultAddOrUpdateAKeyToDraftWallet("eSCREEN_REFRESH_DEVICE", true);
+                    QEventProcessor::instance()->sendEvent(E::EVT_ADD_HARDWARE_KEY_REQUEST);
+                }
+                return true;
+            },
+            [](bool ret) { qApp->restoreOverrideCursor(); });
     }
     return true;
 }
 
 void registerAddKey() {
-    auto masterFunc = []()->bool {
-        auto draftWallet = QAssistedDraftWallets::IsByzantine()
-                       ? dynamic_cast<QAssistedDraftWallets*>(QGroupWallets::instance())
-                       : dynamic_cast<QAssistedDraftWallets*>(QUserWallets::instance());
+    auto masterFunc = []() -> bool {
+        auto draftWallet = QAssistedDraftWallets::IsByzantine() ? dynamic_cast<QAssistedDraftWallets *>(QGroupWallets::instance())
+                                                                : dynamic_cast<QAssistedDraftWallets *>(QUserWallets::instance());
         if (!draftWallet) {
             return false;
         }
@@ -1249,7 +1233,7 @@ void registerAddKey() {
         return draftWallet->requestAddOrReplacementBothIndicesIfPossible(xfp);
     };
 
-    auto masterFuncClaimInheritance = []()->bool {
+    auto masterFuncClaimInheritance = []() -> bool {
         QJsonObject currentSignerInfo = QSignerManagement::instance()->currentSignerJs();
         const QString xfp = currentSignerInfo.value("xfp").toString();
         if (xfp.isEmpty()) {
@@ -1263,7 +1247,7 @@ void registerAddKey() {
     QSignerManagement::instance()->registerCreateMasterSigner(onlyUseForClaim ? masterFuncClaimInheritance : masterFunc);
 }
 
-void QGroupDashboard::requestHealthCheck(const QString &xfp){
+void QGroupDashboard::requestHealthCheck(const QString &xfp) {
     if (auto wallet = walletInfoPtr()) {
         setConfigFlow("health-check-procedure");
         setFlow((int)AlertEnum::E_Alert_t::HEALTH_CHECK_STATUS);
@@ -1276,74 +1260,72 @@ void QGroupDashboard::requestHealthCheck(const QString &xfp){
     }
 }
 
-bool QGroupDashboard::requestByzantineChat()
-{
-    if(!groupInfo().empty()){
+bool QGroupDashboard::requestByzantineChat() {
+    if (!groupInfo().empty()) {
         QStringList invitees_id;
         QStringList invitees_name;
-        QString     group_id = groupId();
+        QString group_id = groupId();
         QJsonArray members = groupInfo()["members"].toArray();
         DracoUser me = CLIENT_INSTANCE->getMe();
         for (QJsonValue js : members) {
             QJsonObject member = js.toObject();
             QString chat_id = member["user"].toObject()["chat_id"].toString();
             QString chat_name = member["user"].toObject()["name"].toString();
-            if(!qUtils::strCompare(chat_id, me.chat_id)){
+            if (!qUtils::strCompare(chat_id, me.chat_id)) {
                 QString chat_id = member["user"].toObject()["chat_id"].toString();
                 QString chat_name = member["user"].toObject()["name"].toString();
-                if(chat_id != ""){
+                if (chat_id != "") {
                     invitees_id << chat_id;
                     invitees_name << chat_name;
                 }
             }
         }
-        if(hasWallet()){
+        if (hasWallet()) {
             QString wallet_name = AppModel::instance()->walletInfo() ? AppModel::instance()->walletInfo()->walletName() : "";
-            if(wallet_name != ""){
+            if (wallet_name != "") {
                 invitees_name.clear();
                 invitees_name.append(wallet_name);
             }
         }
         DBG_INFO << invitees_id << invitees_name << historyPeriodId();
-        if(invitees_id.size() > 0){
+        if (invitees_id.size() > 0) {
             CLIENT_INSTANCE->createRoomByzantineChat(invitees_id, invitees_name, group_id, "");
         }
     }
     return true;
 }
 
-void QGroupDashboard::byzantineRoomCreated(QString room_id, QString group_id, bool existed)
-{
-    if (isUserWallet()) return;
+void QGroupDashboard::byzantineRoomCreated(QString room_id, QString group_id, bool existed) {
+    if (isUserWallet())
+        return;
     QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_CHAT_TAB);
-    if(qUtils::strCompare(group_id, groupId()) && room_id != "" && !existed){
+    if (qUtils::strCompare(group_id, groupId()) && room_id != "" && !existed) {
         DBG_INFO << room_id << existed;
         QJsonObject output;
         QString error_msg = "";
         bool ret = Byzantine::instance()->CreateGroupChat(groupId(), room_id, output, error_msg);
-        if(!ret){
-            //TBD
+        if (!ret) {
+            // TBD
         }
         getChatInfo();
     }
 }
 
-void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id)
-{
-    if (isUserWallet()) return;
-    if(qUtils::strCompare(group_id, groupId())){
+void QGroupDashboard::byzantineRoomDeleted(QString room_id, QString group_id) {
+    if (isUserWallet())
+        return;
+    if (qUtils::strCompare(group_id, groupId())) {
         DBG_INFO << room_id << group_id;
         QJsonObject output;
         QString error_msg = "";
         bool ret = Byzantine::instance()->DeleteGroupChat(group_id, output, error_msg);
-        if(!ret){
+        if (!ret) {
             DBG_INFO << output << error_msg;
         }
     }
 }
 
-void QGroupDashboard::requestShowLetAddYourKeys()
-{
+void QGroupDashboard::requestShowLetAddYourKeys() {
     if (m_keyReplacementInfo.isEmpty()) {
         setFlow((int)AlertEnum::E_Alert_t::WALLET_PENDING);
     } else {
@@ -1353,14 +1335,12 @@ void QGroupDashboard::requestShowLetAddYourKeys()
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }
 
-void QGroupDashboard::requestShowReplacementKey()
-{
+void QGroupDashboard::requestShowReplacementKey() {
     setFlow((int)AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING);
     QEventProcessor::instance()->sendEvent(E::EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST);
 }
 
-bool QGroupDashboard::isDowngrade(QString email_or_username, QString roleNew)
-{
+bool QGroupDashboard::isDowngrade(QString email_or_username, QString roleNew) {
     QString roleOld = "";
     for (auto js : groupInfo()["members"].toArray()) {
         auto email_or_username_tmp = js.toObject()["email_or_username"].toString();
@@ -1369,17 +1349,11 @@ bool QGroupDashboard::isDowngrade(QString email_or_username, QString roleNew)
         }
     }
     DBG_INFO << email_or_username << roleOld << roleNew;
-    if (roleOld.isEmpty()) return false;
+    if (roleOld.isEmpty())
+        return false;
 
-    static QMap<QString, int> maps = {
-        {"MASTER", 1},
-        {"ADMIN", 2},
-        {"KEYHOLDER", 3},
-        {"KEYHOLDER_LIMITED", 4},
-        {"FACILITATOR_ADMIN", 5},
-        {"OBSERVER", 6},
-        {"CUSTOMIZE", 7}
-    };
+    static QMap<QString, int> maps = {{"MASTER", 1},   {"ADMIN", 2},    {"KEYHOLDER", 3}, {"KEYHOLDER_LIMITED", 4}, {"FACILITATOR_ADMIN", 5},
+                                      {"OBSERVER", 6}, {"CUSTOMIZE", 7}};
     if (qUtils::strCompare(roleOld, "FACILITATOR_ADMIN") && qUtils::strCompare(myRole(), "FACILITATOR_ADMIN")) {
         return false;
     }
@@ -1393,25 +1367,21 @@ void QGroupDashboard::updateProgress() {
     }
 }
 
-void QGroupDashboard::updateSuccess()
-{
+void QGroupDashboard::updateSuccess() {
     AppModel::instance()->setAddSignerPercentage(100);
     mTimer->stop();
 }
 
-void QGroupDashboard::updateFail()
-{
+void QGroupDashboard::updateFail() {
     AppModel::instance()->setAddSignerPercentage(-1);
     mTimer->stop();
 }
 
-void QGroupDashboard::markRead()
-{
+void QGroupDashboard::markRead() {
     MarkAlertAsRead(alertId());
 }
 
-void QGroupDashboard::requestBackupColdcard(QVariant msg)
-{
+void QGroupDashboard::requestBackupColdcard(QVariant msg) {
     QMap<QString, QVariant> maps = msg.toMap();
     QString type = maps["type"].toString();
     DBG_INFO << maps;
@@ -1432,22 +1402,23 @@ void QGroupDashboard::requestBackupColdcard(QVariant msg)
     }
 }
 
-
 void QGroupDashboard::startAddKeyAtIndex(int index) {
-    if (index < 0 || index >= m_keys.size()) return;
+    if (index < 0 || index >= m_keys.size())
+        return;
     QJsonObject key = m_keys.at(index).toObject();
     QSignerManagement::instance()->setCurrentSigner(key);
 }
 
 void QGroupDashboard::startReplaceKeyAtIndex(int index) {
-    if (index < 0 || index >= m_replaceKeys.size()) return;
-    
+    if (index < 0 || index >= m_replaceKeys.size())
+        return;
+
     QJsonObject key = m_replaceKeys.at(index).toObject();
     QJsonArray replacements = key["replacements"].toArray();
     if (replacements.size() > 0) {
         QSignerManagement::instance()->setCurrentSigner(key);
         QJsonObject old_singer = key["old_singer"].toObject();
-        QJsonObject  payload;
+        QJsonObject payload;
         payload["xfp"] = old_singer["xfp"].toString();
         auto alert = alertJson();
         alert["payload"] = payload;
@@ -1456,28 +1427,24 @@ void QGroupDashboard::startReplaceKeyAtIndex(int index) {
         QJsonObject sub_singer = key["sub_singer"].toObject();
         sub_singer["notAllowDisplayKeySameXfp"] = true;
         sub_singer["xfp"] = key["xfp"].toString();
-        QSignerManagement::instance()->setCurrentSigner(sub_singer); 
-        QJsonObject  payload;
+        QSignerManagement::instance()->setCurrentSigner(sub_singer);
+        QJsonObject payload;
         payload["xfp"] = key["xfp"].toString();
         auto alert = alertJson();
         alert["payload"] = payload;
         setAlertId(alert);
-    }    
+    }
 }
 
-bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type)
-{
-    bool ret {true};
+bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType type) {
+    bool ret{true};
     if (type == nunchuk::SignerType::COLDCARD_NFC || tags.contains("COLDCARD")) {
         setConfigFlow("register-COLDCARD");
-    }
-    else if (tags.contains("BITBOX")) {
+    } else if (tags.contains("BITBOX")) {
         setConfigFlow("register-BitBox");
-    }
-    else if (type == nunchuk::SignerType::AIRGAP) {
+    } else if (type == nunchuk::SignerType::AIRGAP) {
         setConfigFlow("register-gapped-device");
-    }
-    else {
+    } else {
         ret = false;
         QString errormsg = "This device not support register wallet via QR and file";
         AppModel::instance()->showToast(0, errormsg, EWARNING::WarningType::ERROR_MSG);
@@ -1485,14 +1452,13 @@ bool QGroupDashboard::deviceExport(const QStringList tags, nunchuk::SignerType t
     return ret;
 }
 
-bool QGroupDashboard::xfpExport(const QString xfp)
-{
+bool QGroupDashboard::xfpExport(const QString xfp) {
     QWalletPtr w = walletInfoPtr();
-    if (w.isNull()) return false;
+    if (w.isNull())
+        return false;
     nunchuk::Wallet wallet = w->nunchukWallet();
-    nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(), [xfp](const nunchuk::SingleSigner &s) {
-        return s.get_master_fingerprint() == xfp.toStdString();
-    });
+    nunchuk::SingleSigner signer = *std::find_if(wallet.get_signers().begin(), wallet.get_signers().end(),
+                                                 [xfp](const nunchuk::SingleSigner &s) { return s.get_master_fingerprint() == xfp.toStdString(); });
     QStringList tags;
     for (auto tag : signer.get_tags()) {
         tags.append(QString::fromStdString(SignerTagToStr(tag)));
@@ -1500,71 +1466,59 @@ bool QGroupDashboard::xfpExport(const QString xfp)
     return deviceExport(tags, signer.get_type());
 }
 
-QJsonObject QGroupDashboard::inviterInfo() const
-{
+QJsonObject QGroupDashboard::inviterInfo() const {
     return m_inviterInfo;
 }
 
-void QGroupDashboard::setInviterInfo(const QJsonObject &inviterInfo)
-{
+void QGroupDashboard::setInviterInfo(const QJsonObject &inviterInfo) {
     m_inviterInfo = inviterInfo;
     emit groupInfoChanged();
 }
 
-QVariant QGroupDashboard::myInfoModel() const
-{
+QVariant QGroupDashboard::myInfoModel() const {
     return QVariant::fromValue(myInfo());
 }
 
-QString QGroupDashboard::role() const
-{
+QString QGroupDashboard::role() const {
     return myInfo()["role"].toString();
 }
 
-QString QGroupDashboard::walletunUsedAddress() const
-{
+QString QGroupDashboard::walletunUsedAddress() const {
     return m_walletunUsedAddress;
 }
 
-void QGroupDashboard::setWalletunUsedAddress(const QString &walletunUsedAddress)
-{
+void QGroupDashboard::setWalletunUsedAddress(const QString &walletunUsedAddress) {
     m_walletunUsedAddress = walletunUsedAddress;
     emit walletunUsedAddressChanged();
 }
 
-QString QGroupDashboard::configFlow() const
-{
+QString QGroupDashboard::configFlow() const {
     return m_configFlow;
 }
 
-void QGroupDashboard::setConfigFlow(const QString &configFlow)
-{
+void QGroupDashboard::setConfigFlow(const QString &configFlow) {
     m_configFlow = configFlow;
     emit configFlowChanged();
 }
 
-int QGroupDashboard::flow() const
-{
+int QGroupDashboard::flow() const {
     if (auto w = walletInfoPtr()) {
         return w->flow();
     }
     return 0;
 }
 
-void QGroupDashboard::setFlow(int flow)
-{
+void QGroupDashboard::setFlow(int flow) {
     if (auto w = walletInfoPtr()) {
         w->setFlow(flow);
     }
 }
 
-bool QGroupDashboard::hasWallet() const
-{
+bool QGroupDashboard::hasWallet() const {
     return wallet_id() != "";
 }
 
-bool QGroupDashboard::showDashBoard()
-{
+bool QGroupDashboard::showDashBoard() {
     if (qUtils::strCompare(myRole(), "KEYHOLDER_LIMITED")) {
         m_showDashBoard = true;
     }
@@ -1577,26 +1531,22 @@ bool QGroupDashboard::showDashBoard()
     return m_showDashBoard;
 }
 
-void QGroupDashboard::setShowDashBoard(bool showDashBoard)
-{
+void QGroupDashboard::setShowDashBoard(bool showDashBoard) {
     if (m_showDashBoard == showDashBoard)
         return;
     m_showDashBoard = showDashBoard;
     emit showDashBoardChanged();
 }
 
-int QGroupDashboard::mInfo() const
-{
+int QGroupDashboard::mInfo() const {
     return m_mInfo;
 }
 
-int QGroupDashboard::nInfo() const
-{
+int QGroupDashboard::nInfo() const {
     return m_nInfo;
 }
 
-QJsonObject QGroupDashboard::GetDraftSigner(const QString &xfp) const
-{
+QJsonObject QGroupDashboard::GetDraftSigner(const QString &xfp) const {
     QJsonArray signers = m_walletDraftInfo["signers"].toArray();
     for (QJsonValue js : signers) {
         QJsonObject signer = js.toObject();
@@ -1607,8 +1557,7 @@ QJsonObject QGroupDashboard::GetDraftSigner(const QString &xfp) const
     return {};
 }
 
-QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const
-{
+QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const {
     QJsonArray origin = groupInfo()["members"].toArray();
     QString our_id = "";
     for (auto member : origin) {
@@ -1652,15 +1601,13 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const
     return {};
 }
 
-QVariant QGroupDashboard::health() const
-{
+QVariant QGroupDashboard::health() const {
     return QVariant::fromValue(healthPtr().data());
 }
 
-void QGroupDashboard::setAlertId(const QString &alertId)
-{
+void QGroupDashboard::setAlertId(const QString &alertId) {
     QJsonArray array = m_alertInfo["alerts"].toArray();
-    for(auto js : array) {
+    for (auto js : array) {
         QJsonObject alert = js.toObject();
         if (alert["id"].toString() == alertId) {
             setAlertId(alert);
@@ -1668,8 +1615,7 @@ void QGroupDashboard::setAlertId(const QString &alertId)
     }
 }
 
-void QGroupDashboard::setAlertId(const QJsonObject &alert)
-{
+void QGroupDashboard::setAlertId(const QJsonObject &alert) {
     QJsonObject payload = m_currentAlertInfo["payload"].toObject();
     QJsonObject new_payload = alert["payload"].toObject();
     for (auto it = new_payload.begin(); it != new_payload.end(); ++it) {
@@ -1682,8 +1628,7 @@ void QGroupDashboard::setAlertId(const QJsonObject &alert)
     emit alertInfoChanged();
 }
 
-void QGroupDashboard::setDummyTxAlert(const QJsonObject &dummy_transaction)
-{
+void QGroupDashboard::setDummyTxAlert(const QJsonObject &dummy_transaction) {
     QJsonObject alert = alertJson();
     QJsonObject payload = alert["payload"].toObject();
     payload["dummy_transaction_id"] = dummy_transaction["id"].toString();
@@ -1697,69 +1642,62 @@ void QGroupDashboard::setDummyTxAlert(const QJsonObject &dummy_transaction)
     setAlertId(alert);
 }
 
-bool QGroupDashboard::CancelRecoveryKey()
-{
+bool QGroupDashboard::CancelRecoveryKey() {
     if (auto dummy = groupDummyTxPtr()) {
         return dummy->CancelDummyTransaction();
     }
     return false;
 }
 
-bool QGroupDashboard::CancelKeyReplacement()
-{
+bool QGroupDashboard::CancelKeyReplacement() {
     QJsonObject output;
     QString error_msg = "";
     QJsonObject payload = alertJson()["payload"].toObject();
     QString xfp = payload["xfp"].toString();
     bool can_cancel = payload["can_cancel"].toBool();
-    if (can_cancel == false) return false;
-    bool ret {false};
+    if (can_cancel == false)
+        return false;
+    bool ret{false};
     if (isUserWallet()) {
         ret = Draco::instance()->CancelKeyReplacement(wallet_id(), xfp, output, error_msg);
-    }
-    else {
+    } else {
         ret = Byzantine::instance()->CancelKeyReplacement(groupId(), wallet_id(), xfp, output, error_msg);
     }
     DBG_INFO << ret << error_msg;
-    if(ret){
+    if (ret) {
         // Handle preparing model here.
-    }
-    else{
-        //Show error
+    } else {
+        // Show error
     }
     return ret;
 }
 
-bool QGroupDashboard::FinishKeyReplacement(const QJsonObject &requestBody)
-{
+bool QGroupDashboard::FinishKeyReplacement(const QJsonObject &requestBody) {
     QJsonObject output{};
     QJsonObject payload = alertJson()["payload"].toObject();
     QString xfp = payload["xfp"].toString();
     QString verifyToken = servicesTagPtr()->passwordToken();
-    bool ret {false};
+    bool ret{false};
     if (isUserWallet()) {
         ret = Draco::instance()->ReplaceKey(wallet_id(), xfp, verifyToken, requestBody, output);
-    }
-    else {
+    } else {
         ret = Byzantine::instance()->ReplaceKey(groupId(), wallet_id(), xfp, verifyToken, requestBody, output);
     }
     DBG_INFO << "requestBody:" << requestBody << "output:" << output << ret;
-    if(ret){
+    if (ret) {
         // Handle preparing model here.
         GetAlertsInfo();
         GetHealthCheckInfo();
         GetKeyReplacementStatus();
-    }
-    else{
-        //Show error
+    } else {
+        // Show error
         QString error_msg = output.value("message").toString();
         AppModel::instance()->showToast(-1, error_msg, EWARNING::WarningType::EXCEPTION_MSG);
     }
     return ret;
 }
 
-bool QGroupDashboard::canReplaceKey()
-{
+bool QGroupDashboard::canReplaceKey() {
     auto type = static_cast<AlertEnum::E_Alert_t>(alertJson()["type"].toInt());
     if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING) {
         QJsonObject payload = alertJson()["payload"].toObject();
@@ -1770,21 +1708,18 @@ bool QGroupDashboard::canReplaceKey()
     return false;
 }
 
-bool QGroupDashboard::isInheritance()
-{
+bool QGroupDashboard::isInheritance() {
     auto type = static_cast<AlertEnum::E_Alert_t>(alertJson()["type"].toInt());
-    if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING ||
-        type == AlertEnum::E_Alert_t::KEY_TIMELOCK_UPDATE_PENDING) {
+    if (type == AlertEnum::E_Alert_t::KEY_REPLACEMENT_PENDING || type == AlertEnum::E_Alert_t::KEY_TIMELOCK_UPDATE_PENDING) {
         QJsonObject payload = alertJson()["payload"].toObject();
         return payload["is_inheritance"].toBool();
     } else {
-         auto signer = QSignerManagement::instance()->currentSignerJs();
+        auto signer = QSignerManagement::instance()->currentSignerJs();
         return signer["is_inheritance"].toBool();
     }
 }
 
-QStringList QGroupDashboard::getNameSameTag(const QString &tag)
-{
+QStringList QGroupDashboard::getNameSameTag(const QString &tag) {
     QStringList ret;
     for (QJsonValue js : m_signerInfo) {
         QJsonObject signer = js.toObject();
@@ -1796,8 +1731,7 @@ QStringList QGroupDashboard::getNameSameTag(const QString &tag)
     return ret;
 }
 
-QString QGroupDashboard::createName(const QString &tag, int &index)
-{
+QString QGroupDashboard::createName(const QString &tag, int &index) {
     QMap<QString, QString> maps;
     maps["COLDCARD"] = "COLDCARD";
     maps["BITBOX"] = "BitBox";
@@ -1813,8 +1747,7 @@ QString QGroupDashboard::createName(const QString &tag, int &index)
     return name;
 }
 
-QString QGroupDashboard::generateName(const QStringList &tags)
-{
+QString QGroupDashboard::generateName(const QStringList &tags) {
     QStringList tagList = tags;
     tagList.removeOne("INHERITANCE");
     QString tag = tagList.first();
@@ -1822,44 +1755,36 @@ QString QGroupDashboard::generateName(const QStringList &tags)
     return createName(tag, index);
 }
 
-QVariantList QGroupDashboard::keys() const
-{
+QVariantList QGroupDashboard::keys() const {
     return m_keys.toVariantList();
 }
 
-QVariantList QGroupDashboard::replaceKeys() const
-{
+QVariantList QGroupDashboard::replaceKeys() const {
     return m_replaceKeys.toVariantList();
 }
 
-QVariantList QGroupDashboard::alerts() const
-{
+QVariantList QGroupDashboard::alerts() const {
     return m_alertInfo["alerts"].toArray().toVariantList();
 }
 
-QVariant QGroupDashboard::alert() const
-{
+QVariant QGroupDashboard::alert() const {
     return QVariant::fromValue(alertJson());
 }
 
-QJsonObject QGroupDashboard::alertJson() const
-{
+QJsonObject QGroupDashboard::alertJson() const {
     return m_currentAlertInfo;
 }
 
-QVariantList QGroupDashboard::editMembers() const
-{
+QVariantList QGroupDashboard::editMembers() const {
     return m_editMembers.toVariantList();
 }
 
-void QGroupDashboard::initMembers()
-{
+void QGroupDashboard::initMembers() {
     m_editMembers = groupInfo()["members"].toArray();
     emit editMembersChanged();
 }
 
-bool QGroupDashboard::addMember(const QJsonObject &aEditMember)
-{
+bool QGroupDashboard::addMember(const QJsonObject &aEditMember) {
     QJsonObject obj = aEditMember;
     obj["isNew"] = true;
     DBG_INFO << obj;
@@ -1868,8 +1793,7 @@ bool QGroupDashboard::addMember(const QJsonObject &aEditMember)
     return true;
 }
 
-bool QGroupDashboard::removeMember(const QJsonObject &aEditMember)
-{
+bool QGroupDashboard::removeMember(const QJsonObject &aEditMember) {
     QString email_or_username = aEditMember["email_or_username"].toString();
     for (int i = 0; i < m_editMembers.size(); i++) {
         auto js = m_editMembers.at(i);
@@ -1883,8 +1807,7 @@ bool QGroupDashboard::removeMember(const QJsonObject &aEditMember)
     return false;
 }
 
-bool QGroupDashboard::editMembers(const QJsonObject &aEditMember, int index)
-{
+bool QGroupDashboard::editMembers(const QJsonObject &aEditMember, int index) {
     QString email_or_username = aEditMember["email_or_username"].toString();
     auto old = m_editMembers.at(index).toObject();
     QString email_or_username_old = old["email_or_username"].toString();
@@ -1908,8 +1831,7 @@ bool QGroupDashboard::editMembers(const QJsonObject &aEditMember, int index)
     }
 }
 
-bool QGroupDashboard::containEditMeber(const QJsonObject &aEditMember)
-{
+bool QGroupDashboard::containEditMeber(const QJsonObject &aEditMember) {
     QString email_or_username = aEditMember["email_or_username"].toString();
     for (auto js : m_editMembers) {
         auto email_or_username_tmp = js.toObject()["email_or_username"].toString();
@@ -1920,8 +1842,7 @@ bool QGroupDashboard::containEditMeber(const QJsonObject &aEditMember)
     return false;
 }
 
-bool QGroupDashboard::RequestConfirmationCodeEditMembers()
-{
+bool QGroupDashboard::RequestConfirmationCodeEditMembers() {
     QJsonObject data;
     data["nonce"] = Draco::instance()->randomNonce();
     data["body"] = bodyEditMembers();
@@ -1936,8 +1857,7 @@ bool QGroupDashboard::RequestConfirmationCodeEditMembers()
     return ret;
 }
 
-QJsonObject QGroupDashboard::bodyEditMembers()
-{
+QJsonObject QGroupDashboard::bodyEditMembers() {
     QJsonArray arrays;
     for (auto js : m_editMembers) {
         auto member = js.toObject();
@@ -1963,7 +1883,7 @@ QString QGroupDashboard::timeLock() const {
     return timestamp == 0 ? "" : formatted;
 }
 
-bool QGroupDashboard::enoughKeyAdded(const QString& xfp) {
+bool QGroupDashboard::enoughKeyAdded(const QString &xfp) {
     QJsonArray signers = m_walletDraftInfo.value("signers").toArray();
     int count = 0;
     QString wallet_type = m_walletDraftInfo.value("wallet_type").toString();
@@ -1980,9 +1900,8 @@ bool QGroupDashboard::enoughKeyAdded(const QString& xfp) {
     }
 }
 
-void QGroupDashboard::preparingKeyTobeReplaced()
-{
-    QJsonArray signers      = m_walletInfo["signers"].toArray();
+void QGroupDashboard::preparingKeyTobeReplaced() {
+    QJsonArray signers = m_walletInfo["signers"].toArray();
     bool allow_inheritance = false;
     bool required_server_key = false;
     for (auto js : signers) {
@@ -1999,29 +1918,26 @@ void QGroupDashboard::preparingKeyTobeReplaced()
     if (auto wallet = walletInfoPtr()) {
         int m = 0;
         int n = 0;
-        if(walletInfo()->isHoneyBadger()){
+        if (walletInfo()->isHoneyBadger()) {
             m = 2;
             n = 4;
-        }
-        else if(walletInfo()->isIronHand()){
+        } else if (walletInfo()->isIronHand()) {
             m = 2;
             n = 3;
-        }
-        else if(isGroupWallet()){
+        } else if (isGroupWallet()) {
             QJsonObject output;
             QString error_msg = "";
             bool ret = Byzantine::instance()->GetOneGroupWallets(groupId(), output, error_msg);
-            if(ret){
+            if (ret) {
                 QJsonObject group_info = output["group"].toObject();
-                QJsonObject config     = group_info["wallet_config"].toObject();
+                QJsonObject config = group_info["wallet_config"].toObject();
                 m = config["m"].toInt();
                 n = config["n"].toInt();
                 allow_inheritance = config["allow_inheritance"].toBool();
                 required_server_key = config["required_server_key"].toBool();
             }
             m = output["m"].toInt();
-        }
-        else {
+        } else {
             return;
         }
         QJsonObject wallet_config;
@@ -2030,10 +1946,9 @@ void QGroupDashboard::preparingKeyTobeReplaced()
         wallet_config["allow_inheritance"] = allow_inheritance;
         wallet_config["required_server_key"] = required_server_key;
         QJsonObject data;
-        data["wallet_type"]     = m_walletInfo["wallet_type"].toString();
-        data["signers"]         = signers;        
-        data["wallet_config"]   = wallet_config;
+        data["wallet_type"] = m_walletInfo["wallet_type"].toString();
+        data["signers"] = signers;
+        data["wallet_config"] = wallet_config;
         UpdateReplacementKeys(data);
     }
 }
-

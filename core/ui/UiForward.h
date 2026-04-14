@@ -25,5 +25,6 @@ class AppModel;
 class ServiceSetting;
 class ClientController;
 class QGroupWallets;
+class QSharedWallets;
 class QWalletServicesTag;
 class AppSetting;

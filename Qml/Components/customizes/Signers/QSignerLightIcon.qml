@@ -43,6 +43,7 @@ QIcon {
         case NUNCHUCKTYPE.NFC: img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
         case NUNCHUCKTYPE.COLDCARD_NFC: img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-light.svg"; break
         case NUNCHUCKTYPE.SERVER: img = ""; break
+        case NUNCHUCKTYPE.PLATFORM: img = ""; break
         default: img = ""
         }
         if (img === "") {
@@ -53,6 +54,7 @@ QIcon {
             case "NFC": img = "qrc:/Images/Images/Device_Icons/nfc-key-light.svg"; break
             case "COLDCARD_NFC": img = "qrc:/Images/Images/Device_Icons/coldcard-hardware-light.svg"; break
             case "SERVER": img = ""; break
+            case "PLATFORM": img = ""; break
             default: img = ""
             }
             if (img === "") {

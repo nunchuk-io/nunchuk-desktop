@@ -44,16 +44,20 @@ QMiniscriptPolicesDelegate {
                 _confirmRemoveKey.open()
             }
             onAddClicked: (key) => {
-                if (typeof(sandbox) !== 'undefined' && sandbox != null) {
-                    var obj = {
-                        keyName: key,
-                        group: miniscript.firstLine,
-                    }
-                    sandbox.requestAddOrRepaceKey(obj)
+                if (typeof(AppModel.newWalletInfo.sandbox) !== 'undefined' && AppModel.newWalletInfo.sandbox !== null) {
+                  vm.onAddKeyClicked({groupId: sandbox.groupId, key: miniscript.key})
+                  var obj = {
+                      keyName: key,
+                      group: miniscript.firstLine,
+                  }
+                  AppModel.newWalletInfo.sandbox.requestAddOrRepaceKey(obj)
                 } else {
-                    // Fallback for when sandbox is not available
-                    newWalletInfo.requestAddSigner(miniscript.firstLine, key)
+                  // Fallback for when sandbox is not available
+                  newWalletInfo.requestAddSigner(miniscript.firstLine, key)
                 }
+            }
+            onPlatformConfigClicked: () => {
+                vm.onPlatformKeyConfigClicked(sandbox.groupId)
             }
         }
     }

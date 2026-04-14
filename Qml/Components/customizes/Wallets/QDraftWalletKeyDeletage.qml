@@ -63,7 +63,7 @@ Item {
             height: 48
             iconSize: 24
             radius: 48
-            icon: "qrc:/Images/Images/Device_Icons/key-dark.svg"
+            icon: (dataSingle.single_type === NUNCHUCKTYPE.SERVER) || (dataSingle.single_type === NUNCHUCKTYPE.PLATFORM) ? "qrc:/Images/Images/Device_Icons/server-key-dark.svg" : "qrc:/Images/Images/Device_Icons/key-dark.svg"
             anchors.verticalCenter: parent.verticalCenter
             color: "#F5F5F5"
             visible: !dataSingle.single_is_local
@@ -87,7 +87,7 @@ Item {
                     text: STR.STR_QML_1695
                     height: 16
                     color: "#D0E2FF"
-                    visible: dataSingle.single_value_key
+                    visible: dataSingle.single_value_key && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                     radius: 8
                     fontSize: 10
                 }
@@ -98,12 +98,21 @@ Item {
                     color: "#DEDEDE"
                     height: 16
                     font.pixelSize: 10
+                    visible: (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
+                }
+                QLato {
+                    text: dataSingle.single_platformkeyPolicyType
+                    color: "#031F2B"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    visible: dataSingle.single_platformkeyPolicyType !== "" && (dataSingle.single_type === NUNCHUCKTYPE.PLATFORM)
                 }
                 QBadge {
                     text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                     height: 16
                     color: "#EAEAEA"
-                    visible: (dataSingle.single_account_index > 0) && (dataSingle.single_type !== NUNCHUCKTYPE.SERVER)
+                    visible: (dataSingle.single_account_index > 0) && (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                     radius: 8
                     fontSize: 10
                 }
@@ -121,11 +130,10 @@ Item {
                         return "XFP: " + dataSingle.single_masterFingerPrint.toUpperCase()
                     }
                 }
-                color: "#031F2B"
                 font.weight: Font.Normal
                 font.capitalization: Font.AllUppercase
-                font.family: "Lato"
                 font.pixelSize: 12
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
             }
             QLato {
                 height: 16
@@ -135,6 +143,7 @@ Item {
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
                 font.pixelSize: 12
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
             }
         }
         QTextButton {

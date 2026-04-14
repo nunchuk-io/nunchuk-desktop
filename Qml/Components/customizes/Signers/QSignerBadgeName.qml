@@ -41,6 +41,7 @@ QBadge {
         case NUNCHUCKTYPE.NFC: value = "NFC"; break
         case NUNCHUCKTYPE.COLDCARD_NFC: value = "COLDCARD-NFC"; break
         case NUNCHUCKTYPE.SERVER: value = ""; break
+        case NUNCHUCKTYPE.PLATFORM: value = "Platform key"; break
         default: value = ""
         }
         if (value === "") {
@@ -52,6 +53,7 @@ QBadge {
             case "NFC": value = "NFC"; break
             case "COLDCARD_NFC": value = "COLDCARD-NFC"; break
             case "SERVER": value = ""; break
+            case "PLATFORM": value = "Platform key"; break
             default: value = ""
             }
             if (value === "") {
@@ -72,6 +74,7 @@ QBadge {
                     case "TREZOR":      value = "Wired"; break
                     case "BITBOX":      value = "Wired"; break
                     case "JADE":        value = "Wired"; break
+                    case "PLATFORM":    value = "Platform"; break
                     case "INHERITANCE":
                     case "KEYSTONE":
                     case "PASSPORT":

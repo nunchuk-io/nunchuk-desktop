@@ -20,6 +20,11 @@ class BaseViewModel : public QObject {
     void closeToChatTab();
     void closeToServiceTab();
 
+  public:
+    virtual int backToScreen() {
+        return -1;
+    }
+
   protected:
     ViewModelContext *ctx() const;
     virtual void onInit() {}

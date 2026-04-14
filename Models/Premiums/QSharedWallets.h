@@ -1,23 +1,23 @@
 #ifndef QSHAREDWALLETS_H
 #define QSHAREDWALLETS_H
 
-#include <QObject>
-#include <QJsonArray>
-#include <nunchuk.h>
-#include <TypeDefine.h>
 #include <Premiums/GroupSandboxModel.h>
+#include <QJsonArray>
+#include <QObject>
+#include <TypeDefine.h>
+#include <nunchuk.h>
 
-#define SharedWalletsMng  QSharedWallets::instance()
-class QSharedWallets : public QObject
-{
+#define SharedWalletsMng QSharedWallets::instance()
+class QSharedWallets : public QObject {
     Q_OBJECT
-    Q_PROPERTY(int                  currentIndex    READ currentIndex   WRITE setCurrentIndex       NOTIFY currentIndexChanged)
-    Q_PROPERTY(GroupSandboxModel*   sandboxList     READ sandboxList                                NOTIFY sandboxListChanged)
+    Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
+    Q_PROPERTY(GroupSandboxModel *sandboxList READ sandboxList NOTIFY sandboxListChanged)
 
-private:
+  private:
     QSharedWallets();
     ~QSharedWallets();
-public:
+
+  public:
     static QSharedWallets *instance();
     QSharedWallets(QSharedWallets &other) = delete;
     QSharedWallets(QSharedWallets const &other) = delete;
@@ -28,7 +28,7 @@ public:
     bool CheckGroupConfig();
 
     QGroupSandboxModelPtr sandboxListPtr() const;
-    GroupSandboxModel* sandboxList() const;
+    GroupSandboxModel *sandboxList() const;
 
     int currentIndex() const;
     void setCurrentIndex(int currentIndex);
@@ -38,25 +38,29 @@ public:
     void GetGroupDeviceUID();
 
     bool RecoverSandboxWallet(const QString &file_path);
-    nunchuk::GroupSandbox CreateSandboxFromRecoverWallet(const QWalletPtr& wallet);
+    nunchuk::GroupSandbox CreateSandboxFromRecoverWallet(const QWalletPtr &wallet);
 
     QStringList deprecatedWallets() const;
     void CreateDeprecatedWallets();
-public slots:
+
+    void accept(const QString& group_id);
+    void deny(const QString& group_id);
+  public slots:
     bool importQrSandboxWallet(const QStringList qrtags);
     void changeToWallet();
     bool checkSandboxWalletLimit();
-signals:
+  signals:
     void sandboxListChanged();
     void currentIndexChanged();
     void groupWalletLimitChanged(bool isGuest);
-private:
-    int                     mCurrentIndex {-1};
-    nunchuk::GroupConfig    m_config;
-    QGroupSandboxModelPtr   m_sandboxList;
-    QJsonArray              m_signerExistList;
-    QString                 m_uid {""};
-    QStringList             m_deprecatedWallets;
+
+  private:
+    int mCurrentIndex{-1};
+    nunchuk::GroupConfig m_config;
+    QGroupSandboxModelPtr m_sandboxList;
+    QJsonArray m_signerExistList;
+    QString m_uid{""};
+    QStringList m_deprecatedWallets;
 };
 
 #endif // QSHAREDWALLETS_H

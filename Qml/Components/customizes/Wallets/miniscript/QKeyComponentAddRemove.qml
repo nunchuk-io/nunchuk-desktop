@@ -34,6 +34,8 @@ import "../../../../../localization/STR_QML.js" as STR
 QKeyComponent {
     signal removeClicked(string key)
     signal addClicked(string key)
+    signal platformConfigClicked()
+
     property var itemData: miniscript.keyObj
     signerData {
         single_name: itemData.singleSigner_name
@@ -50,6 +52,7 @@ QKeyComponent {
         single_isOccupied: itemData.single_signer_isOccupied
         single_isReplaced: itemData.single_signer_isReplaced
         single_keyReplaced: itemData.single_signer_keyReplaced
+        single_platformkeyPolicyType: itemData.single_signer_platformkeyPolicyType
     }
     QTextButton {
         anchors {
@@ -61,40 +64,49 @@ QKeyComponent {
         width: label.paintedWidth + 2*16
         height: 36
         type: eTypeB
-        visible: label.text !== ""
+        visible: (label.text !== "") || (keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM)
         label.text: {
-            var hasKey = miniscript.keyObj !== null && miniscript.keyObj !== undefined
-            if (typeof(sandbox) !== 'undefined' && sandbox !== null) {
-                var keyObj = miniscript.keyObj
-                if (sandbox.isReplace) {
-                    if (hasKey) {
-                        return keyObj.single_signer_isReplaced ? STR.STR_QML_1134 : STR.STR_QML_1368
-                    } else {
-                        return STR.STR_QML_941
-                    }
-                } else if (sandbox.isRecovery) {                    
-                    if (hasKey) {
-                        return keyObj.single_signer_is_local ? "" : STR.STR_QML_941
-                    } else {
-                        return STR.STR_QML_941
-                    }
-                } else {
-                    // Use for Flow Create Group Wallet
-                    if (hasKey) {
-                        return keyObj.single_signer_is_local ? STR.STR_QML_1134 : ""
-                    } else {
-                        return STR.STR_QML_941
-                    }
-                }
-            } else {
-                // Fallback for when sandbox is not available
-                return hasKey ? STR.STR_QML_1134 : STR.STR_QML_941
+            var keyObj = miniscript.keyObj
+            var hasKey = keyObj !== null && keyObj !== undefined
+
+            if (hasKey && keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM) {
+                return STR.STR_QML_2137
             }
+
+            if (!hasKey) {
+                return STR.STR_QML_941
+            }
+
+            if (typeof(sandbox) === 'undefined' || sandbox === null) {
+                return STR.STR_QML_1134
+            }
+
+            if (sandbox.isReplace) {
+                return keyObj.single_signer_isReplaced
+                        ? STR.STR_QML_1134
+                        : STR.STR_QML_1368
+            }
+
+            if (sandbox.isRecovery) {
+                return keyObj.single_signer_is_local
+                        ? ""
+                        : STR.STR_QML_941
+            }
+
+            // Flow Create Group Wallet
+            return keyObj.single_signer_is_local
+                    ? STR.STR_QML_1134
+                    : ""
         }
         label.font.pixelSize: 12
         onButtonClicked: {
             if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
-                removeClicked(miniscript.key)
+                if(miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM) {
+                    platformConfigClicked()
+                }
+                else {
+                    removeClicked(miniscript.key)
+                }
             } else {
                 addClicked(miniscript.key)
             }

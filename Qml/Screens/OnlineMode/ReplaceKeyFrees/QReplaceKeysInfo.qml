@@ -85,7 +85,7 @@ QOnScreenContentTypeA {
 
     onPrevClicked: QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_INFO_REQUEST)
     onNextClicked: {
-        if (AppModel.walletInfo.isGlobalGroupWallet) {
+        if (AppModel.walletInfo.isSandboxWallet) {
             var _input = {
                 type: "replace-select-keys-sandbox-wallet",
             }

@@ -8,8 +8,7 @@
 class SignInViaDummy
 {
 public:
-    bool offChainSignInViaDigitalSignature(const QString &bsms);
-    bool onChainSignInViaDigitalSignature(const QString &bsms);
+    bool SignInUsingXPUBorWallet(const QString &bsms);
     void initWallet();
     void initializeWalletData(const QString& walletId);
     void convertWallet();

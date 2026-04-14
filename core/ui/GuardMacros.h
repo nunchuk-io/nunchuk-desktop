@@ -114,3 +114,9 @@
     if (!clientCtrl) {                                                                                                                                   \
         return __VA_ARGS__;                                                                                                                                    \
     }
+#define GUARD_SHARE_WALLETS(...)                                                                                                                               \
+GUARD_CTX(__VA_ARGS__)                                                                                                                                     \
+    auto sharedWallets = ctx()->sharedWallets();                                                                                                                 \
+    if (!sharedWallets) {                                                                                                                                       \
+        return __VA_ARGS__;                                                                                                                                    \
+}

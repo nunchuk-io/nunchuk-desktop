@@ -83,4 +83,8 @@ void SubScreenManager::qmlSyncup() {
     }
 }
 
+int SubScreenManager::count() const {
+    return m_stack.size();
+}
+
 } // namespace core::subscreen

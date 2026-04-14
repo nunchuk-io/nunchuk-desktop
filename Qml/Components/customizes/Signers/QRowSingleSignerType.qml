@@ -60,7 +60,7 @@ Row {
         height: signerTypeText.implicitHeight + 8
         color: "#EAEAEA"
         radius: 20
-        visible: signerType !== NUNCHUCKTYPE.SERVER
+        visible: signerType !== NUNCHUCKTYPE.SERVER && signerType !== NUNCHUCKTYPE.PLATFORM
         anchors.verticalCenter: parent.verticalCenter
         QText {
             id: signerTypeText
@@ -76,7 +76,7 @@ Row {
         width: accttext.implicitWidth + 16
         height: accttext.implicitHeight + 8
         color: "#EAEAEA"
-        visible: (signerType !== NUNCHUCKTYPE.SERVER) && accountVisible
+        visible: (signerType !== NUNCHUCKTYPE.SERVER) && (signerType !== NUNCHUCKTYPE.PLATFORM) && accountVisible
         anchors.verticalCenter: parent.verticalCenter
         radius: 8
         QText {

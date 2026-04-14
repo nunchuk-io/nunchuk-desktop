@@ -20,7 +20,6 @@
 #include "QOutlog.h"
 #include <iostream>
 #include <QFileInfo>
-
 #ifdef Q_OS_UNIX
 #include <unistd.h>
 #endif
@@ -76,7 +75,50 @@ LogVerbose::LogVerbose()
 #ifdef USE_3RD_DEBUG
     // To request write log to the 3rd party of debuger (such as dlt)
 #else
-    qInstallMessageHandler(this->verboseMessageHandler); // Comment tempo
+    // qInstallMessageHandler(this->verboseMessageHandler); // Comment tempo
+    qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& msg) {
+        const char* level = "";
+        switch (type) {
+        case QtDebugMsg:    level = "Debug"; break;
+        case QtInfoMsg:     level = "Info"; break;
+        case QtWarningMsg:  level = "Warning"; break;
+        case QtCriticalMsg: level = "Critical"; break;
+        case QtFatalMsg:    level = "Fatal"; break;
+        }
+
+        fprintf(stderr, "[Qt][%s] %s\n", level, msg.toUtf8().constData());
+
+        if (context.file || context.line || context.function) {
+            fprintf(stderr, "  at %s:%d (%s)\n",
+                    context.file ? context.file : "unknown",
+                    context.line,
+                    context.function ? context.function : "unknown");
+        }
+
+        if (context.category) {
+            fprintf(stderr, "  category: %s\n", context.category);
+        }
+    });
+
+    // backtrace info
+    // qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& msg) {
+    //     QByteArray text = msg.toUtf8();
+    //     fprintf(stderr, "[Qt] %s\n", text.constData());
+
+    //     if (msg.contains("Unexpected null receiver")) {
+    //         void* frames[64];
+    //         int n = backtrace(frames, 64);
+    //         char** syms = backtrace_symbols(frames, n);
+
+    //         fprintf(stderr, "=== stack trace for null receiver ===\n");
+    //         for (int i = 0; i < n; ++i) {
+    //             fprintf(stderr, "%s\n", syms[i]);
+    //         }
+    //         fprintf(stderr, "=====================================\n");
+
+    //         free(syms);
+    //     }
+    // });
 #endif
 }
 

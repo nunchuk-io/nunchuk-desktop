@@ -43,11 +43,15 @@
 #include "QPDFPrinter.h"
 #include "app/AppRegister.h"
 
+#include <cstdio>
+#include <cstdlib>
+
 #ifdef ENABLE_THREAD_MONITOR
 #include "QPingThread.h"
 #endif
 
 #ifdef ENABLE_BACKTRACE
+#include <execinfo.h>
 #include <csignal>
 #include <execinfo.h>
 #include <fstream>
@@ -88,52 +92,80 @@ QStringList montserratFonts = {
     ":/fonts/fonts/Montserrat/Montserrat-Thin.ttf"
 };
 
+static void printBacktrace(int skip = 1)
+{
 #ifdef ENABLE_BACKTRACE
-void writeBacktraceToFile() {
-    std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
-
-    char filename[32];
-    std::strftime(filename, sizeof(filename), "backtrace_%H%M%S.txt", &tm);
-
-    const int max_frames = 256;
-    void **buffer = (void **)malloc(max_frames * sizeof(void *));
-    if (!buffer) {
-        std::cerr << "Failed to allocate memory for backtrace buffer" << std::endl;
+    void* frames[64];
+    int n = backtrace(frames, 64);
+    if (n <= 0) {
+        fprintf(stderr, "=== backtrace unavailable ===\n");
+        fflush(stderr);
         return;
     }
 
-    int nptrs = backtrace(buffer, max_frames);
-    std::ofstream outFile(filename, std::ios::out | std::ios::app);
-    if (!outFile) {
-        std::cerr << "Could not open file: " << filename << std::endl;
-        free(buffer);
+    char** syms = backtrace_symbols(frames, n);
+    if (!syms) {
+        fprintf(stderr, "backtrace_symbols failed\n");
+        fflush(stderr);
         return;
     }
 
-    outFile << "Backtrace (size = " << nptrs << "):" << std::endl;
-    char **symbols = backtrace_symbols(buffer, nptrs);
-    if (!symbols) {
-        outFile << "Error retrieving symbols." << std::endl;
-        free(buffer);
-        return;
+    fprintf(stderr, "=== backtrace (%d frames) ===\n", n);
+    for (int i = skip; i < n; ++i) {
+        fprintf(stderr, "#%-2d %s\n", i - skip, syms[i]);
     }
+    fprintf(stderr, "=============================\n");
+    fflush(stderr);
 
-    for (int i = 0; i < nptrs; i++) {
-        outFile << symbols[i] << std::endl;
-    }
-
-    free(symbols);
-    free(buffer);
-}
-
-// Signal handler
-void signalHandler(int sig) {
-    writeBacktraceToFile();
-    exit(sig);
-}
+    free(syms);
 #endif
+}
 
+class OurApplication : public QApplication
+{
+public:
+    using QApplication::QApplication;
+
+    bool notify(QObject* receiver, QEvent* event) override
+    {
+        const void* receiverPtr = receiver;
+        const void* eventPtr = event;
+
+        const char* receiverClass = "null";
+        int eventType = -1;
+
+        if (receiver) {
+            receiverClass = receiver->metaObject()->className();
+        }
+        if (event) {
+            eventType = int(event->type());
+        }
+
+        try {
+            return QApplication::notify(receiver, event);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Exception escaped Qt event loop\n");
+            fprintf(stderr, "receiver=%p class=%s objectName=%s event=%p eventType=%d\n",
+                    receiverPtr,
+                    receiverClass,
+                    receiver && !receiver->objectName().isEmpty()
+                        ? receiver->objectName().toUtf8().constData()
+                        : "<empty>",
+                    eventPtr,
+                    eventType);
+            fflush(stderr);
+            printBacktrace();
+        } catch (...) {
+            fprintf(stderr, "Unknown exception escaped Qt event loop\n");
+            fprintf(stderr, "receiver=%p class=%s event=%p eventType=%d\n",
+                    receiverPtr, receiverClass, eventPtr, eventType);
+            fflush(stderr);
+            printBacktrace();
+        }
+
+        return false;
+    }
+};
 
 inline double calculateScaleFactor()
 {
@@ -143,8 +175,8 @@ inline double calculateScaleFactor()
     // assumes that the default desktop resolution is 1080 (scale of 1)
     double scalePref = 1.0;
 
-    QApplication* temp = new QApplication(temp_argc, &temp_argv);
-    QScreen* primaryScr = QApplication::primaryScreen();
+    OurApplication* temp = new OurApplication(temp_argc, &temp_argv);
+    QScreen* primaryScr = OurApplication::primaryScreen();
     if (primaryScr) {
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();
@@ -189,17 +221,17 @@ int main(int argc, char* argv[])
     // static char  qt_arg[] = "";
     // static char* qt_argv = qt_arg;
     // static int   argc_own = 1;
-    // QApplication app(argc_own, &qt_argv);
+    // OurApplication app(argc_own, &qt_argv);
 
-    QApplication appNunchuk(argc, argv);
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    OurApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    OurApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    OurApplication appNunchuk(argc, argv);
 
     appNunchuk.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
     appNunchuk.setOrganizationName("nunchuk");
     appNunchuk.setOrganizationDomain("nunchuk.io");
     appNunchuk.setApplicationName("NunchukClient");
-    appNunchuk.setApplicationVersion("2.3.0");
+    appNunchuk.setApplicationVersion("2.4.0");
     appNunchuk.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(appNunchuk.applicationVersion()));
     Draco::instance();
     AppModel::instance();
@@ -247,7 +279,7 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->setViewerSize(QAPP_WIDTH_EXPECTED, QAPP_HEIGHT_EXPECTED);
 #else
     DBG_INFO << scale_factor;
-    QScreen* primaryScr = QApplication::primaryScreen();
+    QScreen* primaryScr = OurApplication::primaryScreen();
     if (primaryScr) {
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();

@@ -27,6 +27,7 @@ import "../../customizes/Buttons"
 
 Item {
     id: _item
+    property bool   isInviter: false
     Item {
         id: _detail
         anchors.fill: parent
@@ -40,8 +41,8 @@ Item {
             }
             Rectangle {
                 width: _item.width
-                height: 48
-                color: "#F5F5F5"
+                height: isInviter ? 104 : 48
+                color: isInviter ? "#393939" : "#F5F5F5"
             }
         }
     }

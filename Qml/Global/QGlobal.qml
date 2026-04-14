@@ -93,7 +93,7 @@ QtObject {
         {id:14, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
         {id:15, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
         {id:16, normal: "#FFFFFF",     hover: "#FFFFFF",     disable: "#FFFFFF",     clicked: "#FFFFFF"},
-        {id:17, normal: "#031F2B",     hover: "#031F2B",     disable: "#031F2B",     clicked: "#031F2B"},
+        {id:17, normal: "#031F2B",     hover: "#031F2B",     disable: "#595959",     clicked: "#031F2B"},
     ]
 
     function signers(type){
@@ -105,6 +105,7 @@ QtObject {
         case NUNCHUCKTYPE.NFC:               return "NFC";
         case NUNCHUCKTYPE.COLDCARD_NFC:      return "COLDCARD-NFC";
         case NUNCHUCKTYPE.SERVER:            return "PLATFORM";
+        case NUNCHUCKTYPE.PLATFORM:          return "PLATFORM";
         case NUNCHUCKTYPE.UNKNOWN:           return "UNKNOWN";
         default:                             return "UNKNOWN";
         }

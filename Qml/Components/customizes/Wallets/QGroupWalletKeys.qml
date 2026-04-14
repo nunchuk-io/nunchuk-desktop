@@ -13,6 +13,7 @@ import "../../customizes/Texts"
 import "../../../../localization/STR_QML.js" as STR
 
 Column {
+    id: groupKeyComp
     width: 352
     spacing: 16
     readonly property var tmpColors: [
@@ -127,10 +128,12 @@ Column {
                 single_isOccupied: modelData.single_signer_isOccupied
                 single_isReplaced: modelData.single_signer_isReplaced
                 single_keyReplaced: modelData.single_signer_keyReplaced
+                single_platformkeyPolicyType: modelData.single_signer_platformkeyPolicyType
             }
 
             onHardwareClicked: {
-                sandbox.requestAddOrRepaceKey({ idx: index })
+                vm.onAddKeyClicked({groupId : sandbox.groupId, key: index})
+                AppModel.newWalletInfo.sandbox.requestAddOrRepaceKey({ idx: index })
             }
             onRemoveClicked: {
                 _confirmRemoveKey.idx = idx
@@ -145,6 +148,9 @@ Column {
             }
             onBip32PathClick: {
                 editBip32Path.requestEditBIP32Path(modelData, { "idx": index })
+            }
+            onPlatformConfigClicked: {
+                vm.onPlatformKeyConfigClicked(sandbox.groupId)
             }
         }
     }

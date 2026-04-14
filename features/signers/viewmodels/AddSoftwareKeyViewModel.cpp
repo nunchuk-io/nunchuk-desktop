@@ -7,13 +7,17 @@
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
 
-static const QJsonArray viaOptions = {
-    QJsonObject{{ "id", (int)RecoveryOption::ViaSeed }, { "label", Strings.STR_QML_2087() }},
-    QJsonObject{{ "id", (int)RecoveryOption::ViaXPRV }, { "label", Strings.STR_QML_2088() }},
-};
+static QJsonArray makeViaOptions()
+{
+    return QJsonArray{
+        QJsonObject{{ "id", (int)RecoveryOption::ViaSeed }, { "label", Strings.STR_QML_2087() }},
+        QJsonObject{{ "id", (int)RecoveryOption::ViaXPRV }, { "label", Strings.STR_QML_2088() }},
+        };
+}
 
-AddSoftwareKeyViewModel::AddSoftwareKeyViewModel(QObject *parent) 
+AddSoftwareKeyViewModel::AddSoftwareKeyViewModel(QObject *parent)
 : AddKeyBaseViewModel(parent) {
+    auto viaOptions = makeViaOptions();
     setoptions(viaOptions.toVariantList());
     setoption(RecoveryOption::ViaSeed);
 }

@@ -14,9 +14,18 @@ SandboxWallet::SandboxWallet(const nunchuk::Wallet &w) :
 {}
 
 void SandboxWallet::convert(const nunchuk::Wallet w) {
-    AssistedWallet::convert(w);
+    AssistedWallet::convert(w); 
     QWarningMessage msg;
-    m_isGlobalGroupWallet = bridge::CheckGroupWalletExists(w, msg);
+    int alerCount = bridge::GetGroupWalletAlertCount(walletId(), msg);
+    if(msg.isSuccess()){
+        setalerCount(alerCount);
+    }
+    QTimer::singleShot(0, this, [this]() {
+        if (m_isSandboxWallet) {
+            return;
+        }
+        m_isSandboxWallet = AppModel::instance()->groupWalletList()->containsId(walletId());
+    });
 }
 
 bool SandboxWallet::isReplaced() const
@@ -25,9 +34,17 @@ bool SandboxWallet::isReplaced() const
     return isGlobalReplaced || AssistedWallet::isReplaced();
 }
 
-bool SandboxWallet::isGlobalGroupWallet() const
+bool SandboxWallet::isSandboxWallet() const
 {
-    return m_isGlobalGroupWallet;
+    return m_isSandboxWallet;
+}
+
+void SandboxWallet::setIsSandboxWallet(bool value)
+{
+    if (m_isSandboxWallet != value) {
+        m_isSandboxWallet = value;
+        emit isSandboxWalletChanged();
+    }
 }
 
 bool SandboxWallet::isReplaceGroupWallet() const
@@ -64,24 +81,32 @@ QGroupSandbox *SandboxWallet::groupSandbox()
 
 void SandboxWallet::startGetUnreadMessage()
 {
+    const QString walletIdSnap = walletId();
     QPointer<SandboxWallet> safeThis(this);
-    runInThread([safeThis]() -> int {
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        return bridge::GetUnreadMessagesCount(ptrLamda->walletId());
-    },[safeThis](int number) {
-                        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-                        ptrLamda->setUnreadMessage(number);
-                        if (auto list = AppModel::instance()->groupWalletList()) {
-                            list->unReadMessageCountChanged();
-                            list->requestSortLastTimestamp();
-                        }
-                    });
 
+    runInThread(
+        this,
+        [walletIdSnap]() -> int {
+            return bridge::GetUnreadMessagesCount(walletIdSnap);
+        },
+        [safeThis](int number) {
+            if (!safeThis) {
+                return;
+            }
+
+            safeThis->setUnreadMessage(number);
+
+            if (auto list = AppModel::instance()->groupWalletList()) {
+                list->unReadMessageCountChanged();
+                list->requestSortLastTimestamp();
+            }
+        }
+        );
 }
 
 void SandboxWallet::startDownloadConversation()
 {
-    if(conversations() && isGlobalGroupWallet()){
+    if(conversations() && isSandboxWallet()){
         QString wallet_id = walletId();
         conversations()->startDownloadConversation(wallet_id);
         startGetUnreadMessage();
@@ -110,6 +135,10 @@ void SandboxWallet::GetGroupWalletConfig()
         m_nunchukConfig = config;
         emit walletConfigChanged();
     }
+}
+
+nunchuk::GroupWalletConfig SandboxWallet::nunchukConfig() const {
+    return m_nunchukConfig;
 }
 
 int SandboxWallet::numberOnline()
@@ -227,27 +256,35 @@ void SandboxWallet::markAllMessagesAsRead()
     }
 }
 
-
 void SandboxWallet::GetReplaceGroups()
 {
+    const QString walletIdSnap = walletId();
     QPointer<SandboxWallet> safeThis(this);
-    runInThread([safeThis]() ->QMap<QString, bool>{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QWarningMessage msg;
-        return bridge::GetReplaceGroups(ptrLamda->walletId(), msg);
-    },[safeThis](QMap<QString, bool> groups) {
-                    SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-                    QJsonArray array;
-                    for (auto it = groups.begin(); it != groups.end(); ++it) {
-                        QJsonObject js;
-                        js["group_id"] = it.key();
-                        js["accepted"] = it.value();
-                        array.append(js);
-                    }
-                    ptrLamda->m_replaceGroups = array;
-                    DBG_INFO << array;
-                    emit ptrLamda->replaceGroupsChanged();
-                });
+
+    runInThread(
+        this,
+        [walletIdSnap]() -> QMap<QString, bool> {
+            QWarningMessage msg;
+            return bridge::GetReplaceGroups(walletIdSnap, msg);
+        },
+        [safeThis](QMap<QString, bool> groups) {
+            if (!safeThis) {
+                return;
+            }
+
+            QJsonArray array;
+            for (auto it = groups.begin(); it != groups.end(); ++it) {
+                QJsonObject js;
+                js["group_id"] = it.key();
+                js["accepted"] = it.value();
+                array.append(js);
+            }
+
+            safeThis->m_replaceGroups = array;
+            DBG_INFO << array;
+            emit safeThis->replaceGroupsChanged();
+        }
+        );
 }
 
 QVariantList SandboxWallet::replaceGroups()
@@ -255,6 +292,40 @@ QVariantList SandboxWallet::replaceGroups()
     return m_replaceGroups.toVariantList();
 }
 
+QString SandboxWallet::platformkeyPolicyType()
+{
+    GetGroupWalletConfig();
+    if (m_nunchukConfig.get_platform_key().has_value()) {
+        auto policies = m_nunchukConfig.get_platform_key().value().get_policies();
+        bool has_global_policies = policies.get_global().has_value();
+        if (has_global_policies) {
+            auto global_policy = policies.get_global().value();
+            if(global_policy.get_spending_limit().has_value()) {
+                DBG_INFO;
+                auto spending_limit = global_policy.get_spending_limit();
+                QString amount = QString::fromStdString(spending_limit.value().get_amount());
+                QString interval = qUtils::GroupSpendingLimitIntervalToString(spending_limit.value().get_interval());
+                QString currency = QString::fromStdString(spending_limit.value().get_currency());
+                QString displayInterval;
+                if (interval == "DAILY") displayInterval = "Day";
+                else if (interval == "WEEKLY") displayInterval = "Week";
+                else if (interval == "MONTHLY") displayInterval = "Month";
+                else if (interval == "YEARLY") displayInterval = "Year";
+                else displayInterval = interval; // fallback
+
+                QString policy_string = QString("%1 %2 / %3").arg(currency, amount, displayInterval);
+                return policy_string;
+            }
+            else {
+                return "No spending limit";
+            }
+        }
+        else {
+            return "Multiple spending limits";
+        }
+    }
+    return "";
+}
 
 void SandboxWallet::requestAcceptReplaceGroup(const QString &sandbox_id)
 {
@@ -262,7 +333,7 @@ void SandboxWallet::requestAcceptReplaceGroup(const QString &sandbox_id)
         if (m_sandbox->AcceptReplaceGroup(walletId(), sandbox_id)) {
             GetReplaceGroups();
             m_sandbox->setScreenFlow("setup-group-wallet");
-            AppModel::instance()->setNewWalletInfo(dynamic_cast<Wallet*>(this));
+            AppModel::instance()->setNewWalletInfo(QWalletPtr(dynamic_cast<Wallet*>(this)));
             QSharedWallets::instance()->GetAllGroups();
             timeoutHandler(500,[=]{
                 QEventProcessor::instance()->sendEvent(E::EVT_SETUP_GROUP_WALLET_REQUEST);

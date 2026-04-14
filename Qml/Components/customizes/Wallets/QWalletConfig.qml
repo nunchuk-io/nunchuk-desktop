@@ -26,6 +26,7 @@ import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import QRCodeItem 1.0
 import DataPool 1.0
+import Features.Wallets.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -42,6 +43,9 @@ QOnScreenContentTypeA {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
+    WalletConfigViewModel {
+        id: vm
+    }
     label.text: STR.STR_QML_437
     property var walletInfo: AppModel.walletInfo
     property string myRole: walletInfo.groupId !== "" ? walletInfo.myRole : ""

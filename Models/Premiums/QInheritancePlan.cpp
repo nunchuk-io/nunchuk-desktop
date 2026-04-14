@@ -218,7 +218,7 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
 void QInheritancePlan::GetInheritancePlan()
 {
     QWalletPtr w = walletInfoPtr();
-    if (w.isNull() || (w.data()->status() == "REPLACED")) return;
+    if (w.isNull() || (w.data()->status() == "REPLACED") || (w.data()->isReplaced())) return;
 
     using namespace features::inheritance::usecases;
     GetInheritancePlanInput input;

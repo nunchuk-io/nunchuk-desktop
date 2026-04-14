@@ -37,16 +37,19 @@ Rectangle {
     radius: 8
     border.width: 1
     border.color: "#DEDEDE"
-    property var transactionInfo
-    property var miniTreeForSigning: transactionInfo.miniTreeForSigning
-    property var timelockedUntil: transactionInfo.timelockedUntil
+    width: 350
+    height: 480
+
+    property var  transactionInfo
+    property var  miniTreeForSigning: transactionInfo.miniTreeForSigning
+    property var  timelockedUntil: transactionInfo.timelockedUntil
+    property bool isDummy: false
+
     signal keySignRequest(var signer)
     signal keyScanRequest
     signal keyEnterPreImageInput(var hashData, var typeNode)
     signal keyExportRequest
     signal keyImportRequest
-    width: 350
-    height: 480
     Flickable {
         width: tree.width
         height: tree.height
@@ -103,6 +106,7 @@ Rectangle {
                         miniscript: modelData
                         is_cosigning: transactionInfo.isCosigning
                         serverkeyMessage: transactionInfo.serverKeyMessage
+                        platformkeyMessage: transactionInfo.groupTransactionState
                     }
                 }
             }

@@ -39,7 +39,16 @@
 
 class QWalletCached {
 public:
-    QWalletCached(){}
+    QWalletCached()
+        : groupId(""),
+          slug(""),
+          myRole(""),
+          status(""),
+          backedup(false),
+          hideFiatCurrency(false),
+          registered(false),
+          isClaimed(false) {}
+
     QString groupId;
     QString slug;
     QString myRole;

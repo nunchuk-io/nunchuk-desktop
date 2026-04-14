@@ -34,9 +34,12 @@ import "../../../../../localization/STR_QML.js" as STR
 
 QMiniscriptPolicesDelegate {
     useDerivationPath: false
-    property var itemData: miniscript.keyObj
+
+    property var    itemData: miniscript.keyObj
     property bool   is_cosigning: false
     property string serverkeyMessage: ""
+    property string platformkeyMessage: ""
+
     Component {
         id: keyCoponent
         QKeyComponentTransactionSign {
@@ -58,6 +61,7 @@ QMiniscriptPolicesDelegate {
                 single_keyset_status: itemData.single_signer_keyset_status
                 single_keyset_index: itemData.single_signer_keyset_index
                 single_keyset_remaining: itemData.single_signer_keyset_remaining
+                single_platformkeyPolicyType: itemData.single_signer_platformkeyPolicyType
             }
             onSignRequest: {
                 keySignRequest(itemData)
@@ -77,9 +81,9 @@ QMiniscriptPolicesDelegate {
     function getKeyHeight() {
         if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
             if (miniscript.keyObj.singleSigner_derivationPath !== undefined && miniscript.keyObj.singleSigner_derivationPath !== null && useDerivationPath) {
-                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 76 : 48
+                return ((miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER) && (miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM)) ? 76 : 48
             } else {
-                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 58 : 48 //38
+                return ((miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER) && (miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM)) ? 58 : 48 //38
             }            
         } else {
             return 48

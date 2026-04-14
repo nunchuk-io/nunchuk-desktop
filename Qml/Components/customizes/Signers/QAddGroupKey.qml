@@ -42,17 +42,25 @@ Loader {
     signal removeClicked(var idx)
     signal recoverKeyClick(var idx, var xfp)
     signal bip32PathClick(var xfp, var path)
-    sourceComponent: if (newWalletInfo.isReplaceGroupWallet) {
-                         if (dataSingle.single_name === "" || dataSingle.single_name === "ADDED") {
-                            return replaceSignerAdd
-                         } else {
-                             return dataSingle.single_is_local ? replaceSignerAdded : replaceNotMeAdded
-                         }
-                     } else {
-                         return dataSingle.single_masterFingerPrint !== ""
-                                 ? (dataSingle.single_is_local ? signerAdded : notMeAdded)
-                                 : signerAdd
-                     }
+    signal platformConfigClicked()
+    sourceComponent: {
+        if (dataSingle.single_type === NUNCHUCKTYPE.PLATFORM) {
+            return platformConfig
+        }
+        else {
+            if (newWalletInfo.isReplaceGroupWallet) {
+                if (dataSingle.single_name === "" || dataSingle.single_name === "ADDED") {
+                   return replaceSignerAdd
+                } else {
+                    return dataSingle.single_is_local ? replaceSignerAdded : replaceNotMeAdded
+                }
+            } else {
+                return dataSingle.single_masterFingerPrint !== ""
+                        ? (dataSingle.single_is_local ? signerAdded : notMeAdded)
+                        : signerAdd
+            }
+        }
+    }
 
     function isAdded() {
         return dataSingle.single_masterFingerPrint === "" && dataSingle.single_name === "ADDED"
@@ -787,6 +795,76 @@ Loader {
                         font.weight: Font.Normal
                         horizontalAlignment: Text.AlignHCenter
                     }
+                }
+            }
+        }
+    }
+    Component {
+        id: platformConfig
+        QDashRectangle {
+            width: 352
+            height: Math.max(maxColumn.childrenRect.height + 12*2, 72)
+            radius: 8
+            borderWitdh: 2
+            borderColor: "#031F2B"
+            Row {
+                anchors {
+                    fill: parent
+                    margins: 12
+                }
+                spacing: 12
+                QBadge {
+                    width: 48
+                    height: 48
+                    iconSize: 24
+                    radius: 48
+                    icon: "qrc:/Images/Images/Device_Icons/server-key-dark.svg"
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "#F5F5F5"
+                }
+                Column {
+                    id: maxColumn
+                    width: 150
+                    spacing: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    QLato {
+                        width: 150
+                        text: STR.STR_QML_957
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    QLato {
+                        width: 150
+                        text: STR.STR_QML_1665
+                        color: "#A66800"
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        visible: dataSingle.single_isOccupied
+                    }
+                    QLato {
+                        text: dataSingle.single_platformkeyPolicyType
+                        color: "#031F2B"
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        visible: dataSingle.single_platformkeyPolicyType !== ""
+                    }
+                }
+            }
+            QTextButton {
+                anchors {
+                    verticalCenter: parent.verticalCenter
+                    right: parent.right
+                    rightMargin: 12
+                }
+                width: label.paintedWidth + 2*16
+                height: 36
+                type: eTypeB
+                label.text: STR.STR_QML_2137
+                label.font.pixelSize: 12
+                onButtonClicked: {
+                    platformConfigClicked()
                 }
             }
         }

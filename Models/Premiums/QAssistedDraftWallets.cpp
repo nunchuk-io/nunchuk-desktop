@@ -53,45 +53,58 @@ QString QAssistedDraftWallets::typeReq() const {
     return map_keys.value((Key)getAddHardware()).mType;
 }
 
-void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray &groups) {
+void QAssistedDraftWallets::GetListAllRequestAddKey(const QJsonArray &groups)
+{
     if (!CLIENT_INSTANCE->isNunchukLoggedIn()) {
         return;
     }
+
+    const auto mode = m_mode;
     QPointer<QAssistedDraftWallets> safeThis(this);
+
     runInThread(
-        [safeThis, groups]() -> QMap<Key, StructAddHardware> {
+        this,
+        [groups, mode, this]() -> QMap<Key, StructAddHardware> {
             QMap<Key, StructAddHardware> requests;
-            SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-            if (ptrLamda->m_mode == USER_WALLET) {
+
+            if (mode == USER_WALLET) {
                 QJsonObject data;
                 QString error_msg;
                 Draco::instance()->assistedWalletGetListKey(data, error_msg);
-                requests = ptrLamda->addRequest(data.value("requests").toArray());
-                DBG_INFO << data;
-            } else if (ptrLamda->m_mode == GROUP_WALLET) {
+                requests = QAssistedDraftWallets::addRequest(data.value("requests").toArray());
+            } else if (mode == GROUP_WALLET) {
                 QJsonObject data;
                 QString error_msg;
-                for (QJsonValue js : groups) {
+
+                for (const QJsonValue &js : groups) {
                     QJsonObject group = js.toObject();
-                    QString status = group["status"].toString();
+                    const QString status = group.value("status").toString();
+
                     if (status == "PENDING_WALLET") {
-                        QString group_id = group["id"].toString();
+                        const QString group_id = group.value("id").toString();
                         Byzantine::instance()->GetAllListRequestAddKey(group_id, data, error_msg);
-                        QMap<Key, StructAddHardware> tmps = ptrLamda->addRequest(data.value("requests").toArray(), group_id);
-                        for (auto tmp = tmps.begin(); tmp != tmps.end(); ++tmp) {
-                            requests.insertMulti(tmp.key(), tmp.value());
+
+                        const QMap<Key, StructAddHardware> tmps =
+                            QAssistedDraftWallets::addRequest(data.value("requests").toArray(), group_id);
+
+                        for (auto it = tmps.begin(); it != tmps.end(); ++it) {
+                            requests.insertMulti(it.key(), it.value());
                         }
-                        DBG_INFO << group_id << data;
                     }
                 }
             }
+
             return requests;
         },
         [safeThis](QMap<Key, StructAddHardware> requests) {
-            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-            ptrLamda->m_requests = requests;
-            ptrLamda->makeListRequests();
-        });
+            if (!safeThis) {
+                return;
+            }
+
+            safeThis->m_requests = std::move(requests);
+            safeThis->makeListRequests();
+        }
+        );
 }
 
 void QAssistedDraftWallets::cancelRequestKey(const QString &request_id, const QString &group_id) {

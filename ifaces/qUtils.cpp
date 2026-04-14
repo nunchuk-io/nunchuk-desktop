@@ -301,6 +301,38 @@ QString qUtils::GetSignerTypeString(const nunchuk::SignerType value) {
     return ret;
 }
 
+QString qUtils::GroupSpendingLimitIntervalToString(const nunchuk::GroupSpendingLimitInterval interval) {
+    switch (interval) {
+    case nunchuk::GroupSpendingLimitInterval::DAILY:
+        return "DAILY";
+    case nunchuk::GroupSpendingLimitInterval::WEEKLY:
+        return "WEEKLY";
+    case nunchuk::GroupSpendingLimitInterval::MONTHLY:
+        return "MONTHLY";
+    case nunchuk::GroupSpendingLimitInterval::YEARLY:
+        return "YEARLY";
+    }
+    return "";
+}
+
+nunchuk::GroupSpendingLimitInterval qUtils::GroupSpendingLimitIntervalFromString(const QString &value) {
+    const QString interval = value.trimmed().toUpper();
+    if (interval == "DAILY") {
+        return nunchuk::GroupSpendingLimitInterval::DAILY;
+    }
+    if (interval == "WEEKLY") {
+        return nunchuk::GroupSpendingLimitInterval::WEEKLY;
+    }
+    if (interval == "MONTHLY") {
+        return nunchuk::GroupSpendingLimitInterval::MONTHLY;
+    }
+    if (interval == "YEARLY") {
+        return nunchuk::GroupSpendingLimitInterval::YEARLY;
+    }
+    DBG_INFO << "Invalid GroupSpendingLimitInterval string:" << value;
+    return nunchuk::GroupSpendingLimitInterval::DAILY;
+}
+
 QString qUtils::GetSHA256(const QString &value) {
     QString ret = value;
     try {
@@ -532,7 +564,24 @@ QString qUtils::GetTimeString(uint time_second, bool is_relative) {
 }
 
 bool qUtils::strCompare(const QString &str1, const QString &str2) {
-    return (0 == QString::compare(str1, str2, Qt::CaseInsensitive)) && !str1.isEmpty();
+    if (str1.isEmpty() || str2.isEmpty()) {
+        return false;
+    }
+
+    QString str1Trimmed = str1.trimmed();
+    QString str2Trimmed = str2.trimmed();
+
+    // Try case-insensitive trimmed comparison first
+    if (str1Trimmed.compare(str2Trimmed, Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+
+    // Try uppercase comparison as fallback
+    if (str1Trimmed.toUpper() == str2Trimmed.toUpper()) {
+        return true;
+    }
+
+    return false;
 }
 
 nunchuk::AnalyzeQRResult qUtils::AnalyzeQR(const QStringList &qrtags) {
@@ -1212,6 +1261,21 @@ nunchuk::WalletType qUtils::WalletTypeFromStr(const QString &str) {
     if (str == "MINISCRIPT")
         return nunchuk::WalletType::MINISCRIPT;
     return nunchuk::WalletType::MULTI_SIG; // Default case, should be handled properly
+}
+
+QString qUtils::WalletTypeToStr(const nunchuk::WalletType &wallet_type) {
+    switch (wallet_type) {
+    case nunchuk::WalletType::MULTI_SIG:
+        return "MULTI_SIG";
+    case nunchuk::WalletType::SINGLE_SIG:
+        return "SINGLE_SIG";
+    case nunchuk::WalletType::ESCROW:
+        return "ESCROW";
+    case nunchuk::WalletType::MINISCRIPT:
+        return "MINISCRIPT";
+    default:
+        return "UNKNOWN";
+    }
 }
 
 nunchuk::ScriptNodeId qUtils::ScriptNodeIdFromString(const QString &path) {

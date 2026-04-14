@@ -21,6 +21,7 @@ AppContext::AppContext(QObject *parent)
 , m_groupWallets(QGroupWallets::instance())
 , m_rightPanelNavigator(new RightPanelNavigator(this))
 , m_appSetting(AppSetting::instance())
+, m_sharedWallets(QSharedWallets::instance())
  {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -71,6 +72,11 @@ RightPanelNavigator *AppContext::rightPanelNavigator() const {
 
 AppSetting *AppContext::appSetting() const {
     return m_appSetting;
+}
+
+QSharedWallets *AppContext::sharedWallets() const
+{
+    return m_sharedWallets;
 }
 
 } // namespace app

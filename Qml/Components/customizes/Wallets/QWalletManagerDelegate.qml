@@ -26,23 +26,27 @@ import "../../customizes"
 import "../../customizes/Wallets"
 import "../Texts"
 import "../Buttons"
-import "../../../../localization/STR_QML.js" as STR
 
 QWalletDelegateBackground {
     id: wldlg
     width: 304
-    height: hasOwner ? 110 : 78
+    height: gradientTopHeight + gradientBottomHeight
     property bool   isCurrentIndex: false
     property bool   isEscrow: false
     property bool   isShared: false
     property string walletName      : "Name"
     property string walletBalance   : "0.0000000"
     property string walletCurrency  : "0.0000000"
-    property int walletM: 0
-    property int walletN: 0
+    property int    walletM: 0
+    property int    walletN: 0
     property var    primaryOwner
     property bool   mouseActive: true
-    property int walletType: 0
+    property int    walletType: 0
+
+
+    signal buttonClicked()
+    signal dashboard()
+    signal alertCountClicked()
 
     function getWalletTypeDes() {
         if (walletType === NUNCHUCKTYPE.MINISCRIPT) {
@@ -63,7 +67,7 @@ QWalletDelegateBackground {
     Column {
         anchors.verticalCenter: parent.verticalCenter
         Row {
-            height: 78
+            height: gradientTopHeight
             spacing: 8
             Rectangle {
                 width: 8
@@ -129,7 +133,7 @@ QWalletDelegateBackground {
                 Item {
                     width: parent.width
                     height: 16
-                    visible: (isDashboard && walletRole !== "OBSERVER") && !isReplaced
+                    visible: (isDashboard && walletRole !== "OBSERVER") && !isReplaced && !isSandboxWallet
                     QTextLink {
                         width: 56
                         height: 16
@@ -173,6 +177,7 @@ QWalletDelegateBackground {
                                  else if (isSandboxWallet && !isReplaced) return "qrc:/Images/Images/sandboxGroup.svg"
                                  else if (isAssisted && !isReplaced) return "qrc:/Images/Images/collab-wallet-dark.svg"
                                  else return ""
+                                 
                     label.text: if (isShared) return STR.STR_QML_438
                                 else if (isSandboxWallet && !isReplaced) return STR.STR_QML_1675
                                 else if (isAssisted && !isReplaced) return STR.STR_QML_679
@@ -198,7 +203,7 @@ QWalletDelegateBackground {
             }
         }
         Item {
-            height: 32
+            height: gradientBottomHeight
             width: wldlg.width
             visible: hasOwner
             Row {
@@ -229,7 +234,60 @@ QWalletDelegateBackground {
                 }
             }
         }
+        Item {
+            height: gradientBottomHeight
+            width: wldlg.width
+            visible: alertCount > 0 && isSandboxWallet
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    alertCountClicked()
+                }
+            }
+            QLato {
+                width: parent.width
+                anchors{
+                    left: parent.left
+                    leftMargin: 16
+                    verticalCenter: parent.verticalCenter
+                }
+                text: STR.STR_QML_934
+                font.pixelSize: 12
+                color: "#FFFFFF"
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+            }
+            Rectangle {
+                anchors{
+                    right: parent.right
+                    rightMargin: 12 + 24
+                    verticalCenter: parent.verticalCenter
+                }
+                width: 24
+                height: 24
+                radius: 24
+                color: "#CF4018"
+                QLato {
+                    width: parent.width
+                    height: parent.height
+                    color: "#FFFFFF"
+                    anchors.centerIn: parent
+                    text: alertCount
+                    font.pixelSize: 12
+                    font.weight: Font.Bold
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            QIcon {
+                iconSize: 24
+                source: "qrc:/Images/Images/chevron-right-light.svg"
+                anchors{
+                    right: parent.right
+                    rightMargin: 0
+                    verticalCenter: parent.verticalCenter
+                }
+            }
+        }
     }
-    signal buttonClicked()
-    signal dashboard()
 }

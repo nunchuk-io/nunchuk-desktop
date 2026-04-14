@@ -101,12 +101,12 @@ Item {
                     radius: 8
                     fontSize: 10
                 }
-                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
             }
             QLato {
                 width: 146
                 height: 16
-                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                 text: {
                     if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
                         var card_id = dataSingle.single_device_cardid

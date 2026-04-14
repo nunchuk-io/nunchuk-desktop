@@ -136,10 +136,30 @@ Rectangle {
                         delegate: QPendingGroupWallet {
                             width: pendingGroupList.width
                             name_group: model.group_name
+                            inviter_email: model.group_InviterEmail
+                            isInviter: model.group_isInviter
                             isCurrentIndex: (!walletList.visible) ? (pendingGroupList.visible) && (index === pendingGroupList.currentIndex) :
                                                                     (pendingGroupList.visible) && (index === pendingGroupList.currentIndex)
                                                                     && (GlobalData.listFocusing === _FOCUS_PENDING_GROUP_WALLET)
 
+                            onDeny: {
+                                GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
+                                GroupWallet.currentIndex = index
+                                var obj = {
+                                    type: "denySandbox",
+                                    group_id: model.group_id
+                                }
+                                askDeny(obj)
+                            }
+                            onAccept: {
+                                GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
+                                GroupWallet.currentIndex = index
+                                var obj = {
+                                    type: "acceptSandbox",
+                                    group_id: model.group_id
+                                }
+                                QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
+                            }
                             onButtonClicked: {
                                 GlobalData.listFocusing = _FOCUS_PENDING_GROUP_WALLET
                                 SharedWallet.currentIndex = index

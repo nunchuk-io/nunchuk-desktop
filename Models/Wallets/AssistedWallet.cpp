@@ -36,8 +36,10 @@ void AssistedWallet::convert(const nunchuk::Wallet w)
     inheritancePlanPtr();
     QGroupDashboardPtr dash = dashboard();
     if (dash && dash->myInfo().isEmpty()) {
-        dash->GetMemberInfo();
-        dash->GetAlertsInfo();
+        if(isReplaced()){
+            dash->GetMemberInfo();
+            dash->GetAlertsInfo();
+        }
         dash->GetHealthCheckInfo();
         dash->GetWalletInfo();
     }
@@ -371,7 +373,7 @@ void AssistedWallet::CancelAssistedTxs(const QString &txid)
 void AssistedWallet::CreateAsisstedTxs(const QString &txid, const QString &psbt, const QString &memo)
 {
     DBG_INFO << "tx_id:" << txid << "wallet status:" << status() << "replace: " << isReplaced();
-    if(isReplaced()){
+    if(isReplaced()/* && !isAssistedWallet()*/){
         return;
     }
     features::transactions::usecases::CreateTransactionInput  input;

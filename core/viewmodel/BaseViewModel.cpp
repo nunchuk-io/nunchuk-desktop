@@ -1,7 +1,6 @@
 #include "BaseViewModel.h"
 #include "QEventProcessor.h"
 #include "ViewsEnums.h"
-#include "core/ui/GuardMacros.h"
 #include "core/ui/UiServices.inc"
 #include <QTimer>
 
@@ -36,6 +35,11 @@ void BaseViewModel::cancel() {
 
 void BaseViewModel::back() {
     GUARD_SUB_SCREEN_MANAGER()
+    if (backToScreen() >= 0) {
+        subMng->clear();
+        QEventProcessor::instance()->sendEvent(backToScreen());
+        return;
+    }
     subMng->back();
 }
 

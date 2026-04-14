@@ -34,4 +34,5 @@ QtObject {
     property var single_isOccupied
     property var single_needPassphrase
     property var single_enabled
+    property var single_platformkeyPolicyType
 }

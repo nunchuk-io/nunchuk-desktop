@@ -181,9 +181,25 @@ void QMiniscriptSandbox::UpdateGroup(const QString &name, const QString& script_
 
 void QMiniscriptSandbox::setSandbox(const nunchuk::GroupSandbox& sandbox) {
     m_sandbox = sandbox;
+
+    bool has_platformkey = sandbox.get_platform_key().has_value();
+    std::vector<std::string> platformkey_slots = has_platformkey ? sandbox.get_platform_key_slots() : std::vector<std::string>{};
+    DBG_INFO << "has_platformkey: " << has_platformkey << " platformkey_slots: " << platformkey_slots.size();
+
     if (walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
         QString uid = QSharedWallets::instance()->uid();
         auto find = [&](const std::string key_name) -> QSingleSignerPtr {
+            bool platform_key_contains = has_platformkey
+                                             ? (std::find(platformkey_slots.begin(), platformkey_slots.end(), key_name) != platformkey_slots.end())
+                                             : false;
+
+            if (platform_key_contains) {
+                QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner());
+                signerPtr->setSignerType((int)ENUNCHUCK::SignerType::PLATFORM);
+                signerPtr->setPlatformkeyPolicyType(platformkeyPolicyType());
+                return signerPtr;
+            }
+
             auto signer = sandbox.get_named_signers().at(key_name);
             if (signer.get_master_fingerprint().empty()) {
                 QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
@@ -212,8 +228,7 @@ void QMiniscriptSandbox::setSandbox(const nunchuk::GroupSandbox& sandbox) {
                 return QSingleSignerPtr(new QSingleSigner(localSigner));
             }
             return QSingleSignerPtr(nullptr);
-        };    
-        
+        };
 
         if (auto gw = AppModel::instance()->newWalletInfoPtr()) {
             if (isReplace()) {
@@ -242,6 +257,31 @@ void QMiniscriptSandbox::setSandbox(const nunchuk::GroupSandbox& sandbox) {
                 //     }
                 // }
             } else {
+                if (has_platformkey) {
+                    std::set<std::string> platform_slot_set(platformkey_slots.begin(), platformkey_slots.end());
+
+                    auto miniscriptMaps = gw->signersMiniscript();
+                    for (auto it = miniscriptMaps.begin(); it != miniscriptMaps.end(); ++it) {
+                        const QString keyName = it.key();
+                        QSingleSignerPtr signerPtr = it.value();
+                        if (!signerPtr.isNull()
+                            && signerPtr->signerType() == (int)ENUNCHUCK::SignerType::PLATFORM
+                            && platform_slot_set.find(keyName.toStdString()) == platform_slot_set.end()) {
+                            gw->removeSignersMiniscript(keyName);
+                        }
+                    }
+                } else {
+                    auto miniscriptMaps = gw->signersMiniscript();
+                    for (auto it = miniscriptMaps.begin(); it != miniscriptMaps.end(); ++it) {
+                        const QString keyName = it.key();
+                        QSingleSignerPtr signerPtr = it.value();
+                        if (!signerPtr.isNull()
+                            && signerPtr->signerType() == (int)ENUNCHUCK::SignerType::PLATFORM) {
+                            gw->removeSignersMiniscript(keyName);
+                        }
+                    }
+                }
+
                 auto maps = sandbox.get_named_signers();
                 for (std::map<std::string, nunchuk::SingleSigner>::iterator it = maps.begin(); it != maps.end(); it++ ){
                     std::string keyName = it->first;
@@ -258,6 +298,102 @@ void QMiniscriptSandbox::setSandbox(const nunchuk::GroupSandbox& sandbox) {
         QNormalSandbox::setSandbox(sandbox);
     }
 }
+
+// void QMiniscriptSandbox::setSandbox(const nunchuk::GroupSandbox& sandbox) {
+//     m_sandbox = sandbox;
+
+//     bool has_platformkey = sandbox.get_platform_key().has_value();
+//     std::vector<std::string> platformkey_slots = has_platformkey ? sandbox.get_platform_key_slots() : std::vector<std::string>{};
+//     DBG_INFO << "has_platformkey: " << has_platformkey << " platformkey_slots: " << platformkey_slots.size();
+
+//     if (walletType() == (int)nunchuk::WalletType::MINISCRIPT) {
+//         QString uid = QSharedWallets::instance()->uid();
+//         auto find = [&](const std::string key_name) -> QSingleSignerPtr {
+//             if(has_platformkey) {
+//                 bool platform_key_contains = platformkey_slots.size() > 0 ? std::find(platformkey_slots.begin(), platformkey_slots.end(), key_name) != platformkey_slots.end() : false;
+//                 if(platform_key_contains){
+//                     QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner());
+//                     signerPtr->setSignerType((int)ENUNCHUCK::SignerType::PLATFORM);
+//                     signerPtr->setName("Platform key");
+//                     return signerPtr;
+//                 }
+//                 return QSingleSignerPtr(nullptr);
+//             }
+//             else {
+//                 auto signer = sandbox.get_named_signers().at(key_name);
+//                 if (signer.get_master_fingerprint().empty()) {
+//                     QSingleSignerPtr signerPtr = QSingleSignerPtr(new QSingleSigner(signer));
+//                     if (signer.get_name() == "ADDED") {
+//                         // Signer at this key_name has been added, but its info is encrypted
+//                         // Display gray out `placeholder`, don't allow add signer here
+//                         return signerPtr;
+//                     } else if (sandbox.get_named_occupied().contains(key_name)) {
+//                         // Signer at this key_name has not been added yet
+//                         std::pair<time_t, std::string> ts_uid = sandbox.get_named_occupied().at(key_name);
+//                         time_t timeout = 5 * 60; // 5 minutes
+//                         if (ts_uid.first + timeout > std::time(0) && ts_uid.second != uid.toStdString()) {
+//                             // Slot occupied by other device is not timeout
+//                             // Display `Occupied`, don't allow add signer here
+//                             signerPtr->setIsOccupied(true);
+//                         } else {
+//                             // Allow add signer here
+//                             signerPtr->setIsOccupied(false);
+//                         }
+//                         return signerPtr;
+//                     }
+//                     return QSingleSignerPtr(nullptr);
+//                 } else {
+//                     QWarningMessage msg;
+//                     nunchuk::SingleSigner localSigner = bridge::nunchukGetOriginSingleSigner(signer, msg);
+//                     return QSingleSignerPtr(new QSingleSigner(localSigner));
+//                 }
+//                 return QSingleSignerPtr(nullptr);
+//             }
+//         };
+
+//         if (auto gw = AppModel::instance()->newWalletInfoPtr()) {
+//             if (isReplace()) {
+//                 // if (auto list = AppModel::instance()->walletListPtr()) {
+//                 //     auto currentWallet = list->getWalletById(QString::fromStdString(m_sandbox.get_replace_wallet_id()));
+//                 //     if (currentWallet) {
+//                 //         auto wallet = currentWallet->nunchukWallet();
+//                 //         QVariantList groupKeys;
+//                 //         for (int i = 0; i < sandbox.get_n(); i++) {
+//                 //             auto newSigner = sandbox.get_signers().at(i);
+//                 //             auto oldSigner = wallet.get_signers().at(i);
+//                 //             QSingleSignerPtr signerPtr = find(i);
+//                 //             if (newSigner.get_master_fingerprint() == oldSigner.get_master_fingerprint()) {
+//                 //                 signerPtr->setIsReplaced(false);
+//                 //             } else if (newSigner.get_master_fingerprint().empty()) {
+//                 //                 signerPtr->setIsReplaced(false);
+//                 //                 signerPtr->setMasterFingerPrint(QString::fromStdString(oldSigner.get_master_fingerprint()));
+//                 //             } else {
+//                 //                 signerPtr->setIsReplaced(true);
+//                 //                 auto oldPtr = QSingleSignerPtr(new QSingleSigner(oldSigner));
+//                 //                 signerPtr->setKeyReplaced(oldPtr);
+//                 //             }
+//                 //             groupKeys.insert(i, SingleSignerListModel::useQml(signerPtr));
+//                 //         }
+//                 //         m_groupKeys = groupKeys;
+//                 //     }
+//                 // }
+//             } else {
+//                 auto maps = sandbox.get_named_signers();
+//                 for (std::map<std::string, nunchuk::SingleSigner>::iterator it = maps.begin(); it != maps.end(); it++ ){
+//                     std::string keyName = it->first;
+//                     QSingleSignerPtr signerPtr = find(keyName);
+//                     if(!signerPtr.isNull()) {
+//                         gw->updateSignersMiniscript(QString::fromStdString(keyName), signerPtr, false);
+//                     }
+//                 }
+//             }
+//             gw->configureWallet(QString::fromStdString(sandbox.get_miniscript_template()));
+//         }
+//         emit groupSandboxChanged();
+//     } else {
+//         QNormalSandbox::setSandbox(sandbox);
+//     }
+// }
 
 bool QMiniscriptSandbox::AddSignerToGroup(const nunchuk::SingleSigner &signer)
 {

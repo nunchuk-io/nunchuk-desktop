@@ -182,6 +182,9 @@ public:
     void setNeedBackup(bool val);
     bool allowAssignToWallet() const;
 
+    QString platformkeyPolicyType() const;
+    void setPlatformkeyPolicyType(const QString &platformkeyPolicyType);
+    
     QSingleSignerPtr clone();
 
 private:
@@ -209,6 +212,7 @@ private:
     QString m_address;
     bool m_isReplaced {false};
     QSingleSignerPtr m_keyReplaced {nullptr};
+    QString m_platformkeyPolicyType {};
 
     // Taproot only
     int  m_keyset_index {0};
@@ -310,6 +314,7 @@ public:
         single_signer_needPassphrase_Role,
         single_signer_needBackup_Role,
         single_signer_allowAssignToWallet_Role,
+        single_signer_platformkeyPolicyType_Role
     };
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;

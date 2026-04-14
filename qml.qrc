@@ -5,6 +5,7 @@
         <file>Qml/core/ScreenHost.qml</file>
         <file>Qml/core/SubScreenHost.qml</file>
         <file>Qml/core/ToastHost.qml</file>
+        <file>Qml/core/buttons/QPlusButton.qml</file>
         <file>Qml/Components/customizes/QBoxShadow.qml</file>
         <file>Qml/Components/customizes/QConnection.qml</file>
         <file>Qml/Components/customizes/QScreen.qml</file>
@@ -590,6 +591,7 @@
         <file>Qml/Components/customizes/Wallets/QDraftWalletKeyDeletage.qml</file>
         <file>Qml/Components/customizes/Wallets/QRegisterWalletOnHardware.qml</file>
         <file>Qml/Components/customizes/Wallets/QGroupSandboxSetting.qml</file>
+        <file>Qml/Components/customizes/Wallets/QAddInvites.qml</file>
         <file>Qml/Components/customizes/Wallets/QWalletConfigCustomize.qml</file>
         <file>Qml/Components/customizes/QRCodes/QQrExportGroupWallet.qml</file>
         <file>Qml/Components/customizes/Wallets/QSandboxAddAnExistingKey.qml</file>
@@ -777,6 +779,13 @@
         <file>Qml/features/signers/QRecoverViaXPRV.qml</file>
         <file>Qml/features/signers/QAddHardwareExistingKey.qml</file>
         <file>Qml/features/signers/QAddKeyProcessLoading.qml</file>
+        <file>Qml/features/signers/QPlatformKeyPolicies.qml</file>
+        <file>Qml/features/signers/QGlobalPlatformKeyPolicies.qml</file>
+        <file>Qml/features/signers/QPerKeyPlatformKeyPolicies.qml</file>
+        <file>Qml/features/signers/platform/QRadioSelectPolicy.qml</file>
+        <file>Qml/features/signers/platform/QPlatformKeyPolicyDelegate.qml</file>
+        <file>Qml/features/signers/platform/QSetupEnableToggle.qml</file>
+        <file>Qml/features/signers/platform/QSetupSpendingLimit.qml</file>
         <file>Qml/features/claiming/offchain/QExportCompleted.qml</file>
         <file>Qml/features/common/QResultSuccess.qml</file>
         <file>Qml/features/claiming/offchain/QYourPlanRequiresTwoInheritanceKeys.qml</file>
@@ -790,7 +799,16 @@
         <file>Qml/features/claiming/QConfirmTransaction.qml</file>
         <file>Qml/features/claiming/QTransactionDetails.qml</file>
         <file>Qml/features/claiming/QTransactionDetailsClaimed.qml</file>
+        <file>Qml/features/transactions/QConfirmTransaction.qml</file>
+        <file>Qml/features/transactions/QTransactionDetails.qml</file>
+        <file>Qml/features/transactions/QSignaturesRequired.qml</file>        
+        <file>Qml/features/transactions/QNormalTransactionDetails.qml</file>
+        <file>Qml/features/transactions/QOnClaimTransactionDetails.qml</file>
+        <file>Qml/features/transactions/QOffClaimTransactionDetails.qml</file>
+        <file>Qml/features/transactions/QGroupDummyTransactionDetails.qml</file>
         <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeAScrollable.qml</file>
+        <file>Qml/features/signers/QEditPlatformKeyPolicies.qml</file>
+        <file>Qml/features/draftwallets/QGroupSandboxInvites.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>
@@ -819,6 +837,7 @@
         <file>Images/chevron-left-dark.svg</file>
         <file>Images/chevron-right-dark-disabled.svg</file>
         <file>Images/chevron-right-dark.svg</file>
+        <file>Images/chevron-right-light.svg</file>
         <file>Images/first_page_24px_d.png</file>
         <file>Images/first_page_24px_n.png</file>
         <file>Images/last_page_24px_d.png</file>
@@ -966,6 +985,8 @@
         <file>Images/message-dark.svg</file>
         <file>Images/health-check-dark.svg</file>
         <file>Images/check-circle-dark.svg</file>
+        <file>Images/global-key.svg</file>
+        <file>Images/per-key.svg</file>
         <file>Images/Device_Icons/key-dark.svg</file>
         <file>Images/account-member-dark.svg</file>
         <file>Images/history-24px.svg</file>
@@ -1200,6 +1221,7 @@
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.png</file>
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg</file>
         <file>Images/editBIP32_red.svg</file>
+        <file>Images/FolderDashed.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

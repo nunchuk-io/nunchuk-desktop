@@ -150,7 +150,7 @@ Rectangle {
                 height: parent.height
                 width: typeText.width + 16
                 color: "#EAEAEA"
-                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                 radius: 20
                 QLato {
                     id: typeText

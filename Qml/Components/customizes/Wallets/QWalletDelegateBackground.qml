@@ -36,6 +36,34 @@ Item {
     property bool isSandboxWallet: false
     property bool isArchived: false
     property string walletRole: ""
+    property int alertCount: 0
+
+    readonly property int gradientTopHeight: {
+        if (isSandboxWallet) {
+            if(alertCount > 0) {
+                return 72
+            }
+            else{
+                return 78
+            }
+        } else {
+            return 78
+        }
+    }
+
+    readonly property int gradientBottomHeight: {
+        if (isSandboxWallet) {
+            if(alertCount > 0) {
+                return 48
+            }
+            else{
+                return 0
+            }
+        } else {
+            return hasOwner ? 32 : 0
+        }
+        
+    }
 
     readonly property string gradientFrom: {
         if(isArchived){
@@ -79,6 +107,14 @@ Item {
         }
     }
 
+    readonly property color bottomColor: {
+        if (isSandboxWallet) {
+            alertCount ? "#2C2C2C" : "#F5F5F5"
+        } else {
+            return "#F5F5F5"
+        }
+    }
+
     Item {
         id: _detail
         anchors.fill: parent
@@ -87,14 +123,9 @@ Item {
             anchors.fill: parent
             LinearGradient {
                 id: gradientItem
-                height: 78
+                height: gradientTopHeight
                 width: _item.width
-                start: {
-                    if (isSandboxWallet)
-                        return Qt.point(0, 0)
-                    else
-                        return Qt.point(0, 0)
-                }
+                start: Qt.point(0, 0)
                 end: {
                     if (isSandboxWallet)
                         return Qt.point(_item.width, _item.height)
@@ -108,8 +139,8 @@ Item {
             }
             Rectangle {
                 width: _item.width
-                height: hasOwner ? 32 : 0
-                color: "#F5F5F5"
+                height: gradientBottomHeight
+                color: bottomColor
             }
         }
     }

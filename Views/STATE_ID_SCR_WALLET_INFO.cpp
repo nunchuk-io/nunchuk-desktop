@@ -80,8 +80,10 @@ void EVT_WALLET_INFO_REMOVE_HANDLER(QVariant msg) {
             }
         }
         else {
-            DBG_INFO << "DELETE WALLET ID:" << wallet_id << wallet->slugs();
-            if (wallet->isAssistedWallet() || wallet->isClaimed()) {
+            bool donNeedPassword = wallet->isSandboxWallet() || (!wallet->isAssistedWallet() && !wallet->isClaimed());
+            DBG_INFO << "DELETE_WALLET_ID:" << wallet_id << wallet->slugs() << 
+            wallet->isAssistedWallet() << wallet->isClaimed() << wallet->isSandboxWallet() << "donNeedPassword: " << donNeedPassword;
+            if (!wallet->isSandboxWallet() && (wallet->isAssistedWallet() || wallet->isClaimed())) {
                 QMap<QString, QVariant> data;
                 data["state_id"] = E::STATE_ID_SCR_WALLET_INFO;
                 data["wallet_id"] = wallet->walletId();

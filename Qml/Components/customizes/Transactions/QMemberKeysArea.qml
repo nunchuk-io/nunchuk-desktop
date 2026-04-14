@@ -47,6 +47,7 @@ Item {
         Row {
             spacing: 8
             height: 20
+            visible: (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
             QText {
                 color: "#031F2B"
                 font.family: "Lato"
@@ -111,8 +112,10 @@ Item {
                     tx_status: transactionInfo.status
                     is_cosigning: transactionInfo.isCosigning
                     accountIndex: model.single_signer_account_index
+                    platformKeyMessage: transactionInfo.groupTransactionState
                     myRole: _item.myRole
                     signerEvents: _item.signerEvents
+                    visible: (model.single_signer_type === NUNCHUCKTYPE.PLATFORM && isDummy) ? false : true
                 }
                 section
                 {

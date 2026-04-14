@@ -100,6 +100,10 @@ nunchuk::SignerType GetSignerType(const QString &value);
 
 QString GetSignerTypeString(const nunchuk::SignerType value);
 
+QString GroupSpendingLimitIntervalToString(const nunchuk::GroupSpendingLimitInterval interval);
+
+nunchuk::GroupSpendingLimitInterval GroupSpendingLimitIntervalFromString(const QString &value);
+
 QString GetSHA256(const QString &value);
 
 QString CreateRequestToken(const QString &signature, const QString &fingerprint);
@@ -224,6 +228,7 @@ std::vector<nunchuk::CoinsGroup> GetCoinsGroupedBySubPolicies(const nunchuk::Scr
 nunchuk::AddressType AddressTypeFromStr(const QString &str);
 nunchuk::WalletTemplate WalletTemplateFromStr(const QString &str);
 nunchuk::WalletType WalletTypeFromStr(const QString &str);
+QString WalletTypeToStr(const nunchuk::WalletType &wallet_type);
 
 nunchuk::ScriptNodeId ScriptNodeIdFromString(const QString &path);
 QString ScriptNodeIdToString(const nunchuk::ScriptNodeId &id);

@@ -200,9 +200,16 @@ void ReplaceRequestListener(const std::string &walletId, const std::string &repl
     QThreadForwarder::instance()->forwardInQueuedConnection([walletId, replaceGroupId](){
         auto wallet = AppModel::instance()->walletInfoPtr();
         if (wallet) {
-            if (wallet.data()->isGlobalGroupWallet()) {
+            if (wallet.data()->isSandboxWallet()) {
                 wallet.data()->GetReplaceGroups();
             }
         }
+    });
+}
+
+void GroupWalletDashboardListener(const std::string &walletId)
+{
+    QThreadForwarder::instance()->forwardInQueuedConnection([walletId](){
+        DBG_INFO << "AddGroupWalletDashboardListener: " << walletId;
     });
 }

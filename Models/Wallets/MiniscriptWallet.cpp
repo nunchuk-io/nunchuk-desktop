@@ -324,6 +324,10 @@ QJsonObject MiniscriptWallet::getKeyDetails(const QJsonObject &oldKey, const QSt
         if (msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
             auto s = QSingleSignerPtr(new QSingleSigner(signer));
             if (s != nullptr) {
+                if (s->signerType() == (int)ENUNCHUCK::SignerType::PLATFORM) {
+                    s->setPlatformkeyPolicyType(this->platformkeyPolicyType());
+                }
+
                 if (!has_signer) {
                     qUtils::ParseSignerString(key, msg);
                     if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
@@ -362,8 +366,14 @@ QJsonObject MiniscriptWallet::getKeyDetails(const QJsonObject &oldKey, const QSt
             if (!p.isNull()) {
                 if (!p->masterFingerPrint().isEmpty()) {
                     keyStr = nunchuk::GetDescriptorForSigner(p->originSingleSigner(), nunchuk::DescriptorPath::EXTERNAL_ALL);
-                }                
-            }            
+                }
+                else if (p.data()->signerType() == (int)ENUNCHUCK::SignerType::PLATFORM) {
+                    keyDetails["key"] = key;
+                    keyDetails["keyObj"] = QJsonValue::fromVariant(SingleSignerListModel::useQml(p));
+                    keyDetails["keyStr"] = "PLATFORM";
+                    return keyDetails;
+                }
+            }
         }
         
         keyDetails = parseSignerString(oldKey, key, QString::fromStdString(keyStr));
@@ -1124,18 +1134,29 @@ bool MiniscriptWallet::importMiniscriptFile(const QString &filePath) {
     return true;
 }
 
+QMap<QString, QSingleSignerPtr> MiniscriptWallet::signersMiniscript() const {
+    return m_signersMiniscript;
+}
+
 void MiniscriptWallet::updateSignersMiniscript(const QString &key, const QSingleSignerPtr &value, bool autoreuse) {
     if (m_signersMiniscript.contains(key)) {
         auto old = m_signersMiniscript.value(key);
         if(!value.isNull() && !value->masterFingerPrint().isEmpty()) {
             m_signersMiniscript[key] = value; // Replace with new value
-        } else {
+        }
+        else if(value && value->signerType() == (int)(int)ENUNCHUCK::SignerType::PLATFORM) {
+            m_signersMiniscript[key] = value;
+        }
+        else {
             m_signersMiniscript[key] = old;
         }   
     } else {
         if(!value.isNull() && !value->masterFingerPrint().isEmpty()) {
             m_signersMiniscript.insert(key, value);
         } else if (!value.isNull() && value->isOccupied()) {
+            m_signersMiniscript.insert(key, value);
+        }
+        else if(value && value->signerType() == (int)(int)ENUNCHUCK::SignerType::PLATFORM) {
             m_signersMiniscript.insert(key, value);
         }
     }
@@ -1147,8 +1168,9 @@ void MiniscriptWallet::updateSignersMiniscript(const QString &key, const QSingle
                 if (!m_signersMiniscript.contains(k)) {
                     if(!value.isNull() && !value->masterFingerPrint().isEmpty()) {
                         m_signersMiniscript.insert(k, value);
+                    } else if(value && value->signerType() == (int)(int)ENUNCHUCK::SignerType::PLATFORM) {
+                        m_signersMiniscript.insert(k, value);
                     }
-
                 }
             }
         }

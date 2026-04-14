@@ -98,7 +98,7 @@ Item {
                     hasOwner: model.wallet_hasOwner
                     primaryOwner: model.wallet_primaryOwner
                     isHotWallet: model.wallet_isHotWallet
-                    isDashboard: model.wallet_slug !== ""
+                    isDashboard: model.wallet_slug !== "" || model.wallet_isSanboxWallet
                     isLocked: model.wallet_dashboard ? (model.wallet_dashboard.isLocked || model.wallet_isLocked || model.wallet_isReplaced) : false
                     isReplaced: model.wallet_isReplaced
                     isEscrow: model.wallet_Escrow
@@ -107,6 +107,7 @@ Item {
                     isSandboxWallet: model.wallet_isSanboxWallet
                     isArchived: model.wallet_isArchived
                     walletType: model.wallet_walletType
+                    alertCount: model.wallet_alerCount
                     mouseActive: false
                     onDashboard: {
                         GlobalData.listFocusing = _FOCUS_WALLET
@@ -122,6 +123,16 @@ Item {
                         GlobalData.listFocusing = _FOCUS_WALLET
                         var obj = {
                             type: "selected",
+                            data: index,
+                            group_id: model.wallet_group_id,
+                            wallet_id: model.wallet_id
+                        }
+                        QMLHandle.sendEvent(EVT.EVT_HOME_WALLET_SELECTED, obj)
+                    }
+                    onAlertCountClicked: {
+                        GlobalData.listFocusing = _FOCUS_WALLET
+                        var obj = {
+                            type: "wallet_dashboard",
                             data: index,
                             group_id: model.wallet_group_id,
                             wallet_id: model.wallet_id

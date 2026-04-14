@@ -22,12 +22,14 @@ class TransactionFlow : public core::flow::BaseFlow {
     bool isOnClaim();
     bool isNormal();
 
-    virtual void autoSignClaimingTransaction() = 0;
-    virtual void proceedTransaction(QVariant feeInput) = 0;
-    virtual void proceedTransaction(const nunchuk::Transaction &tx) = 0;
-    virtual void proceedTransaction(const QString &psbt_signed) = 0;
-    virtual bool isAllreadySigned() = 0;
-    virtual void manualClaimingTransaction(const nunchuk::Transaction &tx) = 0;
+    virtual void autoSignClaimingTransaction() {};
+    virtual void proceedTransaction(QVariant feeInput) {};
+    virtual void proceedTransaction(const nunchuk::Transaction &tx) {};
+    virtual void proceedTransaction(const QString &psbt_signed) {};
+    virtual bool isAllreadySigned() {
+        return false;
+    };
+    virtual void manualClaimingTransaction(const nunchuk::Transaction &tx) {};
   public slots:
     void bind(QObject *vm) override;
   signals:

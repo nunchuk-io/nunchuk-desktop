@@ -36,8 +36,4 @@ import "../../../localization/STR_QML.js" as STR
 
 QScreen {
     QTransactionDetails {}
-
-    Component.onCompleted: {
-        console.log("setSigninDummyTxData QML", AppModel.walletInfo.walletType, AppModel.walletInfo.walletId)
-    }
 }

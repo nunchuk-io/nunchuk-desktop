@@ -53,6 +53,7 @@ QMiniscriptPolicesDelegate {
                 single_isOccupied: itemData.single_signer_isOccupied
                 single_isReplaced: itemData.single_signer_isReplaced
                 single_keyReplaced: itemData.single_signer_keyReplaced
+                single_platformkeyPolicyType: itemData.single_signer_platformkeyPolicyType
             }            
         }
     }

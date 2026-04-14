@@ -11,7 +11,7 @@ using namespace features::transactions::usecases;
 using namespace features::signers::usecases;
 using features::transactions::flows::TransactionFlow;
 
-TransactionDetailsViewModel::TransactionDetailsViewModel(QObject *parent) : BaseTransactionViewModel(parent) {}
+TransactionDetailsViewModel::TransactionDetailsViewModel(QObject *parent) : GeneralTransactionDetailsViewModel(parent) {}
 
 TransactionFlow *TransactionDetailsViewModel::currentTransactionFlow() {
     GUARD_FLOW_MANAGER(nullptr)
@@ -52,52 +52,6 @@ void TransactionDetailsViewModel::importFileOnChainOrNormal(const QString &fileP
     } else {
         emit showToast(0, Strings.STR_QML_2117(), EWARNING::WarningType::ERROR_MSG);
     }
-}
-
-void TransactionDetailsViewModel::verifyAddress(const QString &address) {
-    GUARD_CLIENT_CONTROLLER()
-    AddressToVerifyInput input;
-    input.isLoginRequired = clientCtrl->isNunchukLoggedIn();
-    input.address = address;
-    input.wallet_id = walletId();
-    m_addressToVerifyUC.executeAsync(input, [this](const core::usecase::Result<AddressToVerifyResult> &result) {
-        if (result.isSuccess()) {
-            QString msg = QString("Address successfully verified");
-            emit showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
-        } else {
-            QString msg = QString("Address verification failed");
-            emit showToast(0, msg, EWARNING::WarningType::ERROR_MSG);
-        }
-    });
-}
-
-void TransactionDetailsViewModel::scanDevice() {
-    GUARD_CLIENT_CONTROLLER()
-    ScanDeviceInput input;
-    input.isLoginRequired = clientCtrl->isNunchukLoggedIn();
-    input.deviceType = "";
-    DBG_INFO << "Start scanning devices...";
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    m_scanDeviceUC.executeAsync(input, [this](core::usecase::Result<ScanDeviceResult> result) {
-        qApp->restoreOverrideCursor();
-        if (result.isSuccess()) {
-            QDeviceListModelPtr deviceList = QDeviceListModelPtr(new DeviceListModel());
-            if (deviceList) {
-                deviceList->clearList();
-                const auto &devices = result.value().devices;
-                for (const auto &device : devices) {
-                    QDevicePtr devicePtr = QDevicePtr(new QDevice(device));
-                    deviceList->addDevice(devicePtr);
-                }
-                GUARD_APP_MODEL()
-                appModel->setDeviceList(deviceList);
-                transactionInfo()->singleSignersAssigned()->requestSort();
-                transactionInfo()->refreshScanDevices();
-            }
-        } else {
-            emit showToast(0, result.error(), EWARNING::WarningType::ERROR_MSG);
-        }
-    });
 }
 
 void TransactionDetailsViewModel::setMemo(const QString &memo) {

@@ -100,6 +100,7 @@ public:
     void updateGroupMessage(const QString &wallet_id, const nunchuk::GroupMessage data);
     void updateGroupSandbox(const QString &wallet_id, const nunchuk::GroupSandbox data);
     void updateUnreadMessage(const QString &wallet_id, int number);
+    void updateIsSandboxWallet(bool isGroupWallet);
 
     enum WalletRoles {
         wallet_Id_Role,
@@ -134,6 +135,7 @@ public:
         wallet_numberSigner_Role,
         wallet_archived_Role,
         wallet_walletType_Role,
+        wallet_alerCount_Role
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

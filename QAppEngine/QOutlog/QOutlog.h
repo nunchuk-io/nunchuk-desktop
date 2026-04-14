@@ -20,7 +20,7 @@
 
 #ifndef QQOUTLOG_H
 #define QQOUTLOG_H
-
+#include <QApplication>
 #include <QString>
 #include <QSharedPointer>
 #include <QtCore/qdir.h>
@@ -220,14 +220,91 @@ public:
 
     inline QOutlog &operator<<(const QVariantList &list)
     {
-        mStream << '(';
-        for (int i = 0; i < list.count(); ++i) {
-            if (i) { mStream << ","; }
-            mStream << list.at(i).toString();  // Chuyển QVariant thành chuỗi để hiển thị
+        mStream << "[";
+        for (int i = 0; i < list.size(); ++i) {
+            if (i) mStream << ", ";
+
+            const QVariant &v = list.at(i);
+
+            if (!v.isValid() || v.isNull()) {
+                mStream << "null";
+            }
+            else if (v.canConvert<QVariantMap>()) {
+                QVariantMap map = v.toMap();
+                mStream << "{";
+                bool first = true;
+                for (auto it = map.cbegin(); it != map.cend(); ++it) {
+                    if (!first) mStream << ", ";
+                    first = false;
+                    mStream << it.key() << "=" << it.value().toString();
+                }
+                mStream << "}";
+            }
+            else if (v.canConvert<QVariantList>()) {
+                QVariantList nested = v.toList();
+                mStream << "[";
+                for (int j = 0; j < nested.size(); ++j) {
+                    if (j) mStream << ", ";
+                    mStream << nested[j].toString();
+                }
+                mStream << "]";
+            }
+            else {
+                mStream << v.toString();
+            }
         }
-        mStream << ')' << ' ';
+        mStream << "]";
         return *this;
     }
+
+    inline QOutlog &operator<<(const QVariantMap &map)
+    {
+        mStream << "{";
+        bool first = true;
+
+        for (auto it = map.cbegin(); it != map.cend(); ++it) {
+            if (!first) mStream << ", ";
+            first = false;
+
+            mStream << it.key() << "=";
+
+            const QVariant &v = it.value();
+
+            if (!v.isValid() || v.isNull()) {
+                mStream << "null";
+            }
+            else if (v.canConvert<QVariantMap>()) {
+                // recursive inline
+                QVariantMap nestedMap = v.toMap();
+                mStream << "{";
+                bool nestedFirst = true;
+                for (auto nit = nestedMap.cbegin(); nit != nestedMap.cend(); ++nit) {
+                    if (!nestedFirst) mStream << ", ";
+                    nestedFirst = false;
+                    mStream << nit.key() << "=" << nit.value().toString();
+                }
+                mStream << "}";
+            }
+            else if (v.canConvert<QVariantList>()) {
+                QVariantList list = v.toList();
+                mStream << "[";
+                for (int i = 0; i < list.size(); ++i) {
+                    if (i) mStream << ", ";
+                    mStream << list[i].toString();
+                }
+                mStream << "]";
+            }
+            else {
+                mStream << v.toString();
+            }
+        }
+
+        mStream << "}";
+        return *this;
+    }
+
+    // handle for QVariantlist
+
 private:
     QTextStream mStream;
     QString     mLogString;
@@ -284,12 +361,82 @@ public:
     }
 };
 
+// template<typename T>
+// class OurDeleterWithDeleteLater
+// {
+// public:
+//     void operator()(T* ptr) const noexcept
+//     {
+//         if (!ptr) return;
+//         ptr->deleteLater();
+//     }
+// };
+
+// template<typename T>
+// class OurSharedPointer : public QSharedPointer<T>
+// {
+// public:
+//     OurSharedPointer(T* ptr = nullptr) : QSharedPointer<T>(ptr, OurDeleterWithDeleteLater<T>()) {}
+//     bool isValid() const { return !this->isNull(); }
+// };
+
+template<typename T>
+struct OurDeleterWithDeleteLater
+{
+    void operator()(T* ptr) const noexcept
+    {
+        if (!ptr) {
+            return;
+        }
+
+        if constexpr (std::is_base_of_v<QObject, T>) {
+            QObject* obj = ptr;
+
+            if (!obj->thread() || obj->thread() == QThread::currentThread()) {
+                obj->deleteLater();
+                return;
+            }
+
+            if (QApplication::instance()) {
+                QMetaObject::invokeMethod(
+                    obj,
+                    [obj]() {
+                        if (obj) {
+                            obj->deleteLater();
+                        }
+                    },
+                    Qt::QueuedConnection
+                    );
+                return;
+            }
+
+            delete obj;
+        } else {
+            delete ptr;
+        }
+    }
+};
+
 template<typename T>
 class OurSharedPointer : public QSharedPointer<T>
 {
 public:
-    OurSharedPointer(T* ptr = nullptr) : QSharedPointer<T>(ptr, DeleterWithDeleteLater<T>()) {}
-    bool isValid() const { return !this->isNull(); }
+    using Base = QSharedPointer<T>;
+
+    OurSharedPointer() noexcept = default;
+
+    // handle nullptr
+    OurSharedPointer(std::nullptr_t) noexcept : Base(nullptr) {}
+
+    // handle NULL (__null / 0)
+    OurSharedPointer(int) noexcept : Base(nullptr) {}
+    OurSharedPointer(long) noexcept : Base(nullptr) {}
+
+    // normal pointer
+    explicit OurSharedPointer(T* ptr)
+        : Base(ptr, OurDeleterWithDeleteLater<T>{}) {}
+
+    bool isValid() const noexcept { return !this->isNull(); }
 };
 
 #endif // QQOutlog_H

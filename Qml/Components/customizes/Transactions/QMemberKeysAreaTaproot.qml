@@ -98,6 +98,9 @@ Item {
                 keysetRemaining: model.single_signer_keyset_remaining
                 isValueKey: model.single_signer_value_key
                 signerEvents: _item.signerEvents
+                platformKeyMessage:  transactionInfo.groupTransactionState
+
+                visible: (model.single_signer_type === NUNCHUCKTYPE.PLATFORM && isDummy) ? false : true
             }
             Component.onCompleted: GlobalData.showOthersKeyset = true
         }

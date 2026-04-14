@@ -29,6 +29,7 @@ import QRCodeItem 1.0
 import DataPool 1.0
 import DRACO_CODE 1.0
 import EWARNING 1.0
+import Features.Wallets.ViewModels 1.0
 import "../../Components/origins"
 import "../../Components/customizes"
 import "../../Components/customizes/Chats"
@@ -37,7 +38,6 @@ import "../../Components/customizes/Buttons"
 import "../../Components/customizes/Wallets"
 import "../../Components/customizes/Members"
 import "../../Components/RightPannel/Wallet/Dashboard"
-import "../../../localization/STR_QML.js" as STR
 
 Rectangle {
     id: pendingDashboard
@@ -88,11 +88,13 @@ Rectangle {
             spacing: 24
             property int unitSelected: AppSetting.unit
             property bool enableFixedPrecision: AppSetting.enableFixedPrecision
+            HomePendingAcceptedViewModel {
+                id: vm
+            }
             Item {
                 width: parent.width
                 height: 48
-                QText {
-                    font.family: "Lato"
+                QLato {
                     font.pixelSize: 28
                     font.weight: Font.Bold
                     text: dashboardInfo.hasWallet ? AppModel.walletInfo.walletName : STR.STR_QML_944
@@ -226,6 +228,30 @@ Rectangle {
                 }
             }
             Item {
+                id: noInformation
+                width: parent.width
+                height: parent.height - 96
+                visible: _alert.count === 0 && _healthy.count === 0 && _members.count === 0
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 12
+                    QIcon {
+                        iconSize: 120
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        source: "qrc:/Images/Images/FolderDashed.svg"
+                    }
+                    QLato {
+                        width: 517
+                        height: 24
+                        text:STR.STR_QML_2142
+                        font.weight: Font.Bold
+                        color: "#757575"
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+            }
+            Item {
                 id: alertGroup
                 width: parent.width
                 height: Math.min(224, 24 + 12 + 12 + 88*_alert.count)
@@ -272,7 +298,7 @@ Rectangle {
                                 QDashboardAlert {
                                     width: parent.width
                                     onClickView: {
-                                        GroupWallet.markRead(modelData.id)
+                                        vm.onViewClicked(modelData.id)
                                         if (modelData.type === AlertType.REQUEST_INHERITANCE_PLANNING_APPROVED) {
                                             _info1.open()
                                             _info1.contentText = STR.STR_QML_1048
@@ -295,7 +321,7 @@ Rectangle {
                                     }
 
                                     onClickDismiss: {
-                                        GroupWallet.dismiss(modelData.id)
+                                        vm.onDismissClicked(modelData.id)
                                     }
                                 }
                             }

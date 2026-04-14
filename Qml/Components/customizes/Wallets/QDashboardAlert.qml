@@ -118,7 +118,10 @@ Rectangle {
                          modelData.type === AlertType.SETUP_INHERITANCE_PLAN ||
                          modelData.type === AlertType.BACKUP_WALLET ||
                          modelData.type === AlertType.CHANGE_TIMELOCK_TYPE ||
-                         modelData.type === AlertType.KEY_TIMELOCK_UPDATE_PENDING
+                         modelData.type === AlertType.KEY_TIMELOCK_UPDATE_PENDING ||
+                         modelData.type === AlertType.POLICY_CHANGE_IN_PROGRESS ||
+                         modelData.type === AlertType.POLICY_CHANGED ||
+                         modelData.type === AlertType.REPLACE_WALLET
                 onButtonClicked: {
                     clickView()
                 }

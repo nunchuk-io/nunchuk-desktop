@@ -10,7 +10,7 @@
 #include "AppSetting.h"
 #include "AppModel.h"
 
-bool SignInViaDummy::offChainSignInViaDigitalSignature(const QString &bsms)
+bool SignInViaDummy::SignInUsingXPUBorWallet(const QString &bsms)
 {
     QJsonObject output;
     QString errormsg = "";
@@ -24,29 +24,7 @@ bool SignInViaDummy::offChainSignInViaDigitalSignature(const QString &bsms)
         if (dashboard()) {
             dashboard()->setFlow((int)AlertEnum::E_Alert_t::WELCOME_SIGN_IN_SIGNATURE_XPUB);
             if (auto dummy = dashboard()->groupDummyTxPtr()) {
-                dummy->setSigninDummyTxData(dummy_transaction, bsms);
-            }
-        }
-        QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);
-    }
-    return ret;
-}
-
-bool SignInViaDummy::onChainSignInViaDigitalSignature(const QString &bsms)
-{
-    QJsonObject output;
-    QString errormsg = "";
-    bool ret {false};
-    ret = Draco::instance()->SignInUsingXPUBorWallet(bsms, output, errormsg);
-    DBG_INFO << ret << output;
-    if(ret){
-        QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
-        m_dummy_SignIn = output;
-        convertWallet();
-        if (dashboard()) {
-            dashboard()->setFlow((int)AlertEnum::E_Alert_t::WELCOME_SIGN_IN_SIGNATURE_XPUB);
-            if (auto dummy = dashboard()->groupDummyTxPtr()) {
-                dummy->setSigninDummyTxData(dummy_transaction, bsms);
+                dummy->setDummyTxData(dummy_transaction);
             }
         }
         QEventProcessor::instance()->sendEvent(E::EVT_HEALTH_CHECK_STARTING_REQUEST);

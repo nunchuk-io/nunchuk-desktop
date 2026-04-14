@@ -7,6 +7,7 @@
 #include "TypeDefine.h"
 #include "Commons/QStateFlow.h"
 #include <QTimer>
+#include "core/viewmodel/DefinePropertyMacros.h"
 
 class QNormalSandbox : public QStateFlow
 {
@@ -19,10 +20,14 @@ class QNormalSandbox : public QStateFlow
     Q_PROPERTY(QVariantList groupKeys        READ groupKeys                                            NOTIFY groupSandboxChanged)
     Q_PROPERTY(QString      url              READ url                                                  NOTIFY groupSandboxChanged)
     Q_PROPERTY(int          userCount        READ userCount                                            NOTIFY groupSandboxChanged)
-    Q_PROPERTY(bool enoughSigner             READ enoughSigner                                         NOTIFY groupSandboxChanged)
-    Q_PROPERTY(bool isReplace                READ isReplace                         CONSTANT)
-    Q_PROPERTY(bool isRecovery               READ isRecovery                        CONSTANT)
-    Q_PROPERTY(bool isCreate                 READ isCreate                        CONSTANT)
+    Q_PROPERTY(bool         enoughSigner     READ enoughSigner                                         NOTIFY groupSandboxChanged)
+    Q_PROPERTY(bool         isReplace        READ isReplace                                            CONSTANT)
+    Q_PROPERTY(bool         isRecovery       READ isRecovery                                           CONSTANT)
+    Q_PROPERTY(bool         isCreate         READ isCreate                                             CONSTANT)
+    Q_PROPERTY(QString platformkeyPolicyType READ platformkeyPolicyType                                NOTIFY groupSandboxChanged)
+    DEFINE_QT_PROPERTY(QString, groupEmail)
+    DEFINE_QT_PROPERTY(bool, isInviter)
+    DEFINE_QT_PROPERTY(QString, inviterId)
 
 public:
     QNormalSandbox();
@@ -40,7 +45,7 @@ public:
     int addressType() const;
     void setAddressType(int addressType);
     int walletType() const;
-
+    QString platformkeyPolicyType();
     QString url() const;
     QVariantList groupKeys() const;
 

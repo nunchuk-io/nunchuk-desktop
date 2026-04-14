@@ -44,6 +44,7 @@
 #include "Premiums/QWalletServicesTag.h"
 #include "Premiums/QGroupWalletDummyTx.h"
 #include "QThreadForwarder.h"
+#include "Premiums/QSharedWallets.h"
 
 QNunchukRoom::QNunchukRoom(Room *r):
     m_room(r),
@@ -2041,6 +2042,10 @@ void QNunchukRoom::nunchukNoticeEvent(const RoomEvent &evt)
                        || msgtype.contains("io.nunchuk.custom.claiming_wallet_updated", Qt::CaseInsensitive))
             {
                 AppModel::instance()->requestCreateUserWallets();
+            }
+            else if (msgtype.contains("io.nunchuk.custom.shared", Qt::CaseInsensitive))
+            {
+                QSharedWallets::instance()->GetAllGroups();
             }
             else {
                 // for honey badger

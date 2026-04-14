@@ -156,6 +156,7 @@ void SyncWalletFromRemoteUseCase::walletCached(const QJsonObject &walletData) {
     cachedData.hideFiatCurrency = walletData.value("hide_fiat_currency").toBool();
     cachedData.registered = true;
     cachedData.isClaimed = walletData.value("is_claimed").toBool();
+    DBG_INFO << "walletCached: " << wallet_id << cachedData.isClaimed << walletData.value("name").toString();
     AppSetting::instance()->setWalletCached(wallet_id, cachedData);
 }
 

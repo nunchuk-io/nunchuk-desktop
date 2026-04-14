@@ -153,7 +153,7 @@ void EVT_ONBOARDING_ACTION_REQUEST_HANDLER(QVariant msg) {
     else if (type == "enter-link-url" || type == "enter-link-qr-url") {
         QString sandboxUrl = msg.toMap()["sandboxUrl"].toString();
         DBG_INFO << sandboxUrl;
-        AppModel::instance()->setNewWalletInfo(new Wallet());
+        AppModel::instance()->setNewWalletInfo(QWalletPtr(new Wallet()));
         if (auto w = AppModel::instance()->newWalletInfoPtr()) {
             w->setWalletOptType((int)ENUNCHUCK::WalletOptionType_t::E_GROUP_WALLET);
             if (auto sandbox = w->groupSandboxPtr()) {

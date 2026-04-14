@@ -106,9 +106,9 @@ Item {
     function getKeyHeight() {
         if(miniscript.keyObj !== null && miniscript.keyObj !== undefined) {
             if (miniscript.keyObj.singleSigner_derivationPath !== undefined && miniscript.keyObj.singleSigner_derivationPath !== null && useDerivationPath) {
-                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 76 : 38
+                return ((miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER) && (miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM)) ? 76 : 56
             } else {
-                return miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER ? 58 : 38
+                return ((miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.SERVER) && (miniscript.keyObj.single_signer_type !== NUNCHUCKTYPE.PLATFORM)) ? 58 : 38
             }            
         } else {
             return 48

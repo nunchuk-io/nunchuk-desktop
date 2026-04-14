@@ -233,40 +233,60 @@ QString QGroupMessageModel::convertLinksToHtml(const QString &text) const{
 
 void QGroupMessageModel::startDownloadConversation(const QString &wallet_id)
 {
-    DBG_INFO << "wallet_id";
+    DBG_INFO << wallet_id;
     m_wallet_id = wallet_id;
-    QPointer<QGroupMessageModel> safeThis(this);
-    runInThread([wallet_id]() -> std::vector<nunchuk::GroupMessage> {
-        QWarningMessage msg;
-        int page_num = 0;
-        const int page_size = 50;
-        bool more_data = true;
-        std::vector<nunchuk::GroupMessage> list;
 
-        while (more_data) {
-            auto ret = bridge::GetGroupMessages(wallet_id.toStdString(), page_num, page_size, true, msg);
-            list.insert(list.end(), ret.begin(), ret.end());
-            if (ret.size() == static_cast<size_t>(page_size)) {
-                page_num++;
+    QPointer<QGroupMessageModel> safeThis(this);
+
+    runInThread(
+        this,
+        [wallet_id]() -> std::vector<nunchuk::GroupMessage> {
+            QWarningMessage msg;
+
+            int page_num = 0;
+            const int page_size = 50;
+            bool more_data = true;
+
+            std::vector<nunchuk::GroupMessage> list;
+
+            while (more_data) {
+                auto ret = bridge::GetGroupMessages(
+                    wallet_id.toStdString(),
+                    page_num,
+                    page_size,
+                    true,
+                    msg
+                    );
+
+                list.insert(list.end(), ret.begin(), ret.end());
+
+                if (ret.size() == static_cast<size_t>(page_size)) {
+                    page_num++;
+                } else {
+                    more_data = false;
+                }
             }
-            else {
-                more_data = false;
+
+            std::sort(list.begin(), list.end(),
+                      [](const nunchuk::GroupMessage &a, const nunchuk::GroupMessage &b) {
+                          return a.get_ts() < b.get_ts();
+                      });
+
+            return list;
+        },
+        [safeThis](std::vector<nunchuk::GroupMessage> list) {
+            SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
+
+            if (!list.empty()) {
+                ptrLamda->createGroupMessage(list);
+            }
+
+            if (auto listModel = AppModel::instance()->groupWalletList()) {
+                listModel->unReadMessageCountChanged();
+                listModel->requestSortLastTimestamp();
             }
         }
-        std::sort(list.begin(), list.end(), [](const nunchuk::GroupMessage &a, const nunchuk::GroupMessage &b) {
-            return a.get_ts() < b.get_ts();
-        });
-        return list;
-    },[safeThis](std::vector<nunchuk::GroupMessage> list) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if (list.size() > 0) {
-            ptrLamda->createGroupMessage(list);
-        }
-        if (auto list = AppModel::instance()->groupWalletList()) {
-            list->unReadMessageCountChanged();
-            list->requestSortLastTimestamp();
-        }
-    });
+        );
 }
 
 int QGroupMessageModel::currentIndex() const

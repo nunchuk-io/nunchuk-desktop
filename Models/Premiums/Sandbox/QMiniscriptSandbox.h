@@ -30,6 +30,7 @@ public:
     void UpdateGroup(const QString &name, const QString& script_tmpl, int addType);
     void setSandbox(const nunchuk::GroupSandbox& sandbox) override;
     bool AddSignerToGroup(const nunchuk::SingleSigner& signer) override;
+
 public slots:
     void removeKeyName(const QString &group, const QString &keyName);
     bool editBIP32Path(int index, const QString &master_id, const QString& path) override;

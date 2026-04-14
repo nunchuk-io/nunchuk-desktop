@@ -2370,3 +2370,6 @@ var STR_QML_2078 = qsTr("Move coins to reset a soon-expiring relative timelock. 
 
 var STR_QML_2103 = qsTr("You are still personally responsible for sharing the Magic Phrase and inheritance key seed phrase with the Beneficiary. The notification email won’t include these information.")
 var STR_QML_2104 = qsTr("If you don’t provide a Beneficiary’s email address, you’ll need to share all inheritance plan updates with them manually. Are you sure you want to continue?")
+var STR_QML_2137 = qsTr("Config")
+var STR_QML_2138 = qsTr("Continue (%1 signature%2 pending)")
+var STR_QML_2139 = qsTr("Set a maximum amount for a specific period. When disabled, your spending limit will be unlimited.")

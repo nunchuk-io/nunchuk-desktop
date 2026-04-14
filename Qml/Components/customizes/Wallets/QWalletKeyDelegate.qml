@@ -29,7 +29,6 @@ import "../../origins"
 import "../../customizes/Texts"
 import "../../customizes/Buttons"
 import "../../customizes/Signers"
-import "../../../../localization/STR_QML.js" as STR
 
 Item {
     id: del
@@ -104,12 +103,12 @@ Item {
                     radius: 8
                     fontSize: 10
                 }
-                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
             }
             QLato {
                 width: 146
                 height: 16
-                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                 text: {
                     if (dataSingle.single_type === NUNCHUCKTYPE.NFC) {
                         var card_id = dataSingle.single_device_cardid
@@ -129,8 +128,18 @@ Item {
             QLato {
                 height: 16
                 width: parent.width
-                visible: dataSingle.single_type !== NUNCHUCKTYPE.SERVER
+                visible: (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                 text: qsTr("BIP32 path: %1").arg(dataSingle.single_derivationPath)
+                color: "#031F2B"
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: 12
+            }
+            QLato {
+                height: 16
+                width: parent.width
+                visible: (dataSingle.single_type === NUNCHUCKTYPE.PLATFORM)  && text !== ""
+                text: dataSingle.single_platformkeyPolicyType
                 color: "#031F2B"
                 horizontalAlignment: Text.AlignLeft
                 verticalAlignment: Text.AlignVCenter
@@ -148,7 +157,7 @@ Item {
         label.font.pixelSize: 12
         type: eTypeB
         enabled: !walletInfo.isLocked
-        visible: dataSingle.single_type === NUNCHUCKTYPE.SERVER
+        visible: (dataSingle.single_type === NUNCHUCKTYPE.SERVER || dataSingle.single_type === NUNCHUCKTYPE.PLATFORM)
                  && !walletInfo.isReplaced
                  && myRole !== "FACILITATOR_ADMIN"
         onButtonClicked: {

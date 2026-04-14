@@ -49,40 +49,40 @@ struct ProgressReporter {
 };
 
 // Global function to execute tasks in Singleton Thread
-template <typename Func1, typename Func2>
-void runInThread(Func1&& execute, Func2&& ret) {
-    auto safeExecute = std::make_shared<std::decay_t<Func1>>(std::forward<Func1>(execute));
-    auto safeRet = std::make_shared<std::decay_t<Func2>>(std::forward<Func2>(ret));
+// template <typename Func1, typename Func2>
+// void runInThread(Func1&& execute, Func2&& ret) {
+//     auto safeExecute = std::make_shared<std::decay_t<Func1>>(std::forward<Func1>(execute));
+//     auto safeRet = std::make_shared<std::decay_t<Func2>>(std::forward<Func2>(ret));
 
-    WorkerThread::instance()->runTask([safeExecute, safeRet]() mutable {
-        try {
-            using ResultType = decltype((*safeExecute)());
-            if constexpr (std::is_void_v<ResultType>) {
-                (*safeExecute)();
-                QMetaObject::invokeMethod(qApp, [safeRet]() {
-                    if (appShuttingDown())
-                        return;
-                    (*safeRet)();
-                }, Qt::QueuedConnection);
-            } else {
-                ResultType result = (*safeExecute)();  // Get result
-                QMetaObject::invokeMethod(
-                    qApp,
-                    [safeRet, tmp = std::move(result)]() mutable {
-                        if (appShuttingDown())
-                            return;
-                        (*safeRet)(std::move(tmp));
-                    },
-                    Qt::QueuedConnection
-                    );
-            }
-        } catch (const std::exception& e) {
-            qDebug() << "Exception in execute(): " << e.what();
-        } catch (...) {
-            qDebug() << "Unknown exception in thread execution";
-        }
-    });
-}
+//     WorkerThread::instance()->runTask([safeExecute, safeRet]() mutable {
+//         try {
+//             using ResultType = decltype((*safeExecute)());
+//             if constexpr (std::is_void_v<ResultType>) {
+//                 (*safeExecute)();
+//                 QMetaObject::invokeMethod(qApp, [safeRet]() {
+//                     if (appShuttingDown())
+//                         return;
+//                     (*safeRet)();
+//                 }, Qt::QueuedConnection);
+//             } else {
+//                 ResultType result = (*safeExecute)();  // Get result
+//                 QMetaObject::invokeMethod(
+//                     qApp,
+//                     [safeRet, tmp = std::move(result)]() mutable {
+//                         if (appShuttingDown())
+//                             return;
+//                         (*safeRet)(std::move(tmp));
+//                     },
+//                     Qt::QueuedConnection
+//                     );
+//             }
+//         } catch (const std::exception& e) {
+//             qDebug() << "Exception in execute(): " << e.what();
+//         } catch (...) {
+//             qDebug() << "Unknown exception in thread execution";
+//         }
+//     });
+// }
 
 static QMutex sMutex;  // Shared mutex for thread safety
 
@@ -131,6 +131,33 @@ void runInConcurrent(Func1&& execute, Func2&& ret) {
     });
 
     watcher->setFuture(future);
+}
+
+template <typename Work, typename Done>
+void runInThread(QObject* receiver, Work&& work, Done&& done)
+{
+    using WorkT  = std::decay_t<Work>;
+    using Result = std::invoke_result_t<WorkT>;
+
+    auto* watcher = new QFutureWatcher<Result>(receiver);
+
+    QObject::connect(watcher, &QFutureWatcher<Result>::finished, receiver,
+                     [watcher, done = std::forward<Done>(done)]() mutable {
+                         if (appShuttingDown()) {
+                             watcher->deleteLater();
+                             return;
+                         }
+
+                         if constexpr (std::is_void_v<Result>) {
+                             done();
+                         } else {
+                             done(watcher->result());
+                         }
+
+                         watcher->deleteLater();
+                     });
+
+    watcher->setFuture(QtConcurrent::run(std::forward<Work>(work)));
 }
 
 template<typename Function>

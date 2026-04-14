@@ -68,4 +68,12 @@ AppSetting *FlowContext::appSetting() const {
     return nullptr;
 }
 
+QSharedWallets *FlowContext::sharedWallets() const
+{
+    if (m_appCtx) {
+        return m_appCtx->sharedWallets();
+    }
+    return nullptr;
+}
+
 } // namespace core::flow

@@ -24,6 +24,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Wallets.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -35,9 +36,13 @@ import "../../../Components/customizes/Wallets/miniscript"
 import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeA {
+    id: setupGroupRoot
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
+    SetupGroupWalletViewModel {
+        id: vm
+    }
     label.text: {
         if (sandbox.isCreate || sandbox.isReplace) {
             return STR.STR_QML_1556
@@ -48,7 +53,9 @@ QOnScreenContentTypeA {
         }
     }
     extraHeader: Item {}
+
     property var sandbox: AppModel.newWalletInfo.sandbox
+
     onCloseClicked: {
         if (sandbox.isCreate || sandbox.isReplace) {
             closeTo(NUNCHUCKTYPE.CURRENT_TAB)
@@ -69,6 +76,9 @@ QOnScreenContentTypeA {
                 onCopySandboxUrl: {
                     ClientController.copyMessage(sandbox.url)
                     AppModel.showToast(0, STR.STR_QML_1655, EWARNING.SUCCESS_MSG);
+
+                    vm.onAddKeyClicked({groupId:   sandbox.groupId,
+                                        key:       "miniscript.key"})
                 }
                 onShowQrSandboxUrl: {
                     qrcodeExportSandboxUrl.open()
@@ -101,8 +111,7 @@ QOnScreenContentTypeA {
                 Loader {
                     id: keylistLoader
                     sourceComponent: {
-                        if (newWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT ||
-                            sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
+                        if (newWalletInfo.walletType === NUNCHUCKTYPE.MINISCRIPT || sandbox.walletType === NUNCHUCKTYPE.MINISCRIPT) {
                             return keylistMiniComponent
                         } else {
                             return keylistComponent

@@ -1,20 +1,19 @@
 #ifndef QGROUPDASHBOARD_H
 #define QGROUPDASHBOARD_H
 
-#include <QObject>
-#include <QJsonObject>
-#include <QJsonArray>
-#include "TypeDefine.h"
-#include <nunchuk.h>
 #include "Premiums/QBasePremium.h"
+#include "TypeDefine.h"
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QObject>
 #include <QTimer>
+#include <nunchuk.h>
 
-class AlertEnum : public QObject
-{
+class AlertEnum : public QObject {
     Q_OBJECT
-public:
+  public:
     Q_ENUMS(E_Alert_t)
-    enum class E_Alert_t : int{
+    enum class E_Alert_t : int {
         GROUP_WALLET_PENDING = 0,
         GROUP_WALLET_SETUP,
         DRAFT_WALLET_KEY_ADDED,
@@ -82,6 +81,9 @@ public:
         BACKUP_WALLET,
         CHANGE_TIMELOCK_TYPE,
         KEY_TIMELOCK_UPDATE_PENDING,
+        POLICY_CHANGE_IN_PROGRESS,
+        REPLACE_WALLET,
+        POLICY_CHANGED,
 
         MAX_ALERT,
     };
@@ -90,48 +92,46 @@ public:
 int StringToInt(const QString &type);
 QString IntToString(const int type);
 
-class QGroupDashboard : public QBasePremium
-{
+class QGroupDashboard : public QBasePremium {
     Q_OBJECT
-    Q_PROPERTY(QString groupStatus                READ groupStatus                              NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString myRole                     READ myRole                                   NOTIFY groupInfoChanged)
-    Q_PROPERTY(bool    accepted                   READ accepted                                 NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString groupId                    READ groupId                                  NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString userName                   READ userName                                 NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString userEmail                  READ userEmail                                NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString groupStatus READ groupStatus NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString myRole READ myRole NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool accepted READ accepted NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString groupId READ groupId NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString userName READ userName NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString userEmail READ userEmail NOTIFY groupInfoChanged)
 
-    Q_PROPERTY(QVariantList members               READ members                                  NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariantList memberSignatures      READ memberSignatures                         NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariant inviter                   READ inviter                                  NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariant myInfoModel               READ myInfoModel                              NOTIFY groupInfoChanged)
-    Q_PROPERTY(bool isLocked                      READ isLocked                                 NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString walletType                 READ walletType                               NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantList members READ members NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariantList memberSignatures READ memberSignatures NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant inviter READ inviter NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariant myInfoModel READ myInfoModel NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool isLocked READ isLocked NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString walletType READ walletType NOTIFY draftWalletChanged)
 
-    Q_PROPERTY(QVariantList keys                  READ keys                                     NOTIFY draftWalletChanged)
-    Q_PROPERTY(QVariantList replaceKeys           READ replaceKeys                              NOTIFY replacementKeysChanged)
+    Q_PROPERTY(QVariantList keys READ keys NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantList replaceKeys READ replaceKeys NOTIFY replacementKeysChanged)
 
-    Q_PROPERTY(bool hasWallet                     READ hasWallet                                NOTIFY groupInfoChanged)
-    Q_PROPERTY(QVariantList alerts                READ alerts                                   NOTIFY alertInfoChanged)
-    Q_PROPERTY(QVariant alert                     READ alert                                    NOTIFY alertInfoChanged)
-    Q_PROPERTY(bool isShowDashBoard               READ showDashBoard  WRITE setShowDashBoard    NOTIFY showDashBoardChanged)
-    Q_PROPERTY(int mInfo                          READ mInfo                                    NOTIFY draftWalletChanged)
-    Q_PROPERTY(int nInfo                          READ nInfo                                    NOTIFY draftWalletChanged)
-    Q_PROPERTY(QVariant health                    READ health                                   NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString configFlow                 READ configFlow                               NOTIFY configFlowChanged)
-    Q_PROPERTY(QString walletunUsedAddress        READ walletunUsedAddress                      NOTIFY walletunUsedAddressChanged)
-    Q_PROPERTY(bool    isPremierGroup             READ isPremierGroup                           NOTIFY groupInfoChanged)
-    Q_PROPERTY(bool    allowInheritance           READ allowInheritance                         NOTIFY draftWalletChanged)
-    Q_PROPERTY(int inheritanceCount               READ inheritanceCount                         NOTIFY inheritanceCountChanged)
-    Q_PROPERTY(QString historyPeriodId            READ historyPeriodId                          NOTIFY historyPeriodIdChanged)
-    Q_PROPERTY(bool groupChatExisted              READ groupChatExisted                         NOTIFY groupChatExistedChanged)
-    Q_PROPERTY(QVariantList editMembers           READ editMembers                              NOTIFY editMembersChanged)
-    Q_PROPERTY(QString  timeLock                  READ timeLock                                 NOTIFY draftWalletChanged)
-    Q_PROPERTY(QVariantMap timelockObj            READ timelockObj                              NOTIFY groupInfoChanged)
-    Q_PROPERTY(QString timelockDisplay            READ timelockDisplay                          NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool hasWallet READ hasWallet NOTIFY groupInfoChanged)
+    Q_PROPERTY(QVariantList alerts READ alerts NOTIFY alertInfoChanged)
+    Q_PROPERTY(QVariant alert READ alert NOTIFY alertInfoChanged)
+    Q_PROPERTY(bool isShowDashBoard READ showDashBoard WRITE setShowDashBoard NOTIFY showDashBoardChanged)
+    Q_PROPERTY(int mInfo READ mInfo NOTIFY draftWalletChanged)
+    Q_PROPERTY(int nInfo READ nInfo NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariant health READ health NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString configFlow READ configFlow NOTIFY configFlowChanged)
+    Q_PROPERTY(QString walletunUsedAddress READ walletunUsedAddress NOTIFY walletunUsedAddressChanged)
+    Q_PROPERTY(bool isPremierGroup READ isPremierGroup NOTIFY groupInfoChanged)
+    Q_PROPERTY(bool allowInheritance READ allowInheritance NOTIFY draftWalletChanged)
+    Q_PROPERTY(int inheritanceCount READ inheritanceCount NOTIFY inheritanceCountChanged)
+    Q_PROPERTY(QString historyPeriodId READ historyPeriodId NOTIFY historyPeriodIdChanged)
+    Q_PROPERTY(bool groupChatExisted READ groupChatExisted NOTIFY groupChatExistedChanged)
+    Q_PROPERTY(QVariantList editMembers READ editMembers NOTIFY editMembersChanged)
+    Q_PROPERTY(QString timeLock READ timeLock NOTIFY draftWalletChanged)
+    Q_PROPERTY(QVariantMap timelockObj READ timelockObj NOTIFY groupInfoChanged)
+    Q_PROPERTY(QString timelockDisplay READ timelockDisplay NOTIFY groupInfoChanged)
 
-
-public:
-    QGroupDashboard(const QString& wallet_id);
+  public:
+    QGroupDashboard(const QString &wallet_id);
     ~QGroupDashboard();
 
     GroupId groupId() const;
@@ -143,8 +143,8 @@ public:
     QString myRole() const;
     QString walletname() const;
     QString walletStatus() const;
-    bool    isReplaced();
-    bool    accepted() const;
+    bool isReplaced();
+    bool accepted() const;
     QString userName() const;
     QString userEmail() const;
     QVariantList members() const;
@@ -158,6 +158,7 @@ public:
     QJsonObject walletDraftJson() const;
     void GetMemberInfo();
     void GetAlertsInfo();
+    QJsonArray GetGroupWalletAlerts();
     bool MarkAlertAsRead(const QString &alert_id);
     bool DismissAlert(const QString &alert_id);
     void GetWalletInfo();
@@ -188,8 +189,8 @@ public:
     int mInfo() const;
     int nInfo() const;
 
-    QJsonObject GetDraftSigner(const QString& xfp) const;
-    QJsonObject GetSigner(const QString& xfp) const;
+    QJsonObject GetDraftSigner(const QString &xfp) const;
+    QJsonObject GetSigner(const QString &xfp) const;
 
     int flow() const;
     void setFlow(int flow);
@@ -229,7 +230,7 @@ public:
     QStringList getNameSameTag(const QString &tag);
     QString createName(const QString &tag, int &index);
     QString generateName(const QStringList &tags);
-
+    void proceedpayload();
     bool canEntryClickAlert();
 
     bool allowInheritance() const;
@@ -259,10 +260,10 @@ public:
     QJsonObject bodyEditMembers();
     QString timeLock() const;
 
-public slots:
+  public slots:
     bool requestStartKeyReplacement(const QString &tag);
     bool requestStartKeyCreate(const QString &tag, bool isFirst = false);
-    
+
     void requestHealthCheck(const QString &xfp);
     bool requestByzantineChat();
 
@@ -280,17 +281,17 @@ public slots:
 
     void startAddKeyAtIndex(int index);
     void startReplaceKeyAtIndex(int index);
-    bool enoughKeyAdded(const QString& xfp);
+    bool enoughKeyAdded(const QString &xfp);
     bool dismissAlert();
 
     void preparingKeyTobeReplaced();
     void CorrectCurrentSignerInfoForReplacementKey(const QString &xfp);
 
-private:
+  private:
     bool deviceExport(const QStringList tags, nunchuk::SignerType type);
     bool xfpExport(const QString xfp);
     QVariant health() const;
-signals:
+  signals:
     void groupInfoChanged();
     void draftWalletChanged();
     void alertInfoChanged();
@@ -304,29 +305,30 @@ signals:
     void editMembersChanged();
     void editMembersSuccessChanged();
     void replacementKeysChanged();
-private:
-    QJsonObject m_groupInfo {};
-    QJsonObject m_alertInfo {};
-    QJsonObject m_walletInfo {};
-    QJsonObject m_myInfo {};
-    QJsonObject m_inviterInfo {};
-    QJsonArray m_signerInfo {};
-    QJsonObject m_walletDraftInfo {};
-    QJsonArray m_keys {};
-    QJsonArray m_replaceKeys {};
-    bool m_showDashBoard {false};
-    int m_mInfo {0};
-    int m_nInfo {0};
+
+  private:
+    QJsonObject m_groupInfo{};
+    QJsonObject m_alertInfo{};
+    QJsonObject m_walletInfo{};
+    QJsonObject m_myInfo{};
+    QJsonObject m_inviterInfo{};
+    QJsonArray m_signerInfo{};
+    QJsonObject m_walletDraftInfo{};
+    QJsonArray m_keys{};
+    QJsonArray m_replaceKeys{};
+    bool m_showDashBoard{false};
+    int m_mInfo{0};
+    int m_nInfo{0};
     bool m_allow_inheritance{false};
     QString m_configFlow;
     QString m_walletunUsedAddress;
-    QJsonObject m_currentAlertInfo {};
-    QStringList m_registered_key_xfps {};
-    int m_inheritanceCount {0};
-    QString mHistoryPeriodId {};
-    bool m_groupChatExisted {false};
+    QJsonObject m_currentAlertInfo{};
+    QStringList m_registered_key_xfps{};
+    int m_inheritanceCount{0};
+    QString mHistoryPeriodId{};
+    bool m_groupChatExisted{false};
     QJsonArray m_editMembers;
-    QTimer *mTimer {nullptr};
+    QTimer *mTimer{nullptr};
     QJsonObject m_keyReplacementInfo;
 };
 void registerAddKey();

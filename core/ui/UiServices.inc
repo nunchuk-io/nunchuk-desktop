@@ -11,4 +11,5 @@
 #include "Chats/ClientController.h"
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QWalletServicesTag.h"
+#include "Premiums/QSharedWallets.h"
 #include "AppSetting.h"

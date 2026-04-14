@@ -103,7 +103,7 @@ Item {
                     text: qsTr("Acct %1").arg(dataSingle.single_account_index)
                     height: 16
                     color: "#EAEAEA"
-                    visible: (dataSingle.single_account_index > 0) && (dataSingle.single_type !== NUNCHUCKTYPE.SERVER)
+                    visible: (dataSingle.single_account_index > 0) && (dataSingle.single_type !== NUNCHUCKTYPE.SERVER) && (dataSingle.single_type !== NUNCHUCKTYPE.PLATFORM)
                     radius: 8
                     font.pixelSize: 10
                 }

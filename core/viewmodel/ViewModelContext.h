@@ -25,6 +25,7 @@ class ViewModelContext : public QObject {
     RightPanelNavigator *rightPanelNavigator() const;
     AppSetting *appSetting() const;
     ClientController *clientController() const;
+    QSharedWallets *sharedWallets() const;
 
   private:
     AppContext *m_appCtx{nullptr};

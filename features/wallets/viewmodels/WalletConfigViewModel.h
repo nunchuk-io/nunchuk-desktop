@@ -9,9 +9,8 @@ class WalletConfigViewModel : public ActionViewModel {
     Q_OBJECT
   public:
     explicit WalletConfigViewModel(QObject *parent = nullptr);
-  
-//   public slots:
-//     void asBBQRClicked();
-//     void toCOLDCARDClicked();
+
+  public slots:
+    void onPlatformKeyConfigClicked(const QString &walletId);
 };
 } // namespace features::wallets::viewmodels

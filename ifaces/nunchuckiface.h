@@ -422,6 +422,7 @@ public:
     void AddGroupOnlineListener(std::function<void(const std::string& groupId, int online)> listener);
     void AddGroupDeleteListener(std::function<void(const std::string& groupId)> listener);
     void AddReplaceRequestListener(std::function<void(const std::string& walletId, const std::string& replaceGroupId)> listener);
+    void AddGroupWalletDashboardListener(std::function<void(const std::string& walletId)> listener);
 
     nunchuk::SingleSigner ParseKeystoneSigner(const std::string& qr_data,
                                               QWarningMessage& msg);
@@ -889,6 +890,35 @@ public:
 
     nunchuk::MasterSigner CreateMasterSigner(const std::string &name, const nunchuk::Device &device,
                                              std::function<bool /* stop */ (int /* percent */)> progress, QWarningMessage &msg);
+
+    // Platform key Group wallet related
+    nunchuk::GroupSandbox EnableGroupPlatformKey(const std::string& groupId, const std::vector<std::string>& names, QWarningMessage &msg);// call first when user add platform key, // names empty for multisig, slot key name for miniscript
+
+    nunchuk::GroupSandbox DisableGroupPlatformKey(const std::string& groupId, QWarningMessage &msg);
+
+    nunchuk::GroupSandbox SetGroupPlatformKeyPolicies(const std::string& groupId, const nunchuk::GroupPlatformKeyPolicies& policies, QWarningMessage &msg);
+
+    nunchuk::GroupPlatformKeyPolicyUpdateRequirement PreviewGroupPlatformKeyPolicyUpdate(const std::string& walletId, const nunchuk::GroupPlatformKeyPolicies& policies, QWarningMessage &msg); // call before update to see if it requires dummy tx
+
+    nunchuk::GroupPlatformKeyPolicyUpdateRequirement RequestGroupPlatformKeyPolicyUpdate(const std::string& walletId, const nunchuk::GroupPlatformKeyPolicies& policies, QWarningMessage &msg); // call  to update
+
+    std::vector<nunchuk::GroupDummyTransaction> GetGroupDummyTransactions(const std::string& walletId, QWarningMessage &msg);
+
+    nunchuk::GroupDummyTransaction GetGroupDummyTransaction(const std::string& walletId, const std::string& dummyTransactionId, QWarningMessage &msg);
+
+    nunchuk::GroupDummyTransaction SignGroupDummyTransaction(const std::string& walletId, const std::string& dummyTransactionId, const std::vector<std::string>& signatures, QWarningMessage &msg); // signature = Utils::CreateRequestToken(...)
+
+    void CancelGroupDummyTransaction(const std::string& walletId, const std::string& dummyTransactionId, QWarningMessage &msg);
+
+    int GetGroupWalletAlertCount(const std::string& walletId, QWarningMessage &msg);
+
+    std::vector<nunchuk::GroupWalletAlert> GetGroupWalletAlerts(const std::string& walletId, int page, int pageSize, QWarningMessage &msg);
+
+    void MarkGroupWalletAlertViewed(const std::string& walletId, const std::string& alertId, QWarningMessage &msg);
+
+    void DismissGroupWalletAlert(const std::string& walletId, const std::string& alertId, QWarningMessage &msg);
+
+    nunchuk::GroupTransactionState GetGroupTransactionState(const std::string& walletId, const std::string& txId, QWarningMessage &msg);
 
   private:
     nunchukiface();

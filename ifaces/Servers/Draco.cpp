@@ -1605,7 +1605,10 @@ bool Draco::assistedWalletCreateTx(const QString &wallet_id, const QString &psbt
             return true;
         }
         else {
+            DBG_INFO << response_code << response_msg;
+#if 0
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
+#endif
         }
     }
     return false;

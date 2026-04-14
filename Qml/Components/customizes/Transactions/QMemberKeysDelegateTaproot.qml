@@ -61,6 +61,8 @@ Rectangle {
     property string myRole: ""
     property bool   isValueKey: false
     property bool   enableValuekeyset: AppModel.walletInfo.enableValuekeyset
+    property string platformKeyMessage: ""
+
     property var signerEvents
     function menuClicked(action, data) {
         if (signerEvents[action]) {
@@ -165,7 +167,7 @@ Rectangle {
                             width: typesigner.width + 10
                             height: 16
                             color: "#EAEAEA"
-                            visible: isLocaluser && (signerType !== NUNCHUCKTYPE.SERVER)
+                            visible: isLocaluser && (signerType !== NUNCHUCKTYPE.SERVER) && (signerType !== NUNCHUCKTYPE.PLATFORM)
                             radius: 8
                             QText {
                                 id: typesigner
@@ -181,7 +183,7 @@ Rectangle {
                             width: accttext.width + 10
                             height: 16
                             color: "#EAEAEA"
-                            visible: (accountIndex > 0) && (signerType !== NUNCHUCKTYPE.SERVER)
+                            visible: (accountIndex > 0) && (signerType !== NUNCHUCKTYPE.SERVER) && (signerType !== NUNCHUCKTYPE.PLATFORM)
                             radius: 8
                             QText {
                                 id: accttext
@@ -196,7 +198,7 @@ Rectangle {
                     }
                     QText {
                         height: 16
-                        visible: (signerxfp !== "" || card_id !== "") && signerType !== NUNCHUCKTYPE.SERVER
+                        visible: (signerxfp !== "" || card_id !== "") && (signerType !== NUNCHUCKTYPE.SERVER) && (signerType !== NUNCHUCKTYPE.PLATFORM)
                         font.family: "Lato"
                         font.pixelSize: 12
                         color: "#031F2B"
@@ -211,11 +213,19 @@ Rectangle {
                     }
                     QText {
                         height: 16
-                        visible: (is_cosigning || serverkeyMessage !== "") && signerType === NUNCHUCKTYPE.SERVER
+                        visible: (is_cosigning || serverkeyMessage !== "") && (signerType === NUNCHUCKTYPE.SERVER)
                         font.family: "Lato"
                         font.pixelSize: 12
                         color: "#A66800"
                         text:  is_cosigning ? STR.STR_QML_1002 : serverkeyMessage
+                    }
+                    QText {
+                        height: 16
+                        visible: (text !== "") && (signerType === NUNCHUCKTYPE.PLATFORM)
+                        font.family: "Lato"
+                        font.pixelSize: 12
+                        color: "#A66800"
+                        text:  platformKeyMessage
                     }
                 }
                 Loader {
@@ -236,7 +246,7 @@ Rectangle {
                                     if(signerType === NUNCHUCKTYPE.AIRGAP || signerType === NUNCHUCKTYPE.UNKNOWN ) {
                                         return has_sign_btn ? keysignOption : null;
                                     }
-                                    else if(signerType === NUNCHUCKTYPE.SERVER) {
+                                    else if(signerType === NUNCHUCKTYPE.PLATFORM || signerType === NUNCHUCKTYPE.SERVER) {
                                         return null;
                                     }
                                     else {

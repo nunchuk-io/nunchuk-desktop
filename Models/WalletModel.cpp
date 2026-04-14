@@ -116,6 +116,7 @@ QHash<int,QByteArray> WalletListModel::roleWalletNames() {
     roles[wallet_numberSigner_Role]         = "wallet_numberSigner";
     roles[wallet_archived_Role]             = "wallet_isArchived";
     roles[wallet_walletType_Role]           = "wallet_walletType";
+    roles[wallet_alerCount_Role]            = "wallet_alerCount";
     return roles;
 }
 
@@ -180,7 +181,7 @@ QVariant WalletListModel::dataWallet(const QWalletPtr &data, int role) {
     case wallet_isReplaced_Role:
         return data->isReplaced();
     case wallet_isSanboxWallet_Role:
-        return data->isGlobalGroupWallet();
+        return data->isSandboxWallet();
     case wallet_conversation_Role:
         return QVariant::fromValue((QGroupMessageModel *)data->conversations());
     case wallet_unreadMessage_Role:
@@ -191,6 +192,8 @@ QVariant WalletListModel::dataWallet(const QWalletPtr &data, int role) {
         return data->isArchived();
     case wallet_walletType_Role:
         return data->walletType();
+    case wallet_alerCount_Role:
+        return data->alerCount();
     default:
         return QVariant();
     }
@@ -219,7 +222,6 @@ int WalletListModel::unReadMessageCount()
     for (int i = 0; i < m_data.count(); i++) {
         count += m_data.at(i)->unreadMessage();
     }
-    DBG_INFO << m_data.count() << count;
     return count;
 }
 
@@ -589,6 +591,16 @@ void WalletListModel::updateUnreadMessage(const QString &wallet_id, int number)
     }
 }
 
+void WalletListModel::updateIsSandboxWallet(bool isGroupWallet)
+{
+    for (int i = 0; i < m_data.count(); i++) {
+        if(m_data.at(i).data()){
+            m_data.at(i)->setIsSandboxWallet(isGroupWallet);
+            emit dataChanged(index(i),index(i));
+        }
+    }
+}
+
 QList<QWalletPtr> WalletListModel::fullList() const
 {
     return m_data;
@@ -735,7 +747,7 @@ QWalletPtr WalletListModel::currentWalletPtr() const
 void WalletListModel::setCurrentWallet(const QWalletPtr& newCurrentWallet)
 {
     m_currentWallet = newCurrentWallet;
-    if(m_currentWallet && m_currentWallet.data()->conversations() && m_currentWallet->isGlobalGroupWallet()){
+    if(m_currentWallet && m_currentWallet.data()->conversations() && m_currentWallet->isSandboxWallet()){
         QString wallet_id = m_currentWallet.data()->walletId();
         m_currentWallet.data()->conversations()->startDownloadConversation(wallet_id);
     }

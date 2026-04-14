@@ -170,6 +170,7 @@ public slots:
     QJsonArray scriptPathRefresh(const QJsonArray &tree, const QMap<QString, int> &duplicateCheck);
     QJsonArray keyPathRefresh(const QJsonArray &tree, const QMap<QString, int> &duplicateCheck);
     void checkDuplicateKey();
+    QMap<QString, QSingleSignerPtr> signersMiniscript() const;
 
 signals:
     void newWalletNChanged();

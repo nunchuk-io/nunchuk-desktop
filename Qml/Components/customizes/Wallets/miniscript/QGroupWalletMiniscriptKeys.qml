@@ -33,8 +33,9 @@ import "../../../../Components/customizes/Texts"
 import "../../../../../localization/STR_QML.js" as STR
 
 Column {
-    readonly property int widthHalf: 352
+    id: miniGroupKeyComp
     width: widthHalf
+    readonly property int widthHalf: 352
     readonly property var tmpColors: [
         {colorStr: "#9EC063",           url: "qrc:/Images/Images/User-dark.svg" },
         {colorStr: "#2F466C",           url: "qrc:/Images/Images/User-dark.svg" },

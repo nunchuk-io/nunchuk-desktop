@@ -1293,6 +1293,7 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
         if(wallet){
             QTransactionPtr trans = wallet.data()->SyncAssistedTxs(tx);
             if(trans){
+                trans->setNunchukTransaction(tx);
                 if (status == (int)nunchuk::TransactionStatus::DELETED) {
                     wallet.data()->transactionHistory()->removeTransaction(tx_id);                    
                 } else {
@@ -1307,7 +1308,6 @@ void Controller::slotFinishTransactionChanged(const QString &tx_id,
                         } else {
                             AppModel::instance()->setTransactionInfo(trans);
                         }
-                        
                     }
                 }
             }
@@ -1519,6 +1519,7 @@ void Controller::slotFinishReloadGroupWallets(std::vector<nunchuk::Wallet> walle
     QFunctionTime f(__PRETTY_FUNCTION__);
     QWalletListModelPtr ret = bridge::nunchukConvertWallets(wallets);
     if(ret){
+        ret.data()->updateIsSandboxWallet(true);
         AppModel::instance()->setGroupWalletList(ret);
         if (auto list = AppModel::instance()->groupWalletListPtr()) {
             int index = list->currentIndex();

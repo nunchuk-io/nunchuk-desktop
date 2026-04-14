@@ -41,6 +41,7 @@ void nunchukiface::registerCallback()
     AddGroupDeleteListener(GroupDeleteListener);
     AddGroupOnlineListener(GroupOnlineListener);
     AddReplaceRequestListener(ReplaceRequestListener);
+    AddGroupWalletDashboardListener(GroupWalletDashboardListener);
 }
 
 nunchukiface *nunchukiface::instance() {
@@ -2005,6 +2006,21 @@ void nunchukiface::AddReplaceRequestListener(std::function<void (const std::stri
     }
 }
 
+void nunchukiface::AddGroupWalletDashboardListener(std::function<void (const std::string &)> listener)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->AddGroupWalletDashboardListener(listener);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION";
+    }
+}
+
 nunchuk::SingleSigner nunchukiface::ParseKeystoneSigner(const std::string &qr_data,
                                                         QWarningMessage& msg)
 {
@@ -3435,6 +3451,8 @@ std::vector<nunchuk::GroupSandbox> nunchukiface::GetGroups(QWarningMessage &msg)
         DBG_INFO << "THROW EXCEPTION" << e.what();
         msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
+
+    DBG_INFO << ret.size();
     return ret;
 }
 
@@ -4095,6 +4113,273 @@ nunchuk::MasterSigner nunchukiface::CreateMasterSigner(const std::string &name,
     try {
         if (nunchuk_instance_[nunchukMode()]) {
             ret = nunchuk_instance_[nunchukMode()]->CreateMasterSigner(name, device, progress);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+// names empty for multisig, slot key name for miniscript
+// call first when user add platform key
+nunchuk::GroupSandbox nunchukiface::EnableGroupPlatformKey(const std::string &groupId, const std::vector<std::string> &names, QWarningMessage &msg)
+{
+    nunchuk::GroupSandbox ret("");
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->EnableGroupPlatformKey(groupId, names);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+// call to remove platform key
+nunchuk::GroupSandbox nunchukiface::DisableGroupPlatformKey(const std::string &groupId, QWarningMessage &msg)
+{
+    nunchuk::GroupSandbox ret("");
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->DisableGroupPlatformKey(groupId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+// call to setup policies
+nunchuk::GroupSandbox nunchukiface::SetGroupPlatformKeyPolicies(const std::string &groupId, const nunchuk::GroupPlatformKeyPolicies &policies, QWarningMessage &msg)
+{
+    nunchuk::GroupSandbox ret("");
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->SetGroupPlatformKeyPolicies(groupId, policies);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+// call before update to see if it requires dummy tx
+nunchuk::GroupPlatformKeyPolicyUpdateRequirement nunchukiface::PreviewGroupPlatformKeyPolicyUpdate(const std::string &walletId, const nunchuk::GroupPlatformKeyPolicies &policies, QWarningMessage &msg)
+{
+    nunchuk::GroupPlatformKeyPolicyUpdateRequirement ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->PreviewGroupPlatformKeyPolicyUpdate(walletId, policies);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+// call  to update
+nunchuk::GroupPlatformKeyPolicyUpdateRequirement nunchukiface::RequestGroupPlatformKeyPolicyUpdate(const std::string &walletId, const nunchuk::GroupPlatformKeyPolicies &policies, QWarningMessage &msg)
+{
+    nunchuk::GroupPlatformKeyPolicyUpdateRequirement ret;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->RequestGroupPlatformKeyPolicyUpdate(walletId, policies);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<nunchuk::GroupDummyTransaction> nunchukiface::GetGroupDummyTransactions(const std::string &walletId, QWarningMessage &msg)
+{
+    std::vector<nunchuk::GroupDummyTransaction> ret {};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetGroupDummyTransactions(walletId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+nunchuk::GroupDummyTransaction nunchukiface::GetGroupDummyTransaction(const std::string &walletId, const std::string &dummyTransactionId, QWarningMessage &msg)
+{
+    nunchuk::GroupDummyTransaction ret {};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetGroupDummyTransaction(walletId, dummyTransactionId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+// signature = Utils::CreateRequestToken(...)
+nunchuk::GroupDummyTransaction nunchukiface::SignGroupDummyTransaction(const std::string &walletId, const std::string &dummyTransactionId, const std::vector<std::string>& signatures, QWarningMessage &msg)
+{
+    nunchuk::GroupDummyTransaction ret {};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->SignGroupDummyTransaction(walletId, dummyTransactionId, signatures);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+void nunchukiface::CancelGroupDummyTransaction(const std::string &walletId, const std::string &dummyTransactionId, QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->CancelGroupDummyTransaction(walletId, dummyTransactionId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+int nunchukiface::GetGroupWalletAlertCount(const std::string &walletId, QWarningMessage &msg)
+{
+    int ret = 0;
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetGroupWalletAlertCount(walletId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+std::vector<nunchuk::GroupWalletAlert> nunchukiface::GetGroupWalletAlerts(const std::string &walletId, int page, int pageSize, QWarningMessage &msg)
+{
+    std::vector<nunchuk::GroupWalletAlert> ret {};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetGroupWalletAlerts(walletId, page, pageSize);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    return ret;
+}
+
+void nunchukiface::MarkGroupWalletAlertViewed(const std::string &walletId, const std::string &alertId, QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->MarkGroupWalletAlertViewed(walletId, alertId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+void nunchukiface::DismissGroupWalletAlert(const std::string &walletId, const std::string &alertId, QWarningMessage &msg)
+{
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            nunchuk_instance_[nunchukMode()]->DismissGroupWalletAlert(walletId, alertId);
+        }
+    }
+    catch (const nunchuk::BaseException &ex) {
+        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+    catch (std::exception &e) {
+        DBG_INFO << "THROW EXCEPTION" << e.what();
+        msg.setWarningMessage(-1, e.what(), EWARNING::WarningType::EXCEPTION_MSG);
+    }
+}
+
+nunchuk::GroupTransactionState nunchukiface::GetGroupTransactionState(const std::string &walletId, const std::string &txId, QWarningMessage &msg)
+{
+    nunchuk::GroupTransactionState ret {};
+    try {
+        if(nunchuk_instance_[nunchukMode()]){
+            ret = nunchuk_instance_[nunchukMode()]->GetGroupTransactionState(walletId, txId);
         }
     }
     catch (const nunchuk::BaseException &ex) {

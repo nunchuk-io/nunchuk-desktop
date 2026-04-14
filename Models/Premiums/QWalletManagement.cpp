@@ -1,50 +1,51 @@
 #include "QWalletManagement.h"
-#include <QQmlEngine>
-#include <QJsonDocument>
-#include "localization/STR_CPP.h"
-#include "ServiceSetting.h"
-#include "nunchuckiface.h"
-#include "ViewsEnums.h"
-#include "Servers/Draco.h"
-#include "Servers/Byzantine.h"
 #include "AppSetting.h"
-#include "Premiums/QGroupWallets.h"
-#include "Premiums/QUserWallets.h"
-#include "QWalletServicesTag.h"
 #include "Premiums/QGroupDashboard.h"
-#include "Premiums/QServerKey.h"
-#include "Premiums/QInheritancePlan.h"
-#include "Premiums/QWalletDummyTx.h"
 #include "Premiums/QGroupWalletDummyTx.h"
-#include "Premiums/QUserWalletDummyTx.h"
 #include "Premiums/QGroupWalletHealthCheck.h"
+#include "Premiums/QGroupWallets.h"
+#include "Premiums/QInheritancePlan.h"
 #include "Premiums/QRecurringPayment.h"
-#include "utils/enumconverter.hpp"
+#include "Premiums/QServerKey.h"
+#include "Premiums/QUserWalletDummyTx.h"
+#include "Premiums/QUserWallets.h"
+#include "Premiums/QWalletDummyTx.h"
 #include "QThreadForwarder.h"
+#include "QWalletServicesTag.h"
+#include "Servers/Byzantine.h"
+#include "Servers/Draco.h"
+#include "ServiceSetting.h"
+#include "ViewsEnums.h"
+#include "localization/STR_CPP.h"
+#include "nunchuckiface.h"
+#include "utils/enumconverter.hpp"
+#include <QJsonDocument>
+#include <QQmlEngine>
 
-QWalletManagement *QWalletManagement::instance()
-{
+QWalletManagement *QWalletManagement::instance() {
     static QWalletManagement mInstance;
     return &mInstance;
 }
 
-QWalletManagement::QWalletManagement()
-{
+QWalletManagement::QWalletManagement() {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(this, &QWalletManagement::getListWalletFinish, this, &QWalletManagement::slotGetListWalletFinish, Qt::QueuedConnection);
     connect(this, &QWalletManagement::signalUpdateSigner, this, &QWalletManagement::slotUpdateSigner, Qt::QueuedConnection);
 }
 
-QWalletManagement::~QWalletManagement()
-{
+QWalletManagement::~QWalletManagement() {
     mActivedWallets.clear();
     mServerKeys.clear();
     mInheritancePlans.clear();
 }
 
-void QWalletManagement::GetListWallet()
-{
-    
+void QWalletManagement::GetListGroupWallet() {
+    QWarningMessage msg;
+    std::vector<nunchuk::Wallet> group_wallets = bridge::nunchukGetOriginGroupWallets(msg);
+    for (auto &wallet : group_wallets) {
+        QString wallet_id = QString::fromStdString(wallet.get_id());
+        createDashBoard(wallet_id);
+    }
 }
 
 void QWalletManagement::StoreWalletsInfo(const QJsonArray &walletArray) {
@@ -69,8 +70,7 @@ void QWalletManagement::StoreWalletsInfo(const QJsonArray &walletArray) {
     emit getListWalletFinish();
 }
 
-void QWalletManagement::UpdateSigner(const QJsonObject &signer)
-{
+void QWalletManagement::UpdateSigner(const QJsonObject &signer) {
     QJsonObject js_signer = signer;
     QString xfp = js_signer["xfp"].toString();
     QString name = js_signer["name"].toString();
@@ -93,23 +93,22 @@ void QWalletManagement::UpdateSigner(const QJsonObject &signer)
     }
 }
 
-void QWalletManagement::SyncDeleteWallets(int mode)
-{
+void QWalletManagement::SyncDeleteWallets(int mode) {
     QJsonObject data;
     QString error_msg;
-    bool ret {false};
+    bool ret{false};
     ret = Byzantine::instance()->GetAllDeletedGroupWallets(data, error_msg);
     DBG_INFO << data;
-    if(!data.isEmpty()){
+    if (!data.isEmpty()) {
         QJsonArray wallet_local_ids = data["wallet_local_ids"].toArray();
-        for(QJsonValue json : wallet_local_ids){
-            QString wallet_id   = json.toString();
+        for (QJsonValue json : wallet_local_ids) {
+            QString wallet_id = json.toString();
             DBG_INFO << wallet_id;
-            if (bridge::nunchukHasWallet(wallet_id)){
+            if (bridge::nunchukHasWallet(wallet_id)) {
                 QWarningMessage msgwarning;
                 bridge::nunchukDeleteWallet(wallet_id, msgwarning);
-                if((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()){
-                    QThreadForwarder::instance()->forwardInQueuedConnection([wallet_id](){
+                if ((int)EWARNING::WarningType::NONE_MSG == msgwarning.type()) {
+                    QThreadForwarder::instance()->forwardInQueuedConnection([wallet_id]() {
                         AppModel::instance()->removeWallet(wallet_id);
                         AppModel::instance()->setWalletListCurrentIndex(0);
                         AppSetting::instance()->deleteWalletCached(wallet_id);
@@ -120,34 +119,31 @@ void QWalletManagement::SyncDeleteWallets(int mode)
     }
 }
 
-void QWalletManagement::UpdateSyncWalletFlows()
-{
+void QWalletManagement::UpdateSyncWalletFlows() {
     QMap<QString, QJsonObject> server_signers;
-    for(QJsonValue wallet_json : walletArray){
+    for (QJsonValue wallet_json : walletArray) {
         QJsonObject wallet_obj = wallet_json.toObject();
-        QString wallet_id   = wallet_obj["local_id"].toString();
+        QString wallet_id = wallet_obj["local_id"].toString();
         QJsonArray signers = wallet_obj["signers"].toArray();
-        for(QJsonValue jv_signer : signers){
+        for (QJsonValue jv_signer : signers) {
             QJsonObject js_signer = jv_signer.toObject();
             QString xfp = js_signer["xfp"].toString();
             server_signers.insert(xfp, js_signer);
         }
-        //Update sync wallet flows
+        // Update sync wallet flows
         QWarningMessage msg;
         auto w = bridge::nunchukGetOriginWallet(wallet_id, msg);
         auto local_signers = w.get_signers();
-        for (auto &&local_signer : local_signers)
-        {
-            if (!local_signer.is_visible() || local_signer.get_type() == nunchuk::SignerType::SERVER) {
+        for (auto &&local_signer : local_signers) {
+            if (!local_signer.is_visible() || local_signer.get_type() == nunchuk::SignerType::SERVER || local_signer.get_type() == nunchuk::SignerType::PLATFORM) {
                 continue;
             }
             auto server_signer = server_signers[QString::fromStdString(local_signer.get_master_fingerprint())];
-            if (local_signer.get_type() != SignerTypeFromStr(server_signer["type"].toString().toStdString()))
-            { // local signer type not match server type
-                if (local_signer.get_type() == nunchuk::SignerType::SOFTWARE)
-                {
-                    // UI: “The software key (local_signer.get_master_fingerprint()) was upgraded to a hardware key from another device. Do you want to remove the software key from this device?”
-                    // UI: “The software key (local_signer.get_master_fingerprint()) will be removed from this device. Please tap ‘Delete key’ to confirm.”
+            if (local_signer.get_type() != SignerTypeFromStr(server_signer["type"].toString().toStdString())) { // local signer type not match server type
+                if (local_signer.get_type() == nunchuk::SignerType::SOFTWARE) {
+                    // UI: “The software key (local_signer.get_master_fingerprint()) was upgraded to a hardware key from another device. Do you want to remove
+                    // the software key from this device?” UI: “The software key (local_signer.get_master_fingerprint()) will be removed from this device.
+                    // Please tap ‘Delete key’ to confirm.”
                     software_signer = server_signer;
                     m_local_signer = local_signer;
                     AppModel::instance()->syncingWalletFromServer(QString::fromStdString(m_local_signer.get_master_fingerprint()));
@@ -157,51 +153,35 @@ void QWalletManagement::UpdateSyncWalletFlows()
     }
 }
 
-QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no)
-{
+QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no) {
     if (yes) {
         // update local to match server
-        QJsonObject tapsigner   = software_signer["tapsigner"].toObject();
-        QString signer_name     = software_signer["name"].toString();
-        QString signer_xfp      = software_signer["xfp"].toString();
-        QString signer_xpub     = software_signer["xpub"].toString();
-        QString signer_pubkey   = software_signer["pubkey"].toString();
+        QJsonObject tapsigner = software_signer["tapsigner"].toObject();
+        QString signer_name = software_signer["name"].toString();
+        QString signer_xfp = software_signer["xfp"].toString();
+        QString signer_xpub = software_signer["xpub"].toString();
+        QString signer_pubkey = software_signer["pubkey"].toString();
         QString signer_derivation_path = software_signer["derivation_path"].toString();
-        QString signer_type     = software_signer["type"].toString();
+        QString signer_type = software_signer["type"].toString();
 
-        nunchuk::SingleSigner signer(signer_name.toStdString(),
-                                     signer_xpub.toStdString(),
-                                     signer_pubkey.toStdString(),
-                                     signer_derivation_path.toStdString(),
-                                     {},
-                                     signer_xfp.toStdString(),
-                                     std::time(0));
+        nunchuk::SingleSigner signer(signer_name.toStdString(), signer_xpub.toStdString(), signer_pubkey.toStdString(), signer_derivation_path.toStdString(),
+                                     {}, signer_xfp.toStdString(), std::time(0));
         bool has_signer = bridge::nunchukHasSinger(signer);
-        if(!tapsigner.isEmpty()){
-            QString card_id     = tapsigner["card_id"].toString();
-            QString version     = tapsigner["version"].toString();
-            int birth_height    = tapsigner["birth_height"].toInt();
-            bool is_testnet     = tapsigner["is_testnet"].toBool();
+        if (!tapsigner.isEmpty()) {
+            QString card_id = tapsigner["card_id"].toString();
+            QString version = tapsigner["version"].toString();
+            int birth_height = tapsigner["birth_height"].toInt();
+            bool is_testnet = tapsigner["is_testnet"].toBool();
             bridge::AddTapsigner(card_id, signer_xfp, signer_name, version, birth_height, is_testnet, true);
-        }
-        else {
-            if(!has_signer){
+        } else {
+            if (!has_signer) {
                 nunchuk::SignerType type = nunchuk::SignerType::AIRGAP;
                 try {
                     type = SignerTypeFromStr(signer_type.toStdString());
-                    bridge::nunchukCreateSigner(signer_name,
-                                                signer_xpub,
-                                                signer_pubkey,
-                                                signer_derivation_path,
-                                                signer_xfp,
-                                                type,
-                                                {},
-                                                true);
-                }
-                catch (const nunchuk::BaseException &ex) {
+                    bridge::nunchukCreateSigner(signer_name, signer_xpub, signer_pubkey, signer_derivation_path, signer_xfp, type, {}, true);
+                } catch (const nunchuk::BaseException &ex) {
                     DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
-                }
-                catch (std::exception &e) {
+                } catch (std::exception &e) {
                     DBG_INFO << "THROW EXCEPTION " << e.what();
                 }
             }
@@ -214,45 +194,38 @@ QString QWalletManagement::UpdateSyncWalletFlows(bool yes, bool no)
     return QString::fromStdString(m_local_signer.get_master_fingerprint());
 }
 
-WalletIdList QWalletManagement::wallets() const
-{
+WalletIdList QWalletManagement::wallets() const {
     return mWallets.uniqueKeys();
 }
 
-GroupIdList QWalletManagement::groupIds() const
-{
+GroupIdList QWalletManagement::groupIds() const {
     return mWallets.values();
 }
 
-GroupId QWalletManagement::groupId(WalletId wallet_id) const
-{
+GroupId QWalletManagement::groupId(WalletId wallet_id) const {
     return mWallets.value(wallet_id);
 }
 
-WalletId QWalletManagement::walletId(GroupId group_id) const
-{
+WalletId QWalletManagement::walletId(GroupId group_id) const {
     return mWallets.key(group_id);
 }
 
-QString QWalletManagement::slugInfo(WalletId wallet_id) const
-{
+QString QWalletManagement::slugInfo(WalletId wallet_id) const {
     auto localMap = mWalletsInfo;
-    if(localMap.contains(wallet_id)){
+    if (localMap.contains(wallet_id)) {
         return localMap.value(wallet_id)["slug"].toString();
     }
     return "";
 }
 
-QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const
-{
-    if(mWalletsInfo.contains(wallet_id)){
+QJsonObject QWalletManagement::walletInfo(WalletId wallet_id) const {
+    if (mWalletsInfo.contains(wallet_id)) {
         return mWalletsInfo.value(wallet_id);
     }
     return {};
 }
 
-void QWalletManagement::clear()
-{
+void QWalletManagement::clear() {
     if (mActivedWallets.size() > 0) {
         mActivedWallets.clear();
     }
@@ -268,16 +241,14 @@ void QWalletManagement::clear()
     if (mHealths.size() > 0) {
         mHealths.clear();
     }
-    if (mRecurringPayments.size() > 0)
-    {
+    if (mRecurringPayments.size() > 0) {
         mRecurringPayments.clear();
     }
     mWallets.clear();
     mWalletsInfo.clear();
 }
 
-template<>
-bool QWalletManagement::contains<QGroupDashboardPtr>(WalletId wallet_id) {
+template <> bool QWalletManagement::contains<QGroupDashboardPtr>(WalletId wallet_id) {
     for (auto ptr : mActivedWallets) {
         if (ptr->wallet_id() == wallet_id) {
             return true;
@@ -286,8 +257,7 @@ bool QWalletManagement::contains<QGroupDashboardPtr>(WalletId wallet_id) {
     return false;
 }
 
-template<>
-QGroupDashboardPtr QWalletManagement::data<QGroupDashboardPtr>(WalletId wallet_id) {
+template <> QGroupDashboardPtr QWalletManagement::data<QGroupDashboardPtr>(WalletId wallet_id) {
     for (auto ptr : mActivedWallets) {
         if (ptr->wallet_id() == wallet_id) {
             return ptr;
@@ -296,9 +266,8 @@ QGroupDashboardPtr QWalletManagement::data<QGroupDashboardPtr>(WalletId wallet_i
     return {};
 }
 
-template<>
-void QWalletManagement::CreateData<QGroupDashboardPtr>(WalletId wallet_id) {
-    QString slug        = slugInfo(wallet_id);
+template <> void QWalletManagement::CreateData<QGroupDashboardPtr>(WalletId wallet_id) {
+    QString slug = slugInfo(wallet_id);
     if (slug != "") {
         GroupId group_id = groupId(wallet_id);
         QJsonObject info;
@@ -311,9 +280,7 @@ void QWalletManagement::CreateData<QGroupDashboardPtr>(WalletId wallet_id) {
     }
 }
 
-
-template<>
-bool QWalletManagement::contains<QServerKeyPtr>(WalletId wallet_id) {
+template <> bool QWalletManagement::contains<QServerKeyPtr>(WalletId wallet_id) {
     for (auto ptr : mServerKeys) {
         if (ptr->wallet_id() == wallet_id) {
             return true;
@@ -322,8 +289,7 @@ bool QWalletManagement::contains<QServerKeyPtr>(WalletId wallet_id) {
     return false;
 }
 
-template<>
-QServerKeyPtr QWalletManagement::data<QServerKeyPtr>(WalletId wallet_id) {
+template <> QServerKeyPtr QWalletManagement::data<QServerKeyPtr>(WalletId wallet_id) {
     for (auto ptr : mServerKeys) {
         if (ptr->wallet_id() == wallet_id) {
             return ptr;
@@ -332,18 +298,16 @@ QServerKeyPtr QWalletManagement::data<QServerKeyPtr>(WalletId wallet_id) {
     return {};
 }
 
-template<>
-void QWalletManagement::CreateData<QServerKeyPtr>(WalletId wallet_id) {
-    if (wallet_id.isEmpty()) return;
+template <> void QWalletManagement::CreateData<QServerKeyPtr>(WalletId wallet_id) {
+    if (wallet_id.isEmpty())
+        return;
     QServerKeyPtr serverkey = QServerKeyPtr(new QServerKey(wallet_id));
     if (!contains<QServerKeyPtr>(wallet_id)) {
         mServerKeys.append(serverkey);
     }
 }
 
-
-template<>
-bool QWalletManagement::contains<QInheritancePlanPtr>(WalletId wallet_id) {
+template <> bool QWalletManagement::contains<QInheritancePlanPtr>(WalletId wallet_id) {
     for (auto ptr : mInheritancePlans) {
         if (ptr->wallet_id() == wallet_id) {
             return true;
@@ -352,8 +316,7 @@ bool QWalletManagement::contains<QInheritancePlanPtr>(WalletId wallet_id) {
     return false;
 }
 
-template<>
-QInheritancePlanPtr QWalletManagement::data<QInheritancePlanPtr>(WalletId wallet_id) {
+template <> QInheritancePlanPtr QWalletManagement::data<QInheritancePlanPtr>(WalletId wallet_id) {
     for (auto ptr : mInheritancePlans) {
         if (ptr->wallet_id() == wallet_id) {
             return ptr;
@@ -362,17 +325,16 @@ QInheritancePlanPtr QWalletManagement::data<QInheritancePlanPtr>(WalletId wallet
     return {};
 }
 
-template<>
-void QWalletManagement::CreateData<QInheritancePlanPtr>(WalletId wallet_id) {
-    if (wallet_id.isEmpty()) return;
+template <> void QWalletManagement::CreateData<QInheritancePlanPtr>(WalletId wallet_id) {
+    if (wallet_id.isEmpty())
+        return;
     QInheritancePlanPtr plan = QInheritancePlanPtr(new QInheritancePlan(wallet_id));
     if (!contains<QInheritancePlanPtr>(wallet_id)) {
         mInheritancePlans.append(plan);
     }
 }
 
-template<>
-bool QWalletManagement::contains<QWalletDummyTxPtr>(WalletId wallet_id) {
+template <> bool QWalletManagement::contains<QWalletDummyTxPtr>(WalletId wallet_id) {
     for (auto ptr : mDummyTxs) {
         if (ptr->wallet_id() == wallet_id) {
             return true;
@@ -381,8 +343,7 @@ bool QWalletManagement::contains<QWalletDummyTxPtr>(WalletId wallet_id) {
     return false;
 }
 
-template<>
-QWalletDummyTxPtr QWalletManagement::data<QWalletDummyTxPtr>(WalletId wallet_id) {
+template <> QWalletDummyTxPtr QWalletManagement::data<QWalletDummyTxPtr>(WalletId wallet_id) {
     for (auto ptr : mDummyTxs) {
         if (ptr->wallet_id() == wallet_id) {
             return ptr;
@@ -391,9 +352,9 @@ QWalletDummyTxPtr QWalletManagement::data<QWalletDummyTxPtr>(WalletId wallet_id)
     return {};
 }
 
-template<>
-void QWalletManagement::CreateData<QWalletDummyTxPtr>(WalletId wallet_id) {
-    if (wallet_id.isEmpty()) return;
+template <> void QWalletManagement::CreateData<QWalletDummyTxPtr>(WalletId wallet_id) {
+    if (wallet_id.isEmpty())
+        return;
     QWalletDummyTxPtr dummyTx = QWalletDummyTxPtr(new QWalletDummyTx(wallet_id));
     if (!contains<QWalletDummyTxPtr>(wallet_id)) {
         dummyTx->init(wallet_id);
@@ -401,9 +362,7 @@ void QWalletManagement::CreateData<QWalletDummyTxPtr>(WalletId wallet_id) {
     }
 }
 
-
-template<>
-bool QWalletManagement::contains<QGroupWalletHealthCheckPtr>(WalletId wallet_id) {
+template <> bool QWalletManagement::contains<QGroupWalletHealthCheckPtr>(WalletId wallet_id) {
     for (auto ptr : mHealths) {
         if (ptr->wallet_id() == wallet_id) {
             return true;
@@ -412,8 +371,7 @@ bool QWalletManagement::contains<QGroupWalletHealthCheckPtr>(WalletId wallet_id)
     return false;
 }
 
-template<>
-QGroupWalletHealthCheckPtr QWalletManagement::data<QGroupWalletHealthCheckPtr>(WalletId wallet_id) {
+template <> QGroupWalletHealthCheckPtr QWalletManagement::data<QGroupWalletHealthCheckPtr>(WalletId wallet_id) {
     for (auto ptr : mHealths) {
         if (ptr->wallet_id() == wallet_id) {
             return ptr;
@@ -422,16 +380,14 @@ QGroupWalletHealthCheckPtr QWalletManagement::data<QGroupWalletHealthCheckPtr>(W
     return {};
 }
 
-template<>
-void QWalletManagement::CreateData<QGroupWalletHealthCheckPtr>(WalletId wallet_id) {
+template <> void QWalletManagement::CreateData<QGroupWalletHealthCheckPtr>(WalletId wallet_id) {
     QGroupWalletHealthCheckPtr health = QGroupWalletHealthCheckPtr(new QGroupWalletHealthCheck(wallet_id));
     if (!contains<QGroupWalletHealthCheckPtr>(wallet_id)) {
         mHealths.append(health);
     }
 }
 
-template<>
-bool QWalletManagement::contains<QRecurringPaymentPtr>(WalletId wallet_id) {
+template <> bool QWalletManagement::contains<QRecurringPaymentPtr>(WalletId wallet_id) {
     for (auto ptr : mRecurringPayments) {
         if (ptr->wallet_id() == wallet_id) {
             return true;
@@ -440,8 +396,7 @@ bool QWalletManagement::contains<QRecurringPaymentPtr>(WalletId wallet_id) {
     return false;
 }
 
-template<>
-QRecurringPaymentPtr QWalletManagement::data<QRecurringPaymentPtr>(WalletId wallet_id) {
+template <> QRecurringPaymentPtr QWalletManagement::data<QRecurringPaymentPtr>(WalletId wallet_id) {
     for (auto ptr : mRecurringPayments) {
         if (ptr->wallet_id() == wallet_id) {
             return ptr;
@@ -450,8 +405,7 @@ QRecurringPaymentPtr QWalletManagement::data<QRecurringPaymentPtr>(WalletId wall
     return {};
 }
 
-template<>
-void QWalletManagement::CreateData<QRecurringPaymentPtr>(WalletId wallet_id) {
+template <> void QWalletManagement::CreateData<QRecurringPaymentPtr>(WalletId wallet_id) {
     QRecurringPaymentPtr payment = QRecurringPaymentPtr(new QRecurringPayment(wallet_id));
     if (!contains<QRecurringPaymentPtr>(wallet_id)) {
         mRecurringPayments.append(payment);
@@ -459,6 +413,10 @@ void QWalletManagement::CreateData<QRecurringPaymentPtr>(WalletId wallet_id) {
 }
 
 void QWalletManagement::initSignInWallet(WalletId wallet_id) {
+    createDashBoard(wallet_id);
+}
+
+void QWalletManagement::createDashBoard(WalletId wallet_id) {
     QJsonObject info;
     info["id"] = "";
     QGroupDashboardPtr dashboard = QGroupDashboardPtr(new QGroupDashboard(wallet_id));
@@ -468,8 +426,7 @@ void QWalletManagement::initSignInWallet(WalletId wallet_id) {
     }
 }
 
-void QWalletManagement::FactoryWorker(WalletId wallet_id, GroupId group_id)
-{
+void QWalletManagement::FactoryWorker(WalletId wallet_id, GroupId group_id) {
     DBG_INFO << wallet_id << group_id;
     if (!wallet_id.isEmpty()) {
         CreateData<QGroupDashboardPtr>(wallet_id);
@@ -479,34 +436,31 @@ void QWalletManagement::FactoryWorker(WalletId wallet_id, GroupId group_id)
         CreateData<QWalletDummyTxPtr>(wallet_id);
         CreateData<QGroupWalletHealthCheckPtr>(wallet_id);
     }
+    GetListGroupWallet();
     DBG_INFO << mActivedWallets.size();
 }
 
-int QWalletManagement::activeSize() const
-{
+int QWalletManagement::activeSize() const {
     int size = 0;
     if (auto walletList = AppModel::instance()->walletListPtr()) {
-        for(auto w : walletList->fullList()) {
-            if (w->groupId() != "" ) {
-               size ++;
+        for (auto w : walletList->fullList()) {
+            if (w->groupId() != "") {
+                size++;
             }
         }
     }
     return size;
 }
 
-void QWalletManagement::slotGetListWalletFinish()
-{
+void QWalletManagement::slotGetListWalletFinish() {
     if (mWallets.size() > 0) {
-        for (auto it = mWallets.cbegin(), end = mWallets.cend(); it != end; ++it)
-        {
+        for (auto it = mWallets.cbegin(), end = mWallets.cend(); it != end; ++it) {
             FactoryWorker(it.key(), it.value());
         }
-    }
-    else {
+    } else {
         if (auto walletList = AppModel::instance()->walletListPtr()) {
-            for(auto w : walletList->fullList()) {
-                if (w->isAssistedWallet() ) {
+            for (auto w : walletList->fullList()) {
+                if (w->isAssistedWallet()) {
                     mWallets.insert(w->walletId(), w->groupId());
                     FactoryWorker(w->walletId(), w->groupId());
                 }
@@ -514,24 +468,23 @@ void QWalletManagement::slotGetListWalletFinish()
         }
     }
     if (auto walletList = AppModel::instance()->walletListPtr()) {
-        for(auto w : walletList->fullList()) {
+        for (auto w : walletList->fullList()) {
             if (auto plan = w->inheritancePlanPtr()) {
                 plan->GetInheritancePlan();
             }
         }
         walletList->updateHealthCheckTime();
     }
-    emit QGroupWallets::instance()->dashboardInfoChanged();
+    emit QGroupWallets::instance() -> dashboardInfoChanged();
     QGroupWallets::instance()->clearDashBoard();
     ServiceSetting::instance()->servicesTagPtr()->ConfigServiceTag();
     QGroupWallets::instance()->findPermissionAccount();
     AppModel::instance()->requestOnboarding();
 }
 
-void QWalletManagement::slotUpdateSigner()
-{
+void QWalletManagement::slotUpdateSigner() {
     QMasterSignerListModelPtr mastersigners = bridge::nunchukGetMasterSigners();
-    if(mastersigners){
+    if (mastersigners) {
         AppModel::instance()->setMasterSignerList(mastersigners);
     }
 }

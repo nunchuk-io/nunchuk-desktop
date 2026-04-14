@@ -47,69 +47,99 @@ QList<QObject*> QGroupWallets::dashboards() const
 
 void QGroupWallets::GetAllGroups()
 {
-    if(!CLIENT_INSTANCE->isNunchukLoggedIn()){
+    if (!CLIENT_INSTANCE->isNunchukLoggedIn()) {
         return;
     }
+
     QUserWallets::instance()->GetDraftWallet();
+
+    QJsonObject draftGroupInfo;
+    if (auto draft = QUserWallets::instance()->dashboardInfoPtr()) {
+        draftGroupInfo = draft->groupInfo();
+    }
+
     QPointer<QGroupWallets> safeThis(this);
-    runInThread([]() ->QJsonArray{
-        QJsonObject output;
-        QString error_msg = "";
-        bool ret = Byzantine::instance()->GetAllGroupWallets(output, error_msg);
-        QJsonArray groupList;
-        auto draft = QUserWallets::instance()->dashboardInfoPtr();
-        if (draft) {
-            groupList.append(draft->groupInfo());
-        }
-        if (ret) {
-            QJsonArray groups = output["groups"].toArray();
-            for (auto v : groups) {
-                QJsonObject group = v.toObject();
-                groupList.append(group);
+
+    runInThread(
+        this,
+        [draftGroupInfo]() -> QJsonArray {
+            QJsonObject output;
+            QString error_msg;
+            bool ret = Byzantine::instance()->GetAllGroupWallets(output, error_msg);
+
+            QJsonArray groupList;
+            if (!draftGroupInfo.isEmpty()) {
+                groupList.append(draftGroupInfo);
             }
+
+            if (ret) {
+                const QJsonArray groups = output.value("groups").toArray();
+                for (const auto& v : groups) {
+                    groupList.append(v.toObject());
+                }
+            } else {
+                DBG_INFO << error_msg;
+            }
+
+            return groupList;
+        },
+        [safeThis](QJsonArray groupList) {
+            if (!safeThis) {
+                return;
+            }
+
+            safeThis->GetListAllRequestAddKey(groupList);
+            safeThis->MakePendingDashboardList(groupList);
         }
-        else {
-            DBG_INFO << error_msg;
-        }
-        return groupList;
-    },[safeThis](QJsonArray groupList) {
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        ptrLamda->GetListAllRequestAddKey(groupList);
-        ptrLamda->MakePendingDashboardList(groupList);
-    });
+        );
 }
 
 void QGroupWallets::AcceptGroupWallet()
 {
-    if (!mDashboard) return;
-    if (isBusy()) return;
+    if (!mDashboard) {
+        return;
+    }
+
+    if (isBusy()) {
+        return;
+    }
+
     qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-    QPointer<QGroupDashboard> safeThis(mDashboard.data());
-    runInThread([safeThis]() ->bool{
-        SAFE_QPOINTER_CHECK(ptrLamda, safeThis)
-        QJsonObject output;
-        QString error_msg = "";
-        bool ret = Byzantine::instance()->AcceptGroupWallet(ptrLamda->groupId(), output, error_msg);
-        if(ret){
-            DBG_INFO;
+
+    auto dashboard = mDashboard;
+    const QString groupId = dashboard->groupId();
+    QPointer<QGroupDashboard> safeThis(dashboard.data());
+
+    runInThread(
+        this,
+        [groupId]() -> std::pair<bool, QString> {
+            QJsonObject output;
+            QString error_msg;
+            const bool ret = Byzantine::instance()->AcceptGroupWallet(groupId, output, error_msg);
+            return {ret, error_msg};
+        },
+        [safeThis](std::pair<bool, QString> result) {
+            qApp->restoreOverrideCursor();
+
+            if (!safeThis) {
+                return;
+            }
+
+            const bool ret = result.first;
+            const QString error_msg = result.second;
+
+            if (ret) {
+                QGroupWallets::instance()->GetAllGroups();
+                AppModel::instance()->requestCreateUserWallets();
+                safeThis->GetAlertsInfo();
+                safeThis->GetMemberInfo();
+                safeThis->GetWalletInfo();
+                safeThis->GetHealthCheckInfo();
+            } else {
+                AppModel::instance()->showToast(0, error_msg, EWARNING::WarningType::ERROR_MSG);
+            }
         }
-        else{
-            //Show error
-            AppModel::instance()->showToast(0, error_msg, EWARNING::WarningType::ERROR_MSG);
-        }
-        return ret;
-    },[safeThis](bool ret) {
-        qApp->restoreOverrideCursor();
-        SAFE_QPOINTER_CHECK_RETURN_VOID(ptrLamda, safeThis)
-        if (ret) {
-            QGroupWallets::instance()->GetAllGroups(); // reset pending wallet
-            AppModel::instance()->requestCreateUserWallets();
-            ptrLamda->GetAlertsInfo();
-            ptrLamda->GetMemberInfo();
-            ptrLamda->GetWalletInfo();
-            ptrLamda->GetHealthCheckInfo();
-        }
-    });
+        );
 }
 
 void QGroupWallets::DenyGroupWallet()
@@ -192,20 +222,37 @@ void QGroupWallets::MakePendingDashboardList(const QJsonArray &groups)
                 mPendingWallets.append(dashboard);
             }
             else {
-                GetDashboard(group_id)->setGroupInfo(info);
+                if(auto db = GetDashboard(group_id)){
+                    db->setGroupInfo(info);
+                }
             }
         }
     }
-    for (auto remove: mPendingWallets) {
-        if (!groupids.contains(remove->groupId())) {
-            mPendingWallets.removeOne(remove);
-            if (mDashboard && qUtils::strCompare(mDashboard->groupId(), remove->groupId())) {
+    // for (auto remove: mPendingWallets) {
+    //     if (!groupids.contains(remove->groupId())) {
+    //         mPendingWallets.removeOne(remove);
+    //         if (mDashboard && qUtils::strCompare(mDashboard->groupId(), remove->groupId())) {
+    //             mDashboard->setShowDashBoard(false);
+    //             mDashboard.clear();
+    //             QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
+    //         }
+    //     }
+    // }
+
+    QList<QGroupDashboardPtr> kept;
+    for (const auto &item : std::as_const(mPendingWallets)) {
+        if (groupids.contains(item->groupId())) {
+            kept.append(item);
+        } else {
+            if (mDashboard && qUtils::strCompare(mDashboard->groupId(), item->groupId())) {
                 mDashboard->setShowDashBoard(false);
                 mDashboard.clear();
                 QEventProcessor::instance()->sendEvent(E::EVT_ONS_CLOSE_ALL_REQUEST);
             }
         }
     }
+    mPendingWallets = kept;
+
     if (groups.size() == 0 && mPendingWallets.size() > 0) {
         mPendingWallets.clear();
     }
@@ -496,7 +543,7 @@ void QGroupWallets::findPermissionAccount()
             } else if (new_role == "CUSTOMIZE" || cur_role == "CUSTOMIZE") {
                 currentMember = new_role == "CUSTOMIZE" ? dash->myInfo() : currentMember;
             } else {
-                DBG_INFO << "Unknow " << dash->myInfo();
+                // DBG_INFO << "Unknow " << dash->myInfo();
             }
         }
         return currentMember;

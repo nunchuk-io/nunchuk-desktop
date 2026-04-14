@@ -46,7 +46,7 @@ Item {
     property bool   walletIsAssisted            : walletInfo.isAssistedWallet
     property bool   walletIsShared              : walletInfo.isSharedWallet
     property bool   walletIsLocked              : walletInfo.isLocked
-    property bool   walletIsSandboxWallet       : walletInfo.isGlobalGroupWallet
+    property bool   walletIsSandboxWallet       : walletInfo.isSandboxWallet
     anchors.fill: parent
     anchors.margins: 24
     function getWalletTypeDes() {
@@ -852,7 +852,7 @@ Item {
         anchors.rightMargin: 30
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 30
-        sourceComponent: walletInfo.isGlobalGroupWallet ? messageBubble : null
+        sourceComponent: walletInfo.isSandboxWallet ? messageBubble : null
     }
     Component {
         id: messageBubble

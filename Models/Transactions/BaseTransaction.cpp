@@ -866,8 +866,13 @@ int BaseTransaction::numberSigned() {
 }
 
 int BaseTransaction::pendingSignatures() {
-    int pending_count = max(0, (m() - numberSigned()));
+    int pending_count = isDummyTx() ? m_pendingSignatures : (max(0, (m() - numberSigned())));
     return pending_count;
+}
+
+void BaseTransaction::setPendingSignatures(int pending) {
+    m_pendingSignatures = pending;
+    emit nunchukTransactionChanged();
 }
 
 QString BaseTransaction::subtotalCurrency() const {
@@ -1098,4 +1103,29 @@ int BaseTransaction::walletType() const {
 
 void BaseTransaction::refreshScanDevices() {
     emit nunchukTransactionChanged();
+}
+
+QString BaseTransaction::groupTransactionState()
+{
+    if (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::PENDING_NONCE)
+    {
+        QWarningMessage msg;
+        nunchuk::GroupTransactionState group_state = bridge::GetGroupTransactionState(walletId(), txid(), msg);
+        if(msg.type() == (int)EWARNING::WarningType::NONE_MSG) {
+            const auto group_status = group_state.get_status();
+            DBG_INFO << "Group Transaction State: " << static_cast<int>(group_status);
+            if(group_status == nunchuk::GroupTransactionStatus::COSIGNING || group_status == nunchuk::GroupTransactionStatus::BLOCKED){
+                return QString::fromStdString(group_state.get_message());
+            }
+            else if(group_status == nunchuk::GroupTransactionStatus::PENDING_DELAY){
+                time_t co_signing_at = group_state.get_cosign_at();
+                QString co_signing_at_str = QDateTime::fromTime_t(co_signing_at).toString("hh:mm AP MMM d");
+                return QString("Co-sign at %1").arg(co_signing_at_str);
+            }
+            else {
+                return "";
+            }
+        }
+    }
+    return "";
 }

@@ -84,13 +84,18 @@ Item {
                         single_value_key: single_signer_value_key
                         single_derivationPath: singleSigner_derivationPath
                         single_device_cardid: single_signer_device_cardid
+                        single_platformkeyPolicyType: single_signer_platformkeyPolicyType
                     }
                     onViewPoliciesRequest: {
-                        var objectRequest = {
-                            "requestType": "viewPolicies",
-                            "requestData": AppModel.walletInfo.walletId
+                        if (single_signer_type === NUNCHUCKTYPE.PLATFORM) {
+                            vm.onPlatformKeyConfigClicked(AppModel.walletInfo.walletId)
+                        } else {
+                            var objectRequest = {
+                                "requestType": "viewPolicies",
+                                "requestData": AppModel.walletInfo.walletId
+                            }
+                            QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
                         }
-                        QMLHandle.sendEvent(EVT.EVT_WALLET_INFO_SIGNER_INFO_REQUEST, objectRequest)
                     }
                 }
             }

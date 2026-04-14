@@ -34,7 +34,7 @@ Rectangle {
     property bool   walletIsReplaced        : walletInfo.isReplaced
     property bool   walletIsAssisted        : walletInfo.isAssistedWallet
     property bool   walletIsShared          : walletInfo.isSharedWallet
-    property bool   walletIsSandboxWallet   : walletInfo.isGlobalGroupWallet
+    property bool   walletIsSandboxWallet   : walletInfo.isSandboxWallet
     readonly property var types: [
         {type: NUNCHUCKTYPE.NATIVE_SEGWIT,   displayName: STR.STR_QML_062 },
         {type: NUNCHUCKTYPE.TAPROOT,         displayName: STR.STR_QML_553 },

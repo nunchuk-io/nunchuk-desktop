@@ -25,6 +25,7 @@ import HMIEVENTS 1.0
 import EWARNING 1.0
 import NUNCHUCKTYPE 1.0
 import DataPool 1.0
+import Features.Draftwallets.Sandbox.ViewModels 1.0
 import "../../../Components/origins"
 import "../../../Components/customizes"
 import "../../../Components/customizes/Chats"
@@ -32,7 +33,6 @@ import "../../../Components/customizes/Texts"
 import "../../../Components/customizes/Buttons"
 import "../../../Components/customizes/QRCodes"
 import "../../../Components/customizes/Popups"
-import "../../../../localization/STR_QML.js" as STR
 
 QOnScreenContentTypeB {
     id:_content
@@ -121,6 +121,13 @@ QOnScreenContentTypeB {
                         onMiniscriptDelete: () => {
                                                 newWalletInfo.customizeMiniscript = ""
                                             }
+                    }
+                    QLine {
+                        width: 360
+                    }
+                    QAddInvites {
+                        id: addInvites
+                        width: 360
                     }
                 }
             }
@@ -211,5 +218,9 @@ QOnScreenContentTypeB {
     }
     QPopupMiniscriptTemplateSwitch {
         id: _miniTmpSwitch
+    }
+    GroupSandboxSettingViewModel {
+        id: vm
+        groupId: sandbox.groupId
     }
 }

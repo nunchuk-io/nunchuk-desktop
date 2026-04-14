@@ -121,6 +121,7 @@ Item {
         id: miniscriptWalletKeys
         QMemberKeysAreaMiniscript {
             transactionInfo: _send.transactionInfo
+            isDummy: _send.isDummy
             onKeySignRequest: _send.menuClicked("sign", signer)
             onKeyScanRequest: _send.menuClicked("scan", null)
             onKeyEnterPreImageInput: {
