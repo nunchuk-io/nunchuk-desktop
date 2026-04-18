@@ -11,7 +11,6 @@ using features::draftwallets::sandbox::usecases::SendSharedWalletInvitationUseCa
 class GroupSandboxInvitesViewModel : public BaseViewModel {
     Q_OBJECT
     DEFINE_QT_PROPERTY(QStringList, invitesList)
-    DEFINE_QT_PROPERTY(bool, isSendEnabled)
   public:
     explicit GroupSandboxInvitesViewModel(QObject *parent = nullptr);
     DEFINE_SET_GET(QString, groupId)

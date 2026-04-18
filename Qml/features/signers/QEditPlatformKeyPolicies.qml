@@ -73,7 +73,17 @@ QOnScreenContentTypeA {
                     }
                     QLato {
                         width: parent.width
-                        text: vm.policyInfo
+                        text: {
+                            if(vm.enableSpendingLimit) {
+                                var policy_string = (vm.currency ?? "") + " " + (vm.balance ?? "") + " / " + (vm.intervalStr ?? "")
+                                if (policy_string.trim() === "/") {
+                                    policy_string = STR.STR_QML_2148
+                                }
+                                return policy_string
+                            } else {
+                                return STR.STR_QML_2148
+                            }
+                        }
                         font.pixelSize: 16
                         font.weight: Font.Normal
                         color: "#031F2B"
@@ -157,7 +167,7 @@ QOnScreenContentTypeA {
                             boxWidth: 163
                             boxHeight: 48
                             textInputted: vm.hour.toString()
-                            input.placeholderText: "0"
+                            input.placeholderText: ""
                             isValid: textInputted !== ""
                             validator: RegExpValidator {
                                 regExp: /^(0?\d|1\d|2[0-3])$/
@@ -173,8 +183,7 @@ QOnScreenContentTypeA {
                             boxWidth: 163
                             boxHeight: 48
                             textInputted: vm.minute.toString()
-                            input.placeholderText: "0"
-                            isValid: textInputted !== ""
+                            input.placeholderText: ""
                             validator: RegExpValidator {
                                 regExp: /^(0?\d|[1-5]\d)$/
                             }

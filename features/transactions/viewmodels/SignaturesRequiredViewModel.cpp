@@ -21,24 +21,14 @@ void SignaturesRequiredViewModel::doThisLater() {
         DBG_ERROR << "Current flow is not SetupPlatformKeyPolicyFlow. Cannot sign dummy transaction.";
         return;
     }
-    if (!dummyTx().get_id().empty()) {
-        close();
-    }
-    else {
-        flow->RequestGroupPlatformKeyPolicyUpdateLater();
-    }
+    flow->RequestGroupPlatformKeyPolicyUpdateLater();
 }
 
 void SignaturesRequiredViewModel::signDummyTransaction() {
-
     GUARD_FLOW_MANAGER();
     auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
     if (!flow) {
         DBG_ERROR << "Current flow is not SetupPlatformKeyPolicyFlow. Cannot sign dummy transaction.";
-        return;
-    }
-    if (!dummyTx().get_id().empty()) {
-        flow->startDummyTransaction();
         return;
     }
     flow->RequestGroupPlatformKeyPolicyUpdate();

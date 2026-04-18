@@ -5,6 +5,7 @@
 
 namespace features::wallets::viewmodels {
 using namespace core::viewmodels;
+using namespace features::signers::flows;
 
 SetupGroupWalletViewModel::SetupGroupWalletViewModel(QObject *parent) : ActionViewModel(parent) {}
 
@@ -12,9 +13,10 @@ void SetupGroupWalletViewModel::onPlatformKeyConfigClicked(const QString &groupi
     GUARD_SUB_SCREEN_MANAGER()
     GUARD_FLOW_MANAGER();
     GUARD_SHARE_WALLETS()
-    flowMng->stopFlow<signers::flows::SetupPlatformKeyPolicyFlow>();
-    auto flow = flowMng->startFlow<signers::flows::SetupPlatformKeyPolicyFlow>();
+    flowMng->stopFlow<SetupPlatformKeyPolicyFlow>();
+    auto flow = flowMng->startFlow<SetupPlatformKeyPolicyFlow>();
     if (flow){
+        flow->setentryPoint(Constants::EntryPointGroup);
         flow->setgroupId(groupid);
         if (auto group_wallet = sharedWallets->sandboxListPtr()->GetGroup(groupid)) {
             DBG_INFO;
@@ -62,9 +64,10 @@ void SetupGroupWalletViewModel::onAddKeyClicked(const QVariant& msg)
         }
     }
 
-    flowMng->stopFlow<signers::flows::SetupPlatformKeyPolicyFlow>();
-    auto flow = flowMng->startFlow<signers::flows::SetupPlatformKeyPolicyFlow>();
+    flowMng->stopFlow<SetupPlatformKeyPolicyFlow>();
+    auto flow = flowMng->startFlow<SetupPlatformKeyPolicyFlow>();
     if (flow){
+        flow->setentryPoint(Constants::EntryPointGroup);
         flow->setgroupId(groupid);
         flow->setindexOrKey(indexOrKey);
     }

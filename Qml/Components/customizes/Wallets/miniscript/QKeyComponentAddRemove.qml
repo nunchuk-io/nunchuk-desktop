@@ -64,7 +64,7 @@ QKeyComponent {
         width: label.paintedWidth + 2*16
         height: 36
         type: eTypeB
-        visible: (label.text !== "") || (keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM)
+        visible: (label.text !== "") || (miniscript.keyObj.single_signer_type === NUNCHUCKTYPE.PLATFORM)
         label.text: {
             var keyObj = miniscript.keyObj
             var hasKey = keyObj !== null && keyObj !== undefined

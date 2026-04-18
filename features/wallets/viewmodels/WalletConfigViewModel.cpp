@@ -26,6 +26,7 @@ void WalletConfigViewModel::onPlatformKeyConfigClicked(const QString &walletId) 
     auto flow = flowMng->startFlow<SetupPlatformKeyPolicyFlow>();
     if (flow) {
         QString groupid = wallet->groupId();
+        flow->setentryPoint(Constants::EntryPointWallet);
         flow->setwalletId(walletId);
         flow->setgroupId(groupid);
         if (has_global_policies) {

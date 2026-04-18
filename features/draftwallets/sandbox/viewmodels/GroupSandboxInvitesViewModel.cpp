@@ -10,7 +10,6 @@ GroupSandboxInvitesViewModel::GroupSandboxInvitesViewModel(QObject *parent) : Ba
 
 void GroupSandboxInvitesViewModel::onInit() {
     BaseViewModel::onInit();
-    setisSendEnabled(invitesList().size() > 0);
 }
 
 void GroupSandboxInvitesViewModel::onSendInviteClicked() {

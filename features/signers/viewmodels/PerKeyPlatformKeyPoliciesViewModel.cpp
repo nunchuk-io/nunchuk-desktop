@@ -10,10 +10,8 @@ namespace features::signers::viewmodels {
 using namespace features::signers::flows;
 using namespace features::transactions::usecases;
 
-PerKeyPlatformKeyPoliciesViewModel::PerKeyPlatformKeyPoliciesViewModel(QObject *parent) : BaseViewModel(parent) {
-    setisDummyTx(false);
+PerKeyPlatformKeyPoliciesViewModel::PerKeyPlatformKeyPoliciesViewModel(QObject *parent) : BasePlatformKeyPoliciesViewModel(parent) {
     setisTypeChanged(false);
-    setisWallet(false);
     setafterHours(0);
 }
 
@@ -25,17 +23,14 @@ void PerKeyPlatformKeyPoliciesViewModel::onInit() {
         DBG_ERROR << "Current flow is not SetupPlatformKeyPolicyFlow. Cannot initialize policy from sandbox.";
         return;
     }
-    bool isWallet = flow->walletId().isEmpty() ? false : true;
-    setisWallet(isWallet);
     setpending_signatures(flow->pendingSignatures());
-    auto dummyTx = flow->dummyTx();
-    setisDummyTx(!dummyTx.get_id().empty());
-    if (isWallet) {
-        initPolicyFromWalletConfig();
-    } else {
+    if (isEntryPointGroup()) {
         initPolicyFromSandbox();
+    } else if (isEntryPointWallet()) {
+        initPolicyFromWalletConfig();
+    } else if (isEntryPointAlert()) {
+        initPolicyFromDummyTransaction();
     }
-    initPolicyFromDummyTransaction();
 }
 
 void PerKeyPlatformKeyPoliciesViewModel::initPolicyFromSandbox() {
@@ -75,11 +70,9 @@ void PerKeyPlatformKeyPoliciesViewModel::initPolicyFromSandbox() {
                     platformkey_index = m_groupSandbox->get_platform_key_index().has_value() ? m_groupSandbox->get_platform_key_index().value_or(-1) : -1;
                     perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(sandbox_signers, policy_signers, platformkey_index);
                 }
-                flow->sethasAnyChanged(false);
             } else {
                 auto sandbox_signers = m_groupSandbox->get_signers();
                 perkey_policies = helper::defaultPerkeyPolices(sandbox_signers);
-                flow->sethasAnyChanged(true);
             }
             setperKeyPolicies(perkey_policies);
             flow->setperKeyPolicies(perkey_policies);
@@ -95,43 +88,34 @@ void PerKeyPlatformKeyPoliciesViewModel::initPolicyFromWalletConfig() {
         DBG_ERROR << "Current flow is not SetupPlatformKeyPolicyFlow. Cannot initialize policy from sandbox.";
         return;
     }
-    bool hasAnyChanged = flow->hasAnyChanged();
-    if (hasAnyChanged) {
-        setperKeyPolicies(flow->perKeyPolicies());
-        replacePolicy(flow->policy());
-    } else {
-        QString walletId = flow->walletId();
-        if (walletId.isEmpty()) {
-            return;
-        }
-        GUARD_WALLET(walletId)
-        if (!wallet) {
-            DBG_ERROR << "Wallet not found for walletId: " << walletId;
-            return;
-        }
-        wallet->GetGroupWalletConfig();
-        QString groupid = wallet->groupId();
-        flow->setwalletId(walletId);
-        flow->setgroupId(groupid);
-
-        auto walletConfig = wallet->nunchukConfig();
-        if (walletConfig.get_platform_key().has_value()) {
-            auto platformKey = walletConfig.get_platform_key().value();
-            auto policies = platformKey.get_policies();
-            QVariantList perkey_policies;
-            auto wallet_signers = wallet->singleSignersAssigned()->signers();
-            auto policy_signers = policies.get_signers();
-            ;
-            perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(wallet_signers, policy_signers, -1);
-            setperKeyPolicies(perkey_policies);
-            flow->setperKeyPolicies(perkey_policies);
-            flow->sethasAnyChanged(false);
+    GUARD_WALLET(flow->walletId())
+    if (!wallet) {
+        DBG_ERROR << "Wallet not found for walletId: " << flow->walletId();
+        return;
+    }
+    wallet->GetGroupWalletConfig();
+    auto walletConfig = wallet->nunchukConfig();
+    if (walletConfig.get_platform_key().has_value()) {
+        auto platformKey = walletConfig.get_platform_key().value();
+        auto policies = platformKey.get_policies();
+        auto wallet_signers = wallet->singleSignersAssigned()->signers();
+        auto policy_signers = policies.get_signers();
+        QVariantList old_perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(wallet_signers, policy_signers, -1);
+        bool hasAnyChanged = flow->hasAnyChanged();
+        if (hasAnyChanged) {
+            setperKeyPolicies(old_perkey_policies);
+            replacePolicy(flow->policy());
+            QVariantList new_perkey_policies = perKeyPolicies();
+            QVariantList result = makeRedHighlightPolicy(old_perkey_policies, new_perkey_policies);
+            setperKeyPolicies(result);
         } else {
-            auto wallet_signers = wallet->singleSignersAssigned()->signers();
-            QVariantList perkey_policies = helper::defaultPerkeyPolices(wallet_signers);
-            setperKeyPolicies(perkey_policies);
-            flow->sethasAnyChanged(true);
+            setperKeyPolicies(old_perkey_policies);
         }
+        setisTypeChanged(policy_signers.size() == 0);
+    } else {
+        auto wallet_signers = wallet->singleSignersAssigned()->signers();
+        QVariantList perkey_policies = helper::defaultPerkeyPolices(wallet_signers);
+        setperKeyPolicies(perkey_policies);        
     }
 }
 
@@ -150,43 +134,67 @@ void PerKeyPlatformKeyPoliciesViewModel::initPolicyFromDummyTransaction() {
     if (!payload_opt.has_value()) {
         return;
     }
-    QString wallet_id = flow->walletId();
-    GUARD_WALLET(wallet_id)
+    GUARD_WALLET(flow->walletId())
+    if (!wallet) {
+        DBG_ERROR << "Wallet not found for walletId: " << flow->walletId();
+        return;
+    }
     auto nunWallet = wallet->nunchukWallet();
     auto payload = payload_opt.value();
     auto old_policies = payload.get_old_policies();
     auto new_policies = payload.get_new_policies();
     setisTypeChanged(false);
-    if (old_policies.get_signers().size() > 0 || new_policies.get_signers().size() > 0) {
+    bool hasAnyChanged = flow->hasAnyChanged();
+    if (old_policies.get_signers().size() > 0 && new_policies.get_signers().size() > 0) {
         QVariantList old_perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(nunWallet.get_signers(), old_policies.get_signers(), -1);
-        QVariantList new_perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(nunWallet.get_signers(), new_policies.get_signers(), -1);
-        QVariantList result_perkey_policies_compare_old_new;
-        for (int i = 0; i < old_perkey_policies.size(); i++) {
-            QVariantMap old_policy = old_perkey_policies[i].toMap();
-            for (int j = 0; j < new_perkey_policies.size(); j++) {
-                QVariantMap new_policy = new_perkey_policies[j].toMap();
-                if (old_policy.value("singleSigner_masterFingerPrint").toString() == new_policy.value("singleSigner_masterFingerPrint").toString()) {
-                    QVariantMap result_policy_compare_old_new = new_policy;
-                    for (auto it = old_policy.begin(); it != old_policy.end(); ++it) {
-                        QString key = it.key();
-                        QVariant old_value = it.value();
-                        QVariant new_value = new_policy.value(key, QVariant());
-                        if (old_value != new_value) {
-                            result_policy_compare_old_new[key] = new_value;
-                            result_policy_compare_old_new[key + "Changed"] = true;
-                        }
+        if (hasAnyChanged) {
+            setperKeyPolicies(old_perkey_policies);
+            replacePolicy(flow->policy());
+            QVariantList new_perkey_policies = perKeyPolicies();
+            QVariantList result = makeRedHighlightPolicy(old_perkey_policies, new_perkey_policies);
+            setperKeyPolicies(result);
+        } else {
+            QVariantList new_perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(nunWallet.get_signers(), new_policies.get_signers(), -1);
+            QVariantList result_perkey_policies_compare_old_new = makeRedHighlightPolicy(old_perkey_policies, new_perkey_policies);
+            setperKeyPolicies(result_perkey_policies_compare_old_new);
+        }
+    } else if (old_policies.get_signers().size() == 0) {
+        setisTypeChanged(true);
+        QVariantList old_perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(nunWallet.get_signers(), new_policies.get_signers(), -1);
+        if (hasAnyChanged) {
+            setperKeyPolicies(old_perkey_policies);
+            replacePolicy(flow->policy());
+        } else {
+            setperKeyPolicies(old_perkey_policies);
+        }
+    }
+}
+
+QVariantList PerKeyPlatformKeyPoliciesViewModel::makeRedHighlightPolicy(const QVariantList &old_perkey_policies, const QVariantList &new_perkey_policies) {
+    QVariantList result_perkey_policies_compare_old_new;
+    for (int i = 0; i < old_perkey_policies.size(); i++) {
+        QVariantMap old_policy = old_perkey_policies[i].toMap();
+        for (int j = 0; j < new_perkey_policies.size(); j++) {
+            QVariantMap new_policy = new_perkey_policies[j].toMap();
+            if (old_policy.value("singleSigner_masterFingerPrint").toString() == new_policy.value("singleSigner_masterFingerPrint").toString()) {
+                QVariantMap result_policy_compare_old_new = new_policy;
+                for (auto it = old_policy.begin(); it != old_policy.end(); ++it) {
+                    QString key = it.key();
+                    QVariant old_value = it.value();
+                    QVariant new_value = new_policy.value(key, QVariant());
+                    if (old_value != new_value) {
+                        result_policy_compare_old_new[key] = new_value;
+                        result_policy_compare_old_new[key + "Changed"] = true;
+                    } else {
+                        result_policy_compare_old_new[key + "Changed"] = false;
                     }
-                    result_perkey_policies_compare_old_new.append(result_policy_compare_old_new);
-                    break;
                 }
+                result_perkey_policies_compare_old_new.append(result_policy_compare_old_new);
+                break;
             }
         }
-        setperKeyPolicies(result_perkey_policies_compare_old_new);
-    } else if (old_policies.get_signers().size() == 0 && new_policies.get_signers().size() > 0) {
-        QVariantList perkey_policies = helper::perKeyPolicyToVariantListNormalWallet(nunWallet.get_signers(), new_policies.get_signers(), -1);
-        setperKeyPolicies(QVariantList());
-        setisTypeChanged(true);
     }
+    return result_perkey_policies_compare_old_new;
 }
 
 void PerKeyPlatformKeyPoliciesViewModel::onEditClicked() {
@@ -205,6 +213,7 @@ void PerKeyPlatformKeyPoliciesViewModel::onEditPolicyClicked(QString xfp) {
     auto policy = filterSignerPolicy(xfp);
     auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
     if (flow) {
+        flow->sethasAnyChanged(false);
         flow->setperKeyPolicies(perKeyPolicies());
         flow->setpolicy(policy);
     }
@@ -254,6 +263,8 @@ void PerKeyPlatformKeyPoliciesViewModel::onApplyClicked() {
     GUARD_SUB_SCREEN_MANAGER()
     auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
     if (flow) {
+        flow->sethasAnyChanged(false);
+        flow->setperKeyPolicies(perKeyPolicies());
         flow->PreviewGroupPlatformKeyPolicyUpdate();
     }
 }
@@ -263,6 +274,11 @@ void PerKeyPlatformKeyPoliciesViewModel::onDiscardChangesClicked() {
 
 void PerKeyPlatformKeyPoliciesViewModel::onContinueSignaturePendingClicked() {
     GUARD_SUB_SCREEN_MANAGER()
+    GUARD_FLOW_MANAGER()
+    auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
+    if (flow) {
+        flow->setperKeyPolicies(perKeyPolicies());
+    }
     subMng->show(qml::features::transactions::qsignaturesrequired);
 }
 
@@ -311,17 +327,6 @@ void PerKeyPlatformKeyPoliciesViewModel::replacePolicy(const QVariantMap &newPol
     setperKeyPolicies(currentPolicies);
 }
 
-int PerKeyPlatformKeyPoliciesViewModel::backToScreen() {
-    if (isDummyTx()) {
-        return -1;
-    } else if (isWallet() && !isDummyTx()) {
-        return E::EVT_HOME_WALLET_INFO_REQUEST;
-    } else if (!isWallet()) {
-        return E::EVT_SETUP_GROUP_WALLET_REQUEST;
-    }
-    return -1;
-}
-
 void PerKeyPlatformKeyPoliciesViewModel::cancelDummyTransaction() {
     GUARD_FLOW_MANAGER()
     auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
@@ -343,6 +348,13 @@ void PerKeyPlatformKeyPoliciesViewModel::cancelDummyTransaction() {
         if (result.isSuccess()) {
             // Handle success case
             emit showToast(0, "Dummy transaction cancelled successfully", EWARNING::WarningType::SUCCESS_MSG);
+            GUARD_APP_MODEL()
+            if (auto wallet = appModel->walletInfoPtr()) {
+                if (auto dashboard = wallet->dashboard()) {
+                    dashboard->GetAlertsInfo();
+                    appModel->startReloadWallets();
+                }
+            }
             close();
         } else {
             // Handle error case

@@ -7,6 +7,7 @@
 #include "Chats/ClientController.h"
 #include "Premiums/QSharedWallets.h"
 #include "Signers/QSignerManagement.h"
+#include "core/common/resources/AppStrings.h"
 
 
 QNormalSandbox::QNormalSandbox()
@@ -139,7 +140,7 @@ QString QNormalSandbox::platformkeyPolicyType()
                 return policy_string;
             }
             else {
-                return "No spending limit";
+                return Strings.STR_QML_2148();
             }
         }
         else {

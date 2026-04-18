@@ -6,6 +6,7 @@
 #include "bridgeifaces.h"
 #include "QThreadForwarder.h"
 #include "Premiums/QSharedWallets.h"
+#include "core/common/resources/AppStrings.h"
 
 SandboxWallet::SandboxWallet(const nunchuk::Wallet &w) :
     AssistedWallet{w},
@@ -20,12 +21,10 @@ void SandboxWallet::convert(const nunchuk::Wallet w) {
     if(msg.isSuccess()){
         setalerCount(alerCount);
     }
-    QTimer::singleShot(0, this, [this]() {
-        if (m_isSandboxWallet) {
-            return;
-        }
+    QMetaObject::invokeMethod(this, [this]{
         m_isSandboxWallet = AppModel::instance()->groupWalletList()->containsId(walletId());
-    });
+        GetGroupWalletConfig();
+    }, Qt::DirectConnection);
 }
 
 bool SandboxWallet::isReplaced() const
@@ -294,7 +293,6 @@ QVariantList SandboxWallet::replaceGroups()
 
 QString SandboxWallet::platformkeyPolicyType()
 {
-    GetGroupWalletConfig();
     if (m_nunchukConfig.get_platform_key().has_value()) {
         auto policies = m_nunchukConfig.get_platform_key().value().get_policies();
         bool has_global_policies = policies.get_global().has_value();
@@ -317,11 +315,11 @@ QString SandboxWallet::platformkeyPolicyType()
                 return policy_string;
             }
             else {
-                return "No spending limit";
+                return Strings.STR_QML_2148();
             }
         }
         else {
-            return "Multiple spending limits";
+            return Strings.STR_QML_2150();
         }
     }
     return "";

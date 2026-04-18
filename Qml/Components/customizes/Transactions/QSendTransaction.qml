@@ -121,12 +121,12 @@ Item {
         id: miniscriptWalletKeys
         QMemberKeysAreaMiniscript {
             transactionInfo: _send.transactionInfo
-            isDummy: _send.isDummy
             onKeySignRequest: _send.menuClicked("sign", signer)
             onKeyScanRequest: _send.menuClicked("scan", null)
             onKeyEnterPreImageInput: {
                 _send.keyEnterPreImageInput(hashData, typeNode)
             }
+            isDummy: _send.isDummy
             onKeyExportRequest: _send.menuClicked("exportFile", null)
             onKeyImportRequest: _send.menuClicked("importFile", null)
         }

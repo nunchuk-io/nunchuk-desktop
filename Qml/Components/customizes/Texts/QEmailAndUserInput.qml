@@ -45,6 +45,9 @@ Column {
         font.weight: Font.Bold
         font.pixelSize: 16
     }
+    function hasEmail(){
+        return emailrepeat.model > 0
+    }
     Rectangle {
         width: parent.width
         height: dataInput.height - 20
@@ -106,6 +109,7 @@ Column {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
+                                        emailUpdated()
                                         dataInput.requestlist.splice(index, 1)
                                         dataInput.errorAlert = !dataInput.isVaildAll()
                                         emailrepeat.model = dataInput.requestlist.length
@@ -154,6 +158,9 @@ Column {
         emailinput.finishInputEmail()
     }
     function validateEmail(email) {
+        if(email === null || email === undefined || email === "" || email.trim() === "") {
+            return false;
+        }
         if(Draco.pkey_username_availability(email)){
             return true;
         }

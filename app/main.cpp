@@ -231,7 +231,7 @@ int main(int argc, char* argv[])
     appNunchuk.setOrganizationName("nunchuk");
     appNunchuk.setOrganizationDomain("nunchuk.io");
     appNunchuk.setApplicationName("NunchukClient");
-    appNunchuk.setApplicationVersion("2.4.0");
+    appNunchuk.setApplicationVersion("2.4.1");
     appNunchuk.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(appNunchuk.applicationVersion()));
     Draco::instance();
     AppModel::instance();

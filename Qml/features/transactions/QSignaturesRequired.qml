@@ -89,7 +89,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_572
             label.font.pixelSize: 16
-            type: eTypeB
+            type: eTypeR
             onButtonClicked: vm.doThisLater()
         }
         QTextButton {

@@ -1052,7 +1052,7 @@ QVariantList UTXO::timelocklist()
                 isLocked = true;
             }
         }
-        else {
+        else if(timelockbase() == (int)nunchuk::Timelock::Based::HEIGHT_LOCK) {
             QLocale locale(QLocale::English);
             int64_t currentHeight = AppModel::instance()->blockHeight();
             int64_t remain = val - currentHeight;
@@ -1067,6 +1067,9 @@ QVariantList UTXO::timelocklist()
             } else {
                 valueRemainingStr = "";
             }
+        }
+        else {
+            continue;
         }
 
         if (isLocked) anyLocked = true;

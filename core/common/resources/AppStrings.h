@@ -869,13 +869,13 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(
         STR_QML_822,
         "If you haven't already, install the Bitcoin (BTC) app on the Ledger device. Please refer to <a href='%1' style=\"color:#031F2B\">Ledger's guide</a>.")
-    DEFINE_STRING_PROPERTY(STR_QML_824, "Please ensure that the Ledger device is connected to this computer, and click on Refresh.")
+    DEFINE_STRING_PROPERTY(STR_QML_824, "Connect your Ledger device. If it's not listed, click 'Refresh devices', then select it to continue.")
     DEFINE_STRING_PROPERTY(STR_QML_825, "Configure gap limit (advanced)")
     DEFINE_STRING_PROPERTY(STR_QML_826, "Adding Ledger... Please keep your device connected.")
     DEFINE_STRING_PROPERTY(STR_QML_827, "Ledger added successfully")
     DEFINE_STRING_PROPERTY(STR_QML_828, "To finish setting up your assisted wallet, please return to your mobile device.")
     DEFINE_STRING_PROPERTY(STR_QML_829, "Follow Trezor's instruction on how to set up your device with a seed phrase.")
-    DEFINE_STRING_PROPERTY(STR_QML_830, "Please ensure that the Trezor device is connected to this computer, and click on Refresh.")
+    DEFINE_STRING_PROPERTY(STR_QML_830, "Connect your Trezor device. If it's not listed, click 'Refresh devices', then select it to continue.")
     DEFINE_STRING_PROPERTY(STR_QML_831, "Adding Trezor... Please keep your device connected.")
     DEFINE_STRING_PROPERTY(STR_QML_832, "Trezor added successfully")
     DEFINE_STRING_PROPERTY(STR_QML_833, "Gap limit has been updated")
@@ -975,7 +975,7 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_908, "Refer to <a href='%1' style=\"color:#031F2B\">this starter guide</a>.")
     DEFINE_STRING_PROPERTY(STR_QML_909, "Unlock COLDCARD")
     DEFINE_STRING_PROPERTY(STR_QML_910, "You might need to enter a PIN and/or a PASSPHRASE directly on COLDCARD.")
-    DEFINE_STRING_PROPERTY(STR_QML_911, "Please ensure that the COLDCARD device is connected to this computer, and click on Refresh.")
+    DEFINE_STRING_PROPERTY(STR_QML_911, "Connect your COLDCARD device. If it's not listed, click 'Refresh devices', then select it to continue.")
     DEFINE_STRING_PROPERTY(STR_QML_912, "Adding COLDCARD... Please keep your device connected.")
     DEFINE_STRING_PROPERTY(STR_QML_913, "COLDCARD added successfully")
     DEFINE_STRING_PROPERTY(STR_QML_914, "No COLDCARD devices have been detected. Please try again.")
@@ -995,7 +995,7 @@ class AppStrings : public QObject {
         STR_QML_927,
         "To unlock the device, you might need to use the BitBox's companion app. Please close the BitBox's companion app after you have unlocked the device.")
     DEFINE_STRING_PROPERTY(STR_QML_928, "No BitBox devices have been detected. Please try again.")
-    DEFINE_STRING_PROPERTY(STR_QML_929, "Please ensure that the BitBox device is connected to this computer, and click on Refresh")
+    DEFINE_STRING_PROPERTY(STR_QML_929, "Connect your BitBox device. If it's not listed, click 'Refresh devices', then select it to continue.")
     DEFINE_STRING_PROPERTY(STR_QML_930, "Adding BitBox... Please keep your device connected")
     DEFINE_STRING_PROPERTY(STR_QML_931, "BitBox added successfully")
     DEFINE_STRING_PROPERTY(STR_QML_932, "Key already assigned to wallet")
@@ -1694,7 +1694,7 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(
         STR_QML_1537,
         "Follow Blockstream's instructions on how to set up Jade with a seed phrase. Refer to <a href='%1' style=\"color:#031F2B\">this starter guide</a>.")
-    DEFINE_STRING_PROPERTY(STR_QML_1538, "Please ensure that the Blockstream Jade device is connected to this computer, and click on Refresh.")
+    DEFINE_STRING_PROPERTY(STR_QML_1538, "Connect your Blockstream Jade device. If it's not listed, click 'Refresh devices', then select it to continue.")
     DEFINE_STRING_PROPERTY(STR_QML_1539, "We noticed that you already have Blockstream Jade in your key manager.")
     DEFINE_STRING_PROPERTY(STR_QML_1540, "Adding Blockstream Jade... Please keep your device connected.")
     DEFINE_STRING_PROPERTY(STR_QML_1541, "Blockstream Jade added successfully")
@@ -2327,7 +2327,10 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2145, "Send invite")
     DEFINE_STRING_PROPERTY(STR_QML_2146, "Wallet invitation")
     DEFINE_STRING_PROPERTY(STR_QML_2147, "%1 (%2) invited you to join a group wallet.")
-
+    DEFINE_STRING_PROPERTY(STR_QML_2148, "Unlimited")
+    DEFINE_STRING_PROPERTY(STR_QML_2149, "Co-signing delay duration is required.")
+    DEFINE_STRING_PROPERTY(STR_QML_2150, "Multiple spending limits")
+    
   public:
     static AppStrings &instance();
     explicit AppStrings(QObject *parent = nullptr);

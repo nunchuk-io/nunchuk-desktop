@@ -298,6 +298,7 @@ class BaseTransaction : public QStateFlow {
     virtual void refreshScanDevices();
 
     QString groupTransactionState();
+    void createGroupTransactionState();
 
   public slots:
     bool parseQRTransaction(const QStringList &qrtags);
@@ -338,6 +339,7 @@ class BaseTransaction : public QStateFlow {
     qint64  m_fee_otherKeyset{0};
     int     m_keysetSelected{-1};
     int     m_pendingSignatures{-1};
+    QString m_platformKeyMessage{""};
 
   signals:
     void nunchukTransactionChanged();

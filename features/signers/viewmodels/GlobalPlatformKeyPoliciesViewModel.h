@@ -1,4 +1,5 @@
 #pragma once
+#include "BasePlatformKeyPoliciesViewModel.h"
 #include "core/viewmodel/BaseViewModel.h"
 #include "core/viewmodel/DefinePropertyMacros.h"
 #include "features/transactions/usecases/CancelGroupDummyTransactionUseCase.h"
@@ -8,11 +9,9 @@ namespace features::signers::viewmodels {
 using core::viewmodels::BaseViewModel;
 using features::transactions::usecases::CancelGroupDummyTransactionUseCase;
 
-class GlobalPlatformKeyPoliciesViewModel : public BaseViewModel {
+class GlobalPlatformKeyPoliciesViewModel : public BasePlatformKeyPoliciesViewModel {
     Q_OBJECT
     DEFINE_QT_PROPERTY(QVariantMap, globalPolicy)
-    DEFINE_QT_PROPERTY(bool, isWallet)
-    DEFINE_QT_PROPERTY(bool, isDummyTx)
     DEFINE_QT_PROPERTY(int, pending_signatures)
     DEFINE_QT_PROPERTY(bool, isTypeChanged)
     DEFINE_QT_PROPERTY(int, afterHours)
@@ -24,6 +23,7 @@ class GlobalPlatformKeyPoliciesViewModel : public BaseViewModel {
     void initPolicyFromSandbox();
     void initPolicyFromWalletConfig();
     void initPolicyFromDummyTransaction();
+    QVariantMap makeRedHighlightPolicy(const QVariantMap &old_global_policy, const QVariantMap &new_global_policy);
 
     void cancelDummyTransaction();
   public slots:
@@ -40,9 +40,6 @@ class GlobalPlatformKeyPoliciesViewModel : public BaseViewModel {
   signals:
     void notifySecurityDelayRequired();
     void notifyDummyTransactionRequired();
-
-  public:
-    int backToScreen() override;
 
   private:
     CancelGroupDummyTransactionUseCase m_cancelGroupDummyTransactionUC;

@@ -44,13 +44,13 @@ QMiniscriptPolicesDelegate {
                 _confirmRemoveKey.open()
             }
             onAddClicked: (key) => {
-                if (typeof(AppModel.newWalletInfo.sandbox) !== 'undefined' && AppModel.newWalletInfo.sandbox !== null) {
+                if (typeof(newWalletInfo.sandbox) !== 'undefined' && newWalletInfo.sandbox !== null && newWalletInfo.sandbox.groupId !== "") {
                   vm.onAddKeyClicked({groupId: sandbox.groupId, key: miniscript.key})
                   var obj = {
                       keyName: key,
                       group: miniscript.firstLine,
                   }
-                  AppModel.newWalletInfo.sandbox.requestAddOrRepaceKey(obj)
+                  newWalletInfo.sandbox.requestAddOrRepaceKey(obj)
                 } else {
                   // Fallback for when sandbox is not available
                   newWalletInfo.requestAddSigner(miniscript.firstLine, key)

@@ -201,7 +201,9 @@ BaseTransaction::BaseTransaction(const nunchuk::Transaction &tx)
     : m_destinations(QDestinationListModelPtr(new DestinationListModel())), m_signers(QSingleSignerListModelPtr(new (SingleSignerListModel))),
       m_keysets(QSingleSignerListModelPtr(new (SingleSignerListModel))), m_change(QDestinationPtr(new Destination())), m_transaction(tx), m_walletId(""),
       m_roomId(""), m_initEventId(""), m_createByMe(true), m_serverKeyMessage("") {
-    createDestinationList();
+    QMetaObject::invokeMethod(this, [this, tx]{
+        setNunchukTransaction(tx);
+    }, Qt::DirectConnection);
 }
 
 BaseTransaction::~BaseTransaction() {
@@ -968,6 +970,9 @@ void BaseTransaction::setNunchukTransaction(const nunchuk::Transaction &tx) {
     DBG_INFO << "TAPROOT-TEST";
     m_transaction = tx;
     createDestinationList();
+    if (!isDummyTx()) {
+        createGroupTransactionState();
+    }
     emit nunchukTransactionChanged();
 }
 
@@ -1107,6 +1112,11 @@ void BaseTransaction::refreshScanDevices() {
 
 QString BaseTransaction::groupTransactionState()
 {
+    return m_platformKeyMessage;
+}
+
+void BaseTransaction::createGroupTransactionState() {
+    DBG_INFO << "txstatus: " << static_cast<int>(status());
     if (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::PENDING_NONCE)
     {
         QWarningMessage msg;
@@ -1115,17 +1125,14 @@ QString BaseTransaction::groupTransactionState()
             const auto group_status = group_state.get_status();
             DBG_INFO << "Group Transaction State: " << static_cast<int>(group_status);
             if(group_status == nunchuk::GroupTransactionStatus::COSIGNING || group_status == nunchuk::GroupTransactionStatus::BLOCKED){
-                return QString::fromStdString(group_state.get_message());
+                m_platformKeyMessage = QString::fromStdString(group_state.get_message());
             }
             else if(group_status == nunchuk::GroupTransactionStatus::PENDING_DELAY){
                 time_t co_signing_at = group_state.get_cosign_at();
                 QString co_signing_at_str = QDateTime::fromTime_t(co_signing_at).toString("hh:mm AP MMM d");
-                return QString("Co-sign at %1").arg(co_signing_at_str);
-            }
-            else {
-                return "";
+                m_platformKeyMessage = QString("Co-sign at %1").arg(co_signing_at_str);
             }
         }
     }
-    return "";
+    m_platformKeyMessage = "";
 }

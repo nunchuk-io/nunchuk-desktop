@@ -73,7 +73,6 @@ QOnScreenContentTypeA {
                             onTextClicked: {
                                 vm.onEditClicked()
                             }
-                            // visible: !vm.isWallet
                         }
                     }
                     QLato {
@@ -106,13 +105,23 @@ QOnScreenContentTypeA {
                             width: 400
                             height: 140
                             label: modelData.singleSigner_name ?? ""
-                            subLabel: (modelData.currency ?? "") + " " + (modelData.balance ?? "") + " / " + (modelData.interval ? formatInterval(modelData.interval): "")
-                            subLabelChanged: modelData.currencyChanged || modelData.balanceChanged || modelData.intervalChanged
+                            subLabel: {
+                                var str = (modelData.currency ?? "") + " " + (modelData.balance ?? "") + " / " + (modelData.interval ? formatInterval(modelData.interval): "")
+                                if (str.trim() === "/") {
+                                    str = STR.STR_QML_2148
+                                }
+                                if (modelData.enableSpendingLimit ?? false) {
+                                    str
+                                } else {
+                                    STR.STR_QML_2148
+                                } 
+                            }
+                            subLabelChanged: (modelData.currencyChanged ?? false) || (modelData.balanceChanged ?? false) || (modelData.intervalChanged ?? false)
                             iconUrl: ""
                             signer_tag: modelData.single_signer_tag ?? ""
                             signer_type: modelData.single_signer_type ?? ""
                             enableCoSigningDelay: modelData.enableCoSigningDelay ?? false
-                            coSigningDelayChanged: modelData.coSigningDelayChanged ?? false
+                            coSigningDelayChanged: modelData.enableCoSigningDelayChanged ?? false
                             autoBroadcast: modelData.autoBroadcast ?? false
                             autoBroadcastChanged: modelData.autoBroadcastChanged ?? false
                             onEditClicked: vm.onEditPolicyClicked(modelData.singleSigner_masterFingerPrint)
@@ -132,7 +141,7 @@ QOnScreenContentTypeA {
             label: STR.STR_QML_2129
             textColor: ["#CF4018", "#CF4018", "#CF4018"]
             displayIcon:false
-            visible: !vm.isWallet
+            visible: vm.isEntryPointGroup
             onButtonClicked: {
                 vm.onRemovePlatformKeyClicked()
             }
@@ -142,7 +151,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_193
             type: eTypeR
-            visible: vm.isDummyTx
+            visible: vm.isEntryPointAlert
             onClicked: vm.onDiscardChangesClicked()
         }
         QTextButton {
@@ -150,7 +159,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_2130
             type: eTypeE
-            visible: !vm.isWallet
+            visible: vm.isEntryPointGroup
             onClicked: vm.onContinueToSaveChangesClicked()
         }
         QTextButton {
@@ -158,7 +167,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_2130
             type: eTypeE
-            visible: vm.isWallet && !vm.isDummyTx
+            visible: vm.isEntryPointWallet
             onClicked: vm.onApplyClicked()
         }
         QTextButton {
@@ -166,7 +175,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_2138.arg(vm.pending_signatures).arg((vm.pending_signatures > 1) ? "s" : "")
             type: eTypeE
-            visible: vm.isDummyTx
+            visible: vm.isEntryPointAlert
             onClicked: vm.onContinueSignaturePendingClicked()
         }
     }

@@ -8,7 +8,7 @@ namespace core::viewmodels {
 
 BaseViewModel::BaseViewModel(QObject *parent) : QObject(parent) {
     m_ctx = new ViewModelContext(this);
-    QTimer::singleShot(0, this, [this]() { initialize(); });
+    QMetaObject::invokeMethod(this, &BaseViewModel::initialize, Qt::QueuedConnection);
 }
 
 void BaseViewModel::initialize() {

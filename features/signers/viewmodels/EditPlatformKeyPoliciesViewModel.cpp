@@ -4,20 +4,20 @@
 #include "features/signers/flows/SetupPlatformKeyPolicyFlow.h"
 #include "features/transactions/flows/DummyTransactionFlow.h"
 #include "generated_qml_keys.hpp"
+#include "core/common/resources/AppStrings.h"
 
 namespace features::signers::viewmodels {
 using namespace features::signers::flows;
 
 EditPlatformKeyPoliciesViewModel::EditPlatformKeyPoliciesViewModel(QObject *parent) : BaseViewModel(parent) {
     setpolicyName("Policy Name");
-    setpolicyInfo("Policy Info");
     setautoBroadcast(false);
     setenableCoSigningDelay(false);
     setenableSpendingLimit(false);
     setcurrency("USD");
     setbalance(0.0);
     setinterval("Daily");
-    sethour(0);
+    sethour(2);
     setminute(0);
     setsigningDelaySeconds(0);
 }
@@ -35,7 +35,8 @@ void EditPlatformKeyPoliciesViewModel::onInit() {
         setbalance(policy.value("balance").toDouble());
         setinterval(policy.value("interval").toString());
         setsigningDelaySeconds(policy.value("signingDelaySeconds").toInt());
-        sethour(policy.value("hour").toInt());
+        int seconds = policy.value("signingDelaySeconds").toInt();
+        sethour(seconds == 0 ? 2 : policy.value("hour").toInt());
         setminute(policy.value("minute").toInt());
         setpolicyName(policy.value("singleSigner_name").toString());
         if (policy.contains("single_signer_type")) {
@@ -47,29 +48,18 @@ void EditPlatformKeyPoliciesViewModel::onInit() {
         }
 
         QString interval_str = policy.value("interval").toString();
-        if(qUtils::strCompare(interval_str, "DAILY")) {
+        if (qUtils::strCompare(interval_str, "DAILY")) {
             interval_str = "DAY";
-        }
-        else if(qUtils::strCompare(interval_str, "WEEKLY")) {
+        } else if (qUtils::strCompare(interval_str, "WEEKLY")) {
             interval_str = "WEEK";
-        }
-        else if(qUtils::strCompare(interval_str, "MONTHLY")) {
+        } else if (qUtils::strCompare(interval_str, "MONTHLY")) {
             interval_str = "MONTH";
-        }
-        else if(qUtils::strCompare(interval_str, "YEARLY")) {
+        } else if (qUtils::strCompare(interval_str, "YEARLY")) {
             interval_str = "YEAR";
-        }
-        else {
+        } else {
             interval_str = "DAY";
         }
-        if(enableSpendingLimit()) {
-            QString policyInfo = QString("%1 %2 / %3").arg(currency()).arg(balance()).arg(interval_str);
-            setpolicyInfo(policyInfo);
-        }
-        else {
-            interval_str = QString("%1 %2").arg(interval_str).arg(tr("spent"));
-            setpolicyInfo("No spending limit");
-        }
+        setintervalStr(interval_str);
     }
 }
 
@@ -78,15 +68,17 @@ void EditPlatformKeyPoliciesViewModel::onApplyClicked() {
     auto flow = dynamic_cast<SetupPlatformKeyPolicyFlow *>(flowMng->currentFlow());
     if (flow) {
         QString walletId = flow->walletId();
-
         int hour_input = hour();
         int minute_input = minute();
         int delaySecond_intput = hour_input * 3600 + minute_input * 60;
-        setsigningDelaySeconds(delaySecond_intput);
-        if (delaySecond_intput > 0) {
-            setenableCoSigningDelay(true);
+        if (enableCoSigningDelay()) {
+            setsigningDelaySeconds(delaySecond_intput);
+            if (delaySecond_intput <= 0) {                
+                showToast(-1, Strings.STR_QML_2149(), EWARNING::WarningType::ERROR_MSG);
+                return;
+            }
         } else {
-            setenableCoSigningDelay(false);
+            setsigningDelaySeconds(0);
         }
         QVariantMap policy_old = flow->policy();
         QVariantMap policy_new = flow->policy();
@@ -105,7 +97,7 @@ void EditPlatformKeyPoliciesViewModel::onApplyClicked() {
         DBG_INFO << "New policy: " << policy_new;
 
         flow->setpolicy(policy_new); // fixed naming convention
-        flow->sethasAnyChanged(policy_old != policy_new);
+        flow->sethasAnyChanged(true);
 
         DBG_INFO << "Applying policy changes for walletId: " << walletId;
         back();

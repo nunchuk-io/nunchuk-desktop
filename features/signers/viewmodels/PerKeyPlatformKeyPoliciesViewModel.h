@@ -1,4 +1,5 @@
 #pragma once
+#include "BasePlatformKeyPoliciesViewModel.h"
 #include "core/viewmodel/BaseViewModel.h"
 #include "core/viewmodel/DefinePropertyMacros.h"
 #include "features/transactions/usecases/CancelGroupDummyTransactionUseCase.h"
@@ -8,11 +9,9 @@ namespace features::signers::viewmodels {
 using core::viewmodels::BaseViewModel;
 using features::transactions::usecases::CancelGroupDummyTransactionUseCase;
 
-class PerKeyPlatformKeyPoliciesViewModel : public BaseViewModel {
+class PerKeyPlatformKeyPoliciesViewModel : public BasePlatformKeyPoliciesViewModel {
     Q_OBJECT
     DEFINE_QT_PROPERTY(QVariantList, perKeyPolicies)
-    DEFINE_QT_PROPERTY(bool, isWallet)
-    DEFINE_QT_PROPERTY(bool, isDummyTx)
     DEFINE_QT_PROPERTY(int, pending_signatures)
     DEFINE_QT_PROPERTY(bool, isTypeChanged)
     DEFINE_QT_PROPERTY(int, afterHours)
@@ -24,6 +23,7 @@ class PerKeyPlatformKeyPoliciesViewModel : public BaseViewModel {
     void initPolicyFromSandbox();
     void initPolicyFromDummyTransaction();
     void initPolicyFromWalletConfig();
+    QVariantList makeRedHighlightPolicy(const QVariantList &old_perkey_policies, const QVariantList &new_perkey_policies);
 
     void cancelDummyTransaction();
   public slots:
@@ -40,9 +40,6 @@ class PerKeyPlatformKeyPoliciesViewModel : public BaseViewModel {
   signals:
     void notifySecurityDelayRequired();
     void notifyDummyTransactionRequired();
-
-  public:
-    int backToScreen() override;
 
   private:
     std::optional<nunchuk::GroupSandbox> m_groupSandbox;

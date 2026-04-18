@@ -37,7 +37,7 @@ QOnScreenContentTypeA {
     onPrevClicked: vm.back()
     property var emails: vm.invitesList
     content: Item {
-         function requestFinishInputEmail() {
+        function requestFinishInputEmail() {
             _email_user.requestFinishInputEmail()
         }
         Column {
@@ -57,7 +57,7 @@ QOnScreenContentTypeA {
                 title: ""
                 width: 728
                 height: 330
-                requestlist: emails.length === 0 ? [] : emails //.split(",")
+                requestlist: emails.length === 0 ? [] : emails
                 onEmailUpdated: {
                     var emails_valid = [];
                     for(var i = 0; i < requestlist.length; i ++){
@@ -68,20 +68,23 @@ QOnScreenContentTypeA {
                         }
                     }
                                         
-                    vm.isSendEnabled = requestlist.length == emails_valid.length && emails_valid.length > 0
-                    emails = emails_valid //.join(",")   
+                    emails = emails_valid
                     vm.invitesList = emails_valid
                 }
             }
         }
+        function isEnabled() {
+            console.log("hadv3 _email_user.requestlist.length: " + _email_user.hasEmail())
+            return _email_user.hasEmail()
+        }
     }
     
     bottomRight: QTextButton {
-            width: 100
+            width: label.paintedWidth + 16*2
             height: 48
             label.text: STR.STR_QML_2145
-            type: eTypeB
-            enabled: vm.isSendEnabled
+            type: eTypeE
+            enabled: _content.contentItem.isEnabled()
             onClicked: { 
                 _content.contentItem.requestFinishInputEmail()
                 vm.onSendInviteClicked()

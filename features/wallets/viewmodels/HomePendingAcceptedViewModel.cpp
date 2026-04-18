@@ -78,8 +78,10 @@ void HomePendingAcceptedViewModel::handlePolicyChange(QJsonObject alertJson) {
         if (result.isSuccess()) {
             DBG_INFO << "Alert dismissed successfully: " << alertId;
             GUARD_GROUP_WALLETS()
+            GUARD_APP_MODEL()
             if (auto dashboard = groupWallets->dashboardInfoPtr()) {
                 dashboard->GetAlertsInfo();
+                appModel->startReloadWallets();
             }
         } else {
             emit showToast(0, result.error(), EWARNING::WarningType::ERROR_MSG);
@@ -108,7 +110,12 @@ void HomePendingAcceptedViewModel::handlePolicyChangInProgress(QJsonObject alert
     
     m_markAlertViewedUseCase.executeAsync(markViewedInput, [this, walletId, dummy_transaction_id](const core::usecase::Result<MarkGroupWalletAlertViewedResult> &result) {
         if (result.isSuccess()) {
-            DBG_INFO << "Alert marked as viewed";
+            GUARD_GROUP_WALLETS()
+            GUARD_APP_MODEL()
+            if (auto dashboard = groupWallets->dashboardInfoPtr()) {
+                dashboard->GetAlertsInfo();
+                appModel->startReloadWallets();
+            }
         } else {
             DBG_ERROR << "Failed to mark alert as viewed: " << result.error();
         }
@@ -126,8 +133,10 @@ void HomePendingAcceptedViewModel::GetTransaction(const QString &walletId, const
         if (result.isSuccess()) {
             auto dummyTransaction = result.value().dummy_transaction;
             GUARD_FLOW_MANAGER()
+            flowMng->stopFlow<SetupPlatformKeyPolicyFlow>();
             auto flow = flowMng->startFlow<SetupPlatformKeyPolicyFlow>();
             if (flow) {
+                flow->setentryPoint(Constants::EntryPointAlert);
                 flow->setwalletId(walletId);
                 flow->setdummyTx(dummyTransaction);
                 DBG_INFO << "Dummy transaction loaded with ID: " << dummyTransaction.get_id();

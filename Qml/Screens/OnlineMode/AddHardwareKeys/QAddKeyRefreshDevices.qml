@@ -215,7 +215,7 @@ Item {
         }
     }
     function isEnable() {
-        return devicelist.currentIndex !== -1
+        return devicelist.currentIndex !== -1 && selected_xfp !== ""
     }
     function yesClickedHandler() {
         var masterSignerObj = {

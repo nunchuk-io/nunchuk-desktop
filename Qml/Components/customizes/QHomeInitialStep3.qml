@@ -279,7 +279,7 @@ Item {
                             id: _group
                             width: 24
                             height: 24
-                            visible: (myRole !== "OBSERVER") && (myRole !== "")
+                            visible: ((myRole !== "OBSERVER") && (myRole !== "")) || walletIsSandboxWallet
                             icon: (walletInfo.isHoneyBadger || walletInfo.isIronHand) ? "qrc:/Images/Images/health-check-light.svg" : "qrc:/Images/Images/groups-dark.svg"
                             onClicked: {
                                 GroupWallet.dashboardInfo.isShowDashBoard = true

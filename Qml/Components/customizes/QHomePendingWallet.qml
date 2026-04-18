@@ -232,6 +232,7 @@ Rectangle {
                 width: parent.width
                 height: parent.height - 96
                 visible: _alert.count === 0 && _healthy.count === 0 && _members.count === 0
+                opacity: 0.6
                 Column {
                     anchors.centerIn: parent
                     spacing: 12

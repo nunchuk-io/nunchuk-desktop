@@ -350,7 +350,13 @@ void GroupDummyTransactionDetailsViewModel::cancelDummyTransaction() {
     m_cancelGroupDummyTransactionUC.executeAsync(input, [this](core::usecase::Result<CancelGroupDummyTransactionResult> result) {
         if (result.isSuccess()) {
             // Handle success case
-
+            GUARD_APP_MODEL()
+            if (auto wallet = appModel->walletInfoPtr()) {
+                if (auto dashboard = wallet->dashboard()) {
+                    dashboard->GetAlertsInfo();
+                    appModel->startReloadWallets();
+                }
+            }
         } else {
             // Handle error case, e.g., show an error message to the user
             QString errorMsg = result.error();

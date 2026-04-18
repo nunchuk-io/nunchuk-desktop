@@ -91,11 +91,21 @@ QOnScreenContentTypeA {
                 width: 400
                 height: 140
                 label: vm.globalPolicy.singleSigner_name ?? ""
-                subLabel: (vm.globalPolicy.currency ?? "") + " " + (vm.globalPolicy.balance ?? "") + " / " + (vm.globalPolicy.interval ? formatInterval(vm.globalPolicy.interval) : "")
-                subLabelChanged: vm.globalPolicy.currencyChanged || vm.globalPolicy.balanceChanged || vm.globalPolicy.intervalChanged
+                subLabel: {
+                    var str = (vm.globalPolicy.currency ?? "") + " " + (vm.globalPolicy.balance ?? "") + " / " + (vm.globalPolicy.interval ? formatInterval(vm.globalPolicy.interval) : "")
+                    if (str.trim() === "/") {
+                        str = STR.STR_QML_2148
+                    }
+                    if (vm.globalPolicy.enableSpendingLimit ?? false) {
+                        str
+                    } else {
+                        STR.STR_QML_2148
+                    }                    
+                }
+                subLabelChanged: (vm.globalPolicy.currencyChanged ?? false) || (vm.globalPolicy.balanceChanged ?? false) || (vm.globalPolicy.intervalChanged ?? false)
                 iconUrl: "qrc:/Images/Images/global-key.svg"
                 enableCoSigningDelay: vm.globalPolicy.enableCoSigningDelay ?? false
-                coSigningDelayChanged: vm.globalPolicy.coSigningDelayChanged ?? false
+                coSigningDelayChanged: vm.globalPolicy.enableCoSigningDelayChanged ?? false
                 autoBroadcast: vm.globalPolicy.autoBroadcast ?? false
                 autoBroadcastChanged: vm.globalPolicy.autoBroadcastChanged ?? false
                 onEditClicked: vm.onEditPolicyClicked()
@@ -111,7 +121,7 @@ QOnScreenContentTypeA {
             label: STR.STR_QML_2129
             textColor: ["#CF4018", "#CF4018", "#CF4018"]
             displayIcon:false
-            visible: !vm.isWallet
+            visible: vm.isEntryPointGroup
             onButtonClicked: {
                 vm.onRemovePlatformKeyClicked()
             }
@@ -121,7 +131,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_193
             type: eTypeR
-            visible: vm.isDummyTx
+            visible: vm.isEntryPointAlert
             onClicked: vm.onDiscardChangesClicked()
         }
         QTextButton {
@@ -129,7 +139,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_2130
             type: eTypeE
-            visible: !vm.isWallet
+            visible: vm.isEntryPointGroup
             onClicked: vm.onContinueToSaveChangesClicked()
         }
         QTextButton {
@@ -137,7 +147,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_2130
             type: eTypeE
-            visible: vm.isWallet && !vm.isDummyTx
+            visible: vm.isEntryPointWallet
             onClicked: vm.onApplyClicked()
         }
         QTextButton {
@@ -145,7 +155,7 @@ QOnScreenContentTypeA {
             height: 48
             label.text: STR.STR_QML_2138.arg(vm.pending_signatures).arg((vm.pending_signatures > 1) ? "s" : "")
             type: eTypeE
-            visible: vm.isDummyTx
+            visible: vm.isEntryPointAlert
             onClicked: vm.onContinueSignaturePendingClicked()
         }
     }

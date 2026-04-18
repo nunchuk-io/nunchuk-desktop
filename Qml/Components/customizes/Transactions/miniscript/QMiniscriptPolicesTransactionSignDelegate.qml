@@ -34,12 +34,10 @@ import "../../../../../localization/STR_QML.js" as STR
 
 QMiniscriptPolicesDelegate {
     useDerivationPath: false
-
-    property var    itemData: miniscript.keyObj
+    property var itemData: miniscript.keyObj
     property bool   is_cosigning: false
     property string serverkeyMessage: ""
     property string platformkeyMessage: ""
-
     Component {
         id: keyCoponent
         QKeyComponentTransactionSign {

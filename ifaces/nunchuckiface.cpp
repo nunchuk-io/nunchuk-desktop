@@ -4383,7 +4383,7 @@ nunchuk::GroupTransactionState nunchukiface::GetGroupTransactionState(const std:
         }
     }
     catch (const nunchuk::BaseException &ex) {
-        DBG_INFO << "exception nunchuk::BaseException" << ex.code() << ex.what();
+        DBG_INFO << "exception nunchuk::BaseException" << walletId << txId << ex.code() << ex.what();
         msg.setWarningMessage(ex.code(), ex.what(), EWARNING::WarningType::EXCEPTION_MSG);
     }
     catch (std::exception &e) {

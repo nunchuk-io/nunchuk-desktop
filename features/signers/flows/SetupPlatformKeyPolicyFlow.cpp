@@ -5,9 +5,9 @@
 #include "core/common/resources/AppStrings.h"
 #include "core/ui/UiServices.inc"
 #include "core/utils/Utils.h"
-#include "features/signers/viewmodels/PlatformKeyPoliciesViewModel.h"
 #include "features/signers/viewmodels/GlobalPlatformKeyPoliciesViewModel.h"
 #include "features/signers/viewmodels/PerKeyPlatformKeyPoliciesViewModel.h"
+#include "features/signers/viewmodels/PlatformKeyPoliciesViewModel.h"
 #include "features/transactions/viewmodels/SignaturesRequiredViewModel.h"
 #include "generated_qml_keys.hpp"
 #include <QPointer>
@@ -79,7 +79,8 @@ void SetupPlatformKeyPolicyFlow::PreviewGroupPlatformKeyPolicyUpdate() { // Call
         input.policies = policiesOpt.value();
         m_previewGroupPlatformKeyPolicyUpdateUC.executeAsync(input, [this](const core::usecase::Result<PreviewGroupPlatformKeyPolicyUpdateResult> &result) {
             if (result.isSuccess()) {
-                DBG_INFO << result.value().requires_dummy_transaction << ", pending_signatures: " << result.value().pending_signatures << ", delay_apply_in_seconds: " << result.value().delay_apply_in_seconds;
+                DBG_INFO << result.value().requires_dummy_transaction << ", pending_signatures: " << result.value().pending_signatures
+                         << ", delay_apply_in_seconds: " << result.value().delay_apply_in_seconds;
                 setrequiresDummyTransaction(result.value().requires_dummy_transaction);
                 int pending_signatures = result.value().pending_signatures;
                 int delay_apply_in_seconds = result.value().delay_apply_in_seconds;
@@ -111,6 +112,13 @@ void SetupPlatformKeyPolicyFlow::RequestGroupPlatformKeyPolicyUpdate() {
             if (result.isSuccess()) {
                 setdummyTx(result.value().dumyTx.value());
                 emit startDummyTransaction();
+                GUARD_APP_MODEL()
+                if (auto wallet = appModel->walletInfoPtr()) {
+                    if (auto dashboard = wallet->dashboard()) {
+                        dashboard->GetAlertsInfo();
+                        appModel->startReloadWallets();
+                    }
+                }
             } else {
                 showToast(result.code(), result.error(), EWARNING::WarningType::ERROR_MSG);
             }
@@ -134,6 +142,12 @@ void SetupPlatformKeyPolicyFlow::RequestGroupPlatformKeyPolicyUpdateLater() {
             if (result.isSuccess()) {
                 GUARD_SUB_SCREEN_MANAGER()
                 subMng->clear();
+                GUARD_APP_MODEL()
+                if (auto wallet = appModel->walletInfoPtr()) {
+                    if (auto dashboard = wallet->dashboard()) {
+                        dashboard->GetAlertsInfo();
+                    }
+                }
             } else {
             }
         });
@@ -151,6 +165,12 @@ std::optional<nunchuk::GroupPlatformKeyPolicies> SetupPlatformKeyPolicyFlow::get
 }
 
 void SetupPlatformKeyPolicyFlow::bind(QObject *vm) {
+    auto baseKeyVm = qobject_cast<BasePlatformKeyPoliciesViewModel *>(vm);
+    if (baseKeyVm) {
+        baseKeyVm->setisEntryPointAlert(entryPoint() == Constants::EntryPointAlert);
+        baseKeyVm->setisEntryPointWallet(entryPoint() == Constants::EntryPointWallet);
+        baseKeyVm->setisEntryPointGroup(entryPoint() == Constants::EntryPointGroup);
+    }
     auto realVm = qobject_cast<PlatformKeyPoliciesViewModel *>(vm);
     if (realVm) {
         if (selectedPolicyId().isEmpty()) {
@@ -254,7 +274,7 @@ QVariantList perKeyPolicyToVariantListNormalWallet(const std::vector<nunchuk::Si
         for (const auto &policy : policies) {
             QString xfp_frompolicy = QString::fromStdString(policy.get_master_fingerprint());
             if (qUtils::strCompare(xfp_fromsigner, xfp_frompolicy)) {
-                QVariantMap signer_policy = platformKeySignerPolicyToVariantMap(policy);
+                QVariantMap signer_policy = platformKeyPolicyToVariantMap(policy.get_policy());
                 const QVariantMap signer_info = singleSignerToVariantMap(signer);
                 for (auto it = signer_info.constBegin(); it != signer_info.constEnd(); ++it) {
                     signer_policy.insert(it.key(), it.value());
@@ -302,7 +322,7 @@ QVariantList perKeyPolicyToVariantListMiniscriptWallet(const std::map<std::strin
         for (const auto &policy : policies) {
             QString xfp_frompolicy = QString::fromStdString(policy.get_master_fingerprint());
             if (qUtils::strCompare(xfp_fromsigner, xfp_frompolicy)) {
-                QVariantMap signer_policy = platformKeySignerPolicyToVariantMap(policy);
+                QVariantMap signer_policy = platformKeyPolicyToVariantMap(policy.get_policy());
                 const QVariantMap signer_info = singleSignerToVariantMap(signer_obj);
                 for (auto it = signer_info.constBegin(); it != signer_info.constEnd(); ++it) {
                     signer_policy.insert(it.key(), it.value());
@@ -427,15 +447,6 @@ nunchuk::GroupPlatformKeyPolicies perkeyPolicyListToPolicies(const QVariantList 
 
     policies.set_signers(perkeyPolicies);
     return policies;
-}
-
-QVariantMap platformKeySignerPolicyToVariantMap(const nunchuk::GroupPlatformKeySignerPolicy &signerPolicy) {
-    nunchuk::GroupPlatformKeyPolicy policy = signerPolicy.get_policy();
-    if (!policy.get_spending_limit().has_value()) {
-        return defaultGlobalPolicy();
-    } else {
-        return platformKeyPolicyToVariantMap(policy);
-    }
 }
 
 nunchuk::GroupPlatformKeySignerPolicy filterPolicy(const std::vector<nunchuk::GroupPlatformKeySignerPolicy> &signers_policies, const QString &xfp) {
