@@ -41,6 +41,18 @@
 #include <QHttpPart>
 #include "DracoDefines.h"
 
+// struct QLastRequest {
+//     QNetworkRequest m_request;
+//     QByteArray      m_body;
+//     QNetworkAccessManager::Operation m_operation;
+// };
+
+struct QReplyDeleter {
+    void operator()(QNetworkReply* ptr) const {
+        if (ptr) ptr->deleteLater();
+    }
+};
+
 class QRest : public QObject
 {
     Q_OBJECT
@@ -51,6 +63,7 @@ public:
     static QString dracoToken();
     static void setDracoToken(const QString token);
     static QByteArray machineUniqueId();
+    void setVerificationToken(const QString &token);
     QString url() const;
 
     QThreadStorage<OurSharedPointer<QNetworkAccessManager>> m_networkManager;
@@ -71,6 +84,7 @@ private:
     static QString      m_dracoToken;
     static QByteArray   m_machineUniqueId;
     QThread             *m_workerThread {nullptr};
+    QString             m_verificationToken = "";
 
 private:
     QJsonObject doPostSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);
@@ -85,11 +99,6 @@ private:
     QJsonObject doDeleteSync(const QString &cmd, QMap<QString, QString> paramsQuery, QMap<QString, QString> paramsHeader, QJsonObject data, int &reply_code, QString &reply_msg);
 };
 
-struct QReplyDeleter {
-    void operator()(QNetworkReply* ptr) const {
-        if (ptr) ptr->deleteLater();
-    }
-};
 using QNetworkReplyPtr = std::unique_ptr<QNetworkReply, QReplyDeleter>;
 typedef OurSharedPointer<QRest> QRestPtr;
 

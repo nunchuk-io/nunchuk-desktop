@@ -122,6 +122,11 @@ QQuickImageResponse *QNunchukImageProvider::requestImageResponse(const QString &
     QString tmpid = id;
     if(id.contains("mxc://")){
         tmpid = tmpid.remove("mxc://");
+        if(tmpid.isEmpty() || tmpid.count('/') != 1) {
+            // Invalid MXC format - return error without requesting
+            auto response = new ThumbnailResponse(nullptr, tmpid, requestedSize);
+            return response;
+        }
     }
     else{
         tmpid = id;

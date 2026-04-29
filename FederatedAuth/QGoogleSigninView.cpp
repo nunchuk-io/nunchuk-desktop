@@ -87,14 +87,14 @@ QGoogleSigninView::QGoogleSigninView(QWidget* parent) : QWebEngineView(parent) {
         DBG_INFO << "Loading finished" << finished;
         m_loadingOverlay->hide();
     });
-
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     connect(QEventProcessor::instance(), &QEventProcessor::visibleChanged, this, [this](bool visible) {
         if(!visible){
             close();
             m_loadingOverlay->hide();
         }
     });
+
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
 }
 
 void QGoogleSigninView::startSignin()

@@ -358,7 +358,7 @@ QScreen {
                         errorInfo.contentText = error_msg
                         errorInfo.open()
                     }
-                    else if (error_code === DRACO_CODE.NOT_FOUND) {
+                    else if (error_code === DRACO_CODE.USER_NOT_FOUND) {
                         // Username is not registed
                         // Create new account
                         if(emailaddrs.textInputted !== ""){
@@ -373,6 +373,9 @@ QScreen {
                         // User did not changes tempo password
                         // request change tempo password
                         whereAmI = eCHANGE_TEMPO_PASSWORD_OLD
+                    }
+                    else if(error_code === DRACO_CODE.REQUIRED_VERIFICATION){
+                        // TBD
                     }
                     else {
                         // User able to signin, request signin (with password input)
@@ -393,8 +396,11 @@ QScreen {
                 else if(https_code === DRACO_CODE.SUCCESSFULL && error_code === DRACO_CODE.RESPONSE_OK){
                     whereAmI = eCHANGE_TEMPO_PASSWORD_NEW
                 }
+                else if(error_code === DRACO_CODE.REQUIRED_VERIFICATION){
+                    // TBD
+                }
                 else{
-
+                    // TBD
                 }
             }
         }
@@ -589,6 +595,9 @@ QScreen {
                             commonError.visible = false
                             commonError.text = ""
                             whereAmI = eVERIFY_NEWDEVICE
+                        }
+                        else if(error_code === DRACO_CODE.REQUIRED_VERIFICATION){
+                            // TBD
                         }
                         else {
                             passwd.isValid = false
@@ -1591,6 +1600,8 @@ QScreen {
             console.log("onResendVerifyNewDeviceCodeResult", https_code, error_code, error_msg)
         }
         function onAccountAvailabilityResult(https_code, error_code, error_msg) {
+            // console.log("onAccountAvailabilityResult", https_code, error_code, error_msg)
+            console.log("Draco.whereAmI", whereAmI)
             contentLoader.item.processingAccountAvailabilityResult(https_code, error_code, error_msg)
         }
         function onRequestCreateAccount() {

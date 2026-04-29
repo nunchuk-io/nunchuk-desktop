@@ -560,7 +560,7 @@ const QMap<int, QString> commands{
     {PrimaryKey::CMD_IDX::PRIMARY_KEY_SIGNUP, QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("pkey/signup")},
     {PrimaryKey::CMD_IDX::PRIMARY_KEY_SIGNIN, QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("pkey/signin")},
     {PrimaryKey::CMD_IDX::PRIMARY_KEY_NONCE, QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("pkey/nonce")},
-    {PrimaryKey::CMD_IDX::PRIMARY_KEY_USERNAME, QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("username-availability/")},
+    {PrimaryKey::CMD_IDX::PRIMARY_KEY_USERNAME, QString("%1/%2").arg(DRAGON_PASSPORT_URL).arg("username-availability")},
     {PrimaryKey::CMD_IDX::PRIMARY_KEY_PUBLIC_ADDRESS, QString("%1/%2").arg(DRAGON_USER_URL).arg("pkey/")},
     {PrimaryKey::CMD_IDX::PRIMARY_KEY_DELETE_CONFIRMTION, QString("%1/%2").arg(DRAGON_USER_URL).arg("pkey/delete-confirmation")},
     {PrimaryKey::CMD_IDX::PRIMARY_KEY_CHANGE_KEY, QString("%1/%2").arg(DRAGON_USER_URL).arg("pkey/change-pkey")},
@@ -957,12 +957,12 @@ class DRACO_CODE : public QObject {
     Q_ENUMS(FORGOT_PASSWORD)
     Q_ENUMS(RECOVER_PASSWORD)
     Q_ENUMS(SIGN_IN)
-  public:
+public:
     enum RESPONSE_CODE {
         SUCCESSFULL = 200,
         BAD_REQUEST = 400,
         UNAUTHORIZED = 401,
-        NOT_FOUND = 404,
+        USER_NOT_FOUND = 404,
         INTERNAL_SERVER_ERROR = 500,
         INHERITANCE_801 = 801,
         INHERITANCE_802 = 802,
@@ -972,6 +972,7 @@ class DRACO_CODE : public QObject {
         INHERITANCE_831 = 831,
         LOGIN_NEW_DEVICE = 841,
         ACCOUNT_NOT_ACTIVATED = 1000,
+        REQUIRED_VERIFICATION = 1403,
         RESPONSE_OK = 0,
     };
 

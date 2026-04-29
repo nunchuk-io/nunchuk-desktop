@@ -448,7 +448,7 @@ void BaseWallet::setCreationMode(int creationMode) {
     m_creationMode = creationMode;
 }
 
-bool BaseWallet::getContainsHWSigner() const {
+bool BaseWallet::containsHWSigner() {
     if (m_signers) {
         return m_signers.data()->containsHardwareKey();
     }

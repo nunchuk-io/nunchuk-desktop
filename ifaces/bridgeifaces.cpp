@@ -332,9 +332,18 @@ QDeviceListModelPtr bridge::nunchukGetDevices(QWarningMessage& msg) {
     if (AppModel::instance()->isSignIn()) {
         deviceList_result = qUtils::GetDevices(bridge::hwiPath(), msg);
         DBG_INFO << "deviceList_result.size():" << deviceList_result.size();
-    } else {
+        if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+            msg.resetWarningMessage();
+            if(deviceList_result.size() == 0){
+                deviceList_result = bridge::nunchukGetOriginDevices(msg);
+            }
+        }
+    }
+    else {
+        DBG_INFO << "Not in signin, get devices from nunchuk directly.";
         deviceList_result = bridge::nunchukGetOriginDevices(msg);
     }
+
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
         QDeviceListModelPtr deviceList(new DeviceListModel());
         for (nunchuk::Device it : deviceList_result) {
@@ -1858,6 +1867,7 @@ QString bridge::hwiPath()
     else{
         hwiPath = AppSetting::instance()->executePath() + "/hwi";
     }
+    DBG_INFO << "hwiPath: " << hwiPath;
     return hwiPath;
 }
 

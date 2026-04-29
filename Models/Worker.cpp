@@ -290,30 +290,48 @@ void Worker::slotStartDisplayAddress(const QString &wallet_id,
 {
     DBG_INFO << wallet_id << address;
     emit AppModel::instance()->displayAddressOnDevices();
-    bool ret = false;
     QWarningMessage msg;
-    QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
+    bool ret = bridge::nunchukDisplayAddressOnDevice(wallet_id,
+                                                     address,
+                                                     "", // check it all devices
+                                                     msg);
+
     if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
-        msg.resetWarningMessage();
-        if(deviceList && AppModel::instance()->walletInfo() && AppModel::instance()->walletInfo()->singleSignersAssigned()){
-            QStringList xfps = deviceList->getXFPList();
-            foreach (QString xfp, xfps) {
-                msg.resetWarningMessage();
-                ret = bridge::nunchukDisplayAddressOnDevice(wallet_id,
-                                                            address,
-                                                            xfp,
-                                                            msg);
-            }
+        if(ret){
+            QString msg = QString("Address successfully verified");
+            AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+        }
+        else {
+            QString msg = QString("Address verification failed");
+            AppModel::instance()->showToast(0, msg, EWARNING::WarningType::ERROR_MSG);
         }
     }
-    if(!ret){
-        QString msg = QString("Address verification failed");
-        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::ERROR_MSG);
+    else {
+        AppModel::instance()->showToast(msg.code(), msg.what(), (EWARNING::WarningType)msg.type());
     }
-    else{
-        QString msg = QString("Address successfully verified");
-        AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
-    }
+
+    // QDeviceListModelPtr deviceList = bridge::nunchukGetDevices(msg);
+    // if((int)EWARNING::WarningType::NONE_MSG == msg.type()){
+    //     msg.resetWarningMessage();
+    //     if(deviceList){
+    //         QStringList xfps = deviceList->getXFPList();
+    //         foreach (QString xfp, xfps) {
+    //             msg.resetWarningMessage();
+    //             ret = bridge::nunchukDisplayAddressOnDevice(wallet_id,
+    //                                                         address,
+    //                                                         xfp,
+    //                                                         msg);
+    //         }
+    //     }
+    // }
+    // if(!ret){
+    //     QString msg = QString("Address verification failed");
+    //     AppModel::instance()->showToast(0, msg, EWARNING::WarningType::ERROR_MSG);
+    // }
+    // else{
+    //     QString msg = QString("Address successfully verified");
+    //     AppModel::instance()->showToast(0, msg, EWARNING::WarningType::SUCCESS_MSG);
+    // }
     emit finishDisplayAddress(ret);
 }
 

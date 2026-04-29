@@ -1358,6 +1358,11 @@ void AppModel::recieveToast(int code, const QString &what, EWARNING::WarningType
             data["code"          ] = message.code();
             data["type"          ] = message.type();
             data["popupType"     ] = message.popupType();
+
+            if(message.type() == (int)EWARNING::WarningType::EXCEPTION_MSG && message.what().contains("invalid MXC")){
+                DBG_ERROR << "EXCEPTION:" << message.what() << "Code:" << message.code();
+                return;
+            }
             QEventProcessor::instance()->sendToastMessage(QVariant::fromValue(data));
         });
     });

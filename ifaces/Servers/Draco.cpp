@@ -25,6 +25,7 @@
 #include <QEventLoop>
 #include <QUrlQuery>
 #include <QSysInfo>
+#include "Servers/QCaptchaVerification.h"
 #include "ViewsEnums.h"
 #include "localization/STR_CPP.h"
 #include <QSysInfo>
@@ -168,6 +169,14 @@ void Draco::checkAccountAvailability(const QString &email)
             }
             bool has_subscription = data.value("has_subscription").toBool();
             setIsSubscribed(has_subscription);
+        }
+        else if(response_code == DRACO_CODE::REQUIRED_VERIFICATION){
+            requireCaptchaVerification([this, email]() {
+                checkAccountAvailability(email);
+            });
+        }
+        else {
+
         }
         // FIXME
         // else {
@@ -507,6 +516,11 @@ void Draco::createAccount(const QString& name, const QString& email)
             setExpireSec(dataObj["expireInSeconds"].toInt());
             setEmailRequested(email);
         }
+        else if(response_code == DRACO_CODE::REQUIRED_VERIFICATION){
+            requireCaptchaVerification([this, name, email]() {
+                createAccount(name, email);
+            });
+        }
         else {
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
@@ -532,18 +546,22 @@ void Draco::singin(const QString& email, const QString& password)
             setDeviceId(dataObj["deviceId"].toString());
             setDracoToken(dataObj["tokenId"].toString());
             setExpireSec(dataObj["expireInSeconds"].toInt());
-            setEmailRequested(email);
             getMe();
         }
         else if(response_code == DRACO_CODE::LOGIN_NEW_DEVICE){
             QJsonObject detailsObj = errorObj["details"].toObject();
             setDeviceId(detailsObj["deviceId"].toString());
             setLoginHalfToken(detailsObj["halfToken"].toString());
-            setEmailRequested(email);
+        }
+        else if(response_code == DRACO_CODE::REQUIRED_VERIFICATION){
+            requireCaptchaVerification([this, email, password]() {
+                singin(email, password);
+            });
         }
         else{
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
         }
+        setEmailRequested(email);
         emit signinResult(reply_code, response_code, response_msg);
     }
 }
@@ -1428,7 +1446,12 @@ bool Draco::pkey_username_availability(const QString &username, QJsonObject &err
         if(response_code == DRACO_CODE::RESPONSE_OK){
             ret = true;
         }
+        else if(response_code == DRACO_CODE::REQUIRED_VERIFICATION){
+            // requireCaptchaVerification(); TBD Can emit trigge captcha and captcha verification result back to UI to handle
+            ret = false;
+        }
         else {
+            ret = false;
             DBG_INFO << response_code << response_msg;
 #if 0 // don't show error at here because some case don't allow show error (ex: when only check username availability)
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);
@@ -5403,4 +5426,34 @@ bool Draco::TimeLockConvert(const QJsonObject& requestBody, QJsonObject &result)
     }
     DBG_INFO << reply_msg;
     return false;
+}
+
+void Draco::requireCaptchaVerification(std::function<void()> onSuccess)
+{
+    auto *captcha = new QCaptchaVerification();
+
+    QPointer<QCaptchaVerification> safeCaptcha = captcha;
+
+    connect(captcha, &QCaptchaVerification::verified, this,
+        [this, onSuccess, safeCaptcha](const QString &token) {
+
+            if (!safeCaptcha) return;
+
+            m_rest->setVerificationToken(token);
+
+            if (onSuccess) {
+                onSuccess();
+            }
+
+            safeCaptcha->safeClose();
+        });
+
+    connect(captcha, &QCaptchaVerification::cancelled, this,
+        [safeCaptcha]() {
+            if (safeCaptcha) {
+                safeCaptcha->safeClose();
+            }
+        });
+
+    captcha->startVerifyCaptcha();
 }

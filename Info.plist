@@ -40,5 +40,9 @@
         <string>AppIcon</string>
     <key>UIPrerenderedIcon</key>
         <true/>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+        <string>App may access Bluetooth for device connectivity</string>
+    <key>NSCameraUsageDescription</key>
+        <string>Required for scanning QR codes</string>
 </dict>
 </plist>

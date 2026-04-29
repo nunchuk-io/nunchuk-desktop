@@ -22,6 +22,7 @@
 #include <QScreen>
 #include <QDir>
 #include "QEventProcessor.h"
+#include "Servers/QCaptchaVerification.h"
 #include "Views/Views.h"
 #include "Models/AppModel.h"
 #include "Models/AppSetting.h"
@@ -212,6 +213,11 @@ int main(int argc, char* argv[])
 #ifdef __linux__
     setenv("QTWEBENGINE_DISABLE_SANDBOX", "1", 1);
 #endif
+    qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
+            "--disable-web-bluetooth "
+            "--disable-features=WebBluetooth,WebBluetoothNewPermissionsBackend");
+
+    qputenv("QTWEBENGINE_REMOTE_DEBUGGING", "9222");
 
     DBG_INFO << "Build version:" << QSslSocket::sslLibraryBuildVersionString();
     DBG_INFO << "Runtime version:" << QSslSocket::sslLibraryVersionString();
@@ -231,7 +237,7 @@ int main(int argc, char* argv[])
     appNunchuk.setOrganizationName("nunchuk");
     appNunchuk.setOrganizationDomain("nunchuk.io");
     appNunchuk.setApplicationName("NunchukClient");
-    appNunchuk.setApplicationVersion("2.4.1");
+    appNunchuk.setApplicationVersion("2.4.2");
     appNunchuk.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(appNunchuk.applicationVersion()));
     Draco::instance();
     AppModel::instance();
@@ -246,6 +252,7 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef ENABLE_OUTLOG
+    loguru::add_file("logs/nunchuk.log", loguru::Append, loguru::Verbosity_MAX);
     loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
 #else
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
@@ -358,5 +365,7 @@ int main(int argc, char* argv[])
         });
     });
     QEventProcessor::instance()->show();
+
+
     return appNunchuk.exec();
 }

@@ -495,6 +495,9 @@ public:
     bool CancelClaimingWalletTransactionGetList(const QString &wallet_id, int offset, int limit, QJsonObject &output, QString &errormsg);
 
     bool TimeLockConvert(const QJsonObject& requestBody, QJsonObject &result);
+
+    void requireCaptchaVerification(std::function<void()> onSuccess);
+
 private:
     Draco();
     ~Draco();
@@ -515,6 +518,7 @@ private:
     QAppleSigninViewPtr     m_Apple;
     QGoogleSigninViewPtr    m_Google;
     QRestPtr                m_rest;
+
 #endif
 
 public slots:

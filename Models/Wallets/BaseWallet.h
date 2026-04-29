@@ -80,14 +80,14 @@ class BaseWallet : public QStateFlow
 
     Q_PROPERTY(bool         capableCreate                           READ capableCreate                                          NOTIFY capableCreateChanged)
     Q_PROPERTY(int          creationMode                            READ getCreationMode                                        NOTIFY creationModeChanged)
-    Q_PROPERTY(int          containsHWSigner                        READ getContainsHWSigner                                    NOTIFY containsHWSignerChanged)
+    Q_PROPERTY(bool         containsHWSigner                        READ containsHWSigner                                       NOTIFY walletChanged)
+    Q_PROPERTY(bool         containsColdcard                        READ containsColdcard                                       NOTIFY walletChanged)
     Q_PROPERTY(bool         isArchived                              READ isArchived                 WRITE setArchived           NOTIFY walletChanged)
     Q_PROPERTY(QVariantList signerExistList                         READ signerExistList                                        NOTIFY signerExistListChanged)
     Q_PROPERTY(DeviceListModel* deviceList                          READ deviceList                                             NOTIFY deviceListChanged)
     Q_PROPERTY(QString      deviceType                              READ deviceType                                             NOTIFY deviceTypeChanged)
     Q_PROPERTY(int          limitKeySet                             READ limitKeySet                                            NOTIFY limitKeySetChanged)
     
-
 public:
     BaseWallet(const nunchuk::Wallet &w);
     ~BaseWallet() override = default;
@@ -174,7 +174,7 @@ public:
     int limitKeySet() const;
     int getCreationMode() const;
     void setCreationMode(int creationMode);
-    bool getContainsHWSigner() const;
+    bool containsHWSigner();
     bool containsColdcard();
     bool isArchived() const;
     void setArchived(bool archived);
@@ -245,7 +245,6 @@ signals:
     void descriptiowalletNChanged();
     void transactionHistoryChanged();
     void creationModeChanged();
-    void containsHWSignerChanged();    
     void flowChanged();
     void isDeletingChanged();
     void signMessageChanged();
