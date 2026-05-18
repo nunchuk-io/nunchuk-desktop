@@ -19,8 +19,8 @@ void LetConfigureYourWalletViewModel::onInit() {
     input.group_id = dashboard->groupId();    
     m_timeLockGetUC.executeAsync(input, [this](core::usecase::Result<TimeLockSetupGetResult> result){
         if (result.isSuccess()) {
-            auto timelock = result.value().timelock;            
-            clearTimeLock(timelock);
+            auto timelock = result.value().timelock;
+            clearTimeLock(timelock, true);
         }
     });
 }

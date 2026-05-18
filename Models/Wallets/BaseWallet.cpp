@@ -687,6 +687,7 @@ void BaseWallet::setValueKeyset(int index) {
 }
 
 bool BaseWallet::isValidAddress(const QString &address) {
+    DBG_INFO << address;
     bool isValid = qUtils::IsValidAddress(address);
     bool isSilent = qUtils::IsSilentPaymentAddress(address);
     if (isValid || isSilent) {

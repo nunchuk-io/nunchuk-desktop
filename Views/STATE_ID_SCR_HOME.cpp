@@ -183,7 +183,9 @@ void EVT_HOME_WALLET_INFO_REQUEST_HANDLER(QVariant msg) {
     if (auto w = AppModel::instance()->walletInfo()) {
         w->setScreenFlow(msg.toString());
         w->setIsDeleting(false);
-        QGroupWallets::instance()->setDashboardInfo(w->groupId());
+        if(w->isGroupWallet()){
+            QGroupWallets::instance()->setDashboardInfo(w->groupId());
+        }
         w->GetWalletAlias();
     }
 }
@@ -358,5 +360,8 @@ void EVT_REPLACE_KEYS_REQUEST_HANDLER(QVariant msg) {
     bool isFirst = msg.toMap()["isFirst"].toBool();
     if (isFirst) {
         AppModel::instance()->setNewWalletInfo(AppModel::instance()->walletInfoPtr()->clone());
+        if (auto w = AppModel::instance()->newWalletInfoPtr()) {
+            w->makeExistingSigners();
+        }        
     }
 }

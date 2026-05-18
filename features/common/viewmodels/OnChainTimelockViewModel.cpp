@@ -16,17 +16,20 @@ OnChainTimelockViewModel::OnChainTimelockViewModel(QObject *parent)
     connect(this, &OnChainTimelockViewModel::valueTimeChanged, this, &OnChainTimelockViewModel::slotTimeChanged);
 }
 
-void OnChainTimelockViewModel::clearTimeLock(QJsonObject timelock) {
+void OnChainTimelockViewModel::clearTimeLock(QJsonObject timelock, bool isLetsConfigure) {
     DBG_INFO << timelock;
     if (timelock.isEmpty()) {
+        if(isLetsConfigure){
+            return;
+        }
         QDateTime dt = QDateTime::currentDateTime();
         dt = dt.addYears(DURATION);
         QString formattedDate = dt.toString("MM/dd/yyyy");
-        QString formattedTime = dt.toString("HH:mm");        
+        QString formattedTime = dt.toString("HH:mm");
+        setvalueDate(formattedDate);
         setvalueTime(formattedTime);
         setbased("TIME_LOCK");
         setblockHeight(0);
-        setvalueDate(formattedDate);
     } else {
         qint64 timestamp = timelock.value("value").toVariant().toULongLong();
         QString timezone = timelock.value("timezone").toString();
@@ -34,9 +37,10 @@ void OnChainTimelockViewModel::clearTimeLock(QJsonObject timelock) {
         int64_t blockHeight = static_cast<int64_t>(timelock.value("block_height").toDouble());
         QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
         QString formattedDate = dt.date().toString("MM/dd/yyyy");
-        QString formattedTime = dt.time().toString("HH:mm");        
+        QString formattedTime = dt.time().toString("HH:mm");
         setvalueTime(formattedTime);
-        setvalueTimezone(timezone);
+        QString timezone_formated = qUtils::formatTimeZoneString(timezone);
+        setvalueTimezone(timezone_formated);
         setbased(based);
         setblockHeight(blockHeight);
         setvalueDate(formattedDate);

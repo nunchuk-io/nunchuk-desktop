@@ -18,47 +18,16 @@ void ReplacedWallet::MixMasterSignerAndSingleSignerAll()
 {
     m_replaceFree = true;
     setReplaceFlow("replace-key-info");
-    auto masterList = AppModel::instance()->masterSignerListPtr();
-    auto remoteList = AppModel::instance()->remoteSignerListPtr();
+    QVariantList arrays;
     auto w = dynamic_cast<Wallet*>(this);
-    if (w == nullptr || masterList == nullptr || remoteList == nullptr) return;
-    DBG_INFO << w->walletAddressType() << masterList->rowCount() << remoteList->rowCount();
-    QJsonArray arrays;
-    for (auto m : masterList->fullList()) {
-        QJsonObject signer;
-        signer["signer_deviceType"] = m->devicePtr()->type();
-        signer["signer_type"] = (int)m->signerType();
-        signer["signer_name"] = m->name();
-        signer["signer_fingerPrint"] = m->fingerPrint();
-        signer["signer_tag"] = m->tag();
-        signer["signer_id"] = m->id();
-        signer["signer_bip32_path"] = m->path();
-        signer["signer_is_primary"] = m->isPrimaryKey();
-        signer["signer_account_index"] = 0;
-        signer["signer_card_id"] = m->device()->cardId();
-        signer["signer_allowAssignToWallet"] = m->allowAssignToWallet();
-        if (w && w->groupSandboxPtr() && w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
-            if (m->signerType() == (int)nunchuk::SignerType::SOFTWARE && m->tag().isEmpty()) {
-                arrays.append(signer);
-            }
-        } else {
-            arrays.append(signer);
-        }
+    if (!w) {
+        DBG_WARN << "Failed to cast to Wallet*";
+        return;
     }
-    for (auto s : remoteList->fullList()) {
-        QJsonObject signer;
-        signer["signer_deviceType"] = s->devicetype();
-        signer["signer_type"] = (int)s->signerType();
-        signer["signer_name"] = s->name();
-        signer["signer_fingerPrint"] = s->masterFingerPrint();
-        signer["signer_tag"] = s->tag();
-        signer["signer_id"] = s->masterSignerId();
-        signer["signer_bip32_path"] = s->derivationPath();
-        signer["signer_is_primary"] = s->isPrimaryKey();
-        signer["signer_account_index"] = s->accountIndex();
-        signer["signer_card_id"] = s->cardId();
-        signer["signer_allowAssignToWallet"] = s->allowAssignToWallet();
-        if (w && w->groupSandboxPtr() && w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
+    for (auto s : w->assignAvailableSigners()->fullList()) {
+        DBG_INFO << s->tag() << s->signerType();
+        auto signer = SingleSignerListModel::useQml(s);
+        if (w->groupSandboxPtr()->addressType() == (int)nunchuk::AddressType::TAPROOT) {
             if (s->signerType() == (int)nunchuk::SignerType::SOFTWARE && s->tag().isEmpty()) {
                 arrays.append(signer);
             }
@@ -66,7 +35,7 @@ void ReplacedWallet::MixMasterSignerAndSingleSignerAll()
             arrays.append(signer);
         }
     }
-    setSignerExistList(arrays.toVariantList());
+    setSignerExistList(arrays);
 }
 
 QString ReplacedWallet::replaceFlow() const

@@ -69,14 +69,12 @@ Rectangle {
                     addrToVerify(addr)
                 }
             }
-
             QTransactionNoteBlock {
                 id: transationNote
                 onMemoNotify: {
                     newMemoNotify(newMemo)
                 }
             }
-
             QSignaturesBlock {
                 id: signatures
                 visible: (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)

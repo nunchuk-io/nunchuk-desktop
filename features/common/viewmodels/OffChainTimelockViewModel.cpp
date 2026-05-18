@@ -19,7 +19,8 @@ void OffChainTimelockViewModel::clearTimeLock(QJsonObject timelock) {
         QString formattedTime = dt.toString("HH:mm");        
         setvalueTime(formattedTime);
         setvalueDate(formattedDate);
-        setvalueTimezone(m_timezones->selectedTimezone());
+        QString timezone_formated = qUtils::formatTimeZoneString(m_timezones->selectedTimezone());
+        setvalueTimezone(timezone_formated);
         setisCurrentTime(true);
     } else {
         qint64 timestamp = timelock.value("value").toVariant().toULongLong();
@@ -28,7 +29,8 @@ void OffChainTimelockViewModel::clearTimeLock(QJsonObject timelock) {
         QString formattedDate = dt.date().toString("MM/dd/yyyy");
         QString formattedTime = dt.time().toString("HH:mm");        
         setvalueTime(formattedTime);
-        setvalueTimezone(timezone);
+        QString timezone_formated = qUtils::formatTimeZoneString(timezone);
+        setvalueTimezone(timezone_formated);
         setvalueDate(formattedDate);
     }
 }

@@ -33,7 +33,6 @@ public slots:
     bool hasHardwareOrAirgap();
     bool hasNativeSegwitDerivationPath();
 signals:
-private:
 };
 
 #endif // WALLETIO_H

@@ -56,6 +56,7 @@ Item {
             myRole: _send.myRole
             onAddrToVerify: _send.addrToVerify(addr)
             onNewMemoNotify: _send.newMemoNotify(newMemo)
+            pendingSignature: _send.pendingSignature
         }
         Loader {
             sourceComponent: {

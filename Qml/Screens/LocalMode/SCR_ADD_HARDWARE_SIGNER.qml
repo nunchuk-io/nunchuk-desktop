@@ -476,13 +476,16 @@ QScreen {
                     QMLHandle.sendEvent(EVT.EVT_ADD_HARDWARE_SIGNER_BACK_REQUEST)
                 }
             }
-            Rectangle {
+            Item {
                 id: stateAddSigner
                 visible: AppModel.addSignerStep !== -1
                 anchors.fill: parent
-                color: Qt.rgba(0, 0, 0, 0.9)
+                Rectangle {
+                    anchors.fill: parent
+                    color: Qt.rgba(0, 0, 0, 0.7)
+                    radius: 24
+                }
                 anchors.bottom: parent.bottom
-                radius: 24
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {}
@@ -491,6 +494,16 @@ QScreen {
                     id: busyIndi
                     anchors.centerIn: parent
                     sourceComponent: rootAddsignerToWallet.addSignerComp[AppModel.addSignerStep]
+                }
+                QCloseButton {
+                    bgColor: "transparent"
+                    anchors {
+                        right: parent.right
+                        rightMargin: 24
+                        top: parent.top
+                        topMargin: 24
+                    }
+                    onClicked: { closeTo(NUNCHUCKTYPE.CURRENT_TAB) }
                 }
             }
             QQrImportScanner {

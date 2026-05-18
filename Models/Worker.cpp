@@ -179,11 +179,22 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
                 QWarningMessage signwarning;
                 matrixbrigde::SignTransaction(room->id(), init_event_id, selectedDv, signwarning);
                 nunchuk::Transaction trans = bridge::nunchukGetOriginTransaction(walletId, txid, signwarning);
-                emit finishSigningTransaction(walletId, trans, msgwarning.what(), msgwarning.type(), msgwarning.code(), selectedDv.data()->masterSignerId(),
+                emit finishSigningTransaction(walletId,
+                                              trans,
+                                              msgwarning.what(),
+                                              msgwarning.type(),
+                                              msgwarning.code(),
+                                              selectedDv.data()->masterSignerId(),
                                               isSoftware);
             } else {
                 msgwarning.setWarningMessage(0, STR_CPP_059, EWARNING::WarningType::ERROR_MSG);
-                emit finishSigningTransaction(walletId, nunchuk::Transaction(), msgwarning.what(), msgwarning.type(), msgwarning.code(), "-1", selectedDv);
+                emit finishSigningTransaction(walletId,
+                                              nunchuk::Transaction(),
+                                              msgwarning.what(),
+                                              msgwarning.type(),
+                                              msgwarning.code(),
+                                              "-1",
+                                              selectedDv);
             }
         } else {
             if (selectedDv) {
@@ -219,10 +230,22 @@ void Worker::slotStartSigningTransaction(const QString &walletId,
                         }
                     }
                 }
-                emit finishSigningTransaction(walletId, trans, msgwarning.what(), msgwarning.type(), msgwarning.code(), selectedDv.data()->masterSignerId(), isSoftware);
+                emit finishSigningTransaction(walletId,
+                                              trans,
+                                              msgwarning.what(),
+                                              msgwarning.type(),
+                                              msgwarning.code(),
+                                              selectedDv.data()->masterSignerId(),
+                                              isSoftware);
             } else {
                 msgwarning.setWarningMessage(0, STR_CPP_054, EWARNING::WarningType::ERROR_MSG);
-                emit finishSigningTransaction(walletId, nunchuk::Transaction(), msgwarning.what(), msgwarning.type(), msgwarning.code(), "-1", selectedDv);
+                emit finishSigningTransaction(walletId,
+                                              nunchuk::Transaction(),
+                                              msgwarning.what(),
+                                              msgwarning.type(),
+                                              msgwarning.code(),
+                                              "-1",
+                                              selectedDv);
             }
         }
     }
@@ -1076,7 +1099,12 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId);
         if(auto trans = AppModel::instance()->transactionInfo())
             if(qUtils::strCompare(tx_id, trans->txid()) && qUtils::strCompare(walletId, trans->walletId())){
+                QString serverKeyMsg = trans->serverKeyMessage();
+                bool isCosign = trans->isCosigning();
+
                 trans->setNunchukTransaction(result);
+                trans->setServerKeyMessage(serverKeyMsg);
+                trans->setIsCosigning(isCosign);
                 if(wallet){
                     wallet.data()->SignAsisstedTxs(tx_id, QString::fromStdString(result.get_psbt()), QString::fromStdString(result.get_memo()));
                 }

@@ -22,7 +22,7 @@ class OnChainTimelockViewModel : public ActionViewModel {
     DEFINE_QT_PROPERTY(bool, isInit)
     DEFINE_QT_PROPERTY(int, xYearsLock)
   public:
-    void clearTimeLock(QJsonObject timelock);
+    void clearTimeLock(QJsonObject timelock, bool isLetsConfigure = false);
   public slots:
     void slotTimeChanged();
   signals:

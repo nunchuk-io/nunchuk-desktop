@@ -220,6 +220,10 @@ QString AssistedWallet::myRole() const
     QString role = "";
     if(dashboard()){
         role = dashboard().data()->myRole();
+        if (role == "" && isGroupWallet()) {
+            dashboard().data()->GetMemberInfo();
+            role = dashboard().data()->myRole();
+        }
     }
     if (role == "") {
         QWalletCached data;
@@ -334,8 +338,11 @@ QTransactionPtr AssistedWallet::SyncAssistedTxs(const nunchuk::Transaction &tx)
         if(!transaction.isEmpty() && tranPtr){
             tranPtr->setServerKeyMessage(transaction);
         }
+        return bridge::convertTransaction(result.value().tx, walletId());
     }
-    return bridge::convertTransaction(result.value().tx, walletId());
+    else {
+        return NULL;
+    }
 }
 
 void AssistedWallet::UpdateAssistedTxs(const QString &txid, const QString &memo)
@@ -404,8 +411,10 @@ void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, 
     if (result.isSuccess()) {
         auto transaction = result.value().transaction;
         auto tranPtr = transactionHistory()->getTransactionByTxid(tx_id);
-        if(!transaction.isEmpty() && tranPtr){
-            tranPtr->setServerKeyMessage(transaction);
+        if(tranPtr){
+            if(!transaction.isEmpty()){
+                tranPtr->setServerKeyMessage(transaction);
+            }
         }
     }
 }

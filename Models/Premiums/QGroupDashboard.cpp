@@ -83,8 +83,6 @@ QString QGroupDashboard::groupStatus() const {
 }
 
 QString QGroupDashboard::myRole() const {
-    // return "FACILITATOR_ADMIN"; //FIXME TBD
-    // DBG_INFO << myInfo()["role"].toString();
     return myInfo()["role"].toString();
 }
 

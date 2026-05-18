@@ -32,6 +32,7 @@ import "../../../Components/customizes/Buttons"
 import "../../../../localization/STR_QML.js" as STR
 
 Rectangle {
+    id: _sendAddressArea
     width: 350
     height: 480
     radius: 12
@@ -46,8 +47,10 @@ Rectangle {
         }
     }
     property string myRole: ""
-    property var transactionInfo
-    property bool isDummy: false
+    property var    transactionInfo
+    property bool   isDummy: false
+    property int    pendingSignature: 0
+
     signal addrToVerify(var addr)
     signal newMemoNotify(var newMemo)
     Flickable {
@@ -107,13 +110,12 @@ Rectangle {
                     newMemoNotify(newMemo)
                 }
             }
-
             QSignaturesBlock {
                 id: signatures
                 visible: !isDummy && (transactionInfo.status === NUNCHUCKTYPE.PENDING_SIGNATURES)
                 anchors.horizontalCenter: parent.horizontalCenter
+                pendingSignature: isDummy? _sendAddressArea.pendingSignature : transactionInfo.pendingSignatures
             }
-
             QShowInputCoinsBlock {
                 id: inputCoins
                 visible: !isDummy

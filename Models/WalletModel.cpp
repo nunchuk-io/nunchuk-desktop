@@ -116,7 +116,7 @@ QHash<int,QByteArray> WalletListModel::roleWalletNames() {
     roles[wallet_numberSigner_Role]         = "wallet_numberSigner";
     roles[wallet_archived_Role]             = "wallet_isArchived";
     roles[wallet_walletType_Role]           = "wallet_walletType";
-    roles[wallet_alerCount_Role]            = "wallet_alerCount";
+    roles[wallet_alertCount_Role]           = "wallet_alertCount";
     return roles;
 }
 
@@ -192,8 +192,8 @@ QVariant WalletListModel::dataWallet(const QWalletPtr &data, int role) {
         return data->isArchived();
     case wallet_walletType_Role:
         return data->walletType();
-    case wallet_alerCount_Role:
-        return data->alerCount();
+    case wallet_alertCount_Role:
+        return data->alertCount();
     default:
         return QVariant();
     }

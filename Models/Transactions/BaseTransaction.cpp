@@ -1019,23 +1019,37 @@ QString BaseTransaction::serverKeyMessage() const {
     return m_serverKeyMessage;
 }
 
-void BaseTransaction::setServerKeyMessage(const QJsonObject &transaction) {
+void BaseTransaction::setServerKeyMessage(const QJsonObject &data) {
     if (status() == (int)ENUNCHUCK::TransactionStatus::PENDING_SIGNATURES) {
-        QJsonObject spending_limit_reached = transaction.value("spending_limit_reached").toObject();
-        double time = transaction.value("sign_time_milis").toDouble();
-        if (!spending_limit_reached.isEmpty()) {
-            m_serverKeyMessage = spending_limit_reached.value("message").toString();
-        } else if (time != 0) {
-            m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm AP MMM d"));
-        } else {
+        double time = data.value("sign_time_milis").toDouble();
+
+        if (data.contains("spending_limit_reached")) {
+            QJsonObject spending_limit_reached = data.value("spending_limit_reached").toObject();
+            QString message = spending_limit_reached.value("message").toString();
+            if (!message.isEmpty()) {
+                m_serverKeyMessage = message;
+            }
+            else if (time != 0) {
+                m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm AP MMM d"));
+            }
         }
-        bool is_cosigning = transaction.value("is_cosigning").toBool();
-        DBG_INFO << "FIXME is_cosigning" << is_cosigning << m_serverKeyMessage << transaction;
+        else if (time != 0) {
+            m_serverKeyMessage = QString("Co-sign at %1").arg(QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm AP MMM d"));
+        }
+        bool is_cosigning = data.contains("is_cosigning") ? data.value("is_cosigning").toBool() : false;
         setIsCosigning(is_cosigning);
-        emit serverKeyMessageChanged();
-    } else {
+        emit nunchukTransactionChanged();
+    }
+    else {
         DBG_INFO << "FIXME Hide is_cosigning" << m_is_cosigning << m_serverKeyMessage;
         setIsCosigning(false);
+    }
+}
+
+void BaseTransaction::setServerKeyMessage(const QString &data) {
+    if(data != m_serverKeyMessage){
+        m_serverKeyMessage = data;
+        emit nunchukTransactionChanged();
     }
 }
 

@@ -46,7 +46,9 @@ void ViewInheritancePlanViewModel::timeLockEditClicked() {
     
     connect(flow, &SetupOffChainTimelockFlow::callbackTimelockChanged, this, [this](const QString& date, const QString& timezone){
         setvalueDate(date);
-        setvalueTimezone(timezone);
+
+        QString timezone_formated = qUtils::formatTimeZoneString(timezone);
+        setvalueTimezone(timezone_formated);
     });
     subMng->show(qml::screens::onlinemode::setupwallets::timelocks::qsetupoffchaintimelockwallet);
 }

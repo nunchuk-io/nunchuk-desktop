@@ -135,7 +135,7 @@ public:
         wallet_numberSigner_Role,
         wallet_archived_Role,
         wallet_walletType_Role,
-        wallet_alerCount_Role
+        wallet_alertCount_Role
     };
     QList<QWalletPtr> fullList() const;
     void cleardata();

@@ -500,69 +500,87 @@ Rectangle {
                 visible: index !== keysetM && index !== 0
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            Row {
+            Column {
                 id: valueKeysetLayout
-                anchors.centerIn: parent
-                spacing: 8
-                QImage {
-                    width: 16
-                    height: 16
-                    source: "qrc:/Images/Images/ValueKeyset.png"
-                }
-                Column {
+                spacing: 4
+                Row {
                     spacing: 4
-                    Row {
-                        spacing: 4
-                        QLato {
-                            width: 76
+                    QImage {
+                        width: 16
+                        height: 16
+                        source: "qrc:/Images/Images/ValueKeyset.png"
+                    }
+                    QLato {
+                        width: 76
+                        height: 16
+                        text: "Value Keyset"
+                        font.pixelSize: 12
+                        color: "#031F2B"
+                        font.weight: Font.Bold
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Item {
+                        width: 16
+                        height: 16
+                        QImage {
+                            width: 16
                             height: 16
-                            text: "Value Keyset"
+                            visible: (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
+                            source: "qrc:/Images/Images/PendingSignatures.png"
+                        }
+                    }
+                    Item {
+                        width: 110
+                        height: 16
+                        QLato {
+                            anchors.fill: parent
+                            text: qsTr("Pending %1 %2%3").arg(valueKeysetItem.keyset_pending_number)
+                            .arg(valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE ? "nonce" : "signature")
+                            .arg(valueKeysetItem.keyset_pending_number > 1 ? "s" : "")
                             font.pixelSize: 12
-                            color: "#031F2B"
+                            color: "#757575"
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            visible: valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_NONCE ||
+                                     valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                     valueKeysetItem.keyset_status == NUNCHUCKTYPE.READY_TO_BROADCAST
+                        }
+                    }
+                    Rectangle {
+                        width: 76
+                        height: 16
+                        radius: 20
+                        visible: valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_NONCE ||
+                                 valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                 valueKeysetItem.keyset_status == NUNCHUCKTYPE.READY_TO_BROADCAST
+                        color: {
+                            if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST) {return "#1C652D"}
+                            else if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "#FFCB2E"}
+                            else {return "#FDEBD2"}
+                        }
+                        QLato {
+                            anchors.centerIn: parent
+                            text: {
+                                if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) {return "Round 1/2"}
+                                else if (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "Round 2/2"}
+                                else {return "Completed"}
+                            }
+                            font.pixelSize: 12
+                            color: valueKeysetItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST ? "#FFFFFF" : "#1C1C1C"
                             font.weight: Font.Bold
                             horizontalAlignment: Text.AlignLeft
                             verticalAlignment: Text.AlignVCenter
                         }
-                        Item {
-                            width: 16
-                            height: 16
-                            QImage {
-                                width: 16
-                                height: 16
-                                visible: (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                                source: "qrc:/Images/Images/PendingSignatures.png"
-                            }
-                        }
-                        Item {
-                            width: 110
-                            height: 16
-                            QLato {
-                                anchors.fill: parent
-                                text: qsTr("Pending %1 %2%3").arg(valueKeysetItem.keyset_pending_number)
-                                                             .arg(valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE ? "nonce" : "signature")
-                                                             .arg(valueKeysetItem.keyset_pending_number > 1 ? "s" : "")
-                                font.pixelSize: 12
-                                color: "#757575"
-                                horizontalAlignment: Text.AlignLeft
-                                verticalAlignment: Text.AlignVCenter
-                                visible: (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (valueKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
-                            }
-                        }
-                        QRoundBadgeStatus {
-                            visible: valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_NONCE || 
-                                        valueKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_SIGNATURES ||
-                                        valueKeysetItem.keyset_status == NUNCHUCKTYPE.READY_TO_BROADCAST
-                            txStatus: valueKeysetItem.keyset_status
-                        }
                     }
-                    QLato {
-                        height: 16
-                        text: "Better privacy and lower fees"
-                        font.pixelSize: 12
-                        color: "#757575"
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                }
+                QLato {
+                    height: 16
+                    text: "Better privacy and lower fees"
+                    font.pixelSize: 12
+                    color: "#757575"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
                 }
             }
         }
@@ -623,13 +641,18 @@ Rectangle {
                                 color: "#757575"
                                 horizontalAlignment: Text.AlignLeft
                                 verticalAlignment: Text.AlignVCenter
-                                visible: (otherKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_NONCE) || (otherKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES)
+                                visible: otherKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_NONCE ||
+                                         otherKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                         otherKeysetItem.keyset_status == NUNCHUCKTYPE.READY_TO_BROADCAST
                             }
                         }
                         Rectangle {
                             width: 76
                             height: 16
                             radius: 20
+                            visible: otherKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_NONCE ||
+                                     otherKeysetItem.keyset_status == NUNCHUCKTYPE.PENDING_SIGNATURES ||
+                                     otherKeysetItem.keyset_status == NUNCHUCKTYPE.READY_TO_BROADCAST
                             color: {
                                 if (otherKeysetItem.keyset_status === NUNCHUCKTYPE.READY_TO_BROADCAST) {return "#1C652D"}
                                 else if (otherKeysetItem.keyset_status === NUNCHUCKTYPE.PENDING_SIGNATURES) {return "#FFCB2E"}

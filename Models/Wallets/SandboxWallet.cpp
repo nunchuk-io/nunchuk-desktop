@@ -16,11 +16,6 @@ SandboxWallet::SandboxWallet(const nunchuk::Wallet &w) :
 
 void SandboxWallet::convert(const nunchuk::Wallet w) {
     AssistedWallet::convert(w); 
-    QWarningMessage msg;
-    int alerCount = bridge::GetGroupWalletAlertCount(walletId(), msg);
-    if(msg.isSuccess()){
-        setalerCount(alerCount);
-    }
     QMetaObject::invokeMethod(this, [this]{
         m_isSandboxWallet = AppModel::instance()->groupWalletList()->containsId(walletId());
         GetGroupWalletConfig();
@@ -323,6 +318,18 @@ QString SandboxWallet::platformkeyPolicyType()
         }
     }
     return "";
+}
+
+int SandboxWallet::alertCount()
+{
+    if(isSandboxWallet()){
+        QWarningMessage msg;
+        int cnt = bridge::GetGroupWalletAlertCount(walletId(), msg);
+        if(msg.isSuccess()){
+            return cnt;
+        }
+    }
+    return 0;
 }
 
 void SandboxWallet::requestAcceptReplaceGroup(const QString &sandbox_id)

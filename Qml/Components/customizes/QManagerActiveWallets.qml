@@ -107,7 +107,7 @@ Item {
                     isSandboxWallet: model.wallet_isSanboxWallet
                     isArchived: model.wallet_isArchived
                     walletType: model.wallet_walletType
-                    alertCount: model.wallet_alerCount
+                    alertCount: model.wallet_alertCount
                     mouseActive: false
                     onDashboard: {
                         GlobalData.listFocusing = _FOCUS_WALLET

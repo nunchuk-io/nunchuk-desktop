@@ -51,6 +51,7 @@ Rectangle {
     property alias  recipientLabel: addressInput.label
     property alias  toAmount: amountInput.textInputted
     property string toAddress: ""
+    property string toAddressDisplay: ""
     property alias  enableInput: addressInput.enabled
     property bool   enableInputAmount: true
     property bool   onCurrency: false
@@ -70,10 +71,11 @@ Rectangle {
     }
 
     function setFavoriteSelected(cached) {
-        inputObject = cached
-        toAddress   = inputObject.toAddressDisplay
-        toAmount    = inputObject.toAmount
-        onCurrency  = inputObject.onCurrency
+        inputObject         = cached
+        toAddress           = inputObject.toAddress
+        toAddressDisplay    = inputObject.toAddressDisplay
+        toAmount            = inputObject.toAmount
+        onCurrency          = inputObject.onCurrency
         addressInput.input.leftPadding = 44
         closeLoader.sourceComponent = clearfav
         if ((inputObject.toType === "Address")){
@@ -86,11 +88,12 @@ Rectangle {
     }
 
     function setFavoriteInput(cached) {
-        inputObject = cached
-        inputObject.toType = "Input"
-        toAddress   = inputObject.toAddressDisplay
-        toAmount    = inputObject.toAmount
-        onCurrency  = inputObject.onCurrency
+        inputObject         = cached
+        inputObject.toType  = "Input"
+        toAddress           = inputObject.toAddress
+        toAddressDisplay    = inputObject.toAddressDisplay
+        toAmount            = inputObject.toAmount
+        onCurrency          = inputObject.onCurrency
         addressInput.input.leftPadding = 12
         closeLoader.sourceComponent = dropdownfav
         iconLoader.sourceComponent  = null
@@ -115,23 +118,21 @@ Rectangle {
                 enabled: (inputObject.toType === "Input")
                 disabledColor: "#FFFFFF"
                 input.rightPadding: 100
-                textInputted: sendDelegateRoot.toAddress //inputObject.toAddress
+                textInputted: sendDelegateRoot.toAddressDisplay //inputObject.toAddress
                 onTextInputtedChanged: {
-                    if (!addressInput.enabled)
+                    if (!addressInput.enabled){
                         return
-
+                    }
                     if (addressInput.textInputted.length === 0) {
                         addressInput.isValid = true
                         addressInput.showError = false
                         sendDelegateRoot.toAddress = ""
                         return
                     }
-
-                    if (AppModel.walletInfo.isValidAddress(addressInput.textInputted)) {
+                    if (AppModel.walletInfo.isValidAddress(sendDelegateRoot.toAddress)) {
                         addressInput.isValid = true
                         addressInput.showError = false
                         addressInput.errorText = ""
-                        sendDelegateRoot.toAddress = addressInput.textInputted
                     }
                     else {
                         addressInput.isValid = false

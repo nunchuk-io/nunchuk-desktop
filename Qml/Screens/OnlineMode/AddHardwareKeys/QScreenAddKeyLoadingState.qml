@@ -36,7 +36,8 @@ QOnScreenContent {
     width: popupWidth
     height: popupHeight
     anchors.centerIn: parent
-    enableHeader: false
+    label.text: ""
+    enableHeader: true
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property string progressTitle: ""
     content: Item {

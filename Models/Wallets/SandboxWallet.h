@@ -19,7 +19,7 @@ class SandboxWallet : public AssistedWallet {
     Q_PROPERTY(bool isReplaceGroupWallet            READ isReplaceGroupWallet                                   CONSTANT)
     Q_PROPERTY(QVariantList replaceGroups           READ replaceGroups                                          NOTIFY replaceGroupsChanged)
     Q_PROPERTY(QString platformkeyPolicyType        READ platformkeyPolicyType                                  NOTIFY walletConfigChanged)
-    DEFINE_QT_PROPERTY(int, alerCount)
+    Q_PROPERTY(int alertCount                       READ alertCount                                             NOTIFY walletChanged)
 
   public:
     SandboxWallet(const nunchuk::Wallet &w);
@@ -55,6 +55,8 @@ class SandboxWallet : public AssistedWallet {
     QVariantList replaceGroups();
 
     QString platformkeyPolicyType() override;
+
+    int alertCount();
   public slots:
     // Group message
     void startGetUnreadMessage();

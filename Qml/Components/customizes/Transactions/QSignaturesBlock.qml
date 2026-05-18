@@ -25,6 +25,7 @@ import "../../../../localization/STR_QML.js" as STR
 Column {
     width: parent.width
     spacing: 12
+    property int pendingSignature: 0
     Rectangle {
         width: parent.width
         height: 48
@@ -47,7 +48,7 @@ Column {
         height: 64
         QText {
             id: numbersignaturepending
-            text: "0 / " + transactionInfo.m
+            text: (transactionInfo.m-pendingSignature) + " / " + transactionInfo.m
             font.pixelSize: 16
             color: "#031F2B"
             font.family: "Lato"
@@ -79,7 +80,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QText {
-                text: STR.str_QML_220(transactionInfo.m)
+                text: STR.str_QML_220(pendingSignature)
                 font.pixelSize: 12
                 font.family: "Lato"
                 color: indicatorStatus.color

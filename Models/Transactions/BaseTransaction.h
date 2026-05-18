@@ -122,9 +122,9 @@ class BaseTransaction : public QStateFlow {
     Q_PROPERTY(QString              initEventId             READ initEventId             NOTIFY initEventIdChanged)
     Q_PROPERTY(bool                 createByMe              READ createByMe              NOTIFY createByMeChanged)
     Q_PROPERTY(QString              psbt                    READ psbt                    NOTIFY psbtChanged)
-    Q_PROPERTY(QString              serverKeyMessage        READ serverKeyMessage        NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(QString              serverKeyMessage        READ serverKeyMessage        NOTIFY nunchukTransactionChanged)
     Q_PROPERTY(QString              destination             READ destination             NOTIFY nunchukTransactionChanged)
-    Q_PROPERTY(bool                 isCosigning             READ isCosigning             NOTIFY serverKeyMessageChanged)
+    Q_PROPERTY(bool                 isCosigning             READ isCosigning             NOTIFY nunchukTransactionChanged)
     Q_PROPERTY(bool                 enableRequestSignature  READ enableRequestSignature  CONSTANT)
     Q_PROPERTY(bool                 enableScheduleBroadcast READ enableScheduleBroadcast CONSTANT)
     Q_PROPERTY(bool                 enableCancelTransaction READ enableCancelTransaction CONSTANT)
@@ -237,6 +237,7 @@ class BaseTransaction : public QStateFlow {
     void setCreateByMe(bool createByMe);
     QString serverKeyMessage() const;
     void setServerKeyMessage(const QJsonObject &data);
+    void setServerKeyMessage(const QString &data);
     QString packageFeeRate();
     void setPackageFeeRate(int satvKB);
 
@@ -350,7 +351,6 @@ class BaseTransaction : public QStateFlow {
     void createByMeChanged();
     void walletIdChanged();
     void psbtChanged();
-    void serverKeyMessageChanged();
     void scan_percentChanged();
     void hasMoreBtnChanged();
     void manualCoinsChanged();
