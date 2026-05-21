@@ -1097,7 +1097,7 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
         }
         QString tx_id = QString::fromStdString(result.get_txid());
         QWalletPtr wallet = AppModel::instance()->walletList()->getWalletById(walletId);
-        if(auto trans = AppModel::instance()->transactionInfo())
+        if(auto trans = AppModel::instance()->transactionInfo()){
             if(qUtils::strCompare(tx_id, trans->txid()) && qUtils::strCompare(walletId, trans->walletId())){
                 QString serverKeyMsg = trans->serverKeyMessage();
                 bool isCosign = trans->isCosigning();
@@ -1109,6 +1109,7 @@ void Controller::slotFinishSigningTransaction(const QString &walletId,
                     wallet.data()->SignAsisstedTxs(tx_id, QString::fromStdString(result.get_psbt()), QString::fromStdString(result.get_memo()));
                 }
             }
+        }
         AppModel::instance()->requestSyncWalletDb(walletId);
     }
     else{

@@ -98,6 +98,12 @@ void AssistedWallet::GetAsisstedTx(const QString &txid)
         if(!transaction.isEmpty() && tranPtr){
             tranPtr->setServerKeyMessage(transaction);
         }
+
+        if(auto txInfo = AppModel::instance()->transactionInfo()){
+            if(qUtils::strCompare(txid, txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())){
+                txInfo->setServerKeyMessage(transaction);
+            }
+        }
     }
     return;
 }
@@ -338,7 +344,17 @@ QTransactionPtr AssistedWallet::SyncAssistedTxs(const nunchuk::Transaction &tx)
         if(!transaction.isEmpty() && tranPtr){
             tranPtr->setServerKeyMessage(transaction);
         }
-        return bridge::convertTransaction(result.value().tx, walletId());
+
+        if(auto txInfo = AppModel::instance()->transactionInfo()){
+            if(qUtils::strCompare(QString::fromStdString(tx.get_txid()), txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())){
+                txInfo->setServerKeyMessage(transaction);
+            }
+        }
+        QTransactionPtr ret = bridge::convertTransaction(result.value().tx, walletId());
+        if(ret){
+            ret->setServerKeyMessage(transaction);
+        }
+        return ret;
     }
     else {
         return NULL;
@@ -410,10 +426,15 @@ void AssistedWallet::SignAsisstedTxs(const QString &tx_id, const QString &psbt, 
     auto result = signTransactionUseCase.execute(input);
     if (result.isSuccess()) {
         auto transaction = result.value().transaction;
-        auto tranPtr = transactionHistory()->getTransactionByTxid(tx_id);
-        if(tranPtr){
+        if(auto txPtr = transactionHistory()->getTransactionByTxid(tx_id)){
             if(!transaction.isEmpty()){
-                tranPtr->setServerKeyMessage(transaction);
+                txPtr->setServerKeyMessage(transaction);
+            }
+        }
+
+        if(auto txInfo = AppModel::instance()->transactionInfo()){
+            if(qUtils::strCompare(tx_id, txInfo->txid()) && qUtils::strCompare(walletId(), txInfo->walletId())){
+                txInfo->setServerKeyMessage(transaction);
             }
         }
     }
