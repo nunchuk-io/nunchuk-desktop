@@ -1,17 +1,13 @@
 #pragma once
 
-#include "core/viewmodel/ActionViewModel.h"
 #include "core/viewmodel/DefinePropertyMacros.h"
+#include "features/common/viewmodels/SignaturesRequiredBaseViewModel.h"
 
 namespace features::transactions::viewmodels {
-using core::viewmodels::ActionViewModel;
+using features::common::viewmodels::SignaturesRequiredBaseViewModel;
 
-class SignaturesRequiredViewModel : public ActionViewModel {
+class SignaturesRequiredViewModel : public SignaturesRequiredBaseViewModel {
     Q_OBJECT
-    DEFINE_QT_PROPERTY(QString, amountLimit)
-    DEFINE_QT_PROPERTY(int, pending_signatures)
-    DEFINE_QT_PROPERTY(QString, describeOne)
-    DEFINE_QT_PROPERTY(QString, describeTwo)
   public:
     explicit SignaturesRequiredViewModel(QObject *parent = nullptr);
     DEFINE_SET_GET(nunchuk::GroupDummyTransaction, dummyTx)

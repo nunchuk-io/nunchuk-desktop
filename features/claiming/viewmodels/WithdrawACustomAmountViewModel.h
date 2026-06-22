@@ -14,6 +14,7 @@ class WithdrawACustomAmountViewModel : public ActionViewModel {
   public:
     explicit WithdrawACustomAmountViewModel(QObject *parent = nullptr);
     void forwardAmount();
+    void onInit() override;
   public slots:
     void withdrawToWalletClicked();
     void withdrawToAddressClicked();

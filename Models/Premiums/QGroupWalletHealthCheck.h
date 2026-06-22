@@ -24,7 +24,7 @@ public:
     void GetStatuses();
     void HealthCheckForKey(const QString& xfp);
     void RequestHealthCheckForKey(const QString& xfp);
-    bool HealthCheckPendingForTx(const QString& dummy_transaction_id);
+    bool HealthCheckPendingForTx(const QString& dummy_transaction_id, std::function<void(bool)> callback = nullptr);
 
     bool CancelHealthCheckPending();
     QVariant aKeyStatus() const;

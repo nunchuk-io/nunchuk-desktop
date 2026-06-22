@@ -1,9 +1,12 @@
 #include "HomePendingAcceptedViewModel.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
 #include "core/ui/UiServices.inc"
+#include "features/inheritance/offchain/flows/PhasedRolloutFlow.h"
 #include "features/signers/flows/SetupPlatformKeyPolicyFlow.h"
 #include "features/transactions/flows/DummyTransactionFlow.h"
-#include "features/wallets/usecases/MarkGroupWalletAlertViewedUseCase.h"
 #include "features/wallets/usecases/DismissGroupWalletAlertUseCase.h"
+#include "features/wallets/usecases/MarkGroupWalletAlertViewedUseCase.h"
+#include "generated_qml_keys.hpp"
 
 namespace features::wallets::viewmodels {
 using namespace core::viewmodels;
@@ -11,6 +14,7 @@ using namespace features::transactions::flows;
 using namespace features::signers::flows;
 using namespace features::transactions::usecases;
 using namespace features::wallets::usecases;
+using namespace features::inheritance::offchain::flows;
 
 HomePendingAcceptedViewModel::HomePendingAcceptedViewModel(QObject *parent) : ActionViewModel(parent) {}
 
@@ -20,6 +24,8 @@ void HomePendingAcceptedViewModel::onInit() {}
 
 void HomePendingAcceptedViewModel::onViewClicked(const QString &alertId) {
     GUARD_GROUP_WALLETS()
+    GUARD_APP_MODEL_WALLET()
+    bool isOnChain = wallet->walletType() == (int)nunchuk::WalletType::MINISCRIPT;
     if (auto dashboard = groupWallets->dashboardInfoPtr()) {
         dashboard->setAlertId(alertId);
         dashboard->proceedpayload();
@@ -33,6 +39,69 @@ void HomePendingAcceptedViewModel::onViewClicked(const QString &alertId) {
             handlePolicyChange(alertJson);
         } break;
         case AlertEnum::E_Alert_t::REPLACE_WALLET: {
+        } break;
+        case AlertEnum::E_Alert_t::UPDATE_INHERITANCE_PLAN: {
+            if (isOnChain) {
+                groupWallets->markRead(alertId);
+            } else {
+                QJsonObject payload = dashboard->alertJson().value("payload").toObject();
+                QString dummy_transaction_id = payload.value("dummy_transaction_id").toString();
+                if (!dummy_transaction_id.isEmpty()) {
+                    if (dashboard->healthPtr()) {
+                        std::function<void(bool)> callback = [this, groupWallets, alertId](bool is_phrase_rollout) {
+                            if (is_phrase_rollout) {
+                                GUARD_SUB_SCREEN_MANAGER()
+                                subMng->show(qml::features::inheritance::commons::updateinheritanceplan);
+                            } else {
+                                groupWallets->markRead(alertId);
+                            }
+                        };
+                        dashboard->healthPtr()->HealthCheckPendingForTx(dummy_transaction_id, callback);
+                    }
+                }
+            }
+        } break;
+        case AlertEnum::E_Alert_t::CANCEL_INHERITANCE_PLAN: {
+            if (isOnChain) {
+                groupWallets->markRead(alertId);
+            } else {
+                QJsonObject payload = dashboard->alertJson().value("payload").toObject();
+                QString dummy_transaction_id = payload.value("dummy_transaction_id").toString();
+                if (!dummy_transaction_id.isEmpty()) {
+                    if (dashboard->healthPtr()) {
+                        std::function<void(bool)> callback = [this, groupWallets, alertId](bool is_phrase_rollout) {
+                            if (is_phrase_rollout) {
+                                GUARD_SUB_SCREEN_MANAGER()
+                                subMng->show(qml::features::inheritance::commons::cancelinheritanceplan);
+                            } else {
+                                groupWallets->markRead(alertId);
+                            }
+                        };
+                        dashboard->healthPtr()->HealthCheckPendingForTx(dummy_transaction_id, callback);
+                    }
+                }
+            }
+        } break;
+        case AlertEnum::E_Alert_t::CREATE_INHERITANCE_PLAN: {
+            if (isOnChain) {
+                groupWallets->markRead(alertId);
+            } else {
+                QJsonObject payload = dashboard->alertJson().value("payload").toObject();
+                QString dummy_transaction_id = payload.value("dummy_transaction_id").toString();
+                if (!dummy_transaction_id.isEmpty()) {
+                    if (dashboard->healthPtr()) {
+                        std::function<void(bool)> callback = [this, groupWallets, alertId](bool is_phrase_rollout) {
+                            if (is_phrase_rollout) {
+                                GUARD_SUB_SCREEN_MANAGER()
+                                subMng->show(qml::features::inheritance::commons::createinheritanceplan);
+                            } else {
+                                groupWallets->markRead(alertId);
+                            }
+                        };
+                        dashboard->healthPtr()->HealthCheckPendingForTx(dummy_transaction_id, callback);
+                    }
+                }
+            }
         } break;
         default:
             groupWallets->markRead(alertId);
@@ -69,11 +138,11 @@ void HomePendingAcceptedViewModel::handlePolicyChange(QJsonObject alertJson) {
         return;
     }
     auto walletId = wallet->walletId();
-    
+
     DismissGroupWalletAlertInput input;
     input.wallet_id = walletId;
     input.alert_id = alertId;
-    
+
     m_dismissAlertUseCase.executeAsync(input, [this, alertId](const core::usecase::Result<DismissGroupWalletAlertResult> &result) {
         if (result.isSuccess()) {
             DBG_INFO << "Alert dismissed successfully: " << alertId;
@@ -102,25 +171,26 @@ void HomePendingAcceptedViewModel::handlePolicyChangInProgress(QJsonObject alert
         return;
     }
     auto walletId = wallet->walletId();
-    
+
     // Mark alert as viewed
     MarkGroupWalletAlertViewedInput markViewedInput;
     markViewedInput.wallet_id = walletId;
     markViewedInput.alert_id = alertId;
-    
-    m_markAlertViewedUseCase.executeAsync(markViewedInput, [this, walletId, dummy_transaction_id](const core::usecase::Result<MarkGroupWalletAlertViewedResult> &result) {
-        if (result.isSuccess()) {
-            GUARD_GROUP_WALLETS()
-            GUARD_APP_MODEL()
-            if (auto dashboard = groupWallets->dashboardInfoPtr()) {
-                dashboard->GetAlertsInfo();
-                appModel->startReloadWallets();
-            }
-        } else {
-            DBG_ERROR << "Failed to mark alert as viewed: " << result.error();
-        }
-    });
-    
+
+    m_markAlertViewedUseCase.executeAsync(markViewedInput,
+                                          [this, walletId, dummy_transaction_id](const core::usecase::Result<MarkGroupWalletAlertViewedResult> &result) {
+                                              if (result.isSuccess()) {
+                                                  GUARD_GROUP_WALLETS()
+                                                  GUARD_APP_MODEL()
+                                                  if (auto dashboard = groupWallets->dashboardInfoPtr()) {
+                                                      dashboard->GetAlertsInfo();
+                                                      appModel->startReloadWallets();
+                                                  }
+                                              } else {
+                                                  DBG_ERROR << "Failed to mark alert as viewed: " << result.error();
+                                              }
+                                          });
+
     GetTransaction(walletId, dummy_transaction_id);
 }
 

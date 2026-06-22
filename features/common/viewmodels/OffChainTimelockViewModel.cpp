@@ -27,7 +27,7 @@ void OffChainTimelockViewModel::clearTimeLock(QJsonObject timelock) {
         QString timezone = timelock.value("timezone").toString();
         QDateTime dt = qUtils::convertTimestampToDateTime(timestamp, timezone);
         QString formattedDate = dt.date().toString("MM/dd/yyyy");
-        QString formattedTime = dt.time().toString("HH:mm");        
+        QString formattedTime = dt.time().toString("HH:mm");
         setvalueTime(formattedTime);
         QString timezone_formated = qUtils::formatTimeZoneString(timezone);
         setvalueTimezone(timezone_formated);

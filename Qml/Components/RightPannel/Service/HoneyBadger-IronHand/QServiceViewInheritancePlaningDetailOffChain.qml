@@ -37,6 +37,7 @@ import "../../../customizes/Texts"
 import "../../../customizes/Buttons"
 import "../../../customizes/services"
 import "../../../../Screens/OnlineMode/SetupWallets/TimeLocks"
+import "../../../../features/inheritance/components"
 import "../Common"
 
 Item {
@@ -59,10 +60,7 @@ Item {
         onItemClicked: {
             switch(index){
             case 0:
-                var _input = {
-                    option : "cancel-inheritance-plan"
-                }
-                QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
+                vm.cancelInheritancePlan()
                 break;
             default:
                 break;
@@ -76,17 +74,16 @@ Item {
         Rectangle {
             id: _img_bg
             width: parent.width
-            height: 494
+            height: vm.distribution_method == "CUSTOMIZE" ? 376 : 486
             color: "#D0E2FF"
             Column {
                 anchors.fill: parent
                 anchors.margins: 24
-                spacing: 28
+                spacing: 24
                 Item {
                     width: parent.width
                     height: 48
-                    QText {
-                        font.family: "Lato"
+                    QLato {
                         font.pixelSize: 28
                         color: "#031F2B"
                         font.weight: Font.Bold
@@ -107,7 +104,7 @@ Item {
                 Loader {
                     sourceComponent: headerplanOffchain
                     width: parent.width
-                    height: _img_bg.height * 0.75
+                    height: _img_bg.height - 24 - 48 - 24*2
                 }
             }
         }
@@ -117,7 +114,6 @@ Item {
             Loader {
                 sourceComponent: bodyplanOffchain
                 anchors.fill: parent
-                anchors.margins: 24
             }
         }
         Rectangle {
@@ -144,13 +140,10 @@ Item {
                     label.text: STR.STR_QML_835
                     label.font.pixelSize: 16
                     type: eTypeE
-                    enabled: planInfo.edit_isChanged
+                    enabled: planInfo.edit_isChanged || vm.isDataChanged
                     anchors.verticalCenter: parent.verticalCenter
                     onButtonClicked: {
-                        var _input = {
-                            option : "finalize-change"
-                        }
-                        QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
+                        vm.finalizeChanges()
                     }
                 }
                 QTextButton {
@@ -159,13 +152,10 @@ Item {
                     label.text: STR.STR_QML_805
                     label.font.pixelSize: 16
                     type: eTypeF
-                    enabled: planInfo.edit_isChanged
+                    enabled: planInfo.edit_isChanged || vm.isDataChanged
                     anchors.verticalCenter: parent.verticalCenter
                     onButtonClicked: {
-                        var _input = {
-                            option : "discard-change"
-                        }
-                        QMLHandle.sendEvent(EVT.EVT_INHERITANCE_PLAN_FINALIZE_REQUEST, _input)
+                        vm.discardChanges()
                     }
                 }
             }
@@ -251,36 +241,9 @@ Item {
                         spacing: 12
                         Row {
                             spacing: 12
-                            Rectangle {
-                                width: 393
-                                height: 92
-                                color: "#FFFFFF"
-                                radius: 12
-                                Row {
-                                    spacing: 12
-                                    anchors.fill: parent
-                                    anchors.margins: 12
-                                    QIcon {
-                                        iconSize: 24
-                                        source: "qrc:/Images/Images/star-dark.png"
-                                    }
-                                    Column {
-                                        spacing: 12
-                                        QLato {
-                                            font.pixelSize: 16
-                                            color: "#1C1C1C"
-                                            text: STR.STR_QML_749
-                                            font.weight: Font.Bold
-                                        }
-                                        QLato {
-                                            font.pixelSize: 16
-                                            width: 333
-                                            wrapMode: Text.WordWrap
-                                            color: "#1C1C1C"
-                                            text: planInfo.magic !== null ? planInfo.magic : "null null null"
-                                        }
-                                    }
-                                }
+                            QInheritancePlanMagicPhrases {
+                                magicPhrases: vm.assetAllocation
+                                magic: planInfo.magic
                             }
                             Rectangle {
                                 width: 393
@@ -333,6 +296,7 @@ Item {
                         }
                     }
                     Column {
+                        visible: vm.distribution_method === "LUMP_SUM"
                         spacing: 12
                         QLato {
                             font.pixelSize: 16
@@ -376,6 +340,7 @@ Item {
                                     MouseArea {
                                         anchors.fill: parent
                                         hoverEnabled: true
+
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             vm.timeLockEditClicked()
@@ -393,24 +358,35 @@ Item {
     Component {
         id: bodyplanOffchain
         Item {
-            width: parent.width - 24
-            height: parent.height * 0.58 - 24
+            anchors.fill: parent
             Flickable {
                 anchors.top: parent.top
-                anchors.topMargin: 12
+                anchors.topMargin: vm.distribution_method == "CUSTOMIZE" ? 0 : 24
                 clip: true
-                width: 661
-                height: 372
+                width: parent.width
+                height: parent.height
                 contentWidth: width
                 contentHeight: _colum.childrenRect.height + 100
                 ScrollBar.vertical: ScrollBar { active: true }
                 Column {
                     id: _colum
                     anchors.top: parent.top
-                    anchors.topMargin: 24
                     width: parent.width
                     spacing: 24
+                    QInheritanceOverview {
+                        visible: vm.distribution_method == "CUSTOMIZE"
+                        onAssetAllocationEditClicked: vm.onAssetAllocationEditClicked()
+                        onReleaseMethodEditClicked: vm.onReleaseMethodEditClicked()
+                        onReleaseScheduleEditClicked: vm.onReleaseScheduleEditClicked()
+                        onTimezoneEditClicked: vm.onTimezoneEditClicked()
+                        onFallbackSettingsEditClicked: vm.onFallbackSettingsEditClicked()
+                        onBeneficiarySchedulesEditClicked: vm.onBeneficiarySchedulesEditClicked()
+                    }
                     QTextAreaBoxTypeB {
+                        anchors{
+                            left: parent.left
+                            leftMargin: 24
+                        }
                         width: 651
                         height: 128
                         label.text: STR.STR_QML_850
@@ -425,11 +401,19 @@ Item {
                         }
                     }
                     Rectangle {
+                        anchors{
+                            left: parent.left
+                            leftMargin: 24
+                        }
                         height: 1
                         width: 651
                         color: "#EAEAEA"
                     }
                     QTextInputBoxTypeE {
+                        anchors{
+                            left: parent.left
+                            leftMargin: 24
+                        }
                         width: 651
                         height: 84
                         label.text: STR.STR_QML_851
@@ -443,11 +427,19 @@ Item {
                         }
                     }
                     Rectangle {
+                        anchors{
+                            left: parent.left
+                            leftMargin: 24
+                        }
                         height: 1
                         width: 651
                         color: "#EAEAEA"
                     }
                     QServiceInheritanceNotificationPreferencesOffchain {
+                        anchors{
+                            left: parent.left
+                            leftMargin: 24
+                        }
                         width: 651
                         inheritance: planInfo
                         onTextEditClicked: {

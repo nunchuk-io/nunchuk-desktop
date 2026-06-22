@@ -1325,9 +1325,13 @@ bool CoinWallet::CreateDraftTransaction(int successEvtID, const QVariant &msg)
 
     QUTXOListModelPtr inputs = GetUtxoListSelected();
     qint64 totalAmountInputSelected = inputs->amountSats();
+    DBG_INFO << totalAmountTotal << totalAmountInputSelected << walletInfo->balanceSats();
 
     bool subtractFromAmount = false;
-    if(walletInfo->walletEscrow() || (totalAmountTotal >= walletInfo->balanceSats()) || totalAmountTotal >= totalAmountInputSelected ){
+    if(walletInfo->walletEscrow() || (totalAmountTotal >= walletInfo->balanceSats())){
+        subtractFromAmount = true;
+    }
+    else if((totalAmountInputSelected > 0) && (totalAmountTotal >= totalAmountInputSelected )){
         subtractFromAmount = true;
     }
     QMap<QString, qint64> outputs;

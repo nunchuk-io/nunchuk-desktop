@@ -87,6 +87,13 @@
         return __VA_ARGS__;                                                                                                                                    \
     }
 
+#define GUARD_APP_MODEL_WALLET(...)                                                                                                                            \
+    GUARD_APP_MODEL(__VA_ARGS__)                                                                                                                               \
+    auto wallet = appModel->walletInfoPtr();                                                                                                                   \
+    if (!wallet) {                                                                                                                                             \
+        return __VA_ARGS__;                                                                                                                                    \
+    }
+
 #define GUARD_TRANSACTION(...)                                                                                                                                 \
     GUARD_APP_MODEL(__VA_ARGS__)                                                                                                                               \
     auto tran = appModel->transactionInfoPtr();                                                                                                                \
@@ -110,13 +117,27 @@
 
 #define GUARD_CLIENT_CONTROLLER(...)                                                                                                                           \
     GUARD_CTX(__VA_ARGS__)                                                                                                                                     \
-    auto clientCtrl = ctx()->clientController();                                                                                                         \
-    if (!clientCtrl) {                                                                                                                                   \
+    auto clientCtrl = ctx()->clientController();                                                                                                               \
+    if (!clientCtrl) {                                                                                                                                         \
         return __VA_ARGS__;                                                                                                                                    \
     }
 #define GUARD_SHARE_WALLETS(...)                                                                                                                               \
-GUARD_CTX(__VA_ARGS__)                                                                                                                                     \
-    auto sharedWallets = ctx()->sharedWallets();                                                                                                                 \
-    if (!sharedWallets) {                                                                                                                                       \
+    GUARD_CTX(__VA_ARGS__)                                                                                                                                     \
+    auto sharedWallets = ctx()->sharedWallets();                                                                                                               \
+    if (!sharedWallets) {                                                                                                                                      \
         return __VA_ARGS__;                                                                                                                                    \
-}
+    }
+
+#define GUARD_APP_MODEL_DUMMY_TX(...)                                                                                                                          \
+    GUARD_APP_MODEL_WALLET(__VA_ARGS__)                                                                                                                        \
+    auto dummyTx = wallet->groupDummyTxPtr();                                                                                                                  \
+    if (!dummyTx) {                                                                                                                                            \
+        return __VA_ARGS__;                                                                                                                                    \
+    }
+
+#define GUARD_APP_MODEL_INHERITANCE_PLAN(...)                                                                                                                  \
+    GUARD_APP_MODEL_WALLET(__VA_ARGS__)                                                                                                                        \
+    auto ihPlan = wallet->inheritancePlanPtr();                                                                                                                \
+    if (!ihPlan) {                                                                                                                                             \
+        return __VA_ARGS__;                                                                                                                                    \
+    }

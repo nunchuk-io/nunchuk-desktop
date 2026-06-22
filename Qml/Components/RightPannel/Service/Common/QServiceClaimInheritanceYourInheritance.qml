@@ -138,6 +138,17 @@ Item {
                 QTextButton {
                     width: label.paintedWidth + 32
                     height: 48
+                    label.text: STR.STR_QML_2236
+                    label.font.pixelSize: 16
+                    type: eTypeE
+                    visible: vm.hasReleaseSchedule && vm.isOffClaim
+                    onButtonClicked: {
+                        vm.viewReleaseScheduleClicked()
+                    }
+                }
+                QTextButton {
+                    width: label.paintedWidth + 32
+                    height: 48
                     label.text: STR.STR_QML_1735
                     label.font.pixelSize: 16
                     type: eTypeE

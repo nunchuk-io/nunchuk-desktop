@@ -27,6 +27,7 @@ ComboBox {
     id: control
     width: 627
     height: 48
+    property int heigthContent: 768
     signal signalActivated
     property var current_id
     property var defaultValue
@@ -75,7 +76,7 @@ ComboBox {
     popup: Popup {
         y: control.height
         width: control.width
-        implicitHeight: Math.min(contentItem.implicitHeight, 768)
+        implicitHeight: Math.min(contentItem.implicitHeight, control.heigthContent)
         padding: 0
         background: Rectangle {
             anchors.fill: parent
@@ -107,7 +108,7 @@ ComboBox {
         }
     }
     delegate: ItemDelegate {
-        text: getText(modelData)
+        text: getText(typeof modelData === "object" ? modelData : model)
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width
         height: 48

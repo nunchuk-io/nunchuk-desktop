@@ -1291,7 +1291,7 @@ var STR_QML_1044_Approve = qsTr("Approve")
 
 var STR_QML_1045 = qsTr("Are you sure you want to deny this inheritance planning request?")
 var STR_QML_1046 = qsTr("Customize key account")
-var STR_QML_1047 = qsTr("Note to beneficiary")
+var STR_QML_1047 = qsTr("Note to Beneficiary")
 
 var STR_QML_1048 = qsTr("Please set up the inheritance plan on mobile.")
 var STR_QML_1049 = qsTr("Cancel pending wallet")
@@ -2373,3 +2373,5 @@ var STR_QML_2104 = qsTr("If you don’t provide a Beneficiary’s email address,
 var STR_QML_2137 = qsTr("Config")
 var STR_QML_2138 = qsTr("Continue (%1 signature%2 pending)")
 var STR_QML_2139 = qsTr("Set a maximum amount for a specific period. When disabled, your spending limit will be unlimited.")
+
+var STR_QML_2225 = qsTr("Total stage allocation cannot exceed 100%.")

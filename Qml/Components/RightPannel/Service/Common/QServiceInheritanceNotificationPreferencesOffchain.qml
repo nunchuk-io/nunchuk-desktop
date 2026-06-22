@@ -49,6 +49,7 @@ Item {
                     id: _email
                     width: _item.width - 16*2
                     height: Math.max(40, Math.max(1, splitEmails.length) * 20)
+                    
                     QLato {
                         width: 302
                         height: 40
@@ -86,14 +87,16 @@ Item {
                     }
                 }
                 Rectangle {
-                    width: 311
+                    width: _item.width - 16*2
                     height: 1
                     color: "#EAEAEA"
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Item {
                     id: _notify
                     width: _item.width - 16*2
                     height: 20
+                    
                     QLato {
                         width: 245
                         height: 20

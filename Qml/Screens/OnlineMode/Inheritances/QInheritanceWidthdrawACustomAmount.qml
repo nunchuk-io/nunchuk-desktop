@@ -83,6 +83,17 @@ QOnScreenContentTypeB {
                     destination.toAmount = vm.balanceDisplay
                 }
             }
+            Connections {
+                target: vm
+                function onWithdrawAmountSatsChanged() {
+                    // Chỉ cập nhật khi ViewModel property thay đổi (sau init)
+                    if (AppSetting.unit === NUNCHUCKTYPE.BTC) {
+                        destination.toAmount = AppModel.qBTCFromAmount(vm.withdrawAmountSats)
+                    } else {
+                        destination.toAmount = vm.withdrawAmountSats
+                    }
+                }
+            }
         }
         function convertToSatoshi(isCurrency, amount) {
             if(isCurrency) {

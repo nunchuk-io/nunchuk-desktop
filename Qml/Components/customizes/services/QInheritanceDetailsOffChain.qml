@@ -33,6 +33,14 @@ Item {
     property var planInfo: inheritancePlanInfo.planInfo
     property string title: STR.STR_QML_887
     property string warning: STR.STR_QML_890
+    property var magicPhrases: {
+        var bens = planInfo.beneficiaries || [];
+        var result = [];
+        for (var i = 0; i < bens.length; i++) {
+            if (bens[i].magic) result.push({ email: bens[i].email, magic: bens[i].magic });
+        }
+        return result;
+    }
     width: 346
     height: 512
     Column {
@@ -76,6 +84,69 @@ Item {
                             text: planInfo.magic
                             anchors.centerIn: parent
                             horizontalAlignment: Text.AlignHCenter
+                        }
+                        visible: magicPhrases.length === 0
+                    }
+                    Rectangle {
+                        width: 310
+                        height: 48
+                        color: "#F5F5F5"
+                        radius: 12
+                        Flickable {
+                            anchors.fill: parent
+                            clip: true
+                            visible: magicPhrases.length > 0
+                            contentHeight: infoColumn.implicitHeight
+                            flickableDirection: Flickable.VerticalFlick
+                            ScrollBar.vertical: ScrollBar { active: true }
+                            Column {
+                                id: infoColumn
+                                anchors {
+                                    fill: parent
+                                    topMargin: -6
+                                    leftMargin: 12
+                                }
+                                Repeater {
+                                    model: magicPhrases
+                                    Rectangle {
+                                        width: 283
+                                        height: 64
+                                        color: "transparent"
+                                        Column {
+                                            anchors {
+                                                fill: parent
+                                                topMargin: 12
+                                                bottomMargin: 12
+                                            }
+                                            width: parent.width
+                                            spacing: 0
+                                            QLato {
+                                                font.pixelSize: 16
+                                                width: parent.width
+                                                height: 20
+                                                font.weight: Font.DemiBold
+                                                text: modelData.email ?? "null null null"
+                                            }
+                                            QLato {
+                                                font.pixelSize: 16
+                                                height: 20
+                                                width: parent.width
+                                                text: modelData.magic ?? "null null null"
+                                            }
+                                            Item {
+                                                width: parent.width
+                                                height: 11
+                                            }
+                                            QLine {
+                                                width: parent.width
+                                                height: 1
+                                                color: "#DEDEDE"
+                                                visible: index < magicPhrases.length - 1
+                                            }
+                                        }                    
+                                    }
+                                }
+                            }
                         }
                     }
                }

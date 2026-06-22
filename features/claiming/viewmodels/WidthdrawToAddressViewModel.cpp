@@ -40,7 +40,7 @@ void WidthdrawToAddressViewModel::proceedTransactionResult() {
     flow->setwithdrawAddress(claimingFlow->withdrawAddress());
     flow->setfee_rate(claimingFlow->fee_rate());
     flow->setanti_fee_sniping(claimingFlow->anti_fee_sniping());
-    flow->setsubtract_fee_from_amount(claimingFlow->subtract_fee_from_amount());
+    flow->setsubtract_fee_from_amount(claimingFlow->subtract_fee_from_amount());    
     flow->setwithdrawAmountSats(claimingFlow->withdrawAmountSats());
     flow->setbackupSigners(claimingFlow->backupSigners());
     GUARD_SUB_SCREEN_MANAGER()

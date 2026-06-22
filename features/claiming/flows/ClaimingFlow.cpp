@@ -72,19 +72,43 @@ bool ClaimingFlow::addSingleSigner(const nunchuk::SingleSigner &single) {
 void ClaimingFlow::displayStatusInfo(const ClaimStatusResult &status) {
     static const int64_t COIN = 100000000;
     GUARD_APP_SETTING()
-    int balanceSats = status.balance * COIN;
-    QLocale locale(QLocale::English);
-    QString balanceDisplay;
-    if ((int)AppSetting::Unit::SATOSHI == appSetting->unit()) {
-        balanceDisplay = locale.toString(balanceSats); // sats
-    } else {
-        balanceDisplay = locale.toString(status.balance, 'f', qUtils::Precision(status.balance));
+    {
+        int balanceSats = status.balance * COIN;
+        QLocale locale(QLocale::English);
+        QString balanceDisplay;
+        if ((int)AppSetting::Unit::SATOSHI == appSetting->unit()) {
+            balanceDisplay = locale.toString(balanceSats); // sats
+        } else {
+            balanceDisplay = locale.toString(status.balance, 'f', qUtils::Precision(status.balance));
+        }
+        
+        setbalanceSats(balanceSats);
+        setbalanceDisplay(balanceDisplay);
+        setbalanceCurrency(qUtils::currencyLocale(balanceSats));
     }
-    setbalanceSats(balanceSats);
-    setbalanceDisplay(balanceDisplay);
-    setbalanceCurrency(qUtils::currencyLocale(balanceSats));
+    {
+        int balanceSats = status.available_to_withdraw * COIN;
+        QLocale locale(QLocale::English);
+        QString balanceDisplay;
+        if ((int)AppSetting::Unit::SATOSHI == appSetting->unit()) {
+            balanceDisplay = locale.toString(balanceSats); // sats
+        } else {
+            balanceDisplay = locale.toString(status.available_to_withdraw, 'f', qUtils::Precision(status.available_to_withdraw));
+        }
+        
+        setavailableBalanceSats(balanceSats);
+        setavailableBalanceDisplay(balanceDisplay);
+        setavailableBalanceCurrency(qUtils::currencyLocale(balanceSats));
+    }
+    setcurrent_stage_index(status.current_stage_index);
+    setcurrent_installment_index(status.current_installment_index);
+    setstages(status.stages);
     setnote(status.inheritance.value("note").toString());
+    setdistribution_method(status.inheritance.value("distribution_method").toString());
     setremaining_display_name(status.buffer_period_countdown.value("remaining_display_name").toString());
+    if (qUtils::strCompare(distribution_method(), "CUSTOMIZE")) {
+        setsubtract_fee_from_amount(true);
+    }
 }
 
 void ClaimingFlow::proceedClaimStatusResult(const ClaimStatusResult &status) {
@@ -162,8 +186,15 @@ void ClaimingFlow::bind(QObject *vm) {
     auto realVm6 = qobject_cast<WithdrawACustomAmountViewModel *>(vm);
     if (realVm6) {
         realVm6->setnote(note());
-        realVm6->setbalanceDisplay(balanceDisplay());
-        realVm6->setbalanceCurrency(balanceCurrency());
+        if (qUtils::strCompare(distribution_method(), "CUSTOMIZE")) {
+            realVm6->setwithdrawAmountSats(withdrawAmountSats());
+            realVm6->setbalanceDisplay(availableBalanceDisplay());
+            realVm6->setbalanceCurrency(availableBalanceCurrency());
+        } else {
+            realVm6->setbalanceDisplay(balanceDisplay());
+            realVm6->setbalanceCurrency(balanceCurrency());
+        }
+        
     }
 
     auto realVm7 = qobject_cast<WidthdrawToAddressViewModel *>(vm);

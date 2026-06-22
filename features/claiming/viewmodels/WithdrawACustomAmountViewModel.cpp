@@ -20,6 +20,15 @@ void WithdrawACustomAmountViewModel::forwardAmount() {
     }
 }
 
+void WithdrawACustomAmountViewModel::onInit() {
+    GUARD_FLOW_MANAGER()
+    auto flow = flowMng->currentFlow();
+    auto claimingFlow = qobject_cast<ClaimingFlow *>(flow);
+    if (claimingFlow) {
+        setwithdrawAmountSats(claimingFlow->withdrawAmountSats());
+    }
+}
+
 void WithdrawACustomAmountViewModel::withdrawToWalletClicked() {
     forwardAmount();
     GUARD_SUB_SCREEN_MANAGER()

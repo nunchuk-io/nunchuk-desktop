@@ -39,8 +39,7 @@ QBaseButton {
     }
     QIconState {
         id: idIcon
-        width: iconSize
-        height: iconSize
+        iconSize: iconSize
         icons: icon !== "" ? [icon, icon, icon, icon] : idBtn.icons
         anchors.centerIn: parent
         scale: btnMouse.pressed ? 0.9 : 1

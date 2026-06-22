@@ -18,6 +18,16 @@ void InheritanceUnlockedViewModel::requestWithdrawBitcoin() {
     rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritancewithdrawbitcoin);
 }
 
+void InheritanceUnlockedViewModel::onInit() {
+    GUARD_FLOW_MANAGER()
+    auto currentFlow = flowMng->currentFlow();
+    auto claimingFlow = qobject_cast<ClaimingFlow *>(currentFlow);
+    if (!claimingFlow) {
+        return;
+    }
+    sethasReleaseSchedule(claimingFlow->stages().size() > 0);
+}
+
 void InheritanceUnlockedViewModel::viewWalletClicked() {
     GUARD_APP_MODEL()
     QEventProcessor::instance()->sendEvent(E::EVT_GOTO_HOME_WALLET_TAB);
@@ -53,4 +63,10 @@ void InheritanceUnlockedViewModel::withdrawBitcoinClicked() {
         });
     }
 }
+
+void InheritanceUnlockedViewModel::viewReleaseScheduleClicked() {
+    GUARD_RIGHT_PANEL_NAV()
+    rightPanel->request(qml::components::rightpannel::service::common::qserviceclaiminheritancephaserolloutguideline);
+}
+
 } // namespace features::claiming::viewmodels

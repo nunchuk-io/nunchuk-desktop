@@ -6,6 +6,7 @@
         <file>Qml/core/SubScreenHost.qml</file>
         <file>Qml/core/ToastHost.qml</file>
         <file>Qml/core/buttons/QPlusButton.qml</file>
+        <file>Qml/core/components/QSettingTimezone.qml</file>
         <file>Qml/Components/customizes/QBoxShadow.qml</file>
         <file>Qml/Components/customizes/QConnection.qml</file>
         <file>Qml/Components/customizes/QScreen.qml</file>
@@ -788,6 +789,7 @@
         <file>Qml/features/signers/platform/QSetupSpendingLimit.qml</file>
         <file>Qml/features/claiming/offchain/QExportCompleted.qml</file>
         <file>Qml/features/common/QResultSuccess.qml</file>
+        <file>Qml/features/common/QSignaturesRequiredBase.qml</file>
         <file>Qml/features/claiming/offchain/QYourPlanRequiresTwoInheritanceKeys.qml</file>
         <file>Qml/features/claiming/offchain/QYourPlanRequiresTwoInheritanceKeysAddedOne.qml</file>
         <file>Qml/features/claiming/onchain/QPrepareInheritanceKey.qml</file>
@@ -801,7 +803,7 @@
         <file>Qml/features/claiming/QTransactionDetailsClaimed.qml</file>
         <file>Qml/features/transactions/QConfirmTransaction.qml</file>
         <file>Qml/features/transactions/QTransactionDetails.qml</file>
-        <file>Qml/features/transactions/QSignaturesRequired.qml</file>        
+        <file>Qml/features/transactions/QSignaturesRequired.qml</file>
         <file>Qml/features/transactions/QNormalTransactionDetails.qml</file>
         <file>Qml/features/transactions/QOnClaimTransactionDetails.qml</file>
         <file>Qml/features/transactions/QOffClaimTransactionDetails.qml</file>
@@ -809,6 +811,47 @@
         <file>Qml/Components/customizes/Texts/QTextAreaBoxTypeAScrollable.qml</file>
         <file>Qml/features/signers/QEditPlatformKeyPolicies.qml</file>
         <file>Qml/features/draftwallets/QGroupSandboxInvites.qml</file>
+        <file>Qml/features/inheritance/components/QInheritanceOverview.qml</file>
+        <file>Qml/features/inheritance/components/QAssetAllocation.qml</file>
+        <file>Qml/features/inheritance/components/QBeneficiaryAllocation.qml</file>
+        <file>Qml/features/inheritance/components/QFallbackSettings.qml</file>
+        <file>Qml/features/inheritance/components/QReleaseSchedule.qml</file>
+        <file>Qml/features/inheritance/components/QBufferPeriodRow.qml</file>
+        <file>Qml/features/inheritance/components/QFirstWithdrawalDateRow.qml</file>
+        <file>Qml/features/inheritance/components/QTimelineVisualization.qml</file>
+        <file>Qml/features/inheritance/components/QStageDetail.qml</file>
+        <file>Qml/features/inheritance/components/QReleaseInfoRow.qml</file>
+        <file>Qml/features/inheritance/components/QTimezoneDisplay.qml</file>
+        <file>Qml/features/inheritance/components/DonutChart.qml</file>
+        <file>Qml/features/inheritance/components/QBeneficiarySchedules.qml</file>
+        <file>Qml/features/inheritance/components/QBeneficiaryItem.qml</file>
+        <file>Qml/features/inheritance/offchain/QAssetAllocation.qml</file>
+        <file>Qml/features/inheritance/offchain/QBeneficiarySchedules.qml</file>
+        <file>Qml/features/inheritance/offchain/QChangeTimezone.qml</file>
+        <file>Qml/features/inheritance/offchain/QDetailBeneficiary.qml</file>
+        <file>Qml/features/inheritance/offchain/QFallbackSettings.qml</file>
+        <file>Qml/features/inheritance/offchain/QAddStageFirstWithdrawalDate.qml</file>
+        <file>Qml/features/inheritance/offchain/QReleaseMethod.qml</file>
+        <file>Qml/features/inheritance/offchain/QSetUpBufferPeriod.qml</file>
+        <file>Qml/features/inheritance/offchain/QSetUpBufferPeriodWithdrawal.qml</file>
+        <file>Qml/features/inheritance/offchain/QReleaseSchedule.qml</file>
+        <file>Qml/features/inheritance/offchain/QSignaturesRequired.qml</file>
+        <file>Qml/features/inheritance/offchain/QAddStageWithdrawalRule.qml</file>
+        <file>Qml/features/platformkey/QSignaturesRequired.qml</file>
+        <file>Qml/features/inheritance/commons/CancelInheritancePlan.qml</file>
+        <file>Qml/features/inheritance/commons/CreateInheritancePlan.qml</file>
+        <file>Qml/features/inheritance/commons/UpdateInheritancePlan.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertAssetAllocation.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertBeneficiarySchedules.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertFallbackSettings.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertNotificationPreferences.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertNoteToBeneficiary.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertReleaseSchedule.qml</file>
+        <file>Qml/features/inheritance/components/QDbAlertTimezone.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QInheritancePlanMagicPhrases.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritancePhaseRolloutGuideline.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceReleaseSchedule.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritancePhaseRolloutWithdrawBitcoin.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>
@@ -964,6 +1007,7 @@
         <file>Images/mulitsig-dark.svg</file>
         <file>Images/signing-policy-dark.svg</file>
         <file>Images/inheritance-dark.svg</file>
+        <file>Images/installments-dark.svg</file>
         <file>Images/buffer-period-illustration.svg</file>
         <file>Images/copy-light.svg</file>
         <file>Images/radio-dark.svg</file>
@@ -1222,6 +1266,12 @@
         <file>Images/inheritance-illustration-3-of-5-and-2-of-4-no-inheritance.svg</file>
         <file>Images/editBIP32_red.svg</file>
         <file>Images/FolderDashed.svg</file>
+        <file>Images/calander.svg</file>
+        <file>Images/period.svg</file>
+        <file>Images/delete-dark.svg</file>
+        <file>Images/delete-benefi-dark.svg</file>
+        <file>Images/BitCoinStageFlow.svg</file>
+        <file>Images/StageTimeline.svg</file>
     </qresource>
     <qresource prefix="/version">
         <file>Info.plist</file>

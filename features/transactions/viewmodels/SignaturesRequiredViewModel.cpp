@@ -9,7 +9,7 @@ namespace features::transactions::viewmodels {
 using features::signers::flows::SetupPlatformKeyPolicyFlow;
 using features::transactions::flows::DummyTransactionFlow;
 
-SignaturesRequiredViewModel::SignaturesRequiredViewModel(QObject *parent) : ActionViewModel(parent) {
+SignaturesRequiredViewModel::SignaturesRequiredViewModel(QObject *parent) : SignaturesRequiredBaseViewModel(parent) {
     setamountLimit(qUtils::currencyLocale(10000));
     setpending_signatures(0);
 }

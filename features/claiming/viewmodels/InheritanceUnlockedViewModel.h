@@ -13,14 +13,17 @@ class InheritanceUnlockedViewModel : public ActionViewModel {
     DEFINE_QT_PROPERTY(QString, balanceCurrency)
     DEFINE_QT_PROPERTY(QString, note)
     DEFINE_QT_PROPERTY(bool, isOffClaim)
+    DEFINE_QT_PROPERTY(bool, hasReleaseSchedule)
   public:
     explicit InheritanceUnlockedViewModel(QObject *parent = nullptr);
     DEFINE_SET_GET(bool, isRegistered)
 
+    void onInit() override;
     void requestWithdrawBitcoin();
   public slots:
     void viewWalletClicked();
     void withdrawBitcoinClicked();
+    void viewReleaseScheduleClicked();
 
   private:
     GetClaimingWalletUseCase m_getClaimingWalletUC;

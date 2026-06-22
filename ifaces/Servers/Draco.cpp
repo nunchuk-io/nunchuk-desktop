@@ -3189,6 +3189,29 @@ bool Draco::InheritancePlanningRequestDeny(const QString &request_id, const QStr
     return false;
 }
 
+bool Draco::inheritanceAssociateMagic(const QJsonObject& data, QJsonObject& output, QString& errormsg)
+{
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QString cmd = commands[Premium::CMD_IDX::INHERITANCE_ASSOCIATE_MAGIC];
+    QJsonObject jsonObj = m_rest->postSync(cmd, data, reply_code, reply_msg);
+    if(reply_code == DRACO_CODE::SUCCESSFULL){
+        output = jsonObj["error"].toObject();
+        int response_code = output["code"].toInt();
+        if(response_code == DRACO_CODE::RESPONSE_OK){
+            output = jsonObj["data"].toObject();
+            return true;
+        }
+        else{
+            errormsg = output["message"].toString();
+            AppModel::instance()->showToast(response_code, errormsg, EWARNING::WarningType::EXCEPTION_MSG);
+            return false;
+        }
+    }
+    errormsg = reply_msg;
+    return false;
+}
+
 bool Draco::ServerKeysGet(const QString &id_or_xfp, const QString &derivation_path, QJsonObject &output, QString &errormsg)
 {
     int     reply_code = -1;

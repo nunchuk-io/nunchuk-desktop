@@ -1,35 +1,30 @@
 #include "QInheritancePlan.h"
+#include "AppModel.h"
+#include "Premiums/QGroupWalletDummyTx.h"
+#include "Premiums/QGroupWalletHealthCheck.h"
+#include "Premiums/QUserWalletDummyTx.h"
+#include "QGroupDashboard.h"
 #include "QServerKey.h"
-#include <QQmlEngine>
+#include "QWalletServicesTag.h"
+#include "Servers/Byzantine.h"
+#include "Servers/Draco.h"
+#include "ServiceSetting.h"
+#include "WalletModel.h"
+#include "localization/STR_CPP.h"
+#include "qUtils.h"
 #include <QJsonArray>
 #include <QJsonObject>
-#include "qUtils.h"
-#include "WalletModel.h"
-#include "QGroupDashboard.h"
-#include "AppModel.h"
-#include "WalletModel.h"
-#include "Servers/Draco.h"
-#include "Servers/Byzantine.h"
-#include "localization/STR_CPP.h"
-#include "ServiceSetting.h"
-#include "QWalletServicesTag.h"
-#include "Premiums/QGroupWalletHealthCheck.h"
-#include "Premiums/QGroupWalletDummyTx.h"
-#include "Premiums/QUserWalletDummyTx.h"
+#include <QQmlEngine>
 
-QInheritancePlan::QInheritancePlan(const QString &wallet_id)
-    : QBasePremium(wallet_id)
-{
+QInheritancePlan::QInheritancePlan(const QString &wallet_id) : QBasePremium(wallet_id) {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-int QInheritancePlan::actionPlan() const
-{
+int QInheritancePlan::actionPlan() const {
     return m_actionPlan;
 }
 
-void QInheritancePlan::setActionPlan(int actionPlan)
-{
+void QInheritancePlan::setActionPlan(int actionPlan) {
     if (m_actionPlan == actionPlan)
         return;
 
@@ -37,13 +32,11 @@ void QInheritancePlan::setActionPlan(int actionPlan)
     emit actionPlanChanged();
 }
 
-QString QInheritancePlan::secret() const
-{
+QString QInheritancePlan::secret() const {
     return m_secret;
 }
 
-void QInheritancePlan::setSecret(QString secret)
-{
+void QInheritancePlan::setSecret(QString secret) {
     if (m_secret == secret)
         return;
 
@@ -51,13 +44,11 @@ void QInheritancePlan::setSecret(QString secret)
     emit secretChanged();
 }
 
-QVariantList QInheritancePlan::periods() const
-{
+QVariantList QInheritancePlan::periods() const {
     return m_periods.toVariantList();
 }
 
-void QInheritancePlan::setPeriods(QJsonArray periods)
-{
+void QInheritancePlan::setPeriods(QJsonArray periods) {
     if (m_periods == periods)
         return;
 
@@ -65,13 +56,11 @@ void QInheritancePlan::setPeriods(QJsonArray periods)
     emit periodsChanged();
 }
 
-QVariant QInheritancePlan::planInfo() const
-{
+QVariant QInheritancePlan::planInfo() const {
     return QVariant::fromValue(m_planInfo);
 }
 
-void QInheritancePlan::setPlanInfo(QJsonObject plan_info)
-{
+void QInheritancePlan::setPlanInfo(QJsonObject plan_info) {
     if (m_planInfo == plan_info)
         return;
 
@@ -80,15 +69,24 @@ void QInheritancePlan::setPlanInfo(QJsonObject plan_info)
     emit planInfoChanged();
 }
 
+QJsonObject QInheritancePlan::planInfoJs() const {
+    return m_planInfo;
+}
 
-QVariant QInheritancePlan::planInfoNew() const
-{
+QJsonObject QInheritancePlan::planInfoCurrent() const {
+    return m_planInfoCurrent;
+}
+
+QVariant QInheritancePlan::planInfoNew() const {
     DBG_INFO << m_planInfoNew;
     return QVariant::fromValue(m_planInfoNew);
 }
 
-void QInheritancePlan::setPlanInfoNew(const QJsonObject &planInfoNew)
-{
+QJsonObject QInheritancePlan::planInfoNewJs() const {
+    return m_planInfoNew;
+}
+
+void QInheritancePlan::setPlanInfoNew(const QJsonObject &planInfoNew) {
     if (m_planInfoNew == planInfoNew)
         return;
 
@@ -96,8 +94,7 @@ void QInheritancePlan::setPlanInfoNew(const QJsonObject &planInfoNew)
     emit planInfoNewChanged();
 }
 
-QVariant QInheritancePlan::planInfoUpdate() const
-{
+QVariant QInheritancePlan::planInfoUpdate() const {
     QJsonObject _old = m_planInfoOld;
     QJsonObject _new = m_planInfoNew;
     QJsonObject change = m_planInfoNew;
@@ -119,9 +116,8 @@ QVariant QInheritancePlan::planInfoUpdate() const
     return QVariant::fromValue(change);
 }
 
-bool QInheritancePlan::isSetup() const
-{
-    QJsonObject accountSetup {};
+bool QInheritancePlan::isSetup() const {
+    QJsonObject accountSetup{};
     if (auto dash = dashBoardPtr()) {
         QJsonArray members = dash->groupInfo()["members"].toArray();
         QString owner_id = m_planInfo["owner_id"].toString();
@@ -149,18 +145,16 @@ QString QInheritancePlan::formatDateTime() const {
     return QString();
 }
 
-QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
-{
-    long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble()/1000);
+QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data) {
+    long int activation_time_milis = static_cast<long int>(data.value("activation_time_milis").toDouble() / 1000);
     if (activation_time_milis > 0) {
         data["activation_date"] = QDateTime::fromTime_t(activation_time_milis).toString(formatDateTime());
-    }
-    else {
+    } else {
         data["activation_date"] = "";
     }
     DBG_INFO << data;
     data["activation_timezone"] = qUtils::formatTimeZoneString(data["timezone"].toString());
-    
+
     QJsonArray emails = data.value("notification_emails").toArray();
     if (emails.size() > 0) {
         QStringList emailList;
@@ -172,7 +166,7 @@ QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
     } else {
         data["display_emails"] = "";
     }
-    
+
     QJsonObject buffer_period = data["buffer_period"].toObject();
     if (buffer_period.isEmpty()) {
         buffer_period["id"] = "";
@@ -194,20 +188,21 @@ QJsonObject QInheritancePlan::ConvertToDisplayQml(QJsonObject data)
     return data;
 }
 
-void QInheritancePlan::UpdateFromDummyTx(QJsonObject data)
-{
+void QInheritancePlan::UpdateFromDummyTx(QJsonObject data) {
     setPlanInfoOld(ConvertToDisplayQml(data["payload"].toObject()["old_data"].toObject()));
     setPlanInfoNew(ConvertToDisplayQml(data["payload"].toObject()["new_data"].toObject()));
     emit planInfoUpdateChanged();
 }
 
-QVariant QInheritancePlan::planInfoOld() const
-{
+QVariant QInheritancePlan::planInfoOld() const {
     return QVariant::fromValue(m_planInfoOld);
 }
 
-void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
-{
+QJsonObject QInheritancePlan::planInfoOldJs() const {
+    return m_planInfoOld;
+}
+
+void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld) {
     if (m_planInfoOld == planInfoOld)
         return;
 
@@ -215,18 +210,18 @@ void QInheritancePlan::setPlanInfoOld(const QJsonObject &planInfoOld)
     emit planInfoOldChanged();
 }
 
-void QInheritancePlan::GetInheritancePlan()
-{
+void QInheritancePlan::GetInheritancePlan() {
     QWalletPtr w = walletInfoPtr();
-    if (w.isNull() || (w.data()->status() == "REPLACED") || (w.data()->isReplaced())) return;
+    if (w.isNull() || (w.data()->status() == "REPLACED") || (w.data()->isReplaced()))
+        return;
 
     using namespace features::inheritance::usecases;
     GetInheritancePlanInput input;
     input.wallet_id = wallet_id();
     input.group_id = w->groupId();
-    m_getInheritancePlanUC.executeAsync(input, [this](core::usecase::Result<GetInheritancePlanResult> result){
+    m_getInheritancePlanUC.executeAsync(input, [this](core::usecase::Result<GetInheritancePlanResult> result) {
         if (result.isSuccess()) {
-            auto inheritance = result.value().inheritance;            
+            auto inheritance = result.value().inheritance;
             if (!inheritance.isEmpty()) {
                 DBG_INFO << inheritance;
                 m_planInfoCurrent = ConvertToDisplayQml(inheritance);
@@ -241,8 +236,7 @@ void QInheritancePlan::GetInheritancePlan()
     });
 }
 
-QJsonObject QInheritancePlan::JsBody()
-{
+QJsonObject QInheritancePlan::JsBody() {
     QJsonObject body;
     body["wallet"] = wallet_id();
     body["group_id"] = isUserWallet() ? "" : walletInfoPtr()->groupId();
@@ -259,105 +253,103 @@ QJsonObject QInheritancePlan::JsBody()
     QString activation_date = m_planInfo["activation_date"].toString();
     long int t = qUtils::GetTimeSecond(activation_date);
     double activation_time_milis = m_planInfoCurrent["activation_time_milis"].toDouble();
-    long int old_activeTime = static_cast<long int>(activation_time_milis/1000);
+    long int old_activeTime = static_cast<long int>(activation_time_milis / 1000);
     if (QDateTime::fromTime_t(old_activeTime).date() == QDateTime::fromTime_t(t).date()) {
         body["activation_time_milis"] = activation_time_milis;
-    }
-    else {
-        body["activation_time_milis"] = (double)t*1000;
+    } else {
+        body["activation_time_milis"] = (double)t * 1000;
     }
     body["notification_preferences"] = m_planInfo["notification_preferences"].toObject();
     body["timezone"] = m_planInfo["timezone"].toString();
+
+    body["distribution_method"] = m_planInfo["distribution_method"].toString();
+    body["beneficiary_mode"] = m_planInfo["beneficiary_mode"].toString();
+    body["buffer_apply_on"] = m_planInfo["buffer_apply_on"].toString();
+    body["release_method"] = m_planInfo["release_method"].toString();
+    QString beneficiary_mode = m_planInfo["beneficiary_mode"].toString();
+    if (qUtils::strCompare(beneficiary_mode, "SINGLE")) {
+        body["stages"] = m_planInfo["stages"].toArray();
+        body["beneficiaries"] = {};
+    } else {
+        body["stages"] = m_planInfo["stages"].toArray();
+        body["beneficiaries"] = m_planInfo["beneficiaries"].toArray();
+    }    
+    body["fallback_policy"] = m_planInfo["fallback_policy"].toObject();
     return body;
 }
 
-bool QInheritancePlan::RequestInheritancePlanUpdate()
-{
+bool QInheritancePlan::RequestInheritancePlanUpdate() {
     ReqiredSignaturesInfo info{};
     bool ret = inheritancePlanRequiredSignatures(info);
-    if(ret){
+    if (ret) {
         if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
-        }
-        else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
+        } else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
             QJsonObject output;
             QString errormsg = "";
             QJsonObject data;
             data["nonce"] = Draco::instance()->randomNonce();
-            data["body"]  = JsBody();
+            data["body"] = JsBody();
             QStringList authorizations;
-            bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(),
-                                                                servicesTagPtr()->secQuesToken(),
-                                                                authorizations,
-                                                                data,
-                                                                true,
-                                                                output,
-                                                                errormsg);
+            bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, true,
+                                                                output, errormsg);
             DBG_INFO << ret << output;
-            if(ret){
+            if (ret) {
                 QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
                 DBG_INFO << dummy_transaction;
                 if (auto dummy = groupDummyTxPtr()) {
                     dummy->setDummyTxData(dummy_transaction);
                 }
             }
-            //Show popup support in moble
+            // Show popup support in moble
             emit inheritanceDummyTransactionAlert();
+        } else {
         }
-        else {}
     }
     return ret;
 }
 
-bool QInheritancePlan::RequestInheritancePlanCreate()
-{
+bool QInheritancePlan::RequestInheritancePlanCreate() {
     ReqiredSignaturesInfo info{};
     bool ret = inheritancePlanRequiredSignatures(info);
-    if(ret){
+    if (ret) {
         if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
-        }
-        else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
+        } else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
             QJsonObject output;
             QString errormsg = "";
             QJsonObject data;
             data["nonce"] = Draco::instance()->randomNonce();
-            data["body"]  = JsBody();
+            data["body"] = JsBody();
             QStringList authorizations;
-            bool ret = Draco::instance()->inheritancePlanCreate(authorizations,
-                                                                data,
-                                                                true,
-                                                                output,
-                                                                errormsg);
+            bool ret = Draco::instance()->inheritancePlanCreate(authorizations, data, true, output, errormsg);
             DBG_INFO << ret << output;
-            if(ret){
+            if (ret) {
                 QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
                 DBG_INFO << dummy_transaction;
                 if (auto dummy = groupDummyTxPtr()) {
                     dummy->setDummyTxData(dummy_transaction);
                 }
             }
-            //Show popup support in moble
+            // Show popup support in moble
             emit inheritanceDummyTransactionAlert();
+        } else {
         }
-        else {}
     }
     return ret;
 }
 
-bool QInheritancePlan::RequestInheritancePlanCancel()
-{
+bool QInheritancePlan::RequestInheritancePlanCancel() {
     QWalletPtr wallet = walletInfoPtr();
-    if(!wallet){
+    if (!wallet) {
         return false;
     }
     ReqiredSignaturesInfo info{};
     bool ret = inheritancePlanRequiredSignatures(info, true);
-    if(ret){
+    if (ret) {
         if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SECURITY_QUESTION) {
             servicesTagPtr()->CreateSecurityQuestionsAnswered();
-        }
-        else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
+        } else if (info.type == (int)REQUIRED_SIGNATURE_TYPE_INT::SIGN_DUMMY_TX) {
             QJsonObject output;
             QString errormsg = "";
             QJsonObject data;
@@ -366,39 +358,33 @@ bool QInheritancePlan::RequestInheritancePlanCancel()
             QJsonObject body;
             body["wallet"] = wallet_id();
             body["group_id"] = isUserWallet() ? "" : wallet->groupId();
-            data["body"]  = body;
+            data["body"] = body;
 
             QStringList authorizations;
-            bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(),
-                                                                servicesTagPtr()->secQuesToken(),
-                                                                authorizations,
-                                                                data,
-                                                                true,
-                                                                output,
-                                                                errormsg);
-            if(ret){
+            bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, true,
+                                                                output, errormsg);
+            if (ret) {
                 QJsonObject dummy_transaction = output["dummy_transaction"].toObject();
                 if (auto dummy = groupDummyTxPtr()) {
                     dummy->setDummyTxData(dummy_transaction);
                 }
             }
-            //Show popup support in moble
+            // Show popup support in moble
             emit inheritanceDummyTransactionAlert();
+        } else {
         }
-        else {}
     }
     return ret;
 }
 
-bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &info, bool isCancel)
-{
+bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &info, bool isCancel) {
     QWalletPtr wallet = walletInfoPtr();
-    if(!wallet){
+    if (!wallet) {
         return false;
     }
     QString activation_date = m_planInfo["activation_date"].toString();
     long int activeTime = qUtils::GetTimeSecond(activation_date);
-    long int old_activeTime = static_cast<long int>(m_planInfoCurrent["activation_time_milis"].toDouble()/1000);
+    long int old_activeTime = static_cast<long int>(m_planInfoCurrent["activation_time_milis"].toDouble() / 1000);
     long int currentTime = qUtils::GetCurrentTimeSecond();
     if (QDateTime::fromTime_t(old_activeTime).date() != QDateTime::fromTime_t(activeTime).date() && activeTime < currentTime) {
         AppModel::instance()->showToast(0, STR_CPP_120, EWARNING::WarningType::ERROR_MSG);
@@ -412,6 +398,7 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     QString errormsg = "";
     QJsonObject output;
     bool ret = Draco::instance()->inheritancePlanRequiredSignatures(body_data, output, errormsg);
+    DBG_INFO << errormsg << output;
     if (ret) {
         DBG_INFO << output;
         QJsonObject resultObj = output["result"].toObject();
@@ -421,17 +408,17 @@ bool QInheritancePlan::inheritancePlanRequiredSignatures(ReqiredSignaturesInfo &
     return ret;
 }
 
-bool QInheritancePlan::InheritancePlanUpdateSucceed()
-{
+bool QInheritancePlan::InheritancePlanUpdateSucceed() {
     QJsonObject data;
     QStringList authorizations;
     data["nonce"] = Draco::instance()->randomNonce();
-    data["body"]  = JsBody();
+    data["body"] = JsBody();
 
     QJsonObject output;
     QString errormsg = "";
     DBG_INFO << servicesTagPtr()->passwordToken() << servicesTagPtr()->secQuesToken() << data;
-    bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, false, output, errormsg);
+    bool ret = Draco::instance()->inheritancePlanUpdate(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, false,
+                                                        output, errormsg);
     DBG_INFO << errormsg << output;
     if (ret) {
         emit securityQuestionClosed();
@@ -440,25 +427,28 @@ bool QInheritancePlan::InheritancePlanUpdateSucceed()
     return ret;
 }
 
-bool QInheritancePlan::InheritancePlanCreateSucceed()
-{
+bool QInheritancePlan::InheritancePlanCreateSucceed() {
     QStringList authorizations;
     QJsonObject data;
     data["nonce"] = Draco::instance()->randomNonce();
-    data["body"]  = JsBody();
+    data["body"] = JsBody();
 
     QJsonObject output;
     QString errormsg = "";
     bool ret = Draco::instance()->inheritancePlanCreate(authorizations, data, false, output, errormsg);
     DBG_INFO << errormsg << output;
     if (ret) {
+        QJsonObject inheritance = output["inheritance"].toObject();
+        if (!inheritance.isEmpty()) {
+            m_planInfoCurrent = ConvertToDisplayQml(inheritance);
+            setPlanInfo(ConvertToDisplayQml(inheritance));
+        }
         AppModel::instance()->showToast(0, STR_CPP_119, EWARNING::WarningType::SUCCESS_MSG);
     }
     return ret;
 }
 
-bool QInheritancePlan::InheritancePlanCancelSucceed()
-{
+bool QInheritancePlan::InheritancePlanCancelSucceed() {
     if (auto w = walletInfoPtr()) {
         QStringList authorizations;
         QJsonObject data;
@@ -466,13 +456,14 @@ bool QInheritancePlan::InheritancePlanCancelSucceed()
         QJsonObject body;
         body["wallet"] = wallet_id();
         body["group_id"] = isUserWallet() ? "" : w->groupId();
-        data["body"]  = body;
+        data["body"] = body;
 
         QJsonObject output;
         QString errormsg = "";
 
         DBG_INFO << servicesTagPtr()->passwordToken() << servicesTagPtr()->secQuesToken() << data;
-        bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, false, output, errormsg);
+        bool ret = Draco::instance()->inheritancePlanCancel(servicesTagPtr()->passwordToken(), servicesTagPtr()->secQuesToken(), authorizations, data, false,
+                                                            output, errormsg);
         DBG_INFO << errormsg << output;
         if (ret) {
             emit securityQuestionClosed();
@@ -483,16 +474,14 @@ bool QInheritancePlan::InheritancePlanCancelSucceed()
     return false;
 }
 
-bool QInheritancePlan::InheritancePlanCancel()
-{
+bool QInheritancePlan::InheritancePlanCancel() {
     if (auto dummy = groupDummyTxPtr()) {
         return dummy->CancelDummyTransaction();
     }
     return false;
 }
 
-bool QInheritancePlan::IsActived() const
-{
+bool QInheritancePlan::IsActived() const {
     QString status = m_planInfoCurrent.value("status").toString();
     if (status == "ACTIVE") {
         return true;
@@ -500,8 +489,7 @@ bool QInheritancePlan::IsActived() const
     return false;
 }
 
-bool QInheritancePlan::InheritancePlanningRequestApprove()
-{
+bool QInheritancePlan::InheritancePlanningRequestApprove() {
     if (auto wallet = walletInfoPtr()) {
         QString wallet_id = wallet->walletId();
         if (auto dash = dashBoardPtr()) {
@@ -516,8 +504,7 @@ bool QInheritancePlan::InheritancePlanningRequestApprove()
     return false;
 }
 
-bool QInheritancePlan::InheritancePlanningRequestDeny()
-{
+bool QInheritancePlan::InheritancePlanningRequestDeny() {
     if (auto wallet = walletInfoPtr()) {
         QString wallet_id = wallet->walletId();
         if (auto dash = dashBoardPtr()) {
@@ -532,8 +519,7 @@ bool QInheritancePlan::InheritancePlanningRequestDeny()
     return false;
 }
 
-bool QInheritancePlan::createPeriods()
-{
+bool QInheritancePlan::createPeriods() {
     QJsonArray periods;
     QString errormsg;
     bool ret = Draco::instance()->inheritancePlanBufferPeriod(periods, errormsg);
@@ -550,23 +536,27 @@ bool QInheritancePlan::createPeriods()
     return true;
 }
 
-void QInheritancePlan::editPlanInfo(const QVariant &info)
-{
+void QInheritancePlan::editPlanInfo(const QVariant &info) {
     QMap<QString, QVariant> _new = info.toMap();
     QJsonObject original = m_planInfoCurrent; // baseline from server
-    QJsonObject change   = m_planInfo;        // working copy (may already include previous edits)
+    QJsonObject change = m_planInfo;          // working copy (may already include previous edits)
 
     auto normalizeEmails = [](const QString &text) -> QString {
         QStringList parts = text.split(",", Qt::SkipEmptyParts);
         QStringList out;
         for (QString e : parts) {
             e = e.trimmed();
-            if (e.isEmpty()) continue;
+            if (e.isEmpty())
+                continue;
             bool dup = false;
             for (const QString &ex : out) {
-                if (ex.compare(e, Qt::CaseInsensitive) == 0) { dup = true; break; }
+                if (ex.compare(e, Qt::CaseInsensitive) == 0) {
+                    dup = true;
+                    break;
+                }
             }
-            if (!dup) out.append(e);
+            if (!dup)
+                out.append(e);
         }
         return out.join(",");
     };
@@ -656,13 +646,12 @@ void QInheritancePlan::editPlanInfo(const QVariant &info)
     setPlanInfo(change);
 }
 
-void QInheritancePlan::editPlanInfoOnchain(const QVariant &info)
-{
+void QInheritancePlan::editPlanInfoOnchain(const QVariant &info) {
     QMap<QString, QVariant> req = info.toMap();
     QString setup_type = req.value("setup_type").toString();
 
-    QJsonObject original = m_planInfoCurrent;  // baseline from server
-    QJsonObject change   = m_planInfo;         // working copy
+    QJsonObject original = m_planInfoCurrent; // baseline from server
+    QJsonObject change = m_planInfo;          // working copy
 
     auto ensurePrefs = [](QJsonObject prefs) {
         if (!prefs.contains("beneficiary_notifications"))
@@ -677,12 +666,17 @@ void QInheritancePlan::editPlanInfoOnchain(const QVariant &info)
         QStringList out;
         for (QString e : parts) {
             e = e.trimmed();
-            if (e.isEmpty()) continue;
+            if (e.isEmpty())
+                continue;
             bool dup = false;
             for (const QString &ex : out) {
-                if (ex.compare(e, Qt::CaseInsensitive) == 0) { dup = true; break; }
+                if (ex.compare(e, Qt::CaseInsensitive) == 0) {
+                    dup = true;
+                    break;
+                }
             }
-            if (!dup) out.append(e);
+            if (!dup)
+                out.append(e);
         }
         return out;
     };
@@ -729,12 +723,12 @@ void QInheritancePlan::editPlanInfoOnchain(const QVariant &info)
         }
 
         QJsonArray flatEmails;
-        for (const QString &e : newEmailList) flatEmails.append(e);
+        for (const QString &e : newEmailList)
+            flatEmails.append(e);
         if (change.value("notification_emails").toArray() != flatEmails) {
             change["notification_emails"] = flatEmails;
         }
-    }
-    else if (setup_type == "preference") {
+    } else if (setup_type == "preference") {
         QString email = req.value("setup_email").toString().trimmed();
         if (!email.isEmpty()) {
             QJsonObject prefs = change.value("notification_preferences").toObject();
@@ -744,18 +738,14 @@ void QInheritancePlan::editPlanInfoOnchain(const QVariant &info)
             for (int i = 0; i < list.size(); ++i) {
                 QJsonObject item = list[i].toObject();
                 if (item.value("email").toString().compare(email, Qt::CaseInsensitive) == 0) {
-                    bool nt = req.contains("notify_timelock_expires")
-                              ? req.value("notify_timelock_expires").toBool()
-                              : item.value("notify_timelock_expires").toBool();
-                    bool nw = req.contains("notify_wallet_changes")
-                              ? req.value("notify_wallet_changes").toBool()
-                              : item.value("notify_wallet_changes").toBool();
-                    bool ic = req.contains("include_wallet_config")
-                              ? req.value("include_wallet_config").toBool()
-                              : item.value("include_wallet_config").toBool();
+                    bool nt = req.contains("notify_timelock_expires") ? req.value("notify_timelock_expires").toBool()
+                                                                      : item.value("notify_timelock_expires").toBool();
+                    bool nw =
+                        req.contains("notify_wallet_changes") ? req.value("notify_wallet_changes").toBool() : item.value("notify_wallet_changes").toBool();
+                    bool ic =
+                        req.contains("include_wallet_config") ? req.value("include_wallet_config").toBool() : item.value("include_wallet_config").toBool();
 
-                    if (item.value("notify_timelock_expires").toBool() != nt ||
-                        item.value("notify_wallet_changes").toBool() != nw ||
+                    if (item.value("notify_timelock_expires").toBool() != nt || item.value("notify_wallet_changes").toBool() != nw ||
                         item.value("include_wallet_config").toBool() != ic) {
                         item["notify_timelock_expires"] = nt;
                         item["notify_wallet_changes"] = nw;
@@ -772,8 +762,7 @@ void QInheritancePlan::editPlanInfoOnchain(const QVariant &info)
                 change["notification_preferences"] = prefs;
             }
         }
-    }
-    else if (setup_type == "owner") {
+    } else if (setup_type == "owner") {
         if (req.contains("email_me_wallet_config")) {
             QJsonObject prefs = change.value("notification_preferences").toObject();
             bool newVal = req.value("email_me_wallet_config").toBool();

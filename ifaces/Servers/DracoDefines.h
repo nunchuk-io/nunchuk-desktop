@@ -233,6 +233,7 @@ enum CMD_IDX {
     INHERITANCE_PLAN_CANCEL,
     INHERITANCE_REQUEST_PLANING_DENY,
     INHERITANCE_REQUEST_PLANING_APPROVE,
+    INHERITANCE_ASSOCIATE_MAGIC,
 
     // SERVER_KEYS
     SERVER_KEYS_GET,
@@ -650,6 +651,7 @@ const QMap<int, QString> commands{
     {Premium::CMD_IDX::INHERITANCE_REQUEST_PLANING_DENY, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/request-planning/{request_id}/deny")},
     {Premium::CMD_IDX::INHERITANCE_REQUEST_PLANING_APPROVE,
      QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/request-planning/{request_id}/approve")},
+    {Premium::CMD_IDX::INHERITANCE_ASSOCIATE_MAGIC, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("inheritance/associate-magic")},
 
     // SERVER_KEYS /v1.1/user-wallets/server-keys/{key_id_or_xfp}
     {Premium::CMD_IDX::SERVER_KEYS_GET, QString("%1/%2").arg(DRAGON_USER_WALLETS_URL).arg("server-keys/{key_id_or_xfp}")},

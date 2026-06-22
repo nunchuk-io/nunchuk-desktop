@@ -28,6 +28,7 @@ Rectangle {
     property string labelTop: ""
     property string labelBottom: ""
     property int labelMaxWidth: 467
+    property int labelBottomLineHeight: 28
     property bool isRecommend: false
     signal buttonClicked()
     border.width: 2
@@ -77,7 +78,7 @@ Rectangle {
                 width: Math.min(labelMaxWidth, implicitWidth)
                 visible: labelBottom != ""
                 wrapMode: Text.WordWrap
-                lineHeight: 28
+                lineHeight: labelBottomLineHeight
                 lineHeightMode: Text.FixedHeight
             }
         }

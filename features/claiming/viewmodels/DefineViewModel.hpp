@@ -4,9 +4,12 @@
 #include "ExportCompletedViewModel.h"
 #include "InheritanceUnlockedViewModel.h"
 #include "MagicPhraseViewModel.h"
+#include "PhaseRolloutGuidelineViewModel.h"
+#include "PhaseRolloutWithdrawBitcoinViewModel.h"
 #include "PrepareInheritanceKeyViewModel.h"
 #include "ProceedOptionsViewModel.h"
 #include "RecoverInheritanceKeyViewModel.h"
+#include "ReleaseScheduleViewModel.h"
 #include "RestoreSeedPhraseToHardwareDeviceViewModel.h"
 #include "VerifyInheritanceKeyViewModel.h"
 #include "WidthdrawToAddressViewModel.h"
@@ -24,7 +27,9 @@ static inline void registerViewModels() {
     REGISTER_VIEWMODEL(WithdrawSelectWalletViewModel)
     REGISTER_VIEWMODEL(BackupPasswordViewModel)
     REGISTER_VIEWMODEL(MagicPhraseViewModel)
+    REGISTER_VIEWMODEL(PhaseRolloutGuidelineViewModel)
     REGISTER_VIEWMODEL(ProceedOptionsViewModel)
+    REGISTER_VIEWMODEL(ReleaseScheduleViewModel)
     REGISTER_VIEWMODEL(VerifyInheritanceKeyViewModel)
     REGISTER_VIEWMODEL(ExportCompletedViewModel)
     REGISTER_VIEWMODEL(YourPlanRequireInheritanceKeys)
@@ -33,6 +38,7 @@ static inline void registerViewModels() {
     REGISTER_VIEWMODEL(RestoreSeedPhraseToHardwareDeviceViewModel)
     REGISTER_VIEWMODEL(BufferPeriodHasStartedViewModel)
     REGISTER_VIEWMODEL(WithdrawBitcoinViewModel)
+    REGISTER_VIEWMODEL(PhaseRolloutWithdrawBitcoinViewModel)
     REGISTER_VIEWMODEL(WidthdrawToAddressViewModel)
     REGISTER_VIEWMODEL(WithdrawACustomAmountViewModel)
 }

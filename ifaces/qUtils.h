@@ -248,6 +248,8 @@ qint64 getDaysFromTimestamp(qint64 timestamp, const QTimeZone &tz = QTimeZone::s
 
 QString getTimeFromTimestamp(qint64 timestamp, const QTimeZone &tz = QTimeZone::systemTimeZone());
 
+uint64_t getTimestampFromDateTime(const QString &dateTimeStr, const QTimeZone &tz = QTimeZone::systemTimeZone());
+
 QString localTimeZoneString();
 
 QByteArray serializeSigningPath(const nunchuk::SigningPath path);

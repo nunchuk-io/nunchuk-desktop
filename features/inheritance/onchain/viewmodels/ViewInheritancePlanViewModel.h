@@ -13,6 +13,12 @@ class ViewInheritancePlanViewModel : public OnChainTimelockViewModel {
     explicit ViewInheritancePlanViewModel(QObject *parent = nullptr);
 
     void onInit() override;
+  public slots:
+    void discardChanges();
+    void finalizeChanges();
+    void securityQuestionVerified();
+    void cancelInheritancePlan();
+
   private:
     TimeLockSetupGetUseCase m_timeLockGetUC;
 };

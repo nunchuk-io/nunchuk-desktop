@@ -74,7 +74,6 @@ QOnScreenContentTypeA {
             }
         }
         function isEnabled() {
-            console.log("hadv3 _email_user.requestlist.length: " + _email_user.hasEmail())
             return _email_user.hasEmail()
         }
     }

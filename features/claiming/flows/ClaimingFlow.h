@@ -41,6 +41,13 @@ class ClaimingFlow : public KeyProceedFlow {
     DEFINE_SET_GET(QString, remaining_display_name)
     DEFINE_SET_GET(qint64, withdrawAmountSats)
     DEFINE_SET_GET(bool, isAddressFlow)
+    DEFINE_SET_GET(QJsonArray, stages)
+    DEFINE_SET_GET(int, availableBalanceSats)
+    DEFINE_SET_GET(QString, availableBalanceDisplay)
+    DEFINE_SET_GET(QString, availableBalanceCurrency)
+    DEFINE_SET_GET(int, current_stage_index)
+    DEFINE_SET_GET(int, current_installment_index)
+    DEFINE_SET_GET(QString, distribution_method)
 
     bool addSingleSigner(const nunchuk::SingleSigner &single);
     void displayStatusInfo(const ClaimStatusResult &status);

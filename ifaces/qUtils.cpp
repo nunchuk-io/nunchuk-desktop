@@ -1368,13 +1368,31 @@ QVariant qUtils::toVariant(const QList<int> &list) {
 }
 
 QString qUtils::getTimeFromTimestamp(qint64 timestamp, const QTimeZone &tz) {
-    QDateTime dt = QDateTime::fromSecsSinceEpoch(timestamp, tz);
+    QTimeZone localTz = QTimeZone::systemTimeZone();
+    if (tz.isValid()) {
+        localTz = tz;
+    }
+    QDateTime dt = QDateTime::fromSecsSinceEpoch(timestamp, localTz);
     return dt.time().toString("HH:mm");
 }
 
 QString qUtils::getDateFromTimestamp(qint64 timestamp, const QTimeZone &tz) {
-    QDateTime dt = QDateTime::fromSecsSinceEpoch(timestamp, tz);
+    QTimeZone localTz = QTimeZone::systemTimeZone();
+    if (tz.isValid()) {
+        localTz = tz;
+    }
+    QDateTime dt = QDateTime::fromSecsSinceEpoch(timestamp, localTz);
     return dt.date().toString("MM/dd/yyyy");
+}
+
+uint64_t qUtils::getTimestampFromDateTime(const QString &dateTimeStr, const QTimeZone &tz) {
+    QTimeZone localTz = QTimeZone::systemTimeZone();
+    if (tz.isValid()) {
+        localTz = tz;
+    }
+    QDateTime dt = QDateTime::fromString(dateTimeStr, "MM/dd/yyyy HH:mm");
+    dt.setTimeZone(localTz);
+    return dt.toSecsSinceEpoch();
 }
 
 qint64 qUtils::getDaysFromTimestamp(qint64 timestamp, const QTimeZone &tz) {

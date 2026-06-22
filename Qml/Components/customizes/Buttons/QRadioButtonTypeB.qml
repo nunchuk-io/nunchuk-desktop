@@ -44,6 +44,11 @@ QRadioSelect {
             onTypingFinished: radioRoot.typingFinished(currentText)
             placeholder.text: radioRoot.placeholderText
             textOutput: radioRoot.textOutput
+            onTextOutputChanged: {
+                if (radioRoot.textOutput !== textOutput) {
+                    radioRoot.textOutput = textOutput
+                }
+            }
             QIconButton {
                 iconSize: 24
                 anchors {
