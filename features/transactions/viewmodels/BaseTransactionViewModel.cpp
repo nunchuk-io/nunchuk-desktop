@@ -24,7 +24,10 @@ void BaseTransactionViewModel::onInit() {
         setwalletInfo(walletPtr);
     }
     GUARD_APP_MODEL()
-    if (appModel->walletInfoPtr() && !qUtils::strCompare(appModel->walletInfoPtr()->walletId(), walletId())) {
+    // For claim transactions nunWallet() is the claim SOURCE wallet, not the destination wallet.
+    // Setting walletInfo to the claim source here causes a phantom wallet flash on the wallet tab.
+    // The destination wallet is focused by TransactionDetailsClaimedViewModel::closeToWalletTab() instead.
+    if (!isClaimTx() && appModel->walletInfoPtr() && !qUtils::strCompare(appModel->walletInfoPtr()->walletId(), walletId())) {
         appModel->setWalletInfo(walletPtr);
     }
     displayTransactionInfo();

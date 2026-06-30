@@ -273,7 +273,7 @@ QJsonObject QInheritancePlan::JsBody() {
     } else {
         body["stages"] = m_planInfo["stages"].toArray();
         body["beneficiaries"] = m_planInfo["beneficiaries"].toArray();
-    }    
+    }
     body["fallback_policy"] = m_planInfo["fallback_policy"].toObject();
     return body;
 }

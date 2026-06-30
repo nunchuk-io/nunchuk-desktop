@@ -2401,7 +2401,7 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2218, "A buffer period will be required before each withdrawal request.")
     DEFINE_STRING_PROPERTY(STR_QML_2219, "Buffer period: %1 (%2)")
     DEFINE_STRING_PROPERTY(STR_QML_2220, "Asset allocation & Release method")
-    DEFINE_STRING_PROPERTY(STR_QML_2221, "Distribution exceeds %1. Please adjust.")
+    DEFINE_STRING_PROPERTY(STR_QML_2221, "Distribution exceeds %1%. Please adjust.")
     DEFINE_STRING_PROPERTY(STR_QML_2222, "A buffer period is extra time that you can add after the claimant has provided the secrets and before the "
                                          "inheritance can be claimed. The buffer period helps you prevent unauthorized claims.")
     DEFINE_STRING_PROPERTY(STR_QML_2223, "An email notification will be sent when the buffer period begins.")
@@ -2433,6 +2433,8 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_2249, "On %1, if a beneficiary has not withdrawn their released funds, their unclaimed share is redistributed to the other beneficiaries.")
     DEFINE_STRING_PROPERTY(STR_QML_2250, "If a beneficiary does not withdraw within %1 after the final scheduled payout, their unclaimed share is redistributed to the other beneficiaries.")
     DEFINE_STRING_PROPERTY(STR_QML_2251, "No automatic fallback redistribution is configured.")
+    DEFINE_STRING_PROPERTY(STR_QML_2252, "No buffer period is set.")
+    DEFINE_STRING_PROPERTY(STR_QML_2253, "Fallback date must be later than the final scheduled payout.")
 
   public:
     static AppStrings &instance();

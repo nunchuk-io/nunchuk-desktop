@@ -1,20 +1,18 @@
 #include "WithdrawACustomAmountViewModel.h"
 #include "core/ui/UiServices.inc"
-#include "generated_qml_keys.hpp"
 #include "features/claiming/flows/ClaimingFlow.h"
+#include "generated_qml_keys.hpp"
 
 namespace features::claiming::viewmodels {
 using namespace core::viewmodels;
 using features::claiming::flows::ClaimingFlow;
 
-WithdrawACustomAmountViewModel::WithdrawACustomAmountViewModel(QObject *parent)
-    : ActionViewModel(parent) {
-}
+WithdrawACustomAmountViewModel::WithdrawACustomAmountViewModel(QObject *parent) : ActionViewModel(parent) {}
 
 void WithdrawACustomAmountViewModel::forwardAmount() {
     GUARD_FLOW_MANAGER()
     auto flow = flowMng->currentFlow();
-    auto claimingFlow = qobject_cast<ClaimingFlow*>(flow);
+    auto claimingFlow = qobject_cast<ClaimingFlow *>(flow);
     if (claimingFlow) {
         claimingFlow->setwithdrawAmountSats(withdrawAmountSats());
     }

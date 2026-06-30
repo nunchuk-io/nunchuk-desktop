@@ -18,7 +18,7 @@ class InheritanceFlow : public core::flow::BaseFlow {
         return "InheritanceFlow";
     }
 
-    virtual bool checkStageCanGoNext() {
+    virtual bool checkValidCanGoNext() {
         Q_UNUSED(this)
         return true;
     };

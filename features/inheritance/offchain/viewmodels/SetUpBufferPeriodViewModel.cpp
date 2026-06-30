@@ -1,16 +1,14 @@
 #include "SetUpBufferPeriodViewModel.h"
 #include "core/ui/UiServices.inc"
-#include "generated_qml_keys.hpp"
 #include "features/inheritance/offchain/flows/PhasedRolloutFlow.h"
+#include "generated_qml_keys.hpp"
 
 namespace features::inheritance::offchain::viewmodels {
 using namespace core::viewmodels;
 using namespace features::inheritance::offchain::flows;
 using namespace features::inheritance::usecases;
 
-SetUpBufferPeriodViewModel::SetUpBufferPeriodViewModel(QObject *parent) : ActionViewModel(parent) {
-    
-}
+SetUpBufferPeriodViewModel::SetUpBufferPeriodViewModel(QObject *parent) : ActionViewModel(parent) {}
 
 void SetUpBufferPeriodViewModel::onInit() {
     m_getListBufferPeriodsUC.executeAsync(GetListBufferPeriodsInput(), [this](core::usecase::Result<GetListBufferPeriodsResult> result) {
@@ -47,8 +45,8 @@ void SetUpBufferPeriodViewModel::onContinueClicked() {
             break;
         }
     }
-        
-    GUARD_SUB_SCREEN_MANAGER()   
+
+    GUARD_SUB_SCREEN_MANAGER()
     QJsonObject inheritance = flow->inheritance();
     QString release_method = inheritance.value("release_method").toString();
     if (qUtils::strCompare(release_method, "SHARED")) {

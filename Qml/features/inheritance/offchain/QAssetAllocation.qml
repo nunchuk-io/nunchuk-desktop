@@ -105,7 +105,8 @@ QOnScreenContentTypeA {
                                     beneficiaryIndex: index
                                     beneficiaryEmail: vm.assetAllocation[index].email
                                     beneficiaryPercentage: vm.assetAllocation[index].asset_percentage
-                                    
+                                    emailError: vm.assetAllocation[index].emailError || ""
+
                                     onDeleteBeneficiaryClicked: vm.deleteBeneficiary(beneficiaryIndex)
                                     onEmailChanged: vm.updateBeneficiaryEmail(beneficiaryIndex, email)
                                     onPercentageChanged: vm.updateBeneficiaryPercentage(beneficiaryIndex, percent)
@@ -201,6 +202,7 @@ QOnScreenContentTypeA {
             label.text: STR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
+            enabled: vm.isValidData
             onButtonClicked: {
                 // Save beneficiary allocations
                 vm.saveBeneficiaries()

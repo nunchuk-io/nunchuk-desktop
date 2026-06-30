@@ -73,6 +73,8 @@ void InheritancePlanViewModel::processWalletData() {
         setis_buffer_apply_on_changed(planInfoOld.value("buffer_apply_on").toString() != buffer_apply_on);
 
         auto buffer_period = planInfoNew["buffer_period"].toObject();
+        if (!buffer_period.contains("id"))           buffer_period["id"]           = QString("");
+        if (!buffer_period.contains("display_name")) buffer_period["display_name"] = QString("");
         setbuffer_period(buffer_period.toVariantMap());
         setis_buffer_period_changed(planInfoOld["buffer_period"].toObject() != buffer_period);
     }
@@ -94,6 +96,8 @@ void InheritancePlanViewModel::processWalletData() {
     {
         QJsonObject oldBufferPeriod = planInfoOld["buffer_period"].toObject();
         QJsonObject bufferPeriod = planInfoNew["buffer_period"].toObject();
+        if (!bufferPeriod.contains("id"))           bufferPeriod["id"]           = QString("");
+        if (!bufferPeriod.contains("display_name")) bufferPeriod["display_name"] = QString("");
         setbuffer_period(bufferPeriod.toVariantMap());
 
         bool notifyTodayOld = oldBufferPeriod.value("enabled").toBool();
@@ -129,10 +133,18 @@ void InheritancePlanViewModel::processWalletData() {
     {
         auto oldFallbackPolicy = planInfoOld["fallback_policy"].toObject();
         auto fallbackPolicy = planInfoNew["fallback_policy"].toObject();
-        int inactivity_interval_count = fallbackPolicy.value("inactivity_interval_count").toInt();
-        setinactivity_interval_count(inactivity_interval_count);
-        setisInactivityIntervalCountChanged(oldFallbackPolicy.value("inactivity_interval_count").toInt() != inactivity_interval_count);
+        setfallbackChanged(oldFallbackPolicy != fallbackPolicy);
         setfallback_policy(fallbackPolicy.toVariantMap());
+
+        int inactivity_interval_count = fallbackPolicy.value("inactivity_interval_count").toInt();
+        setfallback_interval_count(inactivity_interval_count);
+        QString fallback_interval = fallbackPolicy.value("inactivity_interval").toString();
+        setfallback_interval(helper::getIntervalDisplayString(fallback_interval, inactivity_interval_count));
+        auto fallback_time_Ms = fallbackPolicy.value("fallback_time_millis").toDouble() / 1000;
+        QString fallback_dateTime = helper::getDateFromTimestamp(fallback_time_Ms);
+        setfallback_dateTime(fallback_dateTime);
+        QString fallback_type = fallbackPolicy.value("type").toString();
+        setfallback_type(fallback_type);
     }
 
     {
@@ -140,6 +152,12 @@ void InheritancePlanViewModel::processWalletData() {
         setrelease_method(release_method);
         QString old_release_method = planInfoOld.value("release_method").toString();
         setis_release_method_changed(release_method != old_release_method);
+    }
+
+    {
+        QString old_timezone = planInfoOld.value("activation_timezone").toString();
+        QString new_timezone = planInfoNew.value("activation_timezone").toString();
+        setisTimezoneDisplayChanged(old_timezone != new_timezone);
     }
 }
 
@@ -149,9 +167,6 @@ void InheritancePlanViewModel::processTimeData() {
     QString timezone = timelockObj.value("timezone").toString();
     settimelockDisplay(isOnChain() ? dashboard->timelockDisplay() : activation_date());
     settimezoneDisplay(isOnChain() ? timezone : activation_timezone());
-    if (!isOnChain()) {
-        setisTimezoneDisplayChanged(old_activation_date() != new_activation_date());
-    }
 }
 
 void InheritancePlanViewModel::onSignDummyTxClicked() {

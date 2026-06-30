@@ -60,7 +60,7 @@ void InheritanceFlow::finalizeInheritanceChanges() {
         if (!qUtils::strCompare(distribution_method, "CUSTOMIZE")) {
             finalizeChanges();
         } else {
-            if (!checkStageCanGoNext()) return;
+            if (!checkValidCanGoNext()) return;
             QString beneficiary_mode = inheritance.value("beneficiary_mode").toString();
             QString release_method = inheritance.value("release_method").toString();
             if (!(qUtils::strCompare(beneficiary_mode, "MULTIPLE") && qUtils::strCompare(release_method, "INDIVIDUAL"))) {

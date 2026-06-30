@@ -71,8 +71,7 @@ bool ClaimingFlow::addSingleSigner(const nunchuk::SingleSigner &single) {
 
 void ClaimingFlow::displayStatusInfo(const ClaimStatusResult &status) {
     static const int64_t COIN = 100000000;
-    GUARD_APP_SETTING()
-    {
+    GUARD_APP_SETTING() {
         int balanceSats = status.balance * COIN;
         QLocale locale(QLocale::English);
         QString balanceDisplay;
@@ -81,7 +80,7 @@ void ClaimingFlow::displayStatusInfo(const ClaimStatusResult &status) {
         } else {
             balanceDisplay = locale.toString(status.balance, 'f', qUtils::Precision(status.balance));
         }
-        
+
         setbalanceSats(balanceSats);
         setbalanceDisplay(balanceDisplay);
         setbalanceCurrency(qUtils::currencyLocale(balanceSats));
@@ -95,7 +94,7 @@ void ClaimingFlow::displayStatusInfo(const ClaimStatusResult &status) {
         } else {
             balanceDisplay = locale.toString(status.available_to_withdraw, 'f', qUtils::Precision(status.available_to_withdraw));
         }
-        
+
         setavailableBalanceSats(balanceSats);
         setavailableBalanceDisplay(balanceDisplay);
         setavailableBalanceCurrency(qUtils::currencyLocale(balanceSats));
@@ -194,7 +193,6 @@ void ClaimingFlow::bind(QObject *vm) {
             realVm6->setbalanceDisplay(balanceDisplay());
             realVm6->setbalanceCurrency(balanceCurrency());
         }
-        
     }
 
     auto realVm7 = qobject_cast<WidthdrawToAddressViewModel *>(vm);

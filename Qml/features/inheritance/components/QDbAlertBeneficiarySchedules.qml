@@ -73,15 +73,14 @@ Column {
                     QFirstWithdrawalDateRow {
                         height: 16
                         firstWithdrawalDate: modelData.firstWithdrawalDate
-                        firstWithdrawalDateChanged: modelData.firstWithdrawalDateChanged || false
+                        firstWithdrawalDateChanged: modelData.firstWithdrawalDateChanged
                     }
 
                     // Buffer period (if exists)
                     QBufferPeriodRow {
                         height: 16
-                        visible: modelData.buffer_period.id !== ""
                         buffer_period: modelData.buffer_period
-                        buffer_period_changed: modelData.buffer_periodChanged || false
+                        buffer_period_changed: modelData.buffer_periodChanged
                         buffer_apply_on: modelData.buffer_apply_on
                     }
                     

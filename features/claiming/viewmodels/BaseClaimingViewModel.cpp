@@ -1,8 +1,8 @@
 #include "BaseClaimingViewModel.h"
 #include "core/bridge/ExternalBridges.h"
 #include "core/ui/UiServices.inc"
-#include "generated_qml_keys.hpp"
 #include "features/claiming/flows/OnChainClaimingFlow.h"
+#include "generated_qml_keys.hpp"
 
 namespace features::claiming::viewmodels {
 using namespace core::viewmodels;
@@ -11,6 +11,7 @@ using features::claiming::flows::OnChainClaimingFlow;
 BaseClaimingViewModel::BaseClaimingViewModel(QObject *parent) : ActionViewModel(parent) {}
 
 void BaseClaimingViewModel::handleErrorCode(int error_code, const QString &error_msg) {
+    DBG_INFO << "handleErrorCode error_code:" << error_code << "error_msg:" << error_msg;
     GUARD_SERVICE_TAG()
     GUARD_SUB_SCREEN_MANAGER()
     GUARD_FLOW_MANAGER()

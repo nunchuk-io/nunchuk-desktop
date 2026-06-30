@@ -431,12 +431,14 @@ Item {
                         height: 1
                         width: 651
                         color: "#EAEAEA"
+                        visible: vm.distribution_method != "CUSTOMIZE" && (vm.beneficiary_mode === "SINGLE" || (vm.beneficiary_mode !== "SINGLE" && vm.release_method === "INDIVIDUAL"))
                     }
                     QTextInputBoxTypeE {
                         anchors{
                             left: parent.left
                             leftMargin: 24
                         }
+                        visible: vm.distribution_method != "CUSTOMIZE" && (vm.beneficiary_mode === "SINGLE" || (vm.beneficiary_mode !== "SINGLE" && vm.release_method === "INDIVIDUAL"))
                         width: 651
                         height: 84
                         label.text: STR.STR_QML_851

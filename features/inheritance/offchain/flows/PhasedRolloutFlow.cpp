@@ -35,6 +35,60 @@ void PhasedRolloutFlow::bind(QObject *vm) {
     TimezoneManager::instance().updatetimezone(valueTimezone());
 }
 
+
+bool PhasedRolloutFlow::checkValidCanGoNext() {
+    if (!checkStageCanGoNext()) {
+        return false;
+    }
+
+    if (!checkFallbackValid()) {
+        return false;
+    }
+
+    return true;
+}
+
+bool PhasedRolloutFlow::checkFallbackValid() {
+    QJsonObject inheritance = this->inheritance();
+    QJsonObject fallback_policy = inheritance.value("fallback_policy").toObject();
+    auto fallback_time_millis = fallback_policy.value("fallback_time_millis").toDouble();
+    QString type = fallback_policy.value("type").toString();
+    if (qUtils::strCompare(type, "DATE_BASED") && fallback_time_millis < lastStageTimeMLs()) {
+        emit showToast(0, Strings.STR_QML_2253(), EWARNING::WarningType::ERROR_MSG);
+        return false;
+    }
+    return true;
+}
+
+double PhasedRolloutFlow::lastStageTimeMLs() {
+    QJsonObject inheritance = this->inheritance();
+    QString beneficiary_mode = inheritance.value("beneficiary_mode").toString();
+    QString release_method = inheritance.value("release_method").toString();
+    if (!(qUtils::strCompare(beneficiary_mode, "MULTIPLE") && qUtils::strCompare(release_method, "INDIVIDUAL"))) {
+        QJsonArray stages = inheritance.value("stages").toArray();
+        if (stages.isEmpty()) {
+            return -1;
+        }
+        QJsonObject lastStage = stages.last().toObject();
+        DBG_INFO << "[PhasedRolloutFlow::lastStageTimeMLs] beneficiary:" << "lastStage:" << lastStage;
+        return helper::getLastStageWithdrawalTimeMillis(lastStage.toVariantMap());
+    } else {
+        QJsonArray beneficiaries = inheritance.value("beneficiaries").toArray();
+        double maxLastStageTimeMillis = -1;
+        for (const auto &beneficiaryValue : beneficiaries) {
+            QJsonObject beneficiary = beneficiaryValue.toObject();
+            QJsonArray stages = beneficiary.value("stages").toArray();
+            if (stages.isEmpty()) {
+                return -1;
+            }
+            QJsonObject lastStage = stages.last().toObject();
+            DBG_INFO << "[PhasedRolloutFlow::lastStageTimeMLs] beneficiary:" << beneficiary.value("email").toString() << "lastStage:" << lastStage;
+            maxLastStageTimeMillis = std::max(maxLastStageTimeMillis, (double)helper::getLastStageWithdrawalTimeMillis(lastStage.toVariantMap()));
+        }
+        return maxLastStageTimeMillis;
+    }
+}
+
 bool PhasedRolloutFlow::checkStageCanGoNext() {
     QJsonObject inheritance = this->inheritance();
     QString beneficiary_mode = inheritance.value("beneficiary_mode").toString();
@@ -71,10 +125,7 @@ bool PhasedRolloutFlow::checkStageCanGoNext() {
 }
 
 bool PhasedRolloutFlow::validateDateTime(const QVariantMap &firstStage, const QVariantMap &secondStage) {
-    auto firstTimestamp = firstStage.value("first_withdrawal_time_millis").toLongLong();
-    auto repeat_interval = firstStage.value("repeat_interval").toString();
-    auto repeat_interval_count = firstStage.value("repeat_interval_count").toInt();
-    auto calculatedLastPhraseFirstTimestamp = helper::addIntervalStage(firstTimestamp, repeat_interval, repeat_interval_count);
+    auto calculatedLastPhraseFirstTimestamp = helper::getLastStageWithdrawalTimeMillis(firstStage);
     auto secondTimestamp = secondStage.value("first_withdrawal_time_millis").toLongLong();
 
     if (secondTimestamp <= calculatedLastPhraseFirstTimestamp) {
@@ -122,6 +173,45 @@ long long helper::addIntervalStage(long long firstWithdrawalTimeMillis, const QS
     return firstWithdrawalDateTime.toMSecsSinceEpoch();
 }
 
+long long helper::getLastStageWithdrawalTimeMillis(const QVariantMap &stageData) {
+    long long firstWithdrawalTimeMillis = stageData.value("first_withdrawal_time_millis").toLongLong();
+    QString repeatInterval = stageData.value("repeat_interval").toString();
+    int repeatCount = stageData.value("repeat_interval_count").toInt();
+    double amountPerRelease = stageData.value("amount_per_release_percentage").toDouble();
+    double totalAllocation = stageData.value("total_stage_allocation_percentage").toDouble();
+    int totalInstallments = static_cast<int>(std::ceil(totalAllocation / amountPerRelease));
+    int totalIntervals = (totalInstallments - 1) * repeatCount; // Total intervals after the first release
+
+    return addIntervalStage(firstWithdrawalTimeMillis, repeatInterval, totalIntervals);
+}
+
+QJsonArray helper::generateInstallmentSchedule(const QVariantMap &stageData) {
+    DBG_INFO << "[helper::generateInstallmentSchedule] stageData:" << stageData;
+    QJsonArray installments;
+    long long firstWithdrawalTimeMillis = stageData.value("first_withdrawal_time_millis").toLongLong();
+    QString repeatInterval = stageData.value("repeat_interval").toString();
+    int repeatCount = stageData.value("repeat_interval_count").toInt();
+    double amountPerRelease = stageData.value("amount_per_release_percentage").toDouble();
+    double totalAllocation = stageData.value("total_stage_allocation_percentage").toDouble();
+    int totalInstallments = static_cast<int>(std::ceil(totalAllocation / amountPerRelease));
+    double remainingAllocation = totalAllocation;
+    for (int i = 0; i < totalInstallments; ++i) {
+        long long installmentTimeMillis = addIntervalStage(firstWithdrawalTimeMillis, repeatInterval, i * repeatCount);
+        QJsonObject installment;
+        installment["index"] = i + 1;
+        if (i < totalInstallments - 1) {
+            installment["allocation_percentage"] = amountPerRelease;
+            remainingAllocation -= amountPerRelease; // Decrease remaining allocation for next installments
+        } else {
+            installment["allocation_percentage"] = remainingAllocation; // Assign remaining allocation to the last installment to ensure total matches
+        }
+        installment["withdrawal_time_millis"] = installmentTimeMillis;
+        installments.append(installment);
+    }
+    DBG_INFO << "[helper::generateInstallmentSchedule] installments:" << installments;
+    return installments;
+}
+
 uint64_t helper::getTimestampFromDateTime(const QString &dateTimeStr) {
     return qUtils::getTimestampFromDateTime(dateTimeStr, TimezoneManager::instance().timezone());
 }
@@ -157,8 +247,13 @@ QVariantMap helper::addStage(int stageIndex) {
     auto repeatInterval = "YEAR";
     auto repeatCount = 1;
     auto amountPerRelease = 5;
-    QJsonArray installments{};
-
+    QJsonObject tmpStage;
+    tmpStage["first_withdrawal_time_millis"] = dt.toMSecsSinceEpoch();
+    tmpStage["repeat_interval"] = repeatInterval;
+    tmpStage["repeat_interval_count"] = repeatCount;
+    tmpStage["amount_per_release_percentage"] = amountPerRelease;
+    tmpStage["total_stage_allocation_percentage"] = 100;
+    QJsonArray installments = helper::generateInstallmentSchedule(tmpStage.toVariantMap());
     newStage["firstWithdrawalDate"] = formattedDate;
     newStage["firstWithdrawalTime"] = formattedTime;
     newStage["amountPerRelease"] = amountPerRelease;
@@ -182,8 +277,9 @@ QVariantMap helper::addStage(int stageIndex) {
 
     newStage["releaseInfo"] = releaseInfo;
     newStage["isExpanded"] = false;
-    newStage["displayInstallments"] = QVariant::fromValue(QVariantList());
-
+    QVariantList displayInstallments = helper::convertInstallmentsDisplayData(installments);
+    newStage["displayInstallments"] = QVariant::fromValue(displayInstallments);
+    
     return newStage;
 }
 
@@ -262,14 +358,28 @@ QVariantList helper::convertStagesData(const QJsonArray &stagesArray) {
 
 QVariantList helper::convertTimelineStagesData(const QVariantList &stagesData) {
     QVariantList timelineStages;
+    int totalPercentage = 0;
     for (const QVariant &stageVar : stagesData) {
         QVariantMap stageMap = stageVar.toMap();
-        QVariantMap timelineStage = stageMap; // Start with the same data, then we can modify/add fields specific to timeline display
+        QVariantMap timelineStage;
         timelineStage["label"] = stageMap["name"];
         timelineStage["date"] = stageMap["firstWithdrawalDate"];
         timelineStage["color"] = stageMap["color"];
         timelineStage["percentage"] = stageMap["percentage"];
         timelineStages.append(timelineStage);
+        totalPercentage += stageMap["percentage"].toInt();
+    }
+    // Append an "Unallocated" segment for any remaining percentage not yet assigned to a stage.
+    // When total == 100 the segment is omitted (remaining == 0). This allows the timeline bar
+    // to visually communicate how much of the inheritance is still unassigned.
+    int remaining = 100 - totalPercentage;
+    if (remaining > 0) {
+        QVariantMap unallocated;
+        unallocated["label"] = QString("Unallocated");
+        unallocated["date"] = QString("");
+        unallocated["color"] = QString("#E0E0E0");
+        unallocated["percentage"] = remaining;
+        timelineStages.append(unallocated);
     }
     return timelineStages;
 }
@@ -379,24 +489,29 @@ QString helper::getFormatFirstWithdrawalDate(const QJsonArray &stagesArray) {
 QVariantList helper::convertInstallmentsDisplayData(const QJsonArray &installmentsArray) {
     QVariantList displayInstallments;
 
-    QStringList ordinals = {"1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"};
+    QStringList ordinals = {"1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th",
+                            "11th", "12th", "13th", "14th", "15th", "16th", "17th", "18th", "19th", "20th"};
 
+    double cumulative = 0.0; // Accumulate to produce cumulative % for display ("X% available by date")
     for (int i = 0; i < installmentsArray.size(); ++i) {
         QJsonObject installmentObj = installmentsArray[i].toObject();
 
         QVariantMap installmentMap;
 
-        // Convert index to ordinal number (1st, 2nd, 3rd, etc.)
-        int index = installmentObj["index"].toInt();
-        if (index >= 0 && index < ordinals.size()) {
-            installmentMap["number"] = ordinals[index];
+        // Use loop position i (0-based) for ordinal — index stored in data is 1-based
+        // so ordinals[index] would be off by one. Use i to always produce "1st", "2nd", etc.
+        if (i < ordinals.size()) {
+            installmentMap["number"] = ordinals[i];
         } else {
-            installmentMap["number"] = QString("%1th").arg(index + 1);
+            installmentMap["number"] = QString("%1th").arg(i + 1);
         }
 
-        // Get allocation percentage (cumulative)
-        int percentage = installmentObj["allocation_percentage"].toInt();
-        installmentMap["percentage"] = percentage;
+        // Cumulative percentage: "X% available by [date]" matches mobile design.
+        // Each installment releases amount_per_release%; the final installment may be smaller
+        // (remainder when total is not evenly divisible). Summing gives the running total
+        // the beneficiary can access after each release date.
+        cumulative += installmentObj["allocation_percentage"].toDouble();
+        installmentMap["percentage"] = qRound(cumulative);
 
         // Convert withdrawal time millis to date
         qint64 withdrawalMs = installmentObj["withdrawal_time_millis"].toVariant().toLongLong() / 1000; // Convert ms to s for timestamp

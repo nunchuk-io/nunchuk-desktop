@@ -86,8 +86,11 @@ QOnScreenContentTypeA {
                         timezoneChanged: vm.isTimezoneDisplayChanged
                     }
                     QDbAlertFallbackSettings {
-                        inactivity_interval_count: vm.inactivity_interval_count
-                        inactivity_interval_countChanged: vm.isInactivityIntervalCountChanged
+                        fallback_interval_count: vm.fallback_interval_count
+                        fallback_interval: vm.fallback_interval
+                        fallback_dateTime: vm.fallback_dateTime
+                        fallback_type: vm.fallback_type
+                        fallbackChanged: vm.fallbackChanged
                         visible: vm.beneficiary_mode !== "SINGLE"
                     }
                     QDbAlertReleaseSchedule {

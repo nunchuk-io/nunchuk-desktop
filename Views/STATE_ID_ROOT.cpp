@@ -27,13 +27,13 @@
 #include "Premiums/QGroupWallets.h"
 #include "Premiums/QInheritancePlan.h"
 #include "Premiums/QServerKey.h"
+#include "Premiums/QWalletServicesTag.h"
 #include "ProfileSetting.h"
 #include "QEventProcessor.h"
 #include "Servers/Draco.h"
 #include "ServiceSetting.h"
 #include "Signers/QSignerManagement.h"
 #include "bridgeifaces.h"
-#include "Premiums/QWalletServicesTag.h"
 
 void ROOT_Entry(QVariant msg) {}
 
@@ -148,13 +148,10 @@ void EVT_LOGIN_DB_REQUEST_HANDLER(QVariant msg) {}
 void EVT_LOGIN_MATRIX_REQUEST_HANDLER(QVariant msg) {}
 
 void EVT_GOTO_APP_SETTINGS_TAB_HANDLER(QVariant msg) {
-    QtConcurrent::run([]() {
-        CLIENT_INSTANCE->refreshDevices();
-    });
-    if(msg.isNull()) {
+    QtConcurrent::run([]() { CLIENT_INSTANCE->refreshDevices(); });
+    if (msg.isNull()) {
         ProfileSetting::instance()->setOptionIndex(0);
-    }
-    else {
+    } else {
         ProfileSetting::instance()->setOptionIndex(msg.toInt());
     }
 }
@@ -221,7 +218,9 @@ void EVT_HEALTH_CHECK_STARTING_REQUEST_HANDLER(QVariant msg) {
         } else if (dashboard->flow() == (int)AlertEnum::E_Alert_t::WELCOME_SIGN_IN_SIGNATURE_XPUB) {
             // For sign dummy, so not implement in here
         } else {
-            AppModel::instance()->setWalletInfo(dashboard->walletInfoPtr());
+            if (auto wallet = dashboard->walletInfoPtr()) {
+                AppModel::instance()->setWalletInfo(wallet);
+            }
         }
     }
 }
@@ -319,15 +318,15 @@ void EVT_HOME_ADD_WALLET_REQUEST_HANDLER(QVariant msg) {
 void EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER(QVariant msg) {
     DBG_INFO << "[Mini]" << msg;
     QMap<QString, QVariant> maps = msg.toMap();
-    if(maps.isEmpty()) {
+    if (maps.isEmpty()) {
         DBG_ERROR << "maps is empty";
         return;
     }
     QString walletNameInputted = maps["walletNameInputted"].toString();
-    QString walletDescription  = maps["walletDescription"].toString();
-    int  addressType = maps["addressType"].toInt();
+    QString walletDescription = maps["walletDescription"].toString();
+    int addressType = maps["addressType"].toInt();
     DBG_INFO << maps;
-    if(auto nw = AppModel::instance()->newWalletInfo()) {
+    if (auto nw = AppModel::instance()->newWalletInfo()) {
         nw->setWalletName(walletNameInputted);
         nw->setWalletDescription(walletDescription);
         nw->setWalletAddressType(addressType);
@@ -335,16 +334,8 @@ void EVT_ADD_WALLET_SIGNER_CONFIGURATION_REQUEST_HANDLER(QVariant msg) {
     }
 }
 
-void EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER(QVariant msg) {
+void EVT_SHOW_GROUP_WALLET_CONFIG_REQUEST_HANDLER(QVariant msg) {}
 
-}
+void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {}
 
-void EVT_EXIST_HARDWARE_REQ_HANDLER(QVariant msg) {
-
-}
-
-
-
-void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg) {
-
-}
+void EVT_ADD_HARDWARE_REQUEST_HANDLER(QVariant msg) {}

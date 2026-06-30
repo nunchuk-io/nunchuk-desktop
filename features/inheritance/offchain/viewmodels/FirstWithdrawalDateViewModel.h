@@ -14,12 +14,10 @@ class FirstWithdrawalDateViewModel : public ActionViewModel {
   public:
     explicit FirstWithdrawalDateViewModel(QObject *parent = nullptr);
     DEFINE_SET_GET(QJsonArray, stagesArray)
-    DEFINE_SET_GET(bool, initialized)
 
     void onInit() override;
 
   public slots:
     void onContinueClicked();
-    void onValidateDateTime();
 };
 } // namespace features::inheritance::offchain::viewmodels

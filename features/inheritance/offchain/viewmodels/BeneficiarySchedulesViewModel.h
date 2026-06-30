@@ -12,6 +12,7 @@ class BeneficiarySchedulesViewModel : public ActionViewModel {
     DEFINE_QT_PROPERTY(QVariantList, assetAllocation)
     DEFINE_QT_PROPERTY(bool, hasEditBtn)
     DEFINE_QT_PROPERTY(QString, release_method)
+    DEFINE_QT_PROPERTY(bool, isValidData)
     
   public:
     explicit BeneficiarySchedulesViewModel(QObject *parent = nullptr);

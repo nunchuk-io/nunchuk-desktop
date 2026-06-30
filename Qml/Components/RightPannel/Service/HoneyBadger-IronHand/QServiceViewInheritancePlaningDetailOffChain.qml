@@ -387,6 +387,7 @@ Item {
                             left: parent.left
                             leftMargin: 24
                         }
+                        visible: vm.distribution_method != "CUSTOMIZE"
                         width: 651
                         height: 128
                         label.text: STR.STR_QML_850
@@ -400,6 +401,15 @@ Item {
                             QMLHandle.sendEvent(EVT.EVT_EDIT_YOUR_INHERITANCE_PLAN_REQUEST, ServiceType.IE_LEAVE_MESSAGE)
                         }
                     }
+                    QInheritanceNoteToBeneficiary {
+                        anchors{
+                            left: parent.left
+                            leftMargin: 24
+                        }
+                        width: 651
+                        visible: vm.distribution_method == "CUSTOMIZE"
+                        beneficiariesData: vm.beneficiariesData
+                    }
                     Rectangle {
                         anchors{
                             left: parent.left
@@ -408,12 +418,14 @@ Item {
                         height: 1
                         width: 651
                         color: "#EAEAEA"
+                        visible: vm.distribution_method != "CUSTOMIZE" && (vm.beneficiary_mode === "SINGLE" || (vm.beneficiary_mode !== "SINGLE" && vm.release_method === "INDIVIDUAL"))
                     }
                     QTextInputBoxTypeE {
                         anchors{
                             left: parent.left
                             leftMargin: 24
                         }
+                        visible: vm.distribution_method != "CUSTOMIZE" && (vm.beneficiary_mode === "SINGLE" || (vm.beneficiary_mode !== "SINGLE" && vm.release_method === "INDIVIDUAL"))
                         width: 651
                         height: 84
                         label.text: STR.STR_QML_851

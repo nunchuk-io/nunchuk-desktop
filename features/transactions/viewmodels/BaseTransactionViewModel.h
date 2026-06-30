@@ -12,6 +12,7 @@ class BaseTransactionViewModel : public ActionViewModel {
     DEFINE_QT_PROPERTY_PTR(Transaction, transactionInfo)
     DEFINE_QT_PROPERTY_PTR(Wallet, walletInfo)
     DEFINE_QT_PROPERTY(bool, isOffChain)
+    DEFINE_QT_PROPERTY(bool, isAddressFlow)
   public:
     explicit BaseTransactionViewModel(QObject *parent = nullptr);
     ~BaseTransactionViewModel();

@@ -852,6 +852,7 @@
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritancePhaseRolloutGuideline.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritanceReleaseSchedule.qml</file>
         <file>Qml/Components/RightPannel/Service/Common/QServiceClaimInheritancePhaseRolloutWithdrawBitcoin.qml</file>
+        <file>Qml/Components/RightPannel/Service/Common/QInheritanceNoteToBeneficiary.qml</file>
     </qresource>
     <qresource prefix="/Images">
         <file>Images/miniscript-introduction.svg</file>

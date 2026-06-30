@@ -52,7 +52,7 @@ Rectangle {
                     verticalCenter: parent.verticalCenter
                 }
                 text: STR.STR_QML_2169
-                font.pixelSize: 18
+                font.pixelSize: 16
                 font.weight: Font.Bold
                 color: "#031F2B"
             }

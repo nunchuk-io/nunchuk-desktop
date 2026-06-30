@@ -30,7 +30,10 @@ void ReleaseScheduleViewModel::onInit() {
 void ReleaseScheduleViewModel::initStagesData(QJsonObject inheritanceData) {
     setbeneficiary_mode(inheritanceData.value("beneficiary_mode").toString());
     setrelease_method(inheritanceData.value("release_method").toString());
-    setbuffer_period(QVariant::fromValue(inheritanceData.value("buffer_period").toObject()));
+    QJsonObject bufferPeriod = inheritanceData.value("buffer_period").toObject();
+    if (!bufferPeriod.contains("id"))           bufferPeriod["id"]           = QString("");
+    if (!bufferPeriod.contains("display_name")) bufferPeriod["display_name"] = QString("");
+    setbuffer_period(QVariant::fromValue(bufferPeriod));
     setbuffer_apply_on(inheritanceData.value("buffer_apply_on").toString());
     QJsonArray stagesArray = inheritanceData["stages"].toArray();
     if (stagesArray.isEmpty()) {

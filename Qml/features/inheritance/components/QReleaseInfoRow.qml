@@ -31,6 +31,7 @@ Column {
     // Properties
     property string releaseInfo: "5% annually (4 installments)"
     property bool isExpanded: false
+    property int minLength: Math.min(installmentDetails.length, 15)
     property var installmentDetails: [
         { number: "1st", percentage: 20, date: "05/29/2028" },
         { number: "2nd", percentage: 40, date: "05/29/2029" },
@@ -113,7 +114,6 @@ Column {
             }
         }
     }
-    property int minLength: Math.min(installmentDetails.length, 10)
     // Expanded content placeholder
     Rectangle {
         id: rectangle
@@ -135,15 +135,16 @@ Column {
             width: parent.width
             height: parent.height - 16
             contentWidth: parent.width
-            contentHeight: root.installmentDetails.length * 20 + 16
+            contentHeight: installmentColumn.implicitHeight + 16
             clip: true
             flickableDirection: Flickable.VerticalFlick
             ScrollBar.vertical: ScrollBar { active: true }
             Column {
-                anchors.fill: parent
+                id: installmentColumn
+                width: parent.width
                 spacing: 8
                 Repeater {
-                    model: root.installmentDetails                    
+                    model: root.installmentDetails
                     QLato {
                         width: parent.width
                         enabled: index <= root.current_installment_index || root.current_installment_index === -1

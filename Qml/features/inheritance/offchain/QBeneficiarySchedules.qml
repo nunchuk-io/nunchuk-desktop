@@ -166,7 +166,6 @@ QOnScreenContentTypeA {
                                         // Buffer period (if exists)
                                         QBufferPeriodRow {
                                             height: 16
-                                            visible: modelData.buffer_period.id !== ""
                                             buffer_period: modelData.buffer_period
                                             buffer_apply_on: modelData.buffer_apply_on
                                         }
@@ -250,6 +249,7 @@ QOnScreenContentTypeA {
             label.text: STR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
+            enabled: vm.isValidData
             onButtonClicked: {
                 vm.onSaveClicked()
             }

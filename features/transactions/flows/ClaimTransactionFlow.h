@@ -31,6 +31,7 @@ class ClaimTransactionFlow : public TransactionFlow {
     DEFINE_SET_GET(qint64, withdrawAmountSats)
     DEFINE_SET_GET(CreateTransactionResult, txResult)
     DEFINE_SET_GET(std::vector<nunchuk::SingleSigner>, backupSigners)
+    DEFINE_SET_GET(QString, destinationWalletId)
 
     void autoSignClaimingTransaction() override;
     void proceedTransaction(QVariant feeInput) override;

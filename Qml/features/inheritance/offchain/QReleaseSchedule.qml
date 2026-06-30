@@ -241,6 +241,7 @@ QOnScreenContentTypeA {
             label.text: STR.STR_QML_835
             label.font.pixelSize: 14
             type: eTypeE
+            enabled: vm.totalPercentage == 100
             onButtonClicked: {
                 vm.onSaveClicked()
             }

@@ -106,8 +106,7 @@ QOnScreenContentTypeA {
                                     isFirst: index === 0
                                     isLast: index === vm.stagesData.length - 1
                                     hasEdit: false
-                                    enabled: index <= vm.current_stage_index
-                                    opacity: enabled ? 1.0 : 0.4
+                                    opacity: index <= vm.current_stage_index ? 1.0 : 0.6
                                     isLastEnabled: index === vm.current_stage_index
                                     current_installment_index: vm.current_installment_index
                                     

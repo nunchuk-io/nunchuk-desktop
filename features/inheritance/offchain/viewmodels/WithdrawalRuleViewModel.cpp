@@ -1,6 +1,6 @@
 #include "WithdrawalRuleViewModel.h"
-#include "core/ui/UiServices.inc"
 #include "core/common/resources/AppStrings.h"
+#include "core/ui/UiServices.inc"
 #include "features/inheritance/offchain/flows/PhasedRolloutFlow.h"
 #include "generated_qml_keys.hpp"
 
@@ -9,18 +9,8 @@ using namespace core::viewmodels;
 using namespace features::inheritance::offchain::flows;
 
 WithdrawalRuleViewModel::WithdrawalRuleViewModel(QObject *parent) : ActionViewModel(parent) {
-
-    connect(this, &WithdrawalRuleViewModel::amountPerReleaseChanged, this, [this]() {
-        if (amountPerRelease() <= 0) {
-            emit showToast(0, Strings.STR_QML_2232(), EWARNING::WarningType::ERROR_MSG);
-        }
-    });
-    connect(this, &WithdrawalRuleViewModel::totalAllocationChanged, this, [this]() {
-        if (totalAllocation() > 100) {
-            emit showToast(0, Strings.STR_QML_2225(), EWARNING::WarningType::ERROR_MSG);
-        }
-    });
-
+    // Validation moved to continueClicked() — reactive signals caused toast to appear
+    // on the previous screen instead of QAddStageWithdrawalRule.
 }
 
 void WithdrawalRuleViewModel::onInit() {
@@ -84,6 +74,15 @@ void WithdrawalRuleViewModel::deleteClicked() {
 }
 
 void WithdrawalRuleViewModel::continueClicked() {
+    // Validate on this screen before navigating — toast appears on the correct screen
+    if (amountPerRelease() <= 0) {
+        emit showToast(0, Strings.STR_QML_2232(), EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
+    if (totalAllocation() > 100) {
+        emit showToast(0, Strings.STR_QML_2225(), EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
     GUARD_FLOW_MANAGER()
     auto flow = flowMng->startFlow<PhasedRolloutFlow>();
     if (!flow) {

@@ -24,8 +24,11 @@ import "../../../Components/customizes/Texts"
 Column {
     width: parent.width
     spacing: 12
-    property int inactivity_interval_count: 0
-    property bool inactivity_interval_countChanged: false
+    property int fallback_interval_count: 0
+    property string fallback_interval: ""
+    property string fallback_dateTime: ""
+    property string fallback_type: ""
+    property bool fallbackChanged: false
     
     QLato {
         width: parent.width
@@ -52,11 +55,20 @@ Column {
             // Description text
             QLato {
                 width: parent.width
-                text: STR.STR_QML_2170.arg(inactivity_interval_count)
-                color: inactivity_interval_countChanged ? "#CF4018" : "#031F2B"
+                text: {
+                    if (fallback_type == "NONE") {
+                        return STR.STR_QML_2251
+                    } else if (fallback_type == "INACTIVITY") {
+                        return STR.STR_QML_2250.arg(fallback_interval)
+                    } else if (fallback_type == "DATE_BASED") {
+                        return STR.STR_QML_2249.arg(fallback_dateTime)                    
+                    }
+                    return STR.STR_QML_2251
+                }
+                color: fallbackChanged ? "#CF4018" : "#031F2B"
                 font.pixelSize: 16
                 lineHeight: 20
-                wrapMode: Text.WrapAnywhere
+                wrapMode: Text.WordWrap
                 lineHeightMode: Text.FixedHeight
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignLeft

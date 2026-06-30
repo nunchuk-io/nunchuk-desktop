@@ -27,4 +27,22 @@ RightPanelNavigator {
     ClaimInheritanceViewModel {
         id: vm
     }
+    Connections {
+        target: ServiceSetting.servicesTag
+        onNotPaidAlert: {
+            _InfoVer.notPaidAlert()
+        }
+        onIsExpiredAlert: {
+            _InfoVer.isExpiredAlert()
+        }
+        onHasNotBeenActivatedYetAlert: {
+            _info1.open()
+        }
+        onComeBackLaterAlert: {
+            _info1.comeBackLaterAlert(errormsg)
+        }
+        onSecurityDepositRequiredAlert:  {
+            _InfoVer.securityDepositRequiredAlert(errormsg)
+        }
+    }
 }

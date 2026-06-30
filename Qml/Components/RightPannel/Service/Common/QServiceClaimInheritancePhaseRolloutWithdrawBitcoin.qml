@@ -234,6 +234,7 @@ Item {
                     label.font.pixelSize: 16
                     type: eTypeE
                     visible: optionSelected === "withdraw-a-custom-amount"
+                    enabled: vm.withdrawAmountSats > 0
                     onButtonClicked: {
                         if (vm.withdrawAmountSats > vm.availableBalanceSats) {
                             vm.withdrawAmountSats = vm.availableBalanceSats

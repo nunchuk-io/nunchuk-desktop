@@ -28,22 +28,48 @@ Rectangle {
     border.color: "#F5F5F5"
     border.width: 1
     radius: 8
-    height: 160
-    
+    // Height grows to fit content (including error row when visible)
+    height: contentColumn.implicitHeight + 24
+
     // Properties
     property int beneficiaryIndex: 0
     property string beneficiaryEmail: ""
     property int beneficiaryPercentage: 0
-    
+    property string emailError: ""  // set by VM on Save failure; cleared by VM when user edits
+
+    // When VM clamps and pushes back a new percentage (e.g. after drag exceeds capacity),
+    // force-reset the slider handle. The _updating guard prevents the reset from
+    // triggering onValueChanged → percentageChanged → VM → infinite loop.
+    onBeneficiaryPercentageChanged: {
+        if (percentageSlider.value !== beneficiaryPercentage) {
+            percentageSlider._updating = true
+            percentageSlider.value = beneficiaryPercentage
+            percentageSlider._updating = false
+        }
+    }
+
     // Signals
     signal deleteBeneficiaryClicked(int index)
     signal emailChanged(int index, string email)
     signal percentageChanged(int index, int percent)
-    
+
+    // Drive input error state whenever emailError changes from VM.
+    // Only the red border is shown (isValid = false); error text is suppressed
+    // because the toast from markEmailErrors() is sufficient feedback.
+    onEmailErrorChanged: {
+        _input_email.isValid   = (emailError === "")
+        _input_email.showError = false
+        _input_email.errorText = ""
+    }
+
     Column {
         id: contentColumn
-        anchors.fill: parent
-        anchors.margins: 12
+        anchors {
+            left:  parent.left
+            right: parent.right
+            top:   parent.top
+            margins: 12
+        }
         spacing: 20
 
         QTextInputBoxTypeB {
@@ -56,11 +82,12 @@ Rectangle {
             textInputted: beneficiaryEmail
             input.placeholderText: ""
             onTextInputtedChanged: {
-                if(!_input_email.isValid){
-                    _input_email.isValid = true
-                    _input_email.errorText = ""
-                }
-                _input_email.showError = false;
+                // Immediately clear any error state when the user edits the field.
+                // VM will also clear emailError via updateBeneficiaryEmail → setassetAllocation,
+                // which triggers onEmailErrorChanged for a clean final reset.
+                _input_email.isValid   = true
+                _input_email.showError = false
+                _input_email.errorText = ""
                 emailChanged(beneficiaryIndex, _input_email.textInputted)
             }
         }
@@ -73,12 +100,34 @@ Rectangle {
                 width: 252
                 from: 0
                 to: 100
-                value: beneficiaryPercentage
                 stepSize: 1
                 anchors.verticalCenter: parent.verticalCenter
-                
+
+                // No declarative binding on `value` — binding is broken by drag gestures.
+                // Initial value set via Component.onCompleted; subsequent updates via
+                // onPressedChanged (snap after drag ends) and onBeneficiaryPercentageChanged
+                // (snap when VM pushes a new value outside of a drag).
+                property bool _updating: false
+                Component.onCompleted: value = beneficiaryPercentage
+
                 onValueChanged: {
-                    percentageChanged(beneficiaryIndex, value)
+                    if (!_updating) {
+                        percentageChanged(beneficiaryIndex, value)
+                    }
+                }
+
+                // Qt recalculates slider value from mouse position every frame during drag,
+                // and may fire one extra onValueChanged after mouse release.
+                // Qt.callLater defers the snap to after all pending slider events are processed,
+                // ensuring the clamped value wins.
+                onPressedChanged: {
+                    if (!pressed) {
+                        Qt.callLater(function() {
+                            percentageSlider._updating = true
+                            percentageSlider.value = beneficiaryPercentage
+                            percentageSlider._updating = false
+                        })
+                    }
                 }
                 
                 background: Rectangle {
@@ -114,7 +163,7 @@ Rectangle {
                 width: 58
                 height: 48
                 color: "#FFFFFF"
-                border.color: "#DEDEDE"
+                border.color: beneficiaryPercentage === 0 ? "#CF4018" : "#DEDEDE"
                 border.width: 1
                 radius: 8
                 

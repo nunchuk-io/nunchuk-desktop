@@ -26,8 +26,9 @@ import "../../../Components/origins"
 Item {
     id: root
     width: parent.width
-    height: isExpanded ? (208 - 112 + installments.length * 20)  : 98 + 12
+    height: isExpanded ? (128 + minLength * 20) : 98 + 12
     property bool hasEdit: true
+    property int minLength: Math.min(installments.length, 15)
     // Properties
     property string stageName: "Stage 1"
     property string stagePercentage: "20"

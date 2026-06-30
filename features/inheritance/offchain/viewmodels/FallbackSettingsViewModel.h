@@ -20,6 +20,7 @@ class FallbackSettingsViewModel : public ActionViewModel {
     void onInit() override;
 
   public slots:
+    void slotValueDateChanged();
     void onContinueClicked();
 };
 } // namespace features::inheritance::offchain::viewmodels

@@ -19,10 +19,10 @@ void DetailBeneficiaryViewModel::onInit() {
     setbeneficiary_mode(inheritanceData.value("beneficiary_mode").toString());
     setrelease_method(inheritanceData.value("release_method").toString());
     initBeneficiaryData(flow->beneficiarySelected());
+    DBG_INFO << "beneficiarySelected: " << flow->beneficiarySelected();
     if (!flow->editStageSelected().isEmpty()) {
         applyStageData(flow->editStageSelected());
         flow->seteditStageSelected(QVariantMap{});
-        saveBeneficiaryData();
     } else if (stagesData().isEmpty()) {
         // Only auto-add initial stage when the beneficiary has no stages yet
         addStage();
@@ -34,6 +34,7 @@ void DetailBeneficiaryViewModel::initBeneficiaryData(const QJsonObject &benefici
     QString email = beneficiarySelected.value("email").toString();
     setbenefiEmail(email);
     QJsonArray stagesArray = beneficiarySelected.value("stages").toArray();
+    DBG_INFO << "initBeneficiaryData: stagesArray: " << stagesArray;
     setstagesData(helper::convertStagesData(stagesArray));
     settimelineStagesData(helper::convertTimelineStagesData(stagesData()));
     updateStageTotalPercentage();

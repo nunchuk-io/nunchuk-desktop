@@ -14,7 +14,7 @@ import "../../../Components/customizes/Buttons"
 import "../components"
 import Features.Inheritance.OffChain.ViewModels 1.0
 
-QOnScreenContentTypeA {
+QOnScreenContentTypeB {
     id: root
     
     DetailBeneficiaryViewModel {
@@ -165,7 +165,7 @@ QOnScreenContentTypeA {
             }
         }
     }
-    onPrevClicked: vm.back()
+    onPrevClicked: vm.close()
     bottomRight: Row {
         spacing: 12        
         QIconTextButton {
@@ -188,6 +188,7 @@ QOnScreenContentTypeA {
             label.text: STR.STR_QML_097
             label.font.pixelSize: 14
             type: eTypeE
+            enabled: vm.totalPercentage == 100
             onButtonClicked: {
                 vm.onContinueClicked()
             }

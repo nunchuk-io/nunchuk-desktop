@@ -48,6 +48,7 @@ class ClaimingFlow : public KeyProceedFlow {
     DEFINE_SET_GET(int, current_stage_index)
     DEFINE_SET_GET(int, current_installment_index)
     DEFINE_SET_GET(QString, distribution_method)
+    DEFINE_SET_GET(QString, destinationWalletId)
 
     bool addSingleSigner(const nunchuk::SingleSigner &single);
     void displayStatusInfo(const ClaimStatusResult &status);

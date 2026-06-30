@@ -35,10 +35,16 @@ Row {
 
     function bufferPeriod()
     {
-        var ret = buffer_period.id === "" ? STR.STR_QML_921 : buffer_period.display_name
-        if (buffer_apply_on == "FIRST_WITHDRAWAL") {
-            ret += " (first withdrawal only)"
+        var ret = ""
+        if (!buffer_period || !buffer_period.id || buffer_period.id === "") {
+            ret = STR.STR_QML_2252
         } else {
+            ret = buffer_period.display_name
+        }
+
+        if (buffer_apply_on === "FIRST_WITHDRAWAL") {
+            ret += " (first withdrawal only)"
+        } else if (buffer_apply_on === "EVERY_WITHDRAWAL") {
             ret += " (every withdrawal)"
         }
         return ret

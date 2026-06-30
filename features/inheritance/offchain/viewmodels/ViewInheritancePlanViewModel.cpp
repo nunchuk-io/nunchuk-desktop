@@ -47,7 +47,10 @@ void ViewInheritancePlanViewModel::initPhasedRolloutData(QJsonObject inheritance
     setbeneficiary_mode(inheritance.value("beneficiary_mode").toString());
     setbuffer_apply_on(inheritance.value("buffer_apply_on").toString());
     setrelease_method(inheritance.value("release_method").toString());
-    setbuffer_period(QVariant::fromValue(inheritance.value("buffer_period").toObject()));
+    QJsonObject bufferPeriod = inheritance.value("buffer_period").toObject();
+    if (!bufferPeriod.contains("id"))           bufferPeriod["id"]           = QString("");
+    if (!bufferPeriod.contains("display_name")) bufferPeriod["display_name"] = QString("");
+    setbuffer_period(QVariant::fromValue(bufferPeriod));
     QJsonArray stagesArray = inheritance["stages"].toArray();
     setstagesData(helper::convertStagesData(stagesArray));
     setfirstWithdrawalDate(helper::getFormatFirstWithdrawalDate(stagesArray));
@@ -164,10 +167,7 @@ void ViewInheritancePlanViewModel::onPhasedRolloutRefresh() {
     compareAndSet("timezone");
     compareAndSet("distribution_method");
     compareAndSet("beneficiary_mode");
-    compareAndSet("buffer_period_id");
-    auto beneficiaries = inheritance.value("beneficiaries").toArray();
-    bool isDataChanged = helper::isBeneficiaryDataValid(beneficiaries);
-    setisDataChanged(isDataChanged);
+    compareAndSet("buffer_period_id");    
 }
 
 void ViewInheritancePlanViewModel::compareAndSet(const QString &key) {

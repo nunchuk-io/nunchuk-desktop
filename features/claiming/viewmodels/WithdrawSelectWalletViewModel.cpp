@@ -55,6 +55,7 @@ void WithdrawSelectWalletViewModel::createTransactionToWallet(const QString& wal
     auto currentFlow = flowMng->currentFlow();
     auto claimingFlow = qobject_cast<ClaimingFlow*>(currentFlow);
     if (claimingFlow) {
+        claimingFlow->setdestinationWalletId(wallet_id); // remember which wallet the user chose to receive the claim
         createTransactionToAddress(withdrawAddress);
     }
 }

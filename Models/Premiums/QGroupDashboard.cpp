@@ -196,8 +196,7 @@ QJsonObject QGroupDashboard::walletDraftJson() const {
     return m_walletDraftInfo;
 }
 
-void QGroupDashboard::GetMemberInfo()
-{
+void QGroupDashboard::GetMemberInfo() {
     if (isUserWallet() || isReplaced() || isUserDraftWallet()) {
         return;
     }
@@ -221,12 +220,10 @@ void QGroupDashboard::GetMemberInfo()
             if (!group.isEmpty()) {
                 safeThis->setGroupInfo(group);
             }
-        }
-        );
+        });
 }
 
-void QGroupDashboard::GetAlertsInfo()
-{
+void QGroupDashboard::GetAlertsInfo() {
     if (isReplaced()) {
         return;
     }
@@ -264,17 +261,13 @@ void QGroupDashboard::GetAlertsInfo()
 
             QJsonArray v_alerts;
 
-            for (const auto& js : alerts) {
+            for (const auto &js : alerts) {
                 QJsonObject alert = js.toObject();
 
-                const qint64 created_time_secs =
-                    static_cast<qint64>(alert.value("created_time_millis").toDouble() / 1000.0);
+                const qint64 created_time_secs = static_cast<qint64>(alert.value("created_time_millis").toDouble() / 1000.0);
 
                 const QDateTime date_time = QDateTime::fromSecsSinceEpoch(created_time_secs);
-                alert["created_time_millis"] =
-                    QString("%1 at %2")
-                        .arg(date_time.date().toString("MM/dd/yyyy"))
-                        .arg(date_time.time().toString("hh:mm AP"));
+                alert["created_time_millis"] = QString("%1 at %2").arg(date_time.date().toString("MM/dd/yyyy")).arg(date_time.time().toString("hh:mm AP"));
 
                 const QString type = alert.value("type").toString();
                 alert["type"] = StringToInt(type);
@@ -285,8 +278,7 @@ void QGroupDashboard::GetAlertsInfo()
             safeThis->m_alertInfo["alerts"] = v_alerts;
             emit safeThis->alertInfoChanged();
             safeThis->setAlertId(safeThis->alertId());
-        }
-        );
+        });
 }
 
 QJsonArray QGroupDashboard::GetGroupWalletAlerts() {
@@ -371,8 +363,7 @@ bool QGroupDashboard::dismissAlert() {
     return DismissAlert(alertId());
 }
 
-void QGroupDashboard::GetWalletInfo()
-{
+void QGroupDashboard::GetWalletInfo() {
     const bool isDraft = isUserDraftWallet();
     const bool isUser = isUserWallet();
     const QString walletId = wallet_id();
@@ -413,8 +404,7 @@ void QGroupDashboard::GetWalletInfo()
                     info->serverKeyPtr()->UpdateFromWallet(wallet);
                 }
             }
-        }
-        );
+        });
 }
 
 void QGroupDashboard::checkInheritanceWallet() {
@@ -429,8 +419,7 @@ void QGroupDashboard::checkInheritanceWallet() {
     setInheritanceCount(size);
 }
 
-void QGroupDashboard::GetDraftWalletInfo()
-{
+void QGroupDashboard::GetDraftWalletInfo() {
     const bool isDraft = isUserDraftWallet();
     const bool isUser = isUserWallet();
     const QString gid = groupId();
@@ -460,8 +449,7 @@ void QGroupDashboard::GetDraftWalletInfo()
             safeThis->m_signerInfo = draft_wallet.value("signers").toArray();
             safeThis->m_walletDraftInfo = draft_wallet;
             safeThis->UpdateKeys(draft_wallet);
-        }
-        );
+        });
 }
 
 void QGroupDashboard::GetHealthCheckInfo() {
@@ -1621,7 +1609,7 @@ void QGroupDashboard::setAlertId(const QJsonObject &alert) {
     }
     QJsonObject tmp_alert = alert;
     tmp_alert["payload"] = payload;
-    DBG_INFO << tmp_alert;
+    DBG_INFO << QString().sprintf("%p", this) << tmp_alert;
     m_currentAlertInfo = tmp_alert;
     emit alertInfoChanged();
 }

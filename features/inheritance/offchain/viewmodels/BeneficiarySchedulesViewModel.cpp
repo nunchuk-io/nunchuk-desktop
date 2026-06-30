@@ -1,8 +1,8 @@
 #include "BeneficiarySchedulesViewModel.h"
 #include "core/ui/UiServices.inc"
 #include "features/inheritance/offchain/flows/PhasedRolloutFlow.h"
-#include "generated_qml_keys.hpp"
 #include "features/inheritance/offchain/viewmodels/FallbackSettingsViewModel.h"
+#include "generated_qml_keys.hpp"
 
 namespace features::inheritance::offchain::viewmodels {
 using namespace core::viewmodels;
@@ -37,6 +37,8 @@ void BeneficiarySchedulesViewModel::initBeneficiarySchedulesData(QJsonObject inh
 }
 
 void BeneficiarySchedulesViewModel::initBeneficiarySchedulesData(QJsonArray beneficiaries) {
+    bool isValid = helper::isBeneficiaryDataValid(beneficiaries);
+    setisValidData(isValid);
     for (const auto &beneficiary : beneficiaries) {
         QJsonObject beneficiaryObj = beneficiary.toObject();
         QJsonArray stages = beneficiaryObj.value("stages").toArray();

@@ -43,6 +43,7 @@ void WidthdrawToAddressViewModel::proceedTransactionResult() {
     flow->setsubtract_fee_from_amount(claimingFlow->subtract_fee_from_amount());    
     flow->setwithdrawAmountSats(claimingFlow->withdrawAmountSats());
     flow->setbackupSigners(claimingFlow->backupSigners());
+    flow->setdestinationWalletId(claimingFlow->destinationWalletId()); // propagate destination wallet so closeToWalletTab can focus it
     GUARD_SUB_SCREEN_MANAGER()
     subMng->show(qml::features::claiming::qconfirmtransaction);
 }
