@@ -85,6 +85,9 @@ Rectangle {
             iconLoader.sourceComponent  = iconFavWallet
         }
         enableInput = false
+        // Address is pre-resolved from the list → always valid; clear any prior error state.
+        addressInput.isValid   = true
+        addressInput.showError = false
     }
 
     function setFavoriteInput(cached) {
@@ -98,6 +101,9 @@ Rectangle {
         closeLoader.sourceComponent = dropdownfav
         iconLoader.sourceComponent  = null
         enableInput = true
+        // Pre-resolved address from favorites (or empty when clearing) → clear any prior error state.
+        addressInput.isValid   = true
+        addressInput.showError = false
     }
 
     Column {
@@ -129,14 +135,11 @@ Rectangle {
                         sendDelegateRoot.toAddress = ""
                         return
                     }
-                    if (AppModel.walletInfo.isValidAddress(sendDelegateRoot.toAddress)) {
-                        addressInput.isValid = true
-                        addressInput.showError = false
-                        addressInput.errorText = ""
-                    }
-                    else {
-                        addressInput.isValid = false
-                    }
+                    // Do NOT validate here — toAddress is not yet resolved (set async by
+                    // pasteBitcoinURI() after the 50 ms waitPaste timer). Validating
+                    // sendDelegateRoot.toAddress at this point always reads "" and would
+                    // incorrectly flag every input as invalid. Validation runs in
+                    // pasteBitcoinURI() after parsingURI() resolves the final address.
                 }
                 onTypingFinished: { waitPaste.restart() }
                 onPasteKeyRequest: { waitPaste.restart() }
@@ -151,17 +154,36 @@ Rectangle {
                     }
                 }
                 function pasteBitcoinURI() {
+                    // Guard: input is disabled when a wallet or saved address is selected from
+                    // the dropdown. In that case toAddress is already resolved by setFavoriteSelected();
+                    // running pasteBitcoinURI() would pass the display name (e.g. "PersonalWallet")
+                    // through parsingURI(), which prepends "bitcoin:" and may extract the name as
+                    // the address field, causing isValidAddress() to reject it and clear toAddress.
+                    if (!addressInput.enabled) { return }
                     if(addressInput.textInputted !== ""){
                         var uriData = AppModel.walletInfo.parsingURI(addressInput.textInputted)
                         if(uriData.address !== ""){
-                            sendDelegateRoot.toAddress = uriData.address
+                            sendDelegateRoot.toAddress      = uriData.address
+                            sendDelegateRoot.toAddressDisplay = uriData.address
+                            // If the user pasted a full Bitcoin URI, collapse the text box to show
+                            // only the extracted address (not the raw URI string).
+                            // Guard prevents re-triggering when already clean (plain address typed).
+                            if (addressInput.textInputted !== uriData.address) {
+                                addressInput.textInputted = uriData.address
+                            }
                         }
                         if(uriData.amount !== ""){
                             sendDelegateRoot.toAmount = uriData.amount
                         }
 
-                        if (!addressInput.isValid) {
-                            AppModel.showToast(-1, STR.STR_QML_1184, EWARNING.ERROR_MSG);
+                        // Validate the RESOLVED toAddress, not textInputted.
+                        // textInputted may be a raw address, a wallet name, or a favourite
+                        // name — parsingURI() normalises all three into toAddress.
+                        var valid = AppModel.walletInfo.isValidAddress(sendDelegateRoot.toAddress)
+                        addressInput.isValid   = valid
+                        addressInput.showError = false   // toast is sufficient; inline error text not used here
+                        if (!valid) {
+                            AppModel.showToast(-1, STR.STR_QML_1184, EWARNING.ERROR_MSG)
                             sendDelegateRoot.toAddress = ""
                         }
                     }
