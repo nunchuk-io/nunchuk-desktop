@@ -60,7 +60,8 @@ QOnScreenContentTypeB {
                 width: 550
                 height: 464
                 clip: true
-                model: GroupWallet.dashboardInfo.health.healthStatuses
+                model: (GroupWallet.dashboardInfo && GroupWallet.dashboardInfo.health)
+                       ? GroupWallet.dashboardInfo.health.healthStatuses : []
                 ScrollBar.vertical: ScrollBar { active: true }
                 delegate: QSignerDetailRadioDelegate {
                     width: ListView.view.width

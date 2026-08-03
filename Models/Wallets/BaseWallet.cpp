@@ -475,6 +475,8 @@ void BaseWallet::setArchived(bool archived) {
         AppModel::instance()->showToast(0, msg_content, EWARNING::WarningType::SUCCESS_MSG);
     }
     emit walletChanged();
+    // Notify WalletListModel so QML roles (wallet_isArchived) and archivedCount refresh.
+    AppModel::instance()->walletList()->dataUpdated(walletId());
 }
 
 nunchuk::Wallet BaseWallet::nunchukWallet() const {

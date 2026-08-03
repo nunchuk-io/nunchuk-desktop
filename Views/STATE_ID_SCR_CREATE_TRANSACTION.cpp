@@ -28,6 +28,13 @@
 
 void SCR_CREATE_TRANSACTION_Entry(QVariant msg) {
     AppModel::instance()->startGetEstimatedFee();
+    // Reset per-session coin-selection state: default to the normal flow
+    // (auto/expandable coin selection). It gets flipped to true only if the
+    // user explicitly fixes the coin set later in this same session (e.g.
+    // "select coin from coin list" -> use-selected-coins-create-transaction).
+    if (auto w = AppModel::instance()->walletInfo()) {
+        w->setFixedInputCoins(false);
+    }
     Q_UNUSED(msg);
 }
 

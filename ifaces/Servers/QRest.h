@@ -27,6 +27,7 @@
 #include <QAuthenticator>
 #include <QNetworkCookieJar>
 #include <QEventLoop>
+#include <QMutex>
 #include <QUrlQuery>
 #include <QSysInfo>
 #include <QThreadStorage>
@@ -82,9 +83,14 @@ public:
 
 private:
     static QString      m_dracoToken;
+    static QMutex       m_dracoTokenMutex;      // guards m_dracoToken (set/read from different threads)
     static QByteArray   m_machineUniqueId;
     QThread             *m_workerThread {nullptr};
     QString             m_verificationToken = "";
+    QMutex              m_verificationMutex;    // guards m_verificationToken (read-then-clear pattern)
+
+    // Thread-safe read-and-clear of m_verificationToken (one-shot token).
+    QString takeVerificationToken();
 
 private:
     QJsonObject doPostSync(const QString &cmd, QJsonObject data, int &reply_code, QString &reply_msg);

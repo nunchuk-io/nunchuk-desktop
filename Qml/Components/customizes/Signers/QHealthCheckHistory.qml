@@ -113,7 +113,8 @@ Item {
                             color: "#595959"
                             visible: modelData.type === "TRANSACTION"
                             onTextClicked: {
-                                if (modelData.type === "TRANSACTION") {
+                                if (modelData.type === "TRANSACTION"
+                                        && GroupWallet.dashboardInfo && GroupWallet.dashboardInfo.health) {
                                     GroupWallet.dashboardInfo.health.transactionSignedClicked(modelData.payload)
                                 }
                             }

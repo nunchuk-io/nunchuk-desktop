@@ -18,6 +18,7 @@
  *                                                                        *
  **************************************************************************/
 #include <QApplication>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QScreen>
 #include <QDir>
@@ -176,8 +177,11 @@ inline double calculateScaleFactor()
     // assumes that the default desktop resolution is 1080 (scale of 1)
     double scalePref = 1.0;
 
-    OurApplication* temp = new OurApplication(temp_argc, &temp_argv);
-    QScreen* primaryScr = OurApplication::primaryScreen();
+    // Probe app only needs QScreen: use QGuiApplication, not the full
+    // QApplication (skips widget/style/palette init — this used to boot the
+    // whole widgets stack twice per app start just to read screen geometry).
+    QGuiApplication* temp = new QGuiApplication(temp_argc, &temp_argv);
+    QScreen* primaryScr = QGuiApplication::primaryScreen();
     if (primaryScr) {
         QRect rect = primaryScr->availableGeometry();
         int screenHeight = rect.height();
@@ -219,9 +223,13 @@ int main(int argc, char* argv[])
 
     qputenv("QTWEBENGINE_REMOTE_DEBUGGING", "9222");
 
-    DBG_INFO << "Build version:" << QSslSocket::sslLibraryBuildVersionString();
-    DBG_INFO << "Runtime version:" << QSslSocket::sslLibraryVersionString();
-    DBG_INFO << "Support SSL:" << QSslSocket::supportsSsl();
+    // Application identity first (static setters, no app instance needed):
+    // every log from here on — including inside calculateScaleFactor() — makes
+    // the lazily-created log file resolve to the app-specific data directory.
+    QCoreApplication::setOrganizationName("nunchuk");
+    QCoreApplication::setOrganizationDomain("nunchuk.io");
+    QCoreApplication::setApplicationName("NunchukClient");
+    QCoreApplication::setApplicationVersion("2.6.3");
 
     double scale_factor = calculateScaleFactor();
     // static char  qt_arg[] = "";
@@ -234,11 +242,15 @@ int main(int argc, char* argv[])
     OurApplication appNunchuk(argc, argv);
 
     appNunchuk.setWindowIcon(QIcon(":/Images/Images/logo-app.svg"));
-    appNunchuk.setOrganizationName("nunchuk");
-    appNunchuk.setOrganizationDomain("nunchuk.io");
-    appNunchuk.setApplicationName("NunchukClient");
-    appNunchuk.setApplicationVersion("2.6.2");
     appNunchuk.setApplicationDisplayName(QString("%1 %2").arg("Nunchuk").arg(appNunchuk.applicationVersion()));
+
+    // Logged AFTER the application identity is set so the (lazily created) log
+    // file resolves to the app-specific directory; QSslSocket::supportsSsl()
+    // also force-loads OpenSSL, so keep it off the pre-QApplication path.
+    DBG_INFO << "Build version:" << QSslSocket::sslLibraryBuildVersionString();
+    DBG_INFO << "Runtime version:" << QSslSocket::sslLibraryVersionString();
+    DBG_INFO << "Support SSL:" << QSslSocket::supportsSsl();
+
     Draco::instance();
     AppModel::instance();
     QWalletManagement::instance();
@@ -252,8 +264,9 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef ENABLE_OUTLOG
-    loguru::add_file("logs/nunchuk.log", loguru::Append, loguru::Verbosity_MAX);
-    loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+    // loguru::add_file("logs/nunchuk.log", loguru::Append, loguru::Verbosity_MAX);
+    // loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+   loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
 #else
     loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
 #endif

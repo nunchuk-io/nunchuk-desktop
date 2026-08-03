@@ -34,6 +34,16 @@ QPopupOverlayScreen {
              } else {
                  return null
              }
+    onOpened: {
+        // BITBOX/TREZOR (and any other tag) have no dedicated firmware-check
+        // screen here, so content resolves to null. Without this guard the
+        // popup would open and show as a blank overlay with nothing inside.
+        // Skip straight through to nextClicked() instead.
+        if (!content) {
+            close()
+            nextClicked()
+        }
+    }
 
     Component {
         id : firmwareLedger

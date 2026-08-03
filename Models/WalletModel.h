@@ -56,6 +56,7 @@ class WalletListModel : public QAbstractListModel
     Q_PROPERTY(bool isContainsPremier   READ isContainsPremier                              NOTIFY containsGroupChanged)
     Q_PROPERTY(bool isContainsGroup     READ existGroupWallet                               NOTIFY containsGroupChanged)
     Q_PROPERTY(int  count               READ count                                          NOTIFY walletCountChanged)
+    Q_PROPERTY(int  archivedCount       READ archivedCount                                  NOTIFY walletCountChanged)
     Q_PROPERTY(int  unReadMessageCount  READ unReadMessageCount                             NOTIFY unReadMessageCountChanged)
     Q_PROPERTY(int  currentIndex        READ currentIndex           WRITE setCurrentIndex   NOTIFY currentIndexChanged)
     Q_PROPERTY(Wallet* currentWallet    READ currentWallet                                  NOTIFY currentIndexChanged)
@@ -70,6 +71,7 @@ public:
     static QVariant dataWallet(const QWalletPtr &data, int role);
     static QVariant useQml(const QWalletPtr &data);
     int count() const;
+    int archivedCount() const;
     int unReadMessageCount();
     Q_INVOKABLE  QVariant get(int row);
     void addWallet(const QWalletPtr &wallet);

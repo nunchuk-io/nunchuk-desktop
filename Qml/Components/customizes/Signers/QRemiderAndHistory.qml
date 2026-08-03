@@ -34,7 +34,14 @@ Item {
     width: 350
     height: 452
     property var walletInfo: AppModel.walletInfo
-    property var keyHealth: walletInfo.dashboardInfo.health.aKeyStatus
+    // Safe default matches the structure that QGroupWalletHealthCheck::aKeyStatus()
+    // returns when the health object exists but the key has not been checked yet.
+    // Using a default object (rather than null) avoids null-dereference errors at
+    // lines 55-56 (keyHealth.lastState) and 80 (keyHealth.reminder.frequency) which
+    // have no guard of their own.
+    property var keyHealth: (walletInfo.dashboardInfo && walletInfo.dashboardInfo.health)
+                            ? walletInfo.dashboardInfo.health.aKeyStatus
+                            : ({ "lastState": "NotCheckedYet", "reminder": null, "keyinfo": {}, "xfp": "" })
     signal reminderClicked()
     readonly property var repeats: [
         // {id: "FIVE_MINUTES",      frequency: STR.STR_QML_1326 },
@@ -75,7 +82,11 @@ Item {
             radius: 12
             height: 48
             width: _item.width
-            property var freq: repeats.find(function(e) { if (e.id === keyHealth.reminder.frequency) return true; else return false })
+            // Guard: reminder may be null (default state) even when keyHealth is a valid object.
+            // QML evaluates this binding even when _rect is invisible, so the guard is essential.
+            property var freq: (keyHealth && keyHealth.reminder)
+                               ? repeats.find(function(e) { if (e.id === keyHealth.reminder.frequency) return true; else return false })
+                               : undefined
             Row {
                 width: parent.width - 12*2
                 height: 24
@@ -91,7 +102,7 @@ Item {
                     source: "qrc:/Images/Images/scheduling-dark.svg"
                 }
                 QLato {
-                    text: _rect.freq.frequency
+                    text: _rect.freq ? _rect.freq.frequency : ""
                     font.pixelSize: 12
                     anchors.verticalCenter: parent.verticalCenter
                 }

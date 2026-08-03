@@ -133,7 +133,6 @@ QWalletDelegateBackground {
                 Item {
                     width: parent.width
                     height: 16
-                    visible: (isDashboard && walletRole !== "OBSERVER") && !isReplaced && !isSandboxWallet
                     QTextLink {
                         width: 56
                         height: 16
@@ -142,6 +141,7 @@ QWalletDelegateBackground {
                         color: "#FFFFFF"
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
+                        visible: (isDashboard && walletRole !== "OBSERVER") && !isReplaced && !isSandboxWallet
                         onTextClicked: {
                             dashboard()
                         }

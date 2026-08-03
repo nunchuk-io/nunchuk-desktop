@@ -912,7 +912,12 @@ Controller::Controller() {
 Controller::~Controller() {
     if(workerThread.isRunning()){
         workerThread.quit();
-        workerThread.wait(5);
+        // NOTE: QThread::wait() takes milliseconds. This previously passed 5
+        // (5ms), which is effectively "don't wait" - if the worker thread was
+        // still mid-task (e.g. blocked inside a device-scan/HWI call), the
+        // destructor proceeded without it actually finishing. Give it a real
+        // bound (5s) to unwind before continuing teardown.
+        workerThread.wait(5000);
     }
     this->disconnect();
 }

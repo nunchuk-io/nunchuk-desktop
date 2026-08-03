@@ -2251,9 +2251,36 @@ nunchuk::Transaction nunchukiface::ImportPassportTransaction(const std::string &
     return ret;
 }
 
+void nunchukiface::killHwiProcessAllInstance()
+{
+    // Best-effort mitigation for a shutdown-time race: if a worker thread is
+    // still blocked inside HWIService::RunCmd() (e.g. device enumerate/sign)
+    // when we reset the Nunchuk instance below, that thread ends up touching
+    // memory owned by the instance we just destroyed -> SIGSEGV (observed in
+    // crash reports on GetDevices()/Enumerate()). We cannot fix the missing
+    // synchronization inside libnunchuk's RunCmd() (out of scope for this
+    // codebase), but terminating any in-flight HWI child process here makes
+    // RunCmd()'s blocking wait() return almost immediately instead of
+    // whatever duration the external hwi command would otherwise take -
+    // shrinking the unsynchronized race window rather than eliminating it.
+    for (int i = 0; i < 2; ++i) {
+        if (nunchuk_instance_[i]) {
+            try {
+                nunchuk_instance_[i]->KillHwiProcess();
+            } catch (...) {
+                // Best-effort only; never let cleanup throw.
+            }
+        }
+    }
+}
+
 void nunchukiface::stopOneInstance()
 {
     if(nunchuk_instance_[nunchukMode()]){
+        try {
+            nunchuk_instance_[nunchukMode()]->KillHwiProcess();
+        } catch (...) {
+        }
         nunchuk_instance_[nunchukMode()].reset();
         nunchuk_instance_[nunchukMode()] = NULL;
     }
@@ -2261,6 +2288,7 @@ void nunchukiface::stopOneInstance()
 
 void nunchukiface::stopAllInstance()
 {
+    killHwiProcessAllInstance();
     nunchuk_instance_[LOCAL_MODE].reset();
     nunchuk_instance_[LOCAL_MODE] = NULL;
     nunchuk_instance_[ONLINE_MODE].reset();

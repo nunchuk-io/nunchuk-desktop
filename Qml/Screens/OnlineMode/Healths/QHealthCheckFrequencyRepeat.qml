@@ -42,8 +42,8 @@ QOnScreenContentTypeA {
     extraHeader: Item {}
     property var dashboardInfo: GroupWallet.dashboardInfo
     property string start_date: _calendarStart.dateString
-    property var reminderKeys: dashboardInfo.health.reminderKeys
-    property string option: dashboardInfo.health.editReminder
+    property var reminderKeys: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.reminderKeys : []
+    property string option: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.editReminder : ""
     readonly property var repeats: [
         {id: "",                  frequency: STR.STR_QML_1315 },
         // {id: "FIVE_MINUTES",      frequency: STR.STR_QML_1327 },
@@ -53,7 +53,7 @@ QOnScreenContentTypeA {
         {id: "YEARLY",            frequency: STR.STR_QML_1319 },
     ]
     onCloseClicked: {
-        dashboardInfo.health.resetScreen()
+        if (dashboardInfo && dashboardInfo.health) dashboardInfo.health.resetScreen()
         closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     }
     signal healthCheckBack(var obj)
@@ -94,7 +94,7 @@ QOnScreenContentTypeA {
                                 _calendarStart.dateString = ""
                             }
                             else {
-                                _calendarStart.dateString = dashboardInfo.health.dateToday()
+                                _calendarStart.dateString = (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.dateToday() : ""
                             }
                         }
                     }
@@ -112,7 +112,7 @@ QOnScreenContentTypeA {
                     boxWidth: 538
                     boxHeight: 48
                     textInputted: _calendarStart.dateString
-                    input.placeholderText: dashboardInfo.health.dateToday()
+                    input.placeholderText: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.dateToday() : ""
                     enabled: option != ""
                     onTextInputtedChanged: {
                         if(!_start_date.isValid){

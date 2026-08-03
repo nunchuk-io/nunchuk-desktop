@@ -1093,6 +1093,12 @@ void AppModel::setTransactionInfo(const QTransactionPtr& d)
 {
     if(d){
         m_transactionInfo = d;
+        // Recompute the group-cosigning state now that this transaction is
+        // the one actually being viewed (BaseTransaction::createGroupTransactionState()
+        // only performs its network call for the "currently viewed" transaction,
+        // so it must be re-triggered explicitly here).
+        m_transactionInfo->createGroupTransactionState();
+        emit m_transactionInfo->nunchukTransactionChanged();
     }
     else {
         m_transactionInfo = QTransactionPtr(new Transaction());

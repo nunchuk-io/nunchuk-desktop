@@ -3328,11 +3328,15 @@ bool bridge::nunchukRevealPreimage(const QString &wallet_id, const QString &tx_i
 void bridge::CreateAssignAvailableSigners(nunchuk::AddressType address_type,
     nunchuk::WalletType wallet_type,
     std::function<void(const QSingleSignerListModelPtr&)> callback) {
+    // Capture signer data on the main thread before dispatching to background thread.
+    // CreateSupportedSigners accesses Qt model objects (remoteSignerList, masterSignerList)
+    // which are not thread-safe. Accessing them from a pooled thread while the main thread
+    // modifies the list (e.g. after adding a new signer) causes a race on QSharedPointer
+    // refcounts and crashes at QtPrivate::RefCount::ref().
+    std::vector<nunchuk::SingleSigner> captured_signers = bridge::CreateSupportedSigners(address_type, wallet_type);
     runInConcurrent(
-        [address_type, wallet_type]() -> std::vector<nunchuk::SingleSigner> {
-            QWarningMessage msg;
-            std::vector<nunchuk::SingleSigner> signers = bridge::CreateSupportedSigners(address_type, wallet_type);
-            return signers;
+        [address_type, wallet_type, captured_signers]() -> std::vector<nunchuk::SingleSigner> {
+            return captured_signers;
         },
         [address_type, wallet_type, callback](std::vector<nunchuk::SingleSigner> signers) {
             QSingleSignerListModelPtr available_signers = QSingleSignerListModelPtr(new SingleSignerListModel());

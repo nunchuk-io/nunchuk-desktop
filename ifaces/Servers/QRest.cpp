@@ -27,7 +27,14 @@
 #define DRAGON_URL            "https://api.nunchuk.io/v1.1"
 #define DRAGON_TESTNET_URL    "https://api-testnet.nunchuk.io/v1.1"
 
+// Transfer timeout for all requests (Qt >= 5.15). The timer is restarted
+// whenever bytes are transferred, so slow-but-alive uploads/downloads are
+// not aborted; only stalled connections are. Without this, the QEventLoop
+// in the *Sync functions can block forever on a stalled connection.
+static constexpr int REST_TRANSFER_TIMEOUT_MS = 120 * 1000;
+
 QString    QRest::m_dracoToken      = "";
+QMutex     QRest::m_dracoTokenMutex;
 QByteArray QRest::m_machineUniqueId = QSysInfo::machineUniqueId();
 
 QRest::QRest()
@@ -50,11 +57,13 @@ QRest::~QRest()
 
 QString QRest::dracoToken()
 {
+    QMutexLocker locker(&m_dracoTokenMutex);
     return m_dracoToken;
 }
 
 void QRest::setDracoToken(const QString token)
 {
+    QMutexLocker locker(&m_dracoTokenMutex);
     m_dracoToken = token;
 }
 
@@ -65,8 +74,20 @@ QByteArray QRest::machineUniqueId()
 
 void QRest::setVerificationToken(const QString &token)
 {
-    m_verificationToken = token;
-    DBG_INFO << "Verification token set:" << m_verificationToken;
+    {
+        QMutexLocker locker(&m_verificationMutex);
+        m_verificationToken = token;
+    }
+    // Log outside the lock: keep the critical section memory-only (no I/O under lock).
+    DBG_INFO << "Verification token set:" << token;
+}
+
+QString QRest::takeVerificationToken()
+{
+    QMutexLocker locker(&m_verificationMutex);
+    QString token = m_verificationToken;
+    m_verificationToken.clear();
+    return token;
 }
 
 QString QRest::url() const
@@ -82,6 +103,7 @@ OurSharedPointer<QNetworkAccessManager> QRest::networkManager()
 {
     if (!m_networkManager.hasLocalData()) {
         OurSharedPointer<QNetworkAccessManager> ptr(new QNetworkAccessManager);
+        ptr->setTransferTimeout(REST_TRANSFER_TIMEOUT_MS);
         m_networkManager.setLocalData(ptr);
     }
     return m_networkManager.localData();
@@ -101,8 +123,7 @@ QJsonObject QRest::postSync(const QString &cmd, QJsonObject data, int& reply_cod
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -172,8 +193,7 @@ QJsonObject QRest::postSync(const QString &cmd, QMap<QString, QString> paramsQue
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -236,8 +256,7 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QVariant>
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -334,8 +353,7 @@ QJsonObject QRest::postMultiPartSync(const QString &cmd, QMap<QString, QString> 
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -510,8 +528,7 @@ QJsonObject QRest::doPostSync(const QString &cmd, QJsonObject data, int &reply_c
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -581,8 +598,7 @@ QJsonObject QRest::doPostSync(const QString &cmd, QMap<QString, QString> paramsQ
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -645,8 +661,7 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QVarian
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -743,8 +758,7 @@ QJsonObject QRest::doPostMultiPartSync(const QString &cmd, QMap<QString, QString
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -845,8 +859,7 @@ QJsonObject QRest::doGetSync(const QString &cmd, QJsonObject paramsQuery, int &r
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -917,8 +930,7 @@ QJsonObject QRest::doGetSync(const QString &cmd, QMap<QString, QString> paramsHe
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -985,8 +997,7 @@ QJsonObject QRest::doPutSync(const QString &cmd, QJsonObject data, int &reply_co
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -1057,8 +1068,7 @@ QJsonObject QRest::doPutSync(const QString &cmd, QMap<QString, QString> paramsQu
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -1124,8 +1134,7 @@ QJsonObject QRest::doDeleteSync(const QString &cmd, QJsonObject data, int &reply
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }
@@ -1197,8 +1206,7 @@ QJsonObject QRest::doDeleteSync(const QString &cmd, QMap<QString, QString> param
     requester_.setRawHeader("x-nc-app-version", qApp->applicationVersion().toUtf8());
     requester_.setRawHeader("x-nc-device-class", "Desktop");
     requester_.setRawHeader("x-nc-os-name", QSysInfo::productType().toUtf8());
-    QString token = m_verificationToken;
-    m_verificationToken.clear();
+    QString token = takeVerificationToken();
     if (token != "") {
         requester_.setRawHeader("X-Verification-Token", token.toUtf8());
     }

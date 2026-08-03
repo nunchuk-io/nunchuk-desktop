@@ -187,10 +187,15 @@ public:
 
     inline QOutlog &operator<<(const QByteArray &t)
     {
-        for(int i = 0; i < t.size(); i++) {
-            mStream << QString("0x%1 ").arg((uchar)t.at(i), 2, 16, QChar('0'));
+        // Single-pass hex (was: one QString::arg() + allocation PER BYTE).
+        // Capped so pathological inputs (e.g. large HTTP bodies) stay bounded.
+        // NOTE format change: "0x41 0x42" -> "41 42" (lowercase, no 0x prefix).
+        constexpr int kMaxDumpBytes = 256;
+        mStream << QString::fromLatin1(t.left(kMaxDumpBytes).toHex(' '));
+        if (t.size() > kMaxDumpBytes) {
+            mStream << " ...(" << t.size() << " bytes total)";
         }
-        mStream  << ' ';
+        mStream << ' ';
         return *this;
     }
 
@@ -392,25 +397,20 @@ struct OurDeleterWithDeleteLater
         if constexpr (std::is_base_of_v<QObject, T>) {
             QObject* obj = ptr;
 
-            if (!obj->thread() || obj->thread() == QThread::currentThread()) {
-                obj->deleteLater();
+            // Threadless object (its thread already finished) or app teardown:
+            // a deferred delete would never be dispatched, so delete directly.
+            if (!obj->thread() || !QCoreApplication::instance()) {
+                delete obj;
                 return;
             }
 
-            if (QApplication::instance()) {
-                QMetaObject::invokeMethod(
-                    obj,
-                    [obj]() {
-                        if (obj) {
-                            obj->deleteLater();
-                        }
-                    },
-                    Qt::QueuedConnection
-                    );
-                return;
-            }
-
-            delete obj;
+            // deleteLater() is documented thread-safe from ANY calling thread:
+            // it posts a DeferredDelete event to the queue of the thread the
+            // object lives in. No manual cross-thread marshaling needed (the
+            // previous queued invokeMethod added a failure mode: metacall
+            // events to a thread without a running event loop are discarded
+            // at thread teardown -> destructor never ran -> permanent leak).
+            obj->deleteLater();
         } else {
             delete ptr;
         }

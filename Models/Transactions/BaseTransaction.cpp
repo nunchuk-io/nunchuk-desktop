@@ -231,7 +231,6 @@ QString BaseTransaction::memo() const {
 }
 
 void BaseTransaction::setMemo(const QString &memo) {
-    DBG_INFO << memo;
     if (!qUtils::strCompare(memo, QString::fromStdString(m_transaction.get_memo()))) {
         m_transaction.set_memo(memo.toStdString());
         bridge::nunchukUpdateTransactionMemo(walletId(), txid(), memo);
@@ -967,7 +966,6 @@ nunchuk::Transaction BaseTransaction::nunchukTransaction() const {
 }
 
 void BaseTransaction::setNunchukTransaction(const nunchuk::Transaction &tx) {
-    DBG_INFO << "TAPROOT-TEST";
     m_transaction = tx;
     createDestinationList();
     if (!isDummyTx()) {
@@ -1130,8 +1128,29 @@ QString BaseTransaction::groupTransactionState()
 }
 
 void BaseTransaction::createGroupTransactionState() {
-    DBG_INFO << "txstatus: " << static_cast<int>(status());
-    if (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES || status() == (int)nunchuk::TransactionStatus::PENDING_NONCE)
+    // Reset up front (not after the if-block): previously this line ran
+    // unconditionally at the end of the function and wiped out whatever was
+    // just computed below, so the cosigning/blocked message and the
+    // "Co-sign at ..." countdown never actually reached the UI.
+    m_platformKeyMessage = "";
+
+    const bool isPending = (status() == (int)nunchuk::TransactionStatus::PENDING_SIGNATURES ||
+                            status() == (int)nunchuk::TransactionStatus::PENDING_NONCE);
+    // GetGroupTransactionState() performs a synchronous HTTP call (see
+    // GroupService::GetGroupTransactionState). This function is invoked for
+    // every transaction built via BaseTransaction(tx)/setNunchukTransaction()
+    // (e.g. bulk transaction-history refresh on wallet selection), but the
+    // result (m_platformKeyMessage / groupTransactionState) is only ever
+    // consumed by the transaction detail screen (QSendTransaction.qml via
+    // AppModel.transactionInfo) - confirmed the Home transaction list does
+    // not read this field. Only pay for the network call when this is
+    // actually the transaction currently open in that screen; AppModel::
+    // setTransactionInfo() re-invokes this once for whichever transaction
+    // becomes current, so freshness there is preserved.
+    const bool isCurrentlyViewed = AppModel::instance()->transactionInfo() &&
+        qUtils::strCompare(txid(), AppModel::instance()->transactionInfo()->txid());
+
+    if (isPending && isCurrentlyViewed)
     {
         QWarningMessage msg;
         nunchuk::GroupTransactionState group_state = bridge::GetGroupTransactionState(walletId(), txid(), msg);
@@ -1148,5 +1167,4 @@ void BaseTransaction::createGroupTransactionState() {
             }
         }
     }
-    m_platformKeyMessage = "";
 }

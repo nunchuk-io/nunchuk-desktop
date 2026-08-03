@@ -805,6 +805,11 @@ bool CoinWallet::RequestCoinScreen(const QVariant &msg)
                 // int  feeRate                = draftTransactionInput.value("feeRate").toDouble()*1000; // Convert sats/Byte to sats/kB
                 // bool manualFee              = draftTransactionInput.value("manualFee").toBool();
                 // bool manualOutput           = draftTransactionInput.value("manualOutput").toBool();
+                // Coin set is now user-fixed for the rest of this transaction's
+                // prep session — subsequent re-drafts (e.g. custom fee edits on
+                // QCreateTransaction.qml, which always sends manualOutput:false)
+                // must not fall back to the wallet-wide coin pool.
+                wallet->setFixedInputCoins(true);
                 wallet->UpdateDraftTransaction(draft_data);
                 QEventProcessor::instance()->sendEvent(E::EVT_CONSOLIDATE_COINS_MERGE_MAKE_TRANSACTION_REQUEST, {});
                 AppModel::instance()->showToast(0, "Coin selection updated", EWARNING::WarningType::SUCCESS_MSG);
@@ -1013,6 +1018,16 @@ void CoinWallet::requestSyncSelectCoinForMakeTransaction(const QVariant &msg)
 void CoinWallet::setReuse(bool newReuse)
 {
     m_reuse = newReuse;
+}
+
+bool CoinWallet::fixedInputCoins() const
+{
+    return m_fixedInputCoins;
+}
+
+void CoinWallet::setFixedInputCoins(bool fixed)
+{
+    m_fixedInputCoins = fixed;
 }
 
 void CoinWallet::RequestSyncSelectCoinForMakeTransaction(const QVariant &msg)
@@ -1486,7 +1501,27 @@ bool CoinWallet::UpdateDraftTransaction(const QVariant &msg)
     bool    use_script_path = false;
     QUTXOListModelPtr inputs = NULL;
     if (auto trans = AppModel::instance()->transactionInfo()){
-        inputs          = trans->GetUtxoListSelected();
+        if (m_fixedInputCoins) {
+            // Coin set was fixed earlier in this session (e.g. "select coin from
+            // coin list" via use-selected-coins-create-transaction). Re-derive
+            // from the transaction's ACTUAL current inputs instead of
+            // GetUtxoListSelected(), which rebuilds from every unlocked UTXO in
+            // the wallet and would silently re-pull coins already committed to
+            // other in-progress unsigned transactions (they aren't locked just
+            // by being drafted).
+            QUTXOListModelPtr fixedInputs = QUTXOListModelPtr(new QUTXOListModel(trans->walletId()));
+            if (auto input_coins = trans->inputCoins()) {
+                for (int i = 0; i < input_coins->rowCount(); i++) {
+                    QUTXOPtr it = input_coins->getUTXOByIndex(i);
+                    if (it.data()) {
+                        fixedInputs->addUTXO(it.data()->getUnspentOutput());
+                    }
+                }
+            }
+            inputs = fixedInputs;
+        } else {
+            inputs = trans->GetUtxoListSelected();
+        }
         memo            = trans->memo();
         use_script_path = trans->useScriptPath();
     }

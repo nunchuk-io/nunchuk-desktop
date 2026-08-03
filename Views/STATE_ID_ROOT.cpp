@@ -96,13 +96,23 @@ void EVT_STARTING_APPLICATION_ONLINEMODE_HANDLER(QVariant msg) {
         timeoutHandler(1000, []() { emit CLIENT_INSTANCE->contactsChanged(); });
     } else {
         if (CLIENT_INSTANCE->checkStayLoggedIn()) {
-            Draco::instance()->getMe();
-            if (Draco::instance()->Uid() == CLIENT_INSTANCE->getMe().email) {
-                bridge::nunchukSetCurrentMode(ONLINE_MODE);
-                QEventProcessor::instance()->notifySendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
-            } else {
-                QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
-            }
+            // Boot-time: Draco::getMe() is a synchronous REST round-trip. Run it
+            // off the GUI thread so the first frame can render immediately; the
+            // follow-up event is sent from the done-callback (GUI thread).
+            runInThread(
+                AppModel::instance(),
+                []() -> bool {
+                    Draco::instance()->getMe();
+                    return Draco::instance()->Uid() == CLIENT_INSTANCE->getMe().email;
+                },
+                [](bool sameAccount) {
+                    if (sameAccount) {
+                        bridge::nunchukSetCurrentMode(ONLINE_MODE);
+                        QEventProcessor::instance()->notifySendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
+                    } else {
+                        QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
+                    }
+                });
         } else {
             QEventProcessor::instance()->sendEvent(E::EVT_LOGIN_MATRIX_REQUEST);
             if ("CreateAccount" == msg.toString()) {

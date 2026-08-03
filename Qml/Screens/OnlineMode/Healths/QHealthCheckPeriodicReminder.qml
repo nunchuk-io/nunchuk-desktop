@@ -58,7 +58,7 @@ QOnScreenContentTypeB {
                 id: masterList
                 width: parent.width
                 height: parent.height - 24 - 20
-                model: dashboardInfo.health.healthStatuses
+                model: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.healthStatuses : []
                 interactive: masterList.count > 3
                 clip: true
                 ScrollBar.vertical: ScrollBar { active: true }
@@ -68,7 +68,7 @@ QOnScreenContentTypeB {
                     height: visible ? 122 : 0
                     visible: modelData.keyinfo.type !== "SERVER"
                     onNotifyEdited: {
-                        dashboardInfo.health.editReminder = modelData.reminder.frequency
+                        if (dashboardInfo && dashboardInfo.health) dashboardInfo.health.editReminder = modelData.reminder.frequency
                         var check = {
                             type: "health-check-add-reminders-edit",
                             xfp: modelData.keyinfo.xfp
@@ -93,7 +93,7 @@ QOnScreenContentTypeB {
         label.text: STR.STR_QML_1312
         label.font.pixelSize: 16
         type: eTypeE
-        enabled: !dashboardInfo.health.isAllReminder
+        enabled: (dashboardInfo && dashboardInfo.health) ? !dashboardInfo.health.isAllReminder : false
         onButtonClicked: {
             var check = {
                 type: "health-check-add-reminders"

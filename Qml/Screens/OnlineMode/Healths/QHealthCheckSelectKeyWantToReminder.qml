@@ -43,7 +43,7 @@ QOnScreenContentTypeB {
     onCloseClicked: closeTo(NUNCHUCKTYPE.CURRENT_TAB)
     property var dashboardInfo: GroupWallet.dashboardInfo
     property var listChecked: {
-        var length = dashboardInfo.health.healthStatuses.length
+        var length = (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.healthStatuses.length : 0
         var ls = []
         for (var i = 0; i < length; i++) {
             ls.push(false)
@@ -51,7 +51,7 @@ QOnScreenContentTypeB {
         return ls
     }
     property var listXfp: {
-        var length = dashboardInfo.health.healthStatuses.length
+        var length = (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.healthStatuses.length : 0
         var ls = []
         for (var i = 0; i < length; i++) {
             ls.push("")
@@ -75,7 +75,7 @@ QOnScreenContentTypeB {
                 id: masterList
                 width: parent.width
                 height: parent.height - 24 - 20
-                model: dashboardInfo.health.healthStatuses
+                model: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.healthStatuses : []
                 interactive: masterList.count > 3
                 clip: true
                 ScrollBar.vertical: ScrollBar { active: true }

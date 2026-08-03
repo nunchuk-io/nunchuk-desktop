@@ -135,6 +135,36 @@ bool MiniscriptWallet::enterCustomMiniscript(const QString &userInput) {
         DBG_INFO << "MiniscriptWallet::enterCustomMiniscript: ERROR:" << error;
         return false; // Invalid input
     }
+    // For non-Taproot templates, reject if any key node is a signer descriptor (xpub inline).
+    // ParseContext in libnunchuk accepts any string <= 200 chars as a key name, so
+    // IsValidMiniscriptTemplate returns true for descriptors with embedded xpubs.
+    // Such templates have no signer-assignment UI (m_signersMiniscript stays empty)
+    // and would crash in CreateMiniscriptWallet with a map::at exception.
+    // Taproot is exempt: its keypath entries are legitimate xpub descriptors by design.
+    if (address_type != nunchuk::AddressType::TAPROOT) {
+        std::vector<std::string> keypaths;
+        nunchuk::ScriptNode script_node = qUtils::GetScriptNode(tmpl, keypaths);
+        std::function<bool(const nunchuk::ScriptNode &)> hasXpubKeys;
+        hasXpubKeys = [&](const nunchuk::ScriptNode &node) -> bool {
+            for (const auto &k : node.get_keys()) {
+                QWarningMessage msg;
+                qUtils::ParseSignerString(QString::fromStdString(k), msg);
+                if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) return true;
+            }
+            for (const auto &sub : node.get_subs()) {
+                if (hasXpubKeys(sub)) return true;
+            }
+            return false;
+        };
+        if (hasXpubKeys(script_node)) {
+            AppModel::instance()->showToast(-1,
+                "Format not supported: template contains inline xpub descriptors. "
+                "Please enter a policy expression or a key placeholder template instead.",
+                EWARNING::WarningType::ERROR_MSG);
+            DBG_INFO << "MiniscriptWallet::enterCustomMiniscript: xpub inline keys detected, rejected";
+            return false;
+        }
+    }
     reformatMiniscript(QString::fromStdString(tmpl));
     return true;
 }
@@ -662,6 +692,27 @@ std::map<std::string, nunchuk::SingleSigner> MiniscriptWallet::signersCreateWall
             signers[it.key().toStdString()] = (it.value())->originSingleSigner();
         }
     }
+    // Safety net: if the template uses inline xpub keys that are absent from m_signersMiniscript
+    // (e.g. ParseContext accepts any string <= 200 chars as a key name in IsValidMiniscriptTemplate),
+    // parse the signer directly from the tree keyStr to avoid a map::at crash in libnunchuk.
+    // enoughSigners() should already block this path; this is a second line of defence.
+    auto addFromArray = [&](const QJsonArray &arr) {
+        for (const auto &js : arr) {
+            QJsonObject jo = js.toObject();
+            QString key = jo.value("key").toString();
+            QString keyStr = jo.value("keyStr").toString();
+            if (key.isEmpty() || keyStr.isEmpty()) continue;
+            if (signers.count(key.toStdString())) continue;
+            QWarningMessage msg;
+            nunchuk::SingleSigner signer = qUtils::ParseSignerString(keyStr, msg);
+            if ((int)EWARNING::WarningType::NONE_MSG == msg.type()) {
+                DBG_INFO << "signersCreateWallet: fallback parse xpub key:" << key;
+                signers[key.toStdString()] = signer;
+            }
+        }
+    };
+    addFromArray(m_treeMiniscript);
+    addFromArray(m_keypaths);
     return signers;
 }
 
@@ -689,10 +740,16 @@ bool MiniscriptWallet::enoughSigners() const {
     };
     createMap(m_keypaths, keyMapAdded);
     createMap(m_treeMiniscript, keyMapAdded);
-    auto keys = keyMapAdded.keys();
     bool allKeyOK = true;
     for (auto it = keyMapAdded.constBegin(); it != keyMapAdded.constEnd(); ++it) {
         if (it.value() != 1) {
+            allKeyOK = false;
+        }
+        // Every key must be explicitly assigned via m_signersMiniscript.
+        // This prevents an xpub-inline template (where keyStr is auto-parsed from the
+        // descriptor but m_signersMiniscript is empty) from bypassing this gate and
+        // causing a map::at crash in CreateMiniscriptWallet with an empty signers map.
+        if (!m_signersMiniscript.contains(it.key())) {
             allKeyOK = false;
         }
     }

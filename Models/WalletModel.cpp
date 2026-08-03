@@ -216,6 +216,15 @@ int WalletListModel::count() const
     return m_data.count();
 }
 
+int WalletListModel::archivedCount() const
+{
+    int n = 0;
+    for (const auto &w : m_data) {
+        if (w && w->isArchived()) ++n;
+    }
+    return n;
+}
+
 int WalletListModel::unReadMessageCount()
 {
     int count = 0;
@@ -311,6 +320,8 @@ void WalletListModel::dataUpdated(const QString &walletId)
     for (int i = 0; i < m_data.count(); i++) {
         if(m_data.at(i).data() && qUtils::strCompare(walletId, m_data.at(i)->walletId())){
             emit dataChanged(index(i),index(i));
+            // archivedCount is derived from wallet data, so notify QML bindings to re-read it.
+            emit walletCountChanged();
         }
     }
 }

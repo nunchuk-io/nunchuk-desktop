@@ -26,7 +26,9 @@
 
 #ifdef ENABLE_OUTLOG
 const char *debugForDev = "debugForDev";
-static const QString logfilePath = []() -> QString {
+
+static QString computeLogfilePath()
+{
     QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(logDir);
 
@@ -36,9 +38,19 @@ static const QString logfilePath = []() -> QString {
     bool debugFileExists = QFileInfo(QString::fromUtf8(debugForDev)).exists();
 #endif
     return debugFileExists ? "logfile_nunchuck-client-qt.log" : logDir + "/logfile_nunchuck-client-qt.log";
-}();
+}
 
-static LogWriteToFile g_writer(logfilePath);
+// Lazy Meyers singleton (thread-safe init per C++11 magic statics).
+// Constructed on the FIRST log call instead of at static-init time, so:
+//  - QStandardPaths resolves the correct app-specific directory
+//    (application/organization name is already set by then), and
+//  - a DBG_* call from another TU's static constructor can no longer touch
+//    the writer before it is constructed (static-init-order fiasco).
+static LogWriteToFile& logWriter()
+{
+    static LogWriteToFile writer(computeLogfilePath());
+    return writer;
+}
 #endif
 
 QOutlog::QOutlog()
@@ -54,7 +66,7 @@ QOutlog::~QOutlog()
     }
     if (!mLogString.contains("QCoreApplication")) {
         std::cout << mLogString.toStdString() << std::endl;
-        g_writer.writeLog(mLogString);
+        logWriter().writeLog(mLogString);
     }
 #endif
 }
@@ -136,12 +148,14 @@ LogVerbose g_verbose;
 
 void LogWriteToFile::writeLog(const QString &log)
 {
-    mutex.lock();
+    // RAII lock: if the stream write throws (e.g. bad_alloc), the mutex is
+    // still released; the old manual lock()/unlock() would leave it locked
+    // forever and deadlock every subsequent logging thread.
+    QMutexLocker locker(&mutex);
     QTextStream st(logfile.data());
     st.setCodec("UTF-8");
     st << log << endl;
     st.flush();
-    mutex.unlock();
 }
 
 LogWriteToFile::LogWriteToFile(const QString &file)

@@ -467,6 +467,7 @@ public:
                                                    QWarningMessage& msg);
     void stopOneInstance();
     void stopAllInstance();
+    void killHwiProcessAllInstance();
 
     bool UpdateTransactionSchedule(const std::string& wallet_id,
                                    const std::string& tx_id,

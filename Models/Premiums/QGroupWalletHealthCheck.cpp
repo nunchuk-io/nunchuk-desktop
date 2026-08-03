@@ -160,11 +160,14 @@ bool QGroupWalletHealthCheck::HealthCheckPendingForTx(const QString &dummy_trans
             QJsonObject payload = dummy_transaction.value("payload").toObject();
             QJsonObject new_data = payload.value("new_data").toObject();
             QString distribution_method = new_data.value("distribution_method").toString();
-            if (!distribution_method.isEmpty()) {
-                if (callback) {
-                    bool is_phrase_rollout = qUtils::strCompare(distribution_method, "CUSTOMIZE");
-                    callback(is_phrase_rollout);
-                }
+            // Always invoke the callback so callers (e.g. onViewClicked) can proceed to
+            // navigation even when distribution_method is absent.  When it is absent the
+            // dummy transaction is not a phrase-rollout variant, so callback(false) is
+            // semantically correct: "not a phrase rollout → fall back to markRead".
+            if (callback) {
+                bool is_phrase_rollout = !distribution_method.isEmpty() &&
+                                         qUtils::strCompare(distribution_method, "CUSTOMIZE");
+                callback(is_phrase_rollout);
             }
         }
         return ret;
@@ -368,7 +371,12 @@ bool QGroupWalletHealthCheck::CancelHealthCheckPending() {
 }
 
 QVariantList QGroupWalletHealthCheck::healthStatuses() const {
-    if (qUtils::strCompare(dashBoardPtr()->myRole(), "FACILITATOR_ADMIN")) {
+    // Guard dashBoardPtr() — it can return null after QWalletManagement::clear() if
+    // this object is kept alive only by QGroupDashboard::m_healthRef while mActivedWallets
+    // has already been cleared.  Dereferencing a null shared pointer crashes unconditionally.
+    auto board = dashBoardPtr();
+    if (!board) return {};
+    if (qUtils::strCompare(board->myRole(), "FACILITATOR_ADMIN")) {
         return m_healthStatuses.toVariantList();
     } else {
         QJsonArray list;

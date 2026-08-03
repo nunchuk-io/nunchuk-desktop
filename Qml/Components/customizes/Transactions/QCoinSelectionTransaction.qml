@@ -62,6 +62,20 @@ Column {
                 verticalCenter: parent.verticalCenter
             }
             onTextClicked: {
+                // QCreateTransaction.qml gets destroyed and recreated when we
+                // come back from coin selection (see QGlobal.qml notes on
+                // txManualFeeReturnPending for why onsRequester() can't be
+                // used to detect this). Set our own flag right here, before
+                // navigating away, so the recreated screen knows to restore
+                // its fee-customization panel instead of resetting it.
+                GlobalData.txManualFeeReturnPending = true
+                GlobalData.txManualFeeContextKey = AppModel.walletInfo.walletId + "|" + transactionInfo.destination
+                // TEMP DEBUG - remove after root-causing the fee-panel reset bug
+                console.log("[FEEDBG] Customize clicked - pending=" + GlobalData.txManualFeeReturnPending
+                             + " key=" + GlobalData.txManualFeeContextKey
+                             + " switchOn=" + GlobalData.txManualFeeSettingOpen
+                             + " checked=" + GlobalData.txManualFeeChecked
+                             + " rate=" + GlobalData.txManualFeeRateText)
                 var input = {
                     type: "select-coin-for-create-transaction"
                 }

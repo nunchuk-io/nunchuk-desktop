@@ -255,33 +255,26 @@ void Draco::exchangeRates(const QString &currency)
 void Draco::feeRates()
 {
     QFunctionTime f(__PRETTY_FUNCTION__);
-    QUrl url;
+    QString cmd;
     switch (AppSetting::instance()->primaryServer()) {
     case (int)AppSetting::Chain::TESTNET:
-        url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/testnet/recommended");
+        cmd = "https://api.nunchuk.io/v1.1/fees/testnet/recommended";
         break;
     case (int)AppSetting::Chain::SIGNET:
-        url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/signet/recommended");
+        cmd = "https://api.nunchuk.io/v1.1/fees/signet/recommended";
         break;
     default:
-        url = QUrl::fromUserInput("https://api.nunchuk.io/v1.1/fees/recommended");
+        cmd = "https://api.nunchuk.io/v1.1/fees/recommended";
         break;
     }
-    QNetworkRequest requester_(url);
-    requester_.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    OurSharedPointer<QNetworkAccessManager> manager = m_rest->networkManager();
-    if (manager.isNull()) {
-        return;
-    }
-    QNetworkReplyPtr reply(manager->get(requester_));
-    QEventLoop eventLoop;
-    QObject::connect(reply.get(),   &QNetworkReply::finished,   &eventLoop, &QEventLoop::quit);
-    eventLoop.exec();
-    if (reply->error() == QNetworkReply::NoError) {
-        QByteArray response_data = reply->readAll();
-        QJsonDocument json = QJsonDocument::fromJson(response_data);
-        QJsonObject jsonObj = json.object();
+    // Route through QRest::getSync like every other Draco endpoint, instead of
+    // building the QNetworkRequest by hand — this is what actually attaches
+    // the Authorization/device/app-version headers (see QRest::doGetSync).
+    int     reply_code = -1;
+    QString reply_msg  = "";
+    QJsonObject jsonObj = m_rest->getSync(cmd, QJsonObject(), reply_code, reply_msg);
+    if (reply_code == DRACO_CODE::SUCCESSFULL) {
+        DBG_INFO << jsonObj;
         AppModel::instance()->setFastestFee(jsonObj["fastestFee"].toInt());
         AppModel::instance()->setHalfHourFee(jsonObj["halfHourFee"].toInt());
         AppModel::instance()->setHourFee(jsonObj["hourFee"].toInt());

@@ -58,7 +58,7 @@ QOnScreenContentTypeB {
                 id: masterList
                 width: parent.width
                 height: parent.height - 24 - 20
-                model: dashboardInfo.health.healthStatuses
+                model: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health.healthStatuses : []
                 interactive: masterList.count > 3
                 clip: true
                 ScrollBar.vertical: ScrollBar { active: true }
@@ -90,7 +90,7 @@ QOnScreenContentTypeB {
                         QMLHandle.sendEvent(EVT.EVT_KEY_HEALTH_CHECK_STATUS_ENTER, check)
                     }
                     onViewHistoryClicked: {
-                        dashboardInfo.health.viewHistoryClicked(modelData.xfp)
+                        if (dashboardInfo && dashboardInfo.health) dashboardInfo.health.viewHistoryClicked(modelData.xfp)
                     }
                 }
             }
@@ -113,7 +113,7 @@ QOnScreenContentTypeB {
         type: eTypeB
         enabled: !AppModel.walletInfo.isLocked
         onButtonClicked: {
-            dashboardInfo.health.editReminder = ""
+            if (dashboardInfo && dashboardInfo.health) dashboardInfo.health.editReminder = ""
             var check = {
                 type: "health-check-reminders"
             }
@@ -121,7 +121,7 @@ QOnScreenContentTypeB {
         }
     }
     Connections {
-        target: dashboardInfo.health
+        target: (dashboardInfo && dashboardInfo.health) ? dashboardInfo.health : null
         onRequestHealthCheckSuccess: {
             var _continue = {
                 type: "health-check-request-sent"

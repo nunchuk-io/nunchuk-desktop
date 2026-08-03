@@ -330,6 +330,11 @@ class QGroupDashboard : public QBasePremium {
     QJsonArray m_editMembers;
     QTimer *mTimer{nullptr};
     QJsonObject m_keyReplacementInfo;
+    // Strong reference keeping the health-check object alive for as long as
+    // this dashboard is alive.  Without this, QWalletManagement::clear() can
+    // free the QGroupWalletHealthCheck while QML still holds the raw pointer
+    // returned by health(), causing a use-after-free crash in QQmlData::wasDeleted.
+    mutable QGroupWalletHealthCheckPtr m_healthRef;
 };
 void registerAddKey();
 #endif // QGROUPDASHBOARD_H

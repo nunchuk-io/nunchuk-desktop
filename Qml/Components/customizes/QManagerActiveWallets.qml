@@ -47,7 +47,17 @@ Item {
                 left: parent.left
                 right: parent.right
             }
-            height: content.height
+            // Archived wallets are hidden from the active list.
+            // height=0 is sufficient: a zero-height item is invisible and receives no
+            // mouse/drag events. Avoid visible: false because it calls setVisible() which
+            // triggers removeGrabber() during teardown and can crash against already-destroyed
+            // Qt static data (QQuickPointerDevice hash).
+            // clip: true is required alongside height=0: "content" below has a fixed,
+            // non-zero height (walletListdelegate.height) independent of dragArea's own
+            // height, so without clipping it still paints at dragArea's zero-height
+            // position and visually overlaps the neighboring list item.
+            clip: true
+            height: (model.wallet_isArchived || model.wallet_isReplaced) ? 0 : content.height
             drag.target: held ? content : undefined
             drag.axis: Drag.YAxis
             onPressAndHold: {

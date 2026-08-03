@@ -403,6 +403,11 @@ void QGroupDashboard::GetWalletInfo() {
                 if (info->serverKeyPtr()) {
                     info->serverKeyPtr()->UpdateFromWallet(wallet);
                 }
+                // Auto-archive replaced wallets so they move to the archived list
+                // instead of remaining visible in the active wallet list.
+                if (safeThis->isReplaced() && !info->isArchived()) {
+                    info->setArchived(true);
+                }
             }
         });
 }
@@ -1588,7 +1593,19 @@ QJsonObject QGroupDashboard::GetSigner(const QString &xfp) const {
 }
 
 QVariant QGroupDashboard::health() const {
-    return QVariant::fromValue(healthPtr().data());
+    // Refresh the strong reference each time health() is called.
+    // This ensures the QGroupWalletHealthCheck object cannot be freed by
+    // QWalletManagement::clear() while this QGroupDashboard (which may be kept
+    // alive via QGroupWallets::mDashboard) still exists and QML still holds the
+    // raw pointer returned below.  Without m_healthRef, clear() drops the only
+    // QSharedPointer, the object is deleted, and QML's QObjectWrapper becomes a
+    // dangling pointer → crash at QQmlData::wasDeleted on the next binding
+    // re-evaluation triggered by groupInfoChanged().
+    m_healthRef = healthPtr();
+    // Return QObject* null explicitly (not invalid QVariant) so QML sees JS null
+    // rather than undefined — preserving the same falsy semantics as before while
+    // all guards use truthiness checks.
+    return QVariant::fromValue<QObject*>(m_healthRef ? m_healthRef.data() : nullptr);
 }
 
 void QGroupDashboard::setAlertId(const QString &alertId) {
