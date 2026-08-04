@@ -58,16 +58,24 @@ Item {
         id:_checkforupdate
         z:100
     }
-    function funcUpdateAvailable(title,message,doItLaterCTALbl) {
+    function funcUpdateAvailable(title,message,doItLaterCTALbl,downloadUrl,primaryCTALbl) {
         _checkforupdate.title = title
         _checkforupdate.contentText = message
         _checkforupdate.btnLabel = doItLaterCTALbl
+        _checkforupdate.downloadUrl = downloadUrl
+        // _checkforupdate is a single reused popup instance, so always set
+        // primaryCTALabel explicitly (falling back to "Learn more" if the
+        // backend omits primaryCTA) instead of skipping the assignment -
+        // skipping would leave a stale value from a previous call.
+        _checkforupdate.primaryCTALabel = (primaryCTALbl !== "") ? primaryCTALbl : STR.STR_QML_2226
         _checkforupdate.open()
     }
-    function funcUpdateRequired(title,message,doItLaterCTALbl) {
+    function funcUpdateRequired(title,message,doItLaterCTALbl,downloadUrl,primaryCTALbl) {
         _checkforupdate.title = title
         _checkforupdate.contentText = message
         _checkforupdate.btnLabel = doItLaterCTALbl
+        _checkforupdate.downloadUrl = downloadUrl
+        if (primaryCTALbl !== "") _checkforupdate.primaryCTALabel = primaryCTALbl
         _checkforupdate.open()
     }
 

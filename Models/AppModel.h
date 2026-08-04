@@ -85,6 +85,20 @@ public:
     AppModel(AppModel &other) = delete;
     AppModel(AppModel const &other) = delete;
     void operator=(const AppModel &other) = delete;
+
+    // Explicitly release wallet/model data (and thus the QObjects they hold,
+    // e.g. Wallet + its child list models) while QGuiApplication/QQuickView
+    // are still alive. AppModel is a function-local-static singleton, so its
+    // destructor otherwise only runs during process exit()'s static-teardown
+    // cascade - by then QGuiApplication/QQuickView (locals of main()) are
+    // already destroyed, and any QML binding that reacts to this data being
+    // destroyed (e.g. a "visible:" binding) ends up touching already-torn-down
+    // QtQuick internals, which crashes. Call this once from main(), right
+    // after appNunchuk.exec() returns and before main() returns, so this
+    // teardown happens at a safe, deterministic point instead. Safe to call
+    // more than once (QSharedPointer::clear() is idempotent); the destructor
+    // still calls the same cleanup as a fallback.
+    void shutdownCleanup();
     void requestInitialData();
     void requestSyncWalletDb(const QString& wallet_id);
     void requestCreateUserWallets();

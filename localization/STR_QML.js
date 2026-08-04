@@ -2375,3 +2375,5 @@ var STR_QML_2138 = qsTr("Continue (%1 signature%2 pending)")
 var STR_QML_2139 = qsTr("Set a maximum amount for a specific period. When disabled, your spending limit will be unlimited.")
 
 var STR_QML_2225 = qsTr("Total stage allocation cannot exceed 100%.")
+
+var STR_QML_2226 = qsTr("Learn more")

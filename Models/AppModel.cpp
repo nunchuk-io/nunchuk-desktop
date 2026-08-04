@@ -94,9 +94,15 @@ AppModel::AppModel(): m_inititalized{false},
 }
 
 AppModel::~AppModel(){
+    shutdownCleanup();
+    disconnect();
+}
+
+void AppModel::shutdownCleanup(){
     m_timerRefreshHealthCheck.stop();
     m_timerCheckAuthorized.stop();
     m_walletList.clear();
+    m_groupWalletList.clear();
     m_deviceList.clear();
     m_masterSignerList.clear();
     m_remoteSignerList.clear();
@@ -107,7 +113,6 @@ AppModel::~AppModel(){
     m_transactionInfo.clear();
     m_transactionReplaceInfo.clear();
     m_destinationList.clear();
-    disconnect();
 }
 
 void AppModel::confirmSyncingWalletFromServer(bool yes, bool no)

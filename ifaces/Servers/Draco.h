@@ -405,7 +405,7 @@ class Draco : public QObject {
     void resendVerifyNewDeviceCodeResult(int https_code, int error_code, QString error_msg);
     void loggedInDeviceChanged(int https_code, int error_code, QString error_msg);
     void updateProfileResult(int https_code, int error_code, QString error_msg);
-    void startCheckForUpdate(int result, const QString &title, const QString &message, const QString &doItLaterCTALbl);
+    void startCheckForUpdate(int result, const QString &title, const QString &message, const QString &doItLaterCTALbl, const QString &downloadUrl, const QString &primaryCTALbl);
     void signalpkey_signup(int https_code, int error_code, QString error_msg);
     void signalpkey_signin(int https_code, int error_code, QString error_msg);
     void stayLoggedInChanged();

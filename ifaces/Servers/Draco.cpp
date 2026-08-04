@@ -1200,11 +1200,14 @@ void Draco::checkForUpdate()
     QString title = "";
     QString message = "";
     QString doItLaterCTALbl = "";
+    QString downloadUrl = "";
+    QString primaryCTALbl = "";
     int result = 0;
     int     reply_code = -1;
     QString reply_msg  = "";
     QJsonObject jsonObj = m_rest->getSync(commands[Common::CMD_IDX::CHECK_FOR_UPDATE], QJsonObject(), reply_code, reply_msg);
     if(reply_code == DRACO_CODE::SUCCESSFULL){
+        DBG_INFO << jsonObj;
         QJsonObject errorObj = jsonObj["error"].toObject();
         int response_code = errorObj["code"].toInt();
         QString response_msg = errorObj["message"].toString();
@@ -1215,13 +1218,15 @@ void Draco::checkForUpdate()
             doItLaterCTALbl = dataObj["btnCTA"].toString();
             message = dataObj["message"].toString();
             title = dataObj["title"].toString();
+            downloadUrl = dataObj["downloadUrl"].toString();
+            primaryCTALbl = dataObj["primaryCTA"].toString();
             if(isUpdateRequired){
                 result = 2;
             }
             else if(isUpdateAvailable){
                 result = 1;
             }
-            emit startCheckForUpdate(result,title,message,doItLaterCTALbl);
+            emit startCheckForUpdate(result,title,message,doItLaterCTALbl,downloadUrl,primaryCTALbl);
         }
         else {
             AppModel::instance()->showToast(response_code, response_msg, EWARNING::WarningType::EXCEPTION_MSG);

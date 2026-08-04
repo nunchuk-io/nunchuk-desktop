@@ -349,18 +349,18 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_ONLINEMODE);
     //    QEventProcessor::instance()->sendEvent(E::EVT_STARTING_APPLICATION_LOCALMODE);
     QObject::connect(Draco::instance(), &Draco::startCheckForUpdate, Draco::instance(),
-        [](int result, const QString& title, const QString& message, const QString& doItLaterCTALbl)->void {
+        [](int result, const QString& title, const QString& message, const QString& doItLaterCTALbl, const QString& downloadUrl, const QString& primaryCTALbl)->void {
             QObject* obj = QEventProcessor::instance()->getQuickWindow()->rootObject();
             if(obj){
                 if (result == 2) // Forced update
                 {
-                    QMetaObject::invokeMethod(obj, "funcUpdateRequired", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
+                    QMetaObject::invokeMethod(obj, "funcUpdateRequired", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl), Q_ARG(QVariant, downloadUrl), Q_ARG(QVariant, primaryCTALbl));
                 }
                 else if (result == 1) { // Recommended update
                     static bool sendOneTime = false;
                     if (sendOneTime == false) {
                         sendOneTime = true;
-                        QMetaObject::invokeMethod(obj, "funcUpdateAvailable", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl));
+                        QMetaObject::invokeMethod(obj, "funcUpdateAvailable", Q_ARG(QVariant, title), Q_ARG(QVariant, message), Q_ARG(QVariant, doItLaterCTALbl), Q_ARG(QVariant, downloadUrl), Q_ARG(QVariant, primaryCTALbl));
                     }
                 }
             }
@@ -380,5 +380,17 @@ int main(int argc, char* argv[])
     QEventProcessor::instance()->show();
 
 
-    return appNunchuk.exec();
+    int execResult = appNunchuk.exec();
+
+    // Explicitly tear down wallet/model data now, while QGuiApplication and
+    // the QQuickView (QEventProcessor::instance()) are still alive. AppModel
+    // is a function-local-static singleton, so without this its destructor
+    // only runs later, during process exit()'s static-teardown cascade -
+    // after QGuiApplication/QQuickView (locals of this function) have already
+    // been destroyed. Destroying Wallet/its QML-exposed child models at that
+    // point can trigger a QML binding re-evaluation (e.g. a "visible:"
+    // binding) that touches already-torn-down QtQuick internals and crashes.
+    AppModel::instance()->shutdownCleanup();
+
+    return execResult;
 }
