@@ -37,7 +37,7 @@ QPopup {
     height: parent.height
     signal confirmSave()
     signal confirmCancel()
-    readonly property int maxGapLimit: 200
+    readonly property int maxGapLimit: ClientController.user.isSubscribedUser ? 2000 : 100
     content: Item {
         id: boxmask
         width: 300
@@ -99,7 +99,7 @@ QPopup {
                     type: eTypeE
                     onButtonClicked: {
                         if (parseInt(inputGapLimit.textInputted) > maxGapLimit) {
-                            inputGapLimit.errorText = STR.STR_QML_834
+                            inputGapLimit.errorText = STR.STR_QML_834.arg(maxGapLimit)
                             inputGapLimit.isValid = false
                             inputGapLimit.showError = true;
                         } else {

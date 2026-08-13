@@ -78,3 +78,9 @@ void QScreenQueue::initScreenQueue()
         m_screenList.removeLast();
     }
 }
+
+void QScreenQueue::clear()
+{
+    QMutexLocker locker(&m_mutex);
+    m_screenList.clear();
+}

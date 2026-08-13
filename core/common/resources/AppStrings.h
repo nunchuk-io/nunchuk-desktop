@@ -879,7 +879,7 @@ class AppStrings : public QObject {
     DEFINE_STRING_PROPERTY(STR_QML_831, "Adding Trezor... Please keep your device connected.")
     DEFINE_STRING_PROPERTY(STR_QML_832, "Trezor added successfully")
     DEFINE_STRING_PROPERTY(STR_QML_833, "Gap limit has been updated")
-    DEFINE_STRING_PROPERTY(STR_QML_834, "Gap limit cannot exceed 100.")
+    DEFINE_STRING_PROPERTY(STR_QML_834, "Gap limit cannot exceed %1.")
     DEFINE_STRING_PROPERTY(STR_QML_835, "Save")
     DEFINE_STRING_PROPERTY(STR_QML_836, "Effective package fee rate: <b>%1 sat/vB</b>")
     DEFINE_STRING_PROPERTY(STR_QML_837, "Select an assisted wallet")

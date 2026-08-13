@@ -992,7 +992,7 @@ var STR_QML_830 = qsTr("Connect your Trezor device. If it's not listed, click 'R
 var STR_QML_831 = qsTr("Adding Trezor... Please keep your device connected.")
 var STR_QML_832 = qsTr("Trezor added successfully")
 var STR_QML_833 = qsTr("Gap limit has been updated")
-var STR_QML_834 = qsTr("Gap limit cannot exceed 100.")
+var STR_QML_834 = qsTr("Gap limit cannot exceed %1.")
 
 var STR_QML_835 = qsTr("Save")
 var STR_QML_836 = qsTr("Effective package fee rate: <b>%1 sat/vB</b>")

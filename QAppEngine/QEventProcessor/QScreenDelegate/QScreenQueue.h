@@ -50,6 +50,7 @@ public:
     void setMaxDeep(int max_deep);
     QQmlComponentPtr operator[](QString scrName);
     void initScreenQueue();
+    void clear();
 };
 
 #endif // QSCREENQUEUE_H

@@ -27,7 +27,12 @@ QScreenDelegate::QScreenDelegate(QQuickItem* rootObject, QQmlContext* context): 
 }
 
 QScreenDelegate::~QScreenDelegate()
-{}
+{
+    // cacheScreen is static and otherwise outlives QApplication. Release all
+    // QQmlComponents while their QQmlEngine is still alive; destroying them
+    // later during static teardown can enter QML GC after Qt has shut down.
+    cacheScreen.clear();
+}
 
 bool QScreenDelegate::showScreen(const APPLICATION_STATE *scr, QVariant msg)
 {
@@ -85,4 +90,3 @@ QQmlComponentPtr QScreenDelegate::getComponent(QObject *parent, QString screenFi
     }
     return QQmlComponentPtr(NULL);
 }
-

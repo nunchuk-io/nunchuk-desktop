@@ -40,9 +40,29 @@ QEventProcessor::QEventProcessor() : m_viewer(new QQuickView()), m_scrMng(NULL),
 
 QEventProcessor::~QEventProcessor()
 {
-    m_viewer->deleteLater();
-    m_scrMng->deleteLater();
-    m_popMng->deleteLater();
+    shutdown();
+}
+
+void QEventProcessor::shutdown()
+{
+    // This singleton is destroyed during static teardown, after the local
+    // QApplication in main(). Do the QObject/QML teardown explicitly before
+    // QApplication is destroyed. deleteLater() is not suitable here because
+    // the event loop has already stopped when main calls this method.
+    disconnect();
+    m_qmlObj.clear();
+    m_currentScreen = nullptr;
+
+    delete m_popMng;
+    m_popMng = nullptr;
+
+    // QScreenDelegate releases its static QQmlComponent cache here, before
+    // the QQuickView and its QQmlEngine are deleted.
+    delete m_scrMng;
+    m_scrMng = nullptr;
+
+    delete m_viewer;
+    m_viewer = nullptr;
 }
 
 QEventProcessor *QEventProcessor::instance(){

@@ -229,7 +229,7 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationName("nunchuk");
     QCoreApplication::setOrganizationDomain("nunchuk.io");
     QCoreApplication::setApplicationName("NunchukClient");
-    QCoreApplication::setApplicationVersion("2.6.3");
+    QCoreApplication::setApplicationVersion("2.6.5");
 
     double scale_factor = calculateScaleFactor();
     // static char  qt_arg[] = "";
@@ -391,6 +391,12 @@ int main(int argc, char* argv[])
     // point can trigger a QML binding re-evaluation (e.g. a "visible:"
     // binding) that touches already-torn-down QtQuick internals and crashes.
     AppModel::instance()->shutdownCleanup();
+
+    // QEventProcessor is also a function-local-static singleton, but owns the
+    // QQuickView and cached QQmlComponents. Destroy those now, while the local
+    // QApplication and the QML runtime are still valid. Its destructor later
+    // becomes a no-op because shutdown() is idempotent.
+    QEventProcessor::instance()->shutdown();
 
     return execResult;
 }
