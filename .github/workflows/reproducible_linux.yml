@@ -64,6 +64,7 @@ jobs:
       - name: Build pinned Linux builder image
         run: |
           docker build --no-cache \
+            --progress=plain \
             --file reproducible-builds/Dockerfile.linux \
             --tag nunchuk-linux-reproducible:local \
             .

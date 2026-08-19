@@ -1,6 +1,6 @@
+# syntax=docker/dockerfile:1.7
 FROM ubuntu:24.04@sha256:d78ab76437b1afc5f01e223d6bf0172763f404bb166441328845adbef44518cb
 
-ARG UBUNTU_SNAPSHOT=20260818T000000Z
 ARG QT_VERSION=5.15.2
 ARG AQTINSTALL_VERSION=3.3.0
 
@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8 \
     QT_INSTALL_DIR=/opt/Qt \
     QT_VERSION=${QT_VERSION} \
-    UBUNTU_SNAPSHOT=${UBUNTU_SNAPSHOT} \
+    UBUNTU_SNAPSHOT=20260818T000000Z \
     QT5_DIR=/opt/Qt/${QT_VERSION}/gcc_64/lib/cmake/Qt5 \
     QT_INSTALLED_PREFIX=/opt/Qt/${QT_VERSION}/gcc_64 \
     OPENSSL_ROOT_DIR=/opt/openssl-1.1.1w \
@@ -23,12 +23,33 @@ ENV DEBIAN_FRONTEND=noninteractive \
     RANLIB=gcc-ranlib-14 \
     NM=gcc-nm-14
 
-# Freeze Ubuntu packages at one archive snapshot. Unpinned distribution
-# upgrades or PPAs would make the build environment change over time.
-RUN printf 'APT::Snapshot "%s";\n' "$UBUNTU_SNAPSHOT" \
-        > /etc/apt/apt.conf.d/50nunchuk-snapshot && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+# The pinned Ubuntu OCI rootfs contains ubuntu-keyring but no CA bundle or
+# openssl CLI. Bootstrap both from the same snapshot with BuildKit-enforced
+# checksums before APT connects to snapshot.ubuntu.com over HTTPS.
+ADD --checksum=sha256:321b30ad5a1c3783cb3d73ae439f824f6d3874d76a93a62f4a984959b490aa7b \
+    https://snapshot.ubuntu.com/ubuntu/20260818T000000Z/pool/main/o/openssl/openssl_3.0.13-0ubuntu3.12_amd64.deb \
+    /tmp/openssl-bootstrap.deb
+ADD --checksum=sha256:6bac2a01979e210d9eac1d4d56747ec709ea60654744d66705dc3c36e7629e50 \
+    https://snapshot.ubuntu.com/ubuntu/20260818T000000Z/pool/main/c/ca-certificates/ca-certificates_20260601~24.04.1_all.deb \
+    /tmp/ca-certificates-bootstrap.deb
+RUN dpkg -i /tmp/openssl-bootstrap.deb /tmp/ca-certificates-bootstrap.deb && \
+    rm -f /tmp/openssl-bootstrap.deb /tmp/ca-certificates-bootstrap.deb
+
+# Freeze Ubuntu packages at one archive snapshot. Use the snapshot URL
+# directly instead of relying on mirror metadata to resolve APT::Snapshot.
+# Old snapshots intentionally need Valid-Until disabled so the same package
+# indexes remain usable when the release is reproduced months or years later.
+RUN printf '%s\n' \
+        'Types: deb' \
+        "URIs: https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/" \
+        'Suites: noble noble-updates noble-backports noble-security' \
+        'Components: main universe restricted multiverse' \
+        'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+        'Check-Valid-Until: no' \
+        > /etc/apt/sources.list.d/ubuntu.sources && \
+    rm -f /etc/apt/sources.list /etc/apt/apt.conf.d/50nunchuk-snapshot && \
+    apt-get -o Acquire::Retries=5 update && \
+    apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
         binutils ca-certificates cmake curl dbus-x11 desktop-file-utils \
         dpkg-dev file g++-14 gcc-14 git libboost-all-dev libdb++-dev \
         libdbus-1-dev libegl1 libevent-dev libgl-dev libglu1-mesa-dev \
