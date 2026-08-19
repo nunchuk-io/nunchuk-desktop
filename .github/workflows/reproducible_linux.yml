@@ -5,48 +5,111 @@ on:
     tags:
       - '*'
   workflow_dispatch:
+    inputs:
+      verify_twice:
+        description: Build twice and compare the AppImage byte-for-byte
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-reproducible-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-linux-repro:
+  build-linux-reproducible:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    environment: GoogleAuth
+    timeout-minutes: 240
 
     steps:
-      - name: Checkout repository
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
-      - name: Determine Git tag
+      - name: Set deterministic build inputs
+        shell: bash
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          set -euo pipefail
+
+          source_commit=$(git rev-parse HEAD)
+          source_date_epoch=$(git log -1 --pretty=%ct)
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag=${GITHUB_REF#refs/tags/}
+          elif tag=$(git describe --tags --exact-match 2>/dev/null); then
+            :
           else
-            echo "TAG=0.0.0" >> $GITHUB_ENV
+            tag="0.0.0-${source_commit:0:12}"
           fi
-          
-      - name: Build Docker image
+
+          case "$tag" in
+            *[!A-Za-z0-9._+-]*)
+              echo "::error::Invalid build tag: $tag"
+              exit 1
+              ;;
+          esac
+
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "SOURCE_COMMIT=$source_commit" >> "$GITHUB_ENV"
+          echo "SOURCE_DATE_EPOCH=$source_date_epoch" >> "$GITHUB_ENV"
+          if git submodule status --recursive | grep -Eq '^[-+U]'; then
+            echo "::error::One or more submodules are not at the recorded commit"
+            exit 1
+          fi
+
+      - name: Build pinned Linux builder image
         run: |
-          echo "TAG found: ${{ env.TAG }}"
-          
           docker build --no-cache \
-            --build-arg TAG=${{ env.TAG }} \
-            -f reproducible-builds/Dockerfile.linux \
-            -t nunchuk-repro .
+            --file reproducible-builds/Dockerfile.linux \
+            --tag nunchuk-linux-reproducible:local \
+            .
 
-      - name: Run reproducible build inside Docker
+      - name: Build and verify AppImage
         run: |
+          set -euo pipefail
           docker run --rm \
-            -e TAG=${{ env.TAG }} \
-            -e OAUTH_CLIENT_SECRET=${{ secrets.OAUTH_CLIENT_SECRET }} \
-            -e OAUTH_REDIRECT_URI=${{ secrets.OAUTH_REDIRECT_URI }} \
-            -e OAUTH_CLIENT_ID=${{ secrets.OAUTH_CLIENT_ID }} \
-            -v ${{ github.workspace }}:/project \
-            nunchuk-repro
+            -e SOURCE_COMMIT \
+            -e SOURCE_DATE_EPOCH \
+            -e TAG \
+            -e RUN_SMOKE_TEST=1 \
+            -v "$GITHUB_WORKSPACE:/project" \
+            nunchuk-linux-reproducible:local
 
-      - name: Upload AppImage artifact
+          cd dist
+          sha256sum --check --strict "nunchuk-linux-v$TAG.AppImage.sha256"
+
+      - name: Rebuild and compare byte-for-byte
+        if: github.event_name == 'push' || inputs.verify_twice
+        run: |
+          set -euo pipefail
+          reference="$RUNNER_TEMP/nunchuk-linux-v$TAG.reference.AppImage"
+          cp "dist/nunchuk-linux-v$TAG.AppImage" "$reference"
+
+          docker run --rm \
+            -e SOURCE_COMMIT \
+            -e SOURCE_DATE_EPOCH \
+            -e TAG \
+            -e RUN_SMOKE_TEST=0 \
+            -v "$GITHUB_WORKSPACE:/project" \
+            nunchuk-linux-reproducible:local
+
+          cmp "$reference" "dist/nunchuk-linux-v$TAG.AppImage"
+          echo "Byte-for-byte reproducibility check passed."
+          sha256sum "$reference" "dist/nunchuk-linux-v$TAG.AppImage"
+
+      - name: Upload reproducible artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nunchuk-linux-v${{ env.TAG }}
-          path: nunchuk-linux-v*/nunchuk-linux-*.AppImage
+          name: nunchuk-linux-v${{ env.TAG }}-reproducible
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            dist/nunchuk-linux-v${{ env.TAG }}.AppImage
+            dist/nunchuk-linux-v${{ env.TAG }}.AppImage.sha256
+            dist/AppDir.sha256
+            dist/AppDir.symlinks
+            dist/build-info.txt
