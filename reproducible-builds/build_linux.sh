@@ -54,6 +54,36 @@ export OAUTH_CLIENT_ID=
 export OAUTH_CLIENT_SECRET=
 export OAUTH_REDIRECT_URI=
 
+resolve_build_tool()
+{
+    local tool_name=$1
+    local tool_path
+    tool_path=$(command -v "$tool_name") || {
+        echo "ERROR: required build tool was not found: $tool_name" >&2
+        return 1
+    }
+    case "$tool_path" in
+        /*)
+            printf '%s\n' "$tool_path"
+            ;;
+        *)
+            echo "ERROR: build tool did not resolve to an absolute path: $tool_name -> $tool_path" >&2
+            return 1
+            ;;
+    esac
+}
+
+C_COMPILER=$(resolve_build_tool /usr/bin/gcc-14)
+CXX_COMPILER=$(resolve_build_tool /usr/bin/g++-14)
+AR_TOOL=$(resolve_build_tool /usr/bin/gcc-ar-14)
+RANLIB_TOOL=$(resolve_build_tool /usr/bin/gcc-ranlib-14)
+NM_TOOL=$(resolve_build_tool /usr/bin/gcc-nm-14)
+export CC="$C_COMPILER"
+export CXX="$CXX_COMPILER"
+export AR="$AR_TOOL"
+export RANLIB="$RANLIB_TOOL"
+export NM="$NM_TOOL"
+
 COMMON_FLAGS="-O0 -ffile-prefix-map=$PROJECT_ROOT=. -fdebug-prefix-map=$PROJECT_ROOT=."
 export CPPFLAGS="-I$OPENSSL_ROOT_DIR/include"
 export CFLAGS="$COMMON_FLAGS $CPPFLAGS"
@@ -68,11 +98,15 @@ fi
 
 cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_C_COMPILER=gcc-14 \
-    -DCMAKE_CXX_COMPILER=g++-14 \
-    -DCMAKE_AR=gcc-ar-14 \
-    -DCMAKE_RANLIB=gcc-ranlib-14 \
-    -DCMAKE_NM=gcc-nm-14 \
+    -DCMAKE_C_COMPILER="$C_COMPILER" \
+    -DCMAKE_CXX_COMPILER="$CXX_COMPILER" \
+    -DCMAKE_AR="$AR_TOOL" \
+    -DCMAKE_RANLIB="$RANLIB_TOOL" \
+    -DCMAKE_NM="$NM_TOOL" \
+    -DCMAKE_C_COMPILER_AR="$AR_TOOL" \
+    -DCMAKE_CXX_COMPILER_AR="$AR_TOOL" \
+    -DCMAKE_C_COMPILER_RANLIB="$RANLIB_TOOL" \
+    -DCMAKE_CXX_COMPILER_RANLIB="$RANLIB_TOOL" \
     -DCMAKE_C_FLAGS_RELEASE="$CFLAGS" \
     -DCMAKE_CXX_FLAGS_RELEASE="$CXXFLAGS" \
     -DCMAKE_EXE_LINKER_FLAGS_RELEASE="$LDFLAGS" \
