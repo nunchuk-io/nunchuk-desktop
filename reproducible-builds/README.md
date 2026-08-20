@@ -63,23 +63,6 @@ docker run --platform linux/amd64 --rm \
   bash ./reproducible-builds/build_linux.sh
 ```
 
-The Linux package includes
-[HWI 3.2.0-displayaddress](https://github.com/nogibi/HWI/releases/tag/3.2.0-displayaddress),
-verified with its pinned SHA-256 checksum during packaging.
-The deploy process also:
-
-- uses pinned, checksum-verified CQtDeployer, appimagetool, and AppImage runtime
-  inputs;
-- bundles the Qt NetworkAuth, WebEngine, OpenSSL 1.1.1, NSS, CA certificate, and
-  selected Qt plugin runtimes required by Nunchuk;
-- computes the complete ELF dependency closure while excluding host ABI,
-  graphics-driver, and audio-driver libraries;
-- deliberately uses the host system's glibc and never bundles `libc.so.6` or
-  its ELF loader; and
-- extracts and verifies the generated AppImage, then runs it for 30 seconds in
-  a virtual X11/DBus session to catch loader, Qt plugin, QML, WebEngine, and TLS
-  startup failures before publishing.
-
 The final output is `nunchuk-linux-v$VERSION/nunchuk-linux-v$VERSION.zip`.
 When a tag is pushed, the Linux workflow creates or updates the matching GitHub
 Release as a pre-release and uploads this ZIP. Manual builds do not publish a

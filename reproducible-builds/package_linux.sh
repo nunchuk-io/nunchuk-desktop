@@ -30,8 +30,7 @@ TEMP_ROOT="$(mktemp -d)"
 trap 'rm -rf -- "$TEMP_ROOT"' EXIT
 
 for command_name in \
-    cqtdeployer curl file find ldd readelf patchelf sha256sum timeout touch \
-    xvfb-run dbus-run-session 7z; do
+    cqtdeployer curl file find ldd readelf patchelf sha256sum touch 7z; do
     command -v "$command_name" >/dev/null || {
         echo "Missing packaging tool: $command_name" >&2
         exit 1
@@ -270,59 +269,6 @@ if command -v desktop-file-validate >/dev/null; then
     desktop-file-validate "$APPDIR/nunchuk.desktop"
 fi
 
-SSL_PROBE_ROOT="$TEMP_ROOT/ssl-probe"
-SSL_PROBE="$SSL_PROBE_ROOT/nunchuk-ssl-probe"
-mkdir -p "$SSL_PROBE_ROOT"
-cat > "$SSL_PROBE_ROOT/ssl-probe.cpp" <<'SSL_PROBE_SOURCE'
-#include <QCoreApplication>
-#include <QSslCertificate>
-#include <QSslSocket>
-#include <QTextStream>
-#include <cstdio>
-
-int main(int argc, char **argv)
-{
-    QCoreApplication app(argc, argv);
-    const bool supportsSsl = QSslSocket::supportsSsl();
-    const QString buildVersion = QSslSocket::sslLibraryBuildVersionString();
-    const QString runtimeVersion = QSslSocket::sslLibraryVersionString();
-    const QString caFile = qEnvironmentVariable("SSL_CERT_FILE");
-    const auto certificates = QSslCertificate::fromPath(caFile);
-
-    QTextStream output(stdout);
-    output << "supports_ssl=" << (supportsSsl ? "true" : "false") << '\n'
-           << "ssl_build_version=" << buildVersion << '\n'
-           << "ssl_runtime_version=" << runtimeVersion << '\n'
-           << "ca_certificates=" << certificates.size() << '\n';
-    output.flush();
-
-    return supportsSsl &&
-           runtimeVersion.startsWith(QStringLiteral("OpenSSL 1.1.1")) &&
-           !certificates.isEmpty() ? 0 : 1;
-}
-SSL_PROBE_SOURCE
-cat > "$SSL_PROBE_ROOT/ssl-probe.pro" <<'SSL_PROBE_PROJECT'
-QT += core network
-CONFIG += console c++11
-CONFIG -= app_bundle
-TEMPLATE = app
-TARGET = nunchuk-ssl-probe
-SOURCES += ssl-probe.cpp
-SSL_PROBE_PROJECT
-(
-    cd "$SSL_PROBE_ROOT"
-    "$QT_INSTALLED_PREFIX/bin/qmake" ssl-probe.pro
-    make -j2
-)
-[[ -x "$SSL_PROBE" ]] || {
-    echo "Qt TLS runtime probe could not be built" >&2
-    exit 1
-}
-env \
-    LD_LIBRARY_PATH="$APPDIR/lib:$APPDIR/bin" \
-    SSL_CERT_FILE="$APPDIR/resources/ca-certificates.crt" \
-    "$SSL_PROBE" 2>&1 | tee "$RELEASE_ROOT/ssl-probe.log"
-
 APPIMAGE_EXTRACT_AND_RUN=1 \
 ARCH=x86_64 \
 VERSION="$TAG" \
@@ -347,33 +293,6 @@ EXTRACTED_APPDIR="$VERIFY_ROOT/squashfs-root"
     exit 1
 }
 "$APPDIR_TOOL" verify "$EXTRACTED_APPDIR" /dev/null
-env \
-    LD_LIBRARY_PATH="$EXTRACTED_APPDIR/lib:$EXTRACTED_APPDIR/bin" \
-    SSL_CERT_FILE="$EXTRACTED_APPDIR/resources/ca-certificates.crt" \
-    "$SSL_PROBE" 2>&1 | tee "$RELEASE_ROOT/extracted-ssl-probe.log"
-
-SMOKE_LOG="$RELEASE_ROOT/appimage-smoke.log"
-set +e
-timeout --signal=TERM --kill-after=10s 30s \
-    dbus-run-session -- \
-    xvfb-run -a -s '-screen 0 1280x800x24' \
-    "$EXTRACTED_APPDIR/AppRun" \
-    > "$SMOKE_LOG" 2>&1
-smoke_status=$?
-set -e
-
-if [[ "$smoke_status" -ne 124 ]]; then
-    cat "$SMOKE_LOG"
-    echo "AppImage smoke test failed with status $smoke_status" >&2
-    exit 1
-fi
-if grep -Eiq \
-    'error while loading shared libraries|symbol lookup error|could not load the qt platform plugin|no qt platform plugin could be initialized|qqmlapplicationengine failed to load component|module .* is not installed|type .* unavailable|could not find qtwebengineprocess|qt webengine resources not found|qsslsocket: cannot (resolve|call)|tls initialization failed|no functional tls backend' \
-    "$SMOKE_LOG"; then
-    cat "$SMOKE_LOG"
-    echo "AppImage smoke log contains a runtime error" >&2
-    exit 1
-fi
 
 (
     cd "$RELEASE_ROOT"

@@ -117,6 +117,134 @@ jobs:
             exit 1
           fi
 
+      - name: Run Linux SSL and smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --platform linux/amd64 --rm -i \
+            -e BUILD_VERSION="${BUILD_VERSION}" \
+            -v "${GITHUB_WORKSPACE}:/project" \
+            -w /project \
+            ghcr.io/${{ github.repository }}/nunchuk-builder-linux-amd64 \
+            bash -s <<'CI_TESTS'
+          set -euo pipefail
+
+          release_root="/project/nunchuk-linux-v${BUILD_VERSION}"
+          app_dir="${release_root}/Appdir"
+          appimage="${release_root}/nunchuk-linux-v${BUILD_VERSION}.AppImage"
+          test_root="$(mktemp -d)"
+          trap 'rm -rf -- "$test_root"' EXIT
+
+          [[ -d "$app_dir" ]] || {
+              echo "Packaged AppDir was not found: $app_dir" >&2
+              exit 1
+          }
+          [[ -x "$appimage" ]] || {
+              echo "Packaged AppImage was not found: $appimage" >&2
+              exit 1
+          }
+
+          extract_root="$test_root/appimage"
+          mkdir -p "$extract_root"
+          (
+              cd "$extract_root"
+              "$appimage" --appimage-extract >/dev/null
+          )
+          extracted_appdir="$extract_root/squashfs-root"
+          [[ -d "$extracted_appdir" ]] || {
+              echo "The generated AppImage could not be extracted" >&2
+              exit 1
+          }
+
+          probe_root="$test_root/ssl-probe"
+          ssl_probe="$probe_root/nunchuk-ssl-probe"
+          mkdir -p "$probe_root"
+          cat > "$probe_root/ssl-probe.cpp" <<'SSL_PROBE_SOURCE'
+          #include <QCoreApplication>
+          #include <QSslCertificate>
+          #include <QSslSocket>
+          #include <QTextStream>
+          #include <cstdio>
+
+          int main(int argc, char **argv)
+          {
+              QCoreApplication app(argc, argv);
+              const bool supportsSsl = QSslSocket::supportsSsl();
+              const QString buildVersion = QSslSocket::sslLibraryBuildVersionString();
+              const QString runtimeVersion = QSslSocket::sslLibraryVersionString();
+              const QString caFile = qEnvironmentVariable("SSL_CERT_FILE");
+              const auto certificates = QSslCertificate::fromPath(caFile);
+
+              QTextStream output(stdout);
+              output << "supports_ssl=" << (supportsSsl ? "true" : "false") << '\n'
+                     << "ssl_build_version=" << buildVersion << '\n'
+                     << "ssl_runtime_version=" << runtimeVersion << '\n'
+                     << "ca_certificates=" << certificates.size() << '\n';
+              output.flush();
+
+              return supportsSsl &&
+                     runtimeVersion.startsWith(QStringLiteral("OpenSSL 1.1.1")) &&
+                     !certificates.isEmpty() ? 0 : 1;
+          }
+          SSL_PROBE_SOURCE
+          cat > "$probe_root/ssl-probe.pro" <<'SSL_PROBE_PROJECT'
+          QT += core network
+          CONFIG += console c++11
+          CONFIG -= app_bundle
+          TEMPLATE = app
+          TARGET = nunchuk-ssl-probe
+          SOURCES += ssl-probe.cpp
+          SSL_PROBE_PROJECT
+          (
+              cd "$probe_root"
+              "$QT_INSTALLED_PREFIX/bin/qmake" ssl-probe.pro
+              make -j2
+          )
+          [[ -x "$ssl_probe" ]] || {
+              echo "Qt TLS runtime probe could not be built" >&2
+              exit 1
+          }
+
+          run_ssl_probe()
+          {
+              local runtime_root="$1"
+              env \
+                  LD_LIBRARY_PATH="$runtime_root/lib:$runtime_root/bin" \
+                  SSL_CERT_FILE="$runtime_root/resources/ca-certificates.crt" \
+                  "$ssl_probe"
+          }
+
+          echo "Testing SSL in packaged AppDir"
+          run_ssl_probe "$app_dir"
+          echo "Testing SSL in extracted AppImage"
+          run_ssl_probe "$extracted_appdir"
+
+          smoke_log="$test_root/appimage-smoke.log"
+          set +e
+          timeout --signal=TERM --kill-after=10s 30s \
+              dbus-run-session -- \
+              xvfb-run -a -s '-screen 0 1280x800x24' \
+              "$extracted_appdir/AppRun" \
+              > "$smoke_log" 2>&1
+          smoke_status=$?
+          set -e
+
+          if [[ "$smoke_status" -ne 124 ]]; then
+              cat "$smoke_log"
+              echo "AppImage smoke test failed with status $smoke_status" >&2
+              exit 1
+          fi
+          if grep -Eiq \
+              'error while loading shared libraries|symbol lookup error|could not load the qt platform plugin|no qt platform plugin could be initialized|qqmlapplicationengine failed to load component|module .* is not installed|type .* unavailable|could not find qtwebengineprocess|qt webengine resources not found|qsslsocket: cannot (resolve|call)|tls initialization failed|no functional tls backend' \
+              "$smoke_log"; then
+              cat "$smoke_log"
+              echo "AppImage smoke log contains a runtime error" >&2
+              exit 1
+          fi
+          echo "Linux SSL and smoke tests passed."
+          CI_TESTS
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
