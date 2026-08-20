@@ -269,6 +269,10 @@ if command -v desktop-file-validate >/dev/null; then
     desktop-file-validate "$APPDIR/nunchuk.desktop"
 fi
 
+# Normalize every timestamp stored in SquashFS, including symlinks.
+find "$APPDIR" -depth -exec \
+    touch --no-dereference --date="@$SOURCE_DATE_EPOCH" -- {} +
+
 APPIMAGE_EXTRACT_AND_RUN=1 \
 ARCH=x86_64 \
 VERSION="$TAG" \
