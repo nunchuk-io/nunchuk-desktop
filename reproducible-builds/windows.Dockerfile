@@ -33,6 +33,8 @@ ENV SOURCE_DATE_EPOCH=1604304302
 # Install QT5
 ARG QT_VERSION=5.15.2
 RUN aqt install-qt windows desktop ${QT_VERSION} win64_mingw81 --timeout 10 --outputdir /qt
+RUN aqt install-qt windows desktop ${QT_VERSION} win64_mingw81 --timeout 10 --outputdir /qt \
+    --modules qtnetworkauth
 
 # Install openssl
 ARG OPENSSL_VERSION=OpenSSL_1_1_1j

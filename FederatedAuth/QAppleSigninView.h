@@ -21,41 +21,54 @@
 #ifndef QAPPLESIGNINVIEW_H
 #define QAPPLESIGNINVIEW_H
 
-
-#if ENABLE_WEBVIEW_SIGIN
-#include "QLoadingOverlay.h"
 #include "QOutlog.h"
-#include <QWebEngineView>
-#include <QWebEngineUrlRequestInterceptor>
-#include <QWebEngineUrlRequestInfo>
+
+#include <QByteArray>
+#include <QHash>
 #include <QJsonObject>
+#include <QObject>
+#include <QString>
+#include <QUrl>
 
-class QInsecureRequestBlocker : public QWebEngineUrlRequestInterceptor {
-public:
-    explicit QInsecureRequestBlocker(QObject* parent = nullptr);
-    void interceptRequest(QWebEngineUrlRequestInfo &info) override;
-};
+class QTcpServer;
+class QTcpSocket;
+class QTimer;
 
-class QAppleSigninView : public QWebEngineView {
+class QAppleSigninView : public QObject {
     Q_OBJECT
+
 public:
-    explicit QAppleSigninView(QWidget *parent = nullptr);
+    explicit QAppleSigninView(QObject *parent = nullptr);
     void startSignin();
+    void cancelSignin(bool notifyUser = true);
 
 signals:
     void loginSucceeded(QJsonObject data);
+    void loginFailed(QString message);
 
 private slots:
-    void handleUrlChanged(const QUrl &url);
-    void handleLoadFinished(bool success);
+    void onNewConnection();
+    void onTimeout();
 
 private:
-    QWebEnginePage*    m_page;
-    QWebEngineProfile* m_profile;
-    QLoadingOverlay*   m_loadingOverlay;
+    QString generateAttemptToken() const;
+    QUrl buildAuthUrl(const QString &clientId, const QUrl &redirectUri) const;
+    void processSocket(QTcpSocket *socket);
+    void rejectSocket(QTcpSocket *socket);
+    void finishSucceeded(QTcpSocket *socket, const QJsonObject &result);
+    void finishFailed(QTcpSocket *socket, const QString &message);
+    void resetAttempt();
+    void sendHtmlResponse(QTcpSocket *socket, int statusCode,
+                          const QByteArray &reasonPhrase,
+                          const QByteArray &body) const;
+
+    QTcpServer *m_server = nullptr;
+    QTimer *m_timeoutTimer = nullptr;
+    QHash<QTcpSocket *, QByteArray> m_requestBuffers;
+    QString m_attemptToken;
+    bool m_active = false;
 };
 
 typedef OurSharedPointer<QAppleSigninView> QAppleSigninViewPtr;
-#endif
 
 #endif // QAPPLESIGNINVIEW_H

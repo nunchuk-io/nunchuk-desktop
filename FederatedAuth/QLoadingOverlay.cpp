@@ -19,7 +19,6 @@
 **************************************************************************/
 
 #include "QLoadingOverlay.h"
-#if ENABLE_WEBVIEW_SIGIN
 #include "QOutlog.h"
 
 QLoadingOverlay::QLoadingOverlay(QWidget *parent) : QWidget(parent) {
@@ -42,4 +41,3 @@ QLoadingOverlay::QLoadingOverlay(QWidget *parent) : QWidget(parent) {
     setLayout(layout);
     hide();
 }
-#endif

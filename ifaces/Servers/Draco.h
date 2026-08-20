@@ -43,6 +43,8 @@ class Draco : public QObject {
     Q_PROPERTY(QString emailRequested READ emailRequested WRITE setEmailRequested NOTIFY emailRequestedChanged)
     Q_PROPERTY(bool stayLoggedIn READ stayLoggedIn WRITE setStayLoggedIn NOTIFY stayLoggedInChanged)
     Q_PROPERTY(bool isSubscribed READ isSubscribed WRITE setIsSubscribed NOTIFY isSubscribedChanged)
+    Q_PROPERTY(bool federatedSigninBusy READ federatedSigninBusy NOTIFY federatedSigninBusyChanged)
+    Q_PROPERTY(QString federatedSigninProvider READ federatedSigninProvider NOTIFY federatedSigninProviderChanged)
 
   public:
     static Draco *instance();
@@ -117,6 +119,8 @@ class Draco : public QObject {
     void setDeviceId(const QString &value);
     bool stayLoggedIn() const;
     void setStayLoggedIn(bool value);
+    bool federatedSigninBusy() const;
+    QString federatedSigninProvider() const;
 
     // USER_SUBSCRIPTION
     bool getUserSubscriptions();
@@ -325,6 +329,7 @@ class Draco : public QObject {
     // Apple signin
     void requestAppleSigin();
     void requestGoogleSigin();
+    Q_INVOKABLE void cancelFederatedSignin();
     // Electrum
     bool ElectrumGetPublicServers(QJsonObject &output, QString &errormsg);
     bool ElectrumGetPaidServers(QJsonObject &output, QString &errormsg);
@@ -371,19 +376,21 @@ class Draco : public QObject {
     QString m_deviceId;
     bool m_stayLoggedIn;
     bool m_isSubscribed;
+    bool m_federatedSigninBusy;
+    QString m_federatedSigninProvider;
     QJsonArray m_taproot_support_types{};
 
-#if ENABLE_WEBVIEW_SIGIN
     // Social signin
     QAppleSigninViewPtr m_Apple;
     QGoogleSigninViewPtr m_Google;
     QRestPtr m_rest;
-
-#endif
+    void setFederatedSigninState(bool busy, const QString &provider = QString());
+    void applyFederatedSigninResult(const QJsonObject &result);
 
   public slots:
     void onAppleSigninSucceeded(QJsonObject result);
     void onGoogleSigninSucceeded(QJsonObject result);
+    void onFederatedSigninFailed(const QString &message);
 
   signals:
     void uidChanged();
@@ -410,6 +417,8 @@ class Draco : public QObject {
     void signalpkey_signin(int https_code, int error_code, QString error_msg);
     void stayLoggedInChanged();
     void isSubscribedChanged();
+    void federatedSigninBusyChanged();
+    void federatedSigninProviderChanged();
 };
 
 #endif // DRACO_H

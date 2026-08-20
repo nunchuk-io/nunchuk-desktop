@@ -21,7 +21,6 @@
 #ifndef QLOADINGOVERLAY_H
 #define QLOADINGOVERLAY_H
 
-#if ENABLE_WEBVIEW_SIGIN
 #include <QWidget>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -31,6 +30,5 @@ class QLoadingOverlay : public QWidget {
 public:
     QLoadingOverlay(QWidget* parent = nullptr);
 };
-#endif
 
 #endif // QLOADINGOVERLAY_H

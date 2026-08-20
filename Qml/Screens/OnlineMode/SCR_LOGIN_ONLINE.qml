@@ -241,14 +241,13 @@ QScreen {
                         "qrc:/Images/Images/GoogleLogo.png",
                         "qrc:/Images/Images/GoogleLogo.png"
                     ]
+                    enabled: !Draco.federatedSigninBusy
                     onButtonClicked: {
-                        processing = true
                         var requestBody = {
                             "action"     : "account-availability-google",
                             "email"      : emailaddrs.textInputted
                         };
                         QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_SIGN_IN, requestBody)
-                        processing = false
                     }
                 }
                 QTextButton {
@@ -263,14 +262,13 @@ QScreen {
                         "qrc:/Images/Images/AppleLogo.png",
                         "qrc:/Images/Images/AppleLogo.png"
                     ]
+                    enabled: !Draco.federatedSigninBusy
                     onButtonClicked: {
-                        processing = true
                         var requestBody = {
                             "action"     : "account-availability-apple",
                             "email"      : emailaddrs.textInputted
                         };
                         QMLHandle.sendEvent(EVT.EVT_LOGIN_ONLINE_SIGN_IN, requestBody)
-                        processing = false
                     }
                 }
                 QTextButton {
@@ -1576,6 +1574,76 @@ QScreen {
     QPopupInfo{
         id: errorInfo
     }
+
+    Rectangle {
+        id: federatedSigninOverlay
+        anchors.fill: parent
+        z: 1000
+        visible: Draco.federatedSigninBusy
+        color: "#99000000"
+        focus: visible
+
+        onVisibleChanged: {
+            if (visible) {
+                forceActiveFocus()
+            }
+        }
+        Keys.onEscapePressed: Draco.cancelFederatedSignin()
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        Rectangle {
+            width: 360
+            height: waitingContent.implicitHeight + 64
+            anchors.centerIn: parent
+            radius: 16
+            color: "#FFFFFF"
+
+            Column {
+                id: waitingContent
+                width: 312
+                anchors.centerIn: parent
+                spacing: 16
+
+                QBusyIndicator {
+                    width: 64
+                    height: 64
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                QText {
+                    width: parent.width
+                    text: qsTr("Waiting for %1 sign-in").arg(Draco.federatedSigninProvider)
+                    font.family: "Lato"
+                    font.pixelSize: 18
+                    font.weight: Font.DemiBold
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                QText {
+                    width: parent.width
+                    text: qsTr("Complete sign-in in your browser. This message will close automatically when sign-in finishes. If you closed the browser tab, cancel sign-in below.")
+                    font.family: "Lato"
+                    font.pixelSize: 14
+                    color: "#595959"
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                QTextButton {
+                    width: parent.width
+                    height: 48
+                    label.text: qsTr("Cancel sign-in")
+                    label.font.pixelSize: 16
+                    type: eTypeB
+                    onButtonClicked: Draco.cancelFederatedSignin()
+                }
+            }
+        }
+    }
+
     Connections {
         target: Draco
         function onCreateAccountResult(https_code, error_code, error_msg) {

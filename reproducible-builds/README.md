@@ -1,111 +1,98 @@
-# Linux reproducible build
+# Reproducible Builds Guide
 
-The Linux x86_64 AppImage is built in a pinned Ubuntu 24.04 container. The
-recipe fixes the base image, Ubuntu package snapshot, dependency revisions,
-download checksums, locale, build paths and file timestamps. CI builds the
-AppImage twice and requires both files to be byte-for-byte identical.
+Easily verify that the binary you installed **really** comes from the open‑source code on GitHub.
 
-## Requirements
+## Status
 
-- Git
-- Docker 24+
-- An x86_64 Linux Docker host (or an x86_64 runner)
+- **Linux x86‑64** — active
+- **Linux ARM64** — standby
+- **Windows** — standby
+- **macOS** — standby
 
-## Build an exact release
+---
 
-```bash
-export VERSION=2.6.5
-export PROJECT_DIR="$HOME/nunchuk-desktop"
+## 0 — Prerequisites
+
+| Tool                | Tested version | Purpose                                       |
+| ------------------- | -------------- | --------------------------------------------- |
+| **git**             | any            | Clone the source repository and tags          |
+| **Docker + Buildx** | 24.0+          | Provides a deterministic build environment    |
+| **diff**            | any            | Byte‑for‑byte comparison of two files         |
+
+---
+
+## 1 — Find the version running on your device
+
+1. Open **Nunchuk → Profile → Settings → About**.
+2. Note the version shown (e.g. **2.6.6**). You will use this as the Git tag.
+
+---
+
+## 2 — Clone the source at that exact tag
+
+``` bash
+export PROJECT_DIR=$HOME/nunchuk-desktop
+export VERSION=2.6.6 # Replace with the version you want to check
 
 git clone https://github.com/nunchuk-io/nunchuk-desktop "$PROJECT_DIR"
 cd "$PROJECT_DIR"
-git checkout --detach "$VERSION"
+git checkout $VERSION
 git submodule update --init --recursive
-
-export TAG="$VERSION"
-export SOURCE_COMMIT="$(git rev-parse HEAD)"
-export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
-
-docker build --no-cache \
-  --file reproducible-builds/Dockerfile.linux \
-  --tag nunchuk-linux-reproducible:local \
-  .
-
-docker run --rm \
-  -e SOURCE_COMMIT \
-  -e SOURCE_DATE_EPOCH \
-  -e TAG \
-  -e RUN_SMOKE_TEST=1 \
-  -v "$PROJECT_DIR:/project" \
-  nunchuk-linux-reproducible:local
 ```
 
-Outputs are written to `dist/`:
+---
 
-- `nunchuk-linux-v<VERSION>.AppImage`
-- `nunchuk-linux-v<VERSION>.AppImage.sha256`
-- `AppDir.sha256` and `AppDir.symlinks`
-- `build-info.txt`
+## 3 — Reproducible build inside Docker
 
-`build-info.txt` records the release-specific inputs. OAuth configuration is
-deliberately excluded from the compiled artifact, so a verifier does not need
-access to any Google OAuth value.
-
-## Verify reproducibility
-
-Keep the first AppImage outside `dist/`, run the same container command again,
-then compare the files:
+### Linux
 
 ```bash
-cp "dist/nunchuk-linux-v$TAG.AppImage" /tmp/nunchuk-first.AppImage
+# Build the builder image
+docker buildx build \
+  --platform linux/amd64 \
+  -t nunchuk-builder \
+  -f reproducible-builds/Dockerfile.linux .
 
-docker run --rm \
-  -e SOURCE_COMMIT \
-  -e SOURCE_DATE_EPOCH \
-  -e TAG \
-  -e RUN_SMOKE_TEST=0 \
-  -v "$PROJECT_DIR:/project" \
-  nunchuk-linux-reproducible:local
-
-cmp /tmp/nunchuk-first.AppImage "dist/nunchuk-linux-v$TAG.AppImage"
-sha256sum /tmp/nunchuk-first.AppImage "dist/nunchuk-linux-v$TAG.AppImage"
+# Build the app
+docker run --platform linux/amd64 --rm \
+  -e TAG="$VERSION" \
+  -v "$PROJECT_DIR":/project \
+  -w /project \
+  nunchuk-builder \
+  bash ./reproducible-builds/build_linux.sh
 ```
 
-No output from `cmp` means both AppImages are identical.
+The Linux package includes
+[HWI 3.2.0-displayaddress](https://github.com/nogibi/HWI/releases/tag/3.2.0-displayaddress),
+verified with its pinned SHA-256 checksum during packaging.
 
-## OAuth and reproducibility
+---
 
-The application source is not changed by this recipe. Its three OAuth macros
-fall back to runtime environment variables when the compile-time values are
-empty. The reproducible build therefore forces these compile-time inputs to an
-empty string:
+## 4 — Byte‑for‑byte Verification
 
-- `OAUTH_CLIENT_ID`
-- `OAUTH_CLIENT_SECRET`
-- `OAUTH_REDIRECT_URI`
+Ensure your local build matches the official release exactly by comparing the final output files.
 
-This makes the AppImage independent of repository secrets and of the builder's
-local environment. Missing or different OAuth values on a verifier's machine
-cannot change the output hash.
+1. **Download** the official Linux release from the [GitHub releases page](https://github.com/nunchuk-io/nunchuk-desktop/releases).
 
-To exercise the existing sign-in implementation, provide all three values only
-when launching the already-built AppImage:
+2. **Compare** it to your local build:
 
-```bash
-OAUTH_CLIENT_ID='...' \
-OAUTH_CLIENT_SECRET='...' \
-OAUTH_REDIRECT_URI='...' \
-./dist/nunchuk-linux-v"$TAG".AppImage
-```
+   ```bash
+   diff /path/to/download/nunchuk-linux-v$VERSION.AppImage "$PROJECT_DIR/nunchuk-linux-v$VERSION/nunchuk-linux-v$VERSION.AppImage"
+   ```
 
-Those runtime values do not modify the AppImage. The current Google flow still
-uses the application's embedded Qt WebEngine implementation; this build recipe
-only ensures that its required WebEngine process and resources are packaged.
-Any Google policy or OAuth-flow change requires a separate source-code change.
+---
 
-## TLS compatibility note
+### Result
 
-The Qt 5.15.2 binary distribution uses the OpenSSL 1.1 ABI, so this recipe pins
-the final 1.1.1w release instead of the older 1.1.1g from the legacy workflow.
-OpenSSL 1.1.1 is end-of-life; moving the application to a supported Qt/OpenSSL
-combination remains a separate migration task.
+If the `diff` command returns **no output**, your local build is **byte-for-byte identical** to the official release — congratulations!
+
+If you see any differences, something is off — refer to the next section for troubleshooting tips.
+
+---
+
+## Troubleshooting
+TBD
+
+---
+
+> *Verified builds keep everyone safer.* Thank you for taking the time to reproduce the binaries you run!

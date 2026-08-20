@@ -1,0 +1,99 @@
+name: Build linux release
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('{0}_manual', inputs.version) || github.ref_name }}
+
+on:
+  push:
+    tags:     [ "*" ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Package version used for a manual build
+        required: false
+        default: 0.0.0
+
+jobs:
+  build-image-and-app:
+    runs-on: ubuntu-24.04
+    env:
+      BUILD_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || inputs.version || '0.0.0' }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Configure Git for private GitLab submodules
+        env:
+          GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
+        run: |
+          git config --global url."https://oauth2:${GITLAB_PAT}@gitlab.com/".insteadOf "https://gitlab.com/"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push builder image
+        working-directory: ${{ github.workspace }}
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -f reproducible-builds/Dockerfile.linux \
+            -t ghcr.io/${{ github.repository }}/nunchuk-builder-linux-amd64 \
+            --cache-from type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache \
+            --cache-to   type=registry,ref=ghcr.io/${{ github.repository }}/builder-cache,mode=max \
+            --push .
+
+      - name: Build application
+        run: |
+          docker run --platform linux/amd64 --rm \
+            -e TAG="${BUILD_VERSION}" \
+            -v ${{ github.workspace }}:/project \
+            -w /project \
+            ghcr.io/${{ github.repository }}/nunchuk-builder-linux-amd64 \
+            bash reproducible-builds/build_linux.sh
+
+      - name: Verify Qt NetworkAuth runtime dependency
+        shell: bash
+        run: |
+          app_binary="$(find . -path './nunchuk-linux-v*/Appdir/bin/nunchuk-qt' -type f -print -quit)"
+          if [[ -z "${app_binary}" ]]; then
+            echo "Packaged Nunchuk binary was not found."
+            exit 1
+          fi
+
+          app_dir="${app_binary%/bin/nunchuk-qt}"
+          network_auth_library="$(find "${app_dir}" -type f -name 'libQt5NetworkAuth.so*' -print -quit)"
+          if [[ -z "${network_auth_library}" ]]; then
+            echo "Qt5NetworkAuth was not bundled in the AppImage directory."
+            exit 1
+          fi
+
+          ldd_output="$(ldd "${app_binary}")"
+          if [[ "${ldd_output}" == *"not found"* ]]; then
+            echo "${ldd_output}"
+            exit 1
+          fi
+          if [[ "${ldd_output}" != *"libQt5NetworkAuth"* ]]; then
+            echo "The packaged binary is not linked to Qt5NetworkAuth."
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64
+          path: nunchuk-linux-v*/nunchuk-linux-*.AppImage
+          compression-level: 0

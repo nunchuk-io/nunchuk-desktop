@@ -1,0 +1,13 @@
+name: Build windows release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Windows x64 for Windows 1
+    runs-on: windows-2022
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4

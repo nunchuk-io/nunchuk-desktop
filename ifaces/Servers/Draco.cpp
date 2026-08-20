@@ -43,19 +43,22 @@ Draco::Draco() :
     m_loginHalfToken(""),
     m_deviceId(""),
     m_stayLoggedIn(false),
-    m_isSubscribed(false)
-#if ENABLE_WEBVIEW_SIGIN
+    m_isSubscribed(false),
+    m_federatedSigninBusy(false)
     ,m_Apple(QAppleSigninViewPtr(new QAppleSigninView()))
     ,m_Google(QGoogleSigninViewPtr(new QGoogleSigninView()))
     ,m_rest(QRestPtr(new QRest()))
-#endif
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-#if ENABLE_WEBVIEW_SIGIN
-    connect(m_Apple.data(), &QAppleSigninView::loginSucceeded, this, &Draco::onAppleSigninSucceeded, Qt::QueuedConnection);
-    connect(m_Google.data(), &QGoogleSigninView::loginSucceeded, this, &Draco::onGoogleSigninSucceeded, Qt::QueuedConnection);
-#endif
+    connect(m_Apple.data(), &QAppleSigninView::loginSucceeded,
+            this, &Draco::onAppleSigninSucceeded);
+    connect(m_Google.data(), &QGoogleSigninView::loginSucceeded,
+            this, &Draco::onGoogleSigninSucceeded);
+    connect(m_Apple.data(), &QAppleSigninView::loginFailed,
+            this, &Draco::onFederatedSigninFailed);
+    connect(m_Google.data(), &QGoogleSigninView::loginFailed,
+            this, &Draco::onFederatedSigninFailed);
 }
 
 QString Draco::dracoToken()
@@ -80,34 +83,82 @@ Draco::~Draco()
 
 void Draco::onAppleSigninSucceeded(QJsonObject result)
 {
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    QJsonObject data    = result["data"].toObject();
-    QString userId      = data["userId"].toString();
-    QString tokenId     = data["tokenId"].toString();
-    QString deviceId    = data["deviceId"].toString();
-    int     expireIn    = data["expireInSeconds"].toInt();
-    setUid(userId);
-    setDeviceId(deviceId);
-    setDracoToken(tokenId);
-    setExpireSec(expireIn);
-    QEventProcessor::instance()->sendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
-    qApp->restoreOverrideCursor();
+    setFederatedSigninState(false);
+    applyFederatedSigninResult(result);
 }
 
 void Draco::onGoogleSigninSucceeded(QJsonObject result)
 {
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    QJsonObject data    = result["data"].toObject();
-    QString userId      = data["userId"].toString();
-    QString tokenId     = data["tokenId"].toString();
-    QString deviceId    = data["deviceId"].toString();
-    int     expireIn    = data["expireInSeconds"].toInt();
+    setFederatedSigninState(false);
+    applyFederatedSigninResult(result);
+}
+
+bool Draco::federatedSigninBusy() const
+{
+    return m_federatedSigninBusy;
+}
+
+QString Draco::federatedSigninProvider() const
+{
+    return m_federatedSigninProvider;
+}
+
+void Draco::setFederatedSigninState(bool busy, const QString &provider)
+{
+    if (m_federatedSigninProvider != provider) {
+        m_federatedSigninProvider = provider;
+        emit federatedSigninProviderChanged();
+    }
+    if (m_federatedSigninBusy != busy) {
+        m_federatedSigninBusy = busy;
+        emit federatedSigninBusyChanged();
+    }
+}
+
+void Draco::applyFederatedSigninResult(const QJsonObject &result)
+{
+    const QJsonValue errorValue = result.value("error");
+    if (!errorValue.isObject()) {
+        onFederatedSigninFailed("The sign-in response is invalid. Please try again.");
+        return;
+    }
+
+    const QJsonObject error = errorValue.toObject();
+    const QJsonValue errorCodeValue = error.value("code");
+    if (!errorCodeValue.isDouble()) {
+        onFederatedSigninFailed("The sign-in response is invalid. Please try again.");
+        return;
+    }
+
+    const int errorCode = errorCodeValue.toInt(-1);
+    if (errorCode != 0) {
+        const QString message = error.value("message").toString("Social sign-in failed.");
+        AppModel::instance()->showToast(errorCode, message, EWARNING::WarningType::ERROR_MSG);
+        return;
+    }
+
+    const QJsonObject data = result.value("data").toObject();
+    const QString userId = data.value("userId").toString();
+    const QString tokenId = data.value("tokenId").toString();
+    const QString deviceId = data.value("deviceId").toString();
+    const int expireIn = data.value("expireInSeconds").toInt();
+    if (userId.isEmpty() || tokenId.isEmpty() || deviceId.isEmpty() || expireIn <= 0) {
+        onFederatedSigninFailed("The sign-in response is incomplete. Please try again.");
+        return;
+    }
+
     setUid(userId);
     setDeviceId(deviceId);
     setDracoToken(tokenId);
     setExpireSec(expireIn);
     QEventProcessor::instance()->sendEvent(E::EVT_NUNCHUK_LOGIN_SUCCEEDED);
-    qApp->restoreOverrideCursor();
+}
+
+void Draco::onFederatedSigninFailed(const QString &message)
+{
+    setFederatedSigninState(false);
+    DBG_WARN << "Federated sign-in failed";
+    AppModel::instance()->showToast(0, message, EWARNING::WarningType::ERROR_MSG);
 }
 
 Draco *Draco::instance()
@@ -4931,20 +4982,47 @@ QJsonArray Draco::GetTaprootSupportedCached(bool reset)
 
 void Draco::requestAppleSigin()
 {
-#if ENABLE_WEBVIEW_SIGIN
+    if (m_federatedSigninBusy) {
+        if (m_federatedSigninProvider == QStringLiteral("Apple")) {
+            return;
+        }
+        cancelFederatedSignin();
+    }
+    if (m_Google) {
+        m_Google->cancelSignin(false);
+    }
     if(m_Apple){
+        setFederatedSigninState(true, QStringLiteral("Apple"));
         m_Apple->startSignin();
     }
-#endif
 }
 
 void Draco::requestGoogleSigin()
 {
-#if ENABLE_WEBVIEW_SIGIN
+    if (m_federatedSigninBusy) {
+        if (m_federatedSigninProvider == QStringLiteral("Google")) {
+            return;
+        }
+        cancelFederatedSignin();
+    }
+    if (m_Apple) {
+        m_Apple->cancelSignin(false);
+    }
     if(m_Google){
+        setFederatedSigninState(true, QStringLiteral("Google"));
         m_Google->startSignin();
     }
-#endif
+}
+
+void Draco::cancelFederatedSignin()
+{
+    if (m_Apple) {
+        m_Apple->cancelSignin(false);
+    }
+    if (m_Google) {
+        m_Google->cancelSignin(false);
+    }
+    setFederatedSigninState(false);
 }
 
 bool Draco::ElectrumGetPublicServers(QJsonObject &output, QString &errormsg)

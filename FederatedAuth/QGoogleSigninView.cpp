@@ -17,190 +17,308 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 *                                                                        *
 **************************************************************************/
+
 #include "QGoogleSigninView.h"
 
-#if ENABLE_WEBVIEW_SIGIN
-#include <QObject>
-#include "WorkerThread.h"
-#include <QWebEnginePage>
-#include <QWebEngineView>
-#include <QWebEngineProfile>
+#include <QAbstractOAuthReplyHandler>
+#include <QCryptographicHash>
+#include <QDesktopServices>
+#include <QHostAddress>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QOAuthHttpServerReplyHandler>
+#include <QRandomGenerator>
+#include <QRegularExpression>
+#include <QTimer>
 #include <QUrl>
 #include <QUrlQuery>
-#include <QDebug>
-#include <QtCore/qeventloop.h>
-#include <QtCore/qjsondocument.h>
-#include <QtCore/qjsonobject.h>
-#include <QtWebEngineWidgets/qwebengineprofile.h>
-#include <QtWebEngineWidgets/qwebenginesettings.h>
-#include <QApplication>
-#include "QEventProcessor.h"
+#include <QVariantMap>
 
-QGoogleSigninView::QGoogleSigninView(QWidget* parent) : QWebEngineView(parent) {
-    m_clientId = QStringLiteral(OAUTH_CLIENT_ID);
-    if (m_clientId.isEmpty()) {
-        m_clientId = qEnvironmentVariable("OAUTH_CLIENT_ID");
-    }
-    m_clientSecret = QStringLiteral(OAUTH_CLIENT_SECRET);
-    if (m_clientSecret.isEmpty()) {
-        m_clientSecret = qEnvironmentVariable("OAUTH_CLIENT_SECRET");
-    }
-    m_redirectUri = QStringLiteral(OAUTH_REDIRECT_URI);
-    if (m_redirectUri.isEmpty()) {
-        m_redirectUri = qEnvironmentVariable("OAUTH_REDIRECT_URI");
-    }
+namespace {
+constexpr int kAuthorizationTimeoutMs = 5 * 60 * 1000;
+constexpr int kNunchukSigninTimeoutMs = 30 * 1000;
 
-    m_profile = new QWebEngineProfile("GoogleOAuth", this);
-    m_profile->setHttpCacheType(QWebEngineProfile::NoCache);
-    m_profile->settings()->setAttribute(QWebEngineSettings::AllowRunningInsecureContent, true);
-    m_profile->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
-    m_profile->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
-    m_profile->settings()->setAttribute(QWebEngineSettings::XSSAuditingEnabled, false);
-    m_profile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, true);
-    m_profile->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
-    m_profile->settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
-    m_page = new QWebEnginePage(m_profile, this);
-    setPage(m_page);
-    setFixedSize(600, 800);
-    setWindowTitle("Sign in with Google");
-    m_networkManager = new QNetworkAccessManager(this);
-    connect(this, &QWebEngineView::urlChanged, this, &QGoogleSigninView::handleUrlChanged);
+const QUrl kGoogleAuthorizationUrl(
+    QStringLiteral("https://accounts.google.com/o/oauth2/v2/auth"));
+const QUrl kNunchukDesktopSigninUrl(
+    QStringLiteral("https://api.nunchuk.io/v1.1/passport/google/desktop/signin"));
+const QString kNunchukGoogleDesktopClientId = QStringLiteral(
+    "712097058578-0n3tufg0oeapgnh5ahmtfb7bi6tu0kgo.apps.googleusercontent.com");
 
-    m_loadingOverlay = new QLoadingOverlay(this);
-    m_loadingOverlay->resize(600, 800);
+QString sanitizedErrorText(QString value, int maximumLength)
+{
+    value.replace(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f]")),
+                  QStringLiteral(" "));
+    return value.simplified().left(maximumLength);
+}
 
-    connect(m_page, &QWebEnginePage::loadStarted, this, [this]() {
-        DBG_INFO << "Loading started";
-        m_loadingOverlay->show();
-        m_loadingOverlay->raise();
-    });
-    connect(m_page, &QWebEnginePage::loadProgress, this, [this](int progress) {
-        DBG_INFO << "Loading finished" << progress;
-        if(progress >= 90) {
-            m_loadingOverlay->hide();
+QString nunchukFailureMessage(const QByteArray &body,
+                              int httpStatus,
+                              const QString &networkError)
+{
+    const QJsonDocument document = QJsonDocument::fromJson(body);
+    if (document.isObject()) {
+        const QJsonObject error = document.object()
+                                      .value(QStringLiteral("error"))
+                                      .toObject();
+        const QString message = sanitizedErrorText(
+            error.value(QStringLiteral("message")).toString(), 512);
+        if (!message.isEmpty()) {
+            return QGoogleSigninView::tr("Nunchuk sign-in failed: %1")
+                .arg(message);
         }
-    });
-    connect(m_page, &QWebEnginePage::loadFinished, this, [this](bool finished) {
-        DBG_INFO << "Loading finished" << finished;
-        m_loadingOverlay->hide();
-    });
-    connect(QEventProcessor::instance(), &QEventProcessor::visibleChanged, this, [this](bool visible) {
-        if(!visible){
-            close();
-            m_loadingOverlay->hide();
-        }
-    });
+    }
 
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
+    return QGoogleSigninView::tr("Nunchuk sign-in failed (HTTP %1): %2")
+        .arg(httpStatus)
+        .arg(sanitizedErrorText(networkError, 512));
+}
+}
+
+QGoogleSigninView::QGoogleSigninView(QObject *parent)
+    : QObject(parent)
+    , m_networkManager(new QNetworkAccessManager(this))
+    , m_replyHandler(new QOAuthHttpServerReplyHandler(
+          QHostAddress::LocalHost, 0, this))
+    , m_timeoutTimer(new QTimer(this))
+{
+    m_replyHandler->setCallbackPath(QStringLiteral("/oauth2/callback"));
+    m_replyHandler->setCallbackText(
+        QStringLiteral("<script>"
+                       "history.replaceState(null, document.title, location.pathname);"
+                       "window.close();"
+                       "</script><p>")
+        + tr("Google sign-in was received. You can close this tab and return to Nunchuk.")
+        + QStringLiteral("</p>"));
+    m_replyHandler->close();
+
+    connect(m_replyHandler,
+            &QAbstractOAuthReplyHandler::callbackReceived,
+            this,
+            &QGoogleSigninView::handleAuthorizationCallback);
+
+    m_timeoutTimer->setSingleShot(true);
+    connect(m_timeoutTimer, &QTimer::timeout, this, [this]() {
+        failCurrentAttempt(tr("Google sign-in timed out. Please try again."));
+    });
+}
+
+QGoogleSigninView::~QGoogleSigninView()
+{
+    m_replyHandler->close();
+    if (m_nunchukReply) {
+        disconnect(m_nunchukReply, nullptr, this, nullptr);
+        m_nunchukReply->abort();
+    }
+}
+
+QString QGoogleSigninView::randomUrlSafeToken(int byteCount)
+{
+    QByteArray bytes(byteCount, '\0');
+    QRandomGenerator *generator = QRandomGenerator::system();
+    for (int offset = 0; offset < byteCount; offset += 4) {
+        const quint32 value = generator->generate();
+        const int remaining = qMin(4, byteCount - offset);
+        for (int index = 0; index < remaining; ++index) {
+            bytes[offset + index] = static_cast<char>(
+                (value >> (index * 8)) & 0xff);
+        }
+    }
+    return QString::fromLatin1(bytes.toBase64(
+        QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
+}
+
+QString QGoogleSigninView::codeChallenge(const QString &verifier)
+{
+    const QByteArray digest = QCryptographicHash::hash(
+        verifier.toLatin1(), QCryptographicHash::Sha256);
+    return QString::fromLatin1(digest.toBase64(
+        QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 }
 
 void QGoogleSigninView::startSignin()
 {
-    QUrl url("https://accounts.google.com/o/oauth2/v2/auth");
-    QUrlQuery query;
-    query.addQueryItem("scope", "openid email profile");
-    query.addQueryItem("response_type", "code");
-    query.addQueryItem("client_id", m_clientId);
-    query.addQueryItem("redirect_uri", m_redirectUri);
-    url.setQuery(query);
-    this->load(url);
-    this->show();
-}
+    if (m_phase != Phase::Idle) {
+        emit loginFailed(tr("Google sign-in is already in progress."));
+        return;
+    }
 
-void QGoogleSigninView::handleUrlChanged(const QUrl& url)
-{
-    if (url.toString().startsWith(m_redirectUri)) {
-        QUrlQuery query(url.query());
-        if (query.hasQueryItem("code")) {
-            QString code = query.queryItemValue("code");
-            exchangeCodeForTokens(code);
-            this->close();
-        }
+    m_phase = Phase::Authorizing;
+    m_replyHandler->close();
+    if (!m_replyHandler->listen(QHostAddress::LocalHost, 0)) {
+        failCurrentAttempt(
+            tr("Could not start the local Google sign-in callback."));
+        return;
+    }
+
+    // 32 random bytes produce a 43-character RFC 7636 verifier.
+    m_codeVerifier = randomUrlSafeToken(32);
+    m_state = randomUrlSafeToken(32);
+    m_redirectUri = m_replyHandler->callback();
+
+    QUrl authorizationUrl = kGoogleAuthorizationUrl;
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("client_id"),
+                       kNunchukGoogleDesktopClientId);
+    query.addQueryItem(QStringLiteral("redirect_uri"), m_redirectUri);
+    query.addQueryItem(QStringLiteral("response_type"),
+                       QStringLiteral("code"));
+    query.addQueryItem(QStringLiteral("scope"),
+                       QStringLiteral("openid email profile"));
+    query.addQueryItem(QStringLiteral("code_challenge"),
+                       codeChallenge(m_codeVerifier));
+    query.addQueryItem(QStringLiteral("code_challenge_method"),
+                       QStringLiteral("S256"));
+    query.addQueryItem(QStringLiteral("state"), m_state);
+    authorizationUrl.setQuery(query);
+
+    m_timeoutTimer->start(kAuthorizationTimeoutMs);
+    if (!QDesktopServices::openUrl(authorizationUrl)) {
+        failCurrentAttempt(
+            tr("Could not open the system browser for Google sign-in."));
     }
 }
 
-void QGoogleSigninView::exchangeCodeForTokens(const QString& code)
+void QGoogleSigninView::cancelSignin(bool notifyUser)
 {
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    QUrl tokenUrl("https://oauth2.googleapis.com/token");
-    QNetworkRequest request(tokenUrl);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-
-    QUrlQuery params;
-    params.addQueryItem("code", code);
-    params.addQueryItem("client_id", m_clientId);
-    params.addQueryItem("client_secret", m_clientSecret);
-    params.addQueryItem("redirect_uri", m_redirectUri);
-    params.addQueryItem("grant_type", "authorization_code");
-
-    QByteArray postData = params.query(QUrl::FullyEncoded).toUtf8();
-
-    QNetworkReply* reply = m_networkManager->post(request, postData);
-    connect(reply, &QNetworkReply::finished, [reply, this]() {
-        QByteArray responseData = reply->readAll();
-        if (reply->error() == QNetworkReply::NoError) {
-            QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
-            QJsonObject jsonObj = jsonDoc.object();
-            QString idToken = jsonObj.value("id_token").toString();
-            QString accessToken = jsonObj.value("access_token").toString();
-            completeGoogleSignin(idToken, accessToken);
-        }
-        else {
-            DBG_INFO << "Error exchanging code for tokens:" << reply->errorString();
-        }
-        qApp->restoreOverrideCursor();
-        reply->deleteLater();
-    });
+    if (m_phase == Phase::Idle) {
+        return;
+    }
+    clearAttempt();
+    if (notifyUser) {
+        emit loginFailed(tr("Google sign-in was cancelled."));
+    }
 }
 
-void QGoogleSigninView::completeGoogleSignin(const QString& idToken, const QString &accessToken)
+void QGoogleSigninView::handleAuthorizationCallback(
+    const QVariantMap &parameters)
 {
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    QUrl nunchukUrl("https://api.nunchuk.io/v1.1/passport/google/signin");
-    QNetworkRequest request(nunchukUrl);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    QJsonObject json;
-    json["id_token"] = idToken;
-    QJsonDocument jsonDoc(json);
-    QByteArray postData = jsonDoc.toJson();
+    if (m_phase != Phase::Authorizing) {
+        return;
+    }
 
-    QNetworkReply* reply = m_networkManager->post(request, postData);
-    connect(reply, &QNetworkReply::finished, this, [reply, this, accessToken]() {
-        QByteArray responseData = reply->readAll();
-        if (reply->error() == QNetworkReply::NoError) {
-            QJsonObject responseObj = QJsonDocument::fromJson(responseData).object();
-            emit loginSucceeded(responseObj);
-        }
-        else {
-            DBG_INFO << "Error sending id_token to Nunchuk API:" << reply->errorString();
-        }
-        reply->deleteLater();
-        qApp->restoreOverrideCursor();
-    }, Qt::QueuedConnection);
+    // Ignore unrelated/forged loopback requests instead of allowing them to
+    // terminate the real browser attempt.
+    const QString returnedState =
+        parameters.value(QStringLiteral("state")).toString();
+    if (returnedState.isEmpty() || returnedState != m_state) {
+        return;
+    }
+
+    m_replyHandler->close();
+    const QString error =
+        parameters.value(QStringLiteral("error")).toString();
+    if (!error.isEmpty()) {
+        const QString description = parameters
+                                        .value(QStringLiteral("error_description"))
+                                        .toString();
+        const QString detail = sanitizedErrorText(
+            description.isEmpty() ? error : description, 512);
+        failCurrentAttempt(
+            tr("Google sign-in was cancelled or rejected: %1").arg(detail));
+        return;
+    }
+
+    // Qt 5 leaves reserved characters percent-encoded in callback values.
+    // Decode Google's authorization code exactly once before sending JSON.
+    const QString authorizationCode = QUrl::fromPercentEncoding(
+        parameters.value(QStringLiteral("code")).toString().toUtf8());
+    if (authorizationCode.isEmpty()) {
+        failCurrentAttempt(
+            tr("Google did not return an authorization code."));
+        return;
+    }
+
+    m_phase = Phase::SigningIn;
+    m_timeoutTimer->start(kNunchukSigninTimeoutMs);
+    sendAuthorizationCodeToNunchuk(authorizationCode);
 }
 
-void QGoogleSigninView::fetchGoogleUserInfo(const QString &accessToken, QJsonObject data)
+void QGoogleSigninView::sendAuthorizationCodeToNunchuk(
+    const QString &authorizationCode)
 {
-    QNetworkRequest userInfoRequest(QUrl("https://www.googleapis.com/oauth2/v3/userinfo"));
-    QString bearerHeader = QString("Bearer %1").arg(accessToken);
-    userInfoRequest.setRawHeader("Authorization", bearerHeader.toUtf8());
+    QNetworkRequest request(kNunchukDesktopSigninUrl);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QStringLiteral("application/json"));
+    request.setRawHeader("Accept", "application/json");
 
-    QNetworkReply* userReply = m_networkManager->get(userInfoRequest);
-    connect(userReply, &QNetworkReply::finished, this, [userReply, data, this]() {
-        if (userReply->error() == QNetworkReply::NoError) {
-            QByteArray userInfoData = userReply->readAll();
-            QJsonObject userInfoObj = QJsonDocument::fromJson(userInfoData).object();
-            QString email = userInfoObj.value("email").toString();
-            QString name = userInfoObj.value("name").toString();
-            QJsonObject output = data;
-            output.insert("email", email);
-            output.insert("name", name);
-            emit loginSucceeded(output);
-        }
-        userReply->deleteLater();
-    }, Qt::QueuedConnection);
+    const QJsonObject payload{
+        {QStringLiteral("code"), authorizationCode},
+        {QStringLiteral("code_verifier"), m_codeVerifier},
+        {QStringLiteral("redirect_uri"), m_redirectUri}
+    };
+    m_nunchukReply = m_networkManager->post(
+        request, QJsonDocument(payload).toJson(QJsonDocument::Compact));
+    connect(m_nunchukReply, &QNetworkReply::finished,
+            this, &QGoogleSigninView::handleNunchukReply);
 }
-#endif
+
+void QGoogleSigninView::handleNunchukReply()
+{
+    QNetworkReply *reply = m_nunchukReply.data();
+    if (!reply) {
+        return;
+    }
+    m_nunchukReply.clear();
+
+    const QNetworkReply::NetworkError networkError = reply->error();
+    const QString networkErrorText = reply->errorString();
+    const int httpStatus = reply
+                               ->attribute(QNetworkRequest::HttpStatusCodeAttribute)
+                               .toInt();
+    const QByteArray body = reply->readAll();
+    reply->deleteLater();
+
+    if (m_phase != Phase::SigningIn) {
+        return;
+    }
+    if (networkError != QNetworkReply::NoError) {
+        failCurrentAttempt(nunchukFailureMessage(
+            body, httpStatus, networkErrorText));
+        return;
+    }
+
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(body, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+        failCurrentAttempt(
+            tr("Nunchuk returned an invalid Google sign-in response."));
+        return;
+    }
+
+    const QJsonObject result = document.object();
+    clearAttempt();
+    emit loginSucceeded(result);
+}
+
+void QGoogleSigninView::failCurrentAttempt(const QString &message)
+{
+    if (m_phase == Phase::Idle) {
+        return;
+    }
+    clearAttempt();
+    emit loginFailed(message);
+}
+
+void QGoogleSigninView::clearAttempt()
+{
+    m_timeoutTimer->stop();
+
+    if (m_nunchukReply) {
+        disconnect(m_nunchukReply, nullptr, this, nullptr);
+        m_nunchukReply->abort();
+        m_nunchukReply->deleteLater();
+        m_nunchukReply.clear();
+    }
+    m_replyHandler->close();
+
+    m_codeVerifier.fill(QChar('\0'));
+    m_codeVerifier.clear();
+    m_state.clear();
+    m_redirectUri.clear();
+    m_phase = Phase::Idle;
+}

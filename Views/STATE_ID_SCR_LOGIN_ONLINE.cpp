@@ -35,7 +35,8 @@ void SCR_LOGIN_ONLINE_Entry(QVariant msg) {
 }
 
 void SCR_LOGIN_ONLINE_Exit(QVariant msg) {
-
+    Q_UNUSED(msg)
+    Draco::instance()->cancelFederatedSignin();
 }
 
 void EVT_LOGIN_ONLINE_CREATE_ACCOUNT_HANDLER(QVariant msg) {

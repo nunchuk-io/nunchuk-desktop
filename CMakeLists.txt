@@ -8,9 +8,9 @@ else()
 endif()
 
 if(UNIX AND APPLE)
-    project(Nunchuk VERSION 2.6.5)
+    project(Nunchuk VERSION 2.6.6)
 else()
-    project(nunchuk-qt VERSION 2.6.5)
+    project(nunchuk-qt VERSION 2.6.6)
 endif()
 
 
@@ -42,28 +42,6 @@ set(CMAKE_AUTOMOC ON )
 set(CMAKE_AUTORCC ON )
 set(CMAKE_AUTOUIC ON )
 
-if(DEFINED ENV{OAUTH_CLIENT_ID})
-    set(OAUTH_CLIENT_ID $ENV{OAUTH_CLIENT_ID})
-else()
-    set(OAUTH_CLIENT_ID "") # fallback to runtime
-endif()
-
-if(DEFINED ENV{OAUTH_CLIENT_SECRET})
-    set(OAUTH_CLIENT_SECRET $ENV{OAUTH_CLIENT_SECRET})
-else()
-    set(OAUTH_CLIENT_SECRET "") # fallback to runtime
-endif()
-
-if(DEFINED ENV{OAUTH_REDIRECT_URI})
-    set(OAUTH_REDIRECT_URI $ENV{OAUTH_REDIRECT_URI})
-else()
-    set(OAUTH_REDIRECT_URI "") # fallback to runtime
-endif()
-
-add_definitions(-DOAUTH_CLIENT_ID="${OAUTH_CLIENT_ID}")
-add_definitions(-DOAUTH_CLIENT_SECRET="${OAUTH_CLIENT_SECRET}")
-add_definitions(-DOAUTH_REDIRECT_URI="${OAUTH_REDIRECT_URI}")
-
 # ZXing Opt
 set(ZXING_UNIT_TESTS OFF)
 set(ZXING_BLACKBOX_TESTS OFF)
@@ -88,7 +66,8 @@ endif()
 
 # Definations
 option(LIMIT_SW_SIGNER "Enable Software signer" OFF)
-option(USING_WEBENGINE "Enable WebEngine" ON)
+# Social OAuth uses the system browser. WebEngine remains required by CAPTCHA.
+option(USING_WEBENGINE "Build with WebEngine (currently required by CAPTCHA)" ON)
 option(USING_AUTO_FEE  "Enable Auto fee selection" ON)
 
 if(USING_AUTO_FEE)
@@ -107,14 +86,13 @@ endif()
 add_definitions (-DSIGNET_SUPPORT)
 
 # Dependences mandatory
-find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Concurrent Svg PrintSupport Network REQUIRED)
+find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Concurrent Svg PrintSupport Network NetworkAuth REQUIRED)
 if(USING_WEBENGINE)
     message(STATUS "---------------------------------> USING WEBENGINE")
     find_package(Qt5 COMPONENTS Widgets WebEngineWidgets REQUIRED)
     if (Qt5WebEngineWidgets_FOUND)
         message( STATUS "Using WebEngineWidgets ${Qt5WebEngineWidgets_VERSION} at ${Qt5WebEngineWidgets_DIR}")
     endif()
-    add_definitions (-DENABLE_WEBVIEW_SIGIN)
 else()
     message(STATUS "---------------------------------> DISABLE WEBENGINE")
 endif()
@@ -227,10 +205,6 @@ message(STATUS "---------------------------------> CMAKE_OSX_ARCHITECTURES: ${CM
 message(STATUS "---------------------------------> C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "---------------------------------> C++ Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "---------------------------------> C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "---------------------------------> OAUTH_CLIENT_ID = ${OAUTH_CLIENT_ID}")
-message(STATUS "---------------------------------> OAUTH_CLIENT_SECRET = ${OAUTH_CLIENT_SECRET}")
-message(STATUS "---------------------------------> OAUTH_REDIRECT_URI = ${OAUTH_REDIRECT_URI}")
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DENABLE_OUTLOG)
     # add_definitions(-DENABLE_BACKTRACE)
@@ -261,7 +235,7 @@ if(WIN32 AND MSVC)
 endif()
 
 # Target link libraries
-target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg Qt5::PrintSupport Qt5::Multimedia Qt5::Network)
+target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Concurrent Qt5::Svg Qt5::PrintSupport Qt5::Multimedia Qt5::Network Qt5::NetworkAuth)
 if(USING_WEBENGINE)
     target_link_libraries (${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::WebEngineWidgets)
 endif()

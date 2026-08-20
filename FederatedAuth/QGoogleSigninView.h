@@ -21,42 +21,62 @@
 #ifndef QGOOGLESIGNINVIEW_H
 #define QGOOGLESIGNINVIEW_H
 
-#if ENABLE_WEBVIEW_SIGIN
 #include "QOutlog.h"
-#include <QWebEngineView>
-#include <QWebEngineUrlRequestInterceptor>
-#include <QWebEngineUrlRequestInfo>
-#include <QJsonObject>
-#include <QWebEngineView>
-#include "QLoadingOverlay.h"
 
-class QGoogleSigninView : public QWebEngineView
+#include <QJsonObject>
+#include <QObject>
+#include <QPointer>
+#include <QString>
+#include <QVariantMap>
+
+class QNetworkAccessManager;
+class QNetworkReply;
+class QOAuthHttpServerReplyHandler;
+class QTimer;
+
+// Kept under its historical name to avoid churn at call sites. This is now
+// an OAuth controller; it never owns or displays an embedded browser view.
+class QGoogleSigninView : public QObject
 {
     Q_OBJECT
+
 public:
-    explicit QGoogleSigninView(QWidget* parent = nullptr);
+    explicit QGoogleSigninView(QObject *parent = nullptr);
+    ~QGoogleSigninView() override;
+
     void startSignin();
-    void exchangeCodeForTokens(const QString &code);
-    void completeGoogleSignin(const QString &idToken, const QString &accessToken);
-    void fetchGoogleUserInfo(const QString &accessToken, QJsonObject data);
-private:
-    QWebEnginePage*         m_page;
-    QWebEngineProfile*      m_profile;
-    QNetworkAccessManager*  m_networkManager;
-    QLoadingOverlay*        m_loadingOverlay;
-    QString                 m_redirectUri;
-    QString                 m_clientId;
-    QString                 m_clientSecret;
-    QString                 m_codeVerifier;
+    void cancelSignin(bool notifyUser = true);
 
 signals:
-    void tokenReceived(const QString& accessToken);
-    void loginSucceeded(QJsonObject data);
+    void loginSucceeded(QJsonObject result);
+    void loginFailed(const QString &message);
 
-private slots:
-    void handleUrlChanged(const QUrl& url);
+private:
+    enum class Phase {
+        Idle,
+        Authorizing,
+        SigningIn
+    };
+
+    static QString randomUrlSafeToken(int byteCount);
+    static QString codeChallenge(const QString &verifier);
+
+    void handleAuthorizationCallback(const QVariantMap &parameters);
+    void sendAuthorizationCodeToNunchuk(const QString &authorizationCode);
+    void handleNunchukReply();
+    void failCurrentAttempt(const QString &message);
+    void clearAttempt();
+
+    Phase m_phase{Phase::Idle};
+    QNetworkAccessManager *m_networkManager{nullptr};
+    QOAuthHttpServerReplyHandler *m_replyHandler{nullptr};
+    QPointer<QNetworkReply> m_nunchukReply;
+    QTimer *m_timeoutTimer{nullptr};
+    QString m_codeVerifier;
+    QString m_state;
+    QString m_redirectUri;
 };
+
 typedef OurSharedPointer<QGoogleSigninView> QGoogleSigninViewPtr;
-#endif
 
 #endif // QGOOGLESIGNINVIEW_H
