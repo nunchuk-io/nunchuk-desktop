@@ -17,7 +17,7 @@ MAC: Compiler GCC 64 or 32 (macOS)
 >**Clone project and fetch submodules**
 >
 ```
-git clone https://gitlab.com/nunchuck/nunchuck-qt
+git clone https://github.com/nunchuk-io/nunchuk-desktop.git
 cd nunchuck-qt
 git submodule update --init --recursive
 ```
