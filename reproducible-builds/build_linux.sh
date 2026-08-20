@@ -6,8 +6,8 @@ mkdir -p build && cd build
 
 export LDFLAGS="-L$OPENSSL_ROOT_DIR/lib -lssl -lcrypto -static-libgcc -static-libstdc++"
 export CPPFLAGS="-I$OPENSSL_ROOT_DIR/include"
-export CXXFLAGS="-O0 $CPPFLAGS"
-export CFLAGS="-O0 $CPPFLAGS"
+export CXXFLAGS="-O2 $CPPFLAGS"
+export CFLAGS="-O2 $CPPFLAGS"
 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
