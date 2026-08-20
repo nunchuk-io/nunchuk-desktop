@@ -12,6 +12,8 @@ RUN apt update && apt install -y \
         libboost-all-dev libzmq3-dev libevent-dev libdb++-dev \
         sqlite3 libsqlite3-dev libsecret-1-dev \
         git dpkg-dev python3-pip wget unzip curl patchelf p7zip-full \
+        binutils file ca-certificates desktop-file-utils \
+        xvfb xauth dbus-x11 \
         libgl1-mesa-dev
 
 # Install system libraries, FUSE, and squashfuse for AppImage support
@@ -21,7 +23,14 @@ RUN apt update && apt install -y \
         libpulse-dev libxcb-xinerama0 software-properties-common \
         libnss3-dev libasound2-dev libxrandr-dev libxcomposite-dev \
         libxcursor-dev libxi-dev libxdamage-dev libxtst-dev libxss-dev \
-        libx11-xcb-dev libxt-dev libdbus-1-dev libegl1-mesa-dev
+        libx11-xcb-dev libxt-dev libdbus-1-dev libegl1-mesa-dev \
+        libegl1 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
+        libgstreamer-plugins-bad1.0-0 libnss3 libx11-xcb1 \
+        libxcb-cursor0 libxcb-glx0 libxcb-icccm4 libxcb-image0 \
+        libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 \
+        libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 \
+        libxcb-xfixes0 libxcb-xinput0 libxcb-xkb1 libxkbcommon0 \
+        libxkbcommon-x11-0
 
 # Install GCC 14
 RUN add-apt-repository ppa:ubuntu-toolchain-r/ppa -y && \
@@ -43,7 +52,7 @@ RUN pip3 install --break-system-packages aqtinstall && \
 # Build and install qtkeychain
 RUN git clone --depth 1 --branch 0.15.0 https://github.com/frankosterfeld/qtkeychain.git /tmp/qtkeychain && \
     cd /tmp/qtkeychain && mkdir build && cd build && \
-    cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DQt5_DIR=$QT5_DIR && \
+    cmake .. -DBUILD_WITH_QT5=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DQt5_DIR=$QT5_DIR && \
     make -j$(nproc) && make install && ldconfig
 
 # Build and install Olm
@@ -53,8 +62,10 @@ RUN git clone https://gitlab.matrix.org/matrix-org/olm.git /tmp/olm && \
     make install && ldconfig
 
 # Install CQtDeployer
-RUN wget https://github.com/QuasarApp/CQtDeployer/releases/download/v1.6.2365/CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb && \
-    dpkg -i CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb
+RUN wget -q https://github.com/QuasarApp/CQtDeployer/releases/download/v1.6.2365/CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb && \
+    echo "a183850a0814e80cc184dea52e4123fcd7826d439c98ab2a20924e07a1b67298  CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb" | sha256sum --check --strict && \
+    dpkg -i CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb && \
+    rm CQtDeployer_1.6.2365.7cce7f3_Linux_x86_64.deb
 
 # Install OpenSSL 1.1.1g
 RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1g/openssl-1.1.1g.tar.gz && \
@@ -64,9 +75,22 @@ RUN wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1g/ope
 
 ENV OPENSSL_ROOT_DIR=/opt/openssl-1.1.1g
 
-# Install appimagetool
-RUN wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage && \
-    chmod +x appimagetool-x86_64.AppImage && mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
+# Pin both the AppImage tool and runtime. The explicit runtime avoids silently
+# changing the produced AppImage when the upstream continuous release moves.
+ENV APPIMAGETOOL=/usr/local/bin/appimagetool
+ENV APPIMAGE_RUNTIME=/usr/local/lib/appimage/runtime-x86_64
+RUN mkdir -p /usr/local/lib/appimage && \
+    curl --fail --location --silent --show-error \
+        --retry 5 --retry-delay 2 --retry-all-errors \
+        https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage \
+        --output "$APPIMAGETOOL" && \
+    curl --fail --location --silent --show-error \
+        --retry 5 --retry-delay 2 --retry-all-errors \
+        https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64 \
+        --output "$APPIMAGE_RUNTIME" && \
+    echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $APPIMAGETOOL" | sha256sum --check --strict && \
+    echo "2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  $APPIMAGE_RUNTIME" | sha256sum --check --strict && \
+    chmod 0755 "$APPIMAGETOOL" "$APPIMAGE_RUNTIME"
 
 WORKDIR /project
 CMD ["bash"]
