@@ -18,7 +18,7 @@ MAC: Compiler GCC 64 or 32 (macOS)
 >
 ```
 git clone https://github.com/nunchuk-io/nunchuk-desktop.git
-cd nunchuck-qt
+cd nunchuck-desktop
 git submodule update --init --recursive
 ```
 ```
