@@ -22,12 +22,6 @@ jobs:
       packages: write
 
     steps:
-      - name: Configure Git for private GitLab submodules
-        env:
-          GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
-        run: |
-          git config --global url."https://oauth2:${GITLAB_PAT}@gitlab.com/".insteadOf "https://gitlab.com/"
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
