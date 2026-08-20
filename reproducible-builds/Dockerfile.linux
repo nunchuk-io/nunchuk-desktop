@@ -1,6 +1,8 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+# Deterministic fallback for dependencies built into the builder image.
+ENV SOURCE_DATE_EPOCH=1604304302
 ARG QT_VERSION=5.15.2
 ENV QT_INSTALL_DIR=/opt/Qt
 ENV QT5_DIR=$QT_INSTALL_DIR/$QT_VERSION/gcc_64/lib/cmake/Qt5

@@ -8,6 +8,12 @@ case "$TAG" in
         exit 1
         ;;
 esac
+case "${SOURCE_DATE_EPOCH:-}" in
+    ''|*[!0-9]*)
+        echo "Invalid SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH:-unset}" >&2
+        exit 1
+        ;;
+esac
 
 PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)"
 RELEASE_ROOT="$PROJECT_ROOT/nunchuk-linux-v$TAG"
@@ -24,7 +30,7 @@ TEMP_ROOT="$(mktemp -d)"
 trap 'rm -rf -- "$TEMP_ROOT"' EXIT
 
 for command_name in \
-    cqtdeployer curl file find ldd readelf patchelf sha256sum timeout \
+    cqtdeployer curl file find ldd readelf patchelf sha256sum timeout touch \
     xvfb-run dbus-run-session 7z; do
     command -v "$command_name" >/dev/null || {
         echo "Missing packaging tool: $command_name" >&2
@@ -257,7 +263,8 @@ chmod 0755 "$APPDIR/AppRun"
 patchelf --set-rpath '$ORIGIN/../lib' "$APPDIR/bin/nunchuk-qt"
 
 "$APPDIR_TOOL" collect "$APPDIR" "$QT_INSTALLED_PREFIX" "$OPENSSL_LIB_DIR"
-"$APPDIR_TOOL" verify "$APPDIR" "$APPDIR/dependency-report.txt"
+# Keep build-path-dependent diagnostics out of the release artifacts.
+"$APPDIR_TOOL" verify "$APPDIR" /dev/null
 sh -n "$APPDIR/AppRun"
 if command -v desktop-file-validate >/dev/null; then
     desktop-file-validate "$APPDIR/nunchuk.desktop"
@@ -325,6 +332,8 @@ VERSION="$TAG" \
         "$APPDIR" \
         "$APPIMAGE"
 chmod 0755 "$APPIMAGE"
+# 7z stores this mtime in the ZIP entry but does not read SOURCE_DATE_EPOCH.
+touch --date="@$SOURCE_DATE_EPOCH" -- "$APPIMAGE"
 
 VERIFY_ROOT="$TEMP_ROOT/appimage-verify"
 mkdir -p "$VERIFY_ROOT"
@@ -337,9 +346,7 @@ EXTRACTED_APPDIR="$VERIFY_ROOT/squashfs-root"
     echo "The generated AppImage could not be extracted" >&2
     exit 1
 }
-"$APPDIR_TOOL" verify \
-    "$EXTRACTED_APPDIR" \
-    "$RELEASE_ROOT/extracted-dependency-report.txt"
+"$APPDIR_TOOL" verify "$EXTRACTED_APPDIR" /dev/null
 env \
     LD_LIBRARY_PATH="$EXTRACTED_APPDIR/lib:$EXTRACTED_APPDIR/bin" \
     SSL_CERT_FILE="$EXTRACTED_APPDIR/resources/ca-certificates.crt" \
@@ -370,7 +377,7 @@ fi
 
 (
     cd "$RELEASE_ROOT"
-    7z a -tzip -mx=9 \
+    TZ=UTC 7z a -tzip -mx=9 \
         "$(basename -- "$ARCHIVE")" \
         "$(basename -- "$APPIMAGE")"
 )

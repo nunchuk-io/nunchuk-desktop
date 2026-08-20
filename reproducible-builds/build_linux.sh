@@ -1,7 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)"
+# Override the builder fallback with the timestamp of the source revision.
+SOURCE_DATE_EPOCH="$(
+    git -c safe.directory="$PROJECT_ROOT" \
+        -C "$PROJECT_ROOT" log -1 --format=%ct
+)"
+case "$SOURCE_DATE_EPOCH" in
+    ''|*[!0-9]*)
+        echo "Invalid SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH" >&2
+        exit 1
+        ;;
+esac
+export SOURCE_DATE_EPOCH
+
 # Build project
+cd "$PROJECT_ROOT"
 mkdir -p build && cd build
 
 export LDFLAGS="-L$OPENSSL_ROOT_DIR/lib -lssl -lcrypto -static-libgcc -static-libstdc++"
@@ -19,4 +34,4 @@ make -j$(nproc)
 
 # After build, call package script
 cd ..
-/project/reproducible-builds/package_linux.sh
+"$PROJECT_ROOT/reproducible-builds/package_linux.sh"
