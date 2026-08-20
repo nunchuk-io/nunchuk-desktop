@@ -197,7 +197,6 @@ while IFS= read -r nss_file; do
                 }
             else
                 cp -L --preserve=mode,timestamps -- "$nss_file" "$nss_destination"
-                chmod a+rX "$nss_destination"
             fi
             ;;
     esac
@@ -268,6 +267,9 @@ sh -n "$APPDIR/AppRun"
 if command -v desktop-file-validate >/dev/null; then
     desktop-file-validate "$APPDIR/nunchuk.desktop"
 fi
+
+# Normalize every non-symlink file and directory permission.
+find "$APPDIR" ! -type l -exec chmod 0775 {} +
 
 # Normalize every timestamp stored in SquashFS, including symlinks.
 find "$APPDIR" -depth -exec \
