@@ -26,7 +26,9 @@
 #include <QtConcurrent>
 #include <QUrlQuery>
 #include <QSysInfo>
+#ifdef USING_WEBENGINE
 #include "Servers/QCaptchaVerification.h"
+#endif
 #include "ViewsEnums.h"
 #include "localization/STR_CPP.h"
 #include <QSysInfo>
@@ -5832,6 +5834,14 @@ bool Draco::TimeLockConvert(const QJsonObject& requestBody, QJsonObject &result)
 
 void Draco::requireCaptchaVerification(std::function<void()> onSuccess)
 {
+#ifndef USING_WEBENGINE
+    // Built without WebEngine: no client-side CAPTCHA widget is available.
+    // Do not call onSuccess: callers retry the same request, which would get
+    // REQUIRED_VERIFICATION again without a token and loop forever.
+    Q_UNUSED(onSuccess);
+    DBG_WARN << "CAPTCHA verification requested, but this build has no WebEngine";
+    AppModel::instance()->showToast(0, QStringLiteral("CAPTCHA verification is not available: this build was compiled without WebEngine."), EWARNING::WarningType::ERROR_MSG);
+#else
     auto *captcha = new QCaptchaVerification();
 
     QPointer<QCaptchaVerification> safeCaptcha = captcha;
@@ -5858,4 +5868,5 @@ void Draco::requireCaptchaVerification(std::function<void()> onSuccess)
         });
 
     captcha->startVerifyCaptcha();
+#endif
 }
