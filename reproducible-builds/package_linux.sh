@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-umask 022
 
 TAG="${TAG:-0.0.0}"
 case "$TAG" in
@@ -233,6 +232,7 @@ Exec=AppRun
 Icon=nunchuk-qt
 Categories=Utility;
 DESKTOP_FILE
+printf 'X-AppImage-Version=%s\n' "$TAG" >> "$APPDIR/nunchuk.desktop"
 install -m 0644 "$NUNCHUK_ICON" "$APPDIR/nunchuk-qt.png"
 ln -sfn nunchuk-qt.png "$APPDIR/.DirIcon"
 
@@ -271,14 +271,15 @@ fi
 
 # Normalize every non-symlink file and directory permission.
 find "$APPDIR" ! -type l -exec chmod 0775 {} +
+chmod 0644 "$APPDIR/nunchuk.desktop"
 
 # Normalize every timestamp stored in SquashFS, including symlinks.
 find "$APPDIR" -depth -exec \
     touch --no-dereference --date="@$SOURCE_DATE_EPOCH" -- {} +
 
-APPIMAGE_EXTRACT_AND_RUN=1 \
-ARCH=x86_64 \
-VERSION="$TAG" \
+env -u VERSION \
+    APPIMAGE_EXTRACT_AND_RUN=1 \
+    ARCH=x86_64 \
     "$APPIMAGETOOL" \
         --no-appstream \
         --runtime-file "$APPIMAGE_RUNTIME" \
