@@ -64,9 +64,6 @@ docker run --platform linux/amd64 --rm \
 ```
 
 The final output is `nunchuk-linux-v$VERSION/nunchuk-linux-v$VERSION.zip`.
-When a tag is pushed, the Linux workflow creates or updates the matching GitHub
-Release as a pre-release and uploads this ZIP. Manual builds do not publish a
-GitHub Release.
 
 ---
 
