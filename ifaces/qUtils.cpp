@@ -26,6 +26,7 @@
 #include <QCryptographicHash>
 #include <QHash>
 #include <QJsonDocument>
+#include <QUrl>
 #include <boost/algorithm/string.hpp>
 
 QString qUtils::deviceId() {
@@ -132,6 +133,13 @@ QString qUtils::QAddressToScriptPubKey(const QString &address) {
 QString qUtils::QGetFilePath(QString in) {
     if (in.isEmpty() || in == "") {
         return "";
+    }
+    // QML file dialogs return percent-encoded URLs ("%20" for spaces, "%23"
+    // for '#'). Stripping the scheme keeps the encoding and the path lookup
+    // fails, so decode through QUrl for local files.
+    QUrl url(in);
+    if (url.isLocalFile()) {
+        return url.toLocalFile();
     }
 #ifdef _WIN32
     return in.remove("file:///");
