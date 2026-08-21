@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 022
 
 TAG="${TAG:-0.0.0}"
 case "$TAG" in
