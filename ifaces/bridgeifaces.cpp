@@ -398,6 +398,11 @@ QMasterSignerPtr bridge::nunchukCreateMasterSigner(const QString &name, const QS
         if (devices) {
             QDevicePtr selectedDv = devices->getDeviceByXfp(xfp);
             int deviceIndex = devices->getDeviceIndexByXfp(xfp);
+            if (!selectedDv && devices->deviceCount() == 1
+                && (xfp.isEmpty() || devices->getDeviceByIndex(0)->masterFingerPrint().isEmpty())) {
+                selectedDv = devices->getDeviceByIndex(0);
+                deviceIndex = 0;
+            }
             QString in_message = qUtils::QGenerateRandomMessage();
             AppModel::instance()->setNewKeySignMessage(in_message);
             if (selectedDv.data()) {
