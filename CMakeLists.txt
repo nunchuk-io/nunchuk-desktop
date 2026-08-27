@@ -89,6 +89,7 @@ add_definitions (-DSIGNET_SUPPORT)
 find_package(Qt5 COMPONENTS Qml Quick Core Gui Multimedia Concurrent Svg PrintSupport Network NetworkAuth REQUIRED)
 if(USING_WEBENGINE)
     message(STATUS "---------------------------------> USING WEBENGINE")
+    add_definitions(-DUSING_WEBENGINE)
     find_package(Qt5 COMPONENTS Widgets WebEngineWidgets REQUIRED)
     if (Qt5WebEngineWidgets_FOUND)
         message( STATUS "Using WebEngineWidgets ${Qt5WebEngineWidgets_VERSION} at ${Qt5WebEngineWidgets_DIR}")
@@ -141,6 +142,9 @@ set(Nunchuk_INC_PATH
 
 # Source
 file(GLOB_RECURSE SOURCES_IFACES	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/ifaces/*.cpp		${CMAKE_SOURCE_DIR}/ifaces/*.h)
+if(NOT USING_WEBENGINE)
+    list(FILTER SOURCES_IFACES EXCLUDE REGEX ".*QCaptchaVerification\\.(cpp|h)$")
+endif()
 file(GLOB_RECURSE SOURCES_MODELS	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Models/*.cpp		${CMAKE_SOURCE_DIR}/Models/*.h)
 file(GLOB_RECURSE SOURCES_QAPPENGINE	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/QAppEngine/*.cpp		${CMAKE_SOURCE_DIR}/QAppEngine/*.h)
 file(GLOB_RECURSE SOURCES_QSCANNER	CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/QRScanner/*.cpp		${CMAKE_SOURCE_DIR}/QRScanner/*.h)
