@@ -5,9 +5,12 @@ on:
   push:
     tags:     [ "*" ]
   workflow_dispatch:
+    # Manual run: use the "Use workflow from" ref picker on the Actions tab to
+    # choose either a tag (build that tag) or the qt6 branch (build its latest
+    # commit). Manual runs never upload artifacts or create a release.
     inputs:
       version:
-        description: Package version used for a manual build
+        description: Package version used for a manual build (ignored if the selected ref is a tag)
         required: false
         default: 0.0.0
 
@@ -240,6 +243,7 @@ jobs:
           CI_TESTS
 
       - name: Upload build artifacts
+        if: github.event_name != 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: nunchuk-linux-v${{ env.BUILD_VERSION }}
@@ -248,7 +252,7 @@ jobs:
           compression-level: 0
 
       - name: Create or update GitHub prerelease
-        if: github.ref_type == 'tag'
+        if: github.event_name != 'workflow_dispatch' && github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
